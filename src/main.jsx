@@ -295,7 +295,8 @@ function Designer({template,tabId,changeTemplate}){const t=template?.tabs.find(x
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId}){
  const[preview,setPreview]=useState({});
- const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),zoomRef=useRef(scale);
+ const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
+ const [panning,setPanning]=useState(false);
  useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
  useEffect(()=>{setSelectedId(null)},[map.id]);
@@ -358,8 +359,33 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onToken
   const npcId=e.dataTransfer.getData('application/x-forge-npc');
   if(npcId){const p=pos(e);onNpcDrop(npcId,p.x,p.y)}
  }
+ function startPan(e){
+  if(e.button!==0||e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
+  const viewport=viewportRef.current;if(!viewport)return;
+  e.preventDefault();
+  setSelectedId(null);
+  pan.current={id:e.pointerId,startX:e.clientX,startY:e.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};
+  viewport.setPointerCapture(e.pointerId);
+  setPanning(true);
+ }
+ function movePan(e){
+  const info=pan.current;
+  if(!info||info.id!==e.pointerId)return;
+  const viewport=viewportRef.current;
+  viewport.scrollLeft=info.left-(e.clientX-info.startX);
+  viewport.scrollTop=info.top-(e.clientY-info.startY);
+ }
+ function endPan(e){
+  if(!pan.current||pan.current.id!==e.pointerId)return;
+  pan.current=null;setPanning(false);
+  const viewport=viewportRef.current;
+  if(viewport?.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId);
+ }
  return <>
-  <div className="mapscroll" ref={viewportRef} aria-label="Battlemap viewport" tabIndex={0}>
+  <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')} ref={viewportRef}
+    aria-label="Battlemap viewport — left-click and drag to pan" tabIndex={0}
+    onPointerDown={startPan} onPointerMove={movePan} onPointerUp={endPan}
+    onPointerCancel={endPan} onLostPointerCapture={endPan}>
    <div ref={boardRef} className="board"
     onPointerDown={e=>{if(e.target===e.currentTarget||e.target.classList.contains('gridlines'))setSelectedId(null)}}
     onDragOver={e=>{if(isDM)e.preventDefault()}}
