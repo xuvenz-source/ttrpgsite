@@ -22,6 +22,39 @@ const read=async(q)=>{const{data,error}=await q;if(error)throw error;return data
 const D=(field)=>field.type==='number'?0:field.type==='inventory'?[]:'';
 const stamp=s=>new Date(s).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const defaults=[{id:'main',name:'Character',fields:[{id:'character_name',label:'Name',type:'text',span:2},{id:'strength',label:'Strength',type:'number',span:1},{id:'dexterity',label:'Dexterity',type:'number',span:1},{id:'hp',label:'Hit points',type:'number',span:1},{id:'attack',label:'Attack',type:'roll',formula:'1d20+@{strength}',span:1}]},{id:'inventory',name:'Inventory',fields:[{id:'items',label:'Equipment',type:'inventory',columns:['Item','Qty','Weight','Notes'],span:3}]}];
+class AppErrorBoundary extends React.Component{
+ constructor(props){super(props);this.state={failed:false}}
+ static getDerivedStateFromError(){return {failed:true}}
+ componentDidCatch(error,info){console.error('Tabletop Forge UI error',error,info)}
+ render(){
+  if(this.state.failed)return <div className="welcome-screen">
+   <section className="welcome-shell welcome-auth">
+    <h2>A tabletop window encountered an error</h2>
+    <p className="muted">Your campaign data is still saved. Reloading will reopen Tabletop Forge.</p>
+    <button type="button" onClick={()=>location.reload()}>Reload Tabletop Forge</button>
+   </section>
+  </div>;
+  return this.props.children;
+ }
+}
+function QuickEditBoundary({children,onClose}){
+ return <LocalErrorBoundary onClose={onClose}>{children}</LocalErrorBoundary>;
+}
+class LocalErrorBoundary extends React.Component{
+ constructor(props){super(props);this.state={failed:false}}
+ static getDerivedStateFromError(){return {failed:true}}
+ componentDidCatch(error,info){console.error('Token quick-edit error',error,info)}
+ render(){
+  if(!this.state.failed)return this.props.children;
+  return <div className="modal-backdrop">
+   <section className="modal quick-token-modal" role="dialog" aria-modal="true">
+    <h2>Could not open token controls</h2>
+    <p className="muted small">The tabletop is still available. Close this window and try again.</p>
+    <button type="button" onClick={this.props.onClose}>Close</button>
+   </section>
+  </div>;
+ }
+}
 function App(){
  const[session,setSession]=useState(null),[authReady,setAuthReady]=useState(false),[email,setEmail]=useState(''),[sent,setSent]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const[campaigns,setCampaigns]=useState([]),[roles,setRoles]=useState({}),[activeId,setActiveId]=useState(''),[camp,setCamp]=useState(null),[members,setMembers]=useState([]),[characters,setCharacters]=useState([]),[character,setCharacter]=useState(null);
@@ -674,10 +707,11 @@ function App(){
   record={characterEditor.data} template={camp?.sheet_template}
   onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
   onRoll={(expression,label)=>roll(expression,label,null)}/>}
- {quickEditToken&&camp&&<TokenQuickEdit key={quickEditToken.id} db={db}
-  token={quickEditToken} template={camp.sheet_template}
-  allowedFields={camp.token_quick_fields||[]}
-  onClose={()=>setQuickEditToken(null)} onApply={applyQuickTokenChanges}/>}
+ {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
+  <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
+   allowedFields={camp.token_quick_fields||[]}
+   onClose={()=>setQuickEditToken(null)} onApply={applyQuickTokenChanges}/>
+ </QuickEditBoundary>}
  {npcEditor&&isDM&&<NpcEditor db={db} campaignId={activeId} userId={user}
   record={npcEditor} template={camp?.sheet_template}
   onSave={saveNpc} onSaveAsTemplate={async draft=>{
@@ -960,4 +994,4 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   </div>
  </>;
 }
-createRoot(document.getElementById('root')).render(<App/>);
+createRoot(document.getElementById('root')).render(<AppErrorBoundary><App/></AppErrorBoundary>);
