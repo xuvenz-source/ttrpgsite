@@ -576,3 +576,47 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .monitor-widget-fields .monitor-auto-bound{grid-column:span 2;background:#1b3c39;border:1px solid #366b60;border-radius:7px;padding:8px}
 .monitor-widget-fields optgroup{color:#dce4f5}
 @media(max-width:650px){.resource-field{gap:4px}.resource-separator{font-size:18px}}
+
+/* v1.0 — compact personal macro hotbar, no additional permanent map toolbar. */
+.map-only-panel{position:relative}
+.macro-hotbar{
+ position:absolute;left:50%;bottom:17px;transform:translateX(-50%);
+ display:grid;grid-template-columns:repeat(8,minmax(42px,55px));gap:4px;
+ padding:6px;border:1px solid #61718eae;border-radius:11px;
+ background:#101827e8;box-shadow:0 8px 25px #0008;
+ backdrop-filter:blur(8px);z-index:20;max-width:calc(100% - 18px);
+ pointer-events:auto;
+}
+.macro-hotbar-slot{
+ position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;
+ min-height:45px;gap:3px;border:1px solid #425474;border-radius:6px;
+ background:#27324a;color:#c5d2e7;padding:4px;min-width:0;cursor:pointer;
+}
+.macro-hotbar-slot.filled{background:#384263;border-color:#8575b7;color:#fff}
+.macro-hotbar-slot:hover{background:#4b5576}
+.hotbar-key{font-size:10px;font-weight:700;color:#ffd18a;line-height:1}
+.hotbar-slot-label{font-size:10px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shortcut-settings{margin:0}
+.shortcut-settings>summary{cursor:pointer;font-size:12px;font-weight:700}
+.keybind-editor,.hotbar-editor{display:flex;flex-direction:column;gap:12px;margin-top:12px;min-width:0}
+.keybind-list{display:flex;flex-direction:column;gap:4px}
+.keybind-row{display:flex;align-items:center;justify-content:space-between;gap:9px;min-height:36px;padding:5px 4px;border-bottom:1px solid #39476180;font-size:12px}
+.keybind-row>span{min-width:0;flex:1}
+.keybind-keys{display:flex;gap:5px}
+.keybind-capture{font-size:11px;padding:5px 7px;min-width:56px;white-space:nowrap;flex:0 0 auto}
+.keybind-capture.capturing{background:#66549c;border-color:#bd9ffa}
+.keybind-actions{display:flex;justify-content:space-between;flex-wrap:wrap;gap:7px}
+.keybind-actions button{font-size:12px;padding:8px}
+.hotbar-visibility{display:flex!important;flex-direction:row!important;gap:8px;align-items:center;font-size:12px}
+.hotbar-visibility input{width:18px!important;height:18px!important;flex:0 0 auto}
+.hotbar-slot-editor{display:flex;flex-direction:column;gap:9px}
+.hotbar-slot-row{display:grid;grid-template-columns:22px minmax(0,1fr);gap:5px;min-width:0;
+ border:1px solid #3c4d68;background:#222e41;border-radius:8px;padding:7px}
+.hotbar-slot-row .hotbar-index{display:flex;align-items:center;justify-content:center;
+ font-size:12px;color:#f2d59d;font-weight:700;grid-row:span 2}
+.hotbar-slot-row input{width:100%;min-width:0;max-width:100%;font-size:12px}
+@media(max-width:800px){
+ .macro-hotbar{grid-template-columns:repeat(8,minmax(25px,1fr));width:min(470px,calc(100% - 12px));gap:2px;padding:4px}
+ .macro-hotbar-slot{min-height:38px;padding:2px}
+ .hotbar-slot-label{font-size:9px}
+}
