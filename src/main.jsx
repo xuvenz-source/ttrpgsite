@@ -609,6 +609,10 @@ function App(){
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken} resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}/>
+   {Object.keys(pendingQuickTokens).length>0&&<div className="quick-save-status" role="status">
+    <span className="quick-save-pulse" aria-hidden="true"/>
+    Saving {Object.keys(pendingQuickTokens).length} token{Object.keys(pendingQuickTokens).length===1?'':'s'}…
+   </div>}
    {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
     onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}/>}
   </>
