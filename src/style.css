@@ -319,3 +319,98 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .app main{height:100dvh;overflow:hidden!important}
  .rail-menu-toggle{width:34px;height:38px}
 }
+
+/* v0.6 — single uninterrupted workspace, with all navigation in the right dock. */
+.app.no-left-rail{
+ display:block!important;
+ grid-template-columns:none!important;
+ width:100vw;
+ height:100dvh;
+ max-height:100dvh;
+ overflow:hidden;
+}
+.app.no-left-rail main{
+ width:100%;
+ height:100dvh;
+ max-height:100dvh;
+ min-width:0;
+ overflow:hidden;
+}
+.app.no-left-rail main .workarea{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 335px;
+ gap:8px;
+ padding:8px;
+ height:100%;
+ min-height:0;
+ width:100%;
+ overflow:hidden;
+}
+.campaign-empty{
+ background:linear-gradient(140deg,#141c2a,#1e2a3d);
+ text-align:center;
+}
+.campaign-empty-content{
+ display:flex;
+ align-items:center;
+ flex-direction:column;
+ gap:14px;
+ padding:24px;
+ max-width:460px;
+}
+.campaign-empty-content h2{font-size:24px;color:#efdcff}
+.campaign-empty-content p{line-height:1.5}
+.campaigns-panel{display:flex;flex-direction:column;gap:12px}
+.campaigns-panel .side-heading{margin-bottom:0}
+.campaigns-panel h3{font-size:13px}
+.campaign-switcher{
+ display:flex;
+ flex-direction:column;
+ gap:7px;
+}
+.campaign-switch{
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ gap:4px;
+ padding:11px;
+ text-align:left;
+ color:#dfe9f7;
+ background:#222e42;
+ border:1px solid #41526c;
+ border-radius:8px;
+}
+.campaign-switch.selected{
+ background:#3a3156;
+ border-color:#9475cf;
+}
+.campaign-switch-title{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.campaign-page-links{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.campaign-page-links button{font-size:12px;text-align:left;padding:10px 8px}
+.campaign-action-details{
+ border:1px solid #374861;
+ border-radius:8px;
+ padding:10px;
+ background:#1c2637;
+}
+.campaign-action-details summary{
+ cursor:pointer;
+ font-size:12px;
+ font-weight:600;
+ color:#e1e6f4;
+}
+.campaign-action-form{margin-top:12px}
+.account-email{overflow-wrap:anywhere}
+.app.no-left-rail .right-sidebar{min-width:0}
+@media(max-width:1050px){
+ .app.no-left-rail main .workarea{grid-template-columns:minmax(0,1fr) 310px}
+}
+@media(max-width:750px){
+ .app.no-left-rail main .workarea{
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) minmax(190px,35vh);
+  gap:6px;
+  padding:6px;
+ }
+ .campaign-page-links{grid-template-columns:1fr 1fr}
+}
