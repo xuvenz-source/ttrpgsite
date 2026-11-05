@@ -133,6 +133,32 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
     {zoom,shiftX,shiftY,ring,back,shape,border,thickness});
   }
  },[file,zoom,shiftX,shiftY,ring,back,shape,border,thickness,frameFile]);
+ // A native non-passive wheel listener prevents browser/page zoom only while
+ // the pointer is over the token preview. The image zooms toward that pointer.
+ useEffect(()=>{
+  const canvas=cv.current;
+  if(!canvas)return;
+  function wheel(e){
+   if(!bmp.current||!e.deltaY)return;
+   e.preventDefault();
+   e.stopPropagation();
+   const factor=e.deltaY<0?1.12:1/1.12;
+   const nextZoom=clamp(zoom*factor,1,3);
+   if(nextZoom===zoom)return;
+   const ratio=nextZoom/zoom;
+   const rect=canvas.getBoundingClientRect();
+   const cursorX=(e.clientX-rect.left)*SIZE/rect.width;
+   const cursorY=(e.clientY-rect.top)*SIZE/rect.height;
+   const bounds=ring==='custom'&&opening.current?opening.current.bounds:null;
+   const centerX=bounds?bounds.x+bounds.w/2:SIZE/2;
+   const centerY=bounds?bounds.y+bounds.h/2:SIZE/2;
+   setShiftX(clamp(shiftX*ratio+(cursorX-centerX)*(1-ratio)/1.5,-180,180));
+   setShiftY(clamp(shiftY*ratio+(cursorY-centerY)*(1-ratio)/1.5,-180,180));
+   setZoom(nextZoom);
+  }
+  canvas.addEventListener('wheel',wheel,{passive:false});
+  return()=>canvas.removeEventListener('wheel',wheel);
+ },[zoom,shiftX,shiftY,ring,file,frameFile]);
  async function choose(e){
   const f=e.target.files?.[0];if(!f)return;
   try{
@@ -202,7 +228,7 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
  return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
   <section className="modal tokenstudio" role="dialog" aria-modal="true" aria-label="Create character token">
    <div className="heading"><h2>Portrait & token studio</h2><button className="secondary" onClick={onClose}>✕ Close</button></div>
-   <p className="muted">Drag your portrait directly in the preview. Decorative frames automatically use their transparent inner opening instead of a circular crop.</p>
+   <p className="muted">Drag to reposition your portrait. Scroll over the preview to zoom in or out toward the cursor. Decorative frames follow their transparent inner opening.</p>
    <div className="studio-grid">
     <div className="studio-preview">
      <canvas ref={cv} width={SIZE} height={SIZE} aria-label="Drag the image to position it in the token frame"
@@ -212,7 +238,7 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
     </div>
     <div className="studio-options">
      <label>Character artwork<input type="file" accept="image/png,image/jpeg,image/webp" onChange={choose}/></label>
-     <label>Zoom — {zoom.toFixed(2)}×
+     <label>Zoom — {zoom.toFixed(2)}× (or scroll over the preview)
       <input type="range" min="1" max="3" step=".05" value={zoom} onChange={e=>setZoom(+e.target.value)}/></label>
      <div className="tools"><button className="secondary" type="button" onClick={()=>{setShiftX(0);setShiftY(0)}}>Centre portrait</button>
       <span className="muted small">Click and drag the image to move it</span></div>
