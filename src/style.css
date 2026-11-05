@@ -716,3 +716,12 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .welcome-hub-top{flex-wrap:wrap}
  .welcome-campaigns{grid-template-columns:1fr}
 }
+
+/* Consistent one-click return from secondary pages to the active tabletop. */
+.page-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.page-header-actions .return-to-game,.return-to-game{white-space:nowrap}
+.page-header-actions .button{white-space:nowrap}
+@media(max-width:660px){
+ .page-panel>.heading{flex-wrap:wrap;align-items:flex-start}
+ .page-header-actions{width:100%;justify-content:flex-start}
+}
