@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
-import TokenStudio from './TokenStudio.jsx';
+import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 
 function Items({field,value,onChange}){
  const columns=field.columns?.length?field.columns:['Item','Qty','Notes'];const rows=Array.isArray(value)?value:[];
@@ -54,6 +54,8 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
  {notice&&<p className="good">{notice}</p>}
  <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button onClick={save} disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save NPC sheet'}</button></div>
  </section>
- {studio&&<TokenStudio db={db} campaignId={campaignId} userId={userId} mode="npcs" onClose={()=>setStudio(false)} onSave={assets=>{setDraft(d=>({...d,portraitPath:assets.portraitPath,tokenPath:assets.tokenPath}))}}/>}
+ {studio&&<PersonalTokenLibrary db={db} campaignId={campaignId} userId={userId}
+  mode="npcs" defaultName={draft.name} currentTokenPath={draft.tokenPath} currentPortraitPath={draft.portraitPath}
+  onClose={()=>setStudio(false)} onApply={assets=>{setDraft(d=>({...d,portraitPath:assets.portraitPath,tokenPath:assets.tokenPath}))}}/>}
  </div>;
 }
