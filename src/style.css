@@ -725,3 +725,17 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .page-panel>.heading{flex-wrap:wrap;align-items:flex-start}
  .page-header-actions{width:100%;justify-content:flex-start}
 }
+
+/* Sheet designer: only the explicit grip reorders fields. Text remains selectable. */
+.designer-grid .designfield,
+.designer-grid .designfield:active{cursor:default}
+.designfield-drag-handle{
+  display:inline-flex;align-items:center;align-self:flex-start;
+  padding:7px 10px;border:1px solid #425471;border-radius:7px;
+  background:#26344a;color:#b9c9e2;
+  cursor:grab;user-select:none;-webkit-user-select:none;
+  font-size:12px;font-weight:600;
+}
+.designfield-drag-handle:hover{background:#364867;border-color:#8b77b8;color:#fff}
+.designfield-drag-handle:active{cursor:grabbing}
+.designfield input,.designfield textarea{user-select:text;-webkit-user-select:text;cursor:text}
