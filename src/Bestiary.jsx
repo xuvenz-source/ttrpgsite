@@ -13,18 +13,21 @@ export default function Bestiary({db,npcs=[],folders=[],compact=false,onNewFolde
   }
   walk('',0);return output;
  },[folders]);
- const shown=npcs.filter(n=>n.name.toLowerCase().includes(search.toLowerCase()) && (compact||search||!folder||(n.folder_id||'')===folder));
+ const shown=npcs.filter(n=>n.name.toLowerCase().includes(search.toLowerCase()) && (search||!folder||(n.folder_id||'')===folder));
  function folderPrompt(){const name=prompt('Folder name');if(name?.trim())onNewFolder(name.trim(),folder||null)}
  function npcPrompt(){const name=prompt('Name for your new NPC');if(name?.trim())onNewNpc(name.trim(),folder||null)}
  return <div className={'bestiary '+(compact?'compact':'')}>
  <div className="heading"><h2>{compact?'Saved NPCs':'NPC Bestiary'}</h2>{!compact&&<button onClick={npcPrompt}>+ NPC</button>}</div>
- <div className="bestiary-toolbar"><input aria-label="Search NPCs" placeholder="Search NPCs…" value={search} onChange={e=>setSearch(e.target.value)}/>{compact&&<button className="secondary" title="Create NPC" onClick={npcPrompt}>+</button>}</div>
- {!compact&&<div className="npc-folderlist">
-  <button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder('')}>All NPCs</button>
-  {tree.map(f=><button className={'nav '+(folder===f.id?'active':'')} key={f.id} style={{paddingLeft:10+Math.min(6,f.depth)*16}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}
-  <button className="secondary" onClick={folderPrompt}>+ New folder</button>
- </div>}
- <p className="muted tiny">{compact?'Drag a saved NPC onto the map or use Place.':'Organise NPCs in folders, edit their sheets, and drag them onto the tabletop.'}</p>
+ <div className="bestiary-toolbar"><input aria-label="Search NPCs" placeholder="Search NPCs…" value={search} onChange={e=>setSearch(e.target.value)}/>{compact&&<button className="secondary" title="Create NPC" onClick={npcPrompt}>+ NPC</button>}</div>
+ <details className="npc-folders-toggle" open={!compact?true:undefined}>
+  <summary>Folders {folder?'· '+(folders.find(f=>f.id===folder)?.name||'Selected'):''}</summary>
+  <div className="npc-folderlist">
+   <button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder('')}>All NPCs</button>
+   {tree.map(f=><button className={'nav '+(folder===f.id?'active':'')} key={f.id} style={{paddingLeft:10+Math.min(6,f.depth)*12}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}
+   <button className="secondary" type="button" onClick={folderPrompt}>+ New folder</button>
+  </div>
+ </details>
+ <p className="muted tiny">{compact?'Drag an NPC onto the map, or click Place.':'Organise NPCs in folders, edit their sheets, and drag them onto the tabletop.'}</p>
  <div className="bestiary-cards">{shown.map(n=><div key={n.id} className="npc-card" draggable onDragStart={e=>{e.dataTransfer.setData('application/x-forge-npc',n.id);e.dataTransfer.effectAllowed='copy'}} title="Drag to map to place NPC">
   <Artwork db={db} path={n.token_path||n.portrait_path} alt={n.name} className="npc-thumb"/>
   <div className="npc-card-body"><strong>{n.name}</strong><div className="npc-actions"><button className="secondary" onClick={()=>onEdit(n)}>Edit</button>{mapReady&&<button className="secondary" onClick={()=>onPlace(n.id)}>Place</button>}</div></div>
