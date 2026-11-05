@@ -455,3 +455,11 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .library-create-row{flex-direction:column;align-items:stretch}
  .library-create-row label{width:100%}
 }
+
+/* Drag character headings to spawn player tokens; drag placed units to reposition. */
+.unit-group-head.unit-draggable,.unit-focus[draggable="true"]{cursor:grab;user-select:none}
+.unit-group-head.unit-draggable:active,.unit-focus[draggable="true"]:active{cursor:grabbing}
+.unit-group-head.unit-draggable:hover{background:#3d4964}
+.unit-group-label{display:flex;align-items:center;gap:8px;min-width:0;text-align:left}
+.unit-group-label>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.group-unit-thumb{width:28px!important;height:28px!important;min-width:28px;object-fit:contain;display:grid;place-items:center;border-radius:50%;background:#1b2536}
