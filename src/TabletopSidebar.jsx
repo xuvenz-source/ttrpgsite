@@ -47,7 +47,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
  },[members,characters,tokens,isDM,user]);
  return <div className="right-section">
   <div className="side-heading"><h2>Controlled units</h2><span className="muted tiny">{isDM?'All campaign controllers':'Your tokens'}</span></div>
-  <p className="muted small side-description">Drag a character name onto the map to place its token. Drag an existing unit below to reposition it. {isDM?'Alt + double-click a token to edit its sheet.':''}</p>
+  <p className="muted small side-description">Drag a character name onto the map to place it, or drag an existing unit to move it. Ctrl + click a token to adjust DM-approved resources. {isDM?'Alt + double-click to edit the full sheet.':''}</p>
   <div className="unit-actions">
    <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>My character sheet</button>
    <button type="button" className="secondary" onClick={onCreatePortrait}>My Token Library</button>
