@@ -2,6 +2,7 @@ import React,{useEffect,useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
+import {RepeatingCollection} from './RepeatingCollection.jsx';
 
 function Items({field,value,onChange}){
  const columns=field.columns?.length?field.columns:['Item','Qty','Notes'];const rows=Array.isArray(value)?value:[];
@@ -53,6 +54,9 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
  f.type==='inventory'?<Items field={f} value={draft.values[f.id]||[]} onChange={v=>setField(f.id,v)}/>:
  f.type==='resource'?<ResourceField value={draft.values[f.id]} onChange={v=>setField(f.id,v)}/>:
+ f.type==='collection'?<RepeatingCollection field={f} value={draft.values[f.id]||[]}
+   sheetValues={draft.values} onChange={v=>setField(f.id,v)}
+   onRoll={(formula,label)=>onRoll(formula,label)}/>:
  f.type==='checkbox'?<input type="checkbox" checked={!!draft.values[f.id]} onChange={e=>setField(f.id,e.target.checked)}/>:
  f.type==='textarea'?<textarea value={draft.values[f.id]??''} onChange={e=>setField(f.id,e.target.value)}/>:
  <input type={f.type==='number'?'number':'text'} value={draft.values[f.id]??''} onChange={e=>setField(f.id,e.target.value)}/>}
