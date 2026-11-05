@@ -33,6 +33,8 @@ function App(){
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
  const[quickEditToken,setQuickEditToken]=useState(null);
+ const[pendingQuickTokens,setPendingQuickTokens]=useState({});
+ const quickWritePatches=useRef(new Map());
  const monitorRequest=useRef(0);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
@@ -183,8 +185,16 @@ function App(){
   if(!selectedMap||!activeId)return setMonitorValues({});
   try{
    const rows=await read(db.rpc('get_token_monitor_values',{p_map:selectedMap}));
-   if(request===monitorRequest.current)
-    setMonitorValues(Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}])));
+   if(request===monitorRequest.current){
+    const latest=Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}]));
+    // Server reads can finish before a background edit. Keep local writes visible.
+    for(const pending of quickWritePatches.current.values()){
+     for(const id of pending.affected){
+      if(latest[id])latest[id]={...latest[id],...pending.patch};
+     }
+    }
+    setMonitorValues(latest);
+   }
   }catch(e){if(request===monitorRequest.current)console.error('Could not refresh token monitors',e)}
  }
  async function refreshTokens(){
@@ -198,7 +208,8 @@ function App(){
  }
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+ useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setPendingQuickTokens({});
+  quickWritePatches.current.clear();++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
   if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);return}
   let alive=true;
@@ -363,7 +374,87 @@ function App(){
  function openQuickToken(t){
   if(!t||(!isDM&&t.owner_id!==user))return;
   if(!isDM&&camp?.active_map_id!==t.map_id)return;
+  if(quickWritePatches.current.has(t.id))return;
   setQuickEditToken(t);
+ }
+ function applyQuickTokenChanges(token,changes){
+  if(!token||!selectedMap||token.map_id!==selectedMap)return false;
+  if(!isDM&&token.owner_id!==user)return false;
+  if(quickWritePatches.current.has(token.id)){
+   fail('A quick edit to '+token.name+' is still saving. You can edit another token meanwhile.');
+   return false;
+  }
+  const fieldTypes=new Map((camp?.sheet_template?.tabs||[])
+   .flatMap(tab=>tab.fields||[]).map(f=>[f.id,f.type]));
+  const patch={};
+  for(const [id,parts] of Object.entries(changes)){
+   if(!['number','resource'].includes(fieldTypes.get(id)))return false;
+   if(Object.hasOwn(parts,'current'))patch[id]=parts.current;
+   if(Object.hasOwn(parts,'max'))patch[id+'__max']=parts.max;
+  }
+  const affected=tokens.filter(t=>t.id===token.id||
+   (token.character_id&&t.character_id===token.character_id)).map(t=>t.id);
+  const before=Object.fromEntries(affected.map(id=>[id,monitorValues[id]]));
+  const entry={affected,patch,before};
+  const currentCampaign=activeId,currentMap=selectedMap;
+  quickWritePatches.current.set(token.id,entry);
+  setPendingQuickTokens(old=>({...old,[token.id]:true}));
+  ++monitorRequest.current;
+  setMonitorValues(old=>{
+   const next={...old};
+   for(const id of affected)
+    if(old[id])next[id]={...old[id],...patch};
+   return next;
+  });
+  // Update any locally open character sheet immediately as well.
+  if(token.character_id){
+   const merge=record=>{
+    if(record?.id!==token.character_id)return record;
+    const values={...record.field_values};
+    for(const [id,parts] of Object.entries(changes)){
+     if(fieldTypes.get(id)==='resource'){
+      const previous=values[id];
+      values[id]={
+       ...(previous&&typeof previous==='object'&&!Array.isArray(previous)
+         ?previous:{current:previous??'',max:''}),
+       ...parts
+      };
+     }else if(Object.hasOwn(parts,'current'))values[id]=parts.current;
+    }
+    return {...record,field_values:values};
+   };
+   setCharacter(merge);
+   setCharacters(old=>old.map(merge));
+  }
+  // Never hold the modal open for network traffic. One RPC saves every field atomically.
+  void db.rpc('apply_token_quick_changes',{p_token:token.id,p_changes:changes})
+   .then(({error})=>{
+    if(error)throw error;
+    if(quickWritePatches.current.get(token.id)!==entry)return;
+    quickWritePatches.current.delete(token.id);
+    if(activeId===currentCampaign&&selectedMap===currentMap){
+     setPendingQuickTokens(old=>{const next={...old};delete next[token.id];return next});
+     void quickTokenSaved(token.id).catch(e=>console.error('Could not refresh saved quick edit',e));
+    }
+   })
+   .catch(e=>{
+    if(quickWritePatches.current.get(token.id)!==entry)return;
+    quickWritePatches.current.delete(token.id);
+    if(activeId!==currentCampaign||selectedMap!==currentMap)return;
+    ++monitorRequest.current;
+    setMonitorValues(old=>{
+     const next={...old};
+     for(const id of affected){
+      if(before[id]===undefined)delete next[id];
+      else next[id]=before[id];
+     }
+     return next;
+    });
+    setPendingQuickTokens(old=>{const next={...old};delete next[token.id];return next});
+    fail('Could not save '+token.name+'\'s quick changes. Previous values restored. '+message(e));
+    void quickTokenSaved(token.id).catch(err=>console.error('Could not reload quick edit values',err));
+   });
+  return true;
  }
  async function quickTokenSaved(id){
   await refreshMonitors();
@@ -571,7 +662,7 @@ function App(){
  {quickEditToken&&camp&&<TokenQuickEdit key={quickEditToken.id} db={db}
   token={quickEditToken} template={camp.sheet_template}
   allowedFields={camp.token_quick_fields||[]}
-  onClose={()=>setQuickEditToken(null)} onSaved={quickTokenSaved}/>}
+  onClose={()=>setQuickEditToken(null)} onApply={applyQuickTokenChanges}/>}
  {npcEditor&&isDM&&<NpcEditor db={db} campaignId={activeId} userId={user}
   record={npcEditor} template={camp?.sheet_template}
   onSave={saveNpc} onSaveAsTemplate={async draft=>{
