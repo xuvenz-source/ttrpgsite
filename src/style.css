@@ -664,3 +664,55 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 }
 @keyframes quick-save-throb{from{opacity:.5;transform:scale(.78)}to{opacity:1;transform:scale(1.15)}}
 @media(prefers-reduced-motion:reduce){.quick-save-pulse{animation:none}}
+
+/* v1.3 Account entry and campaign main menu. In-game navigation has no Campaigns tab. */
+.welcome-screen{min-height:100dvh;background:
+ radial-gradient(ellipse at 50% -20%,#41335f55,transparent 62%),#10151f;
+ padding:clamp(20px,5vh,56px) 20px;display:flex;justify-content:center;align-items:flex-start;
+ color:#e6ebf3;overflow:auto}
+.welcome-shell{width:min(840px,100%);display:flex;flex-direction:column;gap:18px;
+ background:#1b2433;border:1px solid #34435b;border-radius:14px;padding:clamp(20px,4vw,34px);
+ box-shadow:0 14px 35px #0005}
+.welcome-shell.welcome-auth{width:min(475px,100%)}
+.welcome-brand{font-weight:850;font-size:clamp(22px,4vw,32px);letter-spacing:-.6px;color:#e7d9ff}
+.welcome-shell>.muted{margin-top:-10px}
+.welcome-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;
+ border-bottom:1px solid #37465f;padding-bottom:10px}
+.welcome-tabs button{background:transparent;border-color:transparent;color:#b7c6dc}
+.welcome-tabs button.selected{background:#4b396a;color:#fff;border-color:#7b66b0}
+.welcome-form{display:flex;flex-direction:column;gap:14px;margin-top:7px;min-width:0}
+.welcome-form>button{width:100%}
+.welcome-social{display:flex;flex-direction:column;gap:11px}
+.welcome-or{text-align:center;display:flex;align-items:center;gap:10px;color:#9eafc8;font-size:12px}
+.welcome-or:before,.welcome-or:after{content:'';height:1px;background:#3d4c64;flex:1}
+.welcome-social-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.welcome-legacy{border:1px solid #3b4b63;padding:12px;border-radius:8px;min-width:0}
+.welcome-legacy summary{cursor:pointer;font-size:12px;color:#c3d5ed}
+.welcome-legacy form{margin-top:15px}
+.welcome-hub-top{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
+.welcome-hub-top p{margin-top:6px;overflow-wrap:anywhere}
+.welcome-hub-top>button{flex:0 0 auto}
+.welcome-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #34435b;padding-top:21px}
+.welcome-campaigns{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.welcome-campaign{display:grid;grid-template-columns:35px minmax(0,1fr);align-items:center;gap:6px 12px;
+ min-height:95px;text-align:left;background:#27344b;border-color:#4e5e7b;padding:17px}
+.welcome-campaign:hover{background:#344563;border-color:#947fbe}
+.welcome-campaign-symbol{grid-row:span 2;font-size:23px;text-align:center}
+.welcome-campaign-name{font-size:16px;font-weight:750;overflow-wrap:anywhere}
+.welcome-campaign-role{font-size:11px;color:#c4cce0;grid-column:2}
+.welcome-enter{grid-column:2;font-size:12px;color:#dfccff;margin-top:2px}
+.welcome-empty{padding:26px 18px;border:1px dashed #425473;border-radius:10px;text-align:center;display:flex;flex-direction:column;gap:8px}
+.welcome-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;border-top:1px solid #34435b;padding-top:20px}
+.welcome-action{min-width:0}
+.welcome-action .welcome-form{background:#202d41;border:1px solid #3c4e68;border-radius:9px;padding:14px}
+.welcome-action>button{margin-bottom:1px}
+.right-sidebar .side-details{min-width:0}
+.right-sidebar .side-details>.side-form{padding:12px 2px 4px}
+.right-sidebar .side-details .side-details{margin:5px 0}
+@media(max-width:660px){
+ .welcome-screen{padding:12px}
+ .welcome-shell{padding:17px}
+ .welcome-actions{grid-template-columns:1fr}
+ .welcome-hub-top{flex-wrap:wrap}
+ .welcome-campaigns{grid-template-columns:1fr}
+}
