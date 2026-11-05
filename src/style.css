@@ -646,3 +646,21 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .quick-field-order-item span{flex:1;font-size:12px}
 .quick-field-order-item button{padding:4px 10px;font-size:12px}
 .quick-field-settings>button:last-child{font-size:12px}
+
+/* Optimistic quick-resource saving; map remains usable while writes finish. */
+.quick-save-status{
+ position:absolute;right:14px;top:14px;z-index:21;
+ display:inline-flex;align-items:center;gap:8px;
+ padding:7px 11px;border-radius:8px;
+ border:1px solid #5a6b86;background:#151e2de9;
+ box-shadow:0 2px 12px #0007;color:#d9e6f6;
+ font-size:12px;font-weight:600;
+ pointer-events:none;
+}
+.quick-save-pulse{
+ display:inline-block;width:10px;height:10px;border-radius:50%;
+ background:#eab766;box-shadow:0 0 0 3px #eab76630;
+ animation:quick-save-throb 1s ease-in-out infinite alternate;
+}
+@keyframes quick-save-throb{from{opacity:.5;transform:scale(.78)}to{opacity:1;transform:scale(1.15)}}
+@media(prefers-reduced-motion:reduce){.quick-save-pulse{animation:none}}
