@@ -23,7 +23,7 @@ function App(){
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('sheet'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
- const[sidebarOpen,setSidebarOpen]=useState(true),[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
+ const[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
@@ -137,7 +137,7 @@ function App(){
  async function refreshTokens(){if(!selectedMap)return setTokens([]);try{setTokens(await read(db.from('map_tokens').select('*').eq('map_id',selectedMap)))}catch(e){fail(e)}}
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setSidebarOpen(false);setTab('sheet');setRightTab('chat');setSelectedTokenId(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}},[activeId,user]);
+ useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>refreshTokens()).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>fetchCampaign(activeId))
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
@@ -181,47 +181,12 @@ function App(){
   try{await read(db.from('map_tokens').delete().eq('id',t.id));await refreshTokens()}
   catch(e){fail(e)}
  }
- const campaignTabs=['sheet',...(isDM?['designer','maps']:[]),'tabletop'];
  if(!configured())return <div className="center"><h1>Tabletop Forge</h1><p>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel.</p></div>;
  if(!authReady)return <div className="center">Loading…</div>;
  if(!session)return <div className="auth center"><h1>⚔ Tabletop Forge</h1><p>Campaigns, character sheets, battlemaps and dice — one table.</p><form onSubmit={async e=>{e.preventDefault();try{await read(db.auth.signInWithOtp({email,emailRedirectTo:location.origin}));setSent(true)}catch(err){fail(err)}}}><label>Email address<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label><button>Send sign-in link</button></form>{sent&&<p>Check your email for the sign-in link.</p>}{error&&<p className="error">{error}</p>}</div>;
- return <div className={'app '+(sidebarOpen?'':'collapsed')}>
- <aside className="sidebar" aria-label="Campaign and page navigation">
-  <button type="button" className="rail-menu-toggle" aria-label={sidebarOpen?'Collapse campaign menu':'Expand campaign menu'}
-   aria-expanded={sidebarOpen} title={sidebarOpen?'Collapse sidebar':'Open sidebar'}
-   onClick={()=>setSidebarOpen(value=>!value)}>☰</button>
-  <div className="sidebar-inner">
-   <div className="brand">⚔ Tabletop Forge</div>
-   <div className="muted small sidebar-account">{session.user.email}</div>
-   <h3>Campaigns</h3>
-   {campaigns.map(c=><button type="button" className={'nav campaign-nav '+(activeId===c.id?'active':'')} key={c.id}
-     onClick={()=>{setActiveId(c.id);setSidebarOpen(false)}}>
-     <span className="campaign-nav-name">{c.name} {roles[c.id]==='dm'?'★':''}</span>
-     {activeId===c.id&&<span className="muted tiny">{isDM?'Game master':'Player'} · {members.length} member(s)</span>}
-    </button>)}
-   {camp&&<div className="sidebar-pages">
-    <h3>Campaign pages</h3>
-    {campaignTabs.map(page=><button type="button" key={page}
-     className={'nav sidebar-page '+(tab===page?'active':'')}
-     onClick={()=>{setTab(page);setSidebarOpen(false)}}>
-     {page==='sheet'?'▤ Character sheet':page==='designer'?'▦ Sheet designer':page==='maps'?'▧ Map library':'▥ Tabletop'}
-    </button>)}
-   </div>}
-   <div className="sidebar-divider"/>
-   <form onSubmit={create} className="stack">
-    <input required maxLength={100} placeholder="New campaign name" value={createName} onChange={e=>setCreateName(e.target.value)}/>
-    <button disabled={busy}>+ Create campaign</button>
-   </form>
-   <form onSubmit={join} className="stack">
-    <input required placeholder="Invitation code" value={joinCode} onChange={e=>setJoinCode(e.target.value)}/>
-    <button disabled={busy} className="secondary">Join campaign</button>
-   </form>
-   <button className="secondary logout" onClick={()=>db.auth.signOut()}>Sign out</button>
-  </div>
- </aside>
+ return <div className="app no-left-rail">
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
- {camp&&<>
  <div className="workarea"><div className="primary">
  {tab==='sheet'&&<section className="panel page-panel"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
