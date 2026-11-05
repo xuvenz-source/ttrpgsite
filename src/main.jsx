@@ -6,6 +6,7 @@ import TokenStudio from './TokenStudio.jsx';
 import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
+import CharacterEditor from './CharacterEditor.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -21,7 +22,7 @@ function App(){
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('sheet'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
- const[sidebarOpen,setSidebarOpen]=useState(true),[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[trayOpen,setTrayOpen]=useState(true);
+ const[sidebarOpen,setSidebarOpen]=useState(true),[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null),[trayOpen,setTrayOpen]=useState(true);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
@@ -68,6 +69,33 @@ function App(){
  async function moveNpcFolder(id,folderId){try{
   await read(db.from('npc_templates').update({folder_id:folderId}).eq('id',id));await refreshNpcs();
  }catch(e){fail(e)}}
+ async function openPlayerCharacter(characterId,ownerId){
+  if(!isDM)return;
+  try{
+   let row=null;
+   if(characterId){
+    row=await read(db.from('characters').select('*').eq('campaign_id',activeId).eq('id',characterId).maybeSingle());
+   }
+   // Old tokens stored an owner but not a character_id. Resolve by campaign membership.
+   if(!row&&ownerId){
+    row=await read(db.from('characters').select('*').eq('campaign_id',activeId).eq('user_id',ownerId).maybeSingle());
+   }
+   if(!row)throw Error('No player character sheet is linked to this token in the campaign.');
+   setCharacterEditor({data:row});
+  }catch(e){fail(e)}
+ }
+ async function openTokenSheet(t){
+  if(!isDM)return;
+  if(t.character_id||t.owner_id){
+   await openPlayerCharacter(t.character_id,t.owner_id);
+  }else{
+   setNpcEditor({kind:'token',data:t});
+  }
+ }
+ function afterPlayerSheetSaved(updated){
+  setCharacters(prev=>prev.map(ch=>ch.id===updated.id?updated:ch));
+  setCharacter(prev=>prev?.id===updated.id?updated:prev);
+ }
  async function saveNpc(draft){
   if(!npcEditor)return;
   if(npcEditor.kind==='template'){
@@ -106,7 +134,7 @@ function App(){
  async function refreshTokens(){if(!selectedMap)return setTokens([]);try{setTokens(await read(db.from('map_tokens').select('*').eq('map_id',selectedMap)))}catch(e){fail(e)}}
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setSidebarOpen(false);setTab('sheet');setFolder(null);setError('');fetchCampaign(activeId)}},[activeId,user]);
+ useEffect(()=>{if(activeId&&user){setSidebarOpen(false);setTab('sheet');setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}},[activeId,user]);
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>refreshTokens()).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>fetchCampaign(activeId))
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
@@ -167,7 +195,14 @@ function App(){
  {tab==='sheet'&&<section className="panel page-panel"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
- <button className="secondary" onClick={()=>setArtStudio(true)}>🎨 Create token / portrait</button></div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
+ <div className="tools">
+ {isDM&&characters.length>0&&<select aria-label="Open a player character sheet as DM" value=""
+   onChange={e=>{if(e.target.value)openPlayerCharacter(e.target.value,null)}}>
+   <option value="">Open player sheet…</option>
+   {characters.map(ch=><option key={ch.id} value={ch.id}>{ch.name||'Unnamed Character'}</option>)}
+ </select>}
+ <button className="secondary" onClick={()=>setArtStudio(true)}>🎨 Create token / portrait</button>
+ </div></div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><button disabled={busy} onClick={saveTemplate}>Save template</button></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate}/></section>}
  {tab==='maps'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Map library</h2><label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>{setSelectedMap(m.id);setTab('tabletop')}}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
  {tab==='bestiary'&&isDM&&<section className="panel page-panel"><Bestiary
@@ -187,7 +222,7 @@ function App(){
    {isDM&&<button className="secondary small-button tray-toggle" onClick={()=>setTrayOpen(x=>!x)}>{trayOpen?'Hide NPC tray':'Show NPC tray'}</button>}
    <Board db={db} map={activeMap} url={urls[activeMap.id]} tokens={tokens}
     user={user} isDM={isDM} move={moveToken} remove={removeToken}
-    onNpcDrop={placeNpc} onTokenEdit={t=>setNpcEditor({kind:'token',data:t})}
+    onNpcDrop={placeNpc} onTokenEdit={openTokenSheet}
     resize={resizeToken}/>
   </div>
  </div>:<p>Ask the DM to upload and publish a map.</p>}</section>}
@@ -195,6 +230,11 @@ function App(){
  </main>
  {artStudio&&character&&<TokenStudio db={db} campaignId={activeId} userId={user}
   mode="players" onSave={savePlayerArtwork} onClose={()=>setArtStudio(false)}/>}
+ {characterEditor&&isDM&&<CharacterEditor
+  db={db} campaignId={activeId} viewerId={user}
+  record={characterEditor.data} template={camp?.sheet_template}
+  onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
+  onRoll={(expression,label)=>roll(expression,label,null)}/>}
  {npcEditor&&isDM&&<NpcEditor db={db} campaignId={activeId} userId={user}
   record={npcEditor} template={camp?.sheet_template}
   onSave={saveNpc} onSaveAsTemplate={async draft=>{
@@ -316,8 +356,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onToken
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
       }}
-      title={t.name+(isDM&&!t.owner_id?' · Alt + double-click to edit sheet':'')}
-      onDoubleClick={e=>{if(e.altKey&&isDM&&!t.owner_id){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
+      title={t.name+(isDM?' · Alt + double-click to edit sheet':'')}
+      onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
       onPointerDown={e=>{
        e.stopPropagation();setSelectedId(t.id);
        viewportRef.current?.focus({preventScroll:true});
