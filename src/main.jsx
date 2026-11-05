@@ -73,12 +73,15 @@ function App(){
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const[hotbarVisible,setHotbarVisible]=useState(true);
- const movementPending=useRef(new Map()),movementChains=useRef(new Map()),lastKeyboardMove=useRef(0);
+ // Keep the most recent local destination authoritative until the server acknowledges it.
+ const movementPending=useRef(new Map()),tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
+ const tokenContextRef=useRef({mapId:'',campaignId:''});
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const activeMap=maps.find(x=>x.id===selectedMap);
  const displayedMap=activeMap&&mapCalibrationPreview?.mapId===activeMap.id
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
+ tokenContextRef.current={mapId:selectedMap,campaignId:activeId};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  function fail(e){setError(message(e));console.error(e)}
  async function fetchCampaigns(prefer){if(!db||!user)return;
@@ -235,13 +238,27 @@ function App(){
   }catch(e){if(request===monitorRequest.current)console.error('Could not refresh token monitors',e)}
  }
  async function refreshTokens(){
-  if(!selectedMap)return setTokens([]);
+  const request=++tokenRefreshSeq.current;
+  const mapId=selectedMap,campaignId=activeId;
+  if(!mapId){setTokens([]);return}
   try{
    const rows=await read(db.from('map_tokens').select(
     'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public'
-   ).eq('map_id',selectedMap));
-   setTokens(rows);
-  }catch(e){fail(e)}
+   ).eq('map_id',mapId));
+   // Ignore older requests, including requests started before switching maps.
+   if(request!==tokenRefreshSeq.current||
+      tokenContextRef.current.mapId!==mapId||
+      tokenContextRef.current.campaignId!==campaignId)return;
+   // Realtime snapshots may lag behind the newest keyboard or drag destination.
+   // Merge the latest local destination until its database write is confirmed.
+   setTokens(rows.map(token=>{
+    const pending=movementPending.current.get(token.id);
+    return pending&&pending.mapId===mapId&&pending.campaignId===campaignId
+     ?{...token,x:pending.x,y:pending.y}:token;
+   }));
+  }catch(e){
+   if(request===tokenRefreshSeq.current)fail(e);
+  }
  }
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
@@ -574,6 +591,59 @@ function App(){
    throw Error('Unsupported hotbar command. Use /roll, /macro, /em or /say.');
   }catch(e){fail(e)}
  }
+ function queueTokenMove(token,x,y){
+  if(!token||!activeId||!selectedMap||token.map_id!==selectedMap)return;
+  if(!isDM&&(token.owner_id!==user||camp?.active_map_id!==selectedMap))return;
+  const id=token.id;
+  let pending=movementPending.current.get(id);
+  if(!pending||pending.mapId!==selectedMap||pending.campaignId!==activeId){
+   pending={mapId:selectedMap,campaignId:activeId,
+    x:Number(token.x),y:Number(token.y),saving:false};
+   movementPending.current.set(id,pending);
+  }
+  if(pending.x===x&&pending.y===y)return;
+  pending.x=x;pending.y=y;
+  // Immediate feedback: moving a token never waits for a database round trip.
+  setTokens(rows=>rows.map(t=>t.id===id?{...t,x,y}:t));
+  if(!pending.saving)void flushTokenMove(id,pending);
+ }
+ async function flushTokenMove(id,pending){
+  pending.saving=true;
+  try{
+   // At most one write at a time per token. If the user moves again while it
+   // saves, skip obsolete intermediary tiles and save the newest destination.
+   while(movementPending.current.get(id)===pending){
+    const {x,y}=pending;
+    const {data,error}=await db.from('map_tokens')
+     .update({x,y}).eq('id',id)
+     .eq('campaign_id',pending.campaignId).eq('map_id',pending.mapId)
+     .select('id,x,y').maybeSingle();
+    if(error)throw error;
+    if(!data)throw Error('Movement was not permitted for this token.');
+    if(pending.x!==x||pending.y!==y)continue;
+    // The newest position is now confirmed; invalidate older server reads
+    // before releasing the optimistic overlay.
+    movementPending.current.delete(id);
+    ++tokenRefreshSeq.current;
+    if(tokenContextRef.current.mapId===pending.mapId&&
+       tokenContextRef.current.campaignId===pending.campaignId){
+     void refreshTokens();
+    }
+    break;
+   }
+  }catch(e){
+   if(movementPending.current.get(id)===pending){
+    movementPending.current.delete(id);
+    ++tokenRefreshSeq.current;
+    if(tokenContextRef.current.mapId===pending.mapId&&
+       tokenContextRef.current.campaignId===pending.campaignId){
+     fail(e);
+     // On a rejected or failed write, restore the actual saved position.
+     void refreshTokens();
+    }
+   }
+  }finally{pending.saving=false}
+ }
  function moveSelectedByKey(dx,dy){
   const token=selectedToken;
   if(!token||!activeMap||!camp||!user)return;
@@ -584,29 +654,11 @@ function App(){
   const boundY=Math.max(0,Math.min(1000,Math.floor(Number(activeMap.height)/grid-Number(token.span_y??1))));
   const x=Math.max(0,Math.min(boundX,Math.round(last.x)+dx));
   const y=Math.max(0,Math.min(boundY,Math.round(last.y)+dy));
-  if(x===last.x&&y===last.y)return;
-  movementPending.current.set(token.id,{x,y});
-  setTokens(rows=>rows.map(t=>t.id===token.id?{...t,x,y}:t));
-  const previous=movementChains.current.get(token.id)||Promise.resolve();
-  const current=previous.catch(()=>{}).then(async()=>{
-   const {data,error}=await db.from('map_tokens')
-    .update({x,y}).eq('id',token.id).eq('campaign_id',activeId).eq('map_id',activeMap.id)
-    .select('id').maybeSingle();
-   if(error)throw error;
-   if(!data)throw Error('Movement was not permitted for this token.');
-  });
-  movementChains.current.set(token.id,current);
-  current.then(()=>{
-   if(movementChains.current.get(token.id)!==current)return;
-   movementPending.current.delete(token.id);
-   refreshTokens();
-  }).catch(e=>{
-   if(movementChains.current.get(token.id)!==current)return;
-   movementPending.current.delete(token.id);
-   fail(e);refreshTokens();
-  });
+  queueTokenMove(token,x,y);
  }
- async function moveToken(t,x,y){try{await read(db.from('map_tokens').update({x,y}).eq('id',t.id));refreshTokens()}catch(e){fail(e)}}
+ function moveToken(token,x,y){
+  queueTokenMove(token,x,y);
+ }
  async function resizeToken(t,spanX,spanY){
   if(!isDM)return;
   try{await read(db.from('map_tokens').update({span_x:spanX,span_y:spanY}).eq('id',t.id))}
