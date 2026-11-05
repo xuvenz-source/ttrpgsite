@@ -122,11 +122,11 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
       <div className="quick-token-numbers">
        <label>Current<input type="number" step="any" value={value.current}
         onChange={e=>change(f.id,'current',e.target.value)}/></label>
-       {f.type==='resource'&&<label>Maximum<input type="number" step="any" disabled={busy}
+       {f.type==='resource'&&<label>Maximum<input type="number" step="any"
         value={value.max} onChange={e=>change(f.id,'max',e.target.value)}/></label>}
       </div>
       <div className="quick-token-adjustments">
-       {[-5,-1,1,5].map(v=><button type="button" key={v} className="secondary" disabled={busy}
+       {[-5,-1,1,5].map(v=><button type="button" key={v} className="secondary"
         onClick={()=>shift(f,v)}>{v>0?'+':''}{v}</button>)}
       </div>
      </div>;
