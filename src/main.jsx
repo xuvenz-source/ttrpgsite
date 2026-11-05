@@ -265,14 +265,26 @@ function Designer({template,tabId,changeTemplate}){const t=template?.tabs.find(x
  return <><div className="tools"><input aria-label="Tab name" value={t.name} onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/><button className="secondary" onClick={()=>{if(template.tabs.length<2)return alert('Keep at least one tab');if(confirm('Delete tab and its fields?'))changeTemplate(x=>x.tabs=x.tabs.filter(y=>y.id!==t.id))}}>Delete tab</button><select id="newfieldtype" defaultValue="text"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Notes</option><option value="checkbox">Checkbox</option><option value="roll">Dice button</option><option value="inventory">Inventory</option></select><button onClick={()=>{const type=document.getElementById('newfieldtype').value;changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({id:'field_'+uid().slice(0,8),label:'New '+type,type,span:1,...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})}))}}>+ Add field</button></div><div className="designer-grid">{t.fields.map((f,i)=><div className="designfield" draggable onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;changeTemplate(x=>{const a=x.tabs.find(y=>y.id===t.id).fields;a.splice(i,0,a.splice(from,1)[0])});drag.current=null}} key={f.id}><span className="muted">⠿ Drag to reorder</span><label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label><div className="tools"><label>Width <select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}><option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option></select></label><span className="muted">{f.type}</span><button className="secondary" onClick={()=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields=x.tabs.find(y=>y.id===t.id).fields.filter(y=>y.id!==f.id))}>Delete</button></div>{f.type==='roll'&&<label>Dice formula<input value={f.formula||''} onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}{f.type==='inventory'&&<label>Columns (comma separated)<input value={(f.columns||[]).join(', ')} onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}</div>)}</div></>}
 
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onTokenEdit}){
- const[scale,setScale]=useState(.7),[preview,setPreview]=useState({}),[selectedId,setSelectedId]=useState(null);
- const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),zoomRef=useRef(.7);
- const selectedToken=tokens.find(t=>t.id===selectedId);
- const zoomTo=n=>{const next=Math.max(.25,Math.min(3,Number(n)));zoomRef.current=next;setScale(next)};
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId}){
+ const[preview,setPreview]=useState({});
+ const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),zoomRef=useRef(scale);
+ useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
  useEffect(()=>{setSelectedId(null)},[map.id]);
  useEffect(()=>{if(selectedId&&!tokens.some(t=>t.id===selectedId))setSelectedId(null)},[selectedId,tokens]);
+ useEffect(()=>{
+  if(!selectedId||!viewportRef.current)return;
+  const token=tokens.find(t=>t.id===selectedId);
+  if(!token)return;
+  const node=viewportRef.current,cell=map.grid_size*scale;
+  const x=(Number(token.x)+Number(token.span_x??1)/2)*cell;
+  const y=(Number(token.y)+Number(token.span_y??1)/2)*cell;
+  const visibleLeft=node.scrollLeft,visibleRight=visibleLeft+node.clientWidth;
+  const visibleTop=node.scrollTop,visibleBottom=visibleTop+node.clientHeight;
+  if(x<visibleLeft+32||x>visibleRight-32)node.scrollLeft=Math.max(0,x-node.clientWidth/2);
+  if(y<visibleTop+32||y>visibleBottom-32)node.scrollTop=Math.max(0,y-node.clientHeight/2);
+  node.focus({preventScroll:true});
+ },[selectedId,map.id]);
  useEffect(()=>{
   function handleDelete(e){
    if(!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
@@ -319,39 +331,6 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onToken
   if(npcId){const p=pos(e);onNpcDrop(npcId,p.x,p.y)}
  }
  return <>
-  <div className="tools zoom-toolbar">
-   <label>Map zoom<select value={scale} onChange={e=>zoomTo(e.target.value)}>
-    <option value=".25">25%</option><option value=".35">35%</option>
-    <option value=".5">50%</option><option value=".7">70%</option>
-    <option value="1">100%</option><option value="1.5">150%</option>
-    <option value="2">200%</option><option value="3">300%</option>
-   </select></label>
-   <span className="muted tiny">Ctrl + wheel: zoom · Click a token then Delete: remove (DM) · Alt + double-click NPC: sheet</span>
-  </div>
-  {isDM&&selectedToken&&<div className="token-selection-toolbar">
-   <strong>{selectedToken.name}</strong>
-   <span className="muted tiny">Footprint: {Number(selectedToken.span_x??1)} × {Number(selectedToken.span_y??1)} grid cells</span>
-   <label>Size preset
-    <select value={Number(selectedToken.span_x??1)===Number(selectedToken.span_y??1)
-      ?String(Number(selectedToken.span_x??1))
-      :(Number(selectedToken.span_x)===4&&Number(selectedToken.span_y)===2?'4x2':'custom')}
-     onChange={e=>{
-      if(e.target.value==='custom')return;
-      const [w,h]=e.target.value==='4x2'?[4,2]:[Number(e.target.value),Number(e.target.value)];
-      setPreview(old=>({...old,[selectedToken.id]:{...selectedToken,...old[selectedToken.id],span_x:w,span_y:h}}));
-      resize(selectedToken,w,h);
-     }}>
-     <option value=".5">Small (½ × ½)</option>
-     <option value="1">1 × 1</option>
-     <option value="2">Large (2 × 2)</option>
-     <option value="3">Huge (3 × 3)</option>
-     <option value="4">4 × 4</option>
-     <option value="4x2">Eight squares (4 × 2)</option>
-     <option value="custom">Custom</option>
-    </select>
-   </label>
-   <span className="muted tiny">Or drag the lower-right corner to resize</span>
-  </div>}
   <div className="mapscroll" ref={viewportRef} aria-label="Battlemap viewport" tabIndex={0}>
    <div ref={boardRef} className="board"
     onPointerDown={e=>{if(e.target===e.currentTarget||e.target.classList.contains('gridlines'))setSelectedId(null)}}
