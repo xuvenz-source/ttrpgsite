@@ -57,7 +57,7 @@ class LocalErrorBoundary extends React.Component{
 }
 function App(){
  const[session,setSession]=useState(null),[authReady,setAuthReady]=useState(false),[email,setEmail]=useState(''),[sent,setSent]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false);
- const[campaigns,setCampaigns]=useState([]),[roles,setRoles]=useState({}),[activeId,setActiveId]=useState(''),[camp,setCamp]=useState(null),[members,setMembers]=useState([]),[characters,setCharacters]=useState([]),[character,setCharacter]=useState(null);
+ const[campaigns,setCampaigns]=useState([]),[campaignsLoading,setCampaignsLoading]=useState(true),[roles,setRoles]=useState({}),[activeId,setActiveId]=useState(''),[camp,setCamp]=useState(null),[members,setMembers]=useState([]),[characters,setCharacters]=useState([]),[character,setCharacter]=useState(null);
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('sheet'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
@@ -82,9 +82,11 @@ function App(){
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  function fail(e){setError(message(e));console.error(e)}
  async function fetchCampaigns(prefer){if(!db||!user)return;
+  setCampaignsLoading(true);
   try{const [cs,ms]=await Promise.all([read(db.from('campaigns').select('*').order('created_at',{ascending:false})),read(db.from('campaign_members').select('campaign_id,role').eq('user_id',user))]);
     setCampaigns(cs);setRoles(Object.fromEntries(ms.map(x=>[x.campaign_id,x.role])));
-    setActiveId(old=>prefer&&cs.some(c=>c.id===prefer)?prefer:cs.some(c=>c.id===old)?old:'');}catch(e){fail(e)}
+    setActiveId(old=>prefer&&cs.some(c=>c.id===prefer)?prefer:cs.some(c=>c.id===old)?old:'');
+  }catch(e){fail(e)}finally{setCampaignsLoading(false)}
  }
  async function fetchCampaign(id){if(!id)return;
   try{const [c,m,ch,f,b,chat,npcList,npcFolderList]=await Promise.all([
@@ -619,7 +621,7 @@ function App(){
  if(!authReady)return <div className="center">Loading…</div>;
  if(!session)return <AuthGate db={db}/>;
  if(!activeId)return <CampaignHub
-  campaigns={campaigns} roles={roles}
+  campaigns={campaigns} loading={campaignsLoading} roles={roles}
   accountLabel={session.user?.user_metadata?.username||session.user?.user_metadata?.display_name||session.user?.email||'Adventurer'}
   createName={createName} onCreateName={setCreateName}
   inviteCode={joinCode} onInviteChange={setJoinCode}
