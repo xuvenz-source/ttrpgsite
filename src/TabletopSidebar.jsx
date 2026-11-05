@@ -3,6 +3,7 @@ import Artwork from './Artwork.jsx';
 import MapCalibration from './MapCalibration.jsx';
 import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
 import {KeybindingsEditor,HotbarSettings} from './TabletopControls.jsx';
+import {QuickFieldsSettings} from './TokenQuickEdit.jsx';
 import Bestiary from './Bestiary.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -127,7 +128,7 @@ export default function TabletopSidebar({
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
- mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,template,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
+ mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  campaignName,campaignTokenDisplay,activeCampaignId,campaignList,onSelectCampaign,
  createCampaignName,onCreateCampaignNameChange,onCreateCampaign,
@@ -238,6 +239,10 @@ export default function TabletopSidebar({
      <button className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
      <div className="side-divider"/>
      <h3>Token appearance and resources</h3>
+     <details className="side-details token-designer-details">
+      <summary>Ctrl + click quick-adjust fields</summary>
+      <QuickFieldsSettings template={template} selected={quickFields} onSave={onSaveQuickFields}/>
+     </details>
      <details className="side-details token-designer-details">
       <summary>Token Display Designer</summary>
       <TokenDisplayDesigner campaign={{id:activeCampaignId,token_display_config:campaignTokenDisplay}}
