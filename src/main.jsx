@@ -25,10 +25,13 @@ function App(){
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
+ const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const activeMap=maps.find(x=>x.id===selectedMap);
+ const displayedMap=activeMap&&mapCalibrationPreview?.mapId===activeMap.id
+  ?{...activeMap,...mapCalibrationPreview}:activeMap;
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  function fail(e){setError(message(e));console.error(e)}
  async function fetchCampaigns(prefer){if(!db||!user)return;
@@ -161,9 +164,10 @@ function App(){
  async function refreshTokens(){if(!selectedMap)return setTokens([]);try{setTokens(await read(db.from('map_tokens').select('*').eq('map_id',selectedMap)))}catch(e){fail(e)}}
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+ useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>refreshTokens()).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>fetchCampaign(activeId))
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
+ .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
  useEffect(()=>{refreshTokens()},[selectedMap]);
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
@@ -183,8 +187,27 @@ function App(){
  const img=await createImageBitmap(file),scale=Math.min(1,4096/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.85));img.close();if(!blob)throw Error('Image conversion failed');
  const path=activeId+'/'+uid()+'.webp';await read(db.storage.from('battlemap-assets').upload(path,blob,{contentType:'image/webp'}));
- try{await read(db.from('battle_maps').insert({campaign_id:activeId,folder_id:folder,name:file.name.replace(/\.[^.]+$/,''),storage_path:path,width:canvas.width,height:canvas.height,grid_size:70}))}catch(err){await db.storage.from('battlemap-assets').remove([path]);throw err}
+ try{await read(db.from('battle_maps').insert({campaign_id:activeId,folder_id:folder,name:file.name.replace(/\.[^.]+$/,''),storage_path:path,width:canvas.width,height:canvas.height,source_width:canvas.width,source_height:canvas.height,grid_size:70}))}catch(err){await db.storage.from('battlemap-assets').remove([path]);throw err}
  await refreshMaps();}catch(e){fail(e)}finally{setUploading(false);e.target.value=''}}
+ async function saveMapCalibration(map,next){
+  if(!isDM)throw Error('Only the DM can adjust map calibration.');
+  if(!map||map.campaign_id!==activeId)throw Error('Map does not belong to this campaign.');
+  const valid=Object.entries({width:[next.width,64,10000],height:[next.height,64,10000],grid_size:[next.grid_size,5,1024]})
+   .every(([,range])=>Number.isInteger(range[0])&&range[0]>=range[1]&&range[0]<=range[2]);
+  if(!valid)throw Error('Invalid pixel dimensions. Check the width, height, and cell size.');
+  const {data,error:dbError}=await db.from('battle_maps')
+   .update({width:next.width,height:next.height,grid_size:next.grid_size})
+   .eq('id',map.id).eq('campaign_id',activeId)
+   .eq('width',map.width).eq('height',map.height).eq('grid_size',map.grid_size)
+   .select('*').maybeSingle();
+  if(dbError)throw dbError;
+  if(!data){
+   await refreshMaps();
+   throw Error('The map settings changed elsewhere. Please review the latest settings before saving again.');
+  }
+  setMaps(old=>old.map(item=>item.id===map.id?data:item));
+  setMapCalibrationPreview(null);
+ }
  async function publishMap(id){try{await read(db.from('campaigns').update({active_map_id:id}).eq('id',activeId));setCamp(x=>({...x,active_map_id:id}));await refreshMaps()}catch(e){fail(e)}}
  async function addToken(){if(!selectedMap)return;try{
   const ch=characters.find(c=>c.user_id===tokenOwner);
@@ -228,7 +251,7 @@ function App(){
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><button disabled={busy} onClick={saveTemplate}>Save template</button></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate}/></section>}
  {tab==='maps'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Map library</h2><label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>{setSelectedMap(m.id);setTab('tabletop')}}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
  {tab==='tabletop'&&<section className="panel tabletop-panel map-only-panel">
-  {activeMap?<Board db={db} map={activeMap} url={urls[activeMap.id]} tokens={tokens}
+  {displayedMap?<Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} resize={resizeToken}
@@ -249,12 +272,13 @@ function App(){
  onNewNpcFolder={makeNpcFolder} onNewNpc={makeNpc}
  onEditNpc={n=>setNpcEditor({kind:'template',data:n})}
  onMoveNpc={moveNpcFolder} onPlaceNpc={id=>placeNpc(id)}
- activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>{setSelectedMap(id);setTab('tabletop')}}
+ activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>{setMapCalibrationPreview(null);setSelectedMap(id);setTab('tabletop')}}
  publishedMapId={camp?.active_map_id||null} onPublishMap={publishMap}
  onOpenMapLibrary={()=>setTab('maps')}
  newToken={newToken} onChangeTokenName={setNewToken}
  tokenOwner={tokenOwner} onChangeTokenOwner={setTokenOwner} onAddToken={addToken}
  mapZoom={mapZoom} onChangeZoom={setMapZoom}
+ onMapCalibrationPreview={setMapCalibrationPreview} onSaveMapCalibration={saveMapCalibration}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
