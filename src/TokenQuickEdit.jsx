@@ -39,7 +39,7 @@ export function QuickFieldsSettings({template,selected,onSave}){
    <span>{field.label} <small className="muted">({field.type==='resource'?'Current / Max':'Number'})</small></span>
   </label>)}</div>
   {active.length>0&&<div className="quick-field-order">
-   <text className="muted small">Popup order</text>
+   <span className="muted small">Popup order</span>
    {active.map((id,index)=><div key={id} className="quick-field-order-item">
     <span>{fields.find(f=>f.id===id)?.label||id}</span>
     <button type="button" className="secondary" disabled={index===0} onClick={()=>move(index,-1)}>↑</button>
