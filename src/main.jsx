@@ -9,6 +9,7 @@ import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors} from './TokenMonitors.jsx';
+import ResourceField from './ResourceField.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -204,6 +205,23 @@ function App(){
  if(/^\/macro\s+/i.test(raw)){const label=raw.replace(/^\/macro\s+/i,'').trim().toLowerCase(),field=camp?.sheet_template?.tabs?.flatMap(t=>t.fields).find(f=>f.type==='roll'&&f.label.toLowerCase()===label);if(field)return roll(field.formula||'1d20',field.label);return fail('Macro not found')}
  try{await read(db.from('chat_messages').insert({campaign_id:activeId,user_id:user,body:raw.startsWith('/em ')?'*'+raw.slice(4)+'*':raw}));await refreshChat()}catch(e){fail(e)}}
  function changeTemplate(fn){setTemplate(old=>{const t=structuredClone(old||{tabs:defaults});fn(t);return t})}
+ async function linkResourceToToken(field){
+  if(!isDM||field?.type!=='resource'||!template)throw Error('Only the DM can link a resource.');
+  if(!/^[a-zA-Z0-9_-]{1,64}$/.test(field.id))throw Error('Invalid resource field ID');
+  const existing=camp?.token_display_config||{playerVisibility:'owner',npcVisibility:'dm',widgets:[]};
+  const widgets=Array.isArray(existing.widgets)?existing.widgets:[];
+  const found=widgets.some(w=>w.type==='bar'&&w.field===field.id);
+  if(!found&&widgets.length>=8)throw Error('The token display already has 8 elements. Remove one in Settings first.');
+  const newWidget={id:'resource_'+field.id,type:'bar',label:field.label||'Resource',
+    field:field.id,maxField:field.id+'__max',color:'#d94c56',position:'top',icon:'heart',showValue:true};
+  const config={...existing,widgets:found?widgets:[...widgets,newWidget]};
+  const saved=await read(db.from('campaigns').update({
+   sheet_template:template,token_display_config:config
+  }).eq('id',activeId).select('sheet_template,token_display_config').single());
+  setCamp(prev=>({...prev,...saved}));
+  setTemplate(saved.sheet_template);
+  return found?'This resource is already linked to a token bar.':'Resource and token bar saved together.';
+ }
  async function saveTemplate(){setBusy(true);try{await read(db.from('campaigns').update({sheet_template:template}).eq('id',activeId));setCamp(x=>({...x,sheet_template:template}));setSaveState('Template saved')}catch(e){fail(e)}finally{setBusy(false)}}
  async function addFolder(e){e.preventDefault();if(!newFolder.trim())return;try{await read(db.from('map_folders').insert({campaign_id:activeId,parent_id:folder,name:newFolder.trim()}));setNewFolder('');refreshMaps()}catch(e){fail(e)}}
  async function uploadMap(e){const file=e.target.files?.[0];if(!file)return;setUploading(true);try{
@@ -279,8 +297,8 @@ function App(){
  {tab==='sheet'&&<section className="panel page-panel"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
-</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
- {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><button disabled={busy} onClick={saveTemplate}>Save template</button></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate}/></section>}
+</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
+ {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><button disabled={busy} onClick={saveTemplate}>Save template</button></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate} onLinkResource={linkResourceToToken}/></section>}
  {tab==='maps'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Map library</h2><label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>{setSelectedMap(m.id);setTab('tabletop')}}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
  {tab==='tabletop'&&<section className="panel tabletop-panel map-only-panel">
   {displayedMap?<Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
@@ -347,10 +365,85 @@ function App(){
 }
 function configured(){return !!db}
 function Inventory({field,value,onChange}){const cols=field.columns||['Item','Qty','Notes'];return <div className="inventory"><div className="invrow">{cols.map(c=><b key={c}>{c}</b>)}</div>{(Array.isArray(value)?value:[]).map((row,i)=><div className="invrow" key={i}>{cols.map(c=><input key={c} aria-label={c} value={row[c]||''} onChange={e=>onChange(value.map((r,j)=>j===i?{...r,[c]:e.target.value}:r))}/>)}<button className="secondary" onClick={()=>onChange(value.filter((_,j)=>j!==i))}>×</button></div>)}<button className="secondary" onClick={()=>onChange([...value,{}])}>+ Item</button></div>}
-function Designer({template,tabId,changeTemplate}){const t=template?.tabs.find(x=>x.id===tabId)||template?.tabs[0],drag=useRef(null);if(!t)return null;
- const update=(id,key,value)=>changeTemplate(x=>{const f=x.tabs.find(y=>y.id===t.id)?.fields.find(y=>y.id===id);if(f)f[key]=value});
- return <><div className="tools"><input aria-label="Tab name" value={t.name} onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/><button className="secondary" onClick={()=>{if(template.tabs.length<2)return alert('Keep at least one tab');if(confirm('Delete tab and its fields?'))changeTemplate(x=>x.tabs=x.tabs.filter(y=>y.id!==t.id))}}>Delete tab</button><select id="newfieldtype" defaultValue="text"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Notes</option><option value="checkbox">Checkbox</option><option value="roll">Dice button</option><option value="inventory">Inventory</option></select><button onClick={()=>{const type=document.getElementById('newfieldtype').value;changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({id:'field_'+uid().slice(0,8),label:'New '+type,type,span:1,...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})}))}}>+ Add field</button></div><div className="designer-grid">{t.fields.map((f,i)=><div className="designfield" draggable onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;changeTemplate(x=>{const a=x.tabs.find(y=>y.id===t.id).fields;a.splice(i,0,a.splice(from,1)[0])});drag.current=null}} key={f.id}><span className="muted">⠿ Drag to reorder</span><label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label><div className="tools"><label>Width <select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}><option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option></select></label><span className="muted">{f.type}</span><button className="secondary" onClick={()=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields=x.tabs.find(y=>y.id===t.id).fields.filter(y=>y.id!==f.id))}>Delete</button></div>{f.type==='roll'&&<label>Dice formula<input value={f.formula||''} onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}{f.type==='inventory'&&<label>Columns (comma separated)<input value={(f.columns||[]).join(', ')} onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}</div>)}</div></>}
-
+function Designer({template,tabId,changeTemplate,onLinkResource}){
+ const t=template?.tabs.find(x=>x.id===tabId)||template?.tabs[0],drag=useRef(null);
+ const [fieldType,setFieldType]=useState('text'),[linking,setLinking]=useState(''),[linkMessage,setLinkMessage]=useState('');
+ if(!t)return null;
+ const update=(id,key,value)=>changeTemplate(x=>{
+  const field=x.tabs.find(y=>y.id===t.id)?.fields.find(y=>y.id===id);
+  if(field)field[key]=value;
+ });
+ async function link(field){
+  setLinkMessage('');setLinking(field.id);
+  try{const response=await onLinkResource(field);setLinkMessage(response)}
+  catch(e){setLinkMessage(e?.message||String(e))}
+  finally{setLinking('')}
+ }
+ function createField(){
+  const type=fieldType;
+  changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({
+   id:'field_'+uid().slice(0,8),
+   label:type==='resource'?'Hit Points':'New '+type,type,span:type==='resource'?2:1,
+   ...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})
+  }));
+ }
+ return <>
+  <div className="tools">
+   <input aria-label="Tab name" value={t.name}
+    onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/>
+   <button className="secondary" onClick={()=>{
+    if(template.tabs.length<2)return alert('Keep at least one tab');
+    if(confirm('Delete tab and its fields?'))changeTemplate(x=>x.tabs=x.tabs.filter(y=>y.id!==t.id));
+   }}>Delete tab</button>
+   <select aria-label="New field type" value={fieldType} onChange={e=>setFieldType(e.target.value)}>
+    <option value="text">Text</option><option value="number">Number</option>
+    <option value="resource">Resource (Current / Maximum)</option>
+    <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
+    <option value="roll">Dice button</option><option value="inventory">Inventory</option>
+   </select>
+   <button onClick={createField}>+ Add field</button>
+  </div>
+  <p className="muted small">Resource fields keep Current and Maximum together. Link one to a token bar in a single click, without entering field IDs.</p>
+  {linkMessage&&<div className="designer-feedback" role="status">{linkMessage}</div>}
+  <div className="designer-grid">{t.fields.map((f,i)=>
+   <div className="designfield" draggable key={f.id}
+    onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()}
+    onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;
+     changeTemplate(x=>{const arr=x.tabs.find(y=>y.id===t.id).fields;arr.splice(i,0,arr.splice(from,1)[0])});
+     drag.current=null;
+    }}>
+    <span className="muted">⠿ Drag to reorder</span>
+    <label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label>
+    <div className="tools">
+     <label>Width<select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}>
+      <option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option>
+     </select></label>
+     <label>Field type<select value={f.type} onChange={e=>update(f.id,'type',e.target.value)}>
+      <option value="text">Text</option><option value="number">Number</option>
+      <option value="resource">Resource (Current / Maximum)</option>
+      <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
+      <option value="roll">Dice button</option><option value="inventory">Inventory</option>
+     </select></label>
+     <button className="secondary" onClick={()=>changeTemplate(x=>{
+      const tab=x.tabs.find(y=>y.id===t.id);tab.fields=tab.fields.filter(y=>y.id!==f.id);
+     })}>Delete</button>
+    </div>
+    {f.type==='resource'&&<>
+     <div className="resource-designer-explainer">Two values in one field: <strong>Current / Maximum</strong>.
+      <span>Example: {f.label||'Hit Points'} 15 / 22</span></div>
+     <button className="resource-link-button" disabled={linking===f.id} onClick={()=>link(f)}>
+      {linking===f.id?'Linking…':'↗ Add / link token resource bar'}
+     </button>
+    </>}
+    {f.type==='roll'&&<label>Dice formula<input value={f.formula||''}
+      onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}
+    {f.type==='inventory'&&<label>Columns (comma separated)<input
+      value={(f.columns||[]).join(', ')}
+      onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}
+   </div>)}
+  </div>
+ </>;
+}
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues}){
  const[preview,setPreview]=useState({});
