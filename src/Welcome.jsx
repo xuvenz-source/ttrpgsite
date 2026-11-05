@@ -1,7 +1,7 @@
 import React,{useState} from 'react';
 
 const NAME=/^[a-z][a-z0-9_]{2,23}$/i;
-const RESERVED_DOMAIN='accounts.tabletopforge.invalid';
+const RESERVED_DOMAIN='accounts.tabletopforge.example.com';
 export const usernameEmail=(username)=>username.trim().toLowerCase()+'@'+RESERVED_DOMAIN;
 const errText=e=>e?.message||String(e);
 
