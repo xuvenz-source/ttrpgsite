@@ -1,6 +1,7 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
+import ResourceField from './ResourceField.jsx';
 
 function InventoryEditor({field,value,onChange}){
  const columns=field.columns?.length?field.columns:['Item','Qty','Notes'];
@@ -99,6 +100,7 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
       f.type==='inventory'?<InventoryEditor field={f} value={draft.field_values[f.id]||[]}
         onChange={v=>editField(f.id,v)}/>:
+      f.type==='resource'?<ResourceField value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
       f.type==='checkbox'?<input type="checkbox" checked={!!draft.field_values[f.id]}
         onChange={e=>editField(f.id,e.target.checked)}/>:
       f.type==='textarea'?<textarea value={draft.field_values[f.id]??''}
