@@ -188,6 +188,15 @@ function App(){
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
  <div className="workarea"><div className="primary">
+ {!camp&&<section className="empty-tabletop campaign-empty">
+  <div className="campaign-empty-content">
+   <h2>Tabletop Forge</h2>
+   <p>{activeId?'Loading campaign…':'Create or join a campaign to begin.'}</p>
+   <p className="muted small">Open the Campaigns tab on the right to get started.</p>
+   <button className="secondary" type="button" onClick={()=>setRightTab('campaigns')}>Open Campaigns</button>
+  </div>
+ </section>}
+ {camp&&<>
  {tab==='sheet'&&<section className="panel page-panel"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
@@ -211,6 +220,7 @@ function App(){
     {isDM&&<button type="button" onClick={()=>setTab('maps')}>Open map library</button>}
    </div>}
  </section>}
+ </>}
  </div><TabletopSidebar
  db={db} panel={rightTab} onPanelChange={setRightTab} isDM={isDM} user={user}
  messages={msgs} characters={characters} members={members} tokens={tokens}
@@ -222,15 +232,20 @@ function App(){
  onEditNpc={n=>setNpcEditor({kind:'template',data:n})}
  onMoveNpc={moveNpcFolder} onPlaceNpc={id=>placeNpc(id)}
  activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>{setSelectedMap(id);setTab('tabletop')}}
- publishedMapId={camp.active_map_id} onPublishMap={publishMap}
+ publishedMapId={camp?.active_map_id||null} onPublishMap={publishMap}
  onOpenMapLibrary={()=>setTab('maps')}
  newToken={newToken} onChangeTokenName={setNewToken}
  tokenOwner={tokenOwner} onChangeTokenOwner={setTokenOwner} onAddToken={addToken}
  mapZoom={mapZoom} onChangeZoom={setMapZoom}
- onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
+ onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>{setTab('sheet');setArtStudio(true)}}
- campaignName={camp.name}
- /></div></>}
+ campaignName={camp?.name||''}
+ activeCampaignId={activeId} campaignList={campaigns}
+ hasCampaign={!!camp} onSelectCampaign={id=>{setActiveId(id);setTab('tabletop')}}
+ createCampaignName={createName} onCreateCampaignNameChange={setCreateName} onCreateCampaign={create}
+ inviteCode={joinCode} onInviteCodeChange={setJoinCode} onJoinCampaign={join}
+ accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
+ /></div>
  </main>
  {artStudio&&character&&<TokenStudio db={db} campaignId={activeId} userId={user}
   mode="players" onSave={savePlayerArtwork} onClose={()=>setArtStudio(false)}/>}
