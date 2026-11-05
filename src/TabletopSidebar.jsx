@@ -1,5 +1,6 @@
 import React,{useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
+import MapCalibration from './MapCalibration.jsx';
 import Bestiary from './Bestiary.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -124,7 +125,7 @@ export default function TabletopSidebar({
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
- mapZoom,onChangeZoom,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
+ mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
  campaignName,activeCampaignId,campaignList,onSelectCampaign,
  createCampaignName,onCreateCampaignNameChange,onCreateCampaign,
  inviteCode,onInviteCodeChange,onJoinCampaign,accountEmail,onSignOut,hasCampaign
@@ -209,10 +210,15 @@ export default function TabletopSidebar({
      <option value=".7">70%</option><option value="1">100%</option><option value="1.5">150%</option>
      <option value="2">200%</option><option value="3">300%</option>
     </select></label>
-    <p className="muted tiny">Ctrl + mouse wheel over the map also changes zoom.</p>
+    <p className="muted tiny">Ctrl + mouse wheel over the map also changes zoom. This is only your viewing zoom, not the stored map size.</p>
     {isDM&&<>
      <div className="side-divider"/>
      <h3>Map management</h3>
+     <details className="side-details map-calibration-panel" open>
+      <summary>Grid & image calibration</summary>
+      <MapCalibration key={activeMap?.id||'no-map'} map={activeMap}
+       onPreview={onMapCalibrationPreview} onSave={onSaveMapCalibration}/>
+     </details>
      <p className="muted small">{activeMap?.id===publishedMapId?'● Current map is live to players':'This map is not yet published to players.'}</p>
      <button disabled={!activeMap||activeMap.id===publishedMapId} onClick={()=>onPublishMap(selectedMap)}>Publish selected map to players</button>
      <button className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
