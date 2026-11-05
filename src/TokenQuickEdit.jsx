@@ -65,7 +65,7 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
  const fields=useMemo(()=>editableFields(template).filter(f=>(allowedFields||[]).includes(f.id)),[template,allowedFields]);
  const [values,setValues]=useState({}),[saved,setSaved]=useState({}),[loading,setLoading]=useState(true),[error,setError]=useState('');
  useEffect(()=>{
-  let live=true;setLoading(true);setError('');setNotice('');
+  let live=true;setLoading(true);setError('');
   db.rpc('get_token_quick_values',{p_token:token.id}).then(({data,error})=>{
    if(!live)return;
    if(error)setError(error.message);
