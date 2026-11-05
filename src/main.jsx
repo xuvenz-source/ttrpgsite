@@ -207,7 +207,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,onNpcDrop,onTokenEdit}){
   const wheel=e=>{
    if(!e.ctrlKey)return;
    e.preventDefault();e.stopPropagation();
-   const before=zoomRef.current,next=Math.max(.25,Math.min(3,before*(e.deltaY<0?1.13:.885)));
+   const stops=[.25,.35,.5,.7,1,1.5,2,3],before=zoomRef.current;
+   const nearest=stops.reduce((best,value,i)=>Math.abs(value-before)<Math.abs(stops[best]-before)?i:best,0);
+   const next=stops[Math.max(0,Math.min(stops.length-1,nearest+(e.deltaY<0?1:-1)))];
    if(next===before)return;
    const rect=node.getBoundingClientRect(),vx=e.clientX-rect.left,vy=e.clientY-rect.top;
    const wx=(node.scrollLeft+vx)/before,wy=(node.scrollTop+vy)/before;
