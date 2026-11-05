@@ -562,3 +562,17 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .monitor-widget-fields input[type=color]{height:37px;padding:3px}
 .monitor-widget-fields .monitor-checkbox{grid-column:span 2;flex-direction:row;align-items:center;gap:8px}
 .monitor-widget-fields .monitor-checkbox input{width:16px;height:16px}
+
+/* Composite sheet resource: one field, Current and Maximum side by side. */
+.resource-field{display:flex;align-items:end;gap:7px;min-width:0}
+.resource-field label{display:flex;flex-direction:column;flex:1;min-width:0;font-size:11px;color:#bac9df}
+.resource-field input[type=number]{width:100%;min-width:0;max-width:100%;font-variant-numeric:tabular-nums}
+.resource-separator{font-size:23px;color:#a5b2ca;align-self:flex-end;padding-bottom:5px;line-height:1}
+.resource-designer-explainer{border:1px solid #475678;background:#202d41;border-radius:7px;padding:9px;display:flex;flex-direction:column;gap:4px;color:#c4d2e5;font-size:12px}
+.resource-designer-explainer span{font-size:11px;color:#9dacc2}
+.resource-link-button{background:#4f4381;border:1px solid #8777bb;align-self:stretch}
+.resource-link-button:hover{background:#6653a5}
+.designer-feedback{background:#2a3750;border:1px solid #53627c;border-radius:8px;padding:9px 12px;font-size:12px;color:#dce5f8;margin:8px 0}
+.monitor-widget-fields .monitor-auto-bound{grid-column:span 2;background:#1b3c39;border:1px solid #366b60;border-radius:7px;padding:8px}
+.monitor-widget-fields optgroup{color:#dce4f5}
+@media(max-width:650px){.resource-field{gap:4px}.resource-separator{font-size:18px}}
