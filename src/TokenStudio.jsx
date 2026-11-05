@@ -119,7 +119,7 @@ function paint(ctx,img,frame,opening,{zoom,shiftX,shiftY,ring,back,shape,border,
  }
 }
 
-export default function TokenStudio({db,campaignId,userId,mode='players',onSave,onClose}){
+export default function TokenStudio({db,campaignId,userId,mode='players',onSave,onSaveBlobs,onClose}){
  const[file,setFile]=useState(null),[zoom,setZoom]=useState(1),[shiftX,setShiftX]=useState(0),[shiftY,setShiftY]=useState(0),
   [ring,setRing]=useState('single'),[back,setBack]=useState('#1b2030'),[border,setBorder]=useState('#c29b55'),
   [thickness,setThickness]=useState(10),[shape,setShape]=useState('circle'),
@@ -183,6 +183,11 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
    portrait.width=Math.max(1,Math.round(img.width*scale));portrait.height=Math.max(1,Math.round(img.height*scale));
    portrait.getContext('2d').drawImage(img,0,0,portrait.width,portrait.height);
    const portraitBlob=await canvasBlob(portrait,.86),tokenBlob=await canvasBlob(cv.current,.94);
+   if(onSaveBlobs){
+    await onSaveBlobs({portraitBlob,tokenBlob});
+    onClose();
+    return;
+   }
    const root=mode==='npcs'?campaignId+'/npcs/':campaignId+'/players/'+userId+'/';
    const id=crypto.randomUUID(),portraitPath=root+id+'-portrait.webp',tokenPath=root+id+'-token.webp';
    const storage=db.storage.from('tabletop-artwork');
@@ -234,7 +239,7 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
    </div>
    {error&&<div className="error alert">{error}</div>}
    <div className="actions"><button className="secondary" onClick={onClose}>Cancel</button>
-    <button disabled={!file||saving} onClick={save}>{saving?'Uploading…':'Save portrait and token'}</button></div>
+    <button disabled={!file||saving} onClick={save}>{saving?'Uploading…':onSaveBlobs?'Save to my library & equip':'Save portrait and token'}</button></div>
   </section>
  </div>;
 }
