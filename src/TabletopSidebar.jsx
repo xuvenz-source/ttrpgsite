@@ -21,7 +21,7 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen}){
   {isDM&&<button type="button" className="secondary unit-edit" onClick={()=>onOpen(token)} title={'Open '+token.name+' sheet'}>Sheet</button>}
  </div>;
 }
-function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSelect,onOpen,onResize,onNavigate}){
+function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSelect,onOpen,onResize,onNavigate,onCreatePortrait,onOpenPlayerCharacter,onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
  const [collapsed,setCollapsed]=useState({});
  const groups=useMemo(()=>{
   const sorted=members.map((m,index)=>{
@@ -37,7 +37,16 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
  return <div className="right-section">
   <div className="side-heading"><h2>Controlled units</h2><span className="muted tiny">{isDM?'All campaign controllers':'Your tokens'}</span></div>
   <p className="muted small side-description">Select a unit to highlight it on the map. {isDM?'Open any unit sheet here or Alt + double-click its token.':'Open your character sheet below, or select one of your tokens.'}</p>
-  <button type="button" className="secondary full-button" onClick={()=>onNavigate('sheet')}>My character sheet</button>
+  <div className="unit-actions">
+   <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>My character sheet</button>
+   <button type="button" className="secondary" onClick={onCreatePortrait}>Create / edit token art</button>
+  </div>
+  {isDM&&characters.length>0&&<label>Open player character sheet
+   <select defaultValue="" onChange={e=>{if(e.target.value){onOpenPlayerCharacter(e.target.value);e.target.value=''}}}>
+    <option value="">Choose a player character…</option>
+    {characters.map(ch=><option key={ch.id} value={ch.id}>{ch.name||'Unnamed character'}</option>)}
+   </select>
+  </label>}
   <div className="unit-groups">{groups.map(g=><section key={g.id} className="unit-group">
    <button type="button" className="unit-group-head" onClick={()=>setCollapsed(s=>({...s,[g.id]:!s[g.id]}))} aria-expanded={!collapsed[g.id]}>
     <span>{collapsed[g.id]?'▸':'▾'} {g.label}</span><span className="unit-count">{g.units.length}</span>
@@ -49,6 +58,20 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
    </div>}
   </section>)}</div>
   {!groups.length&&<p className="muted small">No controlled units available.</p>}
+  {isDM&&<details className="side-details">
+   <summary>Place a new token</summary>
+   <div className="side-form">
+    <label>Token name<input value={newToken} onChange={e=>onChangeTokenName(e.target.value)} maxLength={80} placeholder="Token name"/></label>
+    <label>Controlled by<select value={tokenOwner} onChange={e=>onChangeTokenOwner(e.target.value)}>
+      <option value="">Game Master (NPC)</option>
+      {members.map((m,i)=><option key={m.user_id} value={m.user_id}>
+       {characters.find(c=>c.user_id===m.user_id)?.name||('Player '+(i+1))}
+      </option>)}
+    </select></label>
+    <button type="button" disabled={!activeMap} onClick={onAddToken}>Place on current map</button>
+    <p className="muted tiny">For reusable NPCs, create them in Bestiary instead.</p>
+   </div>
+  </details>}
   {isDM&&selectedToken&&<div className="unit-inspector">
    <h3>Selected: {selectedToken.name}</h3>
    <p className="muted tiny">Footprint: {Number(selectedToken.span_x??1)} × {Number(selectedToken.span_y??1)} squares</p>
@@ -83,7 +106,7 @@ export default function TabletopSidebar({
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
- mapZoom,onChangeZoom,onCopyInvite,onNavigate,onCreatePortrait,
+ mapZoom,onChangeZoom,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
  campaignName,activeCampaignId,campaignList,onSelectCampaign,
  createCampaignName,onCreateCampaignNameChange,onCreateCampaign,
  inviteCode,onInviteCodeChange,onJoinCampaign,accountEmail,onSignOut,hasCampaign
@@ -99,7 +122,7 @@ export default function TabletopSidebar({
   </nav>
   {validPanel==='campaigns'&&<div className="right-body campaigns-panel">
    <div className="side-heading"><h2>Campaigns & pages</h2></div>
-   <p className="muted small side-description">Choose a campaign, open the tabletop or DM tools, or join another campaign using an invite code. Character sheets are accessed through Units.</p>
+   <p className="muted small side-description">Switch campaigns, create a new game, or join one using an invite code.</p>
    <div className="campaign-switcher">
     {campaignList.length===0&&<p className="muted small">You haven't joined any campaigns yet. Create one or enter an invite code below.</p>}
     {campaignList.map(c=><button type="button" key={c.id}
@@ -109,17 +132,7 @@ export default function TabletopSidebar({
      {activeCampaignId===c.id&&<span className="muted tiny">Current campaign</span>}
     </button>)}
    </div>
-   {hasCampaign&&<>
-    <div className="side-divider"/>
-    <h3>Open page</h3>
-    <div className="campaign-page-links">
-     <button type="button" className="secondary" onClick={()=>onNavigate('tabletop')}>▥ Tabletop</button>
-     {isDM&&<>
-      <button type="button" className="secondary" onClick={()=>onNavigate('designer')}>▦ Sheet designer</button>
-      <button type="button" className="secondary" onClick={()=>onNavigate('maps')}>▧ Map library</button>
-     </>}
-    </div>
-   </>}
+   {hasCampaign&&isDM&&<button type="button" className="secondary full-button" onClick={onCopyInvite}>Copy current campaign invite link</button>}
    <div className="side-divider"/>
    <details className="campaign-action-details">
     <summary>Create campaign</summary>
@@ -154,29 +167,21 @@ export default function TabletopSidebar({
   </>}
   {validPanel==='units'&&<div className="right-body"><UnitGroups db={db} tokens={tokens} characters={characters}
    members={members} user={user} isDM={isDM} selectedToken={selectedToken}
-   onSelect={onSelectToken} onOpen={onOpenToken} onResize={onResizeToken} onNavigate={onNavigate}/></div>}
+   onSelect={onSelectToken} onOpen={onOpenToken} onResize={onResizeToken} onNavigate={onNavigate}
+   onCreatePortrait={onCreatePortrait} onOpenPlayerCharacter={onOpenPlayerCharacter}
+   onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
+   tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}/></div>}
   {validPanel==='bestiary'&&isDM&&<div className="right-body">
    <div className="side-heading"><h2>Bestiary & tokens</h2></div>
-   <details className="side-details"><summary>+ Create a map token</summary>
-    <div className="side-form">
-     <label>Token name<input value={newToken} onChange={e=>onChangeTokenName(e.target.value)} maxLength={80} placeholder="Token name"/></label>
-     <label>Controlled by<select value={tokenOwner} onChange={e=>onChangeTokenOwner(e.target.value)}>
-      <option value="">Game Master (NPC)</option>
-      {members.map((m,i)=><option key={m.user_id} value={m.user_id}>
-       {characters.find(c=>c.user_id===m.user_id)?.name||('Player '+(i+1))}
-      </option>)}
-     </select></label>
-     <button type="button" disabled={!activeMap} onClick={onAddToken}>Place token at starting square</button>
-     <p className="muted tiny">Create a saved NPC below, then drag its card directly onto the map for precise placement.</p>
-    </div>
-   </details>
+   <p className="muted small side-description">Create and organise reusable NPCs, then drag them onto the current map.</p>
    <Bestiary db={db} compact npcs={npcs} folders={npcFolders}
     onNewFolder={onNewNpcFolder} onNewNpc={onNewNpc} onEdit={onEditNpc}
     onMove={onMoveNpc} onPlace={onPlaceNpc} mapReady={!!activeMap}/>
   </div>}
   {validPanel==='settings'&&<div className="right-body">
-   <div className="side-heading"><h2>Settings & management</h2></div>
+   <div className="side-heading"><h2>Tabletop settings</h2></div>
    <div className="side-form">
+    {currentPage!=='tabletop'&&<button type="button" className="secondary" onClick={()=>onNavigate('tabletop')}>Return to tabletop</button>}
     {isDM&&<label>Current map<select value={selectedMap||''} onChange={e=>onSelectMap(e.target.value)}>
      {!maps.length&&<option value="">No maps uploaded</option>}
      {maps.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}
@@ -189,16 +194,14 @@ export default function TabletopSidebar({
     <p className="muted tiny">Ctrl + mouse wheel over the map also changes zoom.</p>
     {isDM&&<>
      <div className="side-divider"/>
-     <h3>Campaign management</h3>
+     <h3>Map management</h3>
      <p className="muted small">{activeMap?.id===publishedMapId?'● Current map is live to players':'This map is not yet published to players.'}</p>
      <button disabled={!activeMap||activeMap.id===publishedMapId} onClick={()=>onPublishMap(selectedMap)}>Publish selected map to players</button>
      <button className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
-     <button className="secondary" onClick={()=>onNavigate('designer')}>Edit character-sheet template</button>
-     <button className="secondary" onClick={onCopyInvite}>Copy campaign invite link</button>
      <div className="side-divider"/>
-     <p className="muted small">Use the Campaigns tab to switch games, create or join campaigns, and open your campaign pages.</p>
+     <h3>Sheet configuration</h3>
+     <button className="secondary" onClick={()=>onNavigate('designer')}>Open sheet designer</button>
     </>}
-    <button className="secondary" onClick={onCreatePortrait}>Create character portrait / token</button>
    </div>
   </div>}
  </aside>;
