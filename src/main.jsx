@@ -7,6 +7,7 @@ import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
+import TabletopSidebar from './TabletopSidebar.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -22,11 +23,13 @@ function App(){
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('sheet'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
- const[sidebarOpen,setSidebarOpen]=useState(true),[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null),[trayOpen,setTrayOpen]=useState(true);
+ const[sidebarOpen,setSidebarOpen]=useState(true),[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
+ const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const activeMap=maps.find(x=>x.id===selectedMap);
+ const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  function fail(e){setError(message(e));console.error(e)}
  async function fetchCampaigns(prefer){if(!db||!user)return;
   try{const [cs,ms]=await Promise.all([read(db.from('campaigns').select('*').order('created_at',{ascending:false})),read(db.from('campaign_members').select('campaign_id,role').eq('user_id',user))]);
@@ -134,7 +137,7 @@ function App(){
  async function refreshTokens(){if(!selectedMap)return setTokens([]);try{setTokens(await read(db.from('map_tokens').select('*').eq('map_id',selectedMap)))}catch(e){fail(e)}}
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setSidebarOpen(false);setTab('sheet');setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}},[activeId,user]);
+ useEffect(()=>{if(activeId&&user){setSidebarOpen(false);setTab('sheet');setRightTab('chat');setSelectedTokenId(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}},[activeId,user]);
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>refreshTokens()).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>fetchCampaign(activeId))
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
@@ -178,7 +181,7 @@ function App(){
   try{await read(db.from('map_tokens').delete().eq('id',t.id));await refreshTokens()}
   catch(e){fail(e)}
  }
- const campaignTabs=['sheet',...(isDM?['designer','maps','bestiary']:[]),'tabletop'];
+ const campaignTabs=['sheet',...(isDM?['designer','maps']:[]),'tabletop'];
  if(!configured())return <div className="center"><h1>Tabletop Forge</h1><p>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel.</p></div>;
  if(!authReady)return <div className="center">Loading…</div>;
  if(!session)return <div className="auth center"><h1>⚔ Tabletop Forge</h1><p>Campaigns, character sheets, battlemaps and dice — one table.</p><form onSubmit={async e=>{e.preventDefault();try{await read(db.auth.signInWithOtp({email,emailRedirectTo:location.origin}));setSent(true)}catch(err){fail(err)}}}><label>Email address<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label><button>Send sign-in link</button></form>{sent&&<p>Check your email for the sign-in link.</p>}{error&&<p className="error">{error}</p>}</div>;
@@ -190,7 +193,7 @@ function App(){
  <button className="secondary logout" onClick={()=>db.auth.signOut()}>Sign out</button></aside>
  <main><header><div className="header-title"><button className="secondary menu-toggle" aria-label={sidebarOpen?'Hide campaigns':'Show campaigns'} title={sidebarOpen?'Hide campaigns':'Show campaigns'} onClick={()=>setSidebarOpen(x=>!x)}>☰</button><div><h1>{camp?.name||'Select or create a campaign'}</h1>{camp&&<span className="muted">{isDM?'Game master':'Player'} · {members.length} member(s)</span>}</div></div>{isDM&&camp&&<button className="secondary" onClick={()=>{navigator.clipboard.writeText(location.origin+'/?join='+camp.invite_code);setSaveState('Invite link copied')}}>Copy invite link</button>}</header>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
- {camp&&<><div className="tabs">{campaignTabs.map(t=><button key={t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t==='sheet'?'Character sheet':t==='designer'?'Sheet designer':t==='maps'?'Map library':t==='bestiary'?'Bestiary':'Tabletop'}</button>)}</div>
+ {camp&&<><div className="tabs">{campaignTabs.map(t=><button key={t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t==='sheet'?'Character sheet':t==='designer'?'Sheet designer':t==='maps'?'Map library':'Tabletop'}</button>)}</div>
  <div className="workarea"><div className="primary">
  {tab==='sheet'&&<section className="panel page-panel"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
@@ -205,28 +208,36 @@ function App(){
  </div></div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><button disabled={busy} onClick={saveTemplate}>Save template</button></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate}/></section>}
  {tab==='maps'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Map library</h2><label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>{setSelectedMap(m.id);setTab('tabletop')}}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
- {tab==='bestiary'&&isDM&&<section className="panel page-panel"><Bestiary
- db={db} npcs={npcs} folders={npcFolders}
- onNewFolder={makeNpcFolder} onNewNpc={makeNpc}
- onEdit={n=>setNpcEditor({kind:'template',data:n})}
- onMove={moveNpcFolder} onPlace={id=>placeNpc(id)}
- mapReady={!!selectedMap}/></section>}
- {tab==='tabletop'&&<section className="panel tabletop-panel"><div className="heading"><h2>Tabletop</h2><select value={selectedMap} onChange={e=>setSelectedMap(e.target.value)}>{maps.map(m=><option value={m.id} key={m.id}>{m.name}</option>)}</select></div>{isDM&&activeMap&&<div className="tools tabletop-tools">{camp.active_map_id===activeMap.id?<span className="good">● Live to players</span>:<button onClick={()=>publishMap(activeMap.id)}>Make active for players</button>}<input value={newToken} onChange={e=>setNewToken(e.target.value)} placeholder="Token name"/><select value={tokenOwner} onChange={e=>setTokenOwner(e.target.value)}><option value="">DM-controlled</option>{members.map(m=><option key={m.user_id} value={m.user_id}>{characters.find(c=>c.user_id===m.user_id)?.name||m.user_id.slice(0,8)}</option>)}</select><button onClick={addToken}>Add token</button></div>}{activeMap?<div className="tabletop-layout">
-  {isDM&&trayOpen&&<aside className="bestiary-tray">
-    <Bestiary db={db} compact npcs={npcs} folders={npcFolders}
-      onNewFolder={makeNpcFolder} onNewNpc={makeNpc}
-      onEdit={n=>setNpcEditor({kind:'template',data:n})}
-      onMove={moveNpcFolder} onPlace={id=>placeNpc(id)} mapReady/>
-  </aside>}
-  <div className="map-area">
-   {isDM&&<button className="secondary small-button tray-toggle" onClick={()=>setTrayOpen(x=>!x)}>{trayOpen?'Hide NPC tray':'Show NPC tray'}</button>}
-   <Board db={db} map={activeMap} url={urls[activeMap.id]} tokens={tokens}
-    user={user} isDM={isDM} move={moveToken} remove={removeToken}
-    onNpcDrop={placeNpc} onTokenEdit={openTokenSheet}
-    resize={resizeToken}/>
-  </div>
- </div>:<p>Ask the DM to upload and publish a map.</p>}</section>}
- </div><aside className="chat panel"><h2>Campaign chat</h2><div className="messages">{msgs.map(m=><div className="msg" key={m.id}><div className="muted tiny">{m.user_id===user?'You':characters.find(c=>c.user_id===m.user_id)?.name||'Party member'} · {stamp(m.created_at)}</div>{m.kind==='roll'?<div className="dice"><b>🎲 {m.body}</b><h2>{m.result?.total}</h2><small>{m.result?.expression} · [{(m.result?.dice||[]).join(', ')}] {m.result?.modifier?' + '+m.result.modifier:''}</small></div>:<p>{m.body}</p>}</div>)}</div><form onSubmit={sendChat} className="chatbox"><input value={chat} onChange={e=>setChat(e.target.value)} placeholder="Message or /roll 1d20"/><button>Send</button></form><p className="muted tiny">/roll 2d6+3 · /roll 2d20kh1 · /macro Attack</p></aside></div></>}
+ {tab==='tabletop'&&<section className="panel tabletop-panel map-only-panel">
+  {activeMap?<Board db={db} map={activeMap} url={urls[activeMap.id]} tokens={tokens}
+   user={user} isDM={isDM} move={moveToken} remove={removeToken}
+   onNpcDrop={placeNpc} onTokenEdit={openTokenSheet} resize={resizeToken}
+   scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}/>
+  :<div className="empty-tabletop">
+    <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
+    {isDM&&<button type="button" onClick={()=>setTab('maps')}>Open map library</button>}
+   </div>}
+ </section>}
+ </div><TabletopSidebar
+ db={db} panel={rightTab} onPanelChange={setRightTab} isDM={isDM} user={user}
+ messages={msgs} characters={characters} members={members} tokens={tokens}
+ selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
+ onOpenToken={openTokenSheet} onResizeToken={resizeToken}
+ chat={chat} onChatChange={setChat} onSendChat={sendChat}
+ npcs={npcs} npcFolders={npcFolders}
+ onNewNpcFolder={makeNpcFolder} onNewNpc={makeNpc}
+ onEditNpc={n=>setNpcEditor({kind:'template',data:n})}
+ onMoveNpc={moveNpcFolder} onPlaceNpc={id=>placeNpc(id)}
+ activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>{setSelectedMap(id);setTab('tabletop')}}
+ publishedMapId={camp.active_map_id} onPublishMap={publishMap}
+ onOpenMapLibrary={()=>setTab('maps')}
+ newToken={newToken} onChangeTokenName={setNewToken}
+ tokenOwner={tokenOwner} onChangeTokenOwner={setTokenOwner} onAddToken={addToken}
+ mapZoom={mapZoom} onChangeZoom={setMapZoom}
+ onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
+ onNavigate={setTab} onCreatePortrait={()=>{setTab('sheet');setArtStudio(true)}}
+ campaignName={camp.name}
+ /></div></>}
  </main>
  {artStudio&&character&&<TokenStudio db={db} campaignId={activeId} userId={user}
   mode="players" onSave={savePlayerArtwork} onClose={()=>setArtStudio(false)}/>}
