@@ -107,7 +107,7 @@ export function AuthGate({db}){
 }
 
 export function CampaignHub({
- campaigns,roles,accountLabel,createName,onCreateName,inviteCode,onInviteChange,
+ campaigns,loading,roles,accountLabel,createName,onCreateName,inviteCode,onInviteChange,
  onCreate,onJoin,onSelect,onSignOut,error,onClearError
 }){
  const[showCreate,setShowCreate]=useState(false);
@@ -124,7 +124,8 @@ export function CampaignHub({
    <div className="welcome-heading">
     <h2>Your campaigns</h2><span className="muted small">{campaigns.length} joined</span>
    </div>
-   {campaigns.length>0?<div className="welcome-campaigns">
+   {loading?<p className="muted small" role="status">Loading your campaigns…</p>:
+   campaigns.length>0?<div className="welcome-campaigns">
     {campaigns.map(c=><button type="button" className="welcome-campaign" key={c.id} onClick={()=>onSelect(c.id)}>
      <span className="welcome-campaign-symbol">⚔</span>
      <span className="welcome-campaign-name">{c.name}</span>
