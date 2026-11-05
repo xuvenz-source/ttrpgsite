@@ -463,3 +463,22 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .unit-group-label{display:flex;align-items:center;gap:8px;min-width:0;text-align:left}
 .unit-group-label>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .group-unit-thumb{width:28px!important;height:28px!important;min-width:28px;object-fit:contain;display:grid;place-items:center;border-radius:50%;background:#1b2536}
+
+/* Map calibration: independent saved world pixel dimensions and grid-cell spacing. */
+.map-calibration-panel{margin:2px 0 8px}
+.map-calibration-panel summary{font-size:12px;font-weight:700}
+.map-calibration{display:flex;flex-direction:column;gap:11px;margin-top:13px;min-width:0}
+.map-calibration .calibration-info{display:flex;flex-direction:column;gap:3px}
+.map-calibration .calibration-info strong{font-size:12px;overflow-wrap:anywhere}
+.map-calibration input[type=number]{width:100%;max-width:none;min-width:0}
+.calibration-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.calibration-fields label{min-width:0}
+.map-calibration .calibration-lock{display:flex;flex-direction:row;align-items:center;gap:8px;cursor:pointer}
+.map-calibration .calibration-lock input{width:15px;height:15px;flex:0 0 auto}
+.calibration-presets{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.calibration-presets .muted{margin-right:3px}
+.calibration-presets button{padding:5px 8px;font-size:11px}
+.calibration-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.calibration-actions button{font-size:11px;padding:8px 6px}
+.calibration-actions button[type=submit]{grid-column:span 2}
+.calibration-actions button:disabled{opacity:.48}
