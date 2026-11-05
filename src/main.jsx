@@ -568,6 +568,10 @@ function App(){
   record={characterEditor.data} template={camp?.sheet_template}
   onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
   onRoll={(expression,label)=>roll(expression,label,null)}/>}
+ {quickEditToken&&camp&&<TokenQuickEdit key={quickEditToken.id} db={db}
+  token={quickEditToken} template={camp.sheet_template}
+  allowedFields={camp.token_quick_fields||[]}
+  onClose={()=>setQuickEditToken(null)} onSaved={quickTokenSaved}/>}
  {npcEditor&&isDM&&<NpcEditor db={db} campaignId={activeId} userId={user}
   record={npcEditor} template={camp?.sheet_template}
   onSave={saveNpc} onSaveAsTemplate={async draft=>{
@@ -663,7 +667,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues}){
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
@@ -787,10 +791,16 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       }}
       title={t.name+(isDM?' · Alt + double-click to edit sheet':'')}
       onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
+      onClick={e=>{
+       if(e.ctrlKey&&!e.altKey&&canMove){
+        e.preventDefault();e.stopPropagation();
+        onTokenQuick(t);
+       }
+      }}
       onPointerDown={e=>{
        e.stopPropagation();setSelectedId(t.id);
        viewportRef.current?.focus({preventScroll:true});
-       if(!canMove||e.altKey||e.button!==0)return;
+       if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.button!==0)return;
        e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id;
       }}
       onPointerMove={e=>{
