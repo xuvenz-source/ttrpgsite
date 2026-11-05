@@ -7,7 +7,8 @@ const tabs=[
  {id:'chat',label:'Chat',icon:'💬'},
  {id:'units',label:'Units',icon:'♟'},
  {id:'bestiary',label:'Bestiary',icon:'🐉'},
- {id:'settings',label:'Settings',icon:'⚙'}
+ {id:'settings',label:'Settings',icon:'⚙'},
+ {id:'campaigns',label:'Campaigns',icon:'🗂'}
 ];
 
 function UnitRow({db,token,selected,isDM,onSelect,onOpen}){
@@ -83,18 +84,64 @@ export default function TabletopSidebar({
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onCopyInvite,onNavigate,onCreatePortrait,
- campaignName
+ campaignName,activeCampaignId,campaignList,onSelectCampaign,
+ createCampaignName,onCreateCampaignNameChange,onCreateCampaign,
+ inviteCode,onInviteCodeChange,onJoinCampaign,accountEmail,onSignOut,hasCampaign
 }){
- const [showTools,setShowTools]=useState(false);
- const validPanel=(!isDM&&panel==='bestiary')?'units':panel;
+ const validPanel=!hasCampaign?'campaigns':(!isDM&&panel==='bestiary'?'units':panel);
  return <aside className="right-sidebar panel" aria-label="Tabletop sidebar">
   <nav className="right-tabs" role="tablist" aria-label="Tabletop tools">
-   {tabs.filter(t=>isDM||t.id!=='bestiary').map(t=><button key={t.id} type="button" role="tab"
+   {tabs.filter(t=>(hasCampaign||t.id==='campaigns')&&(isDM||t.id!=='bestiary')).map(t=><button key={t.id} type="button" role="tab"
      aria-selected={validPanel===t.id} className={validPanel===t.id?'selected':''}
      onClick={()=>onPanelChange(t.id)} title={t.label}>
     <span aria-hidden="true" className="tab-glyph">{t.icon}</span><span>{t.label}</span>
    </button>)}
   </nav>
+  {validPanel==='campaigns'&&<div className="right-body campaigns-panel">
+   <div className="side-heading"><h2>Campaigns & pages</h2></div>
+   <p className="muted small side-description">Choose a campaign, open a page, or invite yourself to another campaign using a join code.</p>
+   <div className="campaign-switcher">
+    {campaignList.length===0&&<p className="muted small">You haven't joined any campaigns yet. Create one or enter an invite code below.</p>}
+    {campaignList.map(c=><button type="button" key={c.id}
+     className={'campaign-switch '+(activeCampaignId===c.id?'selected':'')}
+     onClick={()=>onSelectCampaign(c.id)}>
+     <span className="campaign-switch-title">{c.name}</span>
+     {activeCampaignId===c.id&&<span className="muted tiny">Current campaign</span>}
+    </button>)}
+   </div>
+   {hasCampaign&&<>
+    <div className="side-divider"/>
+    <h3>Open page</h3>
+    <div className="campaign-page-links">
+     <button type="button" className="secondary" onClick={()=>onNavigate('tabletop')}>▥ Tabletop</button>
+     <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>▤ Character sheet</button>
+     {isDM&&<>
+      <button type="button" className="secondary" onClick={()=>onNavigate('designer')}>▦ Sheet designer</button>
+      <button type="button" className="secondary" onClick={()=>onNavigate('maps')}>▧ Map library</button>
+     </>}
+    </div>
+   </>}
+   <div className="side-divider"/>
+   <details className="campaign-action-details">
+    <summary>Create campaign</summary>
+    <form onSubmit={onCreateCampaign} className="side-form campaign-action-form">
+     <label>Campaign name<input maxLength={100} required value={createCampaignName}
+      placeholder="New campaign name" onChange={e=>onCreateCampaignNameChange(e.target.value)}/></label>
+     <button type="submit">Create campaign</button>
+    </form>
+   </details>
+   <details className="campaign-action-details" open={!hasCampaign&&campaignList.length===0?true:undefined}>
+    <summary>Join campaign with invite code</summary>
+    <form onSubmit={onJoinCampaign} className="side-form campaign-action-form">
+     <label>Invite code<input required value={inviteCode} placeholder="Paste campaign invite code"
+      onChange={e=>onInviteCodeChange(e.target.value)}/></label>
+     <button type="submit">Join campaign</button>
+    </form>
+   </details>
+   <div className="side-divider"/>
+   <p className="muted tiny account-email">{accountEmail}</p>
+   <button type="button" className="secondary full-button" onClick={onSignOut}>Sign out</button>
+  </div>}
   {validPanel==='chat'&&<>
    <div className="right-panel-heading"><h2>Campaign chat & rolls</h2></div>
    <div className="messages right-messages">{messages.map(m=><div className="msg" key={m.id}>
@@ -150,7 +197,7 @@ export default function TabletopSidebar({
      <button className="secondary" onClick={()=>onNavigate('designer')}>Edit character-sheet template</button>
      <button className="secondary" onClick={onCopyInvite}>Copy campaign invite link</button>
      <div className="side-divider"/>
-     <p className="muted small">Use the ☰ menu at the top left to change, create, or join campaigns.</p>
+     <p className="muted small">Use the Campaigns tab to switch games, create or join campaigns, and open your campaign pages.</p>
     </>}
     <button className="secondary" onClick={()=>onNavigate('sheet')}>Open my character sheet</button>
     <button className="secondary" onClick={onCreatePortrait}>Create character portrait / token</button>
