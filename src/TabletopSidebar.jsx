@@ -93,8 +93,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
      <option value="custom">Custom · resize corner</option>
     </select>
    </label>
-   <button type="button" onClick={()=>onOpen(selectedToken)}>Open sheet</button>
-   <p className="muted tiny">You can also resize by dragging a selected token's bottom-right corner, or remove it with Delete.</p>
+   <p className="muted tiny">Drag the bottom-right corner to resize. Press Delete to remove. Open its sheet from the unit list or Alt + double-click.</p>
   </div>}
  </div>;
 }
