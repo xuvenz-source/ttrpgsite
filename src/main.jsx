@@ -829,13 +829,29 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
   <p className="muted small">Resource fields keep Current and Maximum together. Link one to a token bar in a single click, without entering field IDs.</p>
   {linkMessage&&<div className="designer-feedback" role="status">{linkMessage}</div>}
   <div className="designer-grid">{t.fields.map((f,i)=>
-   <div className="designfield" draggable key={f.id}
-    onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()}
-    onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;
-     changeTemplate(x=>{const arr=x.tabs.find(y=>y.id===t.id).fields;arr.splice(i,0,arr.splice(from,1)[0])});
+   <div className="designfield" key={f.id}
+    onDragOver={e=>{if(drag.current?.tabId===t.id){e.preventDefault();e.dataTransfer.dropEffect='move'}}}
+    onDrop={e=>{
+     if(drag.current?.tabId!==t.id)return;
+     e.preventDefault();
+     const fromId=drag.current.id;
      drag.current=null;
+     changeTemplate(x=>{
+      const arr=x.tabs.find(y=>y.id===t.id).fields;
+      const from=arr.findIndex(field=>field.id===fromId);
+      const to=arr.findIndex(field=>field.id===f.id);
+      if(from<0||to<0||from===to)return;
+      arr.splice(to,0,arr.splice(from,1)[0]);
+     });
     }}>
-    <span className="muted">⠿ Drag to reorder</span>
+    <span className="muted designfield-drag-handle" draggable="true"
+      title="Drag this handle to reorder the field"
+      onDragStart={e=>{
+       drag.current={tabId:t.id,id:f.id};
+       e.dataTransfer.effectAllowed='move';
+       e.dataTransfer.setData('text/plain',f.id);
+      }}
+      onDragEnd={()=>{drag.current=null}}>⠿ Drag to reorder</span>
     <label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label>
     <div className="tools">
      <label>Width<select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}>
