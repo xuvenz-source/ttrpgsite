@@ -12,7 +12,7 @@ const tabs=[
  {id:'units',label:'Units',icon:'♟'},
  {id:'bestiary',label:'Bestiary',icon:'🐉'},
  {id:'settings',label:'Settings',icon:'⚙'},
- {id:'campaigns',label:'Campaigns',icon:'🗂'}
+ {id:'dm',label:'DM',icon:'🛠'}
 ];
 
 function UnitRow({db,token,selected,isDM,onSelect,onOpen,canDrag}){
@@ -130,53 +130,17 @@ export default function TabletopSidebar({
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
- campaignName,campaignTokenDisplay,activeCampaignId,campaignList,onSelectCampaign,
- createCampaignName,onCreateCampaignNameChange,onCreateCampaign,
- inviteCode,onInviteCodeChange,onJoinCampaign,accountEmail,onSignOut,hasCampaign
+ campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
- const validPanel=!hasCampaign?'campaigns':(!isDM&&panel==='bestiary'?'units':panel);
+ const validPanel=(!isDM&&(panel==='bestiary'||panel==='dm'))?'units':panel;
  return <aside className="right-sidebar panel" aria-label="Tabletop sidebar">
   <nav className="right-tabs" role="tablist" aria-label="Tabletop tools">
-   {tabs.filter(t=>(hasCampaign||t.id==='campaigns')&&(isDM||t.id!=='bestiary')).map(t=><button key={t.id} type="button" role="tab"
+   {tabs.filter(t=>isDM||!['bestiary','dm'].includes(t.id)).map(t=><button key={t.id} type="button" role="tab"
      aria-selected={validPanel===t.id} className={validPanel===t.id?'selected':''}
      onClick={()=>onPanelChange(t.id)} title={t.label}>
     <span aria-hidden="true" className="tab-glyph">{t.icon}</span><span>{t.label}</span>
    </button>)}
   </nav>
-  {validPanel==='campaigns'&&<div className="right-body campaigns-panel">
-   <div className="side-heading"><h2>Campaigns & pages</h2></div>
-   <p className="muted small side-description">Switch campaigns, create a new game, or join one using an invite code.</p>
-   <div className="campaign-switcher">
-    {campaignList.length===0&&<p className="muted small">You haven't joined any campaigns yet. Create one or enter an invite code below.</p>}
-    {campaignList.map(c=><button type="button" key={c.id}
-     className={'campaign-switch '+(activeCampaignId===c.id?'selected':'')}
-     onClick={()=>onSelectCampaign(c.id)}>
-     <span className="campaign-switch-title">{c.name}</span>
-     {activeCampaignId===c.id&&<span className="muted tiny">Current campaign</span>}
-    </button>)}
-   </div>
-   {hasCampaign&&isDM&&<button type="button" className="secondary full-button" onClick={onCopyInvite}>Copy current campaign invite link</button>}
-   <div className="side-divider"/>
-   <details className="campaign-action-details">
-    <summary>Create campaign</summary>
-    <form onSubmit={onCreateCampaign} className="side-form campaign-action-form">
-     <label>Campaign name<input maxLength={100} required value={createCampaignName}
-      placeholder="New campaign name" onChange={e=>onCreateCampaignNameChange(e.target.value)}/></label>
-     <button type="submit">Create campaign</button>
-    </form>
-   </details>
-   <details className="campaign-action-details" open={!hasCampaign&&campaignList.length===0?true:undefined}>
-    <summary>Join campaign with invite code</summary>
-    <form onSubmit={onJoinCampaign} className="side-form campaign-action-form">
-     <label>Invite code<input required value={inviteCode} placeholder="Paste campaign invite code"
-      onChange={e=>onInviteCodeChange(e.target.value)}/></label>
-     <button type="submit">Join campaign</button>
-    </form>
-   </details>
-   <div className="side-divider"/>
-   <p className="muted tiny account-email">{accountEmail}</p>
-   <button type="button" className="secondary full-button" onClick={onSignOut}>Sign out</button>
-  </div>}
   {validPanel==='chat'&&<>
    <div className="right-panel-heading"><h2>Campaign chat & rolls</h2></div>
    <div className="messages right-messages">{messages.map(m=><div className="msg" key={m.id}>
@@ -202,21 +166,21 @@ export default function TabletopSidebar({
     onMove={onMoveNpc} onPlace={onPlaceNpc} mapReady={!!activeMap}/>
   </div>}
   {validPanel==='settings'&&<div className="right-body">
-   <div className="side-heading"><h2>Tabletop settings</h2></div>
+   <div className="side-heading"><h2>Personal settings</h2></div>
    <div className="side-form">
-    {currentPage!=='tabletop'&&<button type="button" className="secondary" onClick={()=>onNavigate('tabletop')}>Return to tabletop</button>}
-    {isDM&&<label>Current map<select value={selectedMap||''} onChange={e=>onSelectMap(e.target.value)}>
-     {!maps.length&&<option value="">No maps uploaded</option>}
-     {maps.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}
-    </select></label>}
-    <label>Battlemap zoom<select value={mapZoom} onChange={e=>onChangeZoom(Number(e.target.value))}>
-     <option value=".25">25%</option><option value=".35">35%</option><option value=".5">50%</option>
-     <option value=".7">70%</option><option value="1">100%</option><option value="1.5">150%</option>
-     <option value="2">200%</option><option value="3">300%</option>
-    </select></label>
-    <p className="muted tiny">Ctrl + mouse wheel over the map also changes zoom. This is only your viewing zoom, not the stored map size.</p>
-    <div className="side-divider"/>
-    <h3>Controls & macros</h3>
+    <button type="button" className="secondary full-button" onClick={onReturnToMenu}>← Back to main menu</button>
+    {currentPage!=='tabletop'&&<button type="button" className="secondary full-button" onClick={()=>onNavigate('tabletop')}>Return to tabletop</button>}
+    <details className="side-details">
+     <summary>View & zoom</summary>
+     <div className="side-form">
+      <label>Battlemap zoom<select value={mapZoom} onChange={e=>onChangeZoom(Number(e.target.value))}>
+       <option value=".25">25%</option><option value=".35">35%</option><option value=".5">50%</option>
+       <option value=".7">70%</option><option value="1">100%</option><option value="1.5">150%</option>
+       <option value="2">200%</option><option value="3">300%</option>
+      </select></label>
+      <p className="muted tiny">Ctrl + mouse wheel over the map changes your view zoom only.</p>
+     </div>
+    </details>
     <details className="side-details shortcut-settings">
      <summary>Keyboard shortcuts</summary>
      <KeybindingsEditor bindings={bindings} onSave={onSaveBindings}/>
@@ -226,32 +190,58 @@ export default function TabletopSidebar({
      <HotbarSettings slots={hotbarSlots} onSave={onSaveHotbar} visible={hotbarVisible}
        onChangeVisible={onChangeHotbarVisible}/>
     </details>
-    {isDM&&<>
-     <div className="side-divider"/>
-     <h3>Map management</h3>
-     <details className="side-details map-calibration-panel" open>
-      <summary>Grid & image calibration</summary>
-      <MapCalibration key={activeMap?.id||'no-map'} map={activeMap}
-       onPreview={onMapCalibrationPreview} onSave={onSaveMapCalibration}/>
-     </details>
-     <p className="muted small">{activeMap?.id===publishedMapId?'● Current map is live to players':'This map is not yet published to players.'}</p>
-     <button disabled={!activeMap||activeMap.id===publishedMapId} onClick={()=>onPublishMap(selectedMap)}>Publish selected map to players</button>
-     <button className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
-     <div className="side-divider"/>
-     <h3>Token appearance and resources</h3>
-     <details className="side-details token-designer-details">
-      <summary>Ctrl + click quick-adjust fields</summary>
-      <QuickFieldsSettings template={template} selected={quickFields} onSave={onSaveQuickFields}/>
-     </details>
-     <details className="side-details token-designer-details">
-      <summary>Token Display Designer</summary>
-      <TokenDisplayDesigner campaign={{id:activeCampaignId,token_display_config:campaignTokenDisplay}}
-       template={template} onSave={onSaveTokenDisplay}/>
-     </details>
-     <div className="side-divider"/>
-     <h3>Sheet configuration</h3>
-     <button className="secondary" onClick={()=>onNavigate('designer')}>Open sheet designer</button>
-    </>}
+   </div>
+  </div>}
+  {validPanel==='dm'&&isDM&&<div className="right-body">
+   <div className="side-heading"><h2>Dungeon Master tools</h2></div>
+   <p className="muted small side-description">Campaign-wide management. Sections are closed until you need them.</p>
+   <div className="side-form">
+    <details className="side-details">
+     <summary>Map management</summary>
+     <div className="side-form">
+      <label>Current map<select value={selectedMap||''} onChange={e=>onSelectMap(e.target.value)}>
+       {!maps.length&&<option value="">No maps uploaded</option>}
+       {maps.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}
+      </select></label>
+      <p className="muted small">{activeMap?.id===publishedMapId?'● Current map is live to players':'This map is not yet published to players.'}</p>
+      <button type="button" disabled={!activeMap||activeMap.id===publishedMapId}
+       onClick={()=>onPublishMap(selectedMap)}>Publish selected map to players</button>
+      <button type="button" className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
+      <details className="side-details map-calibration-panel">
+       <summary>Grid & image calibration</summary>
+       <MapCalibration key={activeMap?.id||'no-map'} map={activeMap}
+        onPreview={onMapCalibrationPreview} onSave={onSaveMapCalibration}/>
+      </details>
+     </div>
+    </details>
+    <details className="side-details">
+     <summary>Token settings & resources</summary>
+     <div className="side-form">
+      <details className="side-details token-designer-details">
+       <summary>Ctrl + click quick-adjust fields</summary>
+       <QuickFieldsSettings template={template} selected={quickFields} onSave={onSaveQuickFields}/>
+      </details>
+      <details className="side-details token-designer-details">
+       <summary>Token Display Designer</summary>
+       <TokenDisplayDesigner campaign={{id:activeCampaignId,token_display_config:campaignTokenDisplay}}
+        template={template} onSave={onSaveTokenDisplay}/>
+      </details>
+     </div>
+    </details>
+    <details className="side-details">
+     <summary>Character sheet template</summary>
+     <div className="side-form">
+      <p className="muted small">Define the fields that every player and NPC in this campaign uses.</p>
+      <button type="button" className="secondary" onClick={()=>onNavigate('designer')}>Open sheet designer</button>
+     </div>
+    </details>
+    <details className="side-details">
+     <summary>Invites & campaign sharing</summary>
+     <div className="side-form">
+      <p className="muted small">{campaignName}</p>
+      <button type="button" className="secondary" onClick={onCopyInvite}>Copy invite link</button>
+     </div>
+    </details>
    </div>
   </div>}
  </aside>;
