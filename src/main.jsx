@@ -187,7 +187,13 @@ function App(){
   mode="players" onSave={savePlayerArtwork} onClose={()=>setArtStudio(false)}/>}
  {npcEditor&&isDM&&<NpcEditor db={db} campaignId={activeId} userId={user}
   record={npcEditor} template={camp?.sheet_template}
-  onSave={saveNpc} onClose={()=>setNpcEditor(null)}
+  onSave={saveNpc} onSaveAsTemplate={async draft=>{
+    await read(db.from('npc_templates').insert({
+     campaign_id:activeId,name:draft.name.trim(),
+     field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath
+    }));
+    await refreshNpcs();
+   }} onClose={()=>setNpcEditor(null)}
   onRoll={(expression,label)=>roll(expression,label,null)}/>}
  </div>;
 }
