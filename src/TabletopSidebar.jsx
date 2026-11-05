@@ -39,7 +39,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
   <p className="muted small side-description">Select a unit to highlight it on the map. {isDM?'Open any unit sheet here or Alt + double-click its token.':'Open your character sheet below, or select one of your tokens.'}</p>
   <div className="unit-actions">
    <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>My character sheet</button>
-   <button type="button" className="secondary" onClick={onCreatePortrait}>Create / edit token art</button>
+   <button type="button" className="secondary" onClick={onCreatePortrait}>My Token Library</button>
   </div>
   {isDM&&characters.length>0&&<label>Open player character sheet
    <select defaultValue="" onChange={e=>{if(e.target.value){onOpenPlayerCharacter(e.target.value);e.target.value=''}}}>
