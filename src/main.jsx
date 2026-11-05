@@ -10,6 +10,7 @@ import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
+import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
@@ -19,7 +20,7 @@ const db=url&&key?createClient(url,key):null;
 const uid=()=>crypto.randomUUID();
 const message=e=>e?.message||String(e);
 const read=async(q)=>{const{data,error}=await q;if(error)throw error;return data};
-const D=(field)=>field.type==='number'?0:field.type==='inventory'?[]:'';
+const D=(field)=>field.type==='number'?0:['inventory','collection'].includes(field.type)?[]:'';
 const stamp=s=>new Date(s).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const defaults=[{id:'main',name:'Character',fields:[{id:'character_name',label:'Name',type:'text',span:2},{id:'strength',label:'Strength',type:'number',span:1},{id:'dexterity',label:'Dexterity',type:'number',span:1},{id:'hp',label:'Hit points',type:'number',span:1},{id:'attack',label:'Attack',type:'roll',formula:'1d20+@{strength}',span:1}]},{id:'inventory',name:'Inventory',fields:[{id:'items',label:'Equipment',type:'inventory',columns:['Item','Qty','Weight','Notes'],span:3}]}];
 class AppErrorBoundary extends React.Component{
@@ -708,7 +709,9 @@ function App(){
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
-</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
+</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='collection'?<RepeatingCollection field={f}
+ value={character?.field_values?.[f.id]||[]} sheetValues={character?.field_values||{}}
+ onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <button type="button" disabled={busy} onClick={saveTemplate}>Save template</button>
@@ -814,6 +817,10 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  }
  function createField(){
   const type=fieldType;
+  if(type==='collection'){
+   changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push(makeBlankCollection()));
+   return;
+  }
   changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({
    id:'field_'+uid().slice(0,8),
    label:type==='resource'?'Hit Points':'New '+type,type,span:type==='resource'?2:1,
@@ -831,12 +838,15 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
    <select aria-label="New field type" value={fieldType} onChange={e=>setFieldType(e.target.value)}>
     <option value="text">Text</option><option value="number">Number</option>
     <option value="resource">Resource (Current / Maximum)</option>
+    <option value="collection">Repeating Collection (spellbooks, abilities…)</option>
     <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
     <option value="roll">Dice button</option><option value="inventory">Inventory</option>
    </select>
-   <button onClick={createField}>+ Add field</button>
+   <button type="button" onClick={createField}>+ Add field</button>
+   <button type="button" className="secondary" onClick={()=>changeTemplate(x=>
+    x.tabs.find(y=>y.id===t.id).fields.push(makeSpellbookField()))}>+ Spellbook preset</button>
   </div>
-  <p className="muted small">Resource fields keep Current and Maximum together. Link one to a token bar in a single click, without entering field IDs.</p>
+  <p className="muted small">Create ordinary fields, Current/Maximum resources, or repeating collections with nested controls. Choose the Spellbook preset for level tabs, spell entries, detail panels, and roll buttons.</p>
   {linkMessage&&<div className="designer-feedback" role="status">{linkMessage}</div>}
   <div className="designer-grid">{t.fields.map((f,i)=>
    <div className="designfield" key={f.id}
@@ -870,6 +880,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
      <label>Field type<select value={f.type} onChange={e=>update(f.id,'type',e.target.value)}>
       <option value="text">Text</option><option value="number">Number</option>
       <option value="resource">Resource (Current / Maximum)</option>
+      <option value="collection">Repeating Collection</option>
       <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
       <option value="roll">Dice button</option><option value="inventory">Inventory</option>
      </select></label>
@@ -877,6 +888,11 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       const tab=x.tabs.find(y=>y.id===t.id);tab.fields=tab.fields.filter(y=>y.id!==f.id);
      })}>Delete</button>
     </div>
+    {f.type==='collection'&&<CollectionDesigner field={f}
+      onChange={next=>changeTemplate(x=>{
+       const child=x.tabs.find(y=>y.id===t.id).fields.find(y=>y.id===f.id);
+       if(child)Object.assign(child,next);
+      })}/>}
     {f.type==='resource'&&<>
      <div className="resource-designer-explainer">Two values in one field: <strong>Current / Maximum</strong>.
       <span>Example: {f.label||'Hit Points'} 15 / 22</span></div>
