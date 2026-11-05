@@ -10,17 +10,21 @@ function Items({field,value,onChange}){
   <button className="secondary" onClick={()=>onChange([...rows,{}])}>+ Item</button>
  </div>;
 }
-export default function NpcEditor({db,campaignId,userId,record,template,onSave,onClose,onRoll}){
+export default function NpcEditor({db,campaignId,userId,record,template,onSave,onSaveAsTemplate,onClose,onRoll}){
  const [draft,setDraft]=useState(()=>({
   name:record.data.name,
   values:structuredClone(record.kind==='template'?record.data.field_values||{}:record.data.npc_values||{}),
   portraitPath:record.kind==='template'?record.data.portrait_path||null:null,
   tokenPath:record.kind==='template'?record.data.token_path||null:record.data.image_path||null
  }));
- const[t,setT]=useState(template?.tabs?.[0]?.id||'main'),[studio,setStudio]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState('');
+ const[t,setT]=useState(template?.tabs?.[0]?.id||'main'),[studio,setStudio]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const current=template?.tabs?.find(x=>x.id===t)||template?.tabs?.[0];const title=record.kind==='template'?'Bestiary template':'NPC token sheet';
  function setField(id,v){setDraft(d=>({...d,name:id==='character_name'?String(v):d.name,values:{...d.values,[id]:v}}))}
  async function save(){setSaving(true);setError('');try{await onSave(draft);onClose()}catch(e){setError(e?.message||String(e))}finally{setSaving(false)}}
+ async function saveToBestiary(){setSaving(true);setNotice('');setError('');
+  try{await onSaveAsTemplate(draft);setNotice('Saved a reusable copy in your Bestiary.')}
+  catch(e){setError(e?.message||String(e))}finally{setSaving(false)}
+ }
  function close(){if(!confirm('Close NPC sheet? Unsaved changes will be lost.'))return;onClose()}
  const doRoll=(field)=>{
   const formula=(field.formula||'1d20').replace(/@\{([a-z0-9_-]+)\}/gi,(raw,key)=>{
@@ -47,7 +51,8 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
  </div>)}
  </div>
  {error&&<p className="error">{error}</p>}
- <div className="actions"><button className="secondary" onClick={close}>Cancel</button><button onClick={save} disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save NPC sheet'}</button></div>
+ {notice&&<p className="good">{notice}</p>}
+ <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button onClick={save} disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save NPC sheet'}</button></div>
  </section>
  {studio&&<TokenStudio db={db} campaignId={campaignId} userId={userId} mode="npcs" onClose={()=>setStudio(false)} onSave={assets=>{setDraft(d=>({...d,portraitPath:assets.portraitPath,tokenPath:assets.tokenPath}))}}/>}
  </div>;
