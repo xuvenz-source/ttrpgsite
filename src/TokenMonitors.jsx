@@ -29,12 +29,13 @@ function number(value){
  const n=Number(value);
  return Number.isFinite(n)?n:null;
 }
-export function TokenMonitors({config,fields,preview=false}){
+export function TokenMonitors({config,fields,preview=false,zoom=1}){
  const settings=normalizeConfig(config);
  if(!preview&&!fields)return null;
  const data=fields||{hp:14,hp_max:22,ac:16,elevation:25};
  const counters={};
- return <div className="token-monitor-layer" aria-hidden="true">
+ return <div className="token-monitor-layer" aria-hidden="true"
+  style={{'--overlay-scale':Math.max(.45,Math.min(1.2,Number(zoom)||1))}}>
   {settings.widgets.map((w,i)=>{
    const kind=w.type==='globe'?'globe':'bar';
    const position=POSITIONS[w.position]?w.position:(kind==='bar'?'top':'bottom-right');
