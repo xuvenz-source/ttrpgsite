@@ -97,3 +97,91 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .npc-editor-top{flex-wrap:wrap}
  .modal{padding:14px}
 }
+
+
+/* v0.3: The canvas image itself owns its chosen ring. No default border on tokens. */
+.token,
+.token.token-image{
+ border:0!important;
+ border-radius:0!important;
+ background:transparent!important;
+ padding:0!important;
+ overflow:visible!important;
+ user-select:none;
+ touch-action:none;
+ z-index:2;
+}
+.token.token-selected{z-index:5}
+.token .token-art,
+.token-image .token-art,
+.token-image .art-fallback{
+ width:100%;
+ height:100%;
+ border:0!important;
+ border-radius:0!important;
+ object-fit:contain!important;
+ background:transparent;
+ pointer-events:none;
+ display:block;
+}
+.token .token-placeholder{
+ display:grid;
+ place-items:center;
+ width:100%;
+ height:100%;
+ border:0;
+ border-radius:50%;
+ background:#30415ce5;
+ color:#e8eefb;
+ font-size:clamp(10px,1.4vw,18px);
+ font-weight:800;
+ overflow:hidden;
+}
+.token-selected::after{
+ position:absolute;
+ content:'';
+ inset:-3px;
+ border:1px dashed #92d6ff;
+ border-radius:8px;
+ box-shadow:0 0 0 1px #0d152c88;
+ pointer-events:none;
+}
+.token-resize-handle{
+ position:absolute;
+ right:-10px;
+ bottom:-10px;
+ width:22px;
+ height:22px;
+ z-index:15;
+ display:grid;
+ place-items:center;
+ background:#a28aff;
+ border:2px solid #e5deff;
+ border-radius:6px;
+ color:#17112b;
+ font-size:16px;
+ cursor:nwse-resize;
+ line-height:1;
+ touch-action:none;
+ user-select:none;
+}
+.token-resize-handle:hover{background:#c4b5ff}
+.token-selection-toolbar{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ flex-wrap:wrap;
+ border-radius:8px;
+ padding:7px 10px;
+ margin-bottom:7px;
+ background:#232d41;
+ border:1px solid #394b65;
+ flex:0 0 auto;
+}
+.token-selection-toolbar strong{font-size:12px}
+.token-selection-toolbar label{display:flex;align-items:center;flex-direction:row;gap:7px}
+.token-selection-toolbar select{width:auto;min-width:145px;padding:5px 8px}
+.mapscroll:focus{outline:none}
+.tokenX{display:none!important}
+.studio-preview{background:repeating-conic-gradient(#343c4b 0% 25%,#273142 0% 50%) 50%/20px 20px}
+.studio-preview canvas{display:block}
