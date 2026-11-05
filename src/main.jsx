@@ -313,7 +313,7 @@ function App(){
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
- campaignName={camp?.name||''}
+ campaignName={camp?.name||''} campaignTokenDisplay={camp?.token_display_config}
  activeCampaignId={activeId} campaignList={campaigns}
  hasCampaign={!!camp} onSelectCampaign={id=>{setActiveId(id);setTab('tabletop')}}
  createCampaignName={createName} onCreateCampaignNameChange={setCreateName} onCreateCampaign={create}
