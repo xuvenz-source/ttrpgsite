@@ -61,10 +61,9 @@ function parts(type,value){
  return {current:value??'',max:''};
 }
 function validNumber(n){return n!==''&&Number.isFinite(Number(n))&&Number(n)>=-1000000&&Number(n)<=1000000}
-export default function TokenQuickEdit({db,token,template,allowedFields,onClose,onSaved}){
+export default function TokenQuickEdit({db,token,template,allowedFields,onClose,onApply}){
  const fields=useMemo(()=>editableFields(template).filter(f=>(allowedFields||[]).includes(f.id)),[template,allowedFields]);
- const [values,setValues]=useState({}),[saved,setSaved]=useState({}),[loading,setLoading]=useState(true),
-  [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
+ const [values,setValues]=useState({}),[saved,setSaved]=useState({}),[loading,setLoading]=useState(true),[error,setError]=useState('');
  useEffect(()=>{
   let live=true;setLoading(true);setError('');setNotice('');
   db.rpc('get_token_quick_values',{p_token:token.id}).then(({data,error})=>{
@@ -79,7 +78,7 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
   return()=>{live=false};
  },[token.id,db,template,allowedFields]);
  function change(id,part,value){
-  setNotice('');setValues(v=>({...v,[id]:{...v[id],[part]:value}}));
+  setValues(v=>({...v,[id]:{...v[id],[part]:value}}));
  }
  const changes=fields.flatMap(f=>{
   const changed=[];
@@ -93,36 +92,26 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
   const next=(Number(raw)||0)+amount;
   change(field.id,'current',String(Math.max(-1000000,Math.min(1000000,next))));
  }
- async function save(){
-  if(!changes.length||busy)return;
+ function save(){
+  if(!changes.length)return;
   if(changes.some(c=>!validNumber(c.value))){
    setError('Enter a number between -1,000,000 and 1,000,000.');return;
   }
-  setBusy(true);setError('');setNotice('');
+  const payload={};
+  for(const item of changes){
+   if(!payload[item.field.id])payload[item.field.id]={};
+   payload[item.field.id][item.part]=Number(item.value);
+  }
   try{
-   for(const item of changes){
-    const {error}=await db.rpc('set_token_quick_value',{
-     p_token:token.id,p_field:item.field.id,p_part:item.part,p_value:Number(item.value)
-    });
-    if(error)throw error;
-   }
-   await onSaved?.(token.id);
-   onClose();
-  }catch(e){
-   setError(e?.message||String(e));
-   // Reload after a partially successful multi-field update.
-   const {data,error}=await db.rpc('get_token_quick_values',{p_token:token.id});
-   if(!error){
-    const vals=Object.fromEntries(fields.map(f=>[f.id,parts(f.type,data?.[f.id])]));
-    setSaved(vals);setValues(vals);
-   }
-  }finally{setBusy(false)}
+   // The parent paints the new values synchronously and queues a single atomic save.
+   if(onApply(token,payload)!==false)onClose();
+  }catch(e){setError(e?.message||String(e))}
  }
- return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&!busy&&onClose()}>
+ return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
   <section className="modal quick-token-modal" role="dialog" aria-modal="true" aria-label={'Quick edit '+token.name}>
    <div className="heading">
     <div><h2>{token.name} · Quick Adjust</h2><p className="muted small">Edit permitted values without opening the full character sheet.</p></div>
-    <button type="button" className="secondary" disabled={busy} onClick={onClose}>✕</button>
+    <button type="button" className="secondary" onClick={onClose}>✕</button>
    </div>
    {loading?<p className="muted">Loading attributes…</p>:fields.length===0?
     <p className="muted">No quick-adjust fields enabled. Ask your DM to configure them in Settings.</p>:
@@ -131,7 +120,7 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
      return <div className="quick-token-field" key={f.id}>
       <strong>{f.label}</strong>
       <div className="quick-token-numbers">
-       <label>Current<input type="number" step="any" disabled={busy} value={value.current}
+       <label>Current<input type="number" step="any" value={value.current}
         onChange={e=>change(f.id,'current',e.target.value)}/></label>
        {f.type==='resource'&&<label>Maximum<input type="number" step="any" disabled={busy}
         value={value.max} onChange={e=>change(f.id,'max',e.target.value)}/></label>}
@@ -143,10 +132,9 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
      </div>;
     })}</div>}
    {error&&<p className="error small" role="alert">{error}</p>}
-   {notice&&<p className="good small">{notice}</p>}
    <div className="actions">
-    <button type="button" className="secondary" disabled={busy} onClick={onClose}>Cancel</button>
-    <button type="button" onClick={save} disabled={busy||loading||changes.length===0}>{busy?'Saving…':'Apply changes'}</button>
+    <button type="button" className="secondary" onClick={onClose}>Cancel</button>
+    <button type="button" onClick={save} disabled={loading||changes.length===0}>Apply changes</button>
    </div>
   </section>
  </div>;
