@@ -7,10 +7,24 @@ import {QuickFieldsSettings} from './TokenQuickEdit.jsx';
 import Bestiary from './Bestiary.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+function BearFaceIcon(){
+ return <svg className="bestiary-bear-icon" width="20" height="20" viewBox="0 0 24 24"
+  xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bear face"
+  stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none">
+  <circle cx="5.7" cy="6.3" r="3.1"/>
+  <circle cx="18.3" cy="6.3" r="3.1"/>
+  <path d="M5.3 8.4C6.3 5.2 9 4.1 12 4.1s5.7 1.1 6.7 4.3c1.4 2.2 1.8 5.1.9 7.4-.8 2.8-3.3 4.7-7.6 4.7s-6.8-1.9-7.6-4.7c-.9-2.3-.5-5.2.9-7.4Z"/>
+  <circle cx="8.9" cy="11.2" r=".95" fill="currentColor" stroke="none"/>
+  <circle cx="15.1" cy="11.2" r=".95" fill="currentColor" stroke="none"/>
+  <ellipse cx="12" cy="15.2" rx="3.2" ry="2.4" strokeWidth="1.2"/>
+  <path d="m10.65 14.2 1.35 1 1.35-1Z" fill="currentColor" strokeWidth=".7"/>
+  <path d="M12 15.3v1.2m0 0-1.2.6m1.2-.6 1.2.6" strokeWidth="1.2"/>
+ </svg>;
+}
 const tabs=[
  {id:'chat',label:'Chat',icon:'💬'},
  {id:'units',label:'Units',icon:'♟'},
- {id:'bestiary',label:'Bestiary',icon:'🐉'},
+ {id:'bestiary',label:'Bestiary',icon:'bear'},
  {id:'settings',label:'Settings',icon:'⚙'},
  {id:'dm',label:'DM',icon:'🛠'}
 ];
@@ -138,7 +152,7 @@ export default function TabletopSidebar({
    {tabs.filter(t=>isDM||!['bestiary','dm'].includes(t.id)).map(t=><button key={t.id} type="button" role="tab"
      aria-selected={validPanel===t.id} className={validPanel===t.id?'selected':''}
      onClick={()=>onPanelChange(t.id)} title={t.label}>
-    <span aria-hidden="true" className="tab-glyph">{t.icon}</span><span>{t.label}</span>
+    <span aria-hidden="true" className="tab-glyph">{t.icon==='bear'?<BearFaceIcon/>:t.icon}</span><span>{t.label}</span>
    </button>)}
   </nav>
   {validPanel==='chat'&&<>
