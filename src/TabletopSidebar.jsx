@@ -1,6 +1,7 @@
 import React,{useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
 import MapCalibration from './MapCalibration.jsx';
+import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
 import Bestiary from './Bestiary.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -125,8 +126,8 @@ export default function TabletopSidebar({
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
- mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
- campaignName,activeCampaignId,campaignList,onSelectCampaign,
+ mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,template,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
+ campaignName,campaignTokenDisplay,activeCampaignId,campaignList,onSelectCampaign,
  createCampaignName,onCreateCampaignNameChange,onCreateCampaign,
  inviteCode,onInviteCodeChange,onJoinCampaign,accountEmail,onSignOut,hasCampaign
 }){
@@ -222,6 +223,13 @@ export default function TabletopSidebar({
      <p className="muted small">{activeMap?.id===publishedMapId?'● Current map is live to players':'This map is not yet published to players.'}</p>
      <button disabled={!activeMap||activeMap.id===publishedMapId} onClick={()=>onPublishMap(selectedMap)}>Publish selected map to players</button>
      <button className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
+     <div className="side-divider"/>
+     <h3>Token appearance and resources</h3>
+     <details className="side-details token-designer-details">
+      <summary>Token Display Designer</summary>
+      <TokenDisplayDesigner campaign={{id:activeCampaignId,token_display_config:campaignTokenDisplay}}
+       template={template} onSave={onSaveTokenDisplay}/>
+     </details>
      <div className="side-divider"/>
      <h3>Sheet configuration</h3>
      <button className="secondary" onClick={()=>onNavigate('designer')}>Open sheet designer</button>
