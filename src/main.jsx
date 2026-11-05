@@ -125,6 +125,30 @@ function App(){
    await refreshTokens();
   }catch(e){fail(e)}
  }
+ async function placeCharacterOnMap(characterId,x,y){
+  const ch=characters.find(c=>c.id===characterId);
+  if(!ch||!selectedMap||!activeId)return;
+  if(!isDM&&ch.user_id!==user){fail('You can only place your own character.');return}
+  if(!isDM&&camp?.active_map_id!==selectedMap){
+   fail('The DM needs to publish this map before players can place tokens.');return;
+  }
+  try{
+   const created=await read(db.from('map_tokens').insert({
+    campaign_id:activeId,map_id:selectedMap,character_id:ch.id,
+    owner_id:ch.user_id,name:ch.name||'Character',image_path:ch.token_path||null,
+    x,y
+   }).select('id').single());
+   await refreshTokens();
+   setSelectedTokenId(created.id);
+  }catch(e){fail(e)}
+ }
+ async function dropExistingUnit(tokenId,x,y){
+  const t=tokens.find(t=>t.id===tokenId);
+  if(!t||t.map_id!==selectedMap)return;
+  if(!isDM&&t.owner_id!==user){fail('You cannot move a token you do not control.');return}
+  if(t.x!==x||t.y!==y)await moveToken(t,x,y);
+  setSelectedTokenId(t.id);
+ }
  async function savePlayerArtwork(art){
   if(!character)throw Error('Character sheet is not ready');
   const changed=await read(db.from('characters').update({
@@ -206,7 +230,8 @@ function App(){
  {tab==='tabletop'&&<section className="panel tabletop-panel map-only-panel">
   {activeMap?<Board db={db} map={activeMap} url={urls[activeMap.id]} tokens={tokens}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
-   onNpcDrop={placeNpc} onTokenEdit={openTokenSheet} resize={resizeToken}
+   onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
+   onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}/>
   :<div className="empty-tabletop">
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
@@ -268,7 +293,7 @@ function Designer({template,tabId,changeTemplate}){const t=template?.tabs.find(x
  return <><div className="tools"><input aria-label="Tab name" value={t.name} onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/><button className="secondary" onClick={()=>{if(template.tabs.length<2)return alert('Keep at least one tab');if(confirm('Delete tab and its fields?'))changeTemplate(x=>x.tabs=x.tabs.filter(y=>y.id!==t.id))}}>Delete tab</button><select id="newfieldtype" defaultValue="text"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Notes</option><option value="checkbox">Checkbox</option><option value="roll">Dice button</option><option value="inventory">Inventory</option></select><button onClick={()=>{const type=document.getElementById('newfieldtype').value;changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({id:'field_'+uid().slice(0,8),label:'New '+type,type,span:1,...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})}))}}>+ Add field</button></div><div className="designer-grid">{t.fields.map((f,i)=><div className="designfield" draggable onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;changeTemplate(x=>{const a=x.tabs.find(y=>y.id===t.id).fields;a.splice(i,0,a.splice(from,1)[0])});drag.current=null}} key={f.id}><span className="muted">⠿ Drag to reorder</span><label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label><div className="tools"><label>Width <select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}><option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option></select></label><span className="muted">{f.type}</span><button className="secondary" onClick={()=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields=x.tabs.find(y=>y.id===t.id).fields.filter(y=>y.id!==f.id))}>Delete</button></div>{f.type==='roll'&&<label>Dice formula<input value={f.formula||''} onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}{f.type==='inventory'&&<label>Columns (comma separated)<input value={(f.columns||[]).join(', ')} onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}</div>)}</div></>}
 
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId}){
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
@@ -330,9 +355,24 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onToken
   };
  };
  const snapSize=(v)=>Math.max(.25,Math.min(12,Math.round(v*4)/4));
- function dropNpc(e){e.preventDefault();if(!isDM)return;
-  const npcId=e.dataTransfer.getData('application/x-forge-npc');
-  if(npcId){const p=pos(e);onNpcDrop(npcId,p.x,p.y)}
+ function dropOnMap(e){
+  const kinds=['application/x-forge-character','application/x-forge-unit','application/x-forge-npc'];
+  const match=kinds.find(k=>e.dataTransfer.types.includes(k));
+  if(!match)return;
+  e.preventDefault();
+  const id=e.dataTransfer.getData(match);
+  if(!id)return;
+  const p=pos(e);
+  if(match==='application/x-forge-character')onCharacterDrop(id,p.x,p.y);
+  else if(match==='application/x-forge-unit')onUnitDrop(id,p.x,p.y);
+  else if(isDM)onNpcDrop(id,p.x,p.y);
+ }
+ function allowMapDrop(e){
+  const types=e.dataTransfer.types;
+  const allowed=types.includes('application/x-forge-character')||
+    types.includes('application/x-forge-unit')||
+    (isDM&&types.includes('application/x-forge-npc'));
+  if(allowed)e.preventDefault();
  }
  function startPan(e){
   if(e.button!==0||e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
@@ -363,8 +403,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onToken
     onPointerCancel={endPan} onLostPointerCapture={endPan}>
    <div ref={boardRef} className="board"
     onPointerDown={e=>{if(e.target===e.currentTarget||e.target.classList.contains('gridlines'))setSelectedId(null)}}
-    onDragOver={e=>{if(isDM)e.preventDefault()}}
-    onDrop={dropNpc}
+    onDragOver={allowMapDrop}
+    onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {tokens.filter(t=>isDM||t.visible).map(t=>{
