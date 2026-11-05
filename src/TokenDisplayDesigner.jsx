@@ -38,6 +38,7 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
  return <div className="token-designer">
   <div className="side-heading"><h2>Token Display Designer</h2></div>
   <p className="muted small">Configure the bars and globes for every token in this campaign. Resources bind to numeric fields on the character sheet. NPC values come from each placed NPC's sheet.</p>
+  <p className="muted tiny">If a monitor shows —, its value is missing. Add a matching Number field in Sheet Designer (for example hp, hp_max, ac, or elevation), then enter a value on the player or NPC sheet.</p>
   <div className="token-visibility-controls">
    <label>Player monitors visible to
     <select value={config.playerVisibility} onChange={e=>setConfig(c=>({...c,playerVisibility:e.target.value}))}>
