@@ -186,14 +186,42 @@ function App(){
  if(!authReady)return <div className="center">Loading…</div>;
  if(!session)return <div className="auth center"><h1>⚔ Tabletop Forge</h1><p>Campaigns, character sheets, battlemaps and dice — one table.</p><form onSubmit={async e=>{e.preventDefault();try{await read(db.auth.signInWithOtp({email,emailRedirectTo:location.origin}));setSent(true)}catch(err){fail(err)}}}><label>Email address<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label><button>Send sign-in link</button></form>{sent&&<p>Check your email for the sign-in link.</p>}{error&&<p className="error">{error}</p>}</div>;
  return <div className={'app '+(sidebarOpen?'':'collapsed')}>
- <aside className="sidebar"><div className="brand">⚔ Tabletop Forge</div><div className="muted small">Signed in as {session.user.email}</div>
- <h3>Campaigns</h3>{campaigns.map(c=><button className={'nav '+(activeId===c.id?'active':'')} key={c.id} onClick={()=>setActiveId(c.id)}>{c.name} {roles[c.id]==='dm'?'★':''}</button>)}
- <form onSubmit={create} className="stack"><input required maxLength={100} placeholder="New campaign name" value={createName} onChange={e=>setCreateName(e.target.value)}/><button disabled={busy}>+ Create campaign</button></form>
- <form onSubmit={join} className="stack"><input required placeholder="Invitation code" value={joinCode} onChange={e=>setJoinCode(e.target.value)}/><button disabled={busy} className="secondary">Join campaign</button></form>
- <button className="secondary logout" onClick={()=>db.auth.signOut()}>Sign out</button></aside>
- <main><header><div className="header-title"><button className="secondary menu-toggle" aria-label={sidebarOpen?'Hide campaigns':'Show campaigns'} title={sidebarOpen?'Hide campaigns':'Show campaigns'} onClick={()=>setSidebarOpen(x=>!x)}>☰</button><div><h1>{camp?.name||'Select or create a campaign'}</h1>{camp&&<span className="muted">{isDM?'Game master':'Player'} · {members.length} member(s)</span>}</div></div></header>
+ <aside className="sidebar" aria-label="Campaign and page navigation">
+  <button type="button" className="rail-menu-toggle" aria-label={sidebarOpen?'Collapse campaign menu':'Expand campaign menu'}
+   aria-expanded={sidebarOpen} title={sidebarOpen?'Collapse sidebar':'Open sidebar'}
+   onClick={()=>setSidebarOpen(value=>!value)}>☰</button>
+  <div className="sidebar-inner">
+   <div className="brand">⚔ Tabletop Forge</div>
+   <div className="muted small sidebar-account">{session.user.email}</div>
+   <h3>Campaigns</h3>
+   {campaigns.map(c=><button type="button" className={'nav campaign-nav '+(activeId===c.id?'active':'')} key={c.id}
+     onClick={()=>{setActiveId(c.id);setSidebarOpen(false)}}>
+     <span className="campaign-nav-name">{c.name} {roles[c.id]==='dm'?'★':''}</span>
+     {activeId===c.id&&<span className="muted tiny">{isDM?'Game master':'Player'} · {members.length} member(s)</span>}
+    </button>)}
+   {camp&&<div className="sidebar-pages">
+    <h3>Campaign pages</h3>
+    {campaignTabs.map(page=><button type="button" key={page}
+     className={'nav sidebar-page '+(tab===page?'active':'')}
+     onClick={()=>{setTab(page);setSidebarOpen(false)}}>
+     {page==='sheet'?'▤ Character sheet':page==='designer'?'▦ Sheet designer':page==='maps'?'▧ Map library':'▥ Tabletop'}
+    </button>)}
+   </div>}
+   <div className="sidebar-divider"/>
+   <form onSubmit={create} className="stack">
+    <input required maxLength={100} placeholder="New campaign name" value={createName} onChange={e=>setCreateName(e.target.value)}/>
+    <button disabled={busy}>+ Create campaign</button>
+   </form>
+   <form onSubmit={join} className="stack">
+    <input required placeholder="Invitation code" value={joinCode} onChange={e=>setJoinCode(e.target.value)}/>
+    <button disabled={busy} className="secondary">Join campaign</button>
+   </form>
+   <button className="secondary logout" onClick={()=>db.auth.signOut()}>Sign out</button>
+  </div>
+ </aside>
+ <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
- {camp&&<><div className="tabs">{campaignTabs.map(t=><button key={t} className={tab===t?'selected':''} onClick={()=>setTab(t)}>{t==='sheet'?'Character sheet':t==='designer'?'Sheet designer':t==='maps'?'Map library':'Tabletop'}</button>)}</div>
+ {camp&&<>
  <div className="workarea"><div className="primary">
  {tab==='sheet'&&<section className="panel page-panel"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
