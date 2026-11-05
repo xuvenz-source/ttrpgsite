@@ -10,6 +10,7 @@ import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
+import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -30,6 +31,10 @@ function App(){
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
+ const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
+ const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
+ const[hotbarVisible,setHotbarVisible]=useState(true);
+ const movementPending=useRef(new Map()),movementChains=useRef(new Map()),lastKeyboardMove=useRef(0);
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const activeMap=maps.find(x=>x.id===selectedMap);
@@ -189,6 +194,29 @@ function App(){
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+ useEffect(()=>{
+  if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);return}
+  let alive=true;
+  db.from('tabletop_user_preferences').select('bindings,hotbar_visible').eq('user_id',user).maybeSingle()
+   .then(({data,error})=>{
+    if(!alive)return;
+    if(error){console.error('Could not load keybindings',error);return}
+    setBindings(normalizeBindings(data?.bindings||DEFAULT_BINDINGS));
+    setHotbarVisible(data?.hotbar_visible!==false);
+   });
+  return()=>{alive=false};
+ },[user]);
+ useEffect(()=>{
+  if(!db||!user||!activeId){setHotbarSlots(normaliseHotbar([]));return}
+  let alive=true;setHotbarSlots(normaliseHotbar([]));
+  db.from('tabletop_hotbars').select('slots').eq('user_id',user).eq('campaign_id',activeId).maybeSingle()
+   .then(({data,error})=>{
+    if(!alive)return;
+    if(error){console.error('Could not load hotbar',error);return}
+    setHotbarSlots(normaliseHotbar(data?.slots));
+   });
+  return()=>{alive=false};
+ },[user,activeId]);
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId,
   select:['id','campaign_id','map_id','updated_at']},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
@@ -197,6 +225,26 @@ function App(){
  useEffect(()=>{refreshTokens();refreshMonitors()},[selectedMap,activeId,user]);
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
  useEffect(()=>()=>clearTimeout(saveTimer.current),[]);
+ async function saveMyKeybindings(next){
+  if(!user)throw Error('Sign in to save your keybindings.');
+  const cleaned=normalizeBindings(next);
+  await read(db.from('tabletop_user_preferences')
+   .upsert({user_id:user,bindings:cleaned,hotbar_visible:hotbarVisible},{onConflict:'user_id'}));
+  setBindings(cleaned);
+ }
+ async function changeHotbarVisibility(visible){
+  if(!user)return;
+  await read(db.from('tabletop_user_preferences')
+   .upsert({user_id:user,bindings,hotbar_visible:visible},{onConflict:'user_id'}));
+  setHotbarVisible(visible);
+ }
+ async function saveMyHotbar(slots){
+  if(!user||!activeId)throw Error('Join a campaign before saving a hotbar.');
+  const cleaned=normaliseHotbar(slots);
+  await read(db.from('tabletop_hotbars')
+   .upsert({user_id:user,campaign_id:activeId,slots:cleaned},{onConflict:'user_id,campaign_id'}));
+  setHotbarSlots(cleaned);
+ }
  async function create(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('create_campaign',{p_name:createName.trim()}));setCreateName('');await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
  async function join(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('join_campaign',{p_invite_code:joinCode.trim().toLowerCase()}));setJoinCode('');history.replaceState({},'',location.pathname);await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
  function updateField(id,value){if(!character)return;const next={...character,field_values:{...character.field_values,[id]:value}};if(id==='character_name')next.name=String(value||'New Character');setCharacter(next);setSaveState('Saving…');clearTimeout(saveTimer.current);saveTimer.current=setTimeout(async()=>{try{await read(db.from('characters').update({field_values:next.field_values,name:next.name}).eq('id',next.id));setSaveState('Saved')}catch(e){setSaveState('Save failed');fail(e)}},600)}
