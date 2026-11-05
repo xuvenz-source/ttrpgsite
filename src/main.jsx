@@ -253,8 +253,14 @@ function App(){
    // Merge the latest local destination until its database write is confirmed.
    setTokens(rows.map(token=>{
     const pending=movementPending.current.get(token.id);
-    return pending&&pending.mapId===mapId&&pending.campaignId===campaignId
-     ?{...token,x:pending.x,y:pending.y}:token;
+    if(!pending||pending.mapId!==mapId||pending.campaignId!==campaignId)return token;
+    // Keep the destination visible even after write acknowledgement: a lagged
+    // database read must not resurrect an older tile for a single frame.
+    if(pending.confirmed&&Number(token.x)===pending.x&&Number(token.y)===pending.y){
+     movementPending.current.delete(token.id);
+     return token;
+    }
+    return {...token,x:pending.x,y:pending.y};
    }));
   }catch(e){
    if(request===tokenRefreshSeq.current)fail(e);
@@ -291,6 +297,10 @@ function App(){
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
+ useEffect(()=>{
+  movementPending.current.clear();
+  ++tokenRefreshSeq.current;
+ },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors()},[selectedMap,activeId,user]);
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
 
@@ -598,11 +608,11 @@ function App(){
   let pending=movementPending.current.get(id);
   if(!pending||pending.mapId!==selectedMap||pending.campaignId!==activeId){
    pending={mapId:selectedMap,campaignId:activeId,
-    x:Number(token.x),y:Number(token.y),saving:false};
+    x:Number(token.x),y:Number(token.y),saving:false,confirmed:false};
    movementPending.current.set(id,pending);
   }
   if(pending.x===x&&pending.y===y)return;
-  pending.x=x;pending.y=y;
+  pending.x=x;pending.y=y;pending.confirmed=false;
   // Immediate feedback: moving a token never waits for a database round trip.
   setTokens(rows=>rows.map(t=>t.id===id?{...t,x,y}:t));
   if(!pending.saving)void flushTokenMove(id,pending);
@@ -621,9 +631,9 @@ function App(){
     if(error)throw error;
     if(!data)throw Error('Movement was not permitted for this token.');
     if(pending.x!==x||pending.y!==y)continue;
-    // The newest position is now confirmed; invalidate older server reads
-    // before releasing the optimistic overlay.
-    movementPending.current.delete(id);
+    // Server acknowledged the destination; keep drawing it until a fresh
+    // authoritative snapshot actually contains it (no post-ack rubberband).
+    pending.confirmed=true;
     ++tokenRefreshSeq.current;
     if(tokenContextRef.current.mapId===pending.mapId&&
        tokenContextRef.current.campaignId===pending.campaignId){
