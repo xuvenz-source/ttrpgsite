@@ -224,6 +224,37 @@ function App(){
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
  useEffect(()=>{refreshTokens();refreshMonitors()},[selectedMap,activeId,user]);
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
+
+ useEffect(()=>{
+  if(!user||!camp||tab!=='tabletop')return;
+  function onKey(e){
+   if(e.defaultPrevented||e.ctrlKey||e.altKey||e.metaKey||e.shiftKey||e.isComposing)return;
+   if(document.querySelector('.modal-backdrop')||isInputFocused(e.target))return;
+   if(e.target instanceof Element&&e.target.closest('.keybind-editor,.hotbar-editor'))return;
+   const action=lookupAction(bindings,e.code);
+   if(!action)return;
+   const isMove=['up','down','left','right'].includes(action);
+   if(e.repeat&&!isMove)return;
+   if(isMove){
+    if(!selectedToken||(!isDM&&selectedToken.owner_id!==user))return;
+    if(e.repeat&&performance.now()-lastKeyboardMove.current<115){e.preventDefault();return}
+    lastKeyboardMove.current=performance.now();
+    e.preventDefault();
+    const delta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[action];
+    moveSelectedByKey(delta[0],delta[1]);
+   }else if(action==='sheet'){
+    e.preventDefault();
+    if(isDM&&selectedToken)openTokenSheet(selectedToken);
+    else setTab('sheet');
+   }else if(action==='hotbar'){
+    e.preventDefault();changeHotbarVisibility(!hotbarVisible).catch(fail);
+   }else if(action.startsWith('slot')){
+    e.preventDefault();useHotbarSlot(Number(action.slice(4))-1);
+   }
+  }
+  document.addEventListener('keydown',onKey);
+  return()=>document.removeEventListener('keydown',onKey);
+ },[user,activeId,selectedMap,tab,camp,bindings,hotbarSlots,hotbarVisible,selectedTokenId,tokens,isDM,character]);
  useEffect(()=>()=>clearTimeout(saveTimer.current),[]);
  async function saveMyKeybindings(next){
   if(!user)throw Error('Sign in to save your keybindings.');
@@ -315,6 +346,71 @@ function App(){
    image_path:ch?.token_path||null,x:1,y:1
   }));refreshTokens();
  }catch(e){fail(e)}}
+
+ async function useHotbarSlot(index){
+  const slot=hotbarSlots[index],command=slot?.command?.trim();
+  if(!command)return setRightTab('settings');
+  if(!activeId||!camp)return;
+  try{
+   const applyFields=expression=>expression.replace(/@\{([A-Za-z0-9_-]+)\}/g,(_,field)=>{
+    const value=character?.field_values?.[field];
+    const scalar=value&&typeof value==='object'?value.current:value;
+    return /^-?\d+(\.\d+)?$/.test(String(scalar??''))?String(scalar):'0';
+   });
+   const dice=command.match(/^\/(?:roll|r)\s+([\s\S]+)$/i);
+   const macro=command.match(/^\/macro\s+(.+)$/i);
+   const say=command.match(/^\/(em|say)\s+([\s\S]+)$/i);
+   if(dice){
+    await roll(applyFields(dice[1]),slot.label||'Hotbar roll');return;
+   }
+   if(macro){
+    const target=camp.sheet_template?.tabs?.flatMap(t=>t.fields||[])
+     .find(field=>field.type==='roll'&&field.label.trim().toLowerCase()===macro[1].trim().toLowerCase());
+    if(!target)throw Error('Cannot find sheet macro "'+macro[1]+'". Check its name in Sheet Designer.');
+    await roll(applyFields(target.formula||'1d20'),target.label);return;
+   }
+   if(say){
+    const message=say[2].trim();
+    if(!message)return;
+    await read(db.from('chat_messages').insert({campaign_id:activeId,user_id:user,
+     body:say[1].toLowerCase()==='em'?'*'+message+'*':message}));
+    await refreshChat();return;
+   }
+   throw Error('Unsupported hotbar command. Use /roll, /macro, /em or /say.');
+  }catch(e){fail(e)}
+ }
+ function moveSelectedByKey(dx,dy){
+  const token=selectedToken;
+  if(!token||!activeMap||!camp||!user)return;
+  if(!isDM&&(token.owner_id!==user||camp.active_map_id!==activeMap.id))return;
+  const last=movementPending.current.get(token.id)||{x:Number(token.x),y:Number(token.y)};
+  const grid=Number(activeMap.grid_size)||70;
+  const boundX=Math.max(0,Math.min(1000,Math.floor(Number(activeMap.width)/grid-Number(token.span_x??1))));
+  const boundY=Math.max(0,Math.min(1000,Math.floor(Number(activeMap.height)/grid-Number(token.span_y??1))));
+  const x=Math.max(0,Math.min(boundX,Math.round(last.x)+dx));
+  const y=Math.max(0,Math.min(boundY,Math.round(last.y)+dy));
+  if(x===last.x&&y===last.y)return;
+  movementPending.current.set(token.id,{x,y});
+  setTokens(rows=>rows.map(t=>t.id===token.id?{...t,x,y}:t));
+  const previous=movementChains.current.get(token.id)||Promise.resolve();
+  const current=previous.catch(()=>{}).then(async()=>{
+   const {data,error}=await db.from('map_tokens')
+    .update({x,y}).eq('id',token.id).eq('campaign_id',activeId).eq('map_id',activeMap.id)
+    .select('id').maybeSingle();
+   if(error)throw error;
+   if(!data)throw Error('Movement was not permitted for this token.');
+  });
+  movementChains.current.set(token.id,current);
+  current.then(()=>{
+   if(movementChains.current.get(token.id)!==current)return;
+   movementPending.current.delete(token.id);
+   refreshTokens();
+  }).catch(e=>{
+   if(movementChains.current.get(token.id)!==current)return;
+   movementPending.current.delete(token.id);
+   fail(e);refreshTokens();
+  });
+ }
  async function moveToken(t,x,y){try{await read(db.from('map_tokens').update({x,y}).eq('id',t.id));refreshTokens()}catch(e){fail(e)}}
  async function resizeToken(t,spanX,spanY){
   if(!isDM)return;
@@ -349,12 +445,15 @@ function App(){
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><button disabled={busy} onClick={saveTemplate}>Save template</button></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate} onLinkResource={linkResourceToToken}/></section>}
  {tab==='maps'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Map library</h2><label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>{setSelectedMap(m.id);setTab('tabletop')}}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
  {tab==='tabletop'&&<section className="panel tabletop-panel map-only-panel">
-  {displayedMap?<Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
+  {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}/>
+   {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
+    onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}/>}
+  </>
   :<div className="empty-tabletop">
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
     {isDM&&<button type="button" onClick={()=>setTab('maps')}>Open map library</button>}
@@ -379,6 +478,9 @@ function App(){
  mapZoom={mapZoom} onChangeZoom={setMapZoom}
  onMapCalibrationPreview={setMapCalibrationPreview} onSaveMapCalibration={saveMapCalibration}
  onSaveTokenDisplay={saveTokenDisplay} template={camp?.sheet_template}
+ bindings={bindings} onSaveBindings={saveMyKeybindings}
+ hotbarSlots={hotbarSlots} onSaveHotbar={saveMyHotbar}
+ hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
