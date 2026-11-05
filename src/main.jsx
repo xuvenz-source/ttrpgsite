@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import './style.css';
-import TokenStudio from './TokenStudio.jsx';
+import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
@@ -241,8 +241,9 @@ function App(){
  accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
  /></div>
  </main>
- {artStudio&&character&&<TokenStudio db={db} campaignId={activeId} userId={user}
-  mode="players" onSave={savePlayerArtwork} onClose={()=>setArtStudio(false)}/>}
+ {artStudio&&character&&<PersonalTokenLibrary db={db} campaignId={activeId} userId={user}
+  mode="players" currentTokenPath={character.token_path} currentPortraitPath={character.portrait_path}
+  defaultName={character.name||'New token'} onApply={savePlayerArtwork} onClose={()=>setArtStudio(false)}/>}
  {characterEditor&&isDM&&<CharacterEditor
   db={db} campaignId={activeId} viewerId={user}
   record={characterEditor.data} template={camp?.sheet_template}
