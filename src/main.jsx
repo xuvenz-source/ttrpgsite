@@ -119,6 +119,7 @@ function App(){
     npc_bars_public:draft.barsPublic
    }).eq('id',npcEditor.data.id));
    await refreshTokens();
+   await refreshMonitors();
   }
  }
  async function placeNpc(npcId,x=1,y=1){
@@ -132,6 +133,7 @@ function App(){
     image_path:npc.token_path||null,owner_id:null,x,y
    }));
    await refreshTokens();
+   await refreshMonitors();
   }catch(e){fail(e)}
  }
  async function placeCharacterOnMap(characterId,x,y){
