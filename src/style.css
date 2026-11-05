@@ -185,3 +185,10 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .tokenX{display:none!important}
 .studio-preview{background:repeating-conic-gradient(#343c4b 0% 25%,#273142 0% 50%) 50%/20px 20px}
 .studio-preview canvas{display:block}
+
+/* Portrait editing: move the artwork by dragging the preview. */
+.tokenstudio .studio-preview canvas{cursor:grab;touch-action:none;user-select:none}
+.tokenstudio .studio-preview canvas.dragging{cursor:grabbing}
+.studio-fine-adjust{border:1px solid #39485c;border-radius:8px;padding:10px 12px}
+.studio-fine-adjust summary{cursor:pointer;color:#d5dbeb}
+.studio-fine-adjust label{margin-top:12px}
