@@ -2,6 +2,7 @@ import React,{useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
 import MapCalibration from './MapCalibration.jsx';
 import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
+import {KeybindingsEditor,HotbarSettings} from './TabletopControls.jsx';
 import Bestiary from './Bestiary.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -127,6 +128,7 @@ export default function TabletopSidebar({
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,template,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
+ bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  campaignName,campaignTokenDisplay,activeCampaignId,campaignList,onSelectCampaign,
  createCampaignName,onCreateCampaignNameChange,onCreateCampaign,
  inviteCode,onInviteCodeChange,onJoinCampaign,accountEmail,onSignOut,hasCampaign
@@ -212,6 +214,17 @@ export default function TabletopSidebar({
      <option value="2">200%</option><option value="3">300%</option>
     </select></label>
     <p className="muted tiny">Ctrl + mouse wheel over the map also changes zoom. This is only your viewing zoom, not the stored map size.</p>
+    <div className="side-divider"/>
+    <h3>Controls & macros</h3>
+    <details className="side-details shortcut-settings">
+     <summary>Keyboard shortcuts</summary>
+     <KeybindingsEditor bindings={bindings} onSave={onSaveBindings}/>
+    </details>
+    <details className="side-details shortcut-settings">
+     <summary>Macro hotbar</summary>
+     <HotbarSettings slots={hotbarSlots} onSave={onSaveHotbar} visible={hotbarVisible}
+       onChangeVisible={onChangeHotbarVisible}/>
+    </details>
     {isDM&&<>
      <div className="side-divider"/>
      <h3>Map management</h3>
