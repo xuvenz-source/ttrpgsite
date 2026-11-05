@@ -196,7 +196,73 @@ function Inventory({field,value,onChange}){const cols=field.columns||['Item','Qt
 function Designer({template,tabId,changeTemplate}){const t=template?.tabs.find(x=>x.id===tabId)||template?.tabs[0],drag=useRef(null);if(!t)return null;
  const update=(id,key,value)=>changeTemplate(x=>{const f=x.tabs.find(y=>y.id===t.id)?.fields.find(y=>y.id===id);if(f)f[key]=value});
  return <><div className="tools"><input aria-label="Tab name" value={t.name} onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/><button className="secondary" onClick={()=>{if(template.tabs.length<2)return alert('Keep at least one tab');if(confirm('Delete tab and its fields?'))changeTemplate(x=>x.tabs=x.tabs.filter(y=>y.id!==t.id))}}>Delete tab</button><select id="newfieldtype" defaultValue="text"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Notes</option><option value="checkbox">Checkbox</option><option value="roll">Dice button</option><option value="inventory">Inventory</option></select><button onClick={()=>{const type=document.getElementById('newfieldtype').value;changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({id:'field_'+uid().slice(0,8),label:'New '+type,type,span:1,...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})}))}}>+ Add field</button></div><div className="designer-grid">{t.fields.map((f,i)=><div className="designfield" draggable onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;changeTemplate(x=>{const a=x.tabs.find(y=>y.id===t.id).fields;a.splice(i,0,a.splice(from,1)[0])});drag.current=null}} key={f.id}><span className="muted">⠿ Drag to reorder</span><label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label><div className="tools"><label>Width <select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}><option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option></select></label><span className="muted">{f.type}</span><button className="secondary" onClick={()=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields=x.tabs.find(y=>y.id===t.id).fields.filter(y=>y.id!==f.id))}>Delete</button></div>{f.type==='roll'&&<label>Dice formula<input value={f.formula||''} onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}{f.type==='inventory'&&<label>Columns (comma separated)<input value={(f.columns||[]).join(', ')} onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}</div>)}</div></>}
-function Board({map,url,tokens,user,isDM,move,remove}){const[scale,setScale]=useState(.7),board=useRef(null),drag=useRef(null),[preview,setPreview]=useState({});
- const pos=e=>{const r=board.current.getBoundingClientRect();return{x:Math.max(0,Math.min(1000,Math.floor((e.clientX-r.left)/(scale*map.grid_size)))),y:Math.max(0,Math.min(1000,Math.floor((e.clientY-r.top)/(scale*map.grid_size))))}};
- return <><div className="tools">Zoom <select value={scale} onChange={e=>setScale(Number(e.target.value))}><option value=".35">35%</option><option value=".5">50%</option><option value=".7">70%</option><option value="1">100%</option><option value="1.5">150%</option></select></div><div ref={board} className="board" style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}><div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>{tokens.filter(t=>isDM||t.visible).map(t=>{const p=preview[t.id]||t,can=isDM||t.owner_id===user;return <div key={t.id} className="token" style={{left:p.x*map.grid_size*scale,top:p.y*map.grid_size*scale,width:map.grid_size*scale,height:map.grid_size*scale,borderColor:t.color,opacity:t.visible?1:.5,cursor:can?'grab':'default'}} title={t.name} onPointerDown={e=>{if(!can)return;e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id}} onPointerMove={e=>{if(drag.current===t.id)setPreview(x=>({...x,[t.id]:pos(e)}))}} onPointerUp={e=>{if(drag.current!==t.id)return;drag.current=null;const p=pos(e);setPreview(x=>({...x,[t.id]:p}));move(t,p.x,p.y)}}><span>{t.name.slice(0,2).toUpperCase()}</span>{isDM&&<button className="tokenX" onClick={e=>{e.stopPropagation();remove(t)}}>×</button>}</div>})}</div></>}
+
+function Board({db,map,url,tokens,user,isDM,move,remove,onNpcDrop,onTokenEdit}){
+ const[scale,setScale]=useState(.7),[preview,setPreview]=useState({});
+ const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),zoomRef=useRef(.7);
+ const zoomTo=n=>{const next=Math.max(.25,Math.min(3,Number(n)));zoomRef.current=next;setScale(next)};
+ useEffect(()=>{setPreview({})},[tokens]);
+ useEffect(()=>{
+  const node=viewportRef.current;if(!node)return;
+  const wheel=e=>{
+   if(!e.ctrlKey)return;
+   e.preventDefault();e.stopPropagation();
+   const before=zoomRef.current,next=Math.max(.25,Math.min(3,before*(e.deltaY<0?1.13:.885)));
+   if(next===before)return;
+   const rect=node.getBoundingClientRect(),vx=e.clientX-rect.left,vy=e.clientY-rect.top;
+   const wx=(node.scrollLeft+vx)/before,wy=(node.scrollTop+vy)/before;
+   zoomRef.current=next;setScale(next);
+   requestAnimationFrame(()=>{
+    node.scrollLeft=Math.max(0,wx*next-vx);
+    node.scrollTop=Math.max(0,wy*next-vy);
+   });
+  };
+  node.addEventListener('wheel',wheel,{passive:false});
+  return()=>node.removeEventListener('wheel',wheel);
+ },[]);
+ const pos=e=>{
+  const rect=boardRef.current.getBoundingClientRect(),cell=zoomRef.current*map.grid_size;
+  return{
+   x:Math.max(0,Math.min(1000,Math.floor((e.clientX-rect.left)/cell))),
+   y:Math.max(0,Math.min(1000,Math.floor((e.clientY-rect.top)/cell)))
+  };
+ };
+ function dropNpc(e){e.preventDefault();if(!isDM)return;
+  const npcId=e.dataTransfer.getData('application/x-forge-npc');
+  if(npcId){const p=pos(e);onNpcDrop(npcId,p.x,p.y)}
+ }
+ return <>
+  <div className="tools zoom-toolbar"><label>Map zoom
+   <select value={scale} onChange={e=>zoomTo(e.target.value)}>
+    <option value=".25">25%</option><option value=".35">35%</option>
+    <option value=".5">50%</option><option value=".7">70%</option>
+    <option value="1">100%</option><option value="1.5">150%</option>
+    <option value="2">200%</option><option value="3">300%</option>
+   </select></label><span className="muted tiny">Ctrl + scroll on map to zoom · drag tokens to move · DM: Alt + double-click NPC for sheet</span>
+  </div>
+  <div className="mapscroll" ref={viewportRef} aria-label="Battlemap viewport">
+   <div ref={boardRef} className="board" onDragOver={e=>{if(isDM)e.preventDefault()}}
+     onDrop={dropNpc} style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
+    <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
+    {tokens.filter(t=>isDM||t.visible).map(t=>{
+     const p=preview[t.id]||t,can=isDM||t.owner_id===user;
+     const dimension=map.grid_size*scale;
+     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')} style={{
+        left:p.x*dimension,top:p.y*dimension,width:dimension,height:dimension,
+        borderColor:t.color,opacity:t.visible?1:.55,cursor:can?'grab':'default'}}
+      title={t.name+(isDM&&!t.owner_id?' · Alt + double-click to edit sheet':'')}
+      onDoubleClick={e=>{if(e.altKey&&isDM&&!t.owner_id){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
+      onPointerDown={e=>{if(!can||e.altKey)return;e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id}}
+      onPointerMove={e=>{if(drag.current===t.id)setPreview(old=>({...old,[t.id]:pos(e)}))}}
+      onPointerUp={e=>{if(drag.current!==t.id)return;drag.current=null;const p=pos(e);
+        setPreview(old=>({...old,[t.id]:p}));if(p.x!==t.x||p.y!==t.y)move(t,p.x,p.y)}}
+      onPointerCancel={()=>{drag.current=null;setPreview({})}}>
+      {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:<span>{t.name.slice(0,2).toUpperCase()}</span>}
+      {isDM&&<button className="tokenX" title="Remove token" onClick={e=>{e.stopPropagation();remove(t)}}>×</button>}
+     </div>;
+    })}
+   </div>
+  </div>
+ </>;
+}
 createRoot(document.getElementById('root')).render(<App/>);
