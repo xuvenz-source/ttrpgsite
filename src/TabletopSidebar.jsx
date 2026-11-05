@@ -36,7 +36,8 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
  },[members,characters,tokens,isDM,user]);
  return <div className="right-section">
   <div className="side-heading"><h2>Controlled units</h2><span className="muted tiny">{isDM?'All campaign controllers':'Your tokens'}</span></div>
-  <p className="muted small side-description">Select a unit to highlight it on the map. {isDM?'Open sheets here or Alt + double-click a token.':'Your character sheet is available in the main navigation.'}</p>
+  <p className="muted small side-description">Select a unit to highlight it on the map. {isDM?'Open any unit sheet here or Alt + double-click its token.':'Open your character sheet below, or select one of your tokens.'}</p>
+  <button type="button" className="secondary full-button" onClick={()=>onNavigate('sheet')}>My character sheet</button>
   <div className="unit-groups">{groups.map(g=><section key={g.id} className="unit-group">
    <button type="button" className="unit-group-head" onClick={()=>setCollapsed(s=>({...s,[g.id]:!s[g.id]}))} aria-expanded={!collapsed[g.id]}>
     <span>{collapsed[g.id]?'▸':'▾'} {g.label}</span><span className="unit-count">{g.units.length}</span>
@@ -72,7 +73,6 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
    <button type="button" onClick={()=>onOpen(selectedToken)}>Open sheet</button>
    <p className="muted tiny">You can also resize by dragging a selected token's bottom-right corner, or remove it with Delete.</p>
   </div>}
-  {!isDM&&<button className="secondary full-button" onClick={()=>onNavigate('sheet')}>Open my character sheet</button>}
  </div>;
 }
 
@@ -99,7 +99,7 @@ export default function TabletopSidebar({
   </nav>
   {validPanel==='campaigns'&&<div className="right-body campaigns-panel">
    <div className="side-heading"><h2>Campaigns & pages</h2></div>
-   <p className="muted small side-description">Choose a campaign, open a page, or invite yourself to another campaign using a join code.</p>
+   <p className="muted small side-description">Choose a campaign, open the tabletop or DM tools, or join another campaign using an invite code. Character sheets are accessed through Units.</p>
    <div className="campaign-switcher">
     {campaignList.length===0&&<p className="muted small">You haven't joined any campaigns yet. Create one or enter an invite code below.</p>}
     {campaignList.map(c=><button type="button" key={c.id}
@@ -114,7 +114,6 @@ export default function TabletopSidebar({
     <h3>Open page</h3>
     <div className="campaign-page-links">
      <button type="button" className="secondary" onClick={()=>onNavigate('tabletop')}>▥ Tabletop</button>
-     <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>▤ Character sheet</button>
      {isDM&&<>
       <button type="button" className="secondary" onClick={()=>onNavigate('designer')}>▦ Sheet designer</button>
       <button type="button" className="secondary" onClick={()=>onNavigate('maps')}>▧ Map library</button>
@@ -199,7 +198,6 @@ export default function TabletopSidebar({
      <div className="side-divider"/>
      <p className="muted small">Use the Campaigns tab to switch games, create or join campaigns, and open your campaign pages.</p>
     </>}
-    <button className="secondary" onClick={()=>onNavigate('sheet')}>Open my character sheet</button>
     <button className="secondary" onClick={onCreatePortrait}>Create character portrait / token</button>
    </div>
   </div>}
