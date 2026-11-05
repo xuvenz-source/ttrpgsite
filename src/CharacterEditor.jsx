@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
-import TokenStudio from './TokenStudio.jsx';
+import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 
 function InventoryEditor({field,value,onChange}){
  const columns=field.columns?.length?field.columns:['Item','Qty','Notes'];
@@ -117,8 +117,9 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
     </button>
    </div>
   </section>
-  {studio&&<TokenStudio db={db} campaignId={campaignId} userId={viewerId} mode="players"
+  {studio&&<PersonalTokenLibrary db={db} campaignId={campaignId} userId={viewerId}
+    mode="players" defaultName={draft.name} currentTokenPath={draft.token_path} currentPortraitPath={draft.portrait_path}
     onClose={()=>setStudio(false)}
-    onSave={assets=>setDraft(d=>({...d,portrait_path:assets.portraitPath,token_path:assets.tokenPath}))}/>}
+    onApply={assets=>setDraft(d=>({...d,portrait_path:assets.portraitPath,token_path:assets.tokenPath}))}/>}
  </div>;
 }
