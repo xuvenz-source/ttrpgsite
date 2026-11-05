@@ -12,6 +12,7 @@ import {TokenMonitors} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
+import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -49,7 +50,8 @@ function App(){
  function fail(e){setError(message(e));console.error(e)}
  async function fetchCampaigns(prefer){if(!db||!user)return;
   try{const [cs,ms]=await Promise.all([read(db.from('campaigns').select('*').order('created_at',{ascending:false})),read(db.from('campaign_members').select('campaign_id,role').eq('user_id',user))]);
-    setCampaigns(cs);setRoles(Object.fromEntries(ms.map(x=>[x.campaign_id,x.role])));setActiveId(old=>cs.find(x=>x.id===(prefer||old))?(prefer||old):(cs[0]?.id||''));}catch(e){fail(e)}
+    setCampaigns(cs);setRoles(Object.fromEntries(ms.map(x=>[x.campaign_id,x.role])));
+    setActiveId(old=>prefer&&cs.some(c=>c.id===prefer)?prefer:cs.some(c=>c.id===old)?old:'');}catch(e){fail(e)}
  }
  async function fetchCampaign(id){if(!id)return;
   try{const [c,m,ch,f,b,chat,npcList,npcFolderList]=await Promise.all([
@@ -582,7 +584,16 @@ function App(){
  }
  if(!configured())return <div className="center"><h1>Tabletop Forge</h1><p>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel.</p></div>;
  if(!authReady)return <div className="center">Loading…</div>;
- if(!session)return <div className="auth center"><h1>⚔ Tabletop Forge</h1><p>Campaigns, character sheets, battlemaps and dice — one table.</p><form onSubmit={async e=>{e.preventDefault();try{await read(db.auth.signInWithOtp({email,emailRedirectTo:location.origin}));setSent(true)}catch(err){fail(err)}}}><label>Email address<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label><button>Send sign-in link</button></form>{sent&&<p>Check your email for the sign-in link.</p>}{error&&<p className="error">{error}</p>}</div>;
+ if(!session)return <AuthGate db={db}/>;
+ if(!activeId)return <CampaignHub
+  campaigns={campaigns} roles={roles}
+  accountLabel={session.user?.user_metadata?.username||session.user?.user_metadata?.display_name||session.user?.email||'Adventurer'}
+  createName={createName} onCreateName={setCreateName}
+  inviteCode={joinCode} onInviteChange={setJoinCode}
+  onCreate={create} onJoin={join} onSelect={setActiveId}
+  onSignOut={()=>db.auth.signOut()}
+  error={error} onClearError={()=>setError('')}/>;
+ if(!camp)return <div className="welcome-screen"><div className="welcome-shell"><h2>Opening campaign…</h2><p className="muted small">Loading your maps and character sheets.</p><button className="secondary" onClick={()=>setActiveId('')}>Back to main menu</button></div></div>;
  return <div className="app no-left-rail">
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
@@ -645,7 +656,7 @@ function App(){
  hotbarSlots={hotbarSlots} onSaveHotbar={saveMyHotbar}
  hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
- onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)}
+ onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)} onReturnToMenu={()=>setActiveId('')}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
  campaignName={camp?.name||''} campaignTokenDisplay={camp?.token_display_config}
  activeCampaignId={activeId} campaignList={campaigns}
