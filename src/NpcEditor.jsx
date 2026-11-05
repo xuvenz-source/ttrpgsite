@@ -15,7 +15,8 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
   name:record.data.name,
   values:structuredClone(record.kind==='template'?record.data.field_values||{}:record.data.npc_values||{}),
   portraitPath:record.kind==='template'?record.data.portrait_path||null:null,
-  tokenPath:record.kind==='template'?record.data.token_path||null:record.data.image_path||null
+  tokenPath:record.kind==='template'?record.data.token_path||null:record.data.image_path||null,
+  barsPublic:!!record.data.npc_bars_public
  }));
  const[t,setT]=useState(template?.tabs?.[0]?.id||'main'),[studio,setStudio]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const current=template?.tabs?.find(x=>x.id===t)||template?.tabs?.[0];const title=record.kind==='template'?'Bestiary template':'NPC token sheet';
@@ -40,6 +41,11 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
  <label>NPC name<input maxLength={100} value={draft.name} onChange={e=>setDraft(d=>({...d,name:e.target.value,values:{...d.values,character_name:e.target.value}}))}/></label>
  <button className="secondary" onClick={()=>setStudio(true)}>🎨 {draft.tokenPath?'Change token art':'Create token art'}</button>
  </div>
+ <label className="npc-monitor-public-toggle">
+  <input type="checkbox" checked={draft.barsPublic}
+    onChange={e=>setDraft(d=>({...d,barsPublic:e.target.checked}))}/>
+  Show this NPC's resource bars and globes to all players (overrides campaign default)
+ </label>
  <div className="tabs">{template?.tabs?.map(tab=><button key={tab.id} onClick={()=>setT(tab.id)} className={t===tab.id?'selected':''}>{tab.name}</button>)}</div>
  <div className="npc-fields fields">
  {(current?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>
