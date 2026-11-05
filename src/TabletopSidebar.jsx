@@ -11,9 +11,16 @@ const tabs=[
  {id:'campaigns',label:'Campaigns',icon:'🗂'}
 ];
 
-function UnitRow({db,token,selected,isDM,onSelect,onOpen}){
+function UnitRow({db,token,selected,isDM,onSelect,onOpen,canDrag}){
  return <div className={'unit-row'+(selected?' unit-row-selected':'')}>
-  <button className="unit-focus" type="button" onClick={()=>onSelect(token.id)} title={'Select '+token.name+' on map'}>
+  <button className="unit-focus" type="button" draggable={canDrag}
+    onDragStart={e=>{
+     if(!canDrag){e.preventDefault();return}
+     e.dataTransfer.setData('application/x-forge-unit',token.id);
+     e.dataTransfer.effectAllowed='move';
+    }}
+    onClick={()=>onSelect(token.id)}
+    title={canDrag?'Drag '+token.name+' to move on the map, or click to select':'Select '+token.name+' on map'}>
    <Artwork db={db} path={token.image_path} alt={token.name} className="unit-thumb"/>
    <span className="unit-name">{token.name}</span>
    <span className="unit-size muted tiny">{Number(token.span_x??1)}×{Number(token.span_y??1)}</span>
@@ -28,7 +35,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
    const character=characters.find(ch=>ch.user_id===m.user_id);
    const units=tokens.filter(t=>t.owner_id===m.user_id);
    return{id:m.user_id,label:character?.name||((m.role==='dm'?'Game Master':'Player')+' '+(index+1)),
-    role:m.role,units};
+    character,role:m.role,units};
   }).filter(g=>isDM||g.id===user);
   const other=tokens.filter(t=>!t.owner_id||!members.some(m=>m.user_id===t.owner_id));
   if(isDM)sorted.push({id:'dm-npcs',label:'Unassigned / DM NPCs',units:other,role:'dm'});
@@ -36,7 +43,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
  },[members,characters,tokens,isDM,user]);
  return <div className="right-section">
   <div className="side-heading"><h2>Controlled units</h2><span className="muted tiny">{isDM?'All campaign controllers':'Your tokens'}</span></div>
-  <p className="muted small side-description">Select a unit to highlight it on the map. {isDM?'Open any unit sheet here or Alt + double-click its token.':'Open your character sheet below, or select one of your tokens.'}</p>
+  <p className="muted small side-description">Drag a character name onto the map to place its token. Drag an existing unit below to reposition it. {isDM?'Alt + double-click a token to edit its sheet.':''}</p>
   <div className="unit-actions">
    <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>My character sheet</button>
    <button type="button" className="secondary" onClick={onCreatePortrait}>My Token Library</button>
@@ -48,12 +55,24 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
    </select>
   </label>}
   <div className="unit-groups">{groups.map(g=><section key={g.id} className="unit-group">
-   <button type="button" className="unit-group-head" onClick={()=>setCollapsed(s=>({...s,[g.id]:!s[g.id]}))} aria-expanded={!collapsed[g.id]}>
-    <span>{collapsed[g.id]?'▸':'▾'} {g.label}</span><span className="unit-count">{g.units.length}</span>
+   <button type="button" className={'unit-group-head'+(g.character&&activeMap&&(isDM||g.id===user)?' unit-draggable':'')}
+    draggable={!!(g.character&&activeMap&&(isDM||g.id===user))}
+    onDragStart={e=>{
+      if(!g.character||!activeMap||(g.id!==user&&!isDM)){e.preventDefault();return}
+      e.dataTransfer.setData('application/x-forge-character',g.character.id);
+      e.dataTransfer.effectAllowed='copy';
+    }}
+    title={g.character&&activeMap?'Drag '+g.label+' onto the battlemap to place a character token':'Expand or collapse this group'}
+    onClick={()=>setCollapsed(s=>({...s,[g.id]:!s[g.id]}))}
+    aria-expanded={!collapsed[g.id]}>
+    <span className="unit-group-label">{g.character&&<Artwork db={db} path={g.character.token_path||g.character.portrait_path} alt={g.label} className="group-unit-thumb"/>}
+      <span>{collapsed[g.id]?'▸':'▾'} {g.label}</span>
+    </span><span className="unit-count">{g.units.length}</span>
    </button>
    {!collapsed[g.id]&&<div className="unit-group-items">{g.units.length?
     g.units.map(t=><UnitRow key={t.id} db={db} token={t} selected={selectedToken?.id===t.id}
-      isDM={isDM} onSelect={onSelect} onOpen={onOpen}/>)
+      isDM={isDM} onSelect={onSelect} onOpen={onOpen}
+      canDrag={!!activeMap&&(isDM||t.owner_id===user)}/>)
     :<p className="muted tiny empty-units">No tokens on this map</p>}
    </div>}
   </section>)}</div>
