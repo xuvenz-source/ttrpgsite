@@ -281,18 +281,21 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onToken
    <strong>{selectedToken.name}</strong>
    <span className="muted tiny">Footprint: {Number(selectedToken.span_x??1)} × {Number(selectedToken.span_y??1)} grid cells</span>
    <label>Size preset
-    <select value={Number(selectedToken.span_x??1)===Number(selectedToken.span_y??1)?String(Number(selectedToken.span_x??1)):'custom'}
+    <select value={Number(selectedToken.span_x??1)===Number(selectedToken.span_y??1)
+      ?String(Number(selectedToken.span_x??1))
+      :(Number(selectedToken.span_x)===4&&Number(selectedToken.span_y)===2?'4x2':'custom')}
      onChange={e=>{
       if(e.target.value==='custom')return;
-      const size=Number(e.target.value);
-      setPreview(old=>({...old,[selectedToken.id]:{...selectedToken,...old[selectedToken.id],span_x:size,span_y:size}}));
-      resize(selectedToken,size,size);
+      const [w,h]=e.target.value==='4x2'?[4,2]:[Number(e.target.value),Number(e.target.value)];
+      setPreview(old=>({...old,[selectedToken.id]:{...selectedToken,...old[selectedToken.id],span_x:w,span_y:h}}));
+      resize(selectedToken,w,h);
      }}>
      <option value=".5">Small (½ × ½)</option>
      <option value="1">1 × 1</option>
      <option value="2">Large (2 × 2)</option>
      <option value="3">Huge (3 × 3)</option>
      <option value="4">4 × 4</option>
+     <option value="4x2">Eight squares (4 × 2)</option>
      <option value="custom">Custom</option>
     </select>
    </label>
