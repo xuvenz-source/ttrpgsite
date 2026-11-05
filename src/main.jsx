@@ -8,6 +8,7 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import {TokenMonitors} from './TokenMonitors.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -27,6 +28,7 @@ function App(){
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
+ const[monitorValues,setMonitorValues]=useState({});
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const activeMap=maps.find(x=>x.id===selectedMap);
@@ -95,7 +97,8 @@ function App(){
   if(t.character_id||t.owner_id){
    await openPlayerCharacter(t.character_id,t.owner_id);
   }else{
-   setNpcEditor({kind:'token',data:t});
+   const npcValues=await read(db.rpc('get_npc_token_values',{p_token:t.id}));
+   setNpcEditor({kind:'token',data:{...t,npc_values:npcValues||{}}});
   }
  }
  function afterPlayerSheetSaved(updated){
@@ -106,12 +109,14 @@ function App(){
   if(!npcEditor)return;
   if(npcEditor.kind==='template'){
    await read(db.from('npc_templates').update({
-    name:draft.name.trim(),field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath
+    name:draft.name.trim(),field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath,
+    npc_bars_public:draft.barsPublic
    }).eq('id',npcEditor.data.id));
    await refreshNpcs();
   }else{
    await read(db.from('map_tokens').update({
-    name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath
+    name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath,
+    npc_bars_public:draft.barsPublic
    }).eq('id',npcEditor.data.id));
    await refreshTokens();
   }
@@ -123,6 +128,7 @@ function App(){
    await read(db.from('map_tokens').insert({
     campaign_id:activeId,map_id:selectedMap,name:npc.name,
     npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{}),
+    npc_bars_public:npc.npc_bars_public,
     image_path:npc.token_path||null,owner_id:null,x,y
    }));
    await refreshTokens();
@@ -161,15 +167,30 @@ function App(){
   setCharacters(old=>old.map(x=>x.id===changed.id?{...x,portrait_path:changed.portrait_path,token_path:changed.token_path}:x));
  }
  async function refreshChat(){if(!activeId)return;try{setMsgs((await read(db.from('chat_messages').select('*').eq('campaign_id',activeId).order('created_at',{ascending:false}).limit(100))).reverse())}catch(e){fail(e)}}
- async function refreshTokens(){if(!selectedMap)return setTokens([]);try{setTokens(await read(db.from('map_tokens').select('*').eq('map_id',selectedMap)))}catch(e){fail(e)}}
+ async function refreshMonitors(){
+  if(!selectedMap||!activeId)return setMonitorValues({});
+  try{
+   const rows=await read(db.rpc('get_token_monitor_values',{p_map:selectedMap}));
+   setMonitorValues(Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}])));
+  }catch(e){console.error('Could not refresh token monitors',e);setMonitorValues({})}
+ }
+ async function refreshTokens(){
+  if(!selectedMap)return setTokens([]);
+  try{
+   const rows=await read(db.from('map_tokens').select(
+    'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public'
+   ).eq('map_id',selectedMap));
+   setTokens(rows);
+  }catch(e){fail(e)}
+ }
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
- useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>refreshTokens()).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>fetchCampaign(activeId))
+ useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
- useEffect(()=>{refreshTokens()},[selectedMap]);
+ useEffect(()=>{refreshTokens();refreshMonitors()},[selectedMap,activeId,user]);
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
  useEffect(()=>()=>clearTimeout(saveTimer.current),[]);
  async function create(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('create_campaign',{p_name:createName.trim()}));setCreateName('');await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
@@ -189,6 +210,14 @@ function App(){
  const path=activeId+'/'+uid()+'.webp';await read(db.storage.from('battlemap-assets').upload(path,blob,{contentType:'image/webp'}));
  try{await read(db.from('battle_maps').insert({campaign_id:activeId,folder_id:folder,name:file.name.replace(/\.[^.]+$/,''),storage_path:path,width:canvas.width,height:canvas.height,source_width:canvas.width,source_height:canvas.height,grid_size:70}))}catch(err){await db.storage.from('battlemap-assets').remove([path]);throw err}
  await refreshMaps();}catch(e){fail(e)}finally{setUploading(false);e.target.value=''}}
+ async function saveTokenDisplay(config){
+  if(!isDM||!camp)throw Error('Only the DM can change token display settings.');
+  const data=await read(db.from('campaigns')
+   .update({token_display_config:config}).eq('id',activeId)
+   .select('token_display_config').single());
+  setCamp(prev=>({...prev,token_display_config:data.token_display_config}));
+  await refreshMonitors();
+ }
  async function saveMapCalibration(map,next){
   if(!isDM)throw Error('Only the DM can adjust map calibration.');
   if(!map||map.campaign_id!==activeId)throw Error('Map does not belong to this campaign.');
@@ -255,7 +284,8 @@ function App(){
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} resize={resizeToken}
-   scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}/>
+   scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
+   displayConfig={camp?.token_display_config} monitorValues={monitorValues}/>
   :<div className="empty-tabletop">
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
     {isDM&&<button type="button" onClick={()=>setTab('maps')}>Open map library</button>}
@@ -279,6 +309,7 @@ function App(){
  tokenOwner={tokenOwner} onChangeTokenOwner={setTokenOwner} onAddToken={addToken}
  mapZoom={mapZoom} onChangeZoom={setMapZoom}
  onMapCalibrationPreview={setMapCalibrationPreview} onSaveMapCalibration={saveMapCalibration}
+ onSaveTokenDisplay={saveTokenDisplay} template={camp?.sheet_template}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
@@ -303,7 +334,8 @@ function App(){
   onSave={saveNpc} onSaveAsTemplate={async draft=>{
     await read(db.from('npc_templates').insert({
      campaign_id:activeId,name:draft.name.trim(),
-     field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath
+     field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath,
+     npc_bars_public:draft.barsPublic
     }));
     await refreshNpcs();
    }} onClose={()=>setNpcEditor(null)}
@@ -317,7 +349,7 @@ function Designer({template,tabId,changeTemplate}){const t=template?.tabs.find(x
  return <><div className="tools"><input aria-label="Tab name" value={t.name} onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/><button className="secondary" onClick={()=>{if(template.tabs.length<2)return alert('Keep at least one tab');if(confirm('Delete tab and its fields?'))changeTemplate(x=>x.tabs=x.tabs.filter(y=>y.id!==t.id))}}>Delete tab</button><select id="newfieldtype" defaultValue="text"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Notes</option><option value="checkbox">Checkbox</option><option value="roll">Dice button</option><option value="inventory">Inventory</option></select><button onClick={()=>{const type=document.getElementById('newfieldtype').value;changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({id:'field_'+uid().slice(0,8),label:'New '+type,type,span:1,...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})}))}}>+ Add field</button></div><div className="designer-grid">{t.fields.map((f,i)=><div className="designfield" draggable onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;changeTemplate(x=>{const a=x.tabs.find(y=>y.id===t.id).fields;a.splice(i,0,a.splice(from,1)[0])});drag.current=null}} key={f.id}><span className="muted">⠿ Drag to reorder</span><label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label><div className="tools"><label>Width <select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}><option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option></select></label><span className="muted">{f.type}</span><button className="secondary" onClick={()=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields=x.tabs.find(y=>y.id===t.id).fields.filter(y=>y.id!==f.id))}>Delete</button></div>{f.type==='roll'&&<label>Dice formula<input value={f.formula||''} onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}{f.type==='inventory'&&<label>Columns (comma separated)<input value={(f.columns||[]).join(', ')} onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}</div>)}</div></>}
 
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues}){
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
@@ -461,6 +493,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       onPointerCancel={()=>{drag.current=null;setPreview({})}}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
+      <TokenMonitors config={displayConfig} fields={monitorValues[t.id]}/>
       {isDM&&selectedId===t.id&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
         onPointerDown={e=>{
