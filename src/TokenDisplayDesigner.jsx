@@ -96,7 +96,11 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
     </div>
    </div>
    <div className="monitor-widget-fields">
-    <label>Display type<select value={w.type} onChange={e=>widgetChange(w.id,{type:e.target.value})}>
+    <label>Display type<select value={w.type} onChange={e=>{
+      const type=e.target.value;
+      const resource=resources.find(f=>f.id===w.field);
+      widgetChange(w.id,{type,maxField:type==='bar'&&resource?resource.id+'__max':type==='globe'?'':w.maxField||''});
+     }}>
       {TYPES.map(([v,label])=><option key={v} value={v}>{label}</option>)}
      </select></label>
     <label>Label<input maxLength={24} value={w.label||''} onChange={e=>widgetChange(w.id,{label:e.target.value})}/></label>
