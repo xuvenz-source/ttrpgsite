@@ -2,6 +2,10 @@ import React,{useEffect,useRef,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import './style.css';
+import TokenStudio from './TokenStudio.jsx';
+import Artwork from './Artwork.jsx';
+import Bestiary from './Bestiary.jsx';
+import NpcEditor from './NpcEditor.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -17,6 +21,8 @@ function App(){
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('sheet'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
+ const[sidebarOpen,setSidebarOpen]=useState(true),[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[trayOpen,setTrayOpen]=useState(true);
+ const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const activeMap=maps.find(x=>x.id===selectedMap);
@@ -26,18 +32,84 @@ function App(){
     setCampaigns(cs);setRoles(Object.fromEntries(ms.map(x=>[x.campaign_id,x.role])));setActiveId(old=>cs.find(x=>x.id===(prefer||old))?(prefer||old):(cs[0]?.id||''));}catch(e){fail(e)}
  }
  async function fetchCampaign(id){if(!id)return;
-  try{const [c,m,ch,f,b,chat]=await Promise.all([read(db.from('campaigns').select('*').eq('id',id).single()),read(db.from('campaign_members').select('user_id,role').eq('campaign_id',id)),read(db.from('characters').select('*').eq('campaign_id',id)),read(db.from('map_folders').select('*').eq('campaign_id',id)),read(db.from('battle_maps').select('*').eq('campaign_id',id).order('created_at',{ascending:false})),read(db.from('chat_messages').select('*').eq('campaign_id',id).order('created_at',{ascending:false}).limit(100))]);
-   setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);setCharacter(ch.find(x=>x.user_id===user)||null);setFolders(f);setMaps(b);setMsgs(chat.reverse());setSelectedMap(old=>b.find(x=>x.id===old)?old:(b[0]?.id||''));}catch(e){fail(e)}
+  try{const [c,m,ch,f,b,chat,npcList,npcFolderList]=await Promise.all([
+  read(db.from('campaigns').select('*').eq('id',id).single()),
+  read(db.from('campaign_members').select('user_id,role').eq('campaign_id',id)),
+  read(db.from('characters').select('*').eq('campaign_id',id)),
+  read(db.from('map_folders').select('*').eq('campaign_id',id)),
+  read(db.from('battle_maps').select('*').eq('campaign_id',id).order('created_at',{ascending:false})),
+  read(db.from('chat_messages').select('*').eq('campaign_id',id).order('created_at',{ascending:false}).limit(100)),
+  read(db.from('npc_templates').select('*').eq('campaign_id',id).order('name')),
+  read(db.from('npc_folders').select('*').eq('campaign_id',id).order('name'))]);
+   setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);setCharacter(ch.find(x=>x.user_id===user)||null);setFolders(f);setMaps(b);setMsgs(chat.reverse());setNpcs(npcList);setNpcFolders(npcFolderList);
+  setSelectedMap(old=>b.find(x=>x.id===old)?old:(c.active_map_id&&b.some(x=>x.id===c.active_map_id)?c.active_map_id:(b[0]?.id||'')));}catch(e){fail(e)}
  }
  async function refreshMaps(){if(!activeId)return;
   try{const [f,m]=await Promise.all([read(db.from('map_folders').select('*').eq('campaign_id',activeId)),read(db.from('battle_maps').select('*').eq('campaign_id',activeId).order('created_at',{ascending:false}))]);setFolders(f);setMaps(m);setSelectedMap(old=>m.find(x=>x.id===old)?old:m[0]?.id||'');}catch(e){fail(e)}
+ }
+ 
+ async function refreshNpcs(){if(!activeId)return;try{
+  const [all,allFolders]=await Promise.all([
+   read(db.from('npc_templates').select('*').eq('campaign_id',activeId).order('name')),
+   read(db.from('npc_folders').select('*').eq('campaign_id',activeId).order('name'))]);
+  setNpcs(all);setNpcFolders(allFolders);
+ }catch(e){fail(e)}}
+ async function makeNpcFolder(name,parentId){try{
+   await read(db.from('npc_folders').insert({campaign_id:activeId,name,parent_id:parentId}));
+   await refreshNpcs();
+  }catch(e){fail(e)}}
+ async function makeNpc(name,folderId){try{
+   const created=await read(db.from('npc_templates').insert({
+    campaign_id:activeId,folder_id:folderId,name,
+    field_values:{character_name:name}
+   }).select('*').single());
+   await refreshNpcs();setNpcEditor({kind:'template',data:created});
+  }catch(e){fail(e)}}
+ async function moveNpcFolder(id,folderId){try{
+  await read(db.from('npc_templates').update({folder_id:folderId}).eq('id',id));await refreshNpcs();
+ }catch(e){fail(e)}}
+ async function saveNpc(draft){
+  if(!npcEditor)return;
+  if(npcEditor.kind==='template'){
+   await read(db.from('npc_templates').update({
+    name:draft.name.trim(),field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath
+   }).eq('id',npcEditor.data.id));
+   await refreshNpcs();
+  }else{
+   await read(db.from('map_tokens').update({
+    name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath
+   }).eq('id',npcEditor.data.id));
+   await refreshTokens();
+  }
+ }
+ async function placeNpc(npcId,x=1,y=1){
+  const npc=npcs.find(n=>n.id===npcId);
+  if(!npc||!selectedMap||!isDM)return;
+  try{
+   await read(db.from('map_tokens').insert({
+    campaign_id:activeId,map_id:selectedMap,name:npc.name,
+    npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{}),
+    image_path:npc.token_path||null,owner_id:null,x,y
+   }));
+   await refreshTokens();
+  }catch(e){fail(e)}
+ }
+ async function savePlayerArtwork(art){
+  if(!character)throw Error('Character sheet is not ready');
+  const changed=await read(db.from('characters').update({
+    portrait_path:art.portraitPath,token_path:art.tokenPath
+  }).eq('id',character.id).select('*').single());
+  setCharacter(old=>({...old,portrait_path:changed.portrait_path,token_path:changed.token_path}));
+  setCharacters(old=>old.map(x=>x.id===changed.id?{...x,portrait_path:changed.portrait_path,token_path:changed.token_path}:x));
  }
  async function refreshChat(){if(!activeId)return;try{setMsgs((await read(db.from('chat_messages').select('*').eq('campaign_id',activeId).order('created_at',{ascending:false}).limit(100))).reverse())}catch(e){fail(e)}}
  async function refreshTokens(){if(!selectedMap)return setTokens([]);try{setTokens(await read(db.from('map_tokens').select('*').eq('map_id',selectedMap)))}catch(e){fail(e)}}
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setTab('sheet');setFolder(null);setError('');fetchCampaign(activeId)}},[activeId,user]);
- useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>refreshTokens()).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>fetchCampaign(activeId)).subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
+ useEffect(()=>{if(activeId&&user){setSidebarOpen(false);setTab('sheet');setFolder(null);setError('');fetchCampaign(activeId)}},[activeId,user]);
+ useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>refreshTokens()).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>fetchCampaign(activeId))
+ .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
+ .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
  useEffect(()=>{refreshTokens()},[selectedMap]);
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
  useEffect(()=>()=>clearTimeout(saveTimer.current),[]);
@@ -59,10 +131,17 @@ function App(){
  try{await read(db.from('battle_maps').insert({campaign_id:activeId,folder_id:folder,name:file.name.replace(/\.[^.]+$/,''),storage_path:path,width:canvas.width,height:canvas.height,grid_size:70}))}catch(err){await db.storage.from('battlemap-assets').remove([path]);throw err}
  await refreshMaps();}catch(e){fail(e)}finally{setUploading(false);e.target.value=''}}
  async function publishMap(id){try{await read(db.from('campaigns').update({active_map_id:id}).eq('id',activeId));setCamp(x=>({...x,active_map_id:id}));await refreshMaps()}catch(e){fail(e)}}
- async function addToken(){if(!selectedMap)return;try{await read(db.from('map_tokens').insert({campaign_id:activeId,map_id:selectedMap,name:newToken,owner_id:tokenOwner||null,x:1,y:1}));refreshTokens()}catch(e){fail(e)}}
+ async function addToken(){if(!selectedMap)return;try{
+  const ch=characters.find(c=>c.user_id===tokenOwner);
+  await read(db.from('map_tokens').insert({
+   campaign_id:activeId,map_id:selectedMap,name:newToken.trim()||ch?.name||'Token',
+   owner_id:tokenOwner||null,character_id:ch?.id||null,
+   image_path:ch?.token_path||null,x:1,y:1
+  }));refreshTokens();
+ }catch(e){fail(e)}}
  async function moveToken(t,x,y){try{await read(db.from('map_tokens').update({x,y}).eq('id',t.id));refreshTokens()}catch(e){fail(e)}}
  async function removeToken(t){if(!confirm('Remove '+t.name+'?'))return;try{await read(db.from('map_tokens').delete().eq('id',t.id));refreshTokens()}catch(e){fail(e)}}
- const campaignTabs=['sheet',...(isDM?['designer','maps']:[]),'tabletop'];
+ const campaignTabs=['sheet',...(isDM?['designer','maps','bestiary']:[]),'tabletop'];
  if(!configured())return <div className="center"><h1>Tabletop Forge</h1><p>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel.</p></div>;
  if(!authReady)return <div className="center">Loading…</div>;
  if(!session)return <div className="auth center"><h1>⚔ Tabletop Forge</h1><p>Campaigns, character sheets, battlemaps and dice — one table.</p><form onSubmit={async e=>{e.preventDefault();try{await read(db.auth.signInWithOtp({email,emailRedirectTo:location.origin}));setSent(true)}catch(err){fail(err)}}}><label>Email address<input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com"/></label><button>Send sign-in link</button></form>{sent&&<p>Check your email for the sign-in link.</p>}{error&&<p className="error">{error}</p>}</div>;
