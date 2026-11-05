@@ -11,6 +11,7 @@ import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
+import TokenQuickEdit from './TokenQuickEdit.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -31,6 +32,8 @@ function App(){
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
+ const[quickEditToken,setQuickEditToken]=useState(null);
+ const monitorRequest=useRef(0);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const[hotbarVisible,setHotbarVisible]=useState(true);
@@ -176,11 +179,13 @@ function App(){
  }
  async function refreshChat(){if(!activeId)return;try{setMsgs((await read(db.from('chat_messages').select('*').eq('campaign_id',activeId).order('created_at',{ascending:false}).limit(100))).reverse())}catch(e){fail(e)}}
  async function refreshMonitors(){
+  const request=++monitorRequest.current;
   if(!selectedMap||!activeId)return setMonitorValues({});
   try{
    const rows=await read(db.rpc('get_token_monitor_values',{p_map:selectedMap}));
-   setMonitorValues(Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}])));
-  }catch(e){console.error('Could not refresh token monitors',e);setMonitorValues({})}
+   if(request===monitorRequest.current)
+    setMonitorValues(Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}])));
+  }catch(e){if(request===monitorRequest.current)console.error('Could not refresh token monitors',e)}
  }
  async function refreshTokens(){
   if(!selectedMap)return setTokens([]);
@@ -193,7 +198,7 @@ function App(){
  }
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+ useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
   if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);return}
   let alive=true;
@@ -217,8 +222,7 @@ function App(){
    });
   return()=>{alive=false};
  },[user,activeId]);
- useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId,
-  select:['id','campaign_id','map_id','updated_at']},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
+ useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
@@ -278,7 +282,43 @@ function App(){
  }
  async function create(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('create_campaign',{p_name:createName.trim()}));setCreateName('');await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
  async function join(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('join_campaign',{p_invite_code:joinCode.trim().toLowerCase()}));setJoinCode('');history.replaceState({},'',location.pathname);await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
- function updateField(id,value){if(!character)return;const next={...character,field_values:{...character.field_values,[id]:value}};if(id==='character_name')next.name=String(value||'New Character');setCharacter(next);setSaveState('Saving…');clearTimeout(saveTimer.current);saveTimer.current=setTimeout(async()=>{try{await read(db.from('characters').update({field_values:next.field_values,name:next.name}).eq('id',next.id));setSaveState('Saved')}catch(e){setSaveState('Save failed');fail(e)}},600)}
+ function updateField(id,value){
+  if(!character)return;
+  const next={...character,field_values:{...character.field_values,[id]:value}};
+  if(id==='character_name')next.name=String(value||'New Character');
+  setCharacter(next);
+  // Instant, optimistic local monitor update; the server will replicate to others.
+  const asNumber=(raw)=>{
+   if(raw===null||raw===undefined||raw==='')return null;
+   const n=Number(raw);return Number.isFinite(n)?n:null;
+  };
+  ++monitorRequest.current;
+  setMonitorValues(old=>{
+   const updated={...old};
+   for(const token of tokens){
+    if(token.character_id!==character.id||!old[token.id])continue;
+    const fields={...old[token.id]};
+    const resource=value!==null&&typeof value==='object'&&!Array.isArray(value);
+    if(resource){
+     const current=asNumber(value.current),max=asNumber(value.max);
+     if(current===null)delete fields[id];else fields[id]=current;
+     if(max===null)delete fields[id+'__max'];else fields[id+'__max']=max;
+    }else{
+     const numeric=asNumber(value);
+     if(numeric===null)delete fields[id];else fields[id]=numeric;
+    }
+    updated[token.id]=fields;
+   }
+   return updated;
+  });
+  setSaveState('Saving…');clearTimeout(saveTimer.current);
+  saveTimer.current=setTimeout(async()=>{
+   try{
+    await read(db.from('characters').update({field_values:next.field_values,name:next.name}).eq('id',next.id));
+    setSaveState('Saved');
+   }catch(e){setSaveState('Save failed');fail(e)}
+  },200);
+}
  async function roll(formula,label='Dice roll',charId=character?.id){try{await read(db.rpc('roll_dice',{p_campaign_id:activeId,p_expression:formula,p_label:label,p_character_id:charId||null}));await refreshChat()}catch(e){fail(e)}}
  async function sendChat(e){e.preventDefault();const raw=chat.trim();if(!raw)return;setChat('');if(/^\/(roll|r)\s+/i.test(raw))return roll(raw.replace(/^\/(roll|r)\s+/i,''),'Dice roll',null);
  if(/^\/macro\s+/i.test(raw)){const label=raw.replace(/^\/macro\s+/i,'').trim().toLowerCase(),field=camp?.sheet_template?.tabs?.flatMap(t=>t.fields).find(f=>f.type==='roll'&&f.label.toLowerCase()===label);if(field)return roll(field.formula||'1d20',field.label);return fail('Macro not found')}
@@ -310,6 +350,33 @@ function App(){
  const path=activeId+'/'+uid()+'.webp';await read(db.storage.from('battlemap-assets').upload(path,blob,{contentType:'image/webp'}));
  try{await read(db.from('battle_maps').insert({campaign_id:activeId,folder_id:folder,name:file.name.replace(/\.[^.]+$/,''),storage_path:path,width:canvas.width,height:canvas.height,source_width:canvas.width,source_height:canvas.height,grid_size:70}))}catch(err){await db.storage.from('battlemap-assets').remove([path]);throw err}
  await refreshMaps();}catch(e){fail(e)}finally{setUploading(false);e.target.value=''}}
+ async function saveQuickFields(fieldIds){
+  if(!isDM||!camp)throw Error('Only the DM can configure quick adjustments.');
+  const eligible=(camp.sheet_template?.tabs||[]).flatMap(t=>t.fields||[])
+   .filter(f=>['number','resource'].includes(f.type)).map(f=>f.id);
+  if(!Array.isArray(fieldIds)||fieldIds.length>8||new Set(fieldIds).size!==fieldIds.length
+    ||fieldIds.some(id=>!eligible.includes(id)))throw Error('Select up to 8 valid Number or Resource fields.');
+  const next=await read(db.from('campaigns').update({token_quick_fields:fieldIds})
+   .eq('id',activeId).select('token_quick_fields').single());
+  setCamp(previous=>({...previous,token_quick_fields:next.token_quick_fields}));
+ }
+ function openQuickToken(t){
+  if(!t||(!isDM&&t.owner_id!==user))return;
+  if(!isDM&&camp?.active_map_id!==t.map_id)return;
+  setQuickEditToken(t);
+ }
+ async function quickTokenSaved(id){
+  await refreshMonitors();
+  const token=tokens.find(t=>t.id===id);
+  if(token?.character_id){
+   const {data,error}=await db.from('characters').select('*').eq('id',token.character_id).maybeSingle();
+   if(error)throw error;
+   if(data){
+    setCharacters(previous=>previous.map(ch=>ch.id===data.id?data:ch));
+    setCharacter(previous=>previous?.id===data.id?data:previous);
+   }
+  }
+ }
  async function saveTokenDisplay(config){
   if(!isDM||!camp)throw Error('Only the DM can change token display settings.');
   const data=await read(db.from('campaigns')
@@ -448,7 +515,7 @@ function App(){
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
-   onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} resize={resizeToken}
+   onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken} resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}/>
    {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
@@ -478,6 +545,7 @@ function App(){
  mapZoom={mapZoom} onChangeZoom={setMapZoom}
  onMapCalibrationPreview={setMapCalibrationPreview} onSaveMapCalibration={saveMapCalibration}
  onSaveTokenDisplay={saveTokenDisplay} template={camp?.sheet_template}
+ quickFields={camp?.token_quick_fields||[]} onSaveQuickFields={saveQuickFields}
  bindings={bindings} onSaveBindings={saveMyKeybindings}
  hotbarSlots={hotbarSlots} onSaveHotbar={saveMyHotbar}
  hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
