@@ -18,20 +18,27 @@ export function AuthGate({db}){
   if(signup&&password.length<10)return setError('Use a password of at least 10 characters.');
   if(signup&&password!==confirm)return setError('Passwords do not match.');
   if(!signup&&!raw)return setError('Enter your username or existing account email.');
-  setBusy(true);
+  setBusy(true);let created=false;
   try{
    if(signup){
     const {data,error:registrationError}=await db.functions.invoke('username-register',{
      body:{username:raw,password}
     });
-    if(registrationError)throw registrationError;
+    if(registrationError){
+     let details=null;
+     try{details=await registrationError.context?.json()}catch{}
+     throw Error(details?.error||registrationError.message||'Could not create account.');
+    }
     if(!data?.ok)throw Error(data?.error||'Could not create your account.');
+    created=true;
    }
    const email=raw.includes('@')&&!signup?raw:usernameEmail(raw);
    const {error:loginError}=await db.auth.signInWithPassword({email,password});
    if(loginError)throw loginError;
   }catch(e){
-   setError(errText(e));
+   if(created){
+    setMode('login');setError('Account created, but automatic sign-in failed. Sign in with the same username and password. '+errText(e));
+   }else setError(errText(e));
   }finally{setBusy(false)}
  }
  async function legacyLink(e){
@@ -85,6 +92,7 @@ export function AuthGate({db}){
      <button type="button" className="secondary" disabled={busy} onClick={()=>social('google')}>Google</button>
      <button type="button" className="secondary" disabled={busy} onClick={()=>social('discord')}>Discord</button>
     </div>
+    <p className="muted tiny">Google and Discord require the corresponding sign-in providers to be enabled by the app administrator.</p>
    </div>
    <details className="welcome-legacy">
     <summary>Use an email sign-in link (existing accounts)</summary>
