@@ -186,7 +186,8 @@ function App(){
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
- useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
+ useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId,
+  select:['id','campaign_id','map_id','updated_at']},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
@@ -493,7 +494,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       onPointerCancel={()=>{drag.current=null;setPreview({})}}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
-      <TokenMonitors config={displayConfig} fields={monitorValues[t.id]}/>
+      <TokenMonitors config={displayConfig} fields={monitorValues[t.id]} zoom={scale}/>
       {isDM&&selectedId===t.id&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
         onPointerDown={e=>{
