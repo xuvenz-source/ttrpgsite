@@ -1,53 +1,138 @@
 import React,{useEffect,useRef,useState} from 'react';
 
+const SIZE=400;
 const MAX_ART_MB=10;
+const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
 const canvasBlob=(canvas,quality=.92)=>new Promise((resolve,reject)=>{
  canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not export artwork')),'image/webp',quality);
 });
+
 function framePath(ctx,shape,inset){
  ctx.beginPath();
- if(shape==='square')ctx.roundRect(inset,inset,400-2*inset,400-2*inset,Math.max(3,26-inset/3));
- else ctx.arc(200,200,200-inset,0,Math.PI*2);
+ if(shape==='square')ctx.roundRect(inset,inset,SIZE-2*inset,SIZE-2*inset,Math.max(3,26-inset/3));
+ else ctx.arc(SIZE/2,SIZE/2,SIZE/2-inset,0,Math.PI*2);
 }
-function paint(ctx,img,overlay,{zoom,shiftX,shiftY,ring,back,shape,border,thickness,portraitRadius}){
- const size=400,outer=191,weight=Number(thickness);
- ctx.clearRect(0,0,size,size); // transparent outside the token; no rectangular background
- let clipInset;
- if(ring==='custom'&&overlay)clipInset=200-Number(portraitRadius);
- else clipInset=ring==='none'?8:Math.max(8,9+weight);
- ctx.save();
- framePath(ctx,shape,clipInset);
- ctx.clip();
- ctx.fillStyle=back;ctx.fillRect(0,0,size,size);
- const diameter=400-clipInset*2;
- const fit=Math.max(diameter/img.width,diameter/img.height)*zoom;
+
+/**
+ * Find the transparent opening containing the middle of a decorative frame.
+ * A flood-fill cannot cross the opaque frame, so the resulting mask follows
+ * irregular horns, blades, and other frame contours instead of imposing a circle.
+ */
+function detectFrameOpening(frame){
+ const canvas=document.createElement('canvas');canvas.width=SIZE;canvas.height=SIZE;
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});
+ ctx.drawImage(frame,0,0,SIZE,SIZE);
+ const rgba=ctx.getImageData(0,0,SIZE,SIZE).data,threshold=120,total=SIZE*SIZE;
+ const transparent=(index)=>rgba[index*4+3]<threshold;
+ const middle=(SIZE/2|0)*SIZE+(SIZE/2|0);
+ let start=transparent(middle)?middle:-1;
+ if(start<0){
+  let best=Infinity;
+  for(let y=120;y<280;y+=2)for(let x=120;x<280;x+=2){
+   const i=y*SIZE+x,dist=(x-200)**2+(y-200)**2;
+   if(transparent(i)&&dist<best){best=dist;start=i}
+  }
+ }
+ if(start<0)throw Error('The custom frame must have a transparent opening near its centre.');
+
+ const seen=new Uint8Array(total),queue=new Int32Array(total);
+ let first=0,last=0;
+ seen[start]=1;queue[last++]=start;
+ let left=SIZE,top=SIZE,right=0,bottom=0,touchesEdge=false;
+ while(first<last){
+  const index=queue[first++],x=index%SIZE,y=Math.floor(index/SIZE);
+  if(x===0||y===0||x===SIZE-1||y===SIZE-1)touchesEdge=true;
+  left=Math.min(left,x);right=Math.max(right,x);
+  top=Math.min(top,y);bottom=Math.max(bottom,y);
+  const neighbors=[];
+  if(x>0)neighbors.push(index-1);
+  if(x<SIZE-1)neighbors.push(index+1);
+  if(y>0)neighbors.push(index-SIZE);
+  if(y<SIZE-1)neighbors.push(index+SIZE);
+  for(const next of neighbors)if(!seen[next]&&transparent(next)){
+   seen[next]=1;queue[last++]=next;
+  }
+ }
+ if(touchesEdge||last<2500){
+  throw Error('The centre of this frame must be a closed transparent opening. This artwork appears open to the outside.');
+ }
+
+ const mask=document.createElement('canvas');mask.width=SIZE;mask.height=SIZE;
+ const maskCtx=mask.getContext('2d'),pixels=maskCtx.createImageData(SIZE,SIZE);
+ for(let i=0;i<total;i++)if(seen[i]){
+  const at=i*4;pixels.data[at]=255;pixels.data[at+1]=255;pixels.data[at+2]=255;pixels.data[at+3]=255;
+ }
+ // Feather the partially transparent antialiasing pixels immediately next
+ // to the interior, while keeping all exterior transparency fully excluded.
+ for(let y=Math.max(1,top-2);y<Math.min(SIZE-1,bottom+3);y++){
+  for(let x=Math.max(1,left-2);x<Math.min(SIZE-1,right+3);x++){
+   const i=y*SIZE+x;
+   if(seen[i])continue;
+   if(seen[i-1]||seen[i+1]||seen[i-SIZE]||seen[i+SIZE]){
+    const amount=rgba[i*4+3];
+    if(amount>0&&amount<255){
+     const at=i*4;pixels.data[at]=255;pixels.data[at+1]=255;pixels.data[at+2]=255;
+     pixels.data[at+3]=Math.round((255-amount)*.7);
+    }
+   }
+  }
+ }
+ maskCtx.putImageData(pixels,0,0);
+ return {canvas:mask,bounds:{x:left,y:top,w:right-left+1,h:bottom-top+1}};
+}
+
+function paint(ctx,img,frame,opening,{zoom,shiftX,shiftY,ring,back,shape,border,thickness}){
+ ctx.clearRect(0,0,SIZE,SIZE);
+ const custom=ring==='custom'&&frame&&opening;
+ const weight=Number(thickness);
+ const inset=ring==='none'?8:Math.max(8,9+weight);
+ const bounds=custom?opening.bounds:{x:inset,y:inset,w:SIZE-2*inset,h:SIZE-2*inset};
+ const fit=Math.max(bounds.w/img.width,bounds.h/img.height)*zoom;
  const w=img.width*fit,h=img.height*fit;
- ctx.drawImage(img,(size-w)/2+shiftX*1.5,(size-h)/2+shiftY*1.5,w,h);
+ const cx=bounds.x+bounds.w/2,cy=bounds.y+bounds.h/2;
+
+ if(custom){
+  const offscreen=document.createElement('canvas');offscreen.width=SIZE;offscreen.height=SIZE;
+  const layer=offscreen.getContext('2d');
+  layer.fillStyle=back;layer.fillRect(0,0,SIZE,SIZE);
+  layer.drawImage(img,cx-w/2+shiftX*1.5,cy-h/2+shiftY*1.5,w,h);
+  layer.globalCompositeOperation='destination-in';
+  layer.drawImage(opening.canvas,0,0);
+  layer.globalCompositeOperation='source-over';
+  ctx.drawImage(offscreen,0,0);
+  ctx.drawImage(frame,0,0,SIZE,SIZE);
+  return;
+ }
+
+ ctx.save();
+ framePath(ctx,shape,inset);ctx.clip();
+ ctx.fillStyle=back;ctx.fillRect(0,0,SIZE,SIZE);
+ ctx.drawImage(img,cx-w/2+shiftX*1.5,cy-h/2+shiftY*1.5,w,h);
  ctx.restore();
- if(ring==='custom'&&overlay){
-  ctx.drawImage(overlay,0,0,400,400);
- }else if(ring!=='none'&&weight>0){
+ if(ring!=='none'&&weight>0){
   ctx.lineWidth=weight;ctx.strokeStyle=border;
   framePath(ctx,shape,9+weight/2);ctx.stroke();
   if(ring==='double'){
    ctx.lineWidth=Math.max(1,Math.min(5,weight*.22));
-   ctx.strokeStyle='#edf1fa';
-   framePath(ctx,shape,9+weight+6);ctx.stroke();
+   ctx.strokeStyle='#edf1fa';framePath(ctx,shape,9+weight+6);ctx.stroke();
   }
  }
 }
+
 export default function TokenStudio({db,campaignId,userId,mode='players',onSave,onClose}){
- const [file,setFile]=useState(null),[zoom,setZoom]=useState(1),[shiftX,setShiftX]=useState(0),[shiftY,setShiftY]=useState(0),
+ const[file,setFile]=useState(null),[zoom,setZoom]=useState(1),[shiftX,setShiftX]=useState(0),[shiftY,setShiftY]=useState(0),
   [ring,setRing]=useState('single'),[back,setBack]=useState('#1b2030'),[border,setBorder]=useState('#c29b55'),
   [thickness,setThickness]=useState(10),[shape,setShape]=useState('circle'),
-  [frameFile,setFrameFile]=useState(''),[portraitRadius,setPortraitRadius]=useState(156),
-  [saving,setSaving]=useState(false),[error,setError]=useState('');
- const bmp=useRef(null),overlay=useRef(null),cv=useRef(null);
+  [frameFile,setFrameFile]=useState(''),[saving,setSaving]=useState(false),[error,setError]=useState(''),
+  [dragging,setDragging]=useState(false);
+ const bmp=useRef(null),overlay=useRef(null),opening=useRef(null),cv=useRef(null),drag=useRef(null);
  useEffect(()=>()=>{bmp.current?.close();overlay.current?.close()},[]);
  useEffect(()=>{
-  if(bmp.current&&cv.current)paint(cv.current.getContext('2d'),bmp.current,overlay.current,
-   {zoom,shiftX,shiftY,ring,back,shape,border,thickness,portraitRadius});
- },[file,zoom,shiftX,shiftY,ring,back,shape,border,thickness,frameFile,portraitRadius]);
+  if(bmp.current&&cv.current){
+   paint(cv.current.getContext('2d'),bmp.current,overlay.current,opening.current,
+    {zoom,shiftX,shiftY,ring,back,shape,border,thickness});
+  }
+ },[file,zoom,shiftX,shiftY,ring,back,shape,border,thickness,frameFile]);
  async function choose(e){
   const f=e.target.files?.[0];if(!f)return;
   try{
@@ -62,15 +147,33 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
   const f=e.target.files?.[0];if(!f)return;
   try{
    if(f.size>5*1024*1024||!['image/png','image/webp'].includes(f.type))
-    throw Error('Custom frames must be a transparent PNG or WebP below 5 MB');
+    throw Error('Custom frames must be transparent PNG or WebP images below 5 MB');
    const image=await createImageBitmap(f);
    if(image.width>4096||image.height>4096){image.close();throw Error('Frame dimensions must be 4096px or less')}
-   const sample=document.createElement('canvas');sample.width=1;sample.height=1;
-   sample.getContext('2d').drawImage(image,0,0,1,1);
-   const a=sample.getContext('2d').getImageData(0,0,1,1).data[3];
-   // Most overlay art has transparent regions; if opaque, the preview still shows what will be exported.
-   overlay.current?.close();overlay.current=image;setFrameFile(f.name);setRing('custom');setError('');
+   let detected;
+   try{detected=detectFrameOpening(image)}
+   catch(err){image.close();throw err}
+   overlay.current?.close();overlay.current=image;opening.current=detected;
+   setFrameFile(f.name);setRing('custom');setShiftX(0);setShiftY(0);setError('');
   }catch(err){setError(err.message||String(err))}
+ }
+ function beginDrag(e){
+  if(!bmp.current||e.button!==0)return;
+  e.preventDefault();cv.current.setPointerCapture(e.pointerId);
+  drag.current={id:e.pointerId,startX:e.clientX,startY:e.clientY,shiftX,shiftY};
+  setDragging(true);
+ }
+ function moveDrag(e){
+  const d=drag.current;
+  if(!d||d.id!==e.pointerId)return;
+  e.preventDefault();
+  const pixels=SIZE/Math.max(1,cv.current.getBoundingClientRect().width);
+  setShiftX(clamp(d.shiftX+(e.clientX-d.startX)*pixels/1.5,-180,180));
+  setShiftY(clamp(d.shiftY+(e.clientY-d.startY)*pixels/1.5,-180,180));
+ }
+ function endDrag(e){
+  if(!drag.current||drag.current.id!==e.pointerId)return;
+  drag.current=null;setDragging(false);
  }
  async function save(){
   if(!bmp.current||!file)return;
@@ -94,28 +197,30 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
  return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
   <section className="modal tokenstudio" role="dialog" aria-modal="true" aria-label="Create character token">
    <div className="heading"><h2>Portrait & token studio</h2><button className="secondary" onClick={onClose}>✕ Close</button></div>
-   <p className="muted">The token image contains its own chosen frame. No extra border is added on the battlemap.</p>
+   <p className="muted">Drag your portrait directly in the preview. Decorative frames automatically use their transparent inner opening instead of a circular crop.</p>
    <div className="studio-grid">
     <div className="studio-preview">
-     <canvas ref={cv} width={400} height={400} aria-label="Token preview"/>
+     <canvas ref={cv} width={SIZE} height={SIZE} aria-label="Drag the image to position it in the token frame"
+      className={dragging?'dragging':''} onPointerDown={beginDrag} onPointerMove={moveDrag}
+      onPointerUp={endDrag} onPointerCancel={endDrag}/>
      {!file&&<div className="studio-empty">Choose your character artwork to preview the token</div>}
     </div>
     <div className="studio-options">
      <label>Character artwork<input type="file" accept="image/png,image/jpeg,image/webp" onChange={choose}/></label>
      <label>Zoom — {zoom.toFixed(2)}×
       <input type="range" min="1" max="3" step=".05" value={zoom} onChange={e=>setZoom(+e.target.value)}/></label>
-     <label>Horizontal crop<input type="range" min="-100" max="100" value={shiftX} onChange={e=>setShiftX(+e.target.value)}/></label>
-     <label>Vertical crop<input type="range" min="-100" max="100" value={shiftY} onChange={e=>setShiftY(+e.target.value)}/></label>
+     <div className="tools"><button className="secondary" type="button" onClick={()=>{setShiftX(0);setShiftY(0)}}>Centre portrait</button>
+      <span className="muted small">Click and drag the image to move it</span></div>
+     <details className="studio-fine-adjust"><summary>Fine position adjustments</summary>
+      <label>Horizontal<input type="range" min="-180" max="180" value={shiftX} onChange={e=>setShiftX(Number(e.target.value))}/></label>
+      <label>Vertical<input type="range" min="-180" max="180" value={shiftY} onChange={e=>setShiftY(Number(e.target.value))}/></label>
+     </details>
      <label>Frame style<select value={ring} onChange={e=>setRing(e.target.value)}>
       <option value="none">No ring</option><option value="single">Single ring</option>
       <option value="double">Double ring</option>
       {overlay.current&&<option value="custom">Uploaded decorative frame</option>}
      </select></label>
-     {ring==='custom'?<>
-      <p className="muted small">{frameFile} — the original PNG/WebP is composited on top of your character portrait.</p>
-      <label>Portrait area (custom frame) — {portraitRadius}px
-       <input type="range" min="115" max="190" step="1" value={portraitRadius} onChange={e=>setPortraitRadius(Number(e.target.value))}/></label>
-     </>:<>
+     {ring==='custom'?<p className="muted small">Using {frameFile}. The portrait is clipped to the exact transparent centre of your uploaded frame.</p>:<>
       {ring!=='none'&&<label>Ring thickness — {thickness}px
        <input type="range" min="1" max="42" step="1" value={thickness} onChange={e=>setThickness(Number(e.target.value))}/></label>}
       <label>Token shape<select value={shape} onChange={e=>setShape(e.target.value)}>
