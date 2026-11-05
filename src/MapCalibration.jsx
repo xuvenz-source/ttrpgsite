@@ -22,6 +22,7 @@ export default function MapCalibration({map,onPreview,onSave}){
  const changed=!!map&&(Number(width)!==Number(map.width)||Number(height)!==Number(map.height)
   ||Number(grid)!==Number(map.grid_size));
 
+ useEffect(()=>()=>onPreview(null),[map?.id]);
  useEffect(()=>{
   if(!map){setWidth('');setHeight('');setGrid('');onPreview(null);return}
   setWidth(String(map.width));setHeight(String(map.height));setGrid(String(map.grid_size));
