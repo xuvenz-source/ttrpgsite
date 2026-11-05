@@ -140,7 +140,16 @@ function App(){
   }));refreshTokens();
  }catch(e){fail(e)}}
  async function moveToken(t,x,y){try{await read(db.from('map_tokens').update({x,y}).eq('id',t.id));refreshTokens()}catch(e){fail(e)}}
- async function removeToken(t){if(!confirm('Remove '+t.name+'?'))return;try{await read(db.from('map_tokens').delete().eq('id',t.id));refreshTokens()}catch(e){fail(e)}}
+ async function resizeToken(t,spanX,spanY){
+  if(!isDM)return;
+  try{await read(db.from('map_tokens').update({span_x:spanX,span_y:spanY}).eq('id',t.id))}
+  catch(e){fail(e)}finally{await refreshTokens()}
+ }
+ async function removeToken(t){
+  if(!isDM)return;
+  try{await read(db.from('map_tokens').delete().eq('id',t.id));await refreshTokens()}
+  catch(e){fail(e)}
+ }
  const campaignTabs=['sheet',...(isDM?['designer','maps','bestiary']:[]),'tabletop'];
  if(!configured())return <div className="center"><h1>Tabletop Forge</h1><p>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel.</p></div>;
  if(!authReady)return <div className="center">Loading…</div>;
@@ -178,7 +187,8 @@ function App(){
    {isDM&&<button className="secondary small-button tray-toggle" onClick={()=>setTrayOpen(x=>!x)}>{trayOpen?'Hide NPC tray':'Show NPC tray'}</button>}
    <Board db={db} map={activeMap} url={urls[activeMap.id]} tokens={tokens}
     user={user} isDM={isDM} move={moveToken} remove={removeToken}
-    onNpcDrop={placeNpc} onTokenEdit={t=>setNpcEditor({kind:'token',data:t})}/>
+    onNpcDrop={placeNpc} onTokenEdit={t=>setNpcEditor({kind:'token',data:t})}
+    resize={resizeToken}/>
   </div>
  </div>:<p>Ask the DM to upload and publish a map.</p>}</section>}
  </div><aside className="chat panel"><h2>Campaign chat</h2><div className="messages">{msgs.map(m=><div className="msg" key={m.id}><div className="muted tiny">{m.user_id===user?'You':characters.find(c=>c.user_id===m.user_id)?.name||'Party member'} · {stamp(m.created_at)}</div>{m.kind==='roll'?<div className="dice"><b>🎲 {m.body}</b><h2>{m.result?.total}</h2><small>{m.result?.expression} · [{(m.result?.dice||[]).join(', ')}] {m.result?.modifier?' + '+m.result.modifier:''}</small></div>:<p>{m.body}</p>}</div>)}</div><form onSubmit={sendChat} className="chatbox"><input value={chat} onChange={e=>setChat(e.target.value)} placeholder="Message or /roll 1d20"/><button>Send</button></form><p className="muted tiny">/roll 2d6+3 · /roll 2d20kh1 · /macro Attack</p></aside></div></>}
@@ -203,11 +213,28 @@ function Designer({template,tabId,changeTemplate}){const t=template?.tabs.find(x
  const update=(id,key,value)=>changeTemplate(x=>{const f=x.tabs.find(y=>y.id===t.id)?.fields.find(y=>y.id===id);if(f)f[key]=value});
  return <><div className="tools"><input aria-label="Tab name" value={t.name} onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/><button className="secondary" onClick={()=>{if(template.tabs.length<2)return alert('Keep at least one tab');if(confirm('Delete tab and its fields?'))changeTemplate(x=>x.tabs=x.tabs.filter(y=>y.id!==t.id))}}>Delete tab</button><select id="newfieldtype" defaultValue="text"><option value="text">Text</option><option value="number">Number</option><option value="textarea">Notes</option><option value="checkbox">Checkbox</option><option value="roll">Dice button</option><option value="inventory">Inventory</option></select><button onClick={()=>{const type=document.getElementById('newfieldtype').value;changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({id:'field_'+uid().slice(0,8),label:'New '+type,type,span:1,...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})}))}}>+ Add field</button></div><div className="designer-grid">{t.fields.map((f,i)=><div className="designfield" draggable onDragStart={()=>drag.current=i} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=drag.current;if(from==null||from===i)return;changeTemplate(x=>{const a=x.tabs.find(y=>y.id===t.id).fields;a.splice(i,0,a.splice(from,1)[0])});drag.current=null}} key={f.id}><span className="muted">⠿ Drag to reorder</span><label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label><div className="tools"><label>Width <select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}><option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option></select></label><span className="muted">{f.type}</span><button className="secondary" onClick={()=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields=x.tabs.find(y=>y.id===t.id).fields.filter(y=>y.id!==f.id))}>Delete</button></div>{f.type==='roll'&&<label>Dice formula<input value={f.formula||''} onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}{f.type==='inventory'&&<label>Columns (comma separated)<input value={(f.columns||[]).join(', ')} onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}</div>)}</div></>}
 
-function Board({db,map,url,tokens,user,isDM,move,remove,onNpcDrop,onTokenEdit}){
- const[scale,setScale]=useState(.7),[preview,setPreview]=useState({});
- const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),zoomRef=useRef(.7);
+
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onTokenEdit}){
+ const[scale,setScale]=useState(.7),[preview,setPreview]=useState({}),[selectedId,setSelectedId]=useState(null);
+ const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),zoomRef=useRef(.7);
+ const selectedToken=tokens.find(t=>t.id===selectedId);
  const zoomTo=n=>{const next=Math.max(.25,Math.min(3,Number(n)));zoomRef.current=next;setScale(next)};
  useEffect(()=>{setPreview({})},[tokens]);
+ useEffect(()=>{setSelectedId(null)},[map.id]);
+ useEffect(()=>{if(selectedId&&!tokens.some(t=>t.id===selectedId))setSelectedId(null)},[selectedId,tokens]);
+ useEffect(()=>{
+  function handleDelete(e){
+   if(!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
+   const el=e.target;
+   if(el instanceof Element && el.closest('input,textarea,select,button,[contenteditable="true"],[role="textbox"]'))return;
+   if(document.querySelector('.modal-backdrop'))return;
+   const t=tokens.find(x=>x.id===selectedId);
+   if(!t)return;
+   e.preventDefault();e.stopPropagation();setSelectedId(null);remove(t);
+  }
+  document.addEventListener('keydown',handleDelete);
+  return()=>document.removeEventListener('keydown',handleDelete);
+ },[selectedId,isDM,tokens,remove]);
  useEffect(()=>{
   const node=viewportRef.current;if(!node)return;
   const wheel=e=>{
@@ -235,38 +262,109 @@ function Board({db,map,url,tokens,user,isDM,move,remove,onNpcDrop,onTokenEdit}){
    y:Math.max(0,Math.min(1000,Math.floor((e.clientY-rect.top)/cell)))
   };
  };
+ const snapSize=(v)=>Math.max(.25,Math.min(12,Math.round(v*4)/4));
  function dropNpc(e){e.preventDefault();if(!isDM)return;
   const npcId=e.dataTransfer.getData('application/x-forge-npc');
   if(npcId){const p=pos(e);onNpcDrop(npcId,p.x,p.y)}
  }
  return <>
-  <div className="tools zoom-toolbar"><label>Map zoom
-   <select value={scale} onChange={e=>zoomTo(e.target.value)}>
+  <div className="tools zoom-toolbar">
+   <label>Map zoom<select value={scale} onChange={e=>zoomTo(e.target.value)}>
     <option value=".25">25%</option><option value=".35">35%</option>
     <option value=".5">50%</option><option value=".7">70%</option>
     <option value="1">100%</option><option value="1.5">150%</option>
     <option value="2">200%</option><option value="3">300%</option>
-   </select></label><span className="muted tiny">Ctrl + scroll on map to zoom · drag tokens to move · DM: Alt + double-click NPC for sheet</span>
+   </select></label>
+   <span className="muted tiny">Ctrl + wheel: zoom · Click a token then Delete: remove (DM) · Alt + double-click NPC: sheet</span>
   </div>
-  <div className="mapscroll" ref={viewportRef} aria-label="Battlemap viewport">
-   <div ref={boardRef} className="board" onDragOver={e=>{if(isDM)e.preventDefault()}}
-     onDrop={dropNpc} style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
+  {isDM&&selectedToken&&<div className="token-selection-toolbar">
+   <strong>{selectedToken.name}</strong>
+   <span className="muted tiny">Footprint: {Number(selectedToken.span_x??1)} × {Number(selectedToken.span_y??1)} grid cells</span>
+   <label>Size preset
+    <select value={Number(selectedToken.span_x??1)===Number(selectedToken.span_y??1)?String(Number(selectedToken.span_x??1)):'custom'}
+     onChange={e=>{
+      if(e.target.value==='custom')return;
+      const size=Number(e.target.value);
+      setPreview(old=>({...old,[selectedToken.id]:{...selectedToken,...old[selectedToken.id],span_x:size,span_y:size}}));
+      resize(selectedToken,size,size);
+     }}>
+     <option value=".5">Small (½ × ½)</option>
+     <option value="1">1 × 1</option>
+     <option value="2">Large (2 × 2)</option>
+     <option value="3">Huge (3 × 3)</option>
+     <option value="4">4 × 4</option>
+     <option value="custom">Custom</option>
+    </select>
+   </label>
+   <span className="muted tiny">Or drag the lower-right corner to resize</span>
+  </div>}
+  <div className="mapscroll" ref={viewportRef} aria-label="Battlemap viewport" tabIndex={0}>
+   <div ref={boardRef} className="board"
+    onPointerDown={e=>{if(e.target===e.currentTarget||e.target.classList.contains('gridlines'))setSelectedId(null)}}
+    onDragOver={e=>{if(isDM)e.preventDefault()}}
+    onDrop={dropNpc}
+    style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {tokens.filter(t=>isDM||t.visible).map(t=>{
-     const p=preview[t.id]||t,can=isDM||t.owner_id===user;
-     const dimension=map.grid_size*scale;
-     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')} style={{
-        left:p.x*dimension,top:p.y*dimension,width:dimension,height:dimension,
-        borderColor:t.color,opacity:t.visible?1:.55,cursor:can?'grab':'default'}}
+     const p={...t,...preview[t.id]},canMove=isDM||t.owner_id===user;
+     const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
+     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+(selectedId===t.id?' token-selected':'')}
+      style={{
+       left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
+       opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
+      }}
       title={t.name+(isDM&&!t.owner_id?' · Alt + double-click to edit sheet':'')}
       onDoubleClick={e=>{if(e.altKey&&isDM&&!t.owner_id){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
-      onPointerDown={e=>{if(!can||e.altKey)return;e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id}}
-      onPointerMove={e=>{if(drag.current===t.id)setPreview(old=>({...old,[t.id]:pos(e)}))}}
-      onPointerUp={e=>{if(drag.current!==t.id)return;drag.current=null;const p=pos(e);
-        setPreview(old=>({...old,[t.id]:p}));if(p.x!==t.x||p.y!==t.y)move(t,p.x,p.y)}}
+      onPointerDown={e=>{
+       e.stopPropagation();setSelectedId(t.id);
+       viewportRef.current?.focus({preventScroll:true});
+       if(!canMove||e.altKey||e.button!==0)return;
+       e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id;
+      }}
+      onPointerMove={e=>{
+       if(drag.current===t.id){const next=pos(e);setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}))}
+      }}
+      onPointerUp={e=>{
+       if(drag.current!==t.id)return;drag.current=null;
+       const next=pos(e);
+       if(next.x!==t.x||next.y!==t.y){
+        setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}));
+        move(t,next.x,next.y);
+       }
+      }}
       onPointerCancel={()=>{drag.current=null;setPreview({})}}>
-      {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:<span>{t.name.slice(0,2).toUpperCase()}</span>}
-      {isDM&&<button className="tokenX" title="Remove token" onClick={e=>{e.stopPropagation();remove(t)}}>×</button>}
+      {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
+       <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
+      {isDM&&selectedId===t.id&&<div className="token-resize-handle" role="button"
+        aria-label={'Resize '+t.name} title="Drag to change token footprint"
+        onPointerDown={e=>{
+         e.stopPropagation();e.preventDefault();
+         if(e.button!==0)return;
+         resizeDrag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+          w:Number(t.span_x??1),h:Number(t.span_y??1)};
+         e.currentTarget.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={e=>{
+         const d=resizeDrag.current;if(!d||d.id!==t.id||d.pointerId!==e.pointerId)return;
+         const cellWidth=map.grid_size*zoomRef.current;
+         const w=snapSize(d.w+(e.clientX-d.startX)/cellWidth),
+           h=snapSize(d.h+(e.clientY-d.startY)/cellWidth);
+         setPreview(old=>({...old,[t.id]:{...old[t.id],span_x:w,span_y:h}}));
+        }}
+        onPointerUp={e=>{
+         const d=resizeDrag.current;if(!d||d.id!==t.id||d.pointerId!==e.pointerId)return;
+         resizeDrag.current=null;
+         const cellWidth=map.grid_size*zoomRef.current,
+          w=snapSize(d.w+(e.clientX-d.startX)/cellWidth),
+          h=snapSize(d.h+(e.clientY-d.startY)/cellWidth);
+         if(w!==d.w||h!==d.h){
+          setPreview(old=>({...old,[t.id]:{...old[t.id],span_x:w,span_y:h}}));
+          resize(t,w,h);
+         }
+        }}
+        onPointerCancel={()=>{resizeDrag.current=null;setPreview({})}}>
+       <span aria-hidden="true">↘</span>
+      </div>}
      </div>;
     })}
    </div>
