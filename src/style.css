@@ -2396,3 +2396,10 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  border:1px solid #83a8da;border-radius:6px;padding:5px 9px;
  white-space:nowrap;background:#111b2ef2;color:#e9f3ff;
  box-shadow:0 5px 15px #0008;pointer-events:none;font-size:11px}
+
+/* Campaign roster presence: green means an authenticated account currently
+   has an active tabletop connection, not merely that a character exists. */
+.unit-account-display{display:inline-flex;align-items:center;gap:7px;min-width:0}
+.unit-account-display>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.unit-online-indicator{display:inline-block;flex:0 0 9px;width:9px;height:9px;
+ border-radius:50%;background:#42db7d;box-shadow:0 0 0 2px #152b24,0 0 7px #42db7d90}
