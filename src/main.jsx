@@ -22,6 +22,7 @@ import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbook
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
+import {parseSheetTemplateFile,serializeSheetTemplate} from './TemplateFiles.js';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -681,6 +682,30 @@ function App(){
   setTemplate(saved.sheet_template);
   return found?'This resource is already linked to a token bar.':'Resource and token bar saved together.';
  }
+ function exportTemplate(){
+  try{
+   const json=serializeSheetTemplate(template);
+   const url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+   const a=document.createElement('a');
+   a.href=url;a.download=(camp?.name||'tabletop-forge').replace(/[^a-z0-9_-]+/gi,'-').slice(0,60)+'-sheet-template.json';
+   document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+   setSaveState('Template exported to your device.');
+  }catch(e){fail(e)}
+ }
+ async function importTemplateFile(event){
+  const file=event.target.files?.[0];
+  event.target.value='';
+  if(!file)return;
+  try{
+   if(file.size>2_000_000)throw Error('Choose a JSON template smaller than 2 MB.');
+   const imported=parseSheetTemplateFile(await file.text());
+   if(!confirm('Replace the current template in the designer? Your campaign will not change until you click Save template.'))return;
+   setTemplate(imported);
+   setSheetTab(imported.tabs[0].id);
+   setSaveState('Imported locally — click Save template to apply to campaign.');
+  }catch(e){fail(e)}
+ }
  async function saveTemplate(){setBusy(true);try{
   validateModifierRules(template);
   await read(db.from('campaigns').update({sheet_template:template}).eq('id',activeId));
@@ -1142,6 +1167,11 @@ function App(){
  </FloatingWindow>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
+ <button type="button" className="secondary" onClick={exportTemplate}>Export JSON</button>
+ <label className="button secondary">Import JSON
+  <input type="file" hidden accept=".json,application/json"
+   onChange={importTemplateFile} aria-label="Import local sheet template JSON"/>
+ </label>
  <button type="button" disabled={busy} onClick={saveTemplate}>Save template</button>
  </div></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button>
  <button type="button" className="secondary" onClick={()=>{
