@@ -74,7 +74,7 @@ begin
    v_highest:=v_threshold;v_best:=v_tier;
   end if;
  end loop;
- if v_best is null or v_best->>'showOnToken'<>'true' then return null;end if;
+ if v_best is null or coalesce(v_best->>'showOnToken','false')<>'true' then return null;end if;
  return jsonb_build_object(
   'icon',left(coalesce(nullif(v_best->>'icon',''),'⚖️'),10),
   'label',left(coalesce(nullif(v_best->>'label',''),'Encumbered'),40)
