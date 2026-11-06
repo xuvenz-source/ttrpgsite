@@ -1,6 +1,6 @@
 -- STAGED ONLY: apply after 20261106180100_private_player_maps.sql.
--- Existing macros without critOn retain their current behaviour.
--- Criticals use the natural d20 face; added modifiers do not change that face.
+-- Older macros without critOn continue to execute as before.
+-- A configured critical uses only the natural d20 face, never the modifier.
 
 create or replace function public.valid_tabletop_macro_rows(p_rows jsonb)
 returns boolean language plpgsql immutable set search_path='' as $$
@@ -33,16 +33,7 @@ begin
        or length(v_cell->>'formula')>120 then return false;end if;
     if v_cell ? 'critOn' and (
        jsonb_typeof(v_cell->'critOn')<>'number'
-       or (v_cell->>'critOn') !~ '^([1-9]|1[0-9]|20)
-   elsif v_cell->>'kind'='text' then
-    if (v_cell-'id'-'kind'-'label'-'text')<>'{}'::jsonb or
-       coalesce(v_cell->>'id','') !~ '^[a-zA-Z0-9_-]{1,50}$'
-       or length(coalesce(v_cell->>'text',''))>90 then return false;end if;
-   else return false;end if;
-  end loop;
- end loop;
- return v_rolls>0 and v_rolls<=18;
-end $$;
+       or (v_cell->>'critOn') !~ '^([1-9]|1[0-9]|20)$'
     ) then return false;end if;
    elsif v_cell->>'kind'='text' then
     if (v_cell-'id'-'kind'-'label'-'text')<>'{}'::jsonb or
@@ -96,7 +87,7 @@ begin
     if v_rolls>18 then raise exception 'Too many rolls in one macro';end if;
     v_result:=public.roll_spell_expression(v_cell->>'formula','{}'::jsonb,v_sheet);
     if v_cell ? 'critOn' then
-     -- Compare the unmodified d20 face, never the total or other bonus dice.
+     -- Natural crits are the face of one d20, not the modified attack total.
      v_crit_on:=(v_cell->>'critOn')::integer;
      v_d20_count:=0;v_natural:=null;
      for v_d20 in select value from jsonb_array_elements(v_result->'rolls') loop
