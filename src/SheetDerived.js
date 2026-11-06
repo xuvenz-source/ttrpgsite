@@ -42,6 +42,25 @@ export function abilityModifier(raw,mode='score',base=10,step=2){
  const value=num(raw,mode==='score'?num(base,10):0);
  return mode==='score'?Math.floor((value-num(base,10))/Math.max(1,num(step,2))):value;
 }
+/** DM-configured derived reference; no new visible sheet field. */
+export function modifierReferenceId(field){
+ const code=String(field?.modifierCode||field?.label||'').trim().toLowerCase()
+  .replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
+ return isDerivedKey(code)?code:null;
+}
+export function validateModifierRules(template){
+ const fields=safeList(template?.tabs).flatMap(tab=>safeList(tab.fields,150));
+ const seen=new Set();
+ for(const f of fields.filter(f=>f?.type==='number'&&f.modifierEnabled===true)){
+  const ref=modifierReferenceId(f);
+  if(!ref||seen.has(ref))throw Error('Each ability modifier needs a unique valid reference ID.');
+  seen.add(ref);
+ }
+ const base=num(template?.modifierRules?.base,10),step=num(template?.modifierRules?.step,2);
+ if(!Number.isInteger(base)||base<0||base>100||
+    !Number.isInteger(step)||step<1||step>20)
+  throw Error('Use a score base 0–100 and an integer modifier step 1–20.');
+}
 export function proficiencyForLevel(tiers,level){
  const ordered=safeList(tiers,30).map(t=>({
   level:Math.max(1,Math.floor(num(t.level,1))),
@@ -145,10 +164,15 @@ export function enrichSheetValues(template,raw){
     scoreAttrs.set(f.defaultAttackField,{base:f.scoreBase,step:f.scoreStep});
   }
  }
+ const rules=template?.modifierRules||{};
+ for(const f of fields.filter(f=>f.type==='number'&&f.modifierEnabled===true)){
+  const alias=modifierReferenceId(f);
+  if(alias)scoreAttrs.set(alias,{source:f.id,base:rules.base??10,step:rules.step??2});
+ }
  for(const [id,settings] of scoreAttrs){
   const key=id+'_mod';
   if(isDerivedKey(key))
-   next[key]=abilityModifier(next[id],'score',settings.base,settings.step);
+   next[key]=abilityModifier(next[settings.source||id],'score',settings.base,settings.step);
  }
  return next;
 }
@@ -181,6 +205,10 @@ export function numericFieldsWithDerived(template){
    if(f.defaultAttackMode==='score'&&f.defaultAttackField)
     scoreFields.add(f.defaultAttackField);
   }
+ }
+ for(const f of fields.filter(f=>f.type==='number'&&f.modifierEnabled===true)){
+  const alias=modifierReferenceId(f);
+  if(alias)entries.push({id:alias+'_mod',label:(f.label||alias)+' modifier'});
  }
  for(const id of scoreFields)if(isDerivedKey(id+'_mod')){
   const source=entries.find(e=>e.id===id);
