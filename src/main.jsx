@@ -26,7 +26,8 @@ import {canControlMapToken,selectionRectangle,selectableTokenIds,
  boundedGroupOffset} from './MapSelection.js';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
-import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
+import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,
+ reorderHotbarSlots,removeHotbarSlot,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 import {parseSheetTemplateFile,serializeSheetTemplate,validateSheetTemplate} from './TemplateFiles.js';
@@ -122,6 +123,7 @@ function App(){
  const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
+ const latestHotbar=useRef(normaliseHotbar([])),hotbarWriteQueue=useRef(Promise.resolve());
  const[macros,setMacros]=useState([]);
  const[macroBuilderOpen,setMacroBuilderOpen]=useState(false);
  const[hotbarVisible,setHotbarVisible]=useState(true);
@@ -740,12 +742,42 @@ function App(){
    return slotIndex;
   }catch(e){setHotbarSlots(previous);throw e}
  }
- async function saveMyHotbar(slots){
+ async function saveMyHotbar(slots,{optimistic=false}={}){
   if(!user||!activeId)throw Error('Join a campaign before saving a hotbar.');
-  const cleaned=normaliseHotbar(slots);
-  await read(db.from('tabletop_hotbars')
-   .upsert({user_id:user,campaign_id:activeId,slots:cleaned},{onConflict:'user_id,campaign_id'}));
-  setHotbarSlots(cleaned);
+  const cleaned=normaliseHotbar(slots),owner=user,campaign=activeId;
+  // Serialize writes so rapid drags cannot save an older order last.
+  const work=hotbarWriteQueue.current.catch(()=>{}).then(()=>read(db.from('tabletop_hotbars')
+   .upsert({user_id:owner,campaign_id:campaign,slots:cleaned},{onConflict:'user_id,campaign_id'})));
+  hotbarWriteQueue.current=work.catch(()=>{});
+  await work;
+  if(!optimistic&&owner===user&&campaign===activeId){
+   latestHotbar.current=cleaned;
+   setHotbarSlots(cleaned);
+  }
+ }
+ useEffect(()=>{latestHotbar.current=hotbarSlots},[hotbarSlots]);
+ async function changeHotbarByDrag(transform){
+  if(!user||!activeId)throw Error('Join a campaign before editing your hotbar.');
+  const previous=latestHotbar.current;
+  const next=transform(previous);
+  if(JSON.stringify(next)===JSON.stringify(previous))return;
+  latestHotbar.current=next;
+  setHotbarSlots(next);
+  try{await saveMyHotbar(next,{optimistic:true})}
+  catch(e){
+   // Don't undo a newer drag while an older save is completing.
+   if(latestHotbar.current===next){
+    latestHotbar.current=previous;
+    setHotbarSlots(previous);
+   }
+   throw e;
+  }
+ }
+ function rearrangeHotbar(from,to){
+  return changeHotbarByDrag(slots=>reorderHotbarSlots(slots,from,to));
+ }
+ function clearHotbarSlot(index){
+  return changeHotbarByDrag(slots=>removeHotbarSlot(slots,index));
  }
  async function create(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('create_campaign',{p_name:createName.trim()}));setCreateName('');await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
  async function join(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('join_campaign',{p_invite_code:joinCode.trim().toLowerCase()}));setJoinCode('');history.replaceState({},'',location.pathname);await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
@@ -1511,7 +1543,9 @@ function App(){
    {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
     onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}
     onAssignSpell={(index,payload)=>assignSpellToHotbar(payload,index).catch(fail)}
-    onAssignMacro={(index,payload)=>assignMacro(payload,index).catch(fail)}/>}
+    onAssignMacro={(index,payload)=>assignMacro(payload,index).catch(fail)}
+    onReorderSlot={(from,to)=>rearrangeHotbar(from,to).catch(fail)}
+    onRemoveSlot={index=>clearHotbarSlot(index).catch(fail)}/>}
   </>
   :<div className="empty-tabletop">
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
