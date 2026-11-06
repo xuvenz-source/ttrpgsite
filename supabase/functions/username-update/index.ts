@@ -63,7 +63,11 @@ Deno.serve(async request=>{
  }
  if(!exhausted)return response(origin,503,{ok:false,error:'Username verification is temporarily unavailable.'});
  const native=String(me.email||'').toLowerCase().endsWith('@'+DOMAIN);
- const updates={
+ const updates:{
+  email?:string;
+  email_confirm?:boolean;
+  user_metadata:Record<string,unknown>;
+ }={
   user_metadata:{...(me.user_metadata||{}),username,display_name:username,
    ...(native?{tabletop_username:true}:{})}
  };
