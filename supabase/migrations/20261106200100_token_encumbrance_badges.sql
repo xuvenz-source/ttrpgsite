@@ -12,7 +12,7 @@ declare
  v_best jsonb:=null;v_qty numeric;v_each numeric;
  v_raw text;v_score_field text;
 begin
- if v_rules->>'enabled'<>'true' then return null;end if;
+ if coalesce(v_rules->>'enabled','false')<>'true' then return null;end if;
  if jsonb_typeof(p_template->'tabs')<>'array' then return null;end if;
  if jsonb_typeof(p_values)<>'object' then p_values:='{}'::jsonb;end if;
  for v_tab in select value from jsonb_array_elements(p_template->'tabs') limit 30 loop
