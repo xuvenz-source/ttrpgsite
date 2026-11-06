@@ -36,7 +36,8 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
  const valid=validCodes&&config.widgets.length<=8&&config.widgets.every(w=>keyRx.test(w.field||'')&&
    (w.type==='globe'||!w.maxField||keyRx.test(w.maxField))&&
    /^#[0-9a-f]{6}$/i.test(w.color||'')&&(w.label||'').length<=24&&
-   Object.keys(POSITIONS).includes(w.position));
+   Object.keys(POSITIONS).includes(w.position)&&
+   ['inside','outside'].includes(w.placement));
  function updateReference(id,patch){
   setStatus('');setError('');
   setConfig(c=>({...c,references:(c.references||[]).map(r=>r.id===id?{...r,...patch}:r)}));
@@ -72,7 +73,8 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
   const field=preferred?.id||'hp';
   setConfig(c=>({...c,widgets:[...c.widgets,{id,type,label:type==='bar'?'Resource':'Status',
    field,maxField:type==='bar'?(preferred?.type==='resource'?field+'__max':''):'',icon:type==='bar'?'heart':'shield',
-   color:type==='bar'?'#d9505b':'#368cdb',position:type==='bar'?'top':'bottom-right',showValue:true}]}));
+   color:type==='bar'?'#d9505b':'#368cdb',position:type==='bar'?'top':'bottom-right',
+   placement:'outside',showValue:true}]}));
  }
  function moveWidget(i,delta){setConfig(c=>{const widgets=[...c.widgets],to=i+delta;if(to<0||to>=widgets.length)return c;
   [widgets[i],widgets[to]]=[widgets[to],widgets[i]];return {...c,widgets}})}
@@ -84,7 +86,7 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
  }
  return <div className="token-designer">
   <p className="muted small">Choose a Resource field such as “Hit Points” to connect its Current and Maximum values automatically. Use single Number fields for AC, elevation and other standalone values.</p>
-  <p className="muted tiny">Create Resource fields in Sheet Designer, or use the one-click “Add / link token resource bar” option there. Existing manually linked fields still work.</p>
+  <p className="muted tiny">Create Resource fields in Sheet Designer, or use the one-click “Add / link token resource bar” option there. Existing manually linked fields still work. Bars and globes appear above overlapping tokens; each can be placed inside its token.</p>
   <details className="reference-codes-editor">
    <summary>Reference codes ({refs.length}/20)</summary>
    <p className="muted tiny">Give a value a short campaign code such as <code>=@AC</code>.
@@ -217,6 +219,13 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
     <label>Position<select value={w.position||'top'} onChange={e=>widgetChange(w.id,{position:e.target.value})}>
       {Object.entries(POSITIONS).map(([v,label])=><option value={v} key={v}>{label}</option>)}
      </select></label>
+    <label>Placement
+     <select value={w.placement||'outside'} aria-label={(w.label||'Resource')+' placement'}
+      onChange={e=>widgetChange(w.id,{placement:e.target.value})}>
+      <option value="outside">Outside token (default)</option>
+      <option value="inside">Inside token boundaries</option>
+     </select>
+    </label>
     <label>Colour<input type="color" value={w.color||'#df444d'} onChange={e=>widgetChange(w.id,{color:e.target.value})}/></label>
     {w.type==='globe'&&<label>Icon<select value={w.icon||'none'} onChange={e=>widgetChange(w.id,{icon:e.target.value})}>
       {Object.entries(ICONS).map(([v,icon])=><option key={v} value={v}>{icon} {v}</option>)}

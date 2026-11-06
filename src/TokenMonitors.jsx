@@ -28,7 +28,9 @@ export function normalizeConfig(input){
   npcVisibility:obj.npcVisibility==='everyone'?'everyone':'dm',
   statusPosition:Object.prototype.hasOwnProperty.call(STATUS_POSITIONS,obj.statusPosition)?obj.statusPosition:'left',
   references:Array.isArray(obj.references)?obj.references.slice(0,20).filter(x=>x&&typeof x==='object'):[],
-  widgets:widgets.filter(x=>x&&typeof x==='object')
+  widgets:widgets.filter(x=>x&&typeof x==='object').map(w=>({
+   ...w,placement:w.placement==='inside'?'inside':'outside'
+  }))
  };
 }
 function number(value){
@@ -46,8 +48,11 @@ export function TokenMonitors({config,fields,preview=false,zoom=1}){
   style={{'--overlay-scale':Math.max(.45,Math.min(1.2,Number(zoom)||1))}}>
   {settings.widgets.map((w,i)=>{
    const kind=w.type==='globe'?'globe':'bar';
-   const position=POSITIONS[w.position]?w.position:(kind==='bar'?'top':'bottom-right');
-   const index=counters[position]||0;counters[position]=index+1;
+   const position=Object.prototype.hasOwnProperty.call(POSITIONS,w.position)?
+    w.position:(kind==='bar'?'top':'bottom-right');
+   const placement=w.placement==='inside'?'inside':'outside';
+   const slot=placement+':'+position;
+   const index=counters[slot]||0;counters[slot]=index+1;
    const value=number(data[w.field]),max=number(data[w.maxField]);
    const fraction=max!==null&&max>0&&value!==null?Math.max(0,Math.min(1,value/max)):null;
    const color=/^#[0-9a-f]{6}$/i.test(w.color||'')?w.color:'#df444d';
@@ -55,14 +60,14 @@ export function TokenMonitors({config,fields,preview=false,zoom=1}){
    const label=String(w.label||w.field||'Resource').slice(0,20);
    const icon=ICONS[w.icon]??ICONS.none;
    return kind==='bar'?
-    <div key={w.id||i} className={'token-monitor monitor-bar pos-'+position} style={style}
+    <div key={w.id||i} className={'token-monitor monitor-bar pos-'+position+' monitor-'+placement} style={style}
      title={label+(value!==null?': '+value:'')+(max!==null?' / '+max:'')}>
      <div className="monitor-track">
       <div className="monitor-fill" style={{width:fraction===null?'0%':(fraction*100)+'%'}}/>
       <span className="monitor-number">{w.showValue===false?'':(value??'—')+(max!==null?'/'+max:'')}</span>
      </div>
     </div>
-   :<div key={w.id||i} className={'token-monitor monitor-globe pos-'+position} style={style}
+   :<div key={w.id||i} className={'token-monitor monitor-globe pos-'+position+' monitor-'+placement} style={style}
      title={label+(value!==null?': '+value:'')}>
      <span className="monitor-icon">{icon}</span>
      <span className="monitor-globe-number">{value??'—'}</span>
