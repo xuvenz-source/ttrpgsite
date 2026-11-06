@@ -19,7 +19,7 @@ jobs:
           node-version: '20'
       - name: Install dependencies without publishing
         run: npm install --no-audit --no-fund
-      - name: Check derived sheet calculations
+      - name: Run staged frontend unit tests
         run: node --test tests/*.test.mjs
       - name: Validate Vite production build (no Vercel deployment)
         run: npm run build

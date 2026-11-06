@@ -50,3 +50,19 @@ rolled-back transactions. The production database is unchanged.
 - Verify only the macro owner can list, update, delete and execute that macro.
 - Test invalid formulas, empty rows, 12-row cap and 18-roll cap.
 - Test on 80% and 125% UI scale and a narrow viewport.
+
+## Staged improvement: natural d20 criticals
+The macro designer now offers **Natural critical** per Dice / Number cell, default **Off**.
+Use **20 only**, **19–20**, **18–20**, or a custom 1–20 threshold.
+Critical tracking requires exactly one positive `1d20` in that cell's formula;
+you can include fixed or linked bonuses, e.g. `1d20+4` or
+`1d20+@{attack_bonus}`. For two attacks, make two independent roll cells.
+The server checks the unmodified die result, never the final total.
+A qualifying critical gains a green result and **CRIT** label; hovering shows
+both the natural roll and critical threshold. Damage is not automatically
+doubled or rolled again. Older macros without a `critOn` property behave
+exactly as before.
+
+Macro chat cards and the Macro Builder title bar also have reduced header height.
+New SQL migration: `20261106180200_macro_crit_thresholds.sql`, to run after the
+private player maps migration.

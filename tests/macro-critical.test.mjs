@@ -16,11 +16,3 @@ test('crit tracking refuses multiple, negative or non-d20 dice',()=>{
  }
 });
 
-test('natural face determines a critical, never the final attack total',()=>{
- const roll=(natural,modifier)=>({natural,total:natural+modifier});
- const critical=(result,threshold)=>result.natural>=threshold;
- assert.equal(critical(roll(19,4),20),false); // 23 total does not crit on 20
- assert.equal(critical(roll(19,4),19),true);  // 19+4 is a crit on 19–20
- assert.equal(critical(roll(18,4),19),false); // 22 total is not a crit
- assert.equal(critical(roll(20,-2),20),true); // 18 total is still a nat 20 crit
-});
