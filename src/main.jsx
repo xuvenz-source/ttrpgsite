@@ -804,27 +804,31 @@ function App(){
  },[db,activeId,user]);
 
  // Keep the latest closures without tearing down network subscriptions on each
- // map change; reconcile missed events when Realtime reconnects or the tab resumes.
+ // map change. Healthy Realtime uses sparse backstop polls; failures retain
+ // the original faster backstop cadence and focus triggers reconciliation.
  latestChatRefresh.current=refreshChat;
  latestRosterRefresh.current=refreshCampaignRoster;
  useEffect(()=>{
   if(!db||!activeId||!user)return;
   const campaignId=activeId;
+  const reconcile=createAdaptiveReconciler(
+   ()=>latestChatRefresh.current?.(),
+   {...CHAT_RECONCILE_MS,healthyMs:CHAT_RECONCILE_MS.healthy,
+    fallbackMs:CHAT_RECONCILE_MS.fallback,
+    isVisible:()=>document.visibilityState==='visible'}
+  );
   const channel=db.channel('vtt-chat-'+campaignId)
    .on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',
     filter:'campaign_id=eq.'+campaignId},()=>void latestChatRefresh.current?.())
    .subscribe(status=>{
-    if(status==='SUBSCRIBED')void latestChatRefresh.current?.();
+    reconcile.setConnected(status==='SUBSCRIBED');
+    if(status==='SUBSCRIBED')reconcile.refreshNow();
     if(status==='CHANNEL_ERROR')console.warn('Chat Realtime temporarily unavailable; using reconciliation.');
    });
-  // Backstop for lost insert notifications or RPC/server-initiated rolls.
-  const timer=setInterval(()=>{
-   if(document.visibilityState==='visible')void latestChatRefresh.current?.();
-  },4000);
-  const focus=()=>{if(document.visibilityState==='visible')void latestChatRefresh.current?.()};
+  const focus=()=>{if(document.visibilityState==='visible')reconcile.refreshNow()};
   document.addEventListener('visibilitychange',focus);
   return()=>{
-   clearInterval(timer);document.removeEventListener('visibilitychange',focus);
+   reconcile.dispose();document.removeEventListener('visibilitychange',focus);
    void db.removeChannel(channel);
   };
  },[db,activeId,user]);
@@ -832,20 +836,24 @@ function App(){
   if(!db||!activeId||!user)return;
   const campaignId=activeId;
   // Character changes are published by the database. Presence detects new
-  // member connections; periodic refresh catches joins without a live session.
+  // member connections; reconciliation catches silent joins and disconnects.
+  const reconcile=createAdaptiveReconciler(
+   ()=>latestRosterRefresh.current?.(),
+   {...ROSTER_RECONCILE_MS,healthyMs:ROSTER_RECONCILE_MS.healthy,
+    fallbackMs:ROSTER_RECONCILE_MS.fallback,
+    isVisible:()=>document.visibilityState==='visible'}
+  );
   const channel=db.channel('vtt-roster-'+campaignId)
    .on('postgres_changes',{event:'*',schema:'public',table:'characters',
     filter:'campaign_id=eq.'+campaignId},()=>void latestRosterRefresh.current?.())
    .subscribe(status=>{
-    if(status==='SUBSCRIBED')void latestRosterRefresh.current?.();
+    reconcile.setConnected(status==='SUBSCRIBED');
+    if(status==='SUBSCRIBED')reconcile.refreshNow();
    });
-  const timer=setInterval(()=>{
-   if(document.visibilityState==='visible')void latestRosterRefresh.current?.();
-  },8000);
-  const focus=()=>{if(document.visibilityState==='visible')void latestRosterRefresh.current?.()};
+  const focus=()=>{if(document.visibilityState==='visible')reconcile.refreshNow()};
   document.addEventListener('visibilitychange',focus);
   return()=>{
-   clearInterval(timer);document.removeEventListener('visibilitychange',focus);
+   reconcile.dispose();document.removeEventListener('visibilitychange',focus);
    ++rosterRequest.current;
    void db.removeChannel(channel);
   };
