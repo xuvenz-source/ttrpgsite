@@ -1,5 +1,5 @@
 /** Login handles use Supabase's existing account-name policy. */
-export const ACCOUNT_USERNAME=/^[a-z][a-z0-9_]{2,23}$/;
+export const ACCOUNT_USERNAME=/^[a-z][a-z0-9_]{2,23}$/i;
 export const VIRTUAL_ACCOUNT_DOMAIN='accounts.tabletopforge.example.com';
 export const normalizeAccountUsername=value=>String(value||'').trim().toLowerCase();
 export const isNativeUsernameAccount=user=>
