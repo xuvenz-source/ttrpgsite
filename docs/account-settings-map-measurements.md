@@ -63,3 +63,29 @@ The staging branch is `stage/account-settings-map-measurements`. GitHub Actions
 runs the frontend tests and Vite build. Vercel preview creation may be delayed
 by the project's daily deployment quota; a green GitHub build is not a live
 Vercel preview.
+
+
+## Sidebar menu preferences (additional staged change)
+
+All Units account folders, individual character sheets, miscellaneous/NPC
+groups, and nested Settings/DM sections now start **collapsed** on a fresh
+account/campaign. Opening or closing one section is stored independently.
+
+The new `src/useSidebarMenus.js` hook keeps expansion state above the
+conditionally rendered right-hand tab panels, so switching to Chat/DM/Settings
+and back does not reset any section. State is saved immediately in browser
+storage under an account-and-campaign-specific key, including across sign-out
+and sign-in on that browser.
+
+For cross-device persistence, release the pending
+`supabase/migrations/20261107000100_sidebar_menu_preferences.sql` migration
+before publishing the frontend. It creates an account-owned,
+campaign-member-gated table with row-level security. While this migration is
+not yet deployed (including preview), the frontend uses the browser's saved
+state without breaking the menus. This migration is **staged only**, not
+applied to the live database.
+
+Manual checks: open several user, character and nested DM menus, switch
+between tabs and return, sign out and sign back in, and confirm the same sections
+remain open. Verify that closing one section does not close unrelated ones and
+that a different account or campaign starts with its own independent state.
