@@ -14,7 +14,11 @@ function initialPosition(kind){
  const height=typeof window!=='undefined'?window.innerHeight:800;
  const x=Math.max(8,Math.round((width-Math.min(width-24,preset.width))/2));
  const y=Math.max(8,Math.round(Math.min(74,(height-preset.height)/3)));
- return {x,y};
+ // Keep the token library and studio visibly distinct from an open character
+ // sheet at first appearance. All remain draggable and click-to-front.
+ const delta=kind==='library'?-Math.min(225,width*.16):
+  kind==='studio'?Math.min(165,width*.12):0;
+ return {x:Math.max(8,Math.min(width-90,Math.round(x+delta))),y};
 }
 /** A mouse-draggable, resizable window that doesn't dim or block the tabletop.
  * Dragging is limited to the existing .heading title bar. Inputs remain
