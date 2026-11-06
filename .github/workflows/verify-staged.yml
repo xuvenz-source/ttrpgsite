@@ -10,6 +10,7 @@ on:
       - stage/account-settings-map-measurements
       - stage/measurement-grid-snap-and-pins
       - stage/dm-map-environment-tools
+      - stage/performance-audit-2026-11-07
   workflow_dispatch:
 
 permissions:
