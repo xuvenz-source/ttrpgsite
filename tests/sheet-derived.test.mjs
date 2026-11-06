@@ -70,6 +70,17 @@ test('proficiencies calculate proficient, expert, half and untrained bonuses',()
  values[skills.id].ranks.insight=0;
  assert.equal(enrichSheetValues(template,values).skillset_1__insight_bonus,2);
 });
+test('DM-defined class paths can grant proficiencies without player toggles',()=>{
+ const {template,progression,skills,values}=example();
+ const skill=skills.entries.find(entry=>entry.id==='insight');
+ skill.autoPaths=['warden'];
+ values[skills.id].ranks.insight=0;
+ const granted=enrichSheetValues(template,values);
+ assert.equal(granted.skillset_1__insight_bonus,5);
+ values[progression.id].levels.warden=0;
+ const notGranted=enrichSheetValues(template,values);
+ assert.equal(notGranted.skillset_1__insight_bonus,2);
+});
 test('leveling updates all derived values without changing saved personal resources',()=>{
  const {template,progression,skills,values}=example();
  const before=JSON.stringify(values[PERSONAL_RESOURCE_KEY]);

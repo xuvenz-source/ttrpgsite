@@ -101,12 +101,15 @@ export function derivedProficiencies(field,value,values,template){
  const entries=safeList(field.entries,80).map(item=>{
   const attribute=item.abilityField?
    abilityModifier(values[item.abilityField],item.abilityMode,levelBase,levelStep):0;
-  const rank=num(ranks[item.id],0);
-  const multiplier=[0,.5,1,2].includes(rank)?rank:0;
+  const chosen=num(ranks[item.id],0);
+  const selectedRank=[0,.5,1,2].includes(chosen)?chosen:0;
+  const levels=values[source?.id]?.levels||{};
+  const automatic=safeList(item.autoPaths,24).some(id=>num(levels[id])>0)?1:0;
+  const multiplier=Math.max(selectedRank,automatic);
   const total=attribute+Math.floor(prof*multiplier);
   const key=field.id+'__'+item.id+'_bonus';
   if(isDerivedKey(key))outputs[key]=total;
-  return {...item,attribute,rank:multiplier,bonus:total};
+  return {...item,attribute,rank:multiplier,selectedRank,autoRank:automatic,bonus:total};
  });
  return {proficiency:prof,entries,outputs};
 }

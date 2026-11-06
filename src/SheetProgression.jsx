@@ -136,6 +136,8 @@ export function ProficienciesDesigner({field,template,onChange}){
  const attrs=numberFields(template),entries=safeList(field.entries,80);
  const progressions=safeList(template?.tabs).flatMap(t=>safeList(t.fields))
   .filter(f=>f.type==='progression');
+ const selectedProgression=progressions.find(f=>f.id===field.progressionField)||progressions[0];
+ const paths=safeList(selectedProgression?.classes,24);
  const update=patch=>onChange({...field,...patch});
  const edit=(id,patch)=>update({entries:entries.map(e=>e.id===id?{...e,...patch}:e)});
  return <div className="sheet-module-designer">
@@ -170,6 +172,18 @@ export function ProficienciesDesigner({field,template,onChange}){
     </select></label>
     <button type="button" className="secondary" title={'Remove '+e.label}
      onClick={()=>update({entries:entries.filter(x=>x.id!==e.id)})}>×</button>
+    {paths.length>0&&<div className="proficiency-auto-paths">
+     <small>Automatically proficient when trained in:</small>
+     {paths.map(path=><label key={path.id} className="sheet-module-inline-check">
+      <input type="checkbox" checked={safeList(e.autoPaths,24).includes(path.id)}
+       onChange={event=>{
+        const current=safeList(e.autoPaths,24);
+        edit(e.id,{autoPaths:event.target.checked?
+         [...new Set([...current,path.id])]:current.filter(id=>id!==path.id)});
+       }}/>
+      {path.label}
+     </label>)}
+    </div>}
    </div>)}
   </div>
   <p className="muted tiny">Players may select None, Half, Proficient or Expert per
@@ -194,15 +208,19 @@ export function ProficienciesPanel({field,value,onChange,sheetValues={},template
    <div className="proficiencies-group-label">{group}</div>
    {items.map(e=><div className="proficiency-entry" key={e.id}>
     <span className="proficiency-name">{e.label}</span>
-    <select aria-label={e.label+' proficiency rank'} value={e.rank}
+    <select aria-label={e.label+' proficiency rank'} value={e.selectedRank}
      onChange={event=>editRank(e.id,Number(event.target.value))}>
      {rankOptions.map(opt=><option key={opt.value} value={opt.value}>{opt.label}</option>)}
     </select>
-    <output title={'Attribute '+e.attribute+' + proficiency '+result.proficiency+' × '+e.rank}>
-     {e.bonus>=0?'+':''}{e.bonus}</output>
+    <output title={'Attribute '+e.attribute+' + proficiency '+result.proficiency+' × '+e.rank+
+     (e.autoRank?' (automatically proficient from class level)':'')}>
+     {e.bonus>=0?'+':''}{e.bonus}{e.autoRank?'*':''}</output>
     <button type="button" className="secondary" disabled={!onRoll}
      onClick={()=>onRoll('1d20'+(e.bonus>=0?'+':'')+e.bonus,e.label+' check')}>🎲</button>
    </div>)}
   </div>)}
+  {result.entries.some(e=>e.autoRank>0)&&<small className="muted">
+   * Automatically granted by a class or advancement path.
+  </small>}
  </div>;
 }

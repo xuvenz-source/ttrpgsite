@@ -1778,3 +1778,11 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .proficiency-entry{grid-template-columns:minmax(90px,1fr)
   minmax(80px,105px) 36px 29px}
 }
+
+.proficiency-auto-paths{
+ grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 10px;
+ align-items:center;padding:5px 6px;border-top:1px dashed #48617c
+}
+.proficiency-auto-paths small{font-size:10px;color:#aebfd8}
+.proficiency-auto-paths label{font-size:10px!important;white-space:nowrap}
+.proficiency-auto-paths input[type=checkbox]{width:13px;height:13px}

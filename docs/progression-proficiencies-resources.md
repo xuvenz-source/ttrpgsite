@@ -12,7 +12,9 @@ Branch: feature/compact-tabletop-ui. Not deployed to production.
   calculation (default floor((score - 10)/2)), DC starting value (default 8),
   and the four result references.
 - DM defines grouped skill/save/tool proficiency entries and which attributes
-  supply their modifiers. Players select None, Half, Proficient or Expert.
+  supply their modifiers. A DM may mark proficiencies automatically granted
+  by any advancement path with at least one level. Players can also select
+  None, Half, Proficient or Expert; automatic grants set a floor of Proficient.
 - The optional earlier Equipment module can now interpret attributes as
   raw scores or direct modifiers for armour and weapon calculations.
 - The template uses existing campaign sheet_template JSONB and user field_values;
@@ -46,8 +48,9 @@ A spell saving-throw target ability still belongs to each spell, as expected.
 Character edits are saved before casts via the existing queue.
 
 ## Limitations / planned follow-ons
-- Proficiency ranks are chosen by players; the system does not automatically
-  assign predefined proficiencies when selecting an advancement path.
+- DMs may assign an automatic full proficiency by class path. More elaborate
+  level-specific feat, expertise, subclass and multiclass prerequisites are not
+  automated in this first version.
 - Custom personal resource recharge describes the rule and provides a
   manual Refill action; automated rests and resource consumption are not
   enforced.
