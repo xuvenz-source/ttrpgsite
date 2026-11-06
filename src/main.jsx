@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import './style.css';
@@ -213,6 +213,7 @@ function App(){
    }).select('*').single());
    setCharacters(old=>[...old,created]);setCharacter(created);
    setNewCharacterName('');setSheetTab('main');setSaveState('Saved');setTab('sheet');
+   void refreshMonitors();
   }catch(e){fail(e)}
  }
  async function openPlayerCharacter(characterId,ownerId){
@@ -242,6 +243,7 @@ function App(){
  function afterPlayerSheetSaved(updated){
   setCharacters(prev=>prev.map(ch=>ch.id===updated.id?updated:ch));
   setCharacter(prev=>prev?.id===updated.id?updated:prev);
+  void refreshMonitors();
  }
  async function saveNpc(draft){
   if(!npcEditor)return;
@@ -288,6 +290,7 @@ function App(){
     x,y
    }).select('id').single());
    await refreshTokens();
+   await refreshMonitors();
    setSelectedTokenId(created.id);
   }catch(e){fail(e)}
  }
@@ -305,6 +308,7 @@ function App(){
   }).eq('id',character.id).select('*').single());
   setCharacter(old=>({...old,portrait_path:changed.portrait_path,token_path:changed.token_path}));
   setCharacters(old=>old.map(x=>x.id===changed.id?{...x,portrait_path:changed.portrait_path,token_path:changed.token_path}:x));
+  void refreshMonitors();
  }
  async function refreshChat(){
   if(!activeId)return;
@@ -1633,6 +1637,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
+ // Recenter only when opening a different map, not during zoom/pan.
+ useLayoutEffect(()=>{
+  const vp=viewportRef.current;
+  if(!vp)return;
+  vp.scrollLeft=Math.max(0,(vp.scrollWidth-vp.clientWidth)/2);
+  vp.scrollTop=Math.max(0,(vp.scrollHeight-vp.clientHeight)/2);
+ },[map.id]);
  useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
  useEffect(()=>{setSelectedId(null)},[map.id]);

@@ -2012,3 +2012,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 }
 .inventory-carry-summary{font-size:11px;padding:5px 7px;border-radius:5px;
  border:1px solid #536b8b;background:#203048}
+
+/* Maps smaller than the viewport are visually centred. For large maps, the
+   board's initial scroll offset is centred without changing pan or zoom. */
+.mapscroll>.board-scroll-content{margin-inline:auto}
