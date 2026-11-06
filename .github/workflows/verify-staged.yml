@@ -6,6 +6,7 @@ on:
       - feature/compact-tabletop-ui
       - feature/weapon-attack-cards
       - stage/attribute-equipment-spell-cards
+      - stage/inventory-grid-item-tiles
   workflow_dispatch:
 
 permissions:
