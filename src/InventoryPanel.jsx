@@ -110,7 +110,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
  const previewW=activeSize&&(drag.turns%2?activeSize.h:activeSize.w);
  const previewH=activeSize&&(drag.turns%2?activeSize.w:activeSize.h);
  const previewVisible=drag&&(drag.moved||drag.turns>0)&&drag.x>=0&&drag.y>=0&&
-  drag.x<cols&&drag.y<height;
+  drag.x+previewW<=cols&&drag.y+previewH<=height;
  const canDrop=previewVisible&&canPlaceInventoryItem(
   items,drag.index,drag.x,drag.y,cols,height,drag.turns);
  return <>
@@ -174,7 +174,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
        style={{gridColumn:(drag.x+1)+' / span '+previewW,
         gridRow:(drag.y+1)+' / span '+previewH}}>
        <span>{canDrop?'✓':'×'} {shortLabel(active)}</span>
-       <small>{(Number(active.gridRotation)||0+drag.turns*90)%360}°</small>
+       <small>{((Number(active.gridRotation)||0)+drag.turns*90)%360}°</small>
       </div>}
      </div>
     </div>
