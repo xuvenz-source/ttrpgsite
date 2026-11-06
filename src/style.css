@@ -2042,3 +2042,150 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  width:calc(100vw - 14px);height:calc(100dvh - 14px);
  left:7px!important;top:7px!important;max-width:none;max-height:none
 }
+
+/* The NPC sheets use their own floating kind, and need the same compact
+   layout as the original sheet window. */
+/* Compact sheet scaffolding: scroll field contents, not a fixed 52vh sliver. */
+.app .floating-window.floating-npc>.npc-modal{
+ display:flex!important;flex-direction:column;overflow:hidden!important;
+ gap:0;min-height:0;
+}
+.app .floating-window.floating-npc>.npc-modal>.heading{
+ flex:0 0 auto;min-height:26px;margin-bottom:3px!important;padding-bottom:5px;
+}
+.app .floating-window.floating-npc>.npc-modal>.heading p{margin-top:1px;line-height:1.25}
+.app .floating-window.floating-npc .npc-editor-top{
+ flex:0 0 auto;gap:9px;margin:4px 0 5px;min-height:0;
+}
+.app .floating-window.floating-npc .npc-editor-portrait{
+ width:45px;height:45px;min-width:45px;
+}
+.app .floating-window.floating-npc .npc-editor-top label{gap:3px;font-size:11px}
+.app .floating-window.floating-npc .npc-editor-top input{padding:6px 8px;min-height:31px}
+.app .floating-window.floating-npc .npc-editor-top button{padding:6px 9px;font-size:11px}
+.app .floating-window.floating-npc>.npc-modal>.tabs{
+ flex:0 0 auto;padding:3px 0!important;margin:2px 0 5px!important;gap:4px;
+ min-height:0;
+}
+.app .floating-window.floating-npc>.npc-modal>.tabs button{padding:6px 9px}
+.app .floating-window.floating-npc>.npc-modal>.npc-monitor-public-toggle{
+ flex:0 0 auto;padding:6px 8px;margin:3px 0 5px;font-size:11px;
+}
+.app .floating-window.floating-npc>.npc-modal>.npc-fields{
+ flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;
+ margin:0;padding:3px 5px 4px 0;align-content:start;
+ gap:7px;
+}
+.app .floating-window.floating-npc>.npc-modal>.actions{
+ flex:0 0 auto;margin-top:5px!important;padding:7px 0 2px;
+ border-top:1px solid #33455e;gap:5px;
+}
+.app .floating-window.floating-npc>.npc-modal>.actions button{padding:6px 10px}
+.app .floating-window.floating-npc>.npc-modal>.npc-fields>.field{
+ gap:3px;align-self:start;
+}
+.app .floating-window.floating-npc>.npc-modal>.npc-fields>.field>label{
+ font-size:11px;line-height:1.2
+}
+.app .floating-window.floating-npc>.npc-modal>.npc-fields>.field>input,
+.app .floating-window.floating-npc>.npc-modal>.npc-fields>.field>select{
+ padding:6px 8px;min-height:30px;
+}
+.app .floating-window.floating-npc>.npc-modal>.npc-fields>.field>textarea{
+ padding:7px 8px;min-height:68px;
+}
+.app .floating-window.floating-npc .collection{
+ padding:7px;gap:7px;border-radius:7px;
+}
+.app .floating-window.floating-npc .collection-toolbar{
+ display:flex;align-items:center;justify-content:space-between;gap:5px;
+ flex-wrap:wrap;
+}
+.app .floating-window.floating-npc .collection-group-tabs{
+ display:flex;flex:1;flex-wrap:wrap;gap:3px;align-items:center;min-width:0;
+}
+.app .floating-window.floating-npc .collection-group-tabs button{
+ min-height:25px;padding:4px 6px;border-radius:5px;font-size:10px;gap:3px;
+}
+.app .floating-window.floating-npc .collection-group-tabs button small{
+ font-size:9px;padding:0 3px
+}
+.app .floating-window.floating-npc .collection-heading{
+ display:flex;align-items:center;gap:5px;margin-left:auto;
+}
+.app .floating-window.floating-npc .collection-heading button{
+ padding:5px 7px;font-size:10px
+}
+.app .floating-window.floating-npc .collection-entry{
+ padding:8px;gap:7px;border-radius:6px;
+}
+.app .floating-window.floating-npc .collection-entry-heading{
+ display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}
+.app .floating-window.floating-npc .collection-entry-title{
+ font-size:12px;flex:1;min-height:25px;padding:2px 0!important;
+}
+.app .floating-window.floating-npc .collection-entry-title small{font-size:10px}
+.app .floating-window.floating-npc .collection-group-select{
+ margin-left:auto;gap:5px;font-size:10px;flex-wrap:nowrap
+}
+.app .floating-window.floating-npc .collection-group-select select{
+ min-width:100px;max-width:145px;padding:4px 6px;font-size:11px
+}
+.app .floating-window.floating-npc .collection-entry-actions{gap:3px}
+.app .floating-window.floating-npc .collection-entry-actions button{
+ padding:3px 6px;min-width:25px;min-height:24px
+}
+.app .floating-window.floating-npc .collection-field-grid{gap:6px 7px}
+.app .floating-window.floating-npc .collection-field-label{gap:3px;font-size:10px!important}
+.app .floating-window.floating-npc .collection-field-label input,
+.app .floating-window.floating-npc .collection-field-label select{
+ padding:6px 7px;min-height:30px;
+}
+.app .floating-window.floating-npc .collection-field-label textarea{
+ padding:7px;min-height:65px;
+}
+.app .floating-window.floating-npc .collection-checkbox{min-height:29px;gap:5px}
+.app .floating-window.floating-npc .collection-checkbox input{
+ width:14px!important;height:14px!important;
+}
+.app .floating-window.floating-npc .collection-action{
+ min-height:29px;padding:5px!important;font-size:10px;
+}
+.app .floating-window.floating-npc .collection-section-tabs{
+ padding-top:5px;gap:4px
+}
+.app .floating-window.floating-npc .collection-section-tabs button{
+ padding:5px 8px;font-size:10px
+}
+.app .floating-window.floating-npc .collection-detail-section{
+ gap:5px;padding:8px;border-radius:6px
+}
+.app .floating-window.floating-npc .collection-detail-section h4{
+ margin:0;font-size:11px;line-height:1.2
+}
+.app .floating-window.floating-npc .collection-empty{padding:12px}
+
+
+/* The Ctrl-click window grows to accommodate status editing while remaining
+   draggable/resizable and keeping the map interactive behind it. */
+.app .floating-window.floating-quick{
+ width:min(calc(410px * var(--ui-scale,.9)),calc(100vw - 18px));
+ height:min(520px,calc(100dvh - 24px));
+}
+.floating-window.floating-quick>.quick-token-modal{gap:8px!important}
+.floating-window .quick-token-fields{flex:0 1 auto;max-height:210px}
+.quick-status-editor{border:1px solid #526581;border-radius:8px;padding:8px;
+ display:flex;flex-direction:column;gap:7px;background:#1b2940;flex:1 1 auto;min-height:110px;overflow-y:auto}
+.quick-status-heading{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.quick-status-heading>strong{font-size:12px}
+.quick-status-current{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.quick-status-chip{display:flex;align-items:center;gap:4px;min-width:0;max-width:100%;
+ border:1px solid var(--status-color,#526581);border-radius:6px;
+ padding:3px 5px;font-size:11px;background:#273449}
+.quick-status-chip>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-status-chip label{display:inline-flex;align-items:center}
+.quick-status-chip input{width:44px!important;min-width:0;padding:2px 3px;font-size:11px}
+.quick-status-chip button{padding:0 5px;min-height:20px}
+.quick-status-add{display:flex;flex-direction:column;gap:3px;font-size:11px}
+.quick-status-add select{min-width:0;width:100%;font-size:11px}
