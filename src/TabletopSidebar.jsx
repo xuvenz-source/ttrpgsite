@@ -2,7 +2,7 @@ import React,{useLayoutEffect,useMemo,useRef} from 'react';
 import useSidebarMenus from './useSidebarMenus.js';
 import {sidebarMenuOpen} from './SidebarMenuState.js';
 import Artwork from './Artwork.jsx';
-import MapCalibration from './MapCalibration.jsx';
+import MapSettingPanel from './MapSettingPanel.jsx';
 import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
 import {StatusCatalogEditor,TokenStatusBadges,normalizedEffects} from './TokenStatuses.jsx';
 import {KeybindingsEditor,HotbarSettings} from './TabletopControls.jsx';
@@ -206,6 +206,7 @@ export default function TabletopSidebar({
  mapAssignments=[],onAssignPlayerMap,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
+  mapEnvironment,mapSettingEditor,onMapSettingEditorChange,onMapEnvironmentChange,mapEnvironmentStatus,
  statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,onDistributedItem,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  macroCount=0,onOpenMacros,
@@ -357,12 +358,16 @@ export default function TabletopSidebar({
          </select>
         </label>)}
       </div>
-      <SavedDetails menuKey={'dm/calibration'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details map-calibration-panel">
-       <summary>Grid & image calibration</summary>
-       <MapCalibration key={activeMap?.id||'no-map'} map={activeMap}
-        onPreview={onMapCalibrationPreview} onSave={onSaveMapCalibration}/>
-      </SavedDetails>
      </div>
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/map-setting'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
+     <summary>Map setting</summary>
+     <MapSettingPanel key={activeMap?.id||'no-map'}
+      map={activeMap} environment={mapEnvironment} editor={mapSettingEditor}
+      onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
+      saveStatus={mapEnvironmentStatus}
+      onMapCalibrationPreview={onMapCalibrationPreview}
+      onSaveMapCalibration={onSaveMapCalibration} template={template}/>
     </SavedDetails>
     <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Token settings & resources</summary>
