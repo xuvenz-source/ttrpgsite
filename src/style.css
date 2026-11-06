@@ -1861,3 +1861,16 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  font-size:9px;font-weight:800;letter-spacing:.04em
 }
 .macro-chat-preview-crit{color:#34633e;font-size:9px;font-weight:700}
+
+/* Staged next batch: account > character > map token hierarchy. */
+.unit-account-content{padding:7px;display:flex;flex-direction:column;gap:7px}
+.unit-character{border:1px solid #455873;background:#202f43;border-radius:6px;padding:6px}
+.unit-character-heading{display:flex;align-items:center;gap:5px;min-width:0}
+.unit-character-toggle{display:flex;align-items:center;text-align:left;gap:6px;
+ flex:1;min-width:0;background:transparent;border:0;color:inherit;padding:4px;font-size:12px}
+.unit-character-toggle>span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.unit-character-sheet{flex-shrink:0;padding:5px 7px!important;font-size:10px!important}
+.unit-character-contents{display:flex;flex-direction:column;gap:3px;padding:2px 1px 2px 8px}
+.unit-character-drag{color:#b6c7e5;cursor:grab;font-size:10px;
+ padding:5px 6px;border:1px dashed #526581;border-radius:5px}
+.unit-create-character{margin:3px 0}

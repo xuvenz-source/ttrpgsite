@@ -13,7 +13,6 @@ import RollMathTooltip from './RollMathTooltip.jsx';
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const tabs=[
  {id:'chat',label:'Chat',icon:'💬'},
- {id:'characters',label:'Characters',icon:'📜'},
  {id:'units',label:'Units',icon:'♟'},
  {id:'settings',label:'Settings',icon:'⚙'},
  {id:'dm',label:'DM',icon:'🛠'}
@@ -42,61 +41,87 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen,onStatus,canDrag,status
   {isDM&&<button type="button" className="secondary unit-edit" onClick={()=>onOpen(token)} title={'Open '+token.name+' sheet'}>Sheet</button>}
  </div>;
 }
-function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSelect,onOpen,onStatus,statusCatalog,onResize,onNavigate,onCreatePortrait,onOpenPlayerCharacter,onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
+function UnitGroups({db,tokens,characters,members,accountNames=[],user,isDM,
+ selectedToken,onSelect,onOpen,onStatus,statusCatalog,onResize,onOpenPlayerCharacter,
+ onOpenOwnCharacter,onCreateCharacter,newCharacterName,onChangeNewCharacterName,
+ onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
  const [collapsed,setCollapsed]=useState({});
- const groups=useMemo(()=>{
-  const sorted=members.flatMap((m,index)=>{
-   const roster=characters.filter(ch=>ch.user_id===m.user_id);
-   const owned=tokens.filter(t=>t.owner_id===m.user_id);
-   const named=roster.map(ch=>({
-    id:m.user_id+':'+ch.id,owner:m.user_id,
-    label:ch.name||'Unnamed character',character:ch,role:m.role,
-    units:owned.filter(t=>t.character_id===ch.id)
-   }));
-   const others=owned.filter(t=>!t.character_id||!roster.some(ch=>ch.id===t.character_id));
-   if(others.length||!named.length)named.push({
-    id:m.user_id+':others',owner:m.user_id,
-    label:(m.role==='dm'?'Game Master':'Player '+(index+1))+' · other units',
-    character:null,role:m.role,units:others
-   });
-   return named;
-  }).filter(g=>isDM||g.owner===user);
-  const other=tokens.filter(t=>!t.owner_id||!members.some(m=>m.user_id===t.owner_id));
-  if(isDM)sorted.push({id:'dm-npcs',label:'Unassigned / DM NPCs',units:other,role:'dm'});
-  return sorted;
- },[members,characters,tokens,isDM,user]);
+ const [hiddenSheets,setHiddenSheets]=useState({});
+ const owners=useMemo(()=>members.filter(m=>isDM||m.user_id===user)
+  .map(m=>({
+   ...m,
+   label:accountNames.find(a=>a.user_id===m.user_id)?.account_name||
+    'Player '+String(m.user_id).slice(0,8),
+   sheets:characters.filter(ch=>ch.user_id===m.user_id),
+   otherTokens:tokens.filter(t=>t.owner_id===m.user_id&&
+    !characters.some(ch=>ch.user_id===m.user_id&&ch.id===t.character_id))
+  })),[members,characters,tokens,accountNames,isDM,user]);
+ const unassigned=tokens.filter(t=>!t.owner_id||!members.some(m=>m.user_id===t.owner_id));
+ const unitProps=t=>({db,token:t,selected:selectedToken?.id===t.id,isDM,
+  onSelect,onOpen,onStatus,statusCatalog,canDrag:!!activeMap&&(isDM||t.owner_id===user)});
  return <div className="right-section">
-  <p className="muted tiny side-description">Drag names to place · Ctrl + click resources · Shift + click effects. {isDM?'Alt + double-click edits a sheet.':''}</p>
-  {isDM&&characters.length>0&&<label>Open player character sheet
-   <select defaultValue="" onChange={e=>{if(e.target.value){onOpenPlayerCharacter(e.target.value);e.target.value=''}}}>
-    <option value="">Choose a player character…</option>
-    {characters.map(ch=><option key={ch.id} value={ch.id}>{ch.name||'Unnamed character'}</option>)}
-   </select>
-  </label>}
-  <div className="unit-groups">{groups.map(g=><section key={g.id} className="unit-group">
-   <button type="button" className={'unit-group-head'+(g.character&&activeMap&&(isDM||g.owner===user)?' unit-draggable':'')}
-    draggable={!!(g.character&&activeMap&&(isDM||g.owner===user))}
-    onDragStart={e=>{
-      if(!g.character||!activeMap||(g.owner!==user&&!isDM)){e.preventDefault();return}
-      e.dataTransfer.setData('application/x-forge-character',g.character.id);
-      e.dataTransfer.effectAllowed='copy';
-    }}
-    title={g.character&&activeMap?'Drag '+g.label+' onto the battlemap to place a character token':'Expand or collapse this group'}
-    onClick={()=>setCollapsed(s=>({...s,[g.id]:!s[g.id]}))}
-    aria-expanded={!collapsed[g.id]}>
-    <span className="unit-group-label">{g.character&&<Artwork db={db} path={g.character.token_path||g.character.portrait_path} alt={g.label} className="group-unit-thumb"/>}
-      <span>{collapsed[g.id]?'▸':'▾'} {g.label}</span>
-    </span><span className="unit-count">{g.units.length}</span>
+  <p className="muted tiny side-description">Account folders contain character sheets. Drag a character onto the map to place a token.</p>
+  <div className="unit-groups">{owners.map(owner=><section key={owner.user_id} className="unit-group unit-account">
+   <button type="button" className="unit-group-head" onClick={()=>
+    setCollapsed(s=>({...s,[owner.user_id]:!s[owner.user_id]}))}
+    aria-expanded={!collapsed[owner.user_id]}>
+    <span className="unit-group-label"><span aria-hidden="true">👤</span>
+     <span>{collapsed[owner.user_id]?'▸':'▾'} {owner.label}{owner.user_id===user?' (you)':''}</span>
+    </span>
+    <span className="unit-count">{owner.sheets.length} sheets</span>
    </button>
-   {!collapsed[g.id]&&<div className="unit-group-items">{g.units.length?
-    g.units.map(t=><UnitRow key={t.id} db={db} token={t} selected={selectedToken?.id===t.id}
-      isDM={isDM} onSelect={onSelect} onOpen={onOpen}
-      onStatus={onStatus} statusCatalog={statusCatalog}
-      canDrag={!!activeMap&&(isDM||t.owner_id===user)}/>)
-    :<p className="muted tiny empty-units">No tokens on this map</p>}
+   {!collapsed[owner.user_id]&&<div className="unit-account-content">
+    {owner.sheets.map(ch=>{
+     const linked=tokens.filter(t=>t.character_id===ch.id&&t.owner_id===owner.user_id);
+     const visible=!hiddenSheets[ch.id];
+     return <section className="unit-character" key={ch.id}>
+      <div className="unit-character-heading">
+       <button type="button" className="unit-character-toggle" aria-expanded={visible}
+        onClick={()=>setHiddenSheets(s=>({...s,[ch.id]:!s[ch.id]}))}>
+        <Artwork db={db} path={ch.token_path||ch.portrait_path}
+         alt={ch.name||'Character'} className="group-unit-thumb"/>
+        <span>{visible?'▾':'▸'} {ch.name||'Unnamed character'}</span>
+        <span className="unit-count">{linked.length}</span>
+       </button>
+       <button type="button" className="secondary unit-character-sheet" onClick={()=>
+        owner.user_id===user?onOpenOwnCharacter(ch.id):onOpenPlayerCharacter(ch.id)}>
+        Sheet</button>
+      </div>
+      {visible&&<div className="unit-character-contents">
+       {activeMap&&<div draggable className="unit-character-drag"
+        title={'Drag '+(ch.name||'character')+' onto the map'}
+        onDragStart={e=>{
+         e.dataTransfer.setData('application/x-forge-character',ch.id);
+         e.dataTransfer.effectAllowed='copy';
+        }}>⠿ Drag onto map</div>}
+       {linked.length?linked.map(t=><UnitRow key={t.id} {...unitProps(t)}/>):
+        <p className="muted tiny empty-units">No tokens on this map</p>}
+      </div>}
+     </section>;
+    })}
+    {owner.otherTokens.length>0&&<div className="unit-character">
+     <strong className="muted tiny">Other controlled tokens</strong>
+     {owner.otherTokens.map(t=><UnitRow key={t.id} {...unitProps(t)}/>)}
+    </div>}
+    {owner.user_id===user&&<details className="side-details unit-create-character">
+     <summary>+ New character sheet</summary>
+     <form className="side-form" onSubmit={e=>{e.preventDefault();onCreateCharacter(newCharacterName)}}>
+      <label>Character name<input value={newCharacterName} required maxLength={100}
+       onChange={e=>onChangeNewCharacterName(e.target.value)} placeholder="Character name"/></label>
+      <button type="submit">Create character sheet</button>
+     </form>
+    </details>}
+    {!owner.sheets.length&&owner.user_id!==user&&
+     <p className="muted tiny empty-units">No character sheets yet</p>}
    </div>}
-  </section>)}</div>
-  {!groups.length&&<p className="muted small">No controlled units available.</p>}
+  </section>)}
+  {isDM&&unassigned.length>0&&<section className="unit-group">
+   <div className="unit-group-head">Unassigned / DM NPCs</div>
+   <div className="unit-group-items">{unassigned.map(t=>
+    <UnitRow key={t.id} {...unitProps(t)}/>)}</div>
+  </section>}
+  </div>
+  {!owners.length&&<p className="muted small">No campaign members found.</p>}
   {isDM&&<details className="side-details">
    <summary>Place a new token</summary>
    <div className="side-form">
@@ -139,7 +164,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
 
 export default function TabletopSidebar({
  db,panel,onPanelChange,isDM,user,
- messages,characters,members,tokens,selectedToken,onSelectToken,onOpenToken,onResizeToken,onOpenStatus,
+ messages,characters,members,accountNames=[],tokens,selectedToken,onSelectToken,onOpenToken,onResizeToken,onOpenStatus,
  chat,onChatChange,onSendChat,
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
@@ -174,7 +199,8 @@ export default function TabletopSidebar({
    pane.scrollHeight-pane.scrollTop-pane.clientHeight<=48;
  }
  return <aside className="right-sidebar panel" aria-label="Tabletop sidebar">
-  <nav className="right-tabs" role="tablist" aria-label="Tabletop tools">
+  <nav className="right-tabs" role="tablist" aria-label="Tabletop tools"
+   style={{gridTemplateColumns:'repeat('+(isDM?4:3)+',minmax(0,1fr))'}}>
    {tabs.filter(t=>isDM||t.id!=='dm').map(t=><button key={t.id} type="button" role="tab"
      aria-selected={validPanel===t.id} className={validPanel===t.id?'selected':''}
      onClick={()=>onPanelChange(t.id)} title={t.label}>
@@ -184,7 +210,7 @@ export default function TabletopSidebar({
   {validPanel==='chat'&&<>
    <div className="messages right-messages" ref={chatScrollRef}
     onScroll={onChatScroll}>{messages.map(m=><div className="msg" key={m.id}>
-    <div className="muted tiny">{m.user_id===user?'You':characters.find(c=>c.user_id===m.user_id)?.name||'Party member'} · {when(m.created_at)}</div>
+    <div className="muted tiny">{m.user_id===user?'You':accountNames.find(a=>a.user_id===m.user_id)?.account_name||'Party member'} · {when(m.created_at)}</div>
     {m.kind==='spell'?<SpellChatCard message={m}/>:
      m.kind==='macro'?<MacroChatCard message={m}/>:
      m.kind==='roll'?<div className="chat-roll">
@@ -203,29 +229,14 @@ export default function TabletopSidebar({
     <button type="submit">Send</button>
    </form><p className="muted tiny right-chat-help">/roll 2d6+3 · /roll 2d20kh1 · /macro Attack</p>
   </>}
-  {validPanel==='characters'&&<div className="right-body">
-   <div className="side-form">
-    <h3>Your character sheets</h3>
-    <p className="muted tiny">Keep multiple characters in this campaign, each with its own sheet and token.</p>
-    <div className="my-character-list">{characters.filter(ch=>ch.user_id===user).map(ch=>
-     <article key={ch.id} className={'my-character-row'+(activeCharacterId===ch.id?' active':'')}>
-      <Artwork db={db} path={ch.portrait_path} alt={ch.name} className="group-unit-thumb"/>
-      <span className="my-character-name">{ch.name||'Unnamed character'}</span>
-      <button className="secondary" type="button" onClick={()=>onOpenOwnCharacter(ch.id)}>Open sheet</button>
-     </article>)}</div>
-    <form className="side-form" onSubmit={e=>{e.preventDefault();onCreateCharacter(newCharacterName)}}>
-     <label>New character name<input required maxLength={100} value={newCharacterName}
-      onChange={e=>onChangeNewCharacterName(e.target.value)} placeholder="Character name"/></label>
-     <button type="submit">+ Create character sheet</button>
-    </form>
-   </div>
-  </div>}
-  {validPanel==='units'&&<div className="right-body"><UnitGroups db={db} tokens={tokens} characters={characters}
-   members={members} user={user} isDM={isDM} selectedToken={selectedToken}
-   onSelect={onSelectToken} onOpen={onOpenToken}
-   onStatus={onOpenStatus} statusCatalog={statusCatalog}
-   onResize={onResizeToken} onNavigate={onNavigate}
-   onCreatePortrait={onCreatePortrait} onOpenPlayerCharacter={onOpenPlayerCharacter}
+  {validPanel==='units'&&<div className="right-body"><UnitGroups db={db} tokens={tokens}
+   characters={characters} members={members} accountNames={accountNames}
+   user={user} isDM={isDM} selectedToken={selectedToken}
+   onSelect={onSelectToken} onOpen={onOpenToken} onStatus={onOpenStatus}
+   statusCatalog={statusCatalog} onResize={onResizeToken}
+   onOpenPlayerCharacter={onOpenPlayerCharacter} onOpenOwnCharacter={onOpenOwnCharacter}
+   onCreateCharacter={onCreateCharacter} newCharacterName={newCharacterName}
+   onChangeNewCharacterName={onChangeNewCharacterName}
    onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
    tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}/></div>}
   {validPanel==='settings'&&<div className="right-body">

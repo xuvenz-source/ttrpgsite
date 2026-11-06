@@ -72,7 +72,7 @@ function App(){
  const[campaigns,setCampaigns]=useState([]),[campaignsLoading,setCampaignsLoading]=useState(true),[roles,setRoles]=useState({}),[activeId,setActiveId]=useState(''),[camp,setCamp]=useState(null),[members,setMembers]=useState([]),[characters,setCharacters]=useState([]),[character,setCharacter]=useState(null);
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('tabletop'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
- const[mapAssignments,setMapAssignments]=useState([]);
+ const[mapAssignments,setMapAssignments]=useState([]),[accountNames,setAccountNames]=useState([]);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
@@ -115,7 +115,7 @@ function App(){
   }catch(e){fail(e)}finally{setCampaignsLoading(false)}
  }
  async function fetchCampaign(id){if(!id)return;
-  try{const [c,m,ch,f,b,chat,npcList,npcFolderList,assignments,views]=await Promise.all([
+  try{const [c,m,ch,f,b,chat,npcList,npcFolderList,assignments,views,names]=await Promise.all([
   read(db.from('campaigns').select('*').eq('id',id).single()),
   read(db.from('campaign_members').select('user_id,role').eq('campaign_id',id)),
   read(db.from('characters').select('*').eq('campaign_id',id)),
@@ -125,12 +125,13 @@ function App(){
   read(db.from('npc_templates').select('*').eq('campaign_id',id).order('name')),
   read(db.from('npc_folders').select('*').eq('campaign_id',id).order('name')),
   read(db.from('campaign_player_maps').select('campaign_id,user_id,map_id').eq('campaign_id',id)),
-  read(db.from('campaign_map_views').select('map_id,user_id').eq('campaign_id',id))]);
+  read(db.from('campaign_map_views').select('map_id,user_id').eq('campaign_id',id)),
+  read(db.rpc('get_campaign_account_names',{p_campaign:id}))]);
    const dm=m.some(member=>member.user_id===user&&member.role==='dm');
    const defaultMap=c.active_map_id||null;
    const desired=dm?(views.find(v=>v.user_id===user)?.map_id||defaultMap):
      (assignments.find(a=>a.user_id===user)?.map_id||defaultMap);
-   setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);
+   setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);setAccountNames(names);
    setCharacter(previous=>ch.find(x=>x.id===previous?.id&&x.user_id===user)||ch.find(x=>x.user_id===user)||null);
    setMapAssignments(assignments);setFolders(f);setMaps(b);
    setMsgs(chat.filter(x=>x.map_id===((dm&&b.some(map=>map.id===selectedMap)?selectedMap:desired)||null)).reverse());
@@ -409,7 +410,7 @@ function App(){
     e.preventDefault();
     if(isDM&&selectedToken)openTokenSheet(selectedToken);
     else if(character)setTab('sheet');
-    else setRightTab('characters');
+    else setRightTab('units');
    }else if(action==='hotbar'){
     e.preventDefault();changeHotbarVisibility(!hotbarVisible).catch(fail);
    }else if(action.startsWith('slot')){
@@ -1188,7 +1189,7 @@ function App(){
  </>}
  </div><TabletopSidebar
  db={db} panel={rightTab} onPanelChange={setRightTab} isDM={isDM} user={user}
- messages={msgs} characters={characters} members={members} tokens={tokens}
+ messages={msgs} characters={characters} members={members} accountNames={accountNames} tokens={tokens}
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
  onOpenStatus={openTokenStatuses}
