@@ -25,7 +25,7 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
   .filter(f=>f.type==='equipment').map(f=>({id:f.id,label:f.label||'Equipment'}))),[template]);
  const refs=config.references||[];
  const codes=refs.map(ref=>ref.code?.toUpperCase());
- const validCodes=refs.length<=20&&refs.every(ref=>
+ const validCodes=refs.length<=60&&refs.every(ref=>
   refCodeRx.test(ref.code||'')&&(ref.label||'').length<=40&&
   (ref.source==='field'?(fields.some(f=>f.id===ref.fieldId)):
    ref.source==='equipment_ac'&&equipment.some(f=>f.id===ref.fieldId)))&&
