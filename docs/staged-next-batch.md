@@ -4,7 +4,7 @@
 Everything in this batch remains an unreferenced chain of Git commit objects. No branch ref
 was changed, no Vercel deployment was triggered, and no pending migration was applied.
 
-## Six user-visible changes
+## Seven user-visible changes
 
 1. Keep the existing website account sign-up and sign-in system; remove the Characters tab.
 2. Units shows an **account-name folder** for each relevant member, containing their character
@@ -25,6 +25,13 @@ was changed, no Vercel deployment was triggered, and no pending migration was ap
    are saved on the DM's device, not as a new Supabase template library.
 6. Chat follows incoming messages and rolls at the bottom, pauses while the user is manually
    reading earlier messages, and resumes when they scroll back near the bottom.
+
+7. Token resource **bars and globes** now render on a map overlay layer above every token,
+   instead of being trapped inside each token's stacking context. The layer is click-through.
+   Each widget in the DM Token Display Designer has **Placement: Outside token** (the default,
+   preserving existing layouts) or **Inside token boundaries**. Top/bottom/corner positions
+   work with either placement. Overlays follow map panning, zoom, dragging, footprint resizing,
+   and live monitor data. No additional database migration is needed.
 
 ## SQL migrations required before releasing the corresponding frontend
 
@@ -47,6 +54,12 @@ transaction on the current Supabase project; this did not persist the changes.
 - Modifier references after DM changes base/step, including negative scores and older sheets.
 - Import/export round-trip, malformed/oversized JSON, and unsaved-import behaviour.
 - Chat automatic following, manual scroll-up pause, and follow resumption after scrolling down.
+- With two overlapping tokens, verify a health bar or globe for the covered token remains
+  visible on top of both portraits, including after selecting and dragging either token.
+  Ensure the monitor layer does not block token dragging, controls or map panning.
+- Set bar and globe widgets independently to inside and outside; check preview and map agree
+  for top, bottom and corner locations at several zoom levels and token footprint sizes.
+  Multiple inside monitors may compete for limited space on a very small token.
 - Check branch and Vercel build quotas before deployment. Verify Supabase migration history,
   Vercel commit SHA, production domain, and authenticated UI after any authorized release.
 

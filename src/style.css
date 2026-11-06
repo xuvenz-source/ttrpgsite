@@ -1912,16 +1912,19 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  position:absolute;inset:0;pointer-events:none!important;overflow:visible;
 }
 /* DM choice per widget: inside token footprint; existing widgets stay outside. */
-.token-monitor.monitor-inside.monitor-bar{left:3px;right:auto;width:calc(100% - 6px)}
+.token-monitor.monitor-inside.monitor-bar{
+ left:3px;right:auto;width:calc(100% - 6px);min-width:0;
+ height:min(12px,calc(100% - 4px));
+}
 .token-monitor.monitor-inside.monitor-bar.pos-top,
 .token-monitor.monitor-inside.monitor-bar.pos-top-left,
 .token-monitor.monitor-inside.monitor-bar.pos-top-right{
- top:calc(3px + var(--monitor-index)*14px);
+ top:clamp(2px,calc(3px + var(--monitor-index)*14px),calc(100% - min(12px,100% - 4px) - 2px));
 }
 .token-monitor.monitor-inside.monitor-bar.pos-bottom,
 .token-monitor.monitor-inside.monitor-bar.pos-bottom-left,
 .token-monitor.monitor-inside.monitor-bar.pos-bottom-right{
- bottom:calc(3px + var(--monitor-index)*14px);
+ bottom:clamp(2px,calc(3px + var(--monitor-index)*14px),calc(100% - min(12px,100% - 4px) - 2px));
 }
 .token-monitor.monitor-inside.monitor-bar.pos-top-left,
 .token-monitor.monitor-inside.monitor-bar.pos-bottom-left{
@@ -1932,18 +1935,18 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  left:auto;right:3px;width:calc(76% - 6px);
 }
 .token-monitor.monitor-inside.monitor-globe{
- width:min(28px,45%);height:auto;aspect-ratio:1;
+ width:min(28px,45%);height:min(28px,45%);aspect-ratio:1;
  transform:scale(min(1,var(--overlay-scale,1)));
 }
 .token-monitor.monitor-inside.monitor-globe.pos-top,
 .token-monitor.monitor-inside.monitor-globe.pos-top-left,
 .token-monitor.monitor-inside.monitor-globe.pos-top-right{
- top:calc(3px + var(--monitor-index)*29px);
+ top:clamp(2px,calc(3px + var(--monitor-index)*29px),calc(100% - min(28px,45%) - 2px));
 }
 .token-monitor.monitor-inside.monitor-globe.pos-bottom,
 .token-monitor.monitor-inside.monitor-globe.pos-bottom-left,
 .token-monitor.monitor-inside.monitor-globe.pos-bottom-right{
- bottom:calc(3px + var(--monitor-index)*29px);
+ bottom:clamp(2px,calc(3px + var(--monitor-index)*29px),calc(100% - min(28px,45%) - 2px));
 }
 .token-monitor.monitor-inside.monitor-globe.pos-top-left,
 .token-monitor.monitor-inside.monitor-globe.pos-bottom-left{left:3px;right:auto}
