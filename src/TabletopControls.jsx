@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
+import {normaliseHotbar} from './HotbarSlots.js';
 
 export const ACTIONS=[
  {id:'up',name:'Move up',defaults:['ArrowUp','KeyW'],count:2},
@@ -11,7 +12,6 @@ export const ACTIONS=[
   defaults:['Digit'+(i+1)],count:1}))
 ];
 export const DEFAULT_BINDINGS=Object.fromEntries(ACTIONS.map(a=>[a.id,a.defaults]));
-import {normaliseHotbar} from './HotbarSlots.js';
 export {EMPTY_HOTBAR,normaliseHotbar,reorderHotbarSlots,removeHotbarSlot}
  from './HotbarSlots.js';
 
