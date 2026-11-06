@@ -10,8 +10,11 @@ import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
+import AttributeField from './AttributeField.jsx';
+import {TemplateListsDesigner,SheetListField,optionLists} from './TemplateOptionLists.jsx';
 import {makeProgressionField,makeProficienciesField,enrichSheetValues,
- PERSONAL_RESOURCE_TAB,PERSONAL_RESOURCE_KEY,validateModifierRules,modifierReferenceId} from './SheetDerived.js';
+ PERSONAL_RESOURCE_TAB,PERSONAL_RESOURCE_KEY,validateModifierRules,modifierReferenceId,
+ numericFieldsWithDerived} from './SheetDerived.js';
 import {ProgressionDesigner,ProgressionPanel,ProficienciesDesigner,ProficienciesPanel} from './SheetProgression.jsx';
 import PersonalResources from './PersonalResources.jsx';
 import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
@@ -24,7 +27,7 @@ import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbook
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
-import {parseSheetTemplateFile,serializeSheetTemplate} from './TemplateFiles.js';
+import {parseSheetTemplateFile,serializeSheetTemplate,validateSheetTemplate} from './TemplateFiles.js';
 import {sheetQuickcodeReferences,hydrateSheetQuickcodes,configWithSheetQuickcodes} from './SheetQuickcodes.js';
 import InventoryPanel from './InventoryPanel.jsx';
 import InventoryRulesDesigner from './InventoryRulesDesigner.jsx';
@@ -36,11 +39,11 @@ const db=url&&key?createClient(url,key):null;
 const uid=()=>crypto.randomUUID();
 const message=e=>e?.message||String(e);
 const read=async(q)=>{const{data,error}=await q;if(error)throw error;return data};
-const D=(field)=>field.type==='number'?0:
+const D=(field)=>field.type==='number'?0:field.type==='attribute'?10:
  ['inventory','collection'].includes(field.type)?[]:
  ['magic_dashboard','equipment','progression','proficiencies'].includes(field.type)?{}:'';
 const stamp=s=>new Date(s).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-const defaults=[{id:'main',name:'Character',fields:[{id:'character_name',label:'Name',type:'text',span:2},{id:'strength',label:'Strength',type:'number',span:1},{id:'dexterity',label:'Dexterity',type:'number',span:1},{id:'hp',label:'Hit points',type:'number',span:1},{id:'attack',label:'Attack',type:'roll',formula:'1d20+@{strength}',span:1}]},{id:'inventory',name:'Inventory',fields:[{id:'items',label:'Equipment',type:'inventory',columns:['Item','Qty','Weight','Notes'],span:3}]}];
+const defaults=[{id:'main',name:'Character',fields:[{id:'character_name',label:'Name',type:'text',span:2},{id:'strength',label:'Strength',type:'attribute',span:1},{id:'dexterity',label:'Dexterity',type:'attribute',span:1},{id:'hp',label:'Hit points',type:'number',span:1},{id:'attack',label:'Attack',type:'roll',formula:'1d20+@{strength}',span:1}]},{id:'inventory',name:'Inventory',fields:[{id:'items',label:'Equipment',type:'inventory',columns:['Item','Qty','Weight','Notes'],span:3}]}];
 class AppErrorBoundary extends React.Component{
  constructor(props){super(props);this.state={failed:false}}
  static getDerivedStateFromError(){return {failed:true}}
@@ -958,6 +961,7 @@ function App(){
   }catch(e){fail(e)}
  }
  async function saveTemplate(){setBusy(true);try{
+  validateSheetTemplate(template);
   validateModifierRules(template);
   sheetQuickcodeReferences(template);
   const config=configWithSheetQuickcodes(camp?.token_display_config,template);
@@ -1648,6 +1652,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
   changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({
    id:'field_'+uid().slice(0,8),
    label:type==='resource'?'Hit Points':'New '+type,type,span:type==='resource'?2:1,
+   ...(type==='attribute'?{proficiencyField:''}:type==='list'?{listId:''}:{}),
    ...(type==='inventory'?{columns:['Item','Qty','Weight','Notes'],inventoryPreset:'list',gridColumns:8,gridRows:5}:type==='roll'?{formula:'1d20'}:{})
   }));
  }
@@ -1662,6 +1667,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
     value={template.modifierRules?.step??2}
     onChange={e=>changeTemplate(x=>x.modifierRules={...x.modifierRules,step:Number(e.target.value)})}/></label>
   </div>
+  <TemplateListsDesigner template={template} changeTemplate={changeTemplate}/>
   <InventoryRulesDesigner template={template} changeTemplate={changeTemplate}/>
   <div className="tools">
    <input aria-label="Tab name" value={t.name}
@@ -1672,6 +1678,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
    }}>Delete tab</button>
    <select aria-label="New field type" value={fieldType} onChange={e=>setFieldType(e.target.value)}>
     <option value="text">Text</option><option value="number">Number</option>
+    <option value="attribute">Attribute (score + saving throw)</option>
+    <option value="list">List (DM-defined dropdown)</option>
     <option value="resource">Resource (Current / Maximum)</option>
     <option value="collection">Repeating Collection (spellbooks, abilities…)</option>
     <option value="magic_dashboard">Magic resources dashboard</option>
@@ -1741,6 +1749,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       });
      }}>
       <option value="text">Text</option><option value="number">Number</option>
+      <option value="attribute">Attribute (score + saving throw)</option>
+      <option value="list">List (DM-defined dropdown)</option>
       <option value="resource">Resource (Current / Maximum)</option>
       <option value="collection">Repeating Collection</option>
       <option value="magic_dashboard">Magic dashboard</option>
@@ -1784,6 +1794,31 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       {linking===f.id?'Linking…':'↗ Add / link token resource bar'}
      </button>
     </>}
+    {f.type==='attribute'&&<div className="ability-modifier-designer">
+     <p className="muted tiny">A numeric ability score with its calculated modifier,
+      a saving-throw proficiency checkbox, and a one-click d20 saving throw.
+      Proficiency is taken from class progression unless you choose a field below.</p>
+     <label>Saving throw proficiency bonus source
+      <select value={f.proficiencyField||''}
+       onChange={e=>update(f.id,'proficiencyField',e.target.value)}>
+       <option value="">Campaign progression / proficiency_bonus</option>
+       {numericFieldsWithDerived(template).filter(item=>item.id!==f.id).map(item=>
+        <option value={item.id} key={item.id}>{item.label} ({item.id})</option>)}
+      </select>
+     </label>
+     <p className="muted tiny">Calculated references: <code>{f.id+'_mod'}</code> and
+      <code>{f.id+'_save_bonus'}</code>.</p>
+    </div>}
+    {f.type==='list'&&<div className="ability-modifier-designer">
+     <label>Predefined list
+      <select value={f.listId||''} onChange={e=>update(f.id,'listId',e.target.value)}>
+       <option value="">Choose a reusable list</option>
+       {optionLists(template).map(list=><option key={list.id} value={list.id}>{list.name}</option>)}
+      </select>
+     </label>
+     <p className="muted tiny">Edit options in Reusable lists above; players only see this
+      dropdown on their sheet.</p>
+    </div>}
     {f.type==='number'&&<div className="ability-modifier-designer">
       <label className="ability-modifier-enable"><input type="checkbox"
        checked={f.modifierEnabled===true} onChange={e=>update(f.id,'modifierEnabled',e.target.checked)}/>
