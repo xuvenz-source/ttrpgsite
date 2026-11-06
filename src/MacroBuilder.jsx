@@ -2,18 +2,11 @@ import React,{useMemo,useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
 import MacroChatCard from './MacroChatCard.jsx';
 import {numericFieldsWithDerived} from './SheetDerived.js';
+import {supportsMacroCritical} from './MacroCritical.js';
 
 const uid=()=>crypto.randomUUID();
 const MAX_ROWS=12,MAX_CELLS=3;
-const roll=(label='Roll',formula='1d20')=>({id:uid(),kind:'roll',label,formula});
-/** A critical is based on a single positive natural d20, never the modified total. */
-export function supportsMacroCritical(formula){
- const compact=String(formula||'').toLowerCase().replace(/\s+/g,'');
- const d20=[...compact.matchAll(/(^|[+\-])(\d{1,2})d(\d{1,4})(?!\d)/g)]
-  .filter(match=>Number(match[3])===20);
- return d20.length===1 && Number(d20[0][2])===1 && d20[0][1]!=='-';
-}
-
+const roll=(label='Roll',formula='1d20',critOn=null)=>({id:uid(),kind:'roll',label,formula,...(critOn==null?{}:{critOn})});
 const text=(label='Note',value='vs AC')=>({id:uid(),kind:'text',label,text:value});
 const row=(label='Attack',cells=[roll('Normal','1d20+3')])=>({id:uid(),label,cells});
 const blankMacro=()=>({
@@ -24,7 +17,7 @@ const blankMacro=()=>({
 const swipeExample=()=>({
  ...blankMacro(),name:'Bobby',subtitle:'Swipe',
  rows:[
-  row('Attack',[roll('Normal','1d20+@{wisdom_mod}'),roll('Advantage','1d20+@{wisdom_mod}'),text('vs','AC')]),
+  row('Attack',[roll('Normal','1d20+@{wisdom_mod}',19),roll('Advantage','1d20+@{wisdom_mod}',19),text('vs','AC')]),
   row('Damage',[roll('Force','1d8+2+@{wisdom_mod}'),roll('Critical','1d8')]),
   row('Graze',[roll('Wisdom','@{wisdom_mod}')]),
   row('Charge 20ft',[roll('Extra','1d6'),roll('Crit','1d6')])

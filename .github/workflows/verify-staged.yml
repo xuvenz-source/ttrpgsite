@@ -20,6 +20,6 @@ jobs:
       - name: Install dependencies without publishing
         run: npm install --no-audit --no-fund
       - name: Check derived sheet calculations
-        run: node --test tests/sheet-derived.test.mjs
+        run: node --test tests/*.test.mjs
       - name: Validate Vite production build (no Vercel deployment)
         run: npm run build
