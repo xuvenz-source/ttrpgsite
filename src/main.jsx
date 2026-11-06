@@ -85,6 +85,7 @@ function App(){
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
+ const[encumbranceBadges,setEncumbranceBadges]=useState({});
  const[quickEditToken,setQuickEditToken]=useState(null);
  const[statusEditToken,setStatusEditToken]=useState(null);
  const[statusSavingTokens,setStatusSavingTokens]=useState({});
@@ -287,9 +288,12 @@ function App(){
  }
  async function refreshMonitors(){
   const request=++monitorRequest.current;
-  if(!selectedMap||!activeId)return setMonitorValues({});
+  if(!selectedMap||!activeId){setMonitorValues({});setEncumbranceBadges({});return}
   try{
-   const rows=await read(db.rpc('get_token_monitor_values',{p_map:selectedMap}));
+   const [rows,badges]=await Promise.all([
+    read(db.rpc('get_token_monitor_values',{p_map:selectedMap})),
+    read(db.rpc('get_token_encumbrance_badges',{p_map:selectedMap}))
+   ]);
    if(request===monitorRequest.current){
     const latest=Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}]));
     // Server reads can finish before a background edit. Keep local writes visible.
@@ -299,6 +303,9 @@ function App(){
      }
     }
     setMonitorValues(latest);
+    setEncumbranceBadges(Object.fromEntries((badges||[]).map(b=>[b.token_id,{
+     icon:b.icon,label:b.label
+    }])));
    }
   }catch(e){if(request===monitorRequest.current)console.error('Could not refresh token monitors',e)}
  }
@@ -526,6 +533,16 @@ function App(){
   setCharacter(next);
   setCharacters(old=>old.map(ch=>ch.id===next.id?next:ch));
   // Instant, optimistic local monitor update; the server will replicate to others.
+  const enc=evaluateEncumbrance(camp?.sheet_template,next.field_values);
+  setEncumbranceBadges(old=>{
+   const nextBadges={...old};
+   for(const token of tokens.filter(t=>t.character_id===character.id)){
+    if(enc.enabled&&enc.tier?.showOnToken===true)
+     nextBadges[token.id]={icon:enc.tier.icon||'⚖️',label:enc.tier.label||'Encumbered'};
+    else delete nextBadges[token.id];
+   }
+   return nextBadges;
+  });
   const asNumber=(raw)=>{
    if(raw===null||raw===undefined||raw==='')return null;
    const n=Number(raw);return Number.isFinite(n)?n:null;
@@ -573,6 +590,7 @@ function App(){
    try{
     await writeSheetSnapshot(next);
     if(pendingSheetSave.current===next){pendingSheetSave.current=null;setSaveState('Saved');}
+    refreshMonitors();
    }catch(e){setSaveState('Save failed');fail(e)}
   },200);
 }
@@ -1147,7 +1165,9 @@ function App(){
   <PersonalResources value={character?.field_values?.[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>updateField(PERSONAL_RESOURCE_KEY,v)}/>
  </div></div>:
- <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:
+ <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]}
+       template={camp?.sheet_template} sheetValues={character?.field_values}
+       onChange={v=>updateField(f.id,v)}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f}
   value={character?.field_values?.[f.id]||{}}
   sheetValues={character?.field_values||{}}
@@ -1213,7 +1233,7 @@ function App(){
    resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}
-   hotbarInset={hotbarVisible}/>
+   encumbranceBadges={encumbranceBadges} hotbarInset={hotbarVisible}/>
    {(Object.keys(pendingQuickTokens).length+Object.keys(statusSavingTokens).length)>0&&
     <div className="quick-save-status" role="status">
      <span className="quick-save-pulse" aria-hidden="true"/>
@@ -1534,7 +1554,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,hotbarInset=false}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},hotbarInset=false}){
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
@@ -1743,6 +1763,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
         opacity:t.visible?1:.55
        }}>
        <TokenMonitors config={displayConfig} fields={monitorValues[t.id]} zoom={scale}/>
+       {encumbranceBadges[t.id]&&<div className="token-encumbrance-indicator"
+        title={encumbranceBadges[t.id].label}>{encumbranceBadges[t.id].icon}</div>}
       </div>;
      })}
     </div>
