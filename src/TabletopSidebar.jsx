@@ -1,4 +1,4 @@
-import React,{useMemo,useState} from 'react';
+import React,{useLayoutEffect,useMemo,useRef,useState} from 'react';
 import Artwork from './Artwork.jsx';
 import MapCalibration from './MapCalibration.jsx';
 import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
@@ -154,6 +154,25 @@ export default function TabletopSidebar({
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
+ const chatScrollRef=useRef(null);
+ const followNewChatRef=useRef(true);
+ // Scroll to latest when a chat view opens or the viewed map changes.
+ useLayoutEffect(()=>{
+  followNewChatRef.current=true;
+  const pane=chatScrollRef.current;
+  if(pane)pane.scrollTop=pane.scrollHeight;
+ },[validPanel,activeMap?.id]);
+ // Leave the reading position alone after the user scrolls up. Resuming
+ // at the bottom re-enables follow mode for subsequent rolls and messages.
+ useLayoutEffect(()=>{
+  const pane=chatScrollRef.current;
+  if(pane&&followNewChatRef.current)pane.scrollTop=pane.scrollHeight;
+ },[messages,validPanel]);
+ function onChatScroll(){
+  const pane=chatScrollRef.current;
+  if(pane)followNewChatRef.current=
+   pane.scrollHeight-pane.scrollTop-pane.clientHeight<=48;
+ }
  return <aside className="right-sidebar panel" aria-label="Tabletop sidebar">
   <nav className="right-tabs" role="tablist" aria-label="Tabletop tools">
    {tabs.filter(t=>isDM||t.id!=='dm').map(t=><button key={t.id} type="button" role="tab"
@@ -163,7 +182,8 @@ export default function TabletopSidebar({
    </button>)}
   </nav>
   {validPanel==='chat'&&<>
-   <div className="messages right-messages">{messages.map(m=><div className="msg" key={m.id}>
+   <div className="messages right-messages" ref={chatScrollRef}
+    onScroll={onChatScroll}>{messages.map(m=><div className="msg" key={m.id}>
     <div className="muted tiny">{m.user_id===user?'You':characters.find(c=>c.user_id===m.user_id)?.name||'Party member'} · {when(m.created_at)}</div>
     {m.kind==='spell'?<SpellChatCard message={m}/>:
      m.kind==='macro'?<MacroChatCard message={m}/>:
