@@ -17,6 +17,8 @@ import PersonalResources from './PersonalResources.jsx';
 import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
+import {movementTopic,allowedMovementPreview,canSendMovementPreview,
+ MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
@@ -100,7 +102,11 @@ function App(){
  const quickWritePatches=useRef(new Map());
  const monitorRequest=useRef(0);
  const navigationChannel=useRef(null),navigationRequest=useRef(0);
- const latestMonitorRefresh=useRef(null);
+ const latestMonitorRefresh=useRef(null),latestTokenRefresh=useRef(null);
+ const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
+ const liveMapChannel=useRef(null),liveMapReady=useRef(false);
+ const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
+ const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const[macros,setMacros]=useState([]);
@@ -486,6 +492,63 @@ function App(){
    void db.removeChannel(channel);
   };
  },[db,activeId,user,isDM]);
+ // Fast ephemeral movement updates: a separate, PRIVATE map channel prevents
+ // solo-map coordinates being broadcast to unauthorized players.
+ useEffect(()=>{
+  setRemoteTokenPositions({});
+  for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
+  remoteMoveExpiry.current.clear();lastMovementPreview.current.clear();
+  liveMapReady.current=false;
+  if(!db||!activeId||!selectedMap||!user)return;
+  const channel=db.channel(movementTopic(selectedMap),{
+   config:{private:true,broadcast:{ack:false,self:false}}
+  }).on('broadcast',{event:'token-preview'},({payload})=>{
+   const access=latestMovementAccess.current;
+   if(!allowedMovementPreview(payload,selectedMap,
+    access.tokens||[],access.members||[],user))return;
+   const id=payload.id;
+   setRemoteTokenPositions(prev=>{
+    if(prev[id]?.actor===payload.actor&&prev[id].seq>=payload.seq)return prev;
+    return {...prev,[id]:{x:payload.x,y:payload.y,seq:payload.seq,actor:payload.actor}};
+   });
+   const last=remoteMoveExpiry.current.get(id);
+   if(last)clearTimeout(last);
+   const seq=payload.seq;
+   const timer=setTimeout(()=>{
+    remoteMoveExpiry.current.delete(id);
+    setRemoteTokenPositions(prev=>{
+     if(prev[id]?.seq!==seq)return prev;
+     const copy={...prev};delete copy[id];return copy;
+    });
+    void latestTokenRefresh.current?.();
+   },payload.final?3000:MOVE_PREVIEW_EXPIRE_MS);
+   remoteMoveExpiry.current.set(id,timer);
+  }).subscribe((status,error)=>{
+   liveMapReady.current=status==='SUBSCRIBED';
+   if(status==='CHANNEL_ERROR')console.warn('Fast map movement unavailable',error);
+  });
+  liveMapChannel.current=channel;
+  return()=>{
+   if(liveMapChannel.current===channel)liveMapChannel.current=null;
+   liveMapReady.current=false;
+   for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
+   remoteMoveExpiry.current.clear();
+   void db.removeChannel(channel);
+  };
+ },[db,activeId,selectedMap,user]);
+ function sendLiveMovement(token,x,y,final=false){
+  if(!canSendMovementPreview(token,user,selectedMap,isDM)||
+    !Number.isInteger(x)||!Number.isInteger(y)||!liveMapReady.current)return;
+  const now=Date.now(),last=lastMovementPreview.current.get(token.id)||0;
+  if(!final&&now-last<MOVE_PREVIEW_INTERVAL_MS)return;
+  lastMovementPreview.current.set(token.id,now);
+  const channel=liveMapChannel.current;
+  if(!channel)return;
+  void channel.send({type:'broadcast',event:'token-preview',payload:{
+   id:token.id,mapId:selectedMap,actor:user,x,y,
+   seq:++liveMovementSeq.current,final
+  }}).catch(e=>console.warn('Movement preview unavailable',e));
+ }
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
@@ -495,7 +558,11 @@ function App(){
   ++tokenRefreshSeq.current;
  },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
- useEffect(()=>{latestMonitorRefresh.current=refreshMonitors});
+ useEffect(()=>{
+  latestMonitorRefresh.current=refreshMonitors;
+  latestTokenRefresh.current=refreshTokens;
+  latestMovementAccess.current={tokens,members,mapId:selectedMap,user};
+ });
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
 
  useEffect(()=>{
@@ -1170,6 +1237,7 @@ function App(){
   pending.x=x;pending.y=y;pending.confirmed=false;
   // Immediate feedback: moving a token never waits for a database round trip.
   setTokens(rows=>rows.map(t=>t.id===id?{...t,x,y}:t));
+  sendLiveMovement(token,x,y,true);
   if(!pending.saving)void flushTokenMove(id,pending);
  }
  async function flushTokenMove(id,pending){
@@ -1347,6 +1415,7 @@ function App(){
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
+    onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
    resize={resizeToken}
