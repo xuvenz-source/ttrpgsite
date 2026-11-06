@@ -18,7 +18,7 @@ export default function MacroChatCard({message,preview=false}){
     <div className="macro-chat-values">
      {(Array.isArray(row.cells)?row.cells:[]).map((cell,j)=>
       <span key={cell.id||j} className={'macro-chat-cell'+(cell.kind==='text'?' text':'')+
-        (cell.critical?' critical':'')}>
+        (cell.critical?' critical':'')+(cell.selected?' attack-selected':'')}>
        {cell.kind==='roll'?<>
         {cell.label&&<span className="macro-chat-cell-label">{cell.label}</span>}
         {preview?<span className="macro-chat-demo">—</span>:

@@ -178,8 +178,9 @@ export function MacroManager({
    <div className="macro-manager-body">
     <aside className="macro-manager-library">
      <strong>My macros <span className="muted tiny">({macros.length})</span></strong>
-     <button type="button" onClick={()=>startNew()} className="secondary">+ New macro</button>
-     <button type="button" onClick={()=>startNew(true)} className="secondary">+ Swipe example</button>
+     <button type="button" onClick={()=>startNew('attack')} className="secondary">+ Attack macro</button>
+     <button type="button" onClick={()=>startNew()} className="secondary">+ Custom macro</button>
+     <button type="button" onClick={()=>startNew('example')} className="secondary">+ Swipe example</button>
      <div className="macro-manager-list">
       {macros.length===0&&<p className="muted tiny">Create your first macro and save it to this campaign.</p>}
       {macros.map(m=><button key={m.id} type="button"
@@ -208,8 +209,12 @@ export function MacroManager({
       <div className="macro-manager-rows">
        <div className="macro-manager-section-heading">
         <strong>Result rows</strong>
-        <button type="button" className="secondary" disabled={draft.rows.length>=MAX_ROWS}
-         onClick={addRow}>+ Row</button>
+        <div className="macro-manager-add-row">
+         <button type="button" className="secondary" disabled={draft.rows.length>=MAX_ROWS}
+          onClick={addAttackRow}>+ Attack</button>
+         <button type="button" className="secondary" disabled={draft.rows.length>=MAX_ROWS}
+          onClick={addRow}>+ Row</button>
+        </div>
        </div>
        {draft.rows.map((r,index)=><article key={r.id} className="macro-edit-row">
         <div className="macro-edit-row-header">
@@ -226,11 +231,15 @@ export function MacroManager({
          <div className="macro-edit-cell-header">
           <select aria-label="Result type" value={cell.kind} onChange={e=>{
            const kind=e.target.value;
+           if(kind==='attack'){updateRow(r.id,{cells:[attackCell()]});return}
            updateCell(r.id,cell.id,kind==='roll'?
-            {kind,formula:'1d20',text:undefined,critOn:undefined}:
-            {kind,text:'',formula:undefined,critOn:undefined});
+            {kind,formula:'1d20',text:undefined,critOn:undefined,
+             damage:undefined,critDamage:undefined,mode:undefined}:
+            {kind,text:'',formula:undefined,critOn:undefined,
+             damage:undefined,critDamage:undefined,mode:undefined});
           }}>
            <option value="roll">Dice / number</option>
+           <option value="attack">Attack (linked)</option>
            <option value="text">Text</option>
           </select>
           <input value={cell.label||''} maxLength={24}
@@ -241,7 +250,30 @@ export function MacroManager({
            disabled={r.cells.length===1}
            onClick={()=>updateRow(r.id,{cells:r.cells.filter(x=>x.id!==cell.id)})}>×</button>
          </div>
-         {cell.kind==='roll'?<>
+         {cell.kind==='attack'?<div className="macro-attack-fields">
+          <label>To-hit formula<input className="macro-formula-input" value={cell.formula||''}
+           placeholder="1d20+@{dexterity_mod}" maxLength={120}
+           onChange={e=>updateCell(r.id,cell.id,{formula:e.target.value})}/></label>
+          <label>Roll mode<select value={cell.mode||'normal'}
+           onChange={e=>updateCell(r.id,cell.id,{mode:e.target.value})}>
+           <option value="normal">Normal — one d20</option>
+           <option value="advantage">Advantage — higher natural d20</option>
+           <option value="disadvantage">Disadvantage — lower natural d20</option>
+          </select></label>
+          <label>Crit on<select value={cell.critOn??20}
+           onChange={e=>updateCell(r.id,cell.id,{critOn:Number(e.target.value)})}>
+           {Array.from({length:20},(_,i)=>20-i).map(n=>
+            <option value={n} key={n}>{n===20?'Natural 20':n+'–20'}</option>)}
+          </select></label>
+          <label>Damage formula<input className="macro-formula-input" value={cell.damage||''}
+           placeholder="1d8+2" maxLength={120}
+           onChange={e=>updateCell(r.id,cell.id,{damage:e.target.value})}/></label>
+          <label>Extra damage on crit<input className="macro-formula-input"
+           value={cell.critDamage||''} placeholder="1d8 (or leave blank)" maxLength={120}
+           onChange={e=>updateCell(r.id,cell.id,{critDamage:e.target.value})}/></label>
+          <p className="muted tiny">One linked action: choose the hit by its natural die,
+           roll damage once, then add the extra damage only when that hit is critical.</p>
+         </div>:cell.kind==='roll'?<>
           <input className="macro-formula-input" value={cell.formula||''}
            aria-label="Dice expression" maxLength={120} placeholder="1d20+@{wisdom_mod}"
            onChange={e=>updateCell(r.id,cell.id,{formula:e.target.value})}/>
@@ -286,14 +318,15 @@ export function MacroManager({
         </div>
        </article>)}
        <p className="muted tiny">Up to 12 rows, three results each, and 18 rolls total.
-        Use <code>@{'{wisdom_mod}'}</code> for a sheet field. Critical thresholds apply
-        to natural d20 rolls before modifiers; they do not automatically add damage.</p>
+        Use <code>@{'{dexterity_mod}'}</code> for a DM-configured modifier.
+        Linked Attack rolls damage and conditional critical bonus together;
+        custom Dice / Number cells remain independent.</p>
       </div>
       <div className="macro-manager-preview">
        <strong>Live layout preview</strong>
        <p className="muted tiny">Values appear when you run the macro. Hover over a rolled result in chat for its maths.</p>
        <MacroChatCard message={previewMacro(draft)} preview/>
-       <p className="muted tiny">Example: Attack has two independent d20 rolls; Graze can show only a modifier; each additional effect gets its own row.</p>
+       <p className="muted tiny">Linked Attack chooses the higher/lower natural d20 and only adds critical damage when the chosen roll qualifies.</p>
       </div>
      </div>
     </div>

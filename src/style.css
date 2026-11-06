@@ -1886,3 +1886,14 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  border-radius:6px;background:#202b42;display:flex;flex-direction:column;gap:6px}
 .ability-modifier-enable{display:flex;align-items:center;gap:7px}
 .ability-modifier-enable input{width:auto}
+
+/* Staged: attack macros link hit/damage and roll critical bonus conditionally. */
+.macro-manager-add-row{display:flex;gap:5px}
+.macro-attack-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.macro-attack-fields>label{display:flex;flex-direction:column;gap:3px;font-size:10px}
+.macro-attack-fields>label:first-child,.macro-attack-fields>p{grid-column:1/-1}
+.macro-attack-fields input,.macro-attack-fields select{width:100%;min-width:0}
+.macro-attack-fields>p{margin:0!important}
+.macro-chat-cell.attack-selected .roll-math-result{box-shadow:inset 0 0 0 2px #4879c5}
+.macro-chat-cell.attack-selected .macro-chat-cell-label{font-weight:800;color:#234b89}
+@media(max-width:520px){.macro-attack-fields{grid-template-columns:minmax(0,1fr)}}
