@@ -3,6 +3,8 @@ import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
+import {MagicDashboard} from './SheetMagic.jsx';
+ import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
 
 function Items({field,value,onChange}){
@@ -81,6 +83,11 @@ export default function NpcEditor({
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
  f.type==='inventory'?<Items field={f} value={draft.values[f.id]||[]} onChange={v=>setField(f.id,v)}/>:
  f.type==='resource'?<ResourceField value={draft.values[f.id]} onChange={v=>setField(f.id,v)}/>:
+ f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.values[f.id]||{}}
+   sheetValues={draft.values} onChange={v=>setField(f.id,v)}/>:
+ f.type==='equipment'?<EquipmentManager field={f} template={template}
+   value={draft.values[f.id]||{}} sheetValues={draft.values}
+   onChange={v=>setField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
  f.type==='collection'?<RepeatingCollection field={f} value={draft.values[f.id]||[]}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}
    sourceType={record.kind==='token'?'npc_token':'npc_template'} sourceId={record.data.id}

@@ -3,6 +3,8 @@ import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
+import {MagicDashboard} from './SheetMagic.jsx';
+ import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
 
 function InventoryEditor({field,value,onChange}){
@@ -128,6 +130,11 @@ export default function CharacterEditor({
       f.type==='inventory'?<InventoryEditor field={f} value={draft.field_values[f.id]||[]}
         onChange={v=>editField(f.id,v)}/>:
       f.type==='resource'?<ResourceField value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
+      f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.field_values[f.id]||{}}
+       sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}/>:
+      f.type==='equipment'?<EquipmentManager field={f} template={template}
+       value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
+       onChange={v=>editField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
       f.type==='collection'?<RepeatingCollection field={f} value={draft.field_values[f.id]||[]}
        sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}
        sourceType="character" sourceId={record.id}

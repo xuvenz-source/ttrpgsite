@@ -10,6 +10,8 @@ import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
+import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
+import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
@@ -23,7 +25,9 @@ const db=url&&key?createClient(url,key):null;
 const uid=()=>crypto.randomUUID();
 const message=e=>e?.message||String(e);
 const read=async(q)=>{const{data,error}=await q;if(error)throw error;return data};
-const D=(field)=>field.type==='number'?0:['inventory','collection'].includes(field.type)?[]:'';
+const D=(field)=>field.type==='number'?0:
+ ['inventory','collection'].includes(field.type)?[]:
+ ['magic_dashboard','equipment'].includes(field.type)?{}:'';
 const stamp=s=>new Date(s).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const defaults=[{id:'main',name:'Character',fields:[{id:'character_name',label:'Name',type:'text',span:2},{id:'strength',label:'Strength',type:'number',span:1},{id:'dexterity',label:'Dexterity',type:'number',span:1},{id:'hp',label:'Hit points',type:'number',span:1},{id:'attack',label:'Attack',type:'roll',formula:'1d20+@{strength}',span:1}]},{id:'inventory',name:'Inventory',fields:[{id:'items',label:'Equipment',type:'inventory',columns:['Item','Qty','Weight','Notes'],span:3}]}];
 class AppErrorBoundary extends React.Component{
@@ -979,7 +983,15 @@ function App(){
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
-</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='collection'?<RepeatingCollection field={f}
+</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:
+ f.type==='magic_dashboard'?<MagicDashboard field={f}
+  value={character?.field_values?.[f.id]||{}}
+  sheetValues={character?.field_values||{}}
+  onChange={v=>updateField(f.id,v)}/>:
+ f.type==='equipment'?<EquipmentManager field={f} template={camp.sheet_template}
+  value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
+  onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}/>:
+ f.type==='collection'?<RepeatingCollection field={f}
  value={character?.field_values?.[f.id]||[]} sheetValues={character?.field_values||{}}
  sourceType="character" sourceId={character?.id}
  onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}
@@ -991,7 +1003,17 @@ function App(){
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <button type="button" disabled={busy} onClick={saveTemplate}>Save template</button>
- </div></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate} onLinkResource={linkResourceToToken}/></section>}
+ </div></div><p className="muted">Drag fields to reorder them. Each campaign member keeps their own saved values.</p><div className="tabs">{template?.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}<button onClick={()=>{const name=prompt('New tab name');if(name?.trim())changeTemplate(t=>t.tabs.push({id:'tab_'+uid().slice(0,8),name:name.trim(),fields:[]}))}}>+ Tab</button>
+ <button type="button" className="secondary" onClick={()=>{
+  const existing=template.tabs.find(t=>t.name.toLowerCase()==='equipment');
+  if(existing){
+   changeTemplate(x=>x.tabs.find(t=>t.id===existing.id).fields.push(makeEquipmentField()));
+   setSheetTab(existing.id);
+  }else{
+   const preset=makeEquipmentTab();
+   changeTemplate(x=>x.tabs.push(preset));setSheetTab(preset.id);
+  }
+ }}>+ Equipment tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate} onLinkResource={linkResourceToToken}/></section>}
  {tab==='maps'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Map library</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label>
@@ -1004,7 +1026,8 @@ function App(){
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
    resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
-   displayConfig={camp?.token_display_config} monitorValues={monitorValues}/>
+   displayConfig={camp?.token_display_config} monitorValues={monitorValues}
+   hotbarInset={hotbarVisible}/>
    {(Object.keys(pendingQuickTokens).length+Object.keys(statusSavingTokens).length)>0&&
     <div className="quick-save-status" role="status">
      <span className="quick-save-pulse" aria-hidden="true"/>
@@ -1129,6 +1152,11 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
    changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push(makeBlankCollection()));
    return;
   }
+  if(type==='magic_dashboard'||type==='equipment'){
+   changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push(
+    type==='equipment'?makeEquipmentField():makeMagicDashboardField()));
+   return;
+  }
   changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({
    id:'field_'+uid().slice(0,8),
    label:type==='resource'?'Hit Points':'New '+type,type,span:type==='resource'?2:1,
@@ -1147,12 +1175,16 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
     <option value="text">Text</option><option value="number">Number</option>
     <option value="resource">Resource (Current / Maximum)</option>
     <option value="collection">Repeating Collection (spellbooks, abilities…)</option>
+    <option value="magic_dashboard">Magic resources dashboard</option>
+    <option value="equipment">Equipment and armour rules</option>
     <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
     <option value="roll">Dice button</option><option value="inventory">Inventory</option>
    </select>
    <button type="button" onClick={createField}>+ Add field</button>
    <button type="button" className="secondary" onClick={()=>changeTemplate(x=>
     x.tabs.find(y=>y.id===t.id).fields.push(makeSpellbookField()))}>+ Spellbook preset</button>
+   <button type="button" className="secondary" onClick={()=>changeTemplate(x=>
+    x.tabs.find(y=>y.id===t.id).fields.push(makeMagicDashboardField()))}>+ Magic dashboard</button>
   </div>
   <p className="muted small">Create ordinary fields, Current/Maximum resources, or repeating collections with nested controls. Choose the Spellbook preset for level tabs, spell entries, detail panels, and roll buttons.</p>
   {linkMessage&&<div className="designer-feedback" role="status">{linkMessage}</div>}
@@ -1185,10 +1217,22 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
      <label>Width<select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}>
       <option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option>
      </select></label>
-     <label>Field type<select value={f.type} onChange={e=>update(f.id,'type',e.target.value)}>
+     <label>Field type<select value={f.type} onChange={e=>{
+      const next=e.target.value;
+      changeTemplate(tpl=>{
+       const field=tpl.tabs.find(tab=>tab.id===t.id).fields.find(item=>item.id===f.id);
+       if(!field)return;
+       if(next==='magic_dashboard'||next==='equipment'){
+        const replacement=next==='magic_dashboard'?makeMagicDashboardField():makeEquipmentField();
+        Object.assign(field,replacement,{id:field.id,label:field.label});
+       }else field.type=next;
+      });
+     }}>
       <option value="text">Text</option><option value="number">Number</option>
       <option value="resource">Resource (Current / Maximum)</option>
       <option value="collection">Repeating Collection</option>
+      <option value="magic_dashboard">Magic dashboard</option>
+      <option value="equipment">Equipment & armour</option>
       <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
       <option value="roll">Dice button</option><option value="inventory">Inventory</option>
      </select></label>
@@ -1196,6 +1240,14 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       const tab=x.tabs.find(y=>y.id===t.id);tab.fields=tab.fields.filter(y=>y.id!==f.id);
      })}>Delete</button>
     </div>
+    {f.type==='magic_dashboard'&&<MagicDashboardDesigner field={f} onChange={next=>
+      changeTemplate(x=>{const target=x.tabs.find(tab=>tab.id===t.id)?.fields.find(v=>v.id===f.id);
+       if(target)Object.assign(target,next);})}/>}
+    {f.type==='equipment'&&<EquipmentDesigner field={f} template={template}
+      onChange={next=>changeTemplate(x=>{
+       const target=x.tabs.find(tab=>tab.id===t.id)?.fields.find(v=>v.id===f.id);
+       if(target)Object.assign(target,next);
+      })}/>}
     {f.type==='collection'&&<CollectionDesigner field={f}
       onChange={next=>changeTemplate(x=>{
        const child=x.tabs.find(y=>y.id===t.id).fields.find(y=>y.id===f.id);
@@ -1218,7 +1270,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,hotbarInset=false}){
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
@@ -1234,11 +1286,14 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   const x=(Number(token.x)+Number(token.span_x??1)/2)*cell;
   const y=(Number(token.y)+Number(token.span_y??1)/2)*cell;
   const visibleLeft=node.scrollLeft,visibleRight=visibleLeft+node.clientWidth;
-  const visibleTop=node.scrollTop,visibleBottom=visibleTop+node.clientHeight;
+  const visibleTop=node.scrollTop;
+  const clearance=hotbarInset?78:0;
+  const visibleBottom=visibleTop+Math.max(35,node.clientHeight-clearance);
   if(x<visibleLeft+32||x>visibleRight-32)node.scrollLeft=Math.max(0,x-node.clientWidth/2);
-  if(y<visibleTop+32||y>visibleBottom-32)node.scrollTop=Math.max(0,y-node.clientHeight/2);
+  if(y<visibleTop+32||y>visibleBottom-32)
+   node.scrollTop=Math.max(0,y-(node.clientHeight-clearance)/2);
   node.focus({preventScroll:true});
- },[selectedId,map.id]);
+ },[selectedId,map.id,hotbarInset]);
  useEffect(()=>{
   function handleDelete(e){
    if(!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
@@ -1326,6 +1381,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     aria-label="Battlemap viewport — left-click and drag to pan" tabIndex={0}
     onPointerDown={startPan} onPointerMove={movePan} onPointerUp={endPan}
     onPointerCancel={endPan} onLostPointerCapture={endPan}>
+   <div className="board-scroll-content" style={{
+    width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
+   }}>
    <div ref={boardRef} className="board"
     onPointerDown={e=>{if(e.target===e.currentTarget||e.target.classList.contains('gridlines'))setSelectedId(null)}}
     onDragOver={allowMapDrop}
@@ -1409,6 +1467,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       </div>}
      </div>;
     })}
+   </div>
    </div>
   </div>
  </>;
