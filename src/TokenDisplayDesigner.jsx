@@ -87,50 +87,7 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
  return <div className="token-designer">
   <p className="muted small">Choose a Resource field such as “Hit Points” to connect its Current and Maximum values automatically. Use single Number fields for AC, elevation and other standalone values.</p>
   <p className="muted tiny">Create Resource fields in Sheet Designer, or use the one-click “Add / link token resource bar” option there. Existing manually linked fields still work. Bars and globes appear above overlapping tokens; each can be placed inside its token.</p>
-  <details className="reference-codes-editor">
-   <summary>Reference codes ({refs.length}/20)</summary>
-   <p className="muted tiny">Give a value a short campaign code such as <code>=@AC</code>.
-    Link it to a Number/Resource field or calculated Equipment defence.
-    Players can type the code into chat with their token selected; bubbles can
-    use it in Manual field ID. Codes update whenever the underlying sheet changes.</p>
-   {refs.map(r=><div className="reference-code-row" key={r.id}>
-    <label>Code
-     <input aria-label="Reference code" value={r.code||''} maxLength={34}
-      placeholder="=@AC"
-      onChange={e=>updateReference(r.id,{code:e.target.value.trim().toUpperCase()})}/>
-    </label>
-    <label>Display name
-     <input aria-label="Reference display name" value={r.label||''} maxLength={40}
-      placeholder="Armour Class"
-      onChange={e=>updateReference(r.id,{label:e.target.value})}/>
-    </label>
-    <label>Value source
-     <select value={r.source||'field'} onChange={e=>{
-      const source=e.target.value;
-      updateReference(r.id,{source,fieldId:source==='equipment_ac'?
-       equipment[0]?.id||'':fields[0]?.id||''});
-     }}>
-      <option value="field">Numeric / resource field</option>
-      <option value="equipment_ac">Calculated equipment defence</option>
-     </select>
-    </label>
-    <label>Linked sheet section
-     <select value={r.fieldId||''}
-      onChange={e=>updateReference(r.id,{fieldId:e.target.value})}>
-      <option value="">Select a field</option>
-      {(r.source==='equipment_ac'?equipment:fields).map(f=>
-       <option key={f.id} value={f.id}>{f.label}</option>)}
-     </select>
-    </label>
-    <button type="button" className="secondary"
-     title="Remove code" aria-label={'Remove '+r.code}
-     onClick={()=>setConfig(c=>({...c,references:(c.references||[]).filter(x=>x.id!==r.id)}))}>×</button>
-   </div>)}
-   <button type="button" className="secondary" disabled={refs.length>=20||!(equipment.length||fields.length)}
-    onClick={addReference}>+ Reference code</button>
-   {!validCodes&&<p className="error small">Reference codes must be unique, begin with =@,
-    contain only letters, numbers and underscores, and link to a valid sheet field.</p>}
-  </details>
+  <p className="muted tiny">Assign quickcodes (for example, <code>=@AC</code>) directly to fields in <strong>Sheet Designer</strong>. Existing campaign codes remain available in token monitors.</p>
   <div className="token-visibility-controls">
    <label>Player monitors visible to
     <select value={config.playerVisibility} onChange={e=>setConfig(c=>({...c,playerVisibility:e.target.value}))}>

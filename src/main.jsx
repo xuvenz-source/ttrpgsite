@@ -23,6 +23,7 @@ import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputF
 import TokenQuickEdit from './TokenQuickEdit.jsx';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 import {parseSheetTemplateFile,serializeSheetTemplate} from './TemplateFiles.js';
+import {sheetQuickcodeReferences,hydrateSheetQuickcodes,configWithSheetQuickcodes} from './SheetQuickcodes.js';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -132,7 +133,7 @@ function App(){
    const defaultMap=c.active_map_id||null;
    const desired=dm?(views.find(v=>v.user_id===user)?.map_id||defaultMap):
      (assignments.find(a=>a.user_id===user)?.map_id||defaultMap);
-   setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);setAccountNames(names);
+   setCamp(c);setTemplate(hydrateSheetQuickcodes(c.sheet_template,c.token_display_config?.references));setMembers(m);setCharacters(ch);setAccountNames(names);
    setCharacter(previous=>ch.find(x=>x.id===previous?.id&&x.user_id===user)||ch.find(x=>x.user_id===user)||null);
    setMapAssignments(assignments);setFolders(f);setMaps(b);
    setMsgs(chat.filter(x=>x.map_id===((dm&&b.some(map=>map.id===selectedMap)?selectedMap:desired)||null)).reverse());
@@ -708,8 +709,13 @@ function App(){
  }
  async function saveTemplate(){setBusy(true);try{
   validateModifierRules(template);
-  await read(db.from('campaigns').update({sheet_template:template}).eq('id',activeId));
-  setCamp(x=>({...x,sheet_template:template}));setSaveState('Template saved');
+  sheetQuickcodeReferences(template);
+  const config=configWithSheetQuickcodes(camp?.token_display_config,template);
+  const saved=await read(db.from('campaigns').update({
+   sheet_template:template,token_display_config:config
+  }).eq('id',activeId).select('sheet_template,token_display_config').single());
+  setCamp(x=>({...x,...saved}));setSaveState('Template and quickcodes saved');
+  await refreshMonitors();
  }catch(e){fail(e)}finally{setBusy(false)}}
  async function addFolder(e){e.preventDefault();if(!newFolder.trim())return;try{await read(db.from('map_folders').insert({campaign_id:activeId,parent_id:folder,name:newFolder.trim()}));setNewFolder('');refreshMaps()}catch(e){fail(e)}}
  async function uploadMap(e){const file=e.target.files?.[0];if(!file)return;setUploading(true);try{
@@ -1418,6 +1424,13 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       }}
       onDragEnd={()=>{drag.current=null}}>⠿ Drag to reorder</span>
     <label>Field label<input value={f.label} onChange={e=>update(f.id,'label',e.target.value)}/></label>
+    <label className="sheet-quickcode-field">Quickcode (optional)
+     <input value={f.quickcode||''} maxLength={34}
+      aria-label={'Quickcode for '+f.label} placeholder="=@AC"
+      onChange={e=>update(f.id,'quickcode',e.target.value.trim().toUpperCase())}/>
+     <small className="muted tiny">Use in chat or token field IDs. Resources resolve Current;
+      equipment resolves calculated armour class.</small>
+    </label>
     <div className="tools">
      <label>Width<select value={f.span||1} onChange={e=>update(f.id,'span',Number(e.target.value))}>
       <option value="1">1 column</option><option value="2">2 columns</option><option value="3">3 columns</option>

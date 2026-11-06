@@ -1,4 +1,5 @@
 import {validateModifierRules} from './SheetDerived.js';
+import {sheetQuickcodeReferences} from './SheetQuickcodes.js';
 
 const TYPES=new Set(['text','number','resource','collection','magic_dashboard',
  'equipment','progression','proficiencies','textarea','checkbox','roll','inventory']);
@@ -39,6 +40,7 @@ export function validateSheetTemplate(template){
  }
  checkSafeTree(template);
  validateModifierRules(template);
+ sheetQuickcodeReferences(template);
  return template;
 }
 export function serializeSheetTemplate(template){
