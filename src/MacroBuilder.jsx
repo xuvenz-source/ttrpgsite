@@ -6,6 +6,14 @@ import {numericFieldsWithDerived} from './SheetDerived.js';
 const uid=()=>crypto.randomUUID();
 const MAX_ROWS=12,MAX_CELLS=3;
 const roll=(label='Roll',formula='1d20')=>({id:uid(),kind:'roll',label,formula});
+/** A critical is based on a single positive natural d20, never the modified total. */
+export function supportsMacroCritical(formula){
+ const compact=String(formula||'').toLowerCase().replace(/\s+/g,'');
+ const d20=[...compact.matchAll(/(^|[+\-])(\d{1,2})d(\d{1,4})(?!\d)/g)]
+  .filter(match=>Number(match[3])===20);
+ return d20.length===1 && Number(d20[0][2])===1 && d20[0][1]!=='-';
+}
+
 const text=(label='Note',value='vs AC')=>({id:uid(),kind:'text',label,text:value});
 const row=(label='Attack',cells=[roll('Normal','1d20+3')])=>({id:uid(),label,cells});
 const blankMacro=()=>({
@@ -98,6 +106,9 @@ export function MacroManager({
    throw Error('Add at least one dice or numeric roll.');
   if(draft.rows.some(r=>!r.label.trim()||r.cells.length===0))
    throw Error('Each row needs a label and at least one cell.');
+  if(draft.rows.some(r=>r.cells.some(c=>c.kind==='roll'&&c.critOn!=null&&
+     !supportsMacroCritical(c.formula))))
+   throw Error('Critical tracking needs exactly one positive 1d20 in that roll formula, e.g. 1d20+4. Use separate rolls for advantage.');
   const saved=await onSave({
    ...draft,name:draft.name.trim(),subtitle:draft.subtitle.trim(),
    rows:draft.rows.map(r=>({...r,label:r.label.trim(),
@@ -139,9 +150,7 @@ export function MacroManager({
  return <FloatingWindow kind="macro" onClose={close}>
   <section className="panel macro-manager" aria-label="Macro builder">
    <div className="heading macro-manager-heading">
-    <div><h2>Macro Builder</h2>
-     <p className="muted tiny">Build multi-roll actions without writing a Roll20 template.</p>
-    </div>
+    <div><h2>Macro Builder</h2></div>
     <button type="button" className="secondary" onClick={close} aria-label="Close macro builder">✕</button>
    </div>
    <div className="macro-manager-body">
@@ -196,8 +205,8 @@ export function MacroManager({
           <select aria-label="Result type" value={cell.kind} onChange={e=>{
            const kind=e.target.value;
            updateCell(r.id,cell.id,kind==='roll'?
-            {kind,formula:'1d20',text:undefined}:
-            {kind,text:'',formula:undefined});
+            {kind,formula:'1d20',text:undefined,critOn:undefined}:
+            {kind,text:'',formula:undefined,critOn:undefined});
           }}>
            <option value="roll">Dice / number</option>
            <option value="text">Text</option>
@@ -214,6 +223,24 @@ export function MacroManager({
           <input className="macro-formula-input" value={cell.formula||''}
            aria-label="Dice expression" maxLength={120} placeholder="1d20+@{wisdom_mod}"
            onChange={e=>updateCell(r.id,cell.id,{formula:e.target.value})}/>
+          <label className="macro-crit-control">Natural critical
+           <select value={cell.critOn??''} aria-label="Natural critical threshold"
+            onChange={e=>updateCell(r.id,cell.id,{
+             critOn:e.target.value===''?undefined:Number(e.target.value)})}>
+            <option value="">Off (normal result)</option>
+            <option value="20">20 only</option>
+            <option value="19">19–20</option>
+            <option value="18">18–20</option>
+            {Array.from({length:17},(_,i)=>17-i).map(n=>
+             <option key={n} value={n}>{n}–20</option>)}
+           </select>
+          </label>
+          {cell.critOn!=null&&<p className={'muted tiny macro-crit-help'+
+           (!supportsMacroCritical(cell.formula)?' error':'')}>
+           {supportsMacroCritical(cell.formula)?
+            'Uses the unmodified d20 face, not the total after bonuses.':
+            'Use exactly one positive 1d20 (e.g. 1d20+4). Separate cells for advantage.'}
+          </p>}
           {attrs.length>0&&<select className="macro-attribute-insert"
            aria-label="Insert character attribute" value=""
            onChange={e=>{
@@ -237,8 +264,8 @@ export function MacroManager({
         </div>
        </article>)}
        <p className="muted tiny">Up to 12 rows, three results each, and 18 rolls total.
-        Use <code>@{'{wisdom_mod}'}</code> to reference a numeric character field.
-        Formulas are rolled by the server when the macro is used.</p>
+        Use <code>@{'{wisdom_mod}'}</code> for a sheet field. Critical thresholds apply
+        to natural d20 rolls before modifiers; they do not automatically add damage.</p>
       </div>
       <div className="macro-manager-preview">
        <strong>Live layout preview</strong>

@@ -1841,3 +1841,23 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .private-map-assignments>strong{font-size:12px}
 .private-map-assignments label{display:flex;flex-direction:column;gap:4px;font-size:11px}
 .private-map-assignments select{width:100%;min-width:0}
+
+/* Staged: smaller macro chat headers and natural critical highlighting. */
+.macro-chat-card:not(.weapon-attack) .macro-chat-header{
+ flex-direction:row;justify-content:flex-start;align-items:center;
+ text-align:left;min-height:0;padding:3px 7px;gap:6px;
+}
+.macro-chat-card:not(.weapon-attack) .macro-chat-header strong{font-size:11px;line-height:1.15}
+.macro-chat-card:not(.weapon-attack) .macro-chat-header span{font-size:10px;line-height:1.15}
+.floating-window .macro-manager-heading{
+ min-height:28px;padding-bottom:4px!important;margin-bottom:5px!important;
+}
+.macro-manager-heading h2{font-size:15px!important}
+.macro-crit-control{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px}
+.macro-crit-control select{width:min(170px,70%);min-width:0}
+.macro-crit-help{margin:0!important;line-height:1.3}
+.macro-chat-crit-badge{
+ border-radius:3px;padding:1px 4px;background:#2d6a36;color:#fff;
+ font-size:9px;font-weight:800;letter-spacing:.04em
+}
+.macro-chat-preview-crit{color:#34633e;font-size:9px;font-weight:700}

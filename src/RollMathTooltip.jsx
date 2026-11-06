@@ -19,7 +19,9 @@ export function rollMathText(data){
  }
  const mod=Number(data.modifier);
  if(Number.isFinite(mod)&&mod!==0)pieces+=' '+(mod>0?'+':'−')+' '+Math.abs(mod);
- return expression+'\n'+pieces+' = '+String(data.total??'—');
+ const result=expression+'\n'+pieces+' = '+String(data.total??'—');
+ return data.critOn!=null&&data.natural!=null?
+  result+'\nNatural d20: '+data.natural+'; critical on '+data.critOn+'+':result;
 }
 export default function RollMathTooltip({data,className='',size='normal'}){
  const [anchor,setAnchor]=useState(null);
@@ -54,6 +56,9 @@ export default function RollMathTooltip({data,className='',size='normal'}){
      <span className="roll-math-line">Kept <b>{data.kept}</b></span>}
     {Number.isFinite(mod)&&mod!==0&&<span className="roll-math-line">
      Modifier <b>{mod>0?'+':''}{mod}</b>
+    </span>}
+    {data.natural!=null&&data.critOn!=null&&<span className="roll-math-line">
+     Natural d20 <b>{data.natural}</b> · Crit on <b>{data.critOn}+</b>
     </span>}
     <span className="roll-math-final">Total <strong>{data.total??'—'}</strong></span>
    </span>,document.body)}
