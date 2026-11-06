@@ -24,13 +24,14 @@ export function MeasurementToolIcon({tool}){
   </>}
  </svg>;
 }
-export function MeasurementToolBar({tool,onPointerDown,onPointerMove,onPointerUp,onPointerCancel,onKeySelect}){
+export function MeasurementToolBar({tool,onPointerDown,onPointerMove,onPointerUp,onPointerCancel,onKeySelect,onClearPins}){
  const names={line:'Direct line',circle:'Circle radius',square:'Square radius',cone:'Cone'};
  return <div className="map-measure-toolbar" role="toolbar" aria-label="Battlemap measurement tools">
   {MEASUREMENT_TOOLS.map(id=><button key={id} type="button"
    className={'map-measure-tool'+(tool===id?' selected':'')}
    aria-label={names[id]} aria-pressed={tool===id}
-   title={names[id]+': click then drag on map, or drag the icon onto the map'}
+   title={names[id]+': left-drag to measure temporarily; right-drag to pin until cleared'}
+   onContextMenu={e=>e.preventDefault()}
    onPointerDown={e=>onPointerDown(e,id)}
    onPointerMove={onPointerMove}
    onPointerUp={onPointerUp}
@@ -38,6 +39,17 @@ export function MeasurementToolBar({tool,onPointerDown,onPointerMove,onPointerUp
    onClick={e=>{if(e.detail===0)onKeySelect(id)}}>
    <MeasurementToolIcon tool={id}/>
   </button>)}
+  <button type="button" className="map-measure-tool map-measure-clear"
+   aria-label="Clear my pinned measurements"
+   title="Clear all of your pinned measurements on this map"
+   onClick={onClearPins}>
+   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"
+    fill="none" stroke="currentColor" strokeWidth="1.8"
+    strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/>
+    <path d="M10 10v7M14 10v7"/>
+   </svg>
+  </button>
   {tool&&<button type="button" className="map-measure-tool map-measure-close"
    aria-label="Stop measuring" title="Stop measuring (Esc)"
    onClick={()=>onKeySelect(null)}>

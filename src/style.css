@@ -2460,3 +2460,63 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .map-measure-toolbar{left:5px;top:48%;padding:3px;gap:3px}
  .map-measure-tool{width:33px;height:33px;min-width:33px;min-height:33px}
 }
+
+
+/* Inventory grid width regression: character/NPC sheet layouts must give an
+   inventory field its configured 1/2/3 sheet columns. A fixed-slot grid must
+   scroll inside that space; it must never shrink its parent to min-content. */
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields.fields,
+.app .floating-window.floating-npc>.npc-modal>.npc-fields.fields{
+ display:grid;
+ width:100%;
+ min-width:0;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ justify-items:stretch;
+ align-items:start;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field{
+ display:flex;
+ flex-direction:column;
+ width:100%;
+ min-width:0;
+ max-width:100%;
+ justify-self:stretch;
+ align-self:start;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field.span1{
+ grid-column:span 1;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field.span2{
+ grid-column:span 2;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field.span3{
+ grid-column:1 / -1;
+}
+/* Player main sheet can also render inventory in its ordinary fields grid. */
+.fields>.field.inventory-grid-field{width:100%;min-width:0;max-width:100%}
+.fields>.field.inventory-grid-field.span3{grid-column:1 / -1}
+.field.inventory-grid-field>.inventory-panel.inventory-grid{
+ width:100%;min-width:0;max-width:100%;align-self:stretch;
+}
+.field.inventory-grid-field .inventory-summary,
+.field.inventory-grid-field .inventory-grid-scroll{
+ width:100%;min-width:0;max-width:100%;
+ align-self:stretch;
+}
+.field.inventory-grid-field .inventory-grid-scroll{
+ display:block;overflow-x:auto;overflow-y:auto;
+}
+.field.inventory-grid-field .inventory-grid{
+ width:max-content;max-width:none;
+}
+/* The window itself can be narrower than three columns; avoid overflowing the
+   sheet, retain the same 48px slots and scroll horizontally instead. */
+@media(max-width:700px){
+ .app .floating-window.floating-sheet>.npc-modal>.npc-fields.fields,
+ .app .floating-window.floating-npc>.npc-modal>.npc-fields.fields{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ .app .floating-window .npc-fields.fields>.field.inventory-grid-field.span3{
+  grid-column:1 / -1;
+ }
+}

@@ -4,7 +4,8 @@ import{createClient}from'@supabase/supabase-js';
 import './style.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
-import {validMeasurement,liveMeasurementPayload,pointOnBattlemap} from './MapMeasurements.js';
+import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
+ acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
@@ -130,6 +131,8 @@ function App(){
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
  const[remoteMeasurements,setRemoteMeasurements]=useState({});
  const measureExpiry=useRef(new Map()),lastMeasureSent=useRef(0);
+ const measureSequence=useRef(0),measureRevisions=useRef(new Map()),
+  measureClearRevisions=useRef(new Map());
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
@@ -628,6 +631,7 @@ function App(){
   setRemoteMeasurements({});
   for(const timer of measureExpiry.current.values())clearTimeout(timer);
   measureExpiry.current.clear();lastMeasureSent.current=0;
+  measureRevisions.current.clear();measureClearRevisions.current.clear();
   for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
   remoteMoveExpiry.current.clear();lastMovementPreview.current.clear();
   liveMapReady.current=false;
@@ -657,18 +661,35 @@ function App(){
    remoteMoveExpiry.current.set(id,timer);
   }).on('broadcast',{event:'map-measure'},({payload})=>{
    if(!validMeasurement(payload,selectedMap)||payload.actor===user)return;
-   const key=payload.id;
-   setRemoteMeasurements(previous=>({...previous,[key]:payload}));
-   const oldTimer=measureExpiry.current.get(key);
-   if(oldTimer)clearTimeout(oldTimer);
-   const timer=setTimeout(()=>{
+   if(!acceptMeasurementEvent(payload,measureRevisions.current,
+    measureClearRevisions.current))return;
+   if(payload.phase==='clear'){
+    for(const [key,timer] of measureExpiry.current){
+     if(key.startsWith(payload.actor+':')){
+      clearTimeout(timer);measureExpiry.current.delete(key);
+     }
+    }
+   }else{
+    const key=payload.actor+':'+payload.id;
+    const oldTimer=measureExpiry.current.get(key);
+    if(oldTimer)clearTimeout(oldTimer);
     measureExpiry.current.delete(key);
-    setRemoteMeasurements(previous=>{
-     if(previous[key]!==payload)return previous;
-     const next={...previous};delete next[key];return next;
-    });
-   },payload.final?12000:4500);
-   measureExpiry.current.set(key,timer);
+    if(payload.phase==='preview'){
+     // This timer is ONLY a network-disconnect recovery fallback.
+     // Normal left-button release broadcasts remove immediately.
+     const timer=setTimeout(()=>{
+      measureExpiry.current.delete(key);
+      setRemoteMeasurements(previous=>{
+       if(previous[payload.id]?.seq!==payload.seq)return previous;
+       const next={...previous};delete next[payload.id];return next;
+      });
+     },4500);
+     measureExpiry.current.set(key,timer);
+    }
+    // Pinned drawings have NO automatic removal timer.
+   }
+   setRemoteMeasurements(previous=>
+    applyMeasurementEventToVisible(previous,payload));
   }).subscribe((status,error)=>{
    liveMapReady.current=status==='SUBSCRIBED';
    if(status==='CHANNEL_ERROR')console.warn('Fast map movement unavailable',error);
@@ -697,11 +718,14 @@ function App(){
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
  }
- function sendLiveMeasurement(measure,final=false){
+ function sendLiveMeasurement(measure,phase='preview'){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
   const now=Date.now();
-  if(!final&&now-lastMeasureSent.current<65)return;
-  const data=liveMeasurementPayload(measure,measure.id,user,selectedMap,final);
+  if(phase==='preview'&&now-lastMeasureSent.current<65)return;
+  // Revisions keep out-of-order network previews from reappearing after clear.
+  measureSequence.current=Math.max(now*1000,measureSequence.current+1);
+  const data=liveMeasurementPayload(measure,measure?.id,user,selectedMap,
+   phase,measureSequence.current);
   if(!validMeasurement(data,selectedMap,
    displayedMap.width/displayedMap.grid_size,
    displayedMap.height/displayedMap.grid_size))return;
@@ -1645,7 +1669,7 @@ function App(){
   <PersonalResources value={character?.field_values?.[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>updateField(PERSONAL_RESOURCE_KEY,v)}/>
  </div></div>:
- <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]}
+ <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]}
        template={camp?.sheet_template} sheetValues={character?.field_values}
        onChange={v=>updateField(f.id,v)}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f}
@@ -2100,7 +2124,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const[marquee,setMarquee]=useState(null);
  const[activeMeasureTool,setActiveMeasureTool]=useState(null),
   [localMeasurements,setLocalMeasurements]=useState([]);
- const measureDrag=useRef(null),toolDrag=useRef(null),measureTimers=useRef(new Map());
+ const measureDrag=useRef(null),toolDrag=useRef(null);
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
@@ -2118,28 +2142,26 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    setSelectedIds(selectedId?[selectedId]:[]);
   }
  },[selectedId]);
- // Local finished measurement shapes fade after 12 seconds; remote views
- // receive the same shape through the private map broadcast channel.
+ // Pinned measurements remain until the creator clears them.
  useEffect(()=>{
   setActiveMeasureTool(null);setLocalMeasurements([]);
   measureDrag.current=null;toolDrag.current=null;
-  for(const timer of measureTimers.current.values())clearTimeout(timer);
-  measureTimers.current.clear();
-  return()=>{
-   for(const timer of measureTimers.current.values())clearTimeout(timer);
-   measureTimers.current.clear();
-  };
  },[map.id]);
  useEffect(()=>{
   function onEscape(event){
    if(event.key!=='Escape'||!activeMeasureTool)return;
    event.preventDefault();
+   const current=measureDrag.current;
+   if(current){
+    setLocalMeasurements(existing=>existing.filter(m=>m.id!==current.measure.id));
+    onMeasurementPreview?.(current.measure,'remove');
+   }
    setActiveMeasureTool(null);
    measureDrag.current=null;toolDrag.current=null;
   }
   window.addEventListener('keydown',onEscape);
   return()=>window.removeEventListener('keydown',onEscape);
- },[activeMeasureTool]);
+ },[activeMeasureTool,onMeasurementPreview]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
   const vp=viewportRef.current;
@@ -2244,62 +2266,64 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const mapPointInCells=e=>pointOnBattlemap(e.clientX,e.clientY,
   boardRef.current?.getBoundingClientRect(),map.width,map.height,
   map.grid_size,zoomRef.current);
- function beginMeasurement(pointerId,tool,point){
-  if(!point)return;
+ function beginMeasurement(pointerId,tool,point,pinned=false){
+  if(!point||measureDrag.current)return;
   const measure={id:crypto.randomUUID(),tool,start:point,end:point};
-  measureDrag.current={pointerId,measure};
-  setLocalMeasurements(existing=>[...existing.slice(-7),{...measure,isLocal:true}]);
-  onMeasurementPreview?.(measure,false);
+  measureDrag.current={pointerId,measure,pinned};
+  setLocalMeasurements(existing=>[...existing,{...measure,isLocal:true}]);
+  onMeasurementPreview?.(measure,'preview');
  }
  function updateMeasurement(e){
   const current=measureDrag.current;
   if(!current||current.pointerId!==e.pointerId)return;
   const point=mapPointInCells(e);
   if(!point)return;
+  if(current.measure.end.x===point.x&&current.measure.end.y===point.y)return;
   const next={...current.measure,end:point};
   current.measure=next;
   setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
    {...next,isLocal:true}:m));
-  onMeasurementPreview?.(next,false);
+  onMeasurementPreview?.(next,'preview');
  }
  function finishMeasurement(e,cancel=false){
   const current=measureDrag.current;
   if(!current||current.pointerId!==e.pointerId)return;
   measureDrag.current=null;
-  if(cancel){
-   setLocalMeasurements(existing=>existing.filter(m=>m.id!==current.measure.id));
-   return;
-  }
-  const point=mapPointInCells(e)||current.measure.end;
+  const point=cancel?current.measure.end:
+   mapPointInCells(e)||current.measure.end;
   const done={...current.measure,end:point};
-  if(Math.hypot(done.end.x-done.start.x,done.end.y-done.start.y)<.02){
-   setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));return;
-  }
-  setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
-   {...done,isLocal:true}:m));
-  onMeasurementPreview?.(done,true);
-  const timer=setTimeout(()=>{
-   measureTimers.current.delete(done.id);
+  const meaningful=Math.hypot(done.end.x-done.start.x,
+   done.end.y-done.start.y)>=.5;
+  if(!cancel&&meaningful&&current.pinned){
+   setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
+    {...done,isLocal:true,pinned:true}:m));
+   onMeasurementPreview?.(done,'pin');
+  }else{
+   // Remove is broadcast without throttling; local removal is immediate.
    setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));
-  },12000);
-  measureTimers.current.set(done.id,timer);
+   onMeasurementPreview?.(done,'remove');
+  }
+ }
+ function clearMyPinnedMeasurements(){
+  setLocalMeasurements(existing=>existing.filter(m=>!m.pinned));
+  onMeasurementPreview?.(null,'clear');
  }
  function onToolPointerDown(e,tool){
+  if(e.button!==0&&e.button!==2)return;
   setActiveMeasureTool(tool);
-  if(e.button!==0)return;
   e.preventDefault();e.stopPropagation();
-  toolDrag.current={pointerId:e.pointerId,tool};
+  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2};
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
  }
  function onToolPointerMove(e){
-  if(!toolDrag.current||toolDrag.current.pointerId!==e.pointerId)return;
+  const current=toolDrag.current;
+  if(!current||current.pointerId!==e.pointerId)return;
   const rect=boardRef.current?.getBoundingClientRect();
   if(!rect)return;
-  // The user can start directly on an icon and drag into the map.
   if(!measureDrag.current){
    if(e.clientX<rect.left||e.clientX>rect.right||
       e.clientY<rect.top||e.clientY>rect.bottom)return;
-   beginMeasurement(e.pointerId,toolDrag.current.tool,mapPointInCells(e));
+   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned);
   }else updateMeasurement(e);
  }
  function onToolPointerUp(e,cancel=false){
@@ -2310,10 +2334,18 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
  }
  function startMeasurementCapture(e){
-  if(!activeMeasureTool||e.button!==0||pan.current)return;
+  if(!activeMeasureTool||(e.button!==0&&e.button!==2)||
+   pan.current||measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
-  beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e));
+  beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e),
+   e.button===2);
   try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
+ }
+ function pinCurrentMeasurementOnRightClick(e){
+  // Chorded mouse buttons do not generate a second pointerdown.
+  if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
+  e.preventDefault();e.stopPropagation();
+  measureDrag.current.pinned=true;
  }
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
@@ -2434,11 +2466,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    onPointerDown={onToolPointerDown} onPointerMove={onToolPointerMove}
    onPointerUp={e=>onToolPointerUp(e)}
    onPointerCancel={e=>onToolPointerUp(e,true)}
-   onKeySelect={setActiveMeasureTool}/>
+   onKeySelect={setActiveMeasureTool} onClearPins={clearMyPinnedMeasurements}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
+    onMouseDownCapture={pinCurrentMeasurementOnRightClick}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
+    onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
