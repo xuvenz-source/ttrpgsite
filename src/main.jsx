@@ -229,7 +229,7 @@ function App(){
    const existing=previous.find(item=>item.kind+':'+item.data.id===key);
    if(existing)return previous.map(item=>item===existing?
     {...item,focusSignal:(item.focusSignal||0)+1}:item);
-   return [...previous.slice(-15),{...record,focusSignal:0}];
+   return [...previous,{...record,focusSignal:0}];
   });
  }
  function closeNpcEditor(record){
