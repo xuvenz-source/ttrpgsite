@@ -1899,3 +1899,59 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 @media(max-width:520px){.macro-attack-fields{grid-template-columns:minmax(0,1fr)}}
 
 .macro-chat-selected-label{font-size:10px;font-weight:900;color:#285caa}
+
+/* Staged: monitors are siblings of all tokens, not children of individual
+   token stacking contexts. The whole layer is transparent to pointer events. */
+.board>.token-monitors-over-all{
+ position:absolute;inset:0;z-index:30;pointer-events:none!important;overflow:visible;
+}
+.token-monitors-over-all .token-monitor-frame{
+ position:absolute;pointer-events:none!important;overflow:visible;
+}
+.token-monitor-frame .token-monitor-layer{
+ position:absolute;inset:0;pointer-events:none!important;overflow:visible;
+}
+/* DM choice per widget: inside token footprint; existing widgets stay outside. */
+.token-monitor.monitor-inside.monitor-bar{left:3px;right:auto;width:calc(100% - 6px)}
+.token-monitor.monitor-inside.monitor-bar.pos-top,
+.token-monitor.monitor-inside.monitor-bar.pos-top-left,
+.token-monitor.monitor-inside.monitor-bar.pos-top-right{
+ top:calc(3px + var(--monitor-index)*14px);
+}
+.token-monitor.monitor-inside.monitor-bar.pos-bottom,
+.token-monitor.monitor-inside.monitor-bar.pos-bottom-left,
+.token-monitor.monitor-inside.monitor-bar.pos-bottom-right{
+ bottom:calc(3px + var(--monitor-index)*14px);
+}
+.token-monitor.monitor-inside.monitor-bar.pos-top-left,
+.token-monitor.monitor-inside.monitor-bar.pos-bottom-left{
+ left:3px;right:auto;width:calc(76% - 6px);
+}
+.token-monitor.monitor-inside.monitor-bar.pos-top-right,
+.token-monitor.monitor-inside.monitor-bar.pos-bottom-right{
+ left:auto;right:3px;width:calc(76% - 6px);
+}
+.token-monitor.monitor-inside.monitor-globe{
+ width:min(28px,45%);height:auto;aspect-ratio:1;
+ transform:scale(min(1,var(--overlay-scale,1)));
+}
+.token-monitor.monitor-inside.monitor-globe.pos-top,
+.token-monitor.monitor-inside.monitor-globe.pos-top-left,
+.token-monitor.monitor-inside.monitor-globe.pos-top-right{
+ top:calc(3px + var(--monitor-index)*29px);
+}
+.token-monitor.monitor-inside.monitor-globe.pos-bottom,
+.token-monitor.monitor-inside.monitor-globe.pos-bottom-left,
+.token-monitor.monitor-inside.monitor-globe.pos-bottom-right{
+ bottom:calc(3px + var(--monitor-index)*29px);
+}
+.token-monitor.monitor-inside.monitor-globe.pos-top-left,
+.token-monitor.monitor-inside.monitor-globe.pos-bottom-left{left:3px;right:auto}
+.token-monitor.monitor-inside.monitor-globe.pos-top-right,
+.token-monitor.monitor-inside.monitor-globe.pos-bottom-right{left:auto;right:3px}
+.token-monitor.monitor-inside.monitor-globe.pos-top,
+.token-monitor.monitor-inside.monitor-globe.pos-bottom{
+ left:50%;right:auto;
+ transform:translateX(-50%) scale(min(1,var(--overlay-scale,1)));
+}
+.monitor-demo-token .token-monitor-layer{z-index:3}
