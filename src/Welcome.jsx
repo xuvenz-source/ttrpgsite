@@ -57,7 +57,14 @@ export function AuthGate({db}){
   try{
    const {error}=await db.auth.signInWithOAuth({provider,options:{redirectTo:location.origin}});
    if(error)throw error;
-  }catch(e){setError(errText(e));setBusy(false)}
+  }catch(e){
+   const msg=errText(e);
+   setError(/Unsupported provider|provider is not enabled|validation_failed/i.test(msg)?
+    (provider==='discord'?'Discord':'This social sign-in method')+
+    ' sign-in is not enabled for Tabletop Forge yet. Use Create account with a username and password until the site administrator configures OAuth.':
+    msg);
+   setBusy(false);
+  }
  }
  return <div className="welcome-screen">
   <div className="welcome-shell welcome-auth">
