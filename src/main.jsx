@@ -1560,14 +1560,18 @@ function App(){
  if(!configured())return <div className="center"><h1>Tabletop Forge</h1><p>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel.</p></div>;
  if(!authReady)return <div className="center">Loading…</div>;
  if(!session)return <AuthGate db={db}/>;
- if(!activeId)return <CampaignHub
+ if(!activeId)return <><CampaignHub
   campaigns={campaigns} loading={campaignsLoading} roles={roles}
   accountLabel={session.user?.user_metadata?.username||session.user?.user_metadata?.display_name||session.user?.email||'Adventurer'}
   createName={createName} onCreateName={setCreateName}
   inviteCode={joinCode} onInviteChange={setJoinCode}
   onCreate={create} onJoin={join} onSelect={setActiveId}
   onSignOut={()=>db.auth.signOut()}
-  error={error} onClearError={()=>setError('')}/>;
+  onOpenAccountSettings={()=>setAccountSettingsOpen(true)}
+  error={error} onClearError={()=>setError('')}/>
+  {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
+   onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
+ </>;
  if(launchNpc&&!isDM&&camp)return <div className="center" role="alert">
   Only the campaign DM can open an NPC pop-out.
  </div>;
@@ -1743,6 +1747,7 @@ function App(){
  onDistributedItem={async()=>{await fetchCampaign(activeId);await refreshMonitors()}}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)} onReturnToMenu={()=>setActiveId('')}
+ onOpenAccountSettings={()=>setAccountSettingsOpen(true)}
  uiScale={uiScale} onChangeUiScale={changeInterfaceScale}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
  campaignName={camp?.name||''} campaignTokenDisplay={camp?.token_display_config}
@@ -1753,6 +1758,8 @@ function App(){
  accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
  /></div>
  </main>
+ {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
+  onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
  {macroBuilderOpen&&<MacroManager macros={macros}
   characters={characters} npcs={npcs} tokens={tokens}
   template={camp?.sheet_template} user={user} isDM={isDM}
