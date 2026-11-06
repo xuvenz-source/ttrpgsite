@@ -2365,3 +2365,19 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .inventory-item-editor-grid{grid-template-columns:1fr}
  .inventory-item-preview-row{gap:7px}
 }
+
+
+/* Battlemap mouse controls: middle-drag pans, left-drag draws a token marquee.
+   Token dragging remains the existing left-button action. */
+.map-pan-region{cursor:crosshair}
+.map-pan-region .board,.map-pan-region .gridlines{cursor:crosshair}
+.map-pan-region.is-panning,.map-pan-region.is-panning .board,
+.map-pan-region.is-panning .token{cursor:grabbing!important}
+.map-pan-region .token{cursor:grab}
+.map-pan-region .token.token-selected::after{
+ border:2px solid #7fd9ff;box-shadow:0 0 0 2px #0d152cbb,0 0 13px #57acfa70;
+}
+.map-selection-marquee{position:absolute;z-index:95;pointer-events:none;
+ border:1px solid #9fd8ff;background:#69b6f633;
+ box-shadow:0 0 0 1px #234771aa inset;border-radius:2px}
+.map-pan-region.is-selecting{cursor:crosshair}
