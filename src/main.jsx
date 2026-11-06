@@ -100,6 +100,7 @@ function App(){
  const quickWritePatches=useRef(new Map());
  const monitorRequest=useRef(0);
  const navigationChannel=useRef(null),navigationRequest=useRef(0);
+ const latestMonitorRefresh=useRef(null);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const[macros,setMacros]=useState([]);
@@ -172,6 +173,13 @@ function App(){
    setMaps(availableMaps);
    setSelectedMap(old=>old===visible?old:visible);
   }catch(e){if(request===navigationRequest.current)console.error('Could not refresh map routing',e)}
+ }
+ function notifyMonitorRefresh(){
+  // No character values leave this broadcast. Every listener re-fetches
+  // only the token monitors visible under their own map permissions.
+  const c=navigationChannel.current;
+  if(c)void c.send({type:'broadcast',event:'monitors-changed',payload:{}})
+   .catch(e=>console.warn('Monitor refresh notification unavailable',e));
  }
  function notifyMapRouting(payload){
   const c=navigationChannel.current;
@@ -258,6 +266,7 @@ function App(){
   setCharacters(prev=>prev.map(ch=>ch.id===updated.id?updated:ch));
   setCharacter(prev=>prev?.id===updated.id?updated:prev);
   void refreshMonitors();
+  notifyMonitorRefresh();
  }
  async function saveNpc(draft){
   if(!npcEditor)return;
@@ -455,6 +464,8 @@ function App(){
   }).on('broadcast',{event:'routing-changed'},({payload})=>{
    if(!isDM&&(payload?.kind==='party'||payload?.targetId===user))
     void refreshPlayerMapRouting();
+  }).on('broadcast',{event:'monitors-changed'},()=>{
+   void latestMonitorRefresh.current?.();
   }).on('postgres_changes',{
    event:'*',schema:'public',table:'campaign_player_maps',
    filter:'campaign_id=eq.'+activeId
@@ -484,6 +495,7 @@ function App(){
   ++tokenRefreshSeq.current;
  },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
+ useEffect(()=>{latestMonitorRefresh.current=refreshMonitors});
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
 
  useEffect(()=>{
@@ -605,7 +617,8 @@ function App(){
   // Preserve write order, even when a queued autosave and an immediate spell
   // cast try to persist different versions of the same character.
   const write=sheetWriteQueue.current.then(()=>read(db.from('characters')
-   .update({field_values:snapshot.field_values,name:snapshot.name}).eq('id',snapshot.id)));
+   .update({field_values:snapshot.field_values,name:snapshot.name}).eq('id',snapshot.id)))
+   .then(result=>{notifyMonitorRefresh();return result});
   sheetWriteQueue.current=write.catch(()=>{});
   return write;
  }
