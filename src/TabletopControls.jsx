@@ -11,46 +11,9 @@ export const ACTIONS=[
   defaults:['Digit'+(i+1)],count:1}))
 ];
 export const DEFAULT_BINDINGS=Object.fromEntries(ACTIONS.map(a=>[a.id,a.defaults]));
-export const EMPTY_HOTBAR=Array.from({length:8},()=>({label:'',command:''}));
-export function normalizeBindings(data){
- const out={};
- for(const action of ACTIONS){
-  const raw=data&&Array.isArray(data[action.id])?data[action.id]:action.defaults;
-  out[action.id]=Array.from({length:action.count},(_,i)=>{
-   const code=raw[i];
-   return typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Space|F[1-9]|F1[0-2]|Minus|Equal|Bracket(Left|Right)|Semicolon|Quote|Comma|Period|Slash|Backquote|Backslash|Numpad[0-9])$/.test(code)
-    ?code:'';
-  });
- }
- return out;
-}
-export function normaliseHotbar(data){
- return Array.from({length:8},(_,i)=>{
-  const slot=Array.isArray(data)?data[i]:null;
-  return {
-   label:typeof slot?.label==='string'?slot.label.slice(0,40):'',
-   command:typeof slot?.command==='string'?slot.command.slice(0,300):''
-  };
- });
-}
-/** Reorder by insertion, shifting other slots while retaining their commands.
- * Hotkeys stay linked to fixed positions (slots 1–8).
- */
-export function reorderHotbarSlots(slots,source,destination){
- const result=normaliseHotbar(slots);
- if(!Number.isInteger(source)||!Number.isInteger(destination)||
-  source<0||source>=result.length||destination<0||destination>=result.length||
-  !result[source].command||source===destination)return result;
- const [entry]=result.splice(source,1);
- result.splice(destination,0,entry);
- return result;
-}
-export function removeHotbarSlot(slots,index){
- const result=normaliseHotbar(slots);
- if(Number.isInteger(index)&&index>=0&&index<result.length)
-  result[index]={label:'',command:''};
- return result;
-}
+import {normaliseHotbar} from './HotbarSlots.js';
+export {EMPTY_HOTBAR,normaliseHotbar,reorderHotbarSlots,removeHotbarSlot}
+ from './HotbarSlots.js';
 
 export function keyLabel(code){
  if(!code)return 'Not set';
@@ -204,6 +167,9 @@ export function MacroHotbar({
  },[]);
  return <div ref={hotbarRef} className={'macro-hotbar'+
   (dragging>=0?' hotbar-drag-active':'')} role="toolbar" aria-label="Macro hotbar">
+  {dragging>=0&&<div className="macro-hotbar-drag-hint" aria-live="polite">
+   Drop outside the hotbar to remove
+  </div>}
   {items.map((slot,i)=><button type="button" key={i}
    draggable={!!slot.command}
    className={'macro-hotbar-slot'+(slot.command?' filled':'')+
