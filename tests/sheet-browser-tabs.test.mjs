@@ -8,7 +8,7 @@ test('characters can launch in standalone authenticated browser tabs',()=>{
  assert.ok(m.includes("url.searchParams.set('campaign',activeId)"));
  assert.ok(m.includes("url.searchParams.set('sheet',characterId)"));
  assert.ok(m.includes("window.open(url.toString(),'_blank','noopener,noreferrer')"));
- assert.ok(m.includes("fetchCampaigns(launchSheet?.campaignId)"));
+ assert.ok(m.includes("fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId)"));
 });
 test('Units and both player/DM sheet editors expose new tab actions',()=>{
  assert.ok(s.includes('onOpenCharacterTab(ch.id)'));
