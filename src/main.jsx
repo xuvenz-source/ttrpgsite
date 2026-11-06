@@ -2187,7 +2187,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     {marquee&&Math.hypot(marquee.end.x-marquee.start.x,
      marquee.end.y-marquee.start.y)>3&&<div
       className="map-selection-marquee" aria-hidden="true"
-      style={selectionRectangle(marquee.start,marquee.end)}/>}
+      style={(()=>{
+       const r=selectionRectangle(marquee.start,marquee.end);
+       return {left:r.x,top:r.y,width:r.width,height:r.height};
+      })()}/>}
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">
