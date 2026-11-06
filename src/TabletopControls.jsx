@@ -33,6 +33,25 @@ export function normaliseHotbar(data){
   };
  });
 }
+/** Reorder by insertion, shifting other slots while retaining their commands.
+ * Hotkeys stay linked to fixed positions (slots 1–8).
+ */
+export function reorderHotbarSlots(slots,source,destination){
+ const result=normaliseHotbar(slots);
+ if(!Number.isInteger(source)||!Number.isInteger(destination)||
+  source<0||source>=result.length||destination<0||destination>=result.length||
+  !result[source].command||source===destination)return result;
+ const [entry]=result.splice(source,1);
+ result.splice(destination,0,entry);
+ return result;
+}
+export function removeHotbarSlot(slots,index){
+ const result=normaliseHotbar(slots);
+ if(Number.isInteger(index)&&index>=0&&index<result.length)
+  result[index]={label:'',command:''};
+ return result;
+}
+
 export function keyLabel(code){
  if(!code)return 'Not set';
  if(code.startsWith('Key'))return code.slice(3);
@@ -141,21 +160,87 @@ export function HotbarSettings({slots,onSave,visible,onChangeVisible}){
  </div>;
 }
 
-export function MacroHotbar({slots,bindings,onExecute,onConfigure,onAssignSpell,onAssignMacro}){
+export function MacroHotbar({
+ slots,bindings,onExecute,onConfigure,onAssignSpell,onAssignMacro,
+ onReorderSlot,onRemoveSlot
+}){
  const items=normaliseHotbar(slots);
  const [dragOver,setDragOver]=useState(-1);
- return <div className="macro-hotbar" role="toolbar" aria-label="Macro hotbar">
+ const [dragging,setDragging]=useState(-1);
+ const hotbarRef=useRef(null),sourceRef=useRef(null),removeRef=useRef(onRemoveSlot);
+ removeRef.current=onRemoveSlot;
+ // Native drop events never fire on non-droppable map/background elements.
+ // Make the rest of the document a drop destination ONLY while a hotbar item
+ // is being dragged. This also distinguishes a deliberate drop from Escape.
+ useEffect(()=>{
+  const withinBar=e=>{
+   const rect=hotbarRef.current?.getBoundingClientRect();
+   return !!rect&&e.clientX>=rect.left&&e.clientX<=rect.right&&
+    e.clientY>=rect.top&&e.clientY<=rect.bottom;
+  };
+  const allowOutside=e=>{
+   if(sourceRef.current===null)return;
+   // Even padding/gaps inside the toolbar must not delete an item.
+   if(e.target instanceof Element&&
+    e.target.closest('.macro-hotbar'))return;
+   e.preventDefault();
+   e.dataTransfer.dropEffect='move';
+  };
+  const dropOutside=e=>{
+   if(sourceRef.current===null)return;
+   if(withinBar(e))return;
+   e.preventDefault();e.stopPropagation();
+   const source=sourceRef.current;
+   sourceRef.current=null;
+   setDragging(-1);setDragOver(-1);
+   void Promise.resolve(removeRef.current?.(source)).catch(()=>{});
+  };
+  document.addEventListener('dragover',allowOutside,true);
+  document.addEventListener('drop',dropOutside,true);
+  return()=>{
+   document.removeEventListener('dragover',allowOutside,true);
+   document.removeEventListener('drop',dropOutside,true);
+  };
+ },[]);
+ return <div ref={hotbarRef} className={'macro-hotbar'+
+  (dragging>=0?' hotbar-drag-active':'')} role="toolbar" aria-label="Macro hotbar">
   {items.map((slot,i)=><button type="button" key={i}
-   className={'macro-hotbar-slot'+(slot.command?' filled':'')+(dragOver===i?' spell-drop-target':'')}
+   draggable={!!slot.command}
+   className={'macro-hotbar-slot'+(slot.command?' filled':'')+
+    (dragOver===i?(dragging>=0?' hotbar-reorder-target':' spell-drop-target'):'')+
+    (dragging===i?' hotbar-drag-source':'')}
    onClick={()=>slot.command?onExecute(i):onConfigure()}
+   onDragStart={e=>{
+    if(!slot.command){e.preventDefault();return}
+    sourceRef.current=i;
+    setDragging(i);
+    e.dataTransfer.setData('application/x-forge-hotbar-slot',String(i));
+    e.dataTransfer.effectAllowed='move';
+   }}
+   onDragEnd={()=>{
+    sourceRef.current=null;
+    setDragging(-1);setDragOver(-1);
+   }}
    onDragOver={e=>{
     const types=Array.from(e.dataTransfer.types);
+    if(types.includes('application/x-forge-hotbar-slot')){
+     e.preventDefault();e.dataTransfer.dropEffect='move';setDragOver(i);return;
+    }
     if(!(onAssignSpell&&types.includes('application/x-forge-spell'))&&
        !(onAssignMacro&&types.includes('application/x-forge-macro')))return;
     e.preventDefault();e.dataTransfer.dropEffect='copy';setDragOver(i);
    }}
    onDragLeave={()=>setDragOver(-1)}
    onDrop={e=>{
+    const source=e.dataTransfer.getData('application/x-forge-hotbar-slot');
+    if(source!==''){
+     e.preventDefault();e.stopPropagation();setDragOver(-1);
+     sourceRef.current=null;
+     const from=Number(source);
+     if(Number.isInteger(from)&&from>=0&&from<8&&from!==i)
+      void Promise.resolve(onReorderSlot?.(from,i)).catch(()=>{});
+     return;
+    }
     const spell=e.dataTransfer.getData('application/x-forge-spell');
     const macro=e.dataTransfer.getData('application/x-forge-macro');
     setDragOver(-1);
@@ -166,7 +251,9 @@ export function MacroHotbar({slots,bindings,onExecute,onConfigure,onAssignSpell,
      else if(spell&&onAssignSpell)onAssignSpell(i,JSON.parse(spell));
     }catch{}
    }}
-   title={slot.command?slot.label+': '+slot.command+' (drop a spell or macro to replace)':'Drag a spell or macro here, or configure slot '+(i+1)}>
+   title={slot.command?slot.label+': '+slot.command+
+    ' (drag to another slot to reorder, or outside the bar to remove)':
+    'Drag a spell or macro here, or configure slot '+(i+1)}>
    <span className="hotbar-key">{keyLabel(bindings['slot'+(i+1)]?.[0]||'')}</span>
    <span className="hotbar-slot-label">{slot.label|| (slot.command?'Macro':'Empty')}</span>
   </button>)}
