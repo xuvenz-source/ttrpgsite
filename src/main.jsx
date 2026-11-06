@@ -139,9 +139,10 @@ function App(){
  const statusPatches=useRef(new Map());
  const[pendingQuickTokens,setPendingQuickTokens]=useState({});
  const quickWritePatches=useRef(new Map());
- const monitorRequest=useRef(0);
+ const monitorRequest=useRef(0),campaignMetadataRequest=useRef(0);
  const navigationChannel=useRef(null),navigationRequest=useRef(0);
  const latestMonitorRefresh=useRef(null),latestTokenRefresh=useRef(null);
+ const latestCampaignMetadataRefresh=useRef(null),latestMapsRefresh=useRef(null),latestNpcsRefresh=useRef(null);
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
  const[remoteMeasurements,setRemoteMeasurements]=useState({});
  const measureExpiry=useRef(new Map()),lastMeasureSent=useRef(0);
@@ -209,6 +210,23 @@ function App(){
    setNpcs(npcList);setNpcFolders(npcFolderList);
    setSelectedMap(old=>(dm&&b.some(x=>x.id===old))?old:(b.some(x=>x.id===desired)?desired:''));
   }catch(e){fail(e)}
+ }
+ // Campaign metadata updates must not reload the entire campaign, chat,
+ // NPCs, character roster, and map library.
+ async function refreshCampaignMetadata(){
+  const campaignId=activeId,request=++campaignMetadataRequest.current;
+  if(!db||!campaignId)return;
+  try{
+   const next=await read(db.from('campaigns').select('*').eq('id',campaignId).single());
+   if(request!==campaignMetadataRequest.current||
+      tokenContextRef.current.campaignId!==campaignId)return;
+   setCamp(next);
+   setTemplate(hydrateSheetQuickcodes(next.sheet_template,
+    next.token_display_config?.references));
+  }catch(e){
+   if(request===campaignMetadataRequest.current)
+    console.warn('Could not refresh campaign metadata',e);
+  }
  }
  /** Server-authorized routing: incoming broadcasts carry no private map IDs. */
  async function refreshPlayerMapRouting(){
@@ -563,7 +581,16 @@ function App(){
    if(request===tokenRefreshSeq.current)fail(e);
   }
  }
- useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
+ useEffect(()=>{
+  if(!db){setAuthReady(true);return}
+  db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});
+  const {data}=db.auth.onAuthStateChange((event,s)=>{
+   // Signed asset URLs carry access permissions: reset across identities.
+   if(event==='SIGNED_IN'||event==='SIGNED_OUT')signedAssetStore.clear();
+   setSession(s);
+  });
+  return()=>data.subscription.unsubscribe();
+ },[]);
  useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
@@ -747,10 +774,34 @@ function App(){
   void liveMapChannel.current.send({type:'broadcast',event:'map-measure',
    payload:data}).catch(error=>console.warn('Live measurement not delivered',error));
  }
- useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
- .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
- .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
- .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
+ useEffect(()=>{
+  if(!db||!activeId)return;
+  const tokenUpdates=createCoalescedRefresh(()=>{
+   void latestTokenRefresh.current?.();
+   void latestMonitorRefresh.current?.();
+  },100);
+  const campaignUpdates=createCoalescedRefresh(()=>{
+   void latestCampaignMetadataRefresh.current?.();
+   void latestMonitorRefresh.current?.();
+  },100);
+  const c=db.channel('vtt-'+activeId)
+   .on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',
+    filter:'campaign_id=eq.'+activeId},event=>{
+    if(eventAffectsMap(event,tokenContextRef.current.mapId))
+     tokenUpdates.request();
+   })
+   .on('postgres_changes',{event:'*',schema:'public',table:'campaigns',
+    filter:'id=eq.'+activeId},()=>campaignUpdates.request())
+   .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',
+    filter:'campaign_id=eq.'+activeId},()=>void latestNpcsRefresh.current?.())
+   .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',
+    filter:'campaign_id=eq.'+activeId},()=>void latestMapsRefresh.current?.())
+   .subscribe();
+  return()=>{
+   tokenUpdates.cancel();campaignUpdates.cancel();
+   void db.removeChannel(c);
+  };
+ },[db,activeId,user]);
 
  // Keep the latest closures without tearing down network subscriptions on each
  // map change; reconcile missed events when Realtime reconnects or the tab resumes.
@@ -876,9 +927,20 @@ function App(){
  useEffect(()=>{
   latestMonitorRefresh.current=refreshMonitors;
   latestTokenRefresh.current=refreshTokens;
+  latestCampaignMetadataRefresh.current=refreshCampaignMetadata;
+  latestMapsRefresh.current=refreshMaps;
+  latestNpcsRefresh.current=refreshNpcs;
   latestMovementAccess.current={tokens,members,mapId:selectedMap,user};
  });
- useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
+ useEffect(()=>{
+  if(!db||!user){setUrls({});return}
+  setUrls(previous=>Object.fromEntries(maps.map(m=>[m.id,previous[m.id]||''])));
+  const unsubscribe=maps.filter(m=>m.storage_path).map(m=>
+   signedAssetStore.subscribe(db,'battlemap-assets',m.storage_path,url=>{
+    setUrls(previous=>previous[m.id]===url?previous:{...previous,[m.id]:url});
+   }));
+  return()=>unsubscribe.forEach(stop=>stop());
+ },[maps,user]);
 
  useEffect(()=>{
   if(!user||!camp||!['tabletop','sheet'].includes(tab))return;
