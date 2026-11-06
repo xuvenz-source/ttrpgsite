@@ -2466,11 +2466,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    onPointerDown={onToolPointerDown} onPointerMove={onToolPointerMove}
    onPointerUp={e=>onToolPointerUp(e)}
    onPointerCancel={e=>onToolPointerUp(e,true)}
-   onKeySelect={setActiveMeasureTool}/>
+   onKeySelect={setActiveMeasureTool} onClearPins={clearMyPinnedMeasurements}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
+    onMouseDownCapture={pinCurrentMeasurementOnRightClick}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
+    onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
