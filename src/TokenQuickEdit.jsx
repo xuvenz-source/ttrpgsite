@@ -1,5 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
+import QuickStatusControls from './QuickStatusControls.jsx';
+import {normalizedEffects} from './TokenStatuses.jsx';
 
 export function editableFields(template){
  const seen=new Set();
@@ -62,12 +64,15 @@ function parts(type,value){
  return {current:value??'',max:''};
 }
 function validNumber(n){return n!==''&&Number.isFinite(Number(n))&&Number(n)>=-1000000&&Number(n)<=1000000}
-export default function TokenQuickEdit({db,token,template,allowedFields,initialValues={},onRemember,onClose,onApply}){
+export default function TokenQuickEdit({db,token,template,allowedFields,initialValues={},onRemember,onClose,onApply,statusCatalog,onApplyStatuses,canEditStatuses=false}){
  const fields=useMemo(()=>editableFields(template).filter(f=>(allowedFields||[]).includes(f.id)),[template,allowedFields]);
  const prepare=raw=>Object.fromEntries(fields.map(f=>[f.id,parts(f.type,raw?.[f.id])]));
  const [values,setValues]=useState(()=>prepare(initialValues));
  const [saved,setSaved]=useState(()=>prepare(initialValues));
  const [error,setError]=useState('');
+ const [statusValues,setStatusValues]=useState(()=>normalizedEffects(token.status_effects));
+ const startingEffects=useRef(normalizedEffects(token.status_effects));
+ const statusChanged=JSON.stringify(statusValues)!==JSON.stringify(startingEffects.current);
  const touched=useRef(new Set());
  const [known,setKnown]=useState(()=>new Set(fields.filter(f=>
   Object.prototype.hasOwnProperty.call(initialValues,f.id)).map(f=>f.id)));
@@ -112,7 +117,7 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
   change(field.id,'current',String(Math.max(-1000000,Math.min(1000000,next))));
  }
  function save(){
-  if(!changes.length)return;
+  if(!changes.length&&!statusChanged)return;
   if(changes.some(c=>!validNumber(c.value))){
    setError('Enter a number between -1,000,000 and 1,000,000.');return;
   }
@@ -123,7 +128,13 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
   }
   try{
    // The parent paints the new values synchronously and queues a single atomic save.
-   if(onApply(token,payload)!==false)onClose();
+   if(statusChanged){
+    if(!canEditStatuses||!onApplyStatuses)
+     throw Error('Status editing is not allowed for this token.');
+    if(onApplyStatuses(token,statusValues)===false)return;
+   }
+   if(changes.length&&onApply(token,payload)===false)return;
+   onClose();
   }catch(e){setError(e?.message||String(e))}
  }
  return <FloatingWindow kind="quick" onClose={onClose}>
@@ -133,7 +144,7 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
     <button type="button" className="secondary" onClick={onClose}>✕</button>
    </div>
    {fields.length===0?
-    <p className="muted">No quick-adjust fields enabled. Ask your DM to configure them in Settings.</p>:
+    <p className="muted">No numeric quick-adjust fields configured. Status effects remain available below.</p>:
     <div className="quick-token-fields">{fields.map(f=>{
      const value=values[f.id]||{current:'',max:''};
      return <div className="quick-token-field" key={f.id}>
@@ -151,10 +162,12 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
       </div>
      </div>;
     })}</div>}
+   <QuickStatusControls catalog={statusCatalog} values={statusValues}
+    onChange={setStatusValues} disabled={!canEditStatuses}/>
    {error&&<p className="error small" role="alert">{error}</p>}
    <div className="actions">
     <button type="button" className="secondary" onClick={onClose}>Cancel</button>
-    <button type="button" onClick={save} disabled={changes.length===0}>Apply changes</button>
+    <button type="button" onClick={save} disabled={changes.length===0&&!statusChanged}>Apply changes</button>
    </div>
   </section>
  </FloatingWindow>;
