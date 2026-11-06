@@ -73,6 +73,12 @@ class LocalErrorBoundary extends React.Component{
  }
 }
 function App(){
+ const[launchSheet]=useState(()=>{
+  const p=new URLSearchParams(location.search);
+  return p.get('campaign')&&p.get('sheet')?
+   {campaignId:p.get('campaign'),characterId:p.get('sheet')}:null;
+ });
+ const launchHandled=useRef(false);
  const[session,setSession]=useState(null),[authReady,setAuthReady]=useState(false),[email,setEmail]=useState(''),[sent,setSent]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const[campaigns,setCampaigns]=useState([]),[campaignsLoading,setCampaignsLoading]=useState(true),[roles,setRoles]=useState({}),[activeId,setActiveId]=useState(''),[camp,setCamp]=useState(null),[members,setMembers]=useState([]),[characters,setCharacters]=useState([]),[character,setCharacter]=useState(null);
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
@@ -197,6 +203,14 @@ function App(){
  async function moveNpcFolder(id,folderId){try{
   await read(db.from('npc_templates').update({folder_id:folderId}).eq('id',id));await refreshNpcs();
  }catch(e){fail(e)}}
+ function openSheetBrowserTab(characterId){
+  if(!activeId||!characters.some(ch=>ch.id===characterId&&(ch.user_id===user||isDM)))
+   return fail('You cannot open that character.');
+  const url=new URL(location.origin+location.pathname);
+  url.searchParams.set('campaign',activeId);
+  url.searchParams.set('sheet',characterId);
+  window.open(url.toString(),'_blank','noopener,noreferrer');
+ }
  async function openOwnCharacter(characterId){
   const target=characters.find(ch=>ch.id===characterId&&ch.user_id===user);
   if(!target)throw Error('Character sheet not found.');
@@ -310,6 +324,17 @@ function App(){
   setCharacters(old=>old.map(x=>x.id===changed.id?{...x,portrait_path:changed.portrait_path,token_path:changed.token_path}:x));
   void refreshMonitors();
  }
+ // A sheet opened in a browser tab runs under its own Supabase session,
+ // with normal character RLS and account permissions.
+ useEffect(()=>{
+  if(!launchSheet||launchHandled.current||!camp||activeId!==launchSheet.campaignId)return;
+  const row=characters.find(ch=>ch.id===launchSheet.characterId);
+  if(!row)return;
+  launchHandled.current=true;
+  if(row.user_id===user)void openOwnCharacter(row.id).catch(fail);
+  else if(isDM)void openPlayerCharacter(row.id,null);
+  else fail('This sheet is not accessible from your account.');
+ },[camp,characters,activeId,user,isDM]);
  async function refreshChat(){
   if(!activeId)return;
   try{
@@ -378,7 +403,7 @@ function App(){
   }
  }
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
- useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
+ useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
   setMacroBuilderOpen(false);setMacros([]);
@@ -1233,6 +1258,9 @@ function App(){
    </select>
   </label>
   <button type="button" className="secondary" disabled={!character}
+   onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a browser tab">
+   ↗ New tab</button>
+  <button type="button" className="secondary" disabled={!character}
    onClick={()=>setArtStudio(true)}>My Token Library</button>
   <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}
@@ -1359,6 +1387,7 @@ function App(){
   newCharacterName={newCharacterName} onChangeNewCharacterName={setNewCharacterName}
   onCreateCharacter={createNewCharacter}
   onOpenOwnCharacter={id=>openOwnCharacter(id).catch(fail)}
+  onOpenCharacterTab={openSheetBrowserTab}
  hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
  onDistributedItem={async()=>{await fetchCampaign(activeId);await refreshMonitors()}}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
@@ -1385,6 +1414,7 @@ function App(){
   db={db} campaignId={activeId} viewerId={user}
   record={characterEditor.data} template={camp?.sheet_template}
   onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
+   onOpenBrowserTab={()=>openSheetBrowserTab(characterEditor.data.id)}
   onRoll={(expression,label)=>roll(expression,label,null)}
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
    sourceType:'character',sourceId:characterEditor.data.id,collectionId,entryId,mode
