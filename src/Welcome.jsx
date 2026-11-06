@@ -149,7 +149,7 @@ export function AuthGate({db}){
 
 export function CampaignHub({
  campaigns,loading,roles,accountLabel,createName,onCreateName,inviteCode,onInviteChange,
- onCreate,onJoin,onSelect,onSignOut,error,onClearError
+ onCreate,onJoin,onSelect,onSignOut,onOpenAccountSettings,error,onClearError
 }){
  const[showCreate,setShowCreate]=useState(false);
  const[showJoin,setShowJoin]=useState(!!inviteCode);
@@ -159,7 +159,11 @@ export function CampaignHub({
     <div><div className="welcome-brand">⚔ Tabletop Forge</div>
      <p className="muted small">Welcome, {accountLabel}. Choose a campaign to enter.</p>
     </div>
-    <button type="button" className="secondary" onClick={onSignOut}>Sign out</button>
+    <div className="welcome-account-actions">
+     <button type="button" className="secondary" onClick={onOpenAccountSettings}>
+      ⚙ Account Settings</button>
+     <button type="button" className="secondary" onClick={onSignOut}>Sign out</button>
+    </div>
    </div>
    {error&&<div className="error alert" role="alert" onClick={onClearError}>{error} ✕</div>}
    <div className="welcome-heading">

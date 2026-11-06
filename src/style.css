@@ -2403,3 +2403,60 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .unit-account-display>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .unit-online-indicator{display:inline-block;flex:0 0 9px;width:9px;height:9px;
  border-radius:50%;background:#42db7d;box-shadow:0 0 0 2px #152b24,0 0 7px #42db7d90}
+
+
+/* Account profile/settings: a compact movable pane, never a site-wide modal. */
+.floating-window.floating-account{
+ width:min(445px,calc(100vw - 22px));height:min(580px,calc(100dvh - 20px));
+ min-width:min(315px,calc(100vw - 12px));min-height:320px
+}
+.account-settings-dialog{height:100%;min-height:0;display:flex;flex-direction:column;
+ overflow:hidden;padding:15px}
+.account-settings-dialog .heading{flex:0 0 auto;margin:0 0 8px}
+.account-settings-dialog .heading h2{font-size:17px}
+.account-settings-scroll{min-height:0;flex:1;overflow-y:auto;display:flex;
+ flex-direction:column;gap:10px;padding:2px 4px 10px 0}
+.account-settings-scroll>p{margin:0}
+.account-login-info{display:flex;flex-direction:column;gap:3px;padding:9px 12px;
+ border:1px solid #4a5970;border-radius:8px;background:#1d2b3f;font-size:11px}
+.account-login-info strong{font-size:12px}
+.account-login-info small{color:#acbbd1;overflow-wrap:anywhere}
+.account-settings-form{border:1px solid #495873;border-radius:8px;
+ display:flex;flex-direction:column;gap:9px;padding:11px;background:#1b293e}
+.account-settings-form h3{font-size:13px;margin:0 0 2px}
+.account-settings-form>p{margin:0}
+.account-settings-form label{display:flex;flex-direction:column;gap:5px;font-size:11px}
+.account-settings-form input{width:100%;min-width:0;box-sizing:border-box}
+.account-settings-form button{align-self:flex-start}
+.welcome-account-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+
+/* All four ruler modes use the real map grid, fixed at 5 ft per cell.
+ * Floating control bar does not take room away from the battlemap. */
+.map-only-panel{position:relative!important}
+.map-measure-toolbar{position:absolute;z-index:350;top:50%;left:9px;
+ transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;
+ padding:5px;border:1px solid #657b9b;border-radius:10px;
+ background:#101b2de8;backdrop-filter:blur(5px);box-shadow:0 4px 13px #05090f88}
+.map-measure-tool{display:grid;place-items:center;width:37px;height:37px;
+ min-width:37px;min-height:37px;padding:6px!important;border-radius:7px!important;
+ background:#253850!important;border:1px solid #47617f!important;
+ color:#cad7ec!important;cursor:crosshair;touch-action:none}
+.map-measure-tool:hover,.map-measure-tool:focus-visible{
+ border-color:#9cd5ff!important;background:#365174!important;color:#fff!important}
+.map-measure-tool.selected{border-color:#adf1b4!important;
+ box-shadow:0 0 0 1px #75e5a2,inset 0 0 13px #39795a88;
+ color:#c3ffd4!important;background:#244739!important}
+.map-measure-tool svg{pointer-events:none}
+.map-measure-close{color:#d4b7cb!important;border-color:#82657a!important}
+.map-measure-overlay{position:absolute;top:0;left:0;z-index:155;
+ overflow:hidden;pointer-events:none}
+.map-measure-local{stroke:#fbc56c;fill:#e8a83c}
+.map-measure-remote{stroke:#79dcff;fill:#43b6e5}
+.map-measure-start{fill:#fff;stroke:#14233a}
+.map-measure-label-back{fill:#111a2df0;stroke:#738db1;stroke-width:.015}
+.map-measure-label{stroke:none;fill:#fff;paint-order:stroke;
+ font-family:system-ui,sans-serif;font-weight:800;letter-spacing:0}
+@media(max-width:650px){
+ .map-measure-toolbar{left:5px;top:48%;padding:3px;gap:3px}
+ .map-measure-tool{width:33px;height:33px;min-width:33px;min-height:33px}
+}

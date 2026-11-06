@@ -3,6 +3,9 @@ import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import './style.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
+import AccountSettings from './AccountSettings.jsx';
+import {validMeasurement,liveMeasurementPayload,pointOnBattlemap} from './MapMeasurements.js';
+import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
@@ -106,7 +109,9 @@ function App(){
  const rosterRequest=useRef(0),chatRequest=useRef(0),
   latestChatRefresh=useRef(null),latestRosterRefresh=useRef(null);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
- const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),[characterEditor,setCharacterEditor]=useState(null);
+ const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),
+  [characterEditor,setCharacterEditor]=useState(null);
+ const[accountSettingsOpen,setAccountSettingsOpen]=useState(false);
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
@@ -123,6 +128,8 @@ function App(){
  const navigationChannel=useRef(null),navigationRequest=useRef(0);
  const latestMonitorRefresh=useRef(null),latestTokenRefresh=useRef(null);
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
+ const[remoteMeasurements,setRemoteMeasurements]=useState({});
+ const measureExpiry=useRef(new Map()),lastMeasureSent=useRef(0);
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
@@ -148,6 +155,12 @@ function App(){
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  function fail(e){setError(message(e));console.error(e)}
+ async function accountUpdated(){
+  const {data,error:identityError}=await db.auth.getUser();
+  if(identityError)throw identityError;
+  if(data?.user)setSession(previous=>previous?{...previous,user:data.user}:previous);
+  if(activeId)void latestRosterRefresh.current?.();
+ }
  async function fetchCampaigns(prefer){if(!db||!user)return;
   setCampaignsLoading(true);
   try{const [cs,ms]=await Promise.all([read(db.from('campaigns').select('*').order('created_at',{ascending:false})),read(db.from('campaign_members').select('campaign_id,role').eq('user_id',user))]);
@@ -612,6 +625,9 @@ function App(){
  // solo-map coordinates being broadcast to unauthorized players.
  useEffect(()=>{
   setRemoteTokenPositions({});
+  setRemoteMeasurements({});
+  for(const timer of measureExpiry.current.values())clearTimeout(timer);
+  measureExpiry.current.clear();lastMeasureSent.current=0;
   for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
   remoteMoveExpiry.current.clear();lastMovementPreview.current.clear();
   liveMapReady.current=false;
@@ -639,6 +655,20 @@ function App(){
     void latestTokenRefresh.current?.();
    },payload.final?3000:MOVE_PREVIEW_EXPIRE_MS);
    remoteMoveExpiry.current.set(id,timer);
+  }).on('broadcast',{event:'map-measure'},({payload})=>{
+   if(!validMeasurement(payload,selectedMap)||payload.actor===user)return;
+   const key=payload.id;
+   setRemoteMeasurements(previous=>({...previous,[key]:payload}));
+   const oldTimer=measureExpiry.current.get(key);
+   if(oldTimer)clearTimeout(oldTimer);
+   const timer=setTimeout(()=>{
+    measureExpiry.current.delete(key);
+    setRemoteMeasurements(previous=>{
+     if(previous[key]!==payload)return previous;
+     const next={...previous};delete next[key];return next;
+    });
+   },payload.final?12000:4500);
+   measureExpiry.current.set(key,timer);
   }).subscribe((status,error)=>{
    liveMapReady.current=status==='SUBSCRIBED';
    if(status==='CHANNEL_ERROR')console.warn('Fast map movement unavailable',error);
@@ -649,6 +679,8 @@ function App(){
    liveMapReady.current=false;
    for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
    remoteMoveExpiry.current.clear();
+   for(const timer of measureExpiry.current.values())clearTimeout(timer);
+   measureExpiry.current.clear();setRemoteMeasurements({});
    void db.removeChannel(channel);
   };
  },[db,activeId,selectedMap,user]);
@@ -664,6 +696,18 @@ function App(){
    id:token.id,mapId:selectedMap,actor:user,x,y,
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
+ }
+ function sendLiveMeasurement(measure,final=false){
+  if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
+  const now=Date.now();
+  if(!final&&now-lastMeasureSent.current<65)return;
+  const data=liveMeasurementPayload(measure,measure.id,user,selectedMap,final);
+  if(!validMeasurement(data,selectedMap,
+   displayedMap.width/displayedMap.grid_size,
+   displayedMap.height/displayedMap.grid_size))return;
+  lastMeasureSent.current=now;
+  void liveMapChannel.current.send({type:'broadcast',event:'map-measure',
+   payload:data}).catch(error=>console.warn('Live measurement not delivered',error));
  }
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
@@ -1547,14 +1591,18 @@ function App(){
  if(!configured())return <div className="center"><h1>Tabletop Forge</h1><p>Configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel.</p></div>;
  if(!authReady)return <div className="center">Loading…</div>;
  if(!session)return <AuthGate db={db}/>;
- if(!activeId)return <CampaignHub
+ if(!activeId)return <><CampaignHub
   campaigns={campaigns} loading={campaignsLoading} roles={roles}
   accountLabel={session.user?.user_metadata?.username||session.user?.user_metadata?.display_name||session.user?.email||'Adventurer'}
   createName={createName} onCreateName={setCreateName}
   inviteCode={joinCode} onInviteChange={setJoinCode}
   onCreate={create} onJoin={join} onSelect={setActiveId}
   onSignOut={()=>db.auth.signOut()}
-  error={error} onClearError={()=>setError('')}/>;
+  onOpenAccountSettings={()=>setAccountSettingsOpen(true)}
+  error={error} onClearError={()=>setError('')}/>
+  {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
+   onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
+ </>;
  if(launchNpc&&!isDM&&camp)return <div className="center" role="alert">
   Only the campaign DM can open an NPC pop-out.
  </div>;
@@ -1669,6 +1717,7 @@ function App(){
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+    onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
    resize={resizeToken}
@@ -1730,6 +1779,7 @@ function App(){
  onDistributedItem={async()=>{await fetchCampaign(activeId);await refreshMonitors()}}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)} onReturnToMenu={()=>setActiveId('')}
+ onOpenAccountSettings={()=>setAccountSettingsOpen(true)}
  uiScale={uiScale} onChangeUiScale={changeInterfaceScale}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
  campaignName={camp?.name||''} campaignTokenDisplay={camp?.token_display_config}
@@ -1740,6 +1790,8 @@ function App(){
  accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
  /></div>
  </main>
+ {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
+  onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
  {macroBuilderOpen&&<MacroManager macros={macros}
   characters={characters} npcs={npcs} tokens={tokens}
   template={camp?.sheet_template} user={user} isDM={isDM}
@@ -2041,10 +2093,14 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},hotbarInset=false}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
+ onMeasurementPreview,remoteMeasurements={},hotbarInset=false}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
+ const[activeMeasureTool,setActiveMeasureTool]=useState(null),
+  [localMeasurements,setLocalMeasurements]=useState([]);
+ const measureDrag=useRef(null),toolDrag=useRef(null),measureTimers=useRef(new Map());
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
@@ -2062,6 +2118,28 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    setSelectedIds(selectedId?[selectedId]:[]);
   }
  },[selectedId]);
+ // Local finished measurement shapes fade after 12 seconds; remote views
+ // receive the same shape through the private map broadcast channel.
+ useEffect(()=>{
+  setActiveMeasureTool(null);setLocalMeasurements([]);
+  measureDrag.current=null;toolDrag.current=null;
+  for(const timer of measureTimers.current.values())clearTimeout(timer);
+  measureTimers.current.clear();
+  return()=>{
+   for(const timer of measureTimers.current.values())clearTimeout(timer);
+   measureTimers.current.clear();
+  };
+ },[map.id]);
+ useEffect(()=>{
+  function onEscape(event){
+   if(event.key!=='Escape'||!activeMeasureTool)return;
+   event.preventDefault();
+   setActiveMeasureTool(null);
+   measureDrag.current=null;toolDrag.current=null;
+  }
+  window.addEventListener('keydown',onEscape);
+  return()=>window.removeEventListener('keydown',onEscape);
+ },[activeMeasureTool]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
   const vp=viewportRef.current;
@@ -2163,6 +2241,80 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    y:Math.max(0,Math.min(map.height*zoomRef.current,e.clientY-rect.top))
   }:{x:0,y:0};
  };
+ const mapPointInCells=e=>pointOnBattlemap(e.clientX,e.clientY,
+  boardRef.current?.getBoundingClientRect(),map.width,map.height,
+  map.grid_size,zoomRef.current);
+ function beginMeasurement(pointerId,tool,point){
+  if(!point)return;
+  const measure={id:crypto.randomUUID(),tool,start:point,end:point};
+  measureDrag.current={pointerId,measure};
+  setLocalMeasurements(existing=>[...existing.slice(-7),{...measure,isLocal:true}]);
+  onMeasurementPreview?.(measure,false);
+ }
+ function updateMeasurement(e){
+  const current=measureDrag.current;
+  if(!current||current.pointerId!==e.pointerId)return;
+  const point=mapPointInCells(e);
+  if(!point)return;
+  const next={...current.measure,end:point};
+  current.measure=next;
+  setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
+   {...next,isLocal:true}:m));
+  onMeasurementPreview?.(next,false);
+ }
+ function finishMeasurement(e,cancel=false){
+  const current=measureDrag.current;
+  if(!current||current.pointerId!==e.pointerId)return;
+  measureDrag.current=null;
+  if(cancel){
+   setLocalMeasurements(existing=>existing.filter(m=>m.id!==current.measure.id));
+   return;
+  }
+  const point=mapPointInCells(e)||current.measure.end;
+  const done={...current.measure,end:point};
+  if(Math.hypot(done.end.x-done.start.x,done.end.y-done.start.y)<.02){
+   setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));return;
+  }
+  setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
+   {...done,isLocal:true}:m));
+  onMeasurementPreview?.(done,true);
+  const timer=setTimeout(()=>{
+   measureTimers.current.delete(done.id);
+   setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));
+  },12000);
+  measureTimers.current.set(done.id,timer);
+ }
+ function onToolPointerDown(e,tool){
+  setActiveMeasureTool(tool);
+  if(e.button!==0)return;
+  e.preventDefault();e.stopPropagation();
+  toolDrag.current={pointerId:e.pointerId,tool};
+  try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+ }
+ function onToolPointerMove(e){
+  if(!toolDrag.current||toolDrag.current.pointerId!==e.pointerId)return;
+  const rect=boardRef.current?.getBoundingClientRect();
+  if(!rect)return;
+  // The user can start directly on an icon and drag into the map.
+  if(!measureDrag.current){
+   if(e.clientX<rect.left||e.clientX>rect.right||
+      e.clientY<rect.top||e.clientY>rect.bottom)return;
+   beginMeasurement(e.pointerId,toolDrag.current.tool,mapPointInCells(e));
+  }else updateMeasurement(e);
+ }
+ function onToolPointerUp(e,cancel=false){
+  if(toolDrag.current?.pointerId!==e.pointerId)return;
+  finishMeasurement(e,cancel);
+  toolDrag.current=null;
+  try{if(e.currentTarget.hasPointerCapture(e.pointerId))
+   e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
+ }
+ function startMeasurementCapture(e){
+  if(!activeMeasureTool||e.button!==0||pan.current)return;
+  e.preventDefault();e.stopPropagation();
+  beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e));
+  try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
+ }
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
   // panning because touchscreens do not have a middle mouse button.
@@ -2175,7 +2327,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   setPanning(true);
  }
  function startMarquee(e){
-  if(e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
+  if(activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
      e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
   if(!viewport||!boardRef.current)return;
@@ -2278,15 +2430,24 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   }
  }
  return <>
+  <MeasurementToolBar tool={activeMeasureTool}
+   onPointerDown={onToolPointerDown} onPointerMove={onToolPointerMove}
+   onPointerUp={e=>onToolPointerUp(e)}
+   onPointerCancel={e=>onToolPointerUp(e,true)}
+   onKeySelect={setActiveMeasureTool}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
-    onPointerDownCapture={startPan} onPointerDown={startMarquee}
-    onPointerMove={moveViewportPointer} onPointerUp={e=>endViewportPointer(e)}
-    onPointerCancel={e=>endViewportPointer(e,true)}
-    onLostPointerCapture={e=>endViewportPointer(e,true)}>
+    onPointerDownCapture={e=>{
+     if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
+     else startMeasurementCapture(e);
+    }} onPointerDown={startMarquee}
+    onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
+    onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
+    onPointerCancel={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}
+    onLostPointerCapture={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}>
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
@@ -2366,6 +2527,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        const r=selectionRectangle(marquee.start,marquee.end);
        return {left:r.x,top:r.y,width:r.width,height:r.height};
       })()}/>}
+    <MapMeasurementOverlay map={map} scale={scale}
+     measures={[...Object.values(remoteMeasurements),...localMeasurements]}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">

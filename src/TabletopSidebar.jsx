@@ -1,4 +1,6 @@
-import React,{useLayoutEffect,useMemo,useRef,useState} from 'react';
+import React,{useLayoutEffect,useMemo,useRef} from 'react';
+import useSidebarMenus from './useSidebarMenus.js';
+import {sidebarMenuOpen} from './SidebarMenuState.js';
 import Artwork from './Artwork.jsx';
 import MapCalibration from './MapCalibration.jsx';
 import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
@@ -42,12 +44,23 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen,onStatus,canDrag,status
   {isDM&&<button type="button" className="secondary unit-edit" onClick={()=>onOpen(token)} title={'Open '+token.name+' sheet'}>Sheet</button>}
  </div>;
 }
+/** Controlled native details. Expansion lives above the changing tab panels. */
+function SavedDetails({menuKey,expanded,onMenuToggle,className='',children}){
+ return <details className={className} open={sidebarMenuOpen(expanded,menuKey)}
+  onToggle={event=>{
+   if(event.target===event.currentTarget)
+    onMenuToggle(menuKey,event.currentTarget.open);
+  }}>
+  {children}
+ </details>;
+}
+
 function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=[],user,isDM,
  selectedToken,onSelect,onOpen,onStatus,statusCatalog,onResize,onOpenPlayerCharacter,
  onOpenOwnCharacter,onOpenCharacterTab,onCreateCharacter,newCharacterName,onChangeNewCharacterName,
- onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
- const [collapsed,setCollapsed]=useState({});
- const [hiddenSheets,setHiddenSheets]=useState({});
+ onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap,
+ expandedMenus,onMenuToggle}){
+ const opened=key=>sidebarMenuOpen(expandedMenus,key);
  const owners=useMemo(()=>members.filter(m=>isDM||m.user_id===user)
   .map(m=>({
    ...m,
@@ -64,25 +77,25 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=
   <p className="muted tiny side-description">Account folders contain character sheets. Drag a character onto the map to place a token.</p>
   <div className="unit-groups">{owners.map(owner=><section key={owner.user_id} className="unit-group unit-account">
    <button type="button" className="unit-group-head" onClick={()=>
-    setCollapsed(s=>({...s,[owner.user_id]:!s[owner.user_id]}))}
-    aria-expanded={!collapsed[owner.user_id]}>
+    onMenuToggle('units/owner/'+owner.user_id,!opened('units/owner/'+owner.user_id))}
+    aria-expanded={opened('units/owner/'+owner.user_id)}>
     <span className="unit-group-label"><span aria-hidden="true">👤</span>
      <span className="unit-account-display">
-      <span>{collapsed[owner.user_id]?'▸':'▾'} {owner.label}{owner.user_id===user?' (you)':''}</span>
+      <span>{opened('units/owner/'+owner.user_id)?'▾':'▸'} {owner.label}{owner.user_id===user?' (you)':''}</span>
       {onlineMembers.includes(owner.user_id)&&<span className="unit-online-indicator"
        role="img" aria-label="Online" title="Online"/>}
      </span>
     </span>
     <span className="unit-count">{owner.sheets.length} sheets</span>
    </button>
-   {!collapsed[owner.user_id]&&<div className="unit-account-content">
+   {opened('units/owner/'+owner.user_id)&&<div className="unit-account-content">
     {owner.sheets.map(ch=>{
      const linked=tokens.filter(t=>t.character_id===ch.id&&t.owner_id===owner.user_id);
-     const visible=!hiddenSheets[ch.id];
+     const visible=opened('units/sheet/'+ch.id);
      return <section className="unit-character" key={ch.id}>
       <div className="unit-character-heading">
        <button type="button" className="unit-character-toggle" aria-expanded={visible}
-        onClick={()=>setHiddenSheets(s=>({...s,[ch.id]:!s[ch.id]}))}>
+        onClick={()=>onMenuToggle('units/sheet/'+ch.id,!visible)}>
         <Artwork db={db} path={ch.token_path||ch.portrait_path}
          alt={ch.name||'Character'} className="group-unit-thumb"/>
         <span>{visible?'▾':'▸'} {ch.name||'Unnamed character'}</span>
@@ -107,29 +120,44 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=
      </section>;
     })}
     {owner.otherTokens.length>0&&<div className="unit-character">
-     <strong className="muted tiny">Other controlled tokens</strong>
-     {owner.otherTokens.map(t=><UnitRow key={t.id} {...unitProps(t)}/>)}
+     <button type="button" className="unit-character-toggle"
+      aria-expanded={opened('units/other/'+owner.user_id)}
+      onClick={()=>onMenuToggle('units/other/'+owner.user_id,
+       !opened('units/other/'+owner.user_id))}>
+      <strong className="muted tiny">
+       {opened('units/other/'+owner.user_id)?'▾':'▸'} Other controlled tokens
+      </strong><span className="unit-count">{owner.otherTokens.length}</span>
+     </button>
+     {opened('units/other/'+owner.user_id)&&<div className="unit-character-contents">
+      {owner.otherTokens.map(t=><UnitRow key={t.id} {...unitProps(t)}/>)}
+     </div>}
     </div>}
-    {owner.user_id===user&&<details className="side-details unit-create-character">
+    {owner.user_id===user&&<SavedDetails menuKey={'units/new-character/'+owner.user_id} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details unit-create-character">
      <summary>+ New character sheet</summary>
      <form className="side-form" onSubmit={e=>{e.preventDefault();onCreateCharacter(newCharacterName)}}>
       <label>Character name<input value={newCharacterName} required maxLength={100}
        onChange={e=>onChangeNewCharacterName(e.target.value)} placeholder="Character name"/></label>
       <button type="submit">Create character sheet</button>
      </form>
-    </details>}
+    </SavedDetails>}
     {!owner.sheets.length&&owner.user_id!==user&&
      <p className="muted tiny empty-units">No character sheets yet</p>}
    </div>}
   </section>)}
   {isDM&&unassigned.length>0&&<section className="unit-group">
-   <div className="unit-group-head">Unassigned / DM NPCs</div>
-   <div className="unit-group-items">{unassigned.map(t=>
-    <UnitRow key={t.id} {...unitProps(t)}/>)}</div>
+   <button type="button" className="unit-group-head"
+    aria-expanded={opened('units/unassigned')}
+    onClick={()=>onMenuToggle('units/unassigned',!opened('units/unassigned'))}>
+    <span>{opened('units/unassigned')?'▾':'▸'} Unassigned / DM NPCs</span>
+    <span className="unit-count">{unassigned.length}</span>
+   </button>
+   {opened('units/unassigned')&&<div className="unit-group-items">
+    {unassigned.map(t=><UnitRow key={t.id} {...unitProps(t)}/>)}
+   </div>}
   </section>}
   </div>
   {!owners.length&&<p className="muted small">No campaign members found.</p>}
-  {isDM&&<details className="side-details">
+  {isDM&&<SavedDetails menuKey={'units/place-token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
    <summary>Place a new token</summary>
    <div className="side-form">
     <label>Token name<input value={newToken} onChange={e=>onChangeTokenName(e.target.value)} maxLength={80} placeholder="Token name"/></label>
@@ -140,7 +168,7 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=
     <button type="button" disabled={!activeMap} onClick={onAddToken}>Place on current map</button>
     <p className="muted tiny">For reusable NPCs, create them in Bestiary instead.</p>
    </div>
-  </details>}
+  </SavedDetails>}
   {isDM&&selectedToken&&<div className="unit-inspector">
    <h3>Selected: {selectedToken.name}</h3>
    <button type="button" className="secondary full-button"
@@ -183,9 +211,10 @@ export default function TabletopSidebar({
  macroCount=0,onOpenMacros,
  uiScale,onChangeUiScale,
  activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,onOpenCharacterTab,
- campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
+ campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,onOpenAccountSettings,hasCampaign
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
+ const {expanded:expandedMenus,toggle:onMenuToggle}=useSidebarMenus(db,user,activeCampaignId);
  const chatScrollRef=useRef(null);
  const followNewChatRef=useRef(true);
  // Scroll to latest when a chat view opens or the viewed map changes.
@@ -246,12 +275,15 @@ export default function TabletopSidebar({
    onCreateCharacter={onCreateCharacter} newCharacterName={newCharacterName}
    onChangeNewCharacterName={onChangeNewCharacterName}
    onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
-   tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}/></div>}
+   tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}
+   expandedMenus={expandedMenus} onMenuToggle={onMenuToggle}/></div>}
   {validPanel==='settings'&&<div className="right-body">
    <div className="side-form">
+    <button type="button" className="secondary full-button" onClick={onOpenAccountSettings}>
+     ⚙ Account Settings · Username &amp; Password</button>
     <button type="button" className="secondary full-button" onClick={onReturnToMenu}>← Back to main menu</button>
     {currentPage!=='tabletop'&&<button type="button" className="secondary full-button" onClick={()=>onNavigate('tabletop')}>Return to tabletop</button>}
-    <details className="side-details">
+    <SavedDetails menuKey={'settings/ui'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>UI</summary>
      <div className="side-form">
       <label>Battlemap zoom<select value={mapZoom} onChange={e=>onChangeZoom(Number(e.target.value))}>
@@ -267,27 +299,27 @@ export default function TabletopSidebar({
       </select></label>
       <p className="muted tiny">Interface scale is saved per account; map grids are unchanged.</p>
      </div>
-    </details>
-    <details className="side-details shortcut-settings">
+    </SavedDetails>
+    <SavedDetails menuKey={'settings/keyboard'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details shortcut-settings">
      <summary>Keyboard shortcuts</summary>
      <KeybindingsEditor bindings={bindings} onSave={onSaveBindings}/>
-    </details>
-    <details className="side-details shortcut-settings">
+    </SavedDetails>
+    <SavedDetails menuKey={'settings/macros'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details shortcut-settings">
      <summary>Macros</summary>
      <div className="side-form">
       <button type="button" className="secondary full-button" onClick={onOpenMacros}>Open Macro Builder ({macroCount})</button>
-      <details className="side-details shortcut-settings">
+      <SavedDetails menuKey={'settings/hotbar'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details shortcut-settings">
        <summary>Hotbar settings</summary>
        <HotbarSettings slots={hotbarSlots} onSave={onSaveHotbar} visible={hotbarVisible}
         onChangeVisible={onChangeHotbarVisible}/>
-      </details>
+      </SavedDetails>
      </div>
-    </details>
+    </SavedDetails>
    </div>
   </div>}
   {validPanel==='dm'&&isDM&&<div className="right-body">
    <div className="side-form">
-    <details className="side-details dm-bestiary-details">
+    <SavedDetails menuKey={'dm/bestiary'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details dm-bestiary-details">
      <summary>Bestiary & NPC templates</summary>
      <div className="side-form">
       <p className="muted tiny">Manage reusable NPCs and drag them onto the map.</p>
@@ -295,8 +327,8 @@ export default function TabletopSidebar({
        onNewFolder={onNewNpcFolder} onNewNpc={onNewNpc} onEdit={onEditNpc}
        onMove={onMoveNpc} onPlace={onPlaceNpc} mapReady={!!activeMap}/>
      </div>
-    </details>
-    <details className="side-details">
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/maps'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Map management</summary>
      <div className="side-form">
       <label>Current map<select value={selectedMap||''} onChange={e=>onSelectMap(e.target.value)}>
@@ -325,50 +357,50 @@ export default function TabletopSidebar({
          </select>
         </label>)}
       </div>
-      <details className="side-details map-calibration-panel">
+      <SavedDetails menuKey={'dm/calibration'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details map-calibration-panel">
        <summary>Grid & image calibration</summary>
        <MapCalibration key={activeMap?.id||'no-map'} map={activeMap}
         onPreview={onMapCalibrationPreview} onSave={onSaveMapCalibration}/>
-      </details>
+      </SavedDetails>
      </div>
-    </details>
-    <details className="side-details">
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Token settings & resources</summary>
      <div className="side-form">
-      <details className="side-details token-designer-details">
+      <SavedDetails menuKey={'dm/quick'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details token-designer-details">
        <summary>Ctrl + click quick-adjust fields</summary>
        <QuickFieldsSettings template={template} selected={quickFields} onSave={onSaveQuickFields}/>
-      </details>
-      <details className="side-details token-designer-details">
+      </SavedDetails>
+      <SavedDetails menuKey={'dm/status'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details token-designer-details">
        <summary>Condition & buff library</summary>
        <StatusCatalogEditor catalog={statusCatalog} onSave={onSaveStatusCatalog}/>
-      </details>
-      <details className="side-details token-designer-details">
+      </SavedDetails>
+      <SavedDetails menuKey={'dm/display'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details token-designer-details">
        <summary>Token Display Designer</summary>
        <TokenDisplayDesigner campaign={{id:activeCampaignId,token_display_config:campaignTokenDisplay}}
         template={template} onSave={onSaveTokenDisplay}/>
-      </details>
+      </SavedDetails>
      </div>
-    </details>
-    <details className="side-details">
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/distribute'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Distribute inventory items</summary>
      <DmItemDistribution db={db} characters={characters} template={template}
       onDistributed={onDistributedItem}/>
-    </details>
-    <details className="side-details">
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/template'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Character sheet template</summary>
      <div className="side-form">
       <p className="muted small">Define the fields that every player and NPC in this campaign uses.</p>
       <button type="button" className="secondary" onClick={()=>onNavigate('designer')}>Open sheet designer</button>
      </div>
-    </details>
-    <details className="side-details">
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/invites'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Invites & campaign sharing</summary>
      <div className="side-form">
       <p className="muted small">{campaignName}</p>
       <button type="button" className="secondary" onClick={onCopyInvite}>Copy invite link</button>
      </div>
-    </details>
+    </SavedDetails>
    </div>
   </div>}
  </aside>;

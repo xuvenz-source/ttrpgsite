@@ -57,7 +57,8 @@ test('battlemap switches mouse gestures and retains old token shortcuts',()=>{
  const m=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
  const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
  assert.ok(m.includes("e.button!==1&&!(e.pointerType==='touch'&&e.button===0)"));
- assert.ok(m.includes('onPointerDownCapture={startPan} onPointerDown={startMarquee}'));
+ assert.ok(m.includes('onPointerDown={startMarquee}'));
+ assert.ok(m.includes('startPan(e)'));
  assert.ok(m.includes('const found=selectableTokenIds('));
  assert.ok(m.includes('const delta=boundedGroupOffset('));
  assert.ok(m.includes('for(const t of info.members)'));
