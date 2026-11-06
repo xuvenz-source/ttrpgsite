@@ -2029,3 +2029,16 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .unit-character-heading{gap:3px}
 .unit-character-heading .unit-character-sheet{white-space:nowrap}
 .floating-sheet-content>.heading{flex-wrap:wrap}
+
+/* Each NPC has its own draggable/resizable window and z-index. */
+.floating-window.floating-npc{
+ width:min(735px,calc(100vw - 18px));
+ height:min(620px,calc(100dvh - 22px));
+}
+.npc-window-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.app.npc-popup-app{min-height:100dvh;background:#111a2a}
+.app.npc-popup-app>main{display:none}
+.app.npc-popup-app .floating-window.floating-npc{
+ width:calc(100vw - 14px);height:calc(100dvh - 14px);
+ left:7px!important;top:7px!important;max-width:none;max-height:none
+}

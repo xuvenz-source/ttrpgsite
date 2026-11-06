@@ -1,8 +1,10 @@
 import React,{useEffect,useRef,useState} from 'react';
 
 let topWindowLayer=700;
+let npcWindowIndex=0;
 const CONFIG={
  sheet:{width:840,height:660},
+ npc:{width:735,height:600},
  library:{width:840,height:575},
  studio:{width:820,height:660},
  quick:{width:365,height:355},
@@ -16,7 +18,8 @@ function initialPosition(kind){
  const y=Math.max(8,Math.round(Math.min(74,(height-preset.height)/3)));
  // Keep the token library and studio visibly distinct from an open character
  // sheet at first appearance. All remain draggable and click-to-front.
- const delta=kind==='library'?-Math.min(225,width*.16):
+ const delta=kind==='npc'?(++npcWindowIndex%7-3)*55:
+  kind==='library'?-Math.min(225,width*.16):
   kind==='studio'?Math.min(165,width*.12):0;
  return {x:Math.max(8,Math.min(width-90,Math.round(x+delta))),y};
 }
@@ -24,10 +27,11 @@ function initialPosition(kind){
  * Dragging is limited to the existing .heading title bar. Inputs remain
  * selectable. Each open window can be raised independently.
  */
-export default function FloatingWindow({children,kind='sheet',className='',onClose}){
+export default function FloatingWindow({children,kind='sheet',className='',onClose,focusSignal=0}){
  const box=useRef(null),dragging=useRef(null);
  const [position,setPosition]=useState(()=>initialPosition(kind));
  const [layer,setLayer]=useState(()=>++topWindowLayer);
+ useEffect(()=>{if(focusSignal>0)setLayer(++topWindowLayer)},[focusSignal]);
  useEffect(()=>{
   function onResize(){
    setPosition(p=>{

@@ -20,7 +20,7 @@ function Items({field,value,onChange}){
 }
 export default function NpcEditor({
  db,campaignId,userId,record,template,onSave,onSaveAsTemplate,onClose,onRoll,
- onCastSpell,onAddSpellToHotbar,onEquipmentAttack
+ onCastSpell,onAddSpellToHotbar,onEquipmentAttack,focusSignal=0,onPopOut
 }){
  const [draft,setDraft]=useState(()=>({
   name:record.data.name,
@@ -74,9 +74,18 @@ export default function NpcEditor({
   onRoll(formula,field.label);
  };
  return <>
- <FloatingWindow kind="sheet" onClose={close}>
+ <FloatingWindow kind="npc" focusSignal={focusSignal} onClose={close}>
  <section className="modal npc-modal" role="dialog" aria-label="Edit NPC sheet">
- <div className="heading"><div><h2>{title}</h2><p className="muted small">{record.kind==='token'?'Changes apply only to this placed token.':'Changes become the default for newly placed copies.'}</p></div><button className="secondary" onClick={close}>✕</button></div>
+ <div className="heading"><div><h2>{title}</h2><p className="muted small">{record.kind==='token'?'Changes apply only to this placed token.':'Changes become the default for newly placed copies.'}</p></div><div className="npc-window-actions">
+   {onPopOut&&<button type="button" className="secondary" onClick={()=>{
+    if(JSON.stringify(draft.values)!==savedValues.current){
+     setNotice('Save the current changes before opening a separate window.');
+     return;
+    }
+    onPopOut();
+   }} title="Open this NPC sheet in a separate browser window">↗ Pop out</button>}
+   <button type="button" className="secondary" onClick={close}>✕</button>
+  </div></div>
  <div className="npc-editor-top">
  <Artwork db={db} path={draft.tokenPath||draft.portraitPath} alt={draft.name} className="npc-editor-portrait"/>
  <label>NPC name<input maxLength={100} value={draft.name} onChange={e=>setDraft(d=>({...d,name:e.target.value,values:{...d.values,character_name:e.target.value}}))}/></label>
