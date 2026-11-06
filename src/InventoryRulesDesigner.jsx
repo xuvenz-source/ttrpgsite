@@ -6,7 +6,7 @@ const uid=()=>crypto.randomUUID().slice(0,8);
 export default function InventoryRulesDesigner({template,changeTemplate}){
  const settings={...DEFAULT_ENCUMBRANCE,...(template?.inventoryRules||{})};
  const tiers=Array.isArray(settings.tiers)?settings.tiers:[];
- const numberFields=(template?.tabs||[]).flatMap(t=>t.fields||[]).filter(f=>f.type==='number');
+ const numberFields=(template?.tabs||[]).flatMap(t=>t.fields||[]).filter(f=>['number','attribute'].includes(f.type));
  const patch=update=>changeTemplate(t=>t.inventoryRules={
   ...DEFAULT_ENCUMBRANCE,...t.inventoryRules,...update
  });

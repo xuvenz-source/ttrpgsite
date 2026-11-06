@@ -11,15 +11,8 @@ import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
+import InventoryPanel from './InventoryPanel.jsx';
 
-function Items({field,value,onChange}){
- const columns=field.columns?.length?field.columns:['Item','Qty','Notes'];const rows=Array.isArray(value)?value:[];
- return <div className="inventory">
-  <div className="invrow">{columns.map(c=><b key={c}>{c}</b>)}</div>
-  {rows.map((row,i)=><div className="invrow" key={i}>{columns.map(c=><input aria-label={c} key={c} value={row?.[c]??''} onChange={e=>onChange(rows.map((r,j)=>j===i?{...r,[c]:e.target.value}:r))}/>)}<button className="secondary" onClick={()=>onChange(rows.filter((_,j)=>j!==i))}>×</button></div>)}
-  <button className="secondary" onClick={()=>onChange([...rows,{}])}>+ Item</button>
- </div>;
-}
 export default function NpcEditor({
  db,campaignId,userId,record,template,onSave,onSaveAsTemplate,onClose,onRoll,
  onCastSpell,onAddSpellToHotbar,onEquipmentAttack,focusSignal=0,onPopOut
@@ -119,7 +112,9 @@ export default function NpcEditor({
    onChange={v=>setField(PERSONAL_RESOURCE_KEY,v)}/></div>:
  (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
- f.type==='inventory'?<Items field={f} value={draft.values[f.id]||[]} onChange={v=>setField(f.id,v)}/>:
+ f.type==='inventory'?<InventoryPanel field={f} template={template}
+  value={draft.values[f.id]||[]} sheetValues={draft.values}
+  onChange={v=>setField(f.id,v)}/>:
  f.type==='attribute'?<AttributeField field={f} template={template}
   value={draft.values[f.id]} values={draft.values}
   onChange={v=>setField(f.id,v)}

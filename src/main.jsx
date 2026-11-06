@@ -22,9 +22,13 @@ import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,c
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,allowedMovementPreview,canSendMovementPreview,
  MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
+import {canControlMapToken,selectionRectangle,selectableTokenIds,
+ boundedGroupOffset} from './MapSelection.js';
+import {campaignPresenceKey,onlineMemberIds,chatRowsForMap} from './CampaignRealtime.js';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
-import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
+import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,
+ reorderHotbarSlots,removeHotbarSlot,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 import {parseSheetTemplateFile,serializeSheetTemplate,validateSheetTemplate} from './TemplateFiles.js';
@@ -97,6 +101,10 @@ function App(){
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('tabletop'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[mapAssignments,setMapAssignments]=useState([]),[accountNames,setAccountNames]=useState([]);
+ const[onlinePresenceKeys,setOnlinePresenceKeys]=useState([]),
+  [memberPresenceHashes,setMemberPresenceHashes]=useState({});
+ const rosterRequest=useRef(0),chatRequest=useRef(0),
+  latestChatRefresh=useRef(null),latestRosterRefresh=useRef(null);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),[characterEditor,setCharacterEditor]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
@@ -120,6 +128,7 @@ function App(){
  const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
+ const latestHotbar=useRef(normaliseHotbar([])),hotbarWriteQueue=useRef(Promise.resolve());
  const[macros,setMacros]=useState([]);
  const[macroBuilderOpen,setMacroBuilderOpen]=useState(false);
  const[hotbarVisible,setHotbarVisible]=useState(true);
@@ -137,6 +146,7 @@ function App(){
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
  tokenContextRef.current={mapId:selectedMap,campaignId:activeId};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
+ const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  function fail(e){setError(message(e));console.error(e)}
  async function fetchCampaigns(prefer){if(!db||!user)return;
   setCampaignsLoading(true);
@@ -374,12 +384,28 @@ function App(){
   setSelectedTokenId(t.id);
  }
  async function savePlayerArtwork(art){
-  if(!character)throw Error('Character sheet is not ready');
+  const owner=character;
+  if(!owner?.id||!activeId||!user)
+   throw Error('Open a character sheet before using a library token.');
+  if(owner.user_id!==user||owner.campaign_id!==activeId)
+   throw Error('This character belongs to another account or campaign.');
   const changed=await read(db.from('characters').update({
     portrait_path:art.portraitPath,token_path:art.tokenPath
-  }).eq('id',character.id).select('*').single());
-  setCharacter(old=>({...old,portrait_path:changed.portrait_path,token_path:changed.token_path}));
-  setCharacters(old=>old.map(x=>x.id===changed.id?{...x,portrait_path:changed.portrait_path,token_path:changed.token_path}:x));
+  }).eq('id',owner.id).eq('campaign_id',activeId).eq('user_id',user)
+   .select('*').single());
+  setCharacter(old=>old?.id===changed.id?{
+   ...old,portrait_path:changed.portrait_path,token_path:changed.token_path
+  }:old);
+  setCharacters(old=>old.map(x=>x.id===changed.id?{
+   ...x,portrait_path:changed.portrait_path,token_path:changed.token_path
+  }:x));
+  // Keep any current visible map token in sync with the sheet artwork.
+  // RLS still limits edits to the player's own authorised tokens.
+  try{
+   await read(db.from('map_tokens').update({image_path:art.tokenPath})
+    .eq('campaign_id',activeId).eq('character_id',owner.id).eq('owner_id',user));
+   void refreshTokens();
+  }catch(error){console.warn('Sheet artwork saved, but map token image could not refresh',error)}
   void refreshMonitors();
  }
  // A sheet opened in a browser tab runs under its own Supabase session,
@@ -417,13 +443,36 @@ function App(){
   };
   void load().catch(fail);
  },[launchNpc,camp,activeId,isDM]);
+ // A previous map's slower request must never overwrite chat for a new map.
  async function refreshChat(){
-  if(!activeId)return;
+  const request=++chatRequest.current,campaignId=activeId,mapId=selectedMap||null;
+  if(!db||!campaignId){setMsgs([]);return}
   try{
-   let q=db.from('chat_messages').select('*').eq('campaign_id',activeId);
-   q=selectedMap?q.eq('map_id',selectedMap):q.is('map_id',null);
-   setMsgs((await read(q.order('created_at',{ascending:false}).limit(100))).reverse());
-  }catch(e){fail(e)}
+   let q=db.from('chat_messages').select('*').eq('campaign_id',campaignId);
+   q=mapId?q.eq('map_id',mapId):q.is('map_id',null);
+   const rows=(await read(q.order('created_at',{ascending:false}).limit(100))).reverse();
+   if(request===chatRequest.current)setMsgs(chatRowsForMap(rows,mapId));
+  }catch(e){
+   if(request===chatRequest.current)console.error('Could not refresh chat',e);
+  }
+ }
+ async function refreshCampaignRoster(){
+  const request=++rosterRequest.current,campaignId=activeId;
+  if(!db||!campaignId)return;
+  try{
+   const [roster,sheets,names]=await Promise.all([
+    read(db.from('campaign_members').select('user_id,role').eq('campaign_id',campaignId)),
+    read(db.from('characters').select('*').eq('campaign_id',campaignId)),
+    read(db.rpc('get_campaign_account_names',{p_campaign:campaignId}))
+   ]);
+   if(request!==rosterRequest.current)return;
+   setMembers(roster);setCharacters(sheets);setAccountNames(names||[]);
+   setCharacter(current=>sheets.find(ch=>ch.id===current?.id&&ch.user_id===user)||
+    sheets.find(ch=>ch.user_id===user)||null);
+  }catch(e){
+   if(request===rosterRequest.current)
+    console.warn('Could not refresh campaign roster',e);
+  }
  }
  async function refreshMonitors(){
   const request=++monitorRequest.current;
@@ -616,15 +665,110 @@ function App(){
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
  }
- useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
+ useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
+
+ // Keep the latest closures without tearing down network subscriptions on each
+ // map change; reconcile missed events when Realtime reconnects or the tab resumes.
+ latestChatRefresh.current=refreshChat;
+ latestRosterRefresh.current=refreshCampaignRoster;
+ useEffect(()=>{
+  if(!db||!activeId||!user)return;
+  const campaignId=activeId;
+  const channel=db.channel('vtt-chat-'+campaignId)
+   .on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',
+    filter:'campaign_id=eq.'+campaignId},()=>void latestChatRefresh.current?.())
+   .subscribe(status=>{
+    if(status==='SUBSCRIBED')void latestChatRefresh.current?.();
+    if(status==='CHANNEL_ERROR')console.warn('Chat Realtime temporarily unavailable; using reconciliation.');
+   });
+  // Backstop for lost insert notifications or RPC/server-initiated rolls.
+  const timer=setInterval(()=>{
+   if(document.visibilityState==='visible')void latestChatRefresh.current?.();
+  },4000);
+  const focus=()=>{if(document.visibilityState==='visible')void latestChatRefresh.current?.()};
+  document.addEventListener('visibilitychange',focus);
+  return()=>{
+   clearInterval(timer);document.removeEventListener('visibilitychange',focus);
+   void db.removeChannel(channel);
+  };
+ },[db,activeId,user]);
+ useEffect(()=>{
+  if(!db||!activeId||!user)return;
+  const campaignId=activeId;
+  // Character changes are published by the database. Presence detects new
+  // member connections; periodic refresh catches joins without a live session.
+  const channel=db.channel('vtt-roster-'+campaignId)
+   .on('postgres_changes',{event:'*',schema:'public',table:'characters',
+    filter:'campaign_id=eq.'+campaignId},()=>void latestRosterRefresh.current?.())
+   .subscribe(status=>{
+    if(status==='SUBSCRIBED')void latestRosterRefresh.current?.();
+   });
+  const timer=setInterval(()=>{
+   if(document.visibilityState==='visible')void latestRosterRefresh.current?.();
+  },8000);
+  const focus=()=>{if(document.visibilityState==='visible')void latestRosterRefresh.current?.()};
+  document.addEventListener('visibilitychange',focus);
+  return()=>{
+   clearInterval(timer);document.removeEventListener('visibilitychange',focus);
+   ++rosterRequest.current;
+   void db.removeChannel(channel);
+  };
+ },[db,activeId,user]);
+ useEffect(()=>{
+  let alive=true;
+  setOnlinePresenceKeys([]);
+  if(!db||!activeId||!user)return;
+  const campaignId=activeId;
+  let channel=null;
+  void campaignPresenceKey(campaignId,user).then(key=>{
+   if(!alive||!key)return;
+   // Public presence carries only a SHA-256 campaign-specific pseudonym.
+   // No account identifiers, names or protected map information are broadcast.
+   channel=db.channel('vtt-presence-'+campaignId,{
+    config:{presence:{key}}
+   });
+   const sync=()=>{
+    if(!alive)return;
+    setOnlinePresenceKeys(Object.keys(channel.presenceState()));
+    void latestRosterRefresh.current?.();
+   };
+   channel.on('presence',{event:'sync'},sync)
+    .subscribe(async status=>{
+     if(!alive)return;
+     if(status==='SUBSCRIBED'){
+      try{await channel.track({online:true})}
+      catch(error){console.warn('Could not publish online status',error)}
+     }else if(status==='CHANNEL_ERROR'){
+      setOnlinePresenceKeys([]);
+      console.warn('Player presence will retry',campaignId);
+     }
+    });
+  }).catch(error=>console.warn('Player presence unavailable',error));
+  return()=>{
+   alive=false;setOnlinePresenceKeys([]);
+   if(channel)void db.removeChannel(channel);
+  };
+ },[db,activeId,user]);
+ useEffect(()=>{
+  let alive=true;
+  void Promise.all(members.map(async m=>[
+   m.user_id,await campaignPresenceKey(activeId,m.user_id)
+  ])).then(entries=>{if(alive)setMemberPresenceHashes(Object.fromEntries(entries))})
+   .catch(error=>console.warn('Could not map party presence',error));
+  return()=>{alive=false};
+ },[activeId,members]);
  useEffect(()=>{
   movementPending.current.clear();
   ++tokenRefreshSeq.current;
  },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
+ useEffect(()=>{
+  if(rightTab==='units')void refreshCampaignRoster();
+  if(rightTab==='chat')void refreshChat();
+ },[rightTab,activeId,user]);
  useEffect(()=>{
   latestMonitorRefresh.current=refreshMonitors;
   latestTokenRefresh.current=refreshTokens;
@@ -738,12 +882,42 @@ function App(){
    return slotIndex;
   }catch(e){setHotbarSlots(previous);throw e}
  }
- async function saveMyHotbar(slots){
+ async function saveMyHotbar(slots,{optimistic=false}={}){
   if(!user||!activeId)throw Error('Join a campaign before saving a hotbar.');
-  const cleaned=normaliseHotbar(slots);
-  await read(db.from('tabletop_hotbars')
-   .upsert({user_id:user,campaign_id:activeId,slots:cleaned},{onConflict:'user_id,campaign_id'}));
-  setHotbarSlots(cleaned);
+  const cleaned=normaliseHotbar(slots),owner=user,campaign=activeId;
+  // Serialize writes so rapid drags cannot save an older order last.
+  const work=hotbarWriteQueue.current.catch(()=>{}).then(()=>read(db.from('tabletop_hotbars')
+   .upsert({user_id:owner,campaign_id:campaign,slots:cleaned},{onConflict:'user_id,campaign_id'})));
+  hotbarWriteQueue.current=work.catch(()=>{});
+  await work;
+  if(!optimistic&&owner===user&&campaign===activeId){
+   latestHotbar.current=cleaned;
+   setHotbarSlots(cleaned);
+  }
+ }
+ useEffect(()=>{latestHotbar.current=hotbarSlots},[hotbarSlots]);
+ async function changeHotbarByDrag(transform){
+  if(!user||!activeId)throw Error('Join a campaign before editing your hotbar.');
+  const previous=latestHotbar.current;
+  const next=transform(previous);
+  if(JSON.stringify(next)===JSON.stringify(previous))return;
+  latestHotbar.current=next;
+  setHotbarSlots(next);
+  try{await saveMyHotbar(next,{optimistic:true})}
+  catch(e){
+   // Don't undo a newer drag while an older save is completing.
+   if(latestHotbar.current===next){
+    latestHotbar.current=previous;
+    setHotbarSlots(previous);
+   }
+   throw e;
+  }
+ }
+ function rearrangeHotbar(from,to){
+  return changeHotbarByDrag(slots=>reorderHotbarSlots(slots,from,to));
+ }
+ function clearHotbarSlot(index){
+  return changeHotbarByDrag(slots=>removeHotbarSlot(slots,index));
  }
  async function create(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('create_campaign',{p_name:createName.trim()}));setCreateName('');await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
  async function join(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('join_campaign',{p_invite_code:joinCode.trim().toLowerCase()}));setJoinCode('');history.replaceState({},'',location.pathname);await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
@@ -1509,7 +1683,9 @@ function App(){
    {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
     onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}
     onAssignSpell={(index,payload)=>assignSpellToHotbar(payload,index).catch(fail)}
-    onAssignMacro={(index,payload)=>assignMacro(payload,index).catch(fail)}/>}
+    onAssignMacro={(index,payload)=>assignMacro(payload,index).catch(fail)}
+    onReorderSlot={(from,to)=>rearrangeHotbar(from,to).catch(fail)}
+    onRemoveSlot={index=>clearHotbarSlot(index).catch(fail)}/>}
   </>
   :<div className="empty-tabletop">
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
@@ -1519,7 +1695,8 @@ function App(){
  </>}
  </div><TabletopSidebar
  db={db} panel={rightTab} onPanelChange={setRightTab} isDM={isDM} user={user}
- messages={msgs} characters={characters} members={members} accountNames={accountNames} tokens={tokens}
+ messages={msgs} characters={characters} members={members} accountNames={accountNames}
+ onlineMembers={onlineMembers} tokens={tokens}
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
  onOpenStatus={openTokenStatuses}
@@ -1866,8 +2043,25 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},hotbarInset=false}){
  const[preview,setPreview]=useState({});
- const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
+ const[selectedIds,setSelectedIds]=useState([]);
+ const[marquee,setMarquee]=useState(null);
+ const boardRef=useRef(null),viewportRef=useRef(null),
+  drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
+  selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
+ function selectTokens(ids){
+  const unique=[...new Set(ids)];
+  setSelectedIds(unique);
+  primaryRef.current=unique[0]||null;
+  setSelectedId(primaryRef.current);
+ }
+ // Keep selections made elsewhere (new tokens, keyboard actions) in sync.
+ useEffect(()=>{
+  if(selectedId!==primaryRef.current){
+   primaryRef.current=selectedId;
+   setSelectedIds(selectedId?[selectedId]:[]);
+  }
+ },[selectedId]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
   const vp=viewportRef.current;
@@ -1877,8 +2071,15 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  },[map.id]);
  useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
- useEffect(()=>{setSelectedId(null)},[map.id]);
- useEffect(()=>{if(selectedId&&!tokens.some(t=>t.id===selectedId))setSelectedId(null)},[selectedId,tokens]);
+ useEffect(()=>{
+  primaryRef.current=null;setSelectedId(null);setSelectedIds([]);
+  setMarquee(null);selection.current=null;drag.current=null;
+ },[map.id]);
+ useEffect(()=>{
+  setSelectedIds(old=>old.filter(id=>tokens.some(t=>
+   t.id===id&&canControlMapToken(t,user,isDM,map.id))));
+  if(selectedId&&!tokens.some(t=>t.id===selectedId))selectTokens([]);
+ },[selectedId,tokens,user,isDM,map.id]);
  useEffect(()=>{
   if(!selectedId||!viewportRef.current)return;
   const token=tokens.find(t=>t.id===selectedId);
@@ -1955,46 +2156,151 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     (isDM&&types.includes('application/x-forge-npc'));
   if(allowed)e.preventDefault();
  }
+ const boardPoint=e=>{
+  const rect=boardRef.current?.getBoundingClientRect();
+  return rect?{
+   x:Math.max(0,Math.min(map.width*zoomRef.current,e.clientX-rect.left)),
+   y:Math.max(0,Math.min(map.height*zoomRef.current,e.clientY-rect.top))
+  }:{x:0,y:0};
+ };
  function startPan(e){
-  if(e.button!==0||e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
+  // Middle mouse pans even if it starts over a token. Touch keeps one-finger
+  // panning because touchscreens do not have a middle mouse button.
+  if(e.button!==1&&!(e.pointerType==='touch'&&e.button===0))return;
   const viewport=viewportRef.current;if(!viewport)return;
-  e.preventDefault();
-  setSelectedId(null);
-  pan.current={id:e.pointerId,startX:e.clientX,startY:e.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};
+  e.preventDefault();e.stopPropagation();
+  pan.current={id:e.pointerId,startX:e.clientX,startY:e.clientY,
+   left:viewport.scrollLeft,top:viewport.scrollTop};
   viewport.setPointerCapture(e.pointerId);
   setPanning(true);
  }
- function movePan(e){
-  const info=pan.current;
-  if(!info||info.id!==e.pointerId)return;
+ function startMarquee(e){
+  if(e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
+     e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
-  viewport.scrollLeft=info.left-(e.clientX-info.startX);
-  viewport.scrollTop=info.top-(e.clientY-info.startY);
+  if(!viewport||!boardRef.current)return;
+  const start=boardPoint(e);
+  e.preventDefault();
+  selection.current={id:e.pointerId,start,originX:e.clientX,
+   originY:e.clientY,additive:e.shiftKey,originalIds:selectedIds};
+  setMarquee({start,end:start});
+  viewport.setPointerCapture(e.pointerId);
  }
- function endPan(e){
-  if(!pan.current||pan.current.id!==e.pointerId)return;
-  pan.current=null;setPanning(false);
+ function moveViewportPointer(e){
+  const info=pan.current;
+  if(info&&info.id===e.pointerId){
+   const viewport=viewportRef.current;
+   viewport.scrollLeft=info.left-(e.clientX-info.startX);
+   viewport.scrollTop=info.top-(e.clientY-info.startY);
+   return;
+  }
+  const select=selection.current;
+  if(select?.id===e.pointerId)
+   setMarquee({start:select.start,end:boardPoint(e)});
+ }
+ function endViewportPointer(e,cancel=false){
+  if(pan.current?.id===e.pointerId){
+   pan.current=null;setPanning(false);
+  }
+  const info=selection.current;
+  if(info?.id===e.pointerId){
+   selection.current=null;setMarquee(null);
+   if(!cancel){
+    const dragged=Math.hypot(e.clientX-info.originX,e.clientY-info.originY)>=4;
+    if(dragged){
+     const rect=selectionRectangle(info.start,boardPoint(e));
+     const found=selectableTokenIds(tokens,rect,map.grid_size*zoomRef.current,
+      user,isDM,map.id);
+     selectTokens(info.additive?[...info.originalIds,...found]:found);
+    }else if(!info.additive)selectTokens([]);
+   }
+  }
   const viewport=viewportRef.current;
-  if(viewport?.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId);
+  if(viewport?.hasPointerCapture(e.pointerId))
+   viewport.releasePointerCapture(e.pointerId);
+ }
+ function startTokenDrag(e,t,canMove){
+  e.stopPropagation();
+  if(e.button!==0)return;
+  const group=canMove&&selectedIds.includes(t.id)&&selectedIds.length>1?
+   selectedIds.filter(id=>tokens.some(other=>other.id===id&&
+    canControlMapToken(other,user,isDM,map.id))):[t.id];
+  if(!canMove)primaryRef.current=t.id;
+  if(canMove)selectTokens(group);
+  else{setSelectedIds([]);setSelectedId(t.id)}
+  viewportRef.current?.focus({preventScroll:true});
+  if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  const members=tokens.filter(token=>group.includes(token.id));
+  e.currentTarget.setPointerCapture(e.pointerId);
+  drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+   members,dx:0,dy:0};
+ }
+ function moveTokenDrag(e,t){
+  const info=drag.current;
+  if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
+  const cell=map.grid_size*zoomRef.current;
+  const delta=boundedGroupOffset(info.members,
+   (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
+   map.width,map.height,map.grid_size);
+  if(info.dx===delta.dx&&info.dy===delta.dy)return;
+  info.dx=delta.dx;info.dy=delta.dy;
+  setPreview(old=>{
+   const next={...old};
+   for(const token of info.members)
+    next[token.id]={...old[token.id],
+     x:Number(token.x)+delta.dx,y:Number(token.y)+delta.dy};
+   return next;
+  });
+  for(const t of info.members){
+   const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
+   onMovementPreview?.(t,next.x,next.y,false);
+  }
+ }
+ function finishTokenDrag(e,t,cancel=false){
+  const info=drag.current;
+  if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
+  drag.current=null;
+  if(e.currentTarget.hasPointerCapture(e.pointerId))
+   e.currentTarget.releasePointerCapture(e.pointerId);
+  if(cancel){
+   setPreview(old=>{
+    const next={...old};
+    for(const member of info.members)delete next[member.id];
+    return next;
+   });
+  }
+  if(info.dx===0&&info.dy===0&&!cancel)return;
+  for(const t of info.members){
+   const next=cancel?{x:Number(t.x),y:Number(t.y)}:
+    {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
+   onMovementPreview?.(t,next.x,next.y,true);
+   if(!cancel)move(t,next.x,next.y);
+  }
  }
  return <>
-  <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')} ref={viewportRef}
-    aria-label="Battlemap viewport — left-click and drag to pan" tabIndex={0}
-    onPointerDown={startPan} onPointerMove={movePan} onPointerUp={endPan}
-    onPointerCancel={endPan} onLostPointerCapture={endPan}>
+  <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
+    (marquee?' is-selecting':'')} ref={viewportRef}
+    aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
+    onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
+    onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
+    onPointerDownCapture={startPan} onPointerDown={startMarquee}
+    onPointerMove={moveViewportPointer} onPointerUp={e=>endViewportPointer(e)}
+    onPointerCancel={e=>endViewportPointer(e,true)}
+    onLostPointerCapture={e=>endViewportPointer(e,true)}>
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
    <div ref={boardRef} className="board"
-    onPointerDown={e=>{if(e.target===e.currentTarget||e.target.classList.contains('gridlines'))setSelectedId(null)}}
     onDragOver={allowMapDrop}
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {tokens.filter(t=>isDM||t.visible).map(t=>{
-     const p={...t,...remotePositions[t.id],...preview[t.id]},canMove=isDM||t.owner_id===user;
+     const p={...t,...remotePositions[t.id],...preview[t.id]},
+      canMove=canControlMapToken(t,user,isDM,map.id);
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
-     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+(selectedId===t.id?' token-selected':'')}
+     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
+      (selectedIds.includes(t.id)?' token-selected':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
@@ -2012,35 +2318,16 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
         onTokenQuick(t);
        }
       }}
-      onPointerDown={e=>{
-       e.stopPropagation();setSelectedId(t.id);
-       viewportRef.current?.focus({preventScroll:true});
-       if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0)return;
-       e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id;
-      }}
-      onPointerMove={e=>{
-       if(drag.current===t.id){
-         const next=pos(e);
-         setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}));
-         onMovementPreview?.(t,next.x,next.y,false);
-        }
-      }}
-      onPointerUp={e=>{
-       if(drag.current!==t.id)return;drag.current=null;
-       const next=pos(e);
-       onMovementPreview?.(t,next.x,next.y,true);
-       if(next.x!==t.x||next.y!==t.y){
-        setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}));
-        move(t,next.x,next.y);
-       }
-      }}
-      onPointerCancel={()=>{if(drag.current===t.id)onMovementPreview?.(t,Number(t.x),Number(t.y),true);drag.current=null;setPreview({})}}>
+      onPointerDown={e=>startTokenDrag(e,t,canMove)}
+      onPointerMove={e=>moveTokenDrag(e,t)}
+      onPointerUp={e=>finishTokenDrag(e,t)}
+      onPointerCancel={e=>finishTokenDrag(e,t,true)}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
        position={normalizeConfig(displayConfig).statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
-      {isDM&&selectedId===t.id&&<div className="token-resize-handle" role="button"
+      {isDM&&selectedId===t.id&&selectedIds.length===1&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
         onPointerDown={e=>{
          e.stopPropagation();e.preventDefault();
@@ -2072,6 +2359,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       </div>}
      </div>;
     })}
+    {marquee&&Math.hypot(marquee.end.x-marquee.start.x,
+     marquee.end.y-marquee.start.y)>3&&<div
+      className="map-selection-marquee" aria-hidden="true"
+      style={(()=>{
+       const r=selectionRectangle(marquee.start,marquee.end);
+       return {left:r.x,top:r.y,width:r.width,height:r.height};
+      })()}/>}
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">

@@ -64,11 +64,33 @@ export function gridLayout(items,columns=8,rows=5){
  });
  return {placed,unplaced,cols,rows:height};
 }
-export function moveInventoryItem(items,index,x,y,cols,rows){
+/** A footprint can only occupy empty, in-bounds slots. Other items may never
+ * be displaced by a move or rotation, even when their positions were auto-filled.
+ */
+export function canPlaceInventoryItem(items,index,x,y,cols,rows,rotationTurns=0){
+ const all=inventoryRows(items);
+ if(!all[index]||!Number.isInteger(x)||!Number.isInteger(y))return false;
+ const width=clamp(Math.floor(finite(cols,8)),2,20);
+ const height=clamp(Math.floor(finite(rows,5)),2,20);
+ const size=itemSize(all[index],width,height);
+ const turns=((Math.trunc(finite(rotationTurns,0))%4)+4)%4;
+ const w=turns%2?size.h:size.w,h=turns%2?size.w:size.h;
+ if(x<0||y<0||x+w>width||y+h>height)return false;
+ const others=gridLayout(all,width,height).placed.filter(p=>p.index!==index);
+ return others.every(p=>x+w<=p.x||p.x+p.w<=x||y+h<=p.y||p.y+p.h<=y);
+}
+/** Rotate on drop: changes both the footprint and the cosmetic rotation.
+ * All legacy inventory keys remain intact for list/weight compatibility.
+ */
+export function moveInventoryItem(items,index,x,y,cols,rows,rotationTurns=0){
  const updated=inventoryRows(items).map(row=>({...row}));
- if(!updated[index])return null;
- updated[index].gridX=x;updated[index].gridY=y;
- const l=gridLayout(updated,cols,rows);
- const placement=l.placed.find(p=>p.index===index);
- return placement?.x===x&&placement?.y===y?updated:null;
+ if(!canPlaceInventoryItem(updated,index,x,y,cols,rows,rotationTurns))return null;
+ const turns=((Math.trunc(finite(rotationTurns,0))%4)+4)%4;
+ const size=itemSize(updated[index],cols,rows);
+ Object.assign(updated[index],{
+  gridX:x,gridY:y,
+  ...(turns?{gridW:turns%2?size.h:size.w,gridH:turns%2?size.w:size.h,
+   gridRotation:((Math.trunc(finite(updated[index].gridRotation,0))+90*turns)%360+360)%360}:{})
+ });
+ return updated;
 }

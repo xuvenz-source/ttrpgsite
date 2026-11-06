@@ -1966,22 +1966,57 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .inventory-list{min-width:0;overflow-x:auto}
 .inventory-list .invrow{align-items:center}
 .inventory-list .invrow input{min-width:82px;padding:6px}
-.inventory-grid{display:grid;gap:2px;min-width:100%;min-height:180px;padding:4px;
- border:1px solid #556581;background:#141f30;border-radius:8px;overflow:auto}
-.inventory-grid-cell{z-index:0;min-height:40px;border:1px dashed #51647a85;
- border-radius:4px;background:#2437505a}
-.inventory-grid-cell:hover{background:#375271}
-.inventory-grid-item{z-index:1;min-width:0;min-height:38px;overflow:auto;
- padding:5px;border:1px solid #8aabd4;border-radius:5px;
- background:#263e5c;color:#eef3fa;cursor:grab;display:flex;flex-direction:column;gap:4px}
-.inventory-grid-item input{font-size:10px;min-width:0;max-width:100%;padding:4px}
-.inventory-grid-item label{font-size:9px;gap:2px;min-width:0}
-.inventory-card-head{display:flex;justify-content:space-between;align-items:center;gap:4px}
-.inventory-card-head strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
-.inventory-card-head button{padding:0 4px}
-.inventory-card-values{display:grid;grid-template-columns:1fr 1fr;gap:3px}
-.inventory-grid-overflow{padding:8px;border:1px dashed #c28545;border-radius:6px;display:grid;gap:5px}
-.inventory-grid-overflow-row{display:flex;gap:5px}
+/* Fixed 48px slots: items span cells, never determine the grid's track sizes.
+ * Only the wrapper scrolls when a sheet is narrower than the inventory grid. */
+.inventory-grid-scroll{width:100%;max-width:100%;min-width:0;
+ overflow:auto;max-height:min(66vh,750px);overscroll-behavior:contain;
+ background:#141f30;border:1px solid #556581;border-radius:8px}
+.inventory-grid{display:grid;gap:2px;width:max-content;min-width:0;
+ padding:4px;background:#141f30;box-sizing:border-box;
+ grid-auto-columns:48px;grid-auto-rows:48px;align-items:stretch}
+.inventory-grid-cell{z-index:0;min-width:0;min-height:0;border:1px dashed #51647a85;
+ border-radius:4px;background:#2437505a;pointer-events:none}
+.inventory-grid-item{z-index:1;min-width:0;min-height:0;
+ width:100%;height:100%;box-sizing:border-box;
+ padding:3px 2px;border:2px solid var(--inventory-tile-border,#91b4e9);
+ border-radius:6px;background:var(--inventory-tile-back,#263e5c)!important;
+ color:var(--inventory-tile-text,#f0f6ff)!important;cursor:grab;
+ display:flex;align-items:center;justify-content:center;
+ flex-direction:column;gap:1px;overflow:hidden;text-align:center;
+ user-select:none;touch-action:none;position:relative}
+.inventory-grid-item:hover{filter:brightness(1.12)}
+.inventory-grid-item:focus-visible{outline:2px solid #dbe9ff;outline-offset:1px}
+.inventory-grid-item-held{opacity:.54;cursor:grabbing}
+.inventory-tile-icon{display:block;font-size:17px;line-height:1.1;
+ max-width:100%;overflow:hidden;white-space:nowrap;flex:0 0 auto;
+ transition:transform .1s}
+.inventory-tile-name{display:block;max-width:100%;font-size:10px;line-height:1.1;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-weight:800;letter-spacing:.01em}
+.inventory-tile-qty{position:absolute;right:2px;bottom:1px;
+ background:#0008;color:#fff;border-radius:3px;padding:0 2px;
+ font-size:9px;line-height:1.2}
+.inventory-grid-drag-preview{z-index:3;pointer-events:none;
+ min-width:0;min-height:0;border-radius:6px;
+ border:2px dashed #6bddad;background:#3a876a70;color:#effff9;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ font-size:11px;overflow:hidden;text-align:center}
+.inventory-grid-drag-preview.is-invalid{border-color:#ff928e;
+ background:#933e466b;color:#ffe8e6}
+.inventory-grid-drag-preview span{font-weight:800;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.inventory-grid-drag-preview small{font-size:9px}
+.inventory-grid-overflow{padding:8px;border:1px dashed #c28545;
+ border-radius:6px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.inventory-grid-overflow-items{display:flex;flex-wrap:wrap;gap:5px}
+.inventory-overflow-tile{max-width:130px;padding:7px 9px;
+ border:2px solid var(--inventory-tile-border,#91b4e9);border-radius:6px;
+ color:var(--inventory-tile-text,#f0f6ff);
+ background:var(--inventory-tile-back,#263e5c);
+ font-size:11px;cursor:grab;touch-action:none;user-select:none;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inventory-overflow-tile:active{cursor:grabbing}
+
 .inventory-designer-options,.inventory-rules-designer{border:1px solid #4e6380;border-radius:7px;
  padding:8px;display:flex;flex-direction:column;gap:8px;background:#1d2d40}
 .inventory-rules-designer{margin-bottom:10px}
@@ -2289,3 +2324,82 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .template-list-item>button{justify-self:end}
  .equipment-settings-grid{grid-template-columns:1fr}
 }
+
+/* Compact draggable inventory item window, shared by player and NPC sheets. */
+.floating-window.floating-inventory{
+ width:min(430px,calc(100vw - 24px));height:min(550px,calc(100dvh - 22px));
+ min-width:min(300px,calc(100vw - 12px));min-height:270px}
+.inventory-item-editor .heading h2{font-size:15px}
+.inventory-item-form{display:flex;flex-direction:column;gap:9px;min-width:0}
+.inventory-item-preview-row{display:flex;align-items:center;gap:13px;
+ border:1px solid #435c77;border-radius:8px;padding:8px}
+.inventory-item-preview-row p{margin:0!important;flex:1;line-height:1.45}
+.inventory-item-preview{display:flex;flex-direction:column;align-items:center;justify-content:center;
+ text-align:center;flex:0 0 74px;width:74px;height:74px;
+ border:3px solid #91b4e9;border-radius:7px;padding:4px;
+ box-sizing:border-box;overflow:hidden}
+.inventory-item-preview-icon{font-size:22px;line-height:1.2}
+.inventory-item-preview strong{font-size:11px;max-width:100%;white-space:nowrap;
+ text-overflow:ellipsis;overflow:hidden}
+.inventory-item-preview small{font-size:10px}
+.inventory-item-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px;align-items:end}
+.inventory-item-editor-grid label{display:flex;flex-direction:column;
+ min-width:0;gap:4px;font-size:11px}
+.inventory-item-editor-grid :is(input,textarea){width:100%;min-width:0;max-width:100%;
+ box-sizing:border-box;font-size:12px}
+.inventory-item-editor-grid input[type=color]{height:33px;padding:2px;cursor:pointer}
+.inventory-item-editor-grid textarea{min-height:76px;resize:vertical}
+.inventory-item-wide{grid-column:1/-1}
+.inventory-icon-presets{display:flex;flex-wrap:wrap;gap:3px}
+.inventory-icon-presets button{min-width:33px;padding:4px 5px;font-size:14px}
+.inventory-item-rotation{display:flex;gap:7px;align-items:center;
+ justify-content:space-between;grid-column:1/-1}
+.inventory-item-rotation button{font-size:11px;padding:5px 8px}
+.inventory-item-editor-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;
+ padding-top:5px;border-top:1px solid #455872}
+.inventory-item-editor-actions button{font-size:11px}
+.inventory-item-editor-actions .inventory-item-delete{margin-right:auto;
+ color:#ffb9b6}
+@media(max-width:380px){
+ .inventory-item-editor-grid{grid-template-columns:1fr}
+ .inventory-item-preview-row{gap:7px}
+}
+
+
+/* Battlemap mouse controls: middle-drag pans, left-drag draws a token marquee.
+   Token dragging remains the existing left-button action. */
+.map-pan-region{cursor:crosshair}
+.map-pan-region .board,.map-pan-region .gridlines{cursor:crosshair}
+.map-pan-region.is-panning,.map-pan-region.is-panning .board,
+.map-pan-region.is-panning .token{cursor:grabbing!important}
+.map-pan-region .token{cursor:grab}
+.map-pan-region .token.token-selected::after{
+ border:2px solid #7fd9ff;box-shadow:0 0 0 2px #0d152cbb,0 0 13px #57acfa70;
+}
+.map-selection-marquee{position:absolute;z-index:95;pointer-events:none;
+ border:1px solid #9fd8ff;background:#69b6f633;
+ box-shadow:0 0 0 1px #234771aa inset;border-radius:2px}
+.map-pan-region.is-selecting{cursor:crosshair}
+
+/* Hotbar drag controls: moving a slot inserts its macro at the destination,
+   dropping outside removes the assignment without deleting the macro. */
+.macro-hotbar-slot.filled{cursor:grab;user-select:none}
+.macro-hotbar-slot.hotbar-drag-source{opacity:.45;cursor:grabbing}
+.macro-hotbar-slot.hotbar-reorder-target{
+ outline:2px solid #82d0ff;outline-offset:1px;
+ border-color:#82d0ff!important;background:#29577a!important}
+.map-only-panel .macro-hotbar-slot.hotbar-reorder-target{
+ background:#29577acc!important;border-color:#82d0ff!important}
+.macro-hotbar-drag-hint{
+ position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);
+ border:1px solid #83a8da;border-radius:6px;padding:5px 9px;
+ white-space:nowrap;background:#111b2ef2;color:#e9f3ff;
+ box-shadow:0 5px 15px #0008;pointer-events:none;font-size:11px}
+
+/* Campaign roster presence: green means an authenticated account currently
+   has an active tabletop connection, not merely that a character exists. */
+.unit-account-display{display:inline-flex;align-items:center;gap:7px;min-width:0}
+.unit-account-display>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.unit-online-indicator{display:inline-block;flex:0 0 9px;width:9px;height:9px;
+ border-radius:50%;background:#42db7d;box-shadow:0 0 0 2px #152b24,0 0 7px #42db7d90}

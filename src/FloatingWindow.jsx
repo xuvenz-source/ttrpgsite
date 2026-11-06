@@ -8,6 +8,7 @@ const CONFIG={
  library:{width:840,height:575},
  studio:{width:820,height:660},
  quick:{width:365,height:355},
+ inventory:{width:430,height:520},
  status:{width:650,height:610}
 };
 function initialPosition(kind){

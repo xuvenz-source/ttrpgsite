@@ -1,4 +1,5 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
+import {campaignArtworkPaths,validateTokenArtwork,isRetryableArtworkError} from './TokenArtworkTransfer.js';
 import Artwork from './Artwork.jsx';
 import TokenStudio from './TokenStudio.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
@@ -19,6 +20,7 @@ export default function PersonalTokenLibrary({
  const [items,setItems]=useState([]),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),
   [studio,setStudio]=useState(false),[newName,setNewName]=useState(defaultName),
   [error,setError]=useState(''),[notice,setNotice]=useState('');
+ const applying=useRef(false);
 
  useEffect(()=>{
   let alive=true;setLoading(true);
@@ -55,32 +57,67 @@ export default function PersonalTokenLibrary({
   const item=await addBlobs(blobs,newName);
   setItems(previous=>[item,...previous]);setStudio(false);setNotice('Token saved to your private library.');
   // Preserve the old Create / edit flow: a newly made token also becomes active.
-  try{await applyItem(item)}catch(e){
-   setError('The token was saved to your library, but could not be assigned: '+(e.message||String(e)));
-  }
+  await applyItem(item);
  }
  async function downloadLibraryFile(path){
   return unwrap(await db.storage.from(LIBRARY_BUCKET).download(path));
  }
  async function applyItem(item){
-  if(busy)return;
+  if(applying.current)return;
+  applying.current=true;
   setBusy(true);setError('');setNotice('');
+  const uploaded=[];
+  const storage=db.storage.from(CAMPAIGN_BUCKET);
+  let step='checking your campaign and character';
   try{
+   if(!campaignId||!userId||!onApply)
+    throw Error('Open your own character sheet in a joined campaign before applying a token.');
+   const {data:identity,error:identityError}=await db.auth.getUser();
+   if(identityError)throw identityError;
+   if(identity?.user?.id!==userId)
+    throw Error('Your sign-in has changed. Sign in again and reopen the token library.');
+   const allowed=unwrap(await db.from('campaign_members')
+    .select('user_id').eq('campaign_id',campaignId).eq('user_id',userId).maybeSingle());
+   if(!allowed)throw Error('You must be a member of this campaign to use its artwork.');
+   step='loading saved portrait and token images';
    const [portraitBlob,tokenBlob]=await Promise.all([
     downloadLibraryFile(item.portrait_path),downloadLibraryFile(item.token_path)
    ]);
-   const id=crypto.randomUUID(),root=mode==='npcs'
-    ?campaignId+'/npcs/':campaignId+'/players/'+userId+'/';
-   const portraitPath=root+id+'-portrait.webp',tokenPath=root+id+'-token.webp';
-   const storage=db.storage.from(CAMPAIGN_BUCKET);
-   unwrap(await storage.upload(portraitPath,portraitBlob,{contentType:'image/webp',upsert:false}));
-   unwrap(await storage.upload(tokenPath,tokenBlob,{contentType:'image/webp',upsert:false}));
+   validateTokenArtwork(portraitBlob,tokenBlob);
+   const {portraitPath,tokenPath}=campaignArtworkPaths(
+    campaignId,userId,mode==='npcs'?'npcs':'players',crypto.randomUUID());
+   async function upload(path,blob){
+    let lastError=null;
+    for(let attempt=0;attempt<2;attempt++){
+     const {error}=await storage.upload(path,blob,{contentType:'image/webp',upsert:false});
+     if(!error)return;
+     lastError=error;
+     if(!isRetryableArtworkError(error))break;
+    }
+    throw lastError;
+   }
+   // Upload token first: if it is the source of an upload error, no portrait
+   // is left behind. Keep the original private library entry untouched.
+   step='copying the token image into the campaign';
+   await upload(tokenPath,tokenBlob);uploaded.push(tokenPath);
+   step='copying the portrait image into the campaign';
+   await upload(portraitPath,portraitBlob);uploaded.push(portraitPath);
+   step='updating your character sheet';
    await onApply({portraitPath,tokenPath});
    onClose();
   }catch(e){
-   setError(e?.message||String(e));
-   throw e;
-  }finally{setBusy(false)}
+   if(uploaded.length){
+    try{
+     const {error:cleanupError}=await storage.remove(uploaded);
+     if(cleanupError)console.warn('Could not clean up unassigned artwork copies',cleanupError);
+    }catch(cleanupError){console.warn('Could not clean up artwork copies',cleanupError)}
+   }
+   const text='Could not apply this token while '+step+': '+(e?.message||String(e));
+   setError(text);console.warn('Personal token assignment failed',step,e);
+   // Report in this window, not as a rejected promise swallowed by a click.
+  }finally{
+   applying.current=false;setBusy(false);
+  }
  }
  async function importCurrent(){
   if(!currentTokenPath)return;
@@ -136,7 +173,7 @@ export default function PersonalTokenLibrary({
    </div>
    {currentTokenPath&&<button className="secondary personal-import" disabled={busy}
     onClick={importCurrent}>Save currently equipped token to library</button>}
-   <p className="muted small">Choose **Use on this sheet** to apply a previously saved token. New tokens are saved here and applied automatically.</p>
+   <p className="muted small">Choose <strong>Use on this sheet</strong> to copy a saved token onto your character. New tokens are saved privately and applied automatically.</p>
    {error&&<div className="error alert" role="alert">{error}</div>}
    {notice&&<p className="good small">{notice}</p>}
    {loading?<p className="muted">Loading your tokens…</p>:
@@ -147,7 +184,7 @@ export default function PersonalTokenLibrary({
       alt={item.name} className="personal-token-art"/>
      <strong title={item.name}>{item.name}</strong>
      <span className="muted tiny">Saved {new Date(item.created_at).toLocaleDateString()}</span>
-     <button type="button" disabled={busy} onClick={()=>applyItem(item).catch(()=>{})}>
+     <button type="button" disabled={busy} onClick={()=>void applyItem(item)}>
       {busy?'Working…':'Use on this sheet'}
      </button>
      <div className="personal-token-actions">

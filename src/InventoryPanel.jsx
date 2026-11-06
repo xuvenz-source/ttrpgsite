@@ -1,103 +1,206 @@
-import React,{useState} from 'react';
-import {inventoryRows,inventoryWeight,gridLayout,moveInventoryItem,rowValue,itemSize,evaluateEncumbrance} from './InventoryMath.js';
+import React,{useEffect,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
+import {inventoryRows,inventoryWeight,gridLayout,moveInventoryItem,
+ canPlaceInventoryItem,rowValue,itemSize,evaluateEncumbrance} from './InventoryMath.js';
+import InventoryItemEditor,{updateInventoryItem} from './InventoryItemEditor.jsx';
 
-/** Both presets edit the same saved array; switching layouts never discards items. */
+const CELL_SIZE=48,GAP=2,GRID_PADDING=5;
+const freshItem={Item:'',Qty:'1',Weight:'0',Notes:'',gridW:1,gridH:1,
+ gridShortName:'',gridIcon:'🎒',gridBorderColor:'#91b4e9',
+ gridBackgroundColor:'#263e5c',gridTextColor:'#f0f6ff'};
+const shortLabel=row=>String(row.gridShortName||rowValue(row,'Item')||'Item').slice(0,12);
+const tileStyle=row=>({
+ '--inventory-tile-border':row.gridBorderColor||'#91b4e9',
+ '--inventory-tile-back':row.gridBackgroundColor||'#263e5c',
+ '--inventory-tile-text':row.gridTextColor||'#f0f6ff'
+});
+
+/** Same saved rows are used by classic list and fixed-cell inventory grid. */
 export default function InventoryPanel({field,value,onChange,template,sheetValues}){
- const rows=inventoryRows(value),mode=field.inventoryPreset==='grid'?'grid':'list';
- const [error,setError]=useState('');
- const columns=field.columns?.length?field.columns:['Item','Qty','Weight','Notes'];
+ const items=inventoryRows(value),mode=field.inventoryPreset==='grid'?'grid':'list';
  const cols=Math.max(2,Math.min(20,Number(field.gridColumns)||8));
  const height=Math.max(2,Math.min(20,Number(field.gridRows)||5));
- const layout=gridLayout(rows,cols,height);
+ const layout=gridLayout(items,cols,height);
  const enc=template?evaluateEncumbrance(template,sheetValues||{}):null;
- const edit=(index,patch)=>onChange(rows.map((r,i)=>i===index?{...r,...patch}:r));
- const remove=index=>onChange(rows.filter((_,i)=>i!==index));
- const add=()=>{
-  if(rows.length>=250){setError('Inventory can hold up to 250 item records.');return}
-  const newItem={Item:'New item',Qty:'1',Weight:'0',Notes:''};
-  onChange([...rows,newItem]);setError('');
+ const columns=field.columns?.length?field.columns:['Item','Qty','Weight','Notes'];
+ const [error,setError]=useState('');
+ const [editing,setEditing]=useState(null);
+ const [drag,setDragState]=useState(null);
+ const dragRef=useRef(null),gridRef=useRef(null);
+ const setDrag=next=>{dragRef.current=next;setDragState(next)};
+ const edit=(index,patch)=>onChange(items.map((row,i)=>i===index?{...row,...patch}:row));
+ const openItem=index=>{setError('');setEditing(index)};
+ const saveItem=draft=>{
+  if(editing==='new'){
+   if(items.length>=250)throw Error('Inventory can hold up to 250 item records.');
+   onChange([...items,updateInventoryItem(freshItem,draft)]);
+  }else if(Number.isInteger(editing)&&items[editing]){
+   onChange(items.map((row,i)=>i===editing?updateInventoryItem(row,draft):row));
+  }else throw Error('This item is no longer available.');
+  setError('');setEditing(null);
  };
- const dropAt=(e,x,y)=>{
-  const raw=e.dataTransfer.getData('application/x-forge-inventory-index');
-  if(raw==='')return;
-  e.preventDefault();
-  const index=Number(raw);
-  if(!Number.isInteger(index)||index<0||index>=rows.length)return;
-  const placed=moveInventoryItem(rows,index,x,y,cols,height);
-  if(!placed){setError('That space is occupied or outside the inventory grid.');return}
+ const deleteItem=()=>{if(Number.isInteger(editing)){
+  onChange(items.filter((_,i)=>i!==editing));setEditing(null);setError('');
+ }};
+ const remove=index=>onChange(items.filter((_,i)=>i!==index));
+ function gridPosition(clientX,clientY,grabX,grabY){
+  const rect=gridRef.current?.getBoundingClientRect();
+  if(!rect)return {x:-1,y:-1};
+  return {
+   x:Math.round((clientX-grabX-rect.left-GRID_PADDING)/(CELL_SIZE+GAP)),
+   y:Math.round((clientY-grabY-rect.top-GRID_PADDING)/(CELL_SIZE+GAP))
+  };
+ }
+ function startDrag(e,index,x,y){
+  if(e.button!==0||dragRef.current)return;
+  const box=e.currentTarget.getBoundingClientRect();
+  try{e.currentTarget.setPointerCapture(e.pointerId)}catch{return}
+  e.currentTarget.focus();
+  setDrag({
+   index,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+   grabX:e.clientX-box.left,grabY:e.clientY-box.top,
+   x,y,turns:0,moved:false
+  });
+  e.preventDefault();e.stopPropagation();
+ }
+ function moveDrag(e){
+  const current=dragRef.current;
+  if(!current||current.pointerId!==e.pointerId)return;
+  const moved=current.moved||Math.hypot(
+   e.clientX-current.startX,e.clientY-current.startY)>5;
+  if(!moved)return;
+  const target=gridPosition(e.clientX,e.clientY,current.grabX,current.grabY);
+  if(current.moved&&target.x===current.x&&target.y===current.y)return;
+  setDrag({...current,moved:true,...target});
+ }
+ function endDrag(e,cancel=false){
+  const current=dragRef.current;
+  if(!current||current.pointerId!==e.pointerId)return;
+  try{if(e.currentTarget.hasPointerCapture(e.pointerId))
+   e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
+  setDrag(null);
+  if(cancel)return;
+  if(!current.moved&&!current.turns){openItem(current.index);return}
+  const placed=moveInventoryItem(items,current.index,current.x,current.y,cols,height,current.turns);
+  if(!placed){
+   setError('Not enough empty slots for that position or orientation. No items were moved.');
+   return;
+  }
   onChange(placed);setError('');
- };
- return <section className={'inventory-panel inventory-'+mode}>
-  <div className="inventory-summary"><strong>{rows.length} items</strong>
-   <span>{inventoryWeight(rows).toLocaleString()} {enc?.unit||'weight units'}</span>
-   <button className="secondary" type="button" onClick={add}>+ Item</button>
-  </div>
-  {enc?.enabled&&<div className="inventory-carry-summary" role="status">
-   Total carried: <strong>{enc.weight.toLocaleString()} / {enc.capacity.toLocaleString()} {enc.unit}</strong>
-   {enc.tier&&<span> · {enc.tier.label}</span>}
-  </div>}
-  {mode==='list'?<div className="inventory-list">
-   <div className="invrow inventory-table-head">{columns.map(c=><b key={c}>{c}</b>)}</div>
-   {rows.map((row,i)=><div className="invrow" key={i}>
-    {columns.map(c=><input key={c} aria-label={c} value={rowValue(row,c)??''}
-     onChange={e=>edit(i,{[c]:e.target.value})}/>)}
-    <button type="button" className="secondary" onClick={()=>remove(i)}
-     title="Remove item">×</button>
-   </div>)}
-  </div>:<>
-   <p className="muted tiny">Drag item cards onto empty grid slots. Each card retains its quantity, weight and notes.</p>
-   <div className="inventory-grid" style={{
-    gridTemplateColumns:'repeat('+cols+',minmax(0,1fr))',
-    gridTemplateRows:'repeat('+height+',minmax(40px,1fr))'
-   }}>
-    {Array.from({length:cols*height},(_,i)=>{
-     const x=i%cols,y=Math.floor(i/cols);
-     return <div className="inventory-grid-cell" key={'slot_'+i}
-      style={{gridColumn:x+1,gridRow:y+1}}
-      onDragOver={e=>{if(e.dataTransfer.types.includes('application/x-forge-inventory-index'))e.preventDefault()}}
-      onDrop={e=>dropAt(e,x,y)}/>;
-    })}
-    {layout.placed.map(({index,row,x,y,w,h})=>
-     <div key={'item_'+index} className="inventory-grid-item" draggable
-      style={{gridColumn:(x+1)+' / span '+w,gridRow:(y+1)+' / span '+h}}
-      onDragStart={e=>{
-       e.dataTransfer.setData('application/x-forge-inventory-index',String(index));
-       e.dataTransfer.effectAllowed='move';
-      }}
-      onDragOver={e=>e.preventDefault()}
-      onDrop={e=>{e.stopPropagation();dropAt(e,x,y)}}>
-      <div className="inventory-card-head">
-       <strong title={rowValue(row,'Item')||'Item'}>{rowValue(row,'Item')||'Item'}</strong>
-       <button type="button" className="secondary" onClick={()=>remove(index)} title="Remove item">×</button>
-      </div>
-      <label>Name<input value={rowValue(row,'Item')||''}
-       onChange={e=>edit(index,{Item:e.target.value})}/></label>
-      <div className="inventory-card-values">
-       <label>Qty<input type="number" min="0" value={rowValue(row,'Qty')??1}
-        onChange={e=>edit(index,{Qty:e.target.value})}/></label>
-       <label>Each weighs<input type="number" min="0" step=".01"
-        value={rowValue(row,'Weight')??0}
-        onChange={e=>edit(index,{Weight:e.target.value})}/></label>
-      </div>
-      <label>Notes<input value={rowValue(row,'Notes')||''}
-       onChange={e=>edit(index,{Notes:e.target.value})}/></label>
-      <div className="inventory-card-values">
-       <label>Width<input type="number" min="1" max={cols} value={itemSize(row,cols,height).w}
-        onChange={e=>edit(index,{gridW:Number(e.target.value)})}/></label>
-       <label>Height<input type="number" min="1" max={height} value={itemSize(row,cols,height).h}
-        onChange={e=>edit(index,{gridH:Number(e.target.value)})}/></label>
-      </div>
-     </div>)}
+ }
+ // Browser-native HTML dragging suppresses keydown events. Pointer capture
+ // keeps the left button held while we listen for R to rotate the footprint.
+ useEffect(()=>{
+  if(!drag)return;
+  function key(e){
+   const current=dragRef.current;
+   if(!current)return;
+   if(e.key.toLowerCase()==='r'&&!e.repeat){
+    e.preventDefault();e.stopPropagation();
+    setDrag({...current,turns:(current.turns+1)%4});
+   }else if(e.key==='Escape'){
+    e.preventDefault();e.stopPropagation();setDrag(null);
+   }
+  }
+  window.addEventListener('keydown',key,true);
+  return()=>window.removeEventListener('keydown',key,true);
+ },[!!drag]);
+ const active=drag&&items[drag.index];
+ const activeSize=active?itemSize(active,cols,height):null;
+ const previewW=activeSize&&(drag.turns%2?activeSize.h:activeSize.w);
+ const previewH=activeSize&&(drag.turns%2?activeSize.w:activeSize.h);
+ const previewVisible=drag&&(drag.moved||drag.turns>0)&&drag.x>=0&&drag.y>=0&&
+  drag.x+previewW<=cols&&drag.y+previewH<=height;
+ const canDrop=previewVisible&&canPlaceInventoryItem(
+  items,drag.index,drag.x,drag.y,cols,height,drag.turns);
+ return <>
+  <section className={'inventory-panel inventory-'+mode}>
+   <div className="inventory-summary"><strong>{items.length} items</strong>
+    <span>{inventoryWeight(items).toLocaleString()} {enc?.unit||'weight units'}</span>
+    <button className="secondary" type="button" disabled={items.length>=250}
+     onClick={()=>{setError('');setEditing('new')}}>+ Item</button>
    </div>
-   {layout.unplaced.length>0&&<div className="inventory-grid-overflow">
-    <strong>Unplaced items ({layout.unplaced.length})</strong>
-    <p className="muted tiny">Expand grid dimensions or move an item to make space. These items are still saved.</p>
-    {layout.unplaced.map(i=><div className="inventory-grid-overflow-row" key={i}>
-      <input value={rowValue(rows[i],'Item')||''} onChange={e=>edit(i,{Item:e.target.value})}/>
-      <button className="secondary" onClick={()=>remove(i)}>Remove</button>
-     </div>)}
+   {enc?.enabled&&<div className="inventory-carry-summary" role="status">
+    Total carried: <strong>{enc.weight.toLocaleString()} / {enc.capacity.toLocaleString()} {enc.unit}</strong>
+    {enc.tier&&<span> · {enc.tier.label}</span>}
    </div>}
-  </>}
-  {error&&<p className="error tiny" role="alert">{error}</p>}
- </section>;
+   {mode==='list'?<div className="inventory-list">
+    <div className="invrow inventory-table-head">{columns.map(c=><b key={c}>{c}</b>)}</div>
+    {items.map((row,i)=><div className="invrow" key={i}>
+     {columns.map(c=><input key={c} aria-label={c} value={rowValue(row,c)??''}
+      onChange={e=>edit(i,{[c]:e.target.value})}/>)}
+     <button type="button" className="secondary" onClick={()=>openItem(i)}
+      title="Open item details">Details</button>
+     <button type="button" className="secondary" onClick={()=>{
+      if(window.confirm('Remove this item?'))remove(i);
+     }} title="Remove item">×</button>
+    </div>)}
+   </div>:<>
+    <p className="muted tiny">Click a tile to see its details. Hold the left mouse button
+     and drag to move it; press <kbd>R</kbd> while holding to rotate 90°. Grid cells always
+     remain the same size.</p>
+    <div className="inventory-grid-scroll">
+     <div className="inventory-grid" ref={gridRef}
+      style={{
+       gridTemplateColumns:'repeat('+cols+', '+CELL_SIZE+'px)',
+       gridTemplateRows:'repeat('+height+', '+CELL_SIZE+'px)'
+      }}>
+      {Array.from({length:cols*height},(_,i)=>{
+       const x=i%cols,y=Math.floor(i/cols);
+       return <div className="inventory-grid-cell" key={'slot_'+i}
+        style={{gridColumn:x+1,gridRow:y+1}}/>;
+      })}
+      {layout.placed.map(({index,row,x,y,w,h})=>
+       <button key={'item_'+index} type="button"
+        className={'inventory-grid-item'+(drag?.index===index?' inventory-grid-item-held':'')}
+        style={{...tileStyle(row),
+         gridColumn:(x+1)+' / span '+w,gridRow:(y+1)+' / span '+h}}
+        aria-label={'Open '+(rowValue(row,'Item')||'item')+' details'}
+        title={(rowValue(row,'Item')||'Item')+' — click for details; hold and press R to rotate'}
+        onPointerDown={e=>startDrag(e,index,x,y)}
+        onPointerMove={moveDrag}
+        onPointerUp={e=>endDrag(e)}
+        onPointerCancel={e=>endDrag(e,true)}
+        onClick={e=>{if(e.detail===0)openItem(index)}}>
+        <span className="inventory-tile-icon" aria-hidden="true"
+         style={{transform:'rotate('+((Number(row.gridRotation)||0)%360)+'deg)'}}>
+         {row.gridIcon||'📦'}</span>
+        <strong className="inventory-tile-name">{shortLabel(row)}</strong>
+        {Number(rowValue(row,'Qty')??1)!==1&&
+         <span className="inventory-tile-qty">×{rowValue(row,'Qty')}</span>}
+       </button>)}
+      {previewVisible&&<div className={'inventory-grid-drag-preview'+
+       (canDrop?' is-valid':' is-invalid')}
+       style={{gridColumn:(drag.x+1)+' / span '+previewW,
+        gridRow:(drag.y+1)+' / span '+previewH}}>
+       <span>{canDrop?'✓':'×'} {shortLabel(active)}</span>
+       <small>{((Number(active.gridRotation)||0)+drag.turns*90)%360}°</small>
+      </div>}
+     </div>
+    </div>
+    {layout.unplaced.length>0&&<div className="inventory-grid-overflow">
+     <strong>Unplaced items ({layout.unplaced.length})</strong>
+     <p className="muted tiny">These items remain saved. Free enough space, then
+      drag a tile into the grid.</p>
+     <div className="inventory-grid-overflow-items">
+      {layout.unplaced.map(i=><button key={i} type="button"
+       className="inventory-overflow-tile"
+       style={tileStyle(items[i])}
+       onPointerDown={e=>startDrag(e,i,-1,-1)}
+       onPointerMove={moveDrag}
+       onPointerUp={e=>endDrag(e)}
+       onPointerCancel={e=>endDrag(e,true)}
+       onClick={e=>{if(e.detail===0)openItem(i)}}>
+       {items[i].gridIcon||'📦'} {shortLabel(items[i])}
+      </button>)}
+     </div>
+    </div>}
+   </>}
+   {error&&<p className="error tiny" role="alert">{error}</p>}
+  </section>
+  {editing!==null&&createPortal(<InventoryItemEditor
+   key={String(editing)}
+   item={editing==='new'?null:items[editing]} cols={cols} rows={height}
+   onSave={saveItem} onDelete={deleteItem} onClose={()=>setEditing(null)}/>,document.body)}
+ </>;
 }
