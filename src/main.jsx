@@ -12,6 +12,8 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
+import {normalizeEnvironment,withObject} from './MapEnvironment.js';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import AttributeField from './AttributeField.jsx';
@@ -116,6 +118,15 @@ function App(){
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
+ const[mapEnvironment,setMapEnvironment]=useState(null);
+ const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
+ const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
+ const mapEnvironmentWriteQueue=useRef(Promise.resolve());
+ const[mapSettingEditor,setMapSettingEditor]=useState({
+  enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
+  lockLight:false,lockBackground:true,snap:true,preset:'solid',
+  selectedId:null,lightBright:20,lightDim:20
+ });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
  const[encumbranceBadges,setEncumbranceBadges]=useState({});
@@ -834,6 +845,28 @@ function App(){
  },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
  useEffect(()=>{
+  let live=true;
+  setMapEnvironment(null);setMapEnvironmentMapId('');
+  setMapSettingEditor(old=>({...old,enabled:false,selectedId:null}));
+  if(!db||!isDM||!activeId||!selectedMap){
+   setMapEnvironmentStatus('Choose a map');return()=>{live=false};
+  }
+  setMapEnvironmentStatus('Loading map environment…');
+  (async()=>{
+   const {data,error:loadError}=await db.from('map_environments').select('prepared')
+    .eq('campaign_id',activeId).eq('map_id',selectedMap).maybeSingle();
+   if(!live)return;
+   if(loadError){
+    setMapEnvironmentStatus('Map storage unavailable: apply the staged environment migration first.');
+    console.warn('Map environment loading failed',loadError);return;
+   }
+   setMapEnvironment(normalizeEnvironment(data?.prepared));
+   setMapEnvironmentMapId(selectedMap);
+   setMapEnvironmentStatus('Saved');
+  })().catch(e=>{if(live){setMapEnvironmentStatus('Environment load failed');fail(e)}});
+  return()=>{live=false};
+ },[selectedMap,activeId,isDM,user]);
+ useEffect(()=>{
   if(rightTab==='units')void refreshCampaignRoster();
   if(rightTab==='chat')void refreshChat();
  },[rightTab,activeId,user]);
@@ -1428,6 +1461,32 @@ function App(){
   setCamp(prev=>({...prev,token_display_config:data.token_display_config}));
   await refreshMonitors();
  }
+ function saveMapEnvironment(nextValue){
+  if(!isDM||!selectedMap||mapEnvironmentMapId!==selectedMap){
+   setMapEnvironmentStatus('Map settings are not loaded or cannot be edited.');return;
+  }
+  const next=normalizeEnvironment(nextValue);
+  const mapId=selectedMap,campaignId=activeId;
+  setMapEnvironment(next);setMapEnvironmentStatus('Saving…');
+  mapEnvironmentWriteQueue.current=mapEnvironmentWriteQueue.current.catch(()=>{}).then(async()=>{
+   const {error:saveError}=await db.from('map_environments').upsert({
+    map_id:mapId,campaign_id:campaignId,prepared:next,
+    updated_at:new Date().toISOString()
+   },{onConflict:'map_id'});
+   if(saveError)throw saveError;
+  }).then(()=>{
+   if(tokenContextRef.current.mapId===mapId&&tokenContextRef.current.campaignId===campaignId)
+    setMapEnvironmentStatus('Saved');
+  }).catch(error=>{
+   console.error('Could not save map environment',error);
+   if(tokenContextRef.current.mapId===mapId&&tokenContextRef.current.campaignId===campaignId)
+    setMapEnvironmentStatus('Save failed: '+message(error));
+  });
+ }
+ function addEnvironmentObject(object){
+  if(mapEnvironmentMapId!==selectedMap||!mapEnvironment)return;
+  saveMapEnvironment(withObject(mapEnvironment,object));
+ }
  async function saveMapCalibration(map,next){
   if(!isDM)throw Error('Only the DM can adjust map calibration.');
   if(!map||map.campaign_id!==activeId)throw Error('Map does not belong to this campaign.');
@@ -1738,6 +1797,9 @@ function App(){
  </div></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>selectMap(m.id).catch(fail)}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
  {(tab==='tabletop'||tab==='sheet')&&<section className="panel tabletop-panel map-only-panel">
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
+   environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+   environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
+   onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
@@ -1779,6 +1841,10 @@ function App(){
  onEditNpc={n=>openNpcEditor({kind:'template',data:n})}
  onMoveNpc={moveNpcFolder} onPlaceNpc={id=>placeNpc(id)}
  activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>selectMap(id).catch(fail)}
+ mapEnvironment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+ mapEnvironmentStatus={mapEnvironmentStatus}
+ mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
+ onMapEnvironmentChange={saveMapEnvironment}
  publishedMapId={camp?.active_map_id||null} onPublishMap={publishMap}
   onMoveEntireParty={moveEntireParty}
   mapAssignments={mapAssignments} onAssignPlayerMap={assignPlayerMap}
@@ -2118,7 +2184,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 }
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
- onMeasurementPreview,remoteMeasurements={},hotbarInset=false}){
+ onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
+ environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
@@ -2359,7 +2426,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   setPanning(true);
  }
  function startMarquee(e){
-  if(activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
+  if(environmentEditor?.enabled||activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
      e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
   if(!viewport||!boardRef.current)return;
@@ -2472,11 +2539,11 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
     onMouseDownCapture={pinCurrentMeasurementOnRightClick}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
-    onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
+    onContextMenu={e=>{if(activeMeasureTool||environmentEditor?.enabled)e.preventDefault()}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
-     else startMeasurementCapture(e);
+     else if(!environmentEditor?.enabled)startMeasurementCapture(e);
     }} onPointerDown={startMarquee}
     onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
     onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
@@ -2490,6 +2557,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
+    {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
+     objects={environment.objects} editor={environmentEditor}
+     onAdd={onAddEnvironmentObject} onSelect={onSelectEnvironmentObject}/>}
     {tokens.filter(t=>isDM||t.visible).map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
       canMove=canControlMapToken(t,user,isDM,map.id);
