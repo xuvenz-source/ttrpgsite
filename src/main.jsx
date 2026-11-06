@@ -4,7 +4,7 @@ import{createClient}from'@supabase/supabase-js';
 import './style.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
-import {validMeasurement,liveMeasurementPayload} from './MapMeasurements.js';
+import {validMeasurement,liveMeasurementPayload,pointOnBattlemap} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
@@ -1717,6 +1717,7 @@ function App(){
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+    onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
    resize={resizeToken}
@@ -2092,10 +2093,14 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},hotbarInset=false}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
+ onMeasurementPreview,remoteMeasurements={},hotbarInset=false}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
+ const[activeMeasureTool,setActiveMeasureTool]=useState(null),
+  [localMeasurements,setLocalMeasurements]=useState([]);
+ const measureDrag=useRef(null),toolDrag=useRef(null),measureTimers=useRef(new Map());
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
@@ -2113,6 +2118,28 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    setSelectedIds(selectedId?[selectedId]:[]);
   }
  },[selectedId]);
+ // Local finished measurement shapes fade after 12 seconds; remote views
+ // receive the same shape through the private map broadcast channel.
+ useEffect(()=>{
+  setActiveMeasureTool(null);setLocalMeasurements([]);
+  measureDrag.current=null;toolDrag.current=null;
+  for(const timer of measureTimers.current.values())clearTimeout(timer);
+  measureTimers.current.clear();
+  return()=>{
+   for(const timer of measureTimers.current.values())clearTimeout(timer);
+   measureTimers.current.clear();
+  };
+ },[map.id]);
+ useEffect(()=>{
+  function onEscape(event){
+   if(event.key!=='Escape'||!activeMeasureTool)return;
+   event.preventDefault();
+   setActiveMeasureTool(null);
+   measureDrag.current=null;toolDrag.current=null;
+  }
+  window.addEventListener('keydown',onEscape);
+  return()=>window.removeEventListener('keydown',onEscape);
+ },[activeMeasureTool]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
   const vp=viewportRef.current;
