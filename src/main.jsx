@@ -116,6 +116,8 @@ function App(){
  const[onlinePresenceKeys,setOnlinePresenceKeys]=useState([]),
   [memberPresenceHashes,setMemberPresenceHashes]=useState({});
  const rosterRequest=useRef(0),chatRequest=useRef(0),
+  campaignFetchRequest=useRef(0),campaignListRequest=useRef(0),
+  mapLibraryRequest=useRef(0),npcLibraryRequest=useRef(0),
   latestChatRefresh=useRef(null),latestRosterRefresh=useRef(null);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),
@@ -195,7 +197,7 @@ function App(){
  const activeMap=maps.find(x=>x.id===selectedMap);
  const displayedMap=activeMap&&mapCalibrationPreview?.mapId===activeMap.id
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
- tokenContextRef.current={mapId:selectedMap,campaignId:activeId};
+ tokenContextRef.current={mapId:selectedMap,campaignId:activeId,userId:user};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  function fail(e){setError(message(e));console.error(e)}
@@ -206,13 +208,18 @@ function App(){
   if(activeId)void latestRosterRefresh.current?.();
  }
  async function fetchCampaigns(prefer){if(!db||!user)return;
+  const request=++campaignListRequest.current,currentUser=user;
   setCampaignsLoading(true);
   try{const [cs,ms]=await Promise.all([read(db.from('campaigns').select('*').order('created_at',{ascending:false})),read(db.from('campaign_members').select('campaign_id,role').eq('user_id',user))]);
+    if(request!==campaignListRequest.current||tokenContextRef.current.userId!==currentUser)return;
     setCampaigns(cs);setRoles(Object.fromEntries(ms.map(x=>[x.campaign_id,x.role])));
     setActiveId(old=>prefer&&cs.some(c=>c.id===prefer)?prefer:cs.some(c=>c.id===old)?old:'');
-  }catch(e){fail(e)}finally{setCampaignsLoading(false)}
+  }catch(e){if(request===campaignListRequest.current)fail(e)}finally{
+   if(request===campaignListRequest.current)setCampaignsLoading(false)
+  }
  }
  async function fetchCampaign(id){if(!id)return;
+  const request=++campaignFetchRequest.current,currentUser=user;
   try{const [c,m,ch,f,b,chat,npcList,npcFolderList,assignments,views,names]=await Promise.all([
   read(db.from('campaigns').select('*').eq('id',id).single()),
   read(db.from('campaign_members').select('user_id,role').eq('campaign_id',id)),
@@ -225,6 +232,8 @@ function App(){
   read(db.from('campaign_player_maps').select('campaign_id,user_id,map_id').eq('campaign_id',id)),
   read(db.from('campaign_map_views').select('map_id,user_id').eq('campaign_id',id)),
   read(db.rpc('get_campaign_account_names',{p_campaign:id}))]);
+   if(request!==campaignFetchRequest.current||
+      tokenContextRef.current.campaignId!==id||tokenContextRef.current.userId!==currentUser)return;
    const dm=m.some(member=>member.user_id===user&&member.role==='dm');
    const defaultMap=c.active_map_id||null;
    const desired=dm?(views.find(v=>v.user_id===user)?.map_id||defaultMap):
@@ -288,16 +297,34 @@ function App(){
    .catch(e=>console.warn('Map routing notification unavailable',e));
  }
  async function refreshMaps(){if(!activeId)return;
-  try{const [f,m]=await Promise.all([read(db.from('map_folders').select('*').eq('campaign_id',activeId)),read(db.from('battle_maps').select('*').eq('campaign_id',activeId).order('created_at',{ascending:false}))]);setFolders(f);setMaps(m);setSelectedMap(old=>m.some(x=>x.id===old)?old:
-    (isDM?m[0]?.id||'':m.some(x=>x.id===playerMapId)?playerMapId:''));}catch(e){fail(e)}
+  const campaignId=activeId,currentUser=user,request=++mapLibraryRequest.current;
+  try{
+   const [f,m]=await Promise.all([
+    read(db.from('map_folders').select('*').eq('campaign_id',campaignId)),
+    read(db.from('battle_maps').select('*').eq('campaign_id',campaignId)
+     .order('created_at',{ascending:false}))
+   ]);
+   if(request!==mapLibraryRequest.current||
+      tokenContextRef.current.campaignId!==campaignId||
+      tokenContextRef.current.userId!==currentUser)return;
+   setFolders(f);setMaps(m);
+   setSelectedMap(old=>m.some(x=>x.id===old)?old:
+    (isDM?m[0]?.id||'':m.some(x=>x.id===playerMapId)?playerMapId:''));
+  }catch(e){if(request===mapLibraryRequest.current)fail(e)}
  }
- 
- async function refreshNpcs(){if(!activeId)return;try{
-  const [all,allFolders]=await Promise.all([
-   read(db.from('npc_templates').select('*').eq('campaign_id',activeId).order('name')),
-   read(db.from('npc_folders').select('*').eq('campaign_id',activeId).order('name'))]);
-  setNpcs(all);setNpcFolders(allFolders);
- }catch(e){fail(e)}}
+ async function refreshNpcs(){if(!activeId)return;
+  const campaignId=activeId,currentUser=user,request=++npcLibraryRequest.current;
+  try{
+   const [all,allFolders]=await Promise.all([
+    read(db.from('npc_templates').select('*').eq('campaign_id',campaignId).order('name')),
+    read(db.from('npc_folders').select('*').eq('campaign_id',campaignId).order('name'))
+   ]);
+   if(request!==npcLibraryRequest.current||
+      tokenContextRef.current.campaignId!==campaignId||
+      tokenContextRef.current.userId!==currentUser)return;
+   setNpcs(all);setNpcFolders(allFolders);
+  }catch(e){if(request===npcLibraryRequest.current)fail(e)}
+ }
  async function makeNpcFolder(name,parentId){try{
    await read(db.from('npc_folders').insert({campaign_id:activeId,name,parent_id:parentId}));
    await refreshNpcs();
