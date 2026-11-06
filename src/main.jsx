@@ -11,6 +11,7 @@ import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
+import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
@@ -78,6 +79,8 @@ function App(){
  const monitorRequest=useRef(0);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
+ const[macros,setMacros]=useState([]);
+ const[macroBuilderOpen,setMacroBuilderOpen]=useState(false);
  const[hotbarVisible,setHotbarVisible]=useState(true);
  const[uiScale,setUiScale]=useState(.9);
  const quickCache=useRef(new Map());
@@ -286,6 +289,7 @@ function App(){
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
+  setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
   ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
@@ -311,6 +315,19 @@ function App(){
     setHotbarSlots(normaliseHotbar(data?.slots));
    });
   return()=>{alive=false};
+ },[user,activeId]);
+ useEffect(()=>{
+  if(!db||!activeId||!user){setMacros([]);return}
+  let live=true;
+  setMacros([]);
+  db.from('tabletop_macros').select('*').eq('campaign_id',activeId)
+   .eq('user_id',user).order('updated_at',{ascending:false})
+   .then(({data,error})=>{
+    if(!live)return;
+    if(error){console.error('Could not load personal macros',error);return}
+    setMacros(data||[]);
+   });
+  return()=>{live=false};
  },[user,activeId]);
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
@@ -378,6 +395,55 @@ function App(){
     .upsert({user_id:user,bindings,hotbar_visible:hotbarVisible,ui_scale:value},
      {onConflict:'user_id'}));
   }catch(e){setUiScale(previous);fail(e)}
+ }
+ async function saveMacro(payload){
+  if(!user||!activeId)throw Error('Select a campaign to save a macro.');
+  const data={
+   id:payload.id,campaign_id:activeId,user_id:user,
+   name:String(payload.name||'').slice(0,80),
+   subtitle:String(payload.subtitle||'').slice(0,100),
+   source_type:payload.source_type||'none',
+   source_id:payload.source_type==='none'?null:payload.source_id,
+   rows:payload.rows
+  };
+  const saved=await read(db.from('tabletop_macros')
+   .upsert(data,{onConflict:'id'}).select('*').single());
+  setMacros(previous=>[saved,...previous.filter(m=>m.id!==saved.id)]
+   .sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at)));
+  return saved;
+ }
+ async function deleteMacro(id){
+  if(!macros.some(m=>m.id===id))throw Error('Macro not found.');
+  await read(db.from('tabletop_macros').delete().eq('id',id)
+   .eq('campaign_id',activeId).eq('user_id',user));
+  setMacros(old=>old.filter(m=>m.id!==id));
+  const command='/builder '+id;
+  if(hotbarSlots.some(s=>s.command===command)){
+   await saveMyHotbar(hotbarSlots.map(slot=>slot.command===command?{label:'',command:''}:slot));
+  }
+ }
+ async function runMacro(id){
+  if(!activeId)throw Error('No campaign selected.');
+  await read(db.rpc('run_tabletop_macro',{p_macro_id:id}));
+  await refreshChat();
+ }
+ async function assignMacro(payload,index=null){
+  const id=String(payload?.id||'');
+  const macro=macros.find(x=>x.id===id)||
+   (payload?.campaign_id===activeId&&payload?.user_id===user?payload:null);
+  if(!macro)throw Error('Save the macro before adding it to the hotbar.');
+  const slotIndex=index===null?hotbarSlots.findIndex(s=>!s.command):index;
+  if(!Number.isInteger(slotIndex)||slotIndex<0||slotIndex>=8)
+   throw Error('Hotbar is full. Drag the macro onto a slot to replace it.');
+  const entry={label:macro.name.slice(0,40),command:'/builder '+macro.id};
+  const previous=hotbarSlots;
+  const next=normaliseHotbar(previous).map((s,i)=>i===slotIndex?entry:s);
+  setHotbarSlots(next);
+  try{
+   await saveMyHotbar(next);
+   if(!hotbarVisible)await changeHotbarVisibility(true);
+   return slotIndex;
+  }catch(e){setHotbarSlots(previous);throw e}
  }
  async function saveMyHotbar(slots){
   if(!user||!activeId)throw Error('Join a campaign before saving a hotbar.');
@@ -488,10 +554,20 @@ function App(){
  }
  async function roll(formula,label='Dice roll',charId=character?.id){try{await read(db.rpc('roll_dice',{p_campaign_id:activeId,p_expression:formula,p_label:label,p_character_id:charId||null}));await refreshChat()}catch(e){fail(e)}}
  async function sendChat(e){e.preventDefault();const raw=chat.trim();if(!raw)return;setChat('');
+ const builder=raw.match(/^\/builder\s+([0-9a-f-]{36})$/i);
+ if(builder){try{await runMacro(builder[1])}catch(e){fail(e)}return}
  const spell=raw.match(/^\/spell\s+(character|npc_token|npc_template)\s+([0-9a-f-]{36})\s+([a-zA-Z0-9_-]{1,100})\s+([a-zA-Z0-9-]{1,100})$/i);
  if(spell){try{await castSpell({sourceType:spell[1],sourceId:spell[2],collectionId:spell[3],entryId:spell[4]})}catch(e){fail(e)}return}
  if(/^\/(roll|r)\s+/i.test(raw))return roll(raw.replace(/^\/(roll|r)\s+/i,''),'Dice roll',null);
- if(/^\/macro\s+/i.test(raw)){const label=raw.replace(/^\/macro\s+/i,'').trim().toLowerCase(),field=camp?.sheet_template?.tabs?.flatMap(t=>t.fields).find(f=>f.type==='roll'&&f.label.toLowerCase()===label);if(field)return roll(field.formula||'1d20',field.label);return fail('Macro not found')}
+ if(/^\/macro\s+/i.test(raw)){
+  const label=raw.replace(/^\/macro\s+/i,'').trim().toLowerCase();
+  const saved=macros.find(m=>m.name.toLowerCase()===label);
+  if(saved){try{await runMacro(saved.id)}catch(e){fail(e)}return}
+  const field=camp?.sheet_template?.tabs?.flatMap(t=>t.fields)
+   .find(f=>f.type==='roll'&&f.label.toLowerCase()===label);
+  if(field)return roll(field.formula||'1d20',field.label);
+  return fail('Macro not found');
+ }
  try{await read(db.from('chat_messages').insert({campaign_id:activeId,user_id:user,body:raw.startsWith('/em ')?'*'+raw.slice(4)+'*':raw}));await refreshChat()}catch(e){fail(e)}}
  function changeTemplate(fn){setTemplate(old=>{const t=structuredClone(old||{tabs:defaults});fn(t);return t})}
  async function linkResourceToToken(field){
@@ -766,8 +842,10 @@ function App(){
    });
    const dice=command.match(/^\/(?:roll|r)\s+([\s\S]+)$/i);
    const spell=command.match(/^\/spell\s+(character|npc_token|npc_template)\s+([0-9a-f-]{36})\s+([a-zA-Z0-9_-]{1,100})\s+([a-zA-Z0-9-]{1,100})$/i);
+   const builder=command.match(/^\/builder\s+([0-9a-f-]{36})$/i);
    const macro=command.match(/^\/macro\s+(.+)$/i);
    const say=command.match(/^\/(em|say)\s+([\s\S]+)$/i);
+   if(builder){await runMacro(builder[1]);return;}
    if(spell){
     await castSpell({sourceType:spell[1],sourceId:spell[2],
      collectionId:spell[3],entryId:spell[4]});return;
@@ -776,6 +854,8 @@ function App(){
     await roll(applyFields(dice[1]),slot.label||'Hotbar roll');return;
    }
    if(macro){
+    const saved=macros.find(m=>m.name.toLowerCase()===macro[1].trim().toLowerCase());
+    if(saved){await runMacro(saved.id);return}
     const target=camp.sheet_template?.tabs?.flatMap(t=>t.fields||[])
      .find(field=>field.type==='roll'&&field.label.trim().toLowerCase()===macro[1].trim().toLowerCase());
     if(!target)throw Error('Cannot find sheet macro "'+macro[1]+'". Check its name in Sheet Designer.');
@@ -788,7 +868,7 @@ function App(){
      body:say[1].toLowerCase()==='em'?'*'+message+'*':message}));
     await refreshChat();return;
    }
-   throw Error('Unsupported hotbar command. Use /spell, /roll, /macro, /em or /say.');
+   throw Error('Unsupported hotbar command. Use /builder, /spell, /roll, /macro, /em or /say.');
   }catch(e){fail(e)}
  }
  function queueTokenMove(token,x,y){
@@ -932,7 +1012,8 @@ function App(){
     </div>}
    {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
     onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}
-    onAssignSpell={(index,payload)=>assignSpellToHotbar(payload,index).catch(fail)}/>}
+    onAssignSpell={(index,payload)=>assignSpellToHotbar(payload,index).catch(fail)}
+    onAssignMacro={(index,payload)=>assignMacro(payload,index).catch(fail)}/>}
   </>
   :<div className="empty-tabletop">
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
@@ -964,6 +1045,7 @@ function App(){
  quickFields={camp?.token_quick_fields||[]} onSaveQuickFields={saveQuickFields}
  bindings={bindings} onSaveBindings={saveMyKeybindings}
  hotbarSlots={hotbarSlots} onSaveHotbar={saveMyHotbar}
+ macroCount={macros.length} onOpenMacros={()=>setMacroBuilderOpen(true)}
  hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)} onReturnToMenu={()=>setActiveId('')}
@@ -977,6 +1059,11 @@ function App(){
  accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
  /></div>
  </main>
+ {macroBuilderOpen&&<MacroManager macros={macros}
+  characters={characters} npcs={npcs} tokens={tokens}
+  template={camp?.sheet_template} user={user} isDM={isDM}
+  onSave={saveMacro} onDelete={deleteMacro} onRun={runMacro} onAssign={assignMacro}
+  onClose={()=>setMacroBuilderOpen(false)}/>}
  {artStudio&&character&&<PersonalTokenLibrary db={db} campaignId={activeId} userId={user}
   mode="players" currentTokenPath={character.token_path} currentPortraitPath={character.portrait_path}
   defaultName={character.name||'New token'} onApply={savePlayerArtwork} onClose={()=>setArtStudio(false)}/>}

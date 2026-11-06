@@ -7,6 +7,8 @@ import {KeybindingsEditor,HotbarSettings} from './TabletopControls.jsx';
 import {QuickFieldsSettings} from './TokenQuickEdit.jsx';
 import Bestiary from './Bestiary.jsx';
 import SpellChatCard from './SpellChatCard.jsx';
+import MacroChatCard from './MacroChatCard.jsx';
+import RollMathTooltip from './RollMathTooltip.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 function BearFaceIcon(){
@@ -154,6 +156,7 @@ export default function TabletopSidebar({
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
  statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
+ macroCount=0,onOpenMacros,
  uiScale,onChangeUiScale,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
@@ -170,10 +173,11 @@ export default function TabletopSidebar({
    <div className="messages right-messages">{messages.map(m=><div className="msg" key={m.id}>
     <div className="muted tiny">{m.user_id===user?'You':characters.find(c=>c.user_id===m.user_id)?.name||'Party member'} · {when(m.created_at)}</div>
     {m.kind==='spell'?<SpellChatCard message={m}/>:
+     m.kind==='macro'?<MacroChatCard message={m}/>:
      m.kind==='roll'?<div className="chat-roll">
      <div className="chat-roll-line">
       <span className="chat-roll-name">🎲 {m.body}</span>
-      <strong className="chat-roll-result" aria-label={'Result '+(m.result?.total??'unknown')}>{m.result?.total??'—'}</strong>
+      <RollMathTooltip data={m.result} className="chat-roll-result" size="small"/>
      </div>
      <details className="chat-roll-breakdown">
       <summary title="Show dice breakdown">{m.result?.expression||'Roll'} <span className="chat-roll-expand">· details</span></summary>
@@ -227,6 +231,15 @@ export default function TabletopSidebar({
     <details className="side-details shortcut-settings">
      <summary>Keyboard shortcuts</summary>
      <KeybindingsEditor bindings={bindings} onSave={onSaveBindings}/>
+    </details>
+    <details className="side-details">
+     <summary>Macro Builder ({macroCount})</summary>
+     <div className="side-form">
+      <p className="muted tiny">Build personal multi-roll actions with labelled rows, character attributes, compact chat cards and hotbar shortcuts.</p>
+      <button type="button" className="secondary full-button" onClick={onOpenMacros}>
+       Open Macro Builder
+      </button>
+     </div>
     </details>
     <details className="side-details shortcut-settings">
      <summary>Macro hotbar</summary>

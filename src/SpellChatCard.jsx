@@ -1,4 +1,5 @@
 import React from 'react';
+import RollMathTooltip from './RollMathTooltip.jsx';
 
 /** One compact, server-rolled chat card. Display switches are saved per spell. */
 function RolledValue({name,data}){
@@ -6,7 +7,7 @@ function RolledValue({name,data}){
  const groups=Array.isArray(data.rolls)?data.rolls:[];
  return <div className="spell-chat-roll" aria-label={name+' roll'}>
   <span className="spell-chat-roll-label">{name}</span>
-  <strong className="spell-chat-roll-total">{data.total??'—'}</strong>
+  <RollMathTooltip data={data} className="spell-chat-roll-total" size="small"/>
   <details className="spell-chat-roll-details">
    <summary>{data.expression||'Dice details'}</summary>
    <span>{groups.map((group,i)=><span key={i}>

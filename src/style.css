@@ -1347,3 +1347,160 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .spell-roll-options{gap:4px 7px}
  .spell-chat-rolls{grid-template-columns:repeat(auto-fit,minmax(75px,1fr))}
 }
+
+/* v1.9 staged: compact multi-roll cards, hover details and personal macro editor. */
+.roll-math-trigger{
+ display:inline-flex;align-items:center;justify-content:center;
+ position:relative;cursor:help;min-width:18px;white-space:nowrap;
+ color:#e8cdff;font-variant-numeric:tabular-nums;border-bottom:1px dotted #b49cc9;
+}
+.roll-math-trigger:focus-visible{outline:2px solid #c5aae9;border-radius:4px;outline-offset:2px}
+.roll-math-result{font-size:inherit;line-height:inherit;font-weight:800;color:inherit}
+.roll-math-result.compact{font-size:inherit}
+.roll-math-tooltip{
+ position:fixed;z-index:99999;pointer-events:none;
+ width:max-content;max-width:min(260px,calc(100vw - 20px));
+ max-height:min(240px,55vh);overflow-y:auto;
+ background:#f2efe7;color:#1e2430;border:1px solid #9a94a5;
+ box-shadow:0 5px 17px #0009;border-radius:7px;
+ padding:9px 11px;display:flex;flex-direction:column;gap:3px;
+ font-size:12px;font-family:inherit;line-height:1.4;
+}
+.roll-math-expression{font-weight:750;border-bottom:1px solid #c8c2bd;
+ padding-bottom:5px;overflow-wrap:anywhere}
+.roll-math-line{display:flex;justify-content:space-between;gap:12px;
+ color:#4e5362;white-space:normal;overflow-wrap:anywhere}
+.roll-math-line b{color:#222b37}
+.roll-math-final{display:flex;justify-content:space-between;gap:12px;
+ margin-top:4px;border-top:1px solid #c8c2bd;padding-top:5px;
+ font-weight:700;color:#34364a}
+.roll-math-final strong{font-size:15px;color:#582d95}
+.chat-roll-result .roll-math-result{font-size:17px}
+.spell-chat-roll-total .roll-math-result{font-size:17px}
+
+/* A condensed Roll20-inspired result card: name, subheader and labelled rows. */
+.macro-chat-card{
+ display:flex;flex-direction:column;overflow:hidden;min-width:0;
+ margin-top:3px;border:1px solid #7a808a;border-radius:8px;
+ background:#edf1f3;color:#27313a;box-shadow:0 1px 3px #0004;
+ font-size:11px;line-height:1.3;
+}
+.macro-chat-header{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ text-align:center;background:linear-gradient(180deg,#777b82,#555b66);
+ color:#fefeff;padding:6px 7px 5px;gap:0;min-height:34px;
+}
+.macro-chat-header strong{font-size:13px;line-height:1.2}
+.macro-chat-header span{font-size:10px;line-height:1.2;color:#f4efff}
+.macro-chat-rows{display:flex;flex-direction:column}
+.macro-chat-row{display:grid;grid-template-columns:38% minmax(0,1fr);
+ border-top:1px solid #d1d6dc;min-height:28px}
+.macro-chat-row:nth-child(odd){background:#f7f8f9}
+.macro-chat-row:nth-child(even){background:#e7ecef}
+.macro-chat-row-label{
+ display:flex;align-items:center;border-right:1px solid #d3d8de;
+ padding:4px 6px;min-width:0;overflow-wrap:anywhere;font-weight:700;color:#5b2931
+}
+.macro-chat-values{display:flex;align-items:center;gap:5px 7px;flex-wrap:wrap;
+ min-width:0;padding:3px 6px}
+.macro-chat-cell{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;
+ max-width:100%;min-width:0;flex-wrap:wrap;font-size:10px;font-weight:550}
+.macro-chat-cell-label{font-size:9px;color:#53616b}
+.macro-chat-cell .roll-math-trigger{color:#291c57;border-bottom-color:#755aa4}
+.macro-chat-cell .roll-math-result{font-size:14px;background:#fff0b5;
+ padding:2px 4px;border-radius:3px}
+.macro-chat-cell.text{color:#545d67}
+.macro-chat-demo{font-size:14px;color:#7a7485}
+.macro-chat-preview{margin:8px 0;border-radius:7px}
+.macro-chat-preview .macro-chat-header{background:linear-gradient(180deg,#777b82,#555b66)}
+
+/* Macro Builder: draggable/resizable over the live battlemap. */
+.floating-window.floating-macro{
+ width:min(1050px,calc(100vw - 25px));
+ height:min(695px,calc(100dvh - 25px));
+ min-width:min(510px,calc(100vw - 12px));min-height:315px;
+}
+.floating-window>.macro-manager{
+ height:100%!important;width:100%!important;display:flex!important;
+ flex-direction:column;overflow:hidden!important;
+ padding:11px 14px!important;border:0!important;min-width:0;
+}
+.floating-window .macro-manager-heading{flex:0 0 auto;min-height:40px;
+ padding-bottom:8px!important;margin-bottom:8px!important}
+.macro-manager-heading h2{font-size:17px!important}
+.macro-manager-heading p{margin:2px 0 0}
+.macro-manager-body{display:grid;grid-template-columns:168px minmax(0,1fr);
+ gap:12px;flex:1;min-height:0;min-width:0;overflow:hidden}
+.macro-manager-library{display:flex;flex-direction:column;gap:7px;
+ min-width:0;min-height:0;overflow-y:auto;
+ border-right:1px solid #394b65;padding-right:10px}
+.macro-manager-library>strong{font-size:12px}
+.macro-manager-library>button{padding:7px 5px;font-size:11px}
+.macro-manager-list{display:flex;flex-direction:column;gap:5px;min-height:0}
+.macro-library-entry{
+ display:flex;flex-direction:column;text-align:left;gap:3px;
+ padding:8px 9px;border:1px solid #485b79;background:#24344b;
+ border-radius:7px;min-width:0;color:#edf2ff;cursor:grab
+}
+.macro-library-entry.selected{background:#403658;border-color:#9e87bd}
+.macro-library-entry strong{font-size:11px;overflow-wrap:anywhere}
+.macro-library-entry small{font-size:10px;color:#b8c9df}
+.macro-manager-editor{min-width:0;display:flex;flex-direction:column;gap:9px;min-height:0;
+ overflow:hidden}
+.macro-manager-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+ flex:0 0 auto}
+.macro-manager-meta label{display:flex;flex-direction:column;gap:4px;min-width:0;
+ font-size:10px;color:#beccdf}
+.macro-manager-meta input,.macro-manager-meta select{
+ width:100%;min-width:0;min-height:30px;padding:6px 9px;font-size:11px
+}
+.macro-source-label{grid-column:1/-1}
+.macro-manager-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,38%);
+ gap:12px;min-width:0;min-height:0;flex:1;overflow:hidden}
+.macro-manager-rows{min-width:0;min-height:0;overflow-y:auto;padding-right:4px;
+ display:flex;flex-direction:column;gap:8px}
+.macro-manager-section-heading{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.macro-manager-section-heading strong,.macro-manager-preview>strong{font-size:12px}
+.macro-manager-section-heading button{padding:5px 8px;font-size:11px}
+.macro-edit-row{display:flex;flex-direction:column;gap:6px;border:1px solid #4e6280;
+ border-radius:7px;background:#223149;padding:8px}
+.macro-edit-row-header{display:flex;align-items:center;gap:5px;min-width:0}
+.macro-edit-row-header input{flex:1;min-width:0;font-size:12px;font-weight:700}
+.macro-edit-row-header button{padding:5px 7px;min-width:25px}
+.macro-edit-cell{display:flex;flex-direction:column;gap:5px;
+ background:#1b2a40;border:1px solid #344c6a;border-radius:5px;padding:7px}
+.macro-edit-cell-header{display:flex;gap:5px;align-items:center}
+.macro-edit-cell-header select{width:112px;flex-shrink:0}
+.macro-edit-cell-header input{flex:1;min-width:0}
+.macro-edit-cell-header button{padding:5px 7px;min-width:25px}
+.macro-edit-cell input,.macro-edit-cell select{
+ min-width:0;font-size:11px;padding:6px 7px;min-height:29px
+}
+.macro-formula-input{font-family:ui-monospace,Consolas,monospace}
+.macro-edit-cell-actions{display:flex;gap:5px}
+.macro-edit-cell-actions button{font-size:10px;padding:5px 7px}
+.macro-manager-preview{min-width:0;min-height:0;overflow-y:auto;
+ padding:10px;background:#192538;border:1px solid #3d5069;border-radius:8px}
+.macro-manager-preview p{margin:5px 0;font-size:10px}
+.macro-manager-preview .macro-chat-card{font-size:10px}
+.macro-manager-notice{flex:0 0 auto;max-height:40px;overflow-y:auto;margin:4px 0!important}
+.macro-manager-footer{display:flex;align-items:center;gap:6px;justify-content:flex-end;
+ padding:9px 0 0;margin-top:8px;border-top:1px solid #425371;flex:0 0 auto}
+.macro-manager-footer .spacer{flex:1}
+.macro-manager-footer button{padding:7px 10px;font-size:11px}
+@media(max-width:790px){
+ .macro-manager-body{grid-template-columns:120px minmax(0,1fr);gap:7px}
+ .macro-manager-columns{display:flex;flex-direction:column;overflow-y:auto}
+ .macro-manager-rows,.macro-manager-preview{overflow:visible;flex:0 0 auto}
+ .macro-manager-preview{margin-bottom:10px}
+ .macro-edit-cell-header select{width:85px}
+}
+@media(max-width:520px){
+ .floating-window.floating-macro{width:calc(100vw - 10px);min-width:280px}
+ .macro-manager-body{grid-template-columns:minmax(0,1fr)}
+ .macro-manager-library{border-right:0;border-bottom:1px solid #394b65;max-height:105px;
+  padding:0 0 6px}
+ .macro-manager-list{flex-direction:row;overflow-x:auto}
+ .macro-library-entry{min-width:105px;flex-shrink:0}
+ .macro-manager-meta{gap:5px}
+}
