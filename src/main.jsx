@@ -93,6 +93,7 @@ function App(){
  const[pendingQuickTokens,setPendingQuickTokens]=useState({});
  const quickWritePatches=useRef(new Map());
  const monitorRequest=useRef(0);
+ const navigationChannel=useRef(null),navigationRequest=useRef(0);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const[macros,setMacros]=useState([]);
@@ -145,8 +146,35 @@ function App(){
    setSelectedMap(old=>(dm&&b.some(x=>x.id===old))?old:(b.some(x=>x.id===desired)?desired:''));
   }catch(e){fail(e)}
  }
+ /** Server-authorized routing: incoming broadcasts carry no private map IDs. */
+ async function refreshPlayerMapRouting(){
+  const request=++navigationRequest.current;
+  if(!db||!activeId||!user||isDM)return;
+  try{
+   const [campaign,own,availableMaps]=await Promise.all([
+    read(db.from('campaigns').select('active_map_id').eq('id',activeId).single()),
+    read(db.from('campaign_player_maps').select('campaign_id,user_id,map_id')
+     .eq('campaign_id',activeId).eq('user_id',user).maybeSingle()),
+    read(db.from('battle_maps').select('*').eq('campaign_id',activeId)
+     .order('created_at',{ascending:false}))
+   ]);
+   if(request!==navigationRequest.current)return;
+   const target=own?.map_id||campaign.active_map_id||'';
+   const visible=availableMaps.some(m=>m.id===target)?target:'';
+   setCamp(old=>old?{...old,active_map_id:campaign.active_map_id}:old);
+   setMapAssignments(old=>[...old.filter(a=>a.user_id!==user),...(own?[own]:[])]);
+   setMaps(availableMaps);
+   setSelectedMap(old=>old===visible?old:visible);
+  }catch(e){if(request===navigationRequest.current)console.error('Could not refresh map routing',e)}
+ }
+ function notifyMapRouting(payload){
+  const c=navigationChannel.current;
+  if(c)void c.send({type:'broadcast',event:'routing-changed',payload})
+   .catch(e=>console.warn('Map routing notification unavailable',e));
+ }
  async function refreshMaps(){if(!activeId)return;
-  try{const [f,m]=await Promise.all([read(db.from('map_folders').select('*').eq('campaign_id',activeId)),read(db.from('battle_maps').select('*').eq('campaign_id',activeId).order('created_at',{ascending:false}))]);setFolders(f);setMaps(m);setSelectedMap(old=>m.find(x=>x.id===old)?old:m[0]?.id||'');}catch(e){fail(e)}
+  try{const [f,m]=await Promise.all([read(db.from('map_folders').select('*').eq('campaign_id',activeId)),read(db.from('battle_maps').select('*').eq('campaign_id',activeId).order('created_at',{ascending:false}))]);setFolders(f);setMaps(m);setSelectedMap(old=>m.some(x=>x.id===old)?old:
+    (isDM?m[0]?.id||'':m.some(x=>x.id===playerMapId)?playerMapId:''));}catch(e){fail(e)}
  }
  
  async function refreshNpcs(){if(!activeId)return;try{
@@ -389,10 +417,38 @@ function App(){
    });
   return()=>{live=false};
  },[user,activeId]);
+ // This listener survives selected-map changes; a map switch must never
+ // unsubscribe navigation notifications during the transition.
+ useEffect(()=>{
+  if(!db||!activeId||!user)return;
+  const channel=db.channel('vtt-routing-'+activeId,{
+   config:{broadcast:{ack:true}}
+  }).on('broadcast',{event:'routing-changed'},({payload})=>{
+   if(!isDM&&(payload?.kind==='party'||payload?.targetId===user))
+    void refreshPlayerMapRouting();
+  }).on('postgres_changes',{
+   event:'*',schema:'public',table:'campaign_player_maps',
+   filter:'campaign_id=eq.'+activeId
+  },event=>{
+   if(!isDM&&event.new?.user_id===user)void refreshPlayerMapRouting();
+  }).on('postgres_changes',{
+   event:'UPDATE',schema:'public',table:'campaigns',
+   filter:'id=eq.'+activeId
+  },()=>{if(!isDM)void refreshPlayerMapRouting()})
+  .subscribe(status=>{
+   // A reconnect reconciles notifications missed while a user was offline.
+   if(status==='SUBSCRIBED'&&!isDM)void refreshPlayerMapRouting();
+  });
+  navigationChannel.current=channel;
+  return()=>{
+   if(navigationChannel.current===channel)navigationChannel.current=null;
+   ++navigationRequest.current;
+   void db.removeChannel(channel);
+  };
+ },[db,activeId,user,isDM]);
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
- .on('postgres_changes',{event:'*',schema:'public',table:'campaign_player_maps',filter:'campaign_id=eq.'+activeId},()=>fetchCampaign(activeId))
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
  useEffect(()=>{
   movementPending.current.clear();
@@ -989,9 +1045,25 @@ function App(){
     campaign_id:activeId,user_id:memberId,map_id:mapId||null
    },{onConflict:'campaign_id,user_id'}).select('*').single());
    setMapAssignments(old=>[...old.filter(x=>x.user_id!==memberId),item]);
+    notifyMapRouting({targetId:memberId});
   }catch(e){fail(e)}
  }
- async function publishMap(id){try{await read(db.from('campaigns').update({active_map_id:id}).eq('id',activeId));setCamp(x=>({...x,active_map_id:id}));await refreshMaps()}catch(e){fail(e)}}
+ async function publishMap(id){try{
+  await read(db.from('campaigns').update({active_map_id:id}).eq('id',activeId));
+  setCamp(x=>({...x,active_map_id:id}));
+  notifyMapRouting({kind:'party'});
+  await refreshMaps();
+ }catch(e){fail(e)}}
+ async function moveEntireParty(id){
+  if(!isDM||!maps.some(map=>map.id===id))return fail('Choose a campaign map for the party.');
+  try{
+   await read(db.rpc('move_entire_party_to_map',{p_campaign:activeId,p_map:id}));
+   setCamp(x=>({...x,active_map_id:id}));
+   setMapAssignments([]);
+   notifyMapRouting({kind:'party'});
+   await refreshMaps();
+  }catch(e){fail(e)}
+ }
  async function addToken(){if(!selectedMap)return;try{
   const ch=characters.find(c=>c.id===tokenOwner);
   await read(db.from('map_tokens').insert({
@@ -1265,6 +1337,7 @@ function App(){
  onMoveNpc={moveNpcFolder} onPlaceNpc={id=>placeNpc(id)}
  activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>selectMap(id).catch(fail)}
  publishedMapId={camp?.active_map_id||null} onPublishMap={publishMap}
+  onMoveEntireParty={moveEntireParty}
   mapAssignments={mapAssignments} onAssignPlayerMap={assignPlayerMap}
  onOpenMapLibrary={()=>setTab('maps')}
  newToken={newToken} onChangeTokenName={setNewToken}
