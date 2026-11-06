@@ -1,6 +1,7 @@
 import React from 'react';
 import {uid,num,safeList,clampNumber,numberFields} from './SheetMath.js';
 import {numericFieldsWithDerived,abilityModifier} from './SheetDerived.js';
+import {optionLists,optionListById,listItems} from './TemplateOptionLists.jsx';
 
 const DEFAULT_CATEGORIES=[
  {id:'light',label:'Light',role:'base',bonus:'full',cap:0},
@@ -13,7 +14,7 @@ export function makeEquipmentField(){
  return {id:uid('equipment_'),label:'Equipment & defence',type:'equipment',span:3,
   categories:structuredClone(DEFAULT_CATEGORIES),
   armorModifierField:'',unarmoredBase:10,unarmoredRule:'full',unarmoredCap:0,
-  proficiencyField:'',defaultAttackField:'',
+  proficiencyField:'',defaultAttackField:'',weaponModifierListId:'',
   armorModifierMode:'score',defaultAttackMode:'score',
   scoreBase:10,scoreStep:2,
   allowWeapons:true,allowArmor:true};
@@ -29,6 +30,7 @@ const bonusModes=[
 const valueObject=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
 export function EquipmentDesigner({field,template,onChange}){
  const attrs=numericFieldsWithDerived(template),categories=safeList(field.categories,16);
+ const lists=optionLists(template);
  const update=patch=>onChange({...field,...patch});
  const selectAttr=(name,label)=><label>{label}
   <select value={field[name]||''} onChange={e=>update({[name]:e.target.value})}>
@@ -78,6 +80,17 @@ export function EquipmentDesigner({field,template,onChange}){
    {field.unarmoredRule==='cap'&&<label>Unarmoured positive cap
     <input type="number" value={field.unarmoredCap??0} min="0" max="100"
      onChange={e=>update({unarmoredCap:clampNumber(e.target.value,0,100)})}/></label>}
+  </div>
+  <div className="equipment-list-setting">
+   <label>Weapon modifier dropdown list
+    <select value={field.weaponModifierListId||''}
+     onChange={e=>update({weaponModifierListId:e.target.value})}>
+     <option value="">All numeric fields (legacy selector)</option>
+     {lists.map(list=><option key={list.id} value={list.id}>{list.name}</option>)}
+    </select>
+   </label>
+   <p className="muted tiny">Create reusable lists in the Sheet Designer, then choose one
+    here. Players will see only the modifier options you define.</p>
   </div>
   <div className="sheet-module-editor-bar"><strong>Armour / equipment categories</strong>
    <button type="button" className="secondary" disabled={categories.length>=16}
@@ -158,13 +171,24 @@ function Input({value,onChange,type='text',label,...rest}){
 export function EquipmentManager({field,value,onChange,sheetValues={},template,onAttack}){
  const [attacking,setAttacking]=React.useState('');
  const [attackError,setAttackError]=React.useState('');
+ const [settingsWeaponId,setSettingsWeaponId]=React.useState('');
  const data=valueObject(value),categories=safeList(field.categories,16),
   armor=safeList(data.armor,100),weapons=safeList(data.weapons,100),
   stats=numericFieldsWithDerived(template);
+ const modifierList=optionListById(template,field.weaponModifierListId);
+ const modifierEntries=listItems(modifierList);
+ const settingsWeapon=weapons.find(w=>w.id===settingsWeaponId);
  const def=calculateArmor(field,data,sheetValues);
  const update=(key,rows)=>onChange({...data,[key]:rows});
  const changeItem=(key,id,patch)=>update(key,safeList(data[key],100).map(row=>
   row.id===id?{...row,...patch}:row));
+ function chooseModifier(weapon,id){
+  const option=modifierEntries.find(item=>item.id===id);
+  changeItem('weapons',weapon.id,{
+   modifierId:id,statField:option?.statField||'',
+   statMode:option?.statField?(option.statMode||'score'):''
+  });
+ }
  async function rollWeapon(weapon){
   if(attacking||!onAttack)return;
   setAttacking(weapon.id);setAttackError('');
