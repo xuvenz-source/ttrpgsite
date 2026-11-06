@@ -47,7 +47,10 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen,onStatus,canDrag,status
 /** Controlled native details. Expansion lives above the changing tab panels. */
 function SavedDetails({menuKey,expanded,onMenuToggle,className='',children}){
  return <details className={className} open={sidebarMenuOpen(expanded,menuKey)}
-  onToggle={event=>onMenuToggle(menuKey,event.currentTarget.open)}>
+  onToggle={event=>{
+   if(event.target===event.currentTarget)
+    onMenuToggle(menuKey,event.currentTarget.open);
+  }}>
   {children}
  </details>;
 }
@@ -117,8 +120,17 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=
      </section>;
     })}
     {owner.otherTokens.length>0&&<div className="unit-character">
-     <strong className="muted tiny">Other controlled tokens</strong>
-     {owner.otherTokens.map(t=><UnitRow key={t.id} {...unitProps(t)}/>)}
+     <button type="button" className="unit-character-toggle"
+      aria-expanded={opened('units/other/'+owner.user_id)}
+      onClick={()=>onMenuToggle('units/other/'+owner.user_id,
+       !opened('units/other/'+owner.user_id))}>
+      <strong className="muted tiny">
+       {opened('units/other/'+owner.user_id)?'▾':'▸'} Other controlled tokens
+      </strong><span className="unit-count">{owner.otherTokens.length}</span>
+     </button>
+     {opened('units/other/'+owner.user_id)&&<div className="unit-character-contents">
+      {owner.otherTokens.map(t=><UnitRow key={t.id} {...unitProps(t)}/>)}
+     </div>}
     </div>}
     {owner.user_id===user&&<SavedDetails menuKey={'units/new-character/'+owner.user_id} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details unit-create-character">
      <summary>+ New character sheet</summary>
@@ -133,9 +145,15 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=
    </div>}
   </section>)}
   {isDM&&unassigned.length>0&&<section className="unit-group">
-   <div className="unit-group-head">Unassigned / DM NPCs</div>
-   <div className="unit-group-items">{unassigned.map(t=>
-    <UnitRow key={t.id} {...unitProps(t)}/>)}</div>
+   <button type="button" className="unit-group-head"
+    aria-expanded={opened('units/unassigned')}
+    onClick={()=>onMenuToggle('units/unassigned',!opened('units/unassigned'))}>
+    <span>{opened('units/unassigned')?'▾':'▸'} Unassigned / DM NPCs</span>
+    <span className="unit-count">{unassigned.length}</span>
+   </button>
+   {opened('units/unassigned')&&<div className="unit-group-items">
+    {unassigned.map(t=><UnitRow key={t.id} {...unitProps(t)}/>)}
+   </div>}
   </section>}
   </div>
   {!owners.length&&<p className="muted small">No campaign members found.</p>}
