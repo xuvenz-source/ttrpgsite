@@ -3,6 +3,8 @@ import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
+import AttributeField from './AttributeField.jsx';
+import {SheetListField} from './TemplateOptionLists.jsx';
 import {enrichSheetValues,PERSONAL_RESOURCE_KEY,PERSONAL_RESOURCE_TAB} from './SheetDerived.js';
 import {ProgressionPanel,ProficienciesPanel} from './SheetProgression.jsx';
 import PersonalResources from './PersonalResources.jsx';
@@ -133,6 +135,13 @@ export default function CharacterEditor({
       f.type==='inventory'?<InventoryPanel field={f} value={draft.field_values[f.id]||[]}
         template={template} sheetValues={draft.field_values}
         onChange={v=>editField(f.id,v)}/>:
+      f.type==='attribute'?<AttributeField field={f} template={template}
+       value={draft.field_values[f.id]} values={draft.field_values}
+       onChange={v=>editField(f.id,v)}
+       onProficiencyChange={v=>editField(f.id+'__save_prof',v)}
+       onRoll={(formula,label)=>onRoll(formula,label)}/>:
+      f.type==='list'?<SheetListField field={f} template={template}
+       value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
       f.type==='resource'?<ResourceField value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
       f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.field_values[f.id]||{}}
        sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}/>:
