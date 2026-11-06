@@ -3,6 +3,9 @@ import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import './style.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
+import AccountSettings from './AccountSettings.jsx';
+import {validMeasurement,liveMeasurementPayload} from './MapMeasurements.js';
+import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
@@ -106,7 +109,9 @@ function App(){
  const rosterRequest=useRef(0),chatRequest=useRef(0),
   latestChatRefresh=useRef(null),latestRosterRefresh=useRef(null);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
- const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),[characterEditor,setCharacterEditor]=useState(null);
+ const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),
+  [characterEditor,setCharacterEditor]=useState(null);
+ const[accountSettingsOpen,setAccountSettingsOpen]=useState(false);
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
@@ -123,6 +128,8 @@ function App(){
  const navigationChannel=useRef(null),navigationRequest=useRef(0);
  const latestMonitorRefresh=useRef(null),latestTokenRefresh=useRef(null);
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
+ const[remoteMeasurements,setRemoteMeasurements]=useState({});
+ const measureExpiry=useRef(new Map()),lastMeasureSent=useRef(0);
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
@@ -148,6 +155,12 @@ function App(){
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  function fail(e){setError(message(e));console.error(e)}
+ async function accountUpdated(){
+  const {data,error:identityError}=await db.auth.getUser();
+  if(identityError)throw identityError;
+  if(data?.user)setSession(previous=>previous?{...previous,user:data.user}:previous);
+  if(activeId)void latestRosterRefresh.current?.();
+ }
  async function fetchCampaigns(prefer){if(!db||!user)return;
   setCampaignsLoading(true);
   try{const [cs,ms]=await Promise.all([read(db.from('campaigns').select('*').order('created_at',{ascending:false})),read(db.from('campaign_members').select('campaign_id,role').eq('user_id',user))]);
