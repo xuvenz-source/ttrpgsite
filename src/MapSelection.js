@@ -16,8 +16,8 @@ export function selectableTokenIds(tokens,rectangle,cell,user,isDM,mapId){
  return (tokens||[]).filter(token=>{
   if(!canControlMapToken(token,user,isDM,mapId))return false;
   const x=finite(token.x)*cell,y=finite(token.y)*cell,
-   width=Math.max(.25,finite(token.span_x,1))*cell,
-   height=Math.max(.25,finite(token.span_y,1))*cell;
+   width=Math.max(.25,finite(token.span_x??1,1))*cell,
+   height=Math.max(.25,finite(token.span_y??1,1))*cell;
   return x<r.x+r.width&&x+width>r.x&&
    y<r.y+r.height&&y+height>r.y;
  }).map(token=>token.id);
@@ -32,8 +32,8 @@ export function boundedGroupOffset(tokens,desiredX,desiredY,mapWidth,mapHeight,g
  const maxY=Math.max(0,Math.min(1000,Math.floor(finite(mapHeight)/grid)));
  const minDX=Math.max(...tokens.map(t=>-finite(t.x)));
  const minDY=Math.max(...tokens.map(t=>-finite(t.y)));
- const maxDX=Math.min(...tokens.map(t=>maxX-finite(t.x)-Math.max(.25,finite(t.span_x,1))));
- const maxDY=Math.min(...tokens.map(t=>maxY-finite(t.y)-Math.max(.25,finite(t.span_y,1))));
+ const maxDX=Math.min(...tokens.map(t=>maxX-finite(t.x)-Math.max(.25,finite(t.span_x??1,1))));
+ const maxDY=Math.min(...tokens.map(t=>maxY-finite(t.y)-Math.max(.25,finite(t.span_y??1,1))));
  const clamp=(v,min,max)=>Math.max(min,Math.min(Math.max(min,max),v));
  return {
   dx:clamp(Math.round(finite(desiredX)),minDX,maxDX),
