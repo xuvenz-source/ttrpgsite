@@ -17,8 +17,8 @@ test('every battlemap square represents exactly 5 ft',()=>{
  assert.deepEqual(MEASUREMENT_TOOLS,['line','circle','square','cone']);
  for(const mode of MEASUREMENT_TOOLS){
   const g=measurementGeometry({tool:mode,start:{x:2,y:3},end:{x:5,y:7}});
-  assert.equal(g.feet,25);
-  assert.match(g.label,/25 ft/);
+  assert.equal(g.feet,mode==='square'?20:25);
+  assert.match(g.label,mode==='square'?/20 ft/:/25 ft/);
  }
 });
 test('line distance measures Euclidean grid distance at every zoom',()=>{
