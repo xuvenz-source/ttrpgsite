@@ -19,7 +19,8 @@ import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
 import {createDebouncedSerialWriter} from './QueuedWrites.js';
-import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
+import {normalizeConfig} from './TokenMonitors.jsx';
+import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import ResourceField from './ResourceField.jsx';
 import AttributeField from './AttributeField.jsx';
 import {TemplateListsDesigner,SheetListField,optionLists} from './TemplateOptionLists.jsx';
@@ -2746,22 +2747,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     <MapMeasurementOverlay map={map} scale={scale} measures={measures}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
-    <div className="token-monitors-over-all" aria-hidden="true">
-     {visibleTokens.map(t=>{
-      const p={...t,...remotePositions[t.id],...preview[t.id]};
-      const cell=map.grid_size*scale;
-      return <div key={t.id} className="token-monitor-frame"
-       style={{
-        left:Number(p.x)*cell,top:Number(p.y)*cell,
-        width:cell*Number(p.span_x??1),height:cell*Number(p.span_y??1),
-        opacity:t.visible?1:.55
-       }}>
-       <TokenMonitors config={displaySettings} normalized fields={monitorValues[t.id]} zoom={scale}/>
-       {encumbranceBadges[t.id]&&<div className="token-encumbrance-indicator"
-        title={encumbranceBadges[t.id].label}>{encumbranceBadges[t.id].icon}</div>}
-      </div>;
-     })}
-    </div>
+    <TokenMonitorFrames tokens={visibleTokens} remotePositions={remotePositions}
+     preview={preview} config={displaySettings} monitorValues={monitorValues}
+     encumbranceBadges={encumbranceBadges} gridSize={map.grid_size} scale={scale}/>
    </div>
    </div>
   </div>
