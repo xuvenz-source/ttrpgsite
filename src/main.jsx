@@ -2124,7 +2124,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const[marquee,setMarquee]=useState(null);
  const[activeMeasureTool,setActiveMeasureTool]=useState(null),
   [localMeasurements,setLocalMeasurements]=useState([]);
- const measureDrag=useRef(null),toolDrag=useRef(null),measureTimers=useRef(new Map());
+ const measureDrag=useRef(null),toolDrag=useRef(null);
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
@@ -2142,28 +2142,26 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    setSelectedIds(selectedId?[selectedId]:[]);
   }
  },[selectedId]);
- // Local finished measurement shapes fade after 12 seconds; remote views
- // receive the same shape through the private map broadcast channel.
+ // Pinned measurements remain until the creator clears them.
  useEffect(()=>{
   setActiveMeasureTool(null);setLocalMeasurements([]);
   measureDrag.current=null;toolDrag.current=null;
-  for(const timer of measureTimers.current.values())clearTimeout(timer);
-  measureTimers.current.clear();
-  return()=>{
-   for(const timer of measureTimers.current.values())clearTimeout(timer);
-   measureTimers.current.clear();
-  };
  },[map.id]);
  useEffect(()=>{
   function onEscape(event){
    if(event.key!=='Escape'||!activeMeasureTool)return;
    event.preventDefault();
+   const current=measureDrag.current;
+   if(current){
+    setLocalMeasurements(existing=>existing.filter(m=>m.id!==current.measure.id));
+    onMeasurementPreview?.(current.measure,'remove');
+   }
    setActiveMeasureTool(null);
    measureDrag.current=null;toolDrag.current=null;
   }
   window.addEventListener('keydown',onEscape);
   return()=>window.removeEventListener('keydown',onEscape);
- },[activeMeasureTool]);
+ },[activeMeasureTool,onMeasurementPreview]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
   const vp=viewportRef.current;
@@ -2268,62 +2266,64 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const mapPointInCells=e=>pointOnBattlemap(e.clientX,e.clientY,
   boardRef.current?.getBoundingClientRect(),map.width,map.height,
   map.grid_size,zoomRef.current);
- function beginMeasurement(pointerId,tool,point){
-  if(!point)return;
+ function beginMeasurement(pointerId,tool,point,pinned=false){
+  if(!point||measureDrag.current)return;
   const measure={id:crypto.randomUUID(),tool,start:point,end:point};
-  measureDrag.current={pointerId,measure};
-  setLocalMeasurements(existing=>[...existing.slice(-7),{...measure,isLocal:true}]);
-  onMeasurementPreview?.(measure,false);
+  measureDrag.current={pointerId,measure,pinned};
+  setLocalMeasurements(existing=>[...existing,{...measure,isLocal:true}]);
+  onMeasurementPreview?.(measure,'preview');
  }
  function updateMeasurement(e){
   const current=measureDrag.current;
   if(!current||current.pointerId!==e.pointerId)return;
   const point=mapPointInCells(e);
   if(!point)return;
+  if(current.measure.end.x===point.x&&current.measure.end.y===point.y)return;
   const next={...current.measure,end:point};
   current.measure=next;
   setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
    {...next,isLocal:true}:m));
-  onMeasurementPreview?.(next,false);
+  onMeasurementPreview?.(next,'preview');
  }
  function finishMeasurement(e,cancel=false){
   const current=measureDrag.current;
   if(!current||current.pointerId!==e.pointerId)return;
   measureDrag.current=null;
-  if(cancel){
-   setLocalMeasurements(existing=>existing.filter(m=>m.id!==current.measure.id));
-   return;
-  }
-  const point=mapPointInCells(e)||current.measure.end;
+  const point=cancel?current.measure.end:
+   mapPointInCells(e)||current.measure.end;
   const done={...current.measure,end:point};
-  if(Math.hypot(done.end.x-done.start.x,done.end.y-done.start.y)<.02){
-   setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));return;
-  }
-  setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
-   {...done,isLocal:true}:m));
-  onMeasurementPreview?.(done,true);
-  const timer=setTimeout(()=>{
-   measureTimers.current.delete(done.id);
+  const meaningful=Math.hypot(done.end.x-done.start.x,
+   done.end.y-done.start.y)>=.5;
+  if(!cancel&&meaningful&&current.pinned){
+   setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
+    {...done,isLocal:true,pinned:true}:m));
+   onMeasurementPreview?.(done,'pin');
+  }else{
+   // Remove is broadcast without throttling; local removal is immediate.
    setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));
-  },12000);
-  measureTimers.current.set(done.id,timer);
+   onMeasurementPreview?.(done,'remove');
+  }
+ }
+ function clearMyPinnedMeasurements(){
+  setLocalMeasurements(existing=>existing.filter(m=>!m.pinned));
+  onMeasurementPreview?.(null,'clear');
  }
  function onToolPointerDown(e,tool){
+  if(e.button!==0&&e.button!==2)return;
   setActiveMeasureTool(tool);
-  if(e.button!==0)return;
   e.preventDefault();e.stopPropagation();
-  toolDrag.current={pointerId:e.pointerId,tool};
+  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2};
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
  }
  function onToolPointerMove(e){
-  if(!toolDrag.current||toolDrag.current.pointerId!==e.pointerId)return;
+  const current=toolDrag.current;
+  if(!current||current.pointerId!==e.pointerId)return;
   const rect=boardRef.current?.getBoundingClientRect();
   if(!rect)return;
-  // The user can start directly on an icon and drag into the map.
   if(!measureDrag.current){
    if(e.clientX<rect.left||e.clientX>rect.right||
       e.clientY<rect.top||e.clientY>rect.bottom)return;
-   beginMeasurement(e.pointerId,toolDrag.current.tool,mapPointInCells(e));
+   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned);
   }else updateMeasurement(e);
  }
  function onToolPointerUp(e,cancel=false){
@@ -2334,10 +2334,18 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
  }
  function startMeasurementCapture(e){
-  if(!activeMeasureTool||e.button!==0||pan.current)return;
+  if(!activeMeasureTool||(e.button!==0&&e.button!==2)||
+   pan.current||measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
-  beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e));
+  beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e),
+   e.button===2);
   try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
+ }
+ function pinCurrentMeasurementOnRightClick(e){
+  // Chorded mouse buttons do not generate a second pointerdown.
+  if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
+  e.preventDefault();e.stopPropagation();
+  measureDrag.current.pinned=true;
  }
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
