@@ -66,9 +66,15 @@ export default function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd
   }
  }
  function pointerMove(e){
-  const p=point(e);if(!p)return;
-  setCursor(p);
+  // Only the connected-line tool needs a hover preview. Grid snapping means
+  // many pointer events share a coordinate: retain state when it is unchanged.
+  if(tool==='wall-line'){
+   const p=point(e);if(!p)return;
+   setCursor(old=>old?.x===p.x&&old?.y===p.y?old:p);
+   return;
+  }
   if(tool!=='wall-pen'||!drawing.current)return;
+  const p=point(e);if(!p)return;
   setDraft(old=>{
    if(old.length>=500)return old;
    const last=old[old.length-1];
