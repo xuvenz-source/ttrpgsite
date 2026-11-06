@@ -24,6 +24,7 @@ import {movementTopic,allowedMovementPreview,canSendMovementPreview,
  MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
  boundedGroupOffset} from './MapSelection.js';
+import {campaignPresenceKey,onlineMemberIds,chatRowsForMap} from './CampaignRealtime.js';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,
@@ -100,6 +101,9 @@ function App(){
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('tabletop'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[mapAssignments,setMapAssignments]=useState([]),[accountNames,setAccountNames]=useState([]);
+ const[onlinePresenceKeys,setOnlinePresenceKeys]=useState([]),
+  [memberPresenceHashes,setMemberPresenceHashes]=useState({});
+ const rosterRequest=useRef(0),chatRequest=useRef(0),latestChatRefresh=useRef(null);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),[characterEditor,setCharacterEditor]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
@@ -141,6 +145,7 @@ function App(){
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
  tokenContextRef.current={mapId:selectedMap,campaignId:activeId};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
+ const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  function fail(e){setError(message(e));console.error(e)}
  async function fetchCampaigns(prefer){if(!db||!user)return;
   setCampaignsLoading(true);
@@ -421,13 +426,36 @@ function App(){
   };
   void load().catch(fail);
  },[launchNpc,camp,activeId,isDM]);
+ // A previous map's slower request must never overwrite chat for a new map.
  async function refreshChat(){
-  if(!activeId)return;
+  const request=++chatRequest.current,campaignId=activeId,mapId=selectedMap||null;
+  if(!db||!campaignId){setMsgs([]);return}
   try{
-   let q=db.from('chat_messages').select('*').eq('campaign_id',activeId);
-   q=selectedMap?q.eq('map_id',selectedMap):q.is('map_id',null);
-   setMsgs((await read(q.order('created_at',{ascending:false}).limit(100))).reverse());
-  }catch(e){fail(e)}
+   let q=db.from('chat_messages').select('*').eq('campaign_id',campaignId);
+   q=mapId?q.eq('map_id',mapId):q.is('map_id',null);
+   const rows=(await read(q.order('created_at',{ascending:false}).limit(100))).reverse();
+   if(request===chatRequest.current)setMsgs(chatRowsForMap(rows,mapId));
+  }catch(e){
+   if(request===chatRequest.current)console.error('Could not refresh chat',e);
+  }
+ }
+ async function refreshCampaignRoster(){
+  const request=++rosterRequest.current,campaignId=activeId;
+  if(!db||!campaignId)return;
+  try{
+   const [roster,sheets,names]=await Promise.all([
+    read(db.from('campaign_members').select('user_id,role').eq('campaign_id',campaignId)),
+    read(db.from('characters').select('*').eq('campaign_id',campaignId)),
+    read(db.rpc('get_campaign_account_names',{p_campaign:campaignId}))
+   ]);
+   if(request!==rosterRequest.current)return;
+   setMembers(roster);setCharacters(sheets);setAccountNames(names||[]);
+   setCharacter(current=>sheets.find(ch=>ch.id===current?.id&&ch.user_id===user)||
+    sheets.find(ch=>ch.user_id===user)||null);
+  }catch(e){
+   if(request===rosterRequest.current)
+    console.warn('Could not refresh campaign roster',e);
+  }
  }
  async function refreshMonitors(){
   const request=++monitorRequest.current;
