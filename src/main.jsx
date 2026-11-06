@@ -1745,7 +1745,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},hotbarInset=false}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},hotbarInset=false}){
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
@@ -1873,7 +1873,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {tokens.filter(t=>isDM||t.visible).map(t=>{
-     const p={...t,...preview[t.id]},canMove=isDM||t.owner_id===user;
+     const p={...t,...remotePositions[t.id],...preview[t.id]},canMove=isDM||t.owner_id===user;
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+(selectedId===t.id?' token-selected':'')}
       style={{
@@ -1900,17 +1900,22 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id;
       }}
       onPointerMove={e=>{
-       if(drag.current===t.id){const next=pos(e);setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}))}
+       if(drag.current===t.id){
+         const next=pos(e);
+         setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}));
+         onMovementPreview?.(t,next.x,next.y,false);
+        }
       }}
       onPointerUp={e=>{
        if(drag.current!==t.id)return;drag.current=null;
        const next=pos(e);
+       onMovementPreview?.(t,next.x,next.y,true);
        if(next.x!==t.x||next.y!==t.y){
         setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}));
         move(t,next.x,next.y);
        }
       }}
-      onPointerCancel={()=>{drag.current=null;setPreview({})}}>
+      onPointerCancel={()=>{if(drag.current===t.id)onMovementPreview?.(t,Number(t.x),Number(t.y),true);drag.current=null;setPreview({})}}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
@@ -1952,7 +1957,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">
      {tokens.filter(t=>isDM||t.visible).map(t=>{
-      const p={...t,...preview[t.id]};
+      const p={...t,...remotePositions[t.id],...preview[t.id]};
       const cell=map.grid_size*scale;
       return <div key={t.id} className="token-monitor-frame"
        style={{
