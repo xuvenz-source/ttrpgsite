@@ -3,7 +3,7 @@ import {createBarrier,createLight,snapEnvironmentPoint} from './MapEnvironment.j
 import {FEET_PER_CELL} from './MapMeasurements.js';
 
 /** DM-only editor overlay. None of these geometry objects are sent to players. */
-export default function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect}){
+function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect}){
  const [draft,setDraft]=useState([]);
  const [cursor,setCursor]=useState(null);
  const drawing=useRef(false),svg=useRef(null);
@@ -152,3 +152,5 @@ export default function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd
    pointerEvents="none"/>}
  </svg>;
 }
+
+export default React.memo(MapEnvironmentOverlay);
