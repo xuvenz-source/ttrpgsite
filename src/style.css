@@ -1897,3 +1897,5 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .macro-chat-cell.attack-selected .roll-math-result{box-shadow:inset 0 0 0 2px #4879c5}
 .macro-chat-cell.attack-selected .macro-chat-cell-label{font-weight:800;color:#234b89}
 @media(max-width:520px){.macro-attack-fields{grid-template-columns:minmax(0,1fr)}}
+
+.macro-chat-selected-label{font-size:10px;font-weight:900;color:#285caa}

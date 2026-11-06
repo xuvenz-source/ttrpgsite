@@ -23,6 +23,8 @@ export default function MacroChatCard({message,preview=false}){
         {cell.label&&<span className="macro-chat-cell-label">{cell.label}</span>}
         {preview?<span className="macro-chat-demo">—</span>:
          <RollMathTooltip data={cell.roll} size="small"/>}
+        {cell.selected&&<span className="macro-chat-selected-label"
+         title="Selected attack roll">✓</span>}
         {cell.critical&&<span className="macro-chat-crit-badge"
          title={'Natural '+(cell.roll?.natural??'d20')+' (critical on '+(cell.critOn??20)+'+)'}>CRIT</span>}
         {preview&&cell.critOn!=null&&<span className="macro-chat-preview-crit">

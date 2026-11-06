@@ -163,7 +163,7 @@ begin
      v_bonus:=public.roll_spell_expression(v_cell->>'critDamage','{}'::jsonb,v_sheet);
      v_damage_sum:=(v_damage->>'total')::integer+(v_bonus->>'total')::integer;
      v_damage_cells:=v_damage_cells||jsonb_build_array(jsonb_build_object(
-      'kind','roll','label','Crit bonus','roll',v_bonus,'critical',true));
+      'kind','roll','label','Crit bonus','roll',v_bonus));
      v_damage_cells:=v_damage_cells||jsonb_build_array(jsonb_build_object(
       'kind','roll','label','Total','roll',jsonb_build_object(
        'expression','Damage including critical bonus',
