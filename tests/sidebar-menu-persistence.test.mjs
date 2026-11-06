@@ -69,7 +69,7 @@ test('corrupted or hostile saved menu data does not break rendering',()=>{
  storage.setItem(key,'not-json');
  assert.deepEqual(readSidebarMenuState(storage,key),{});
  storage.setItem(key,JSON.stringify({
-  'units/unassigned':true,'units/sheet/'+camp1:1,
+  'units/unassigned':true,['units/sheet/'+camp1]:1,
   'dm/invites':false,'__proto__':true,'bad_key':true
  }));
  const result=readSidebarMenuState(storage,key);
