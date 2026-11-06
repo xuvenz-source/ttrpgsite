@@ -4,6 +4,7 @@ on:
     branches:
       - feature/token-status-markers
       - feature/compact-tabletop-ui
+      - feature/weapon-attack-cards
   workflow_dispatch:
 
 permissions:

@@ -1,5 +1,7 @@
 -- STAGED ONLY. Apply after other November 6 migrations, before releasing frontend.
 alter table public.characters drop constraint if exists characters_campaign_id_user_id_key;
+-- Original table grants only SELECT/UPDATE; RLS alone does not grant INSERT.
+grant insert on public.characters to authenticated;
 create policy "members create their own character sheets" on public.characters
 for insert to authenticated
 with check (user_id=(select auth.uid()) AND public.is_campaign_member(campaign_id));
