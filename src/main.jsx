@@ -1669,7 +1669,7 @@ function App(){
   <PersonalResources value={character?.field_values?.[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>updateField(PERSONAL_RESOURCE_KEY,v)}/>
  </div></div>:
- <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]}
+ <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]}
        template={camp?.sheet_template} sheetValues={character?.field_values}
        onChange={v=>updateField(f.id,v)}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f}
