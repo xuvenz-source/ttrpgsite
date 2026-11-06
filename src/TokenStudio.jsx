@@ -1,4 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
+import FloatingWindow from './FloatingWindow.jsx';
 
 const SIZE=400;
 const MAX_ART_MB=10;
@@ -254,8 +255,8 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
    onClose();
   }catch(err){setError(err?.message||String(err))}finally{setSaving(false)}
  }
- return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
-  <section className="modal tokenstudio" role="dialog" aria-modal="true" aria-label="Create character token">
+ return <FloatingWindow kind="studio" onClose={onClose}>
+  <section className="modal tokenstudio" role="dialog" aria-label="Create character token">
    <div className="heading"><h2>Portrait & token studio</h2><button className="secondary" onClick={onClose}>✕ Close</button></div>
    <p className="muted">Drag the portrait freely to centre the face, even at high zoom. Scroll over the preview to zoom toward the cursor. Transparent backgrounds are preserved in saved tokens.</p>
    <div className="studio-grid">
@@ -308,5 +309,5 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
    <div className="actions"><button className="secondary" onClick={onClose}>Cancel</button>
     <button disabled={!file||saving} onClick={save}>{saving?'Uploading…':onSaveBlobs?'Save to my library & equip':'Save portrait and token'}</button></div>
   </section>
- </div>;
+ </FloatingWindow>;
 }

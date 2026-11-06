@@ -3,6 +3,8 @@ import React,{useEffect,useRef,useState} from 'react';
 let topWindowLayer=700;
 const CONFIG={
  sheet:{width:840,height:660},
+ library:{width:840,height:575},
+ studio:{width:820,height:660},
  quick:{width:365,height:355},
  status:{width:650,height:610}
 };

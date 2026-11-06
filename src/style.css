@@ -2016,3 +2016,11 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 /* Maps smaller than the viewport are visually centred. For large maps, the
    board's initial scroll offset is centred without changing pan or zoom. */
 .mapscroll>.board-scroll-content{margin-inline:auto}
+
+/* Token library and studio join the shared nonmodal floating-window stack.
+   No blanket backdrop can block or darken the game/map. */
+.app .floating-window.floating-library{width:min(840px,calc(100vw - 20px));height:min(580px,calc(100dvh - 28px))}
+.app .floating-window.floating-studio{width:min(820px,calc(100vw - 20px));height:min(680px,calc(100dvh - 28px))}
+.floating-window.floating-library>.personal-token-library,
+.floating-window.floating-studio>.tokenstudio{max-height:none!important;overflow:auto!important}
+.floating-window.floating-library .personal-token-grid{overflow-y:auto;min-height:0}

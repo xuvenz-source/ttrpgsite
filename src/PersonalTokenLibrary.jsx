@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import Artwork from './Artwork.jsx';
 import TokenStudio from './TokenStudio.jsx';
+import FloatingWindow from './FloatingWindow.jsx';
 
 const LIBRARY_BUCKET='personal-token-art';
 const CAMPAIGN_BUCKET='tabletop-artwork';
@@ -119,9 +120,9 @@ export default function PersonalTokenLibrary({
   }catch(e){setError(e?.message||String(e))}finally{setBusy(false)}
  }
 
- return <div className="modal-backdrop personal-token-backdrop"
-  onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
-  <section className="modal personal-token-library" role="dialog" aria-modal="true" aria-label="My Token Library">
+ return <>
+  <FloatingWindow kind="library" onClose={onClose}>
+  <section className="modal personal-token-library" role="dialog" aria-label="My Token Library">
    <div className="heading">
     <div><h2>My Token Library</h2>
      <p className="muted small">Private to your account · Reusable across campaigns</p>
@@ -155,7 +156,8 @@ export default function PersonalTokenLibrary({
      </div>
     </article>)}</div>}
   </section>
+  </FloatingWindow>
   {studio&&<TokenStudio db={db} userId={userId} campaignId={campaignId}
    onClose={()=>setStudio(false)} onSaveBlobs={saveNewBlobs}/>}
- </div>;
+ </>;
 }
