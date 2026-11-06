@@ -143,6 +143,7 @@ export default function TabletopSidebar({
  chat,onChatChange,onSendChat,
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
+ mapAssignments=[],onAssignPlayerMap,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
  statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
@@ -267,6 +268,19 @@ export default function TabletopSidebar({
       <button type="button" disabled={!activeMap||activeMap.id===publishedMapId}
        onClick={()=>onPublishMap(selectedMap)}>Publish selected map to players</button>
       <button type="button" className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
+      <div className="private-map-assignments">
+       <strong>Player map assignments</strong>
+       <p className="muted tiny">Party default follows the published map. Assign another map for a private solo or split-party scene. Other players cannot view it.</p>
+       {members.filter(member=>member.role==='player').map((member,index)=>
+        <label key={member.user_id}>
+         {characters.filter(ch=>ch.user_id===member.user_id).map(ch=>ch.name).join(', ')||'Player '+(index+1)}
+         <select value={mapAssignments.find(a=>a.user_id===member.user_id)?.map_id||''}
+          onChange={e=>onAssignPlayerMap(member.user_id,e.target.value)}>
+          <option value="">Party default (published map)</option>
+          {maps.map(map=><option key={map.id} value={map.id}>{map.name}</option>)}
+         </select>
+        </label>)}
+      </div>
       <details className="side-details map-calibration-panel">
        <summary>Grid & image calibration</summary>
        <MapCalibration key={activeMap?.id||'no-map'} map={activeMap}

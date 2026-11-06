@@ -9,10 +9,10 @@ alter table public.battle_maps
 create table public.campaign_player_maps (
  campaign_id uuid not null,
  user_id uuid not null,
- map_id uuid not null,
+ map_id uuid,
  primary key(campaign_id,user_id),
  foreign key(campaign_id,user_id) references public.campaign_members(campaign_id,user_id) on delete cascade,
- foreign key(campaign_id,map_id) references public.battle_maps(campaign_id,id) on delete cascade
+ foreign key(campaign_id,map_id) references public.battle_maps(campaign_id,id) on delete set null (map_id)
 );
 alter table public.campaign_player_maps enable row level security;
 grant select,insert,update,delete on public.campaign_player_maps to authenticated;
@@ -108,7 +108,7 @@ create policy "dm read maps" on storage.objects
 alter table public.chat_messages add column map_id uuid;
 alter table public.chat_messages
  add constraint chat_messages_campaign_map_fk
- foreign key(campaign_id,map_id) references public.battle_maps(campaign_id,id) on delete set null;
+ foreign key(campaign_id,map_id) references public.battle_maps(campaign_id,id) on delete set null (map_id);
 update public.chat_messages msg
  set map_id=c.active_map_id
  from public.campaigns c where msg.campaign_id=c.id
@@ -194,7 +194,4 @@ begin
 end $patch$;
 
 -- Restrict map folder names to the DM: players only need assigned map data.
-drop policy if exists "members read map folders" on public.map_folders;
-drop policy if exists "members view map folders" on public.map_folders;
-create policy "dm reads private map folders" on public.map_folders
- for select to authenticated using (public.is_campaign_dm(campaign_id));
+-- The existing map-folder SELECT policy is already DM-only.
