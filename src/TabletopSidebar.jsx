@@ -183,7 +183,7 @@ export default function TabletopSidebar({
  macroCount=0,onOpenMacros,
  uiScale,onChangeUiScale,
  activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,onOpenCharacterTab,
- campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
+ campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,onOpenAccountSettings,hasCampaign
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
  const chatScrollRef=useRef(null);
@@ -249,6 +249,8 @@ export default function TabletopSidebar({
    tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}/></div>}
   {validPanel==='settings'&&<div className="right-body">
    <div className="side-form">
+    <button type="button" className="secondary full-button" onClick={onOpenAccountSettings}>
+     ⚙ Account Settings · Username &amp; Password</button>
     <button type="button" className="secondary full-button" onClick={onReturnToMenu}>← Back to main menu</button>
     {currentPage!=='tabletop'&&<button type="button" className="secondary full-button" onClick={()=>onNavigate('tabletop')}>Return to tabletop</button>}
     <details className="side-details">
