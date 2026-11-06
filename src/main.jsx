@@ -87,7 +87,7 @@ function App(){
  const[tab,setTab]=useState('tabletop'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[mapAssignments,setMapAssignments]=useState([]),[accountNames,setAccountNames]=useState([]);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
- const[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
+ const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),[characterEditor,setCharacterEditor]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
@@ -207,12 +207,25 @@ function App(){
    await read(db.from('npc_folders').insert({campaign_id:activeId,name,parent_id:parentId}));
    await refreshNpcs();
   }catch(e){fail(e)}}
+ function openNpcEditor(record){
+  const key=record.kind+':'+record.data.id;
+  setNpcEditors(previous=>{
+   const existing=previous.find(item=>item.kind+':'+item.data.id===key);
+   if(existing)return previous.map(item=>item===existing?
+    {...item,focusSignal:(item.focusSignal||0)+1}:item);
+   return [...previous.slice(-15),{...record,focusSignal:0}];
+  });
+ }
+ function closeNpcEditor(record){
+  const key=record.kind+':'+record.data.id;
+  setNpcEditors(previous=>previous.filter(item=>item.kind+':'+item.data.id!==key));
+ }
  async function makeNpc(name,folderId){try{
    const created=await read(db.from('npc_templates').insert({
     campaign_id:activeId,folder_id:folderId,name,
     field_values:{character_name:name}
    }).select('*').single());
-   await refreshNpcs();setNpcEditor({kind:'template',data:created});
+   await refreshNpcs();openNpcEditor({kind:'template',data:created});
   }catch(e){fail(e)}}
  async function moveNpcFolder(id,folderId){try{
   await read(db.from('npc_templates').update({folder_id:folderId}).eq('id',id));await refreshNpcs();
@@ -265,7 +278,7 @@ function App(){
    await openPlayerCharacter(t.character_id,t.owner_id);
   }else{
    const npcValues=await read(db.rpc('get_npc_token_values',{p_token:t.id}));
-   setNpcEditor({kind:'token',data:{...t,npc_values:npcValues||{}}});
+   openNpcEditor({kind:'token',data:{...t,npc_values:npcValues||{}}});
   }
  }
  function afterPlayerSheetSaved(updated){
@@ -274,19 +287,19 @@ function App(){
   void refreshMonitors();
   notifyMonitorRefresh();
  }
- async function saveNpc(draft){
-  if(!npcEditor)return;
-  if(npcEditor.kind==='template'){
+ async function saveNpc(record,draft){
+  if(!record)return;
+  if(record.kind==='template'){
    await read(db.from('npc_templates').update({
     name:draft.name.trim(),field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath,
     npc_bars_public:draft.barsPublic
-   }).eq('id',npcEditor.data.id));
+   }).eq('id',record.data.id));
    await refreshNpcs();
   }else{
    await read(db.from('map_tokens').update({
     name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath,
     npc_bars_public:draft.barsPublic
-   }).eq('id',npcEditor.data.id));
+   }).eq('id',record.data.id));
    await refreshTokens();
    await refreshMonitors();
   }
@@ -423,7 +436,7 @@ function App(){
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
   setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
-  ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+  ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
   if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);setUiScale(.9);return}
   let alive=true;
@@ -1447,7 +1460,7 @@ function App(){
  chat={chat} onChatChange={setChat} onSendChat={sendChat}
  npcs={npcs} npcFolders={npcFolders}
  onNewNpcFolder={makeNpcFolder} onNewNpc={makeNpc}
- onEditNpc={n=>setNpcEditor({kind:'template',data:n})}
+ onEditNpc={n=>openNpcEditor({kind:'template',data:n})}
  onMoveNpc={moveNpcFolder} onPlaceNpc={id=>placeNpc(id)}
  activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>selectMap(id).catch(fail)}
  publishedMapId={camp?.active_map_id||null} onPublishMap={publishMap}
@@ -1518,26 +1531,28 @@ function App(){
    onRemember={values=>quickCache.current.set(quickEditToken.id,values)}
    onClose={()=>setQuickEditToken(null)} onApply={applyQuickTokenChanges}/>
  </QuickEditBoundary>}
- {npcEditor&&isDM&&<NpcEditor db={db} campaignId={activeId} userId={user}
-  record={npcEditor} template={camp?.sheet_template}
-  onSave={saveNpc} onSaveAsTemplate={async draft=>{
-    await read(db.from('npc_templates').insert({
-     campaign_id:activeId,name:draft.name.trim(),
-     field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath,
-     npc_bars_public:draft.barsPublic
-    }));
-    await refreshNpcs();
-   }} onClose={()=>setNpcEditor(null)}
+ {isDM&&npcEditors.map(editor=><NpcEditor
+  key={editor.kind+':'+editor.data.id} focusSignal={editor.focusSignal}
+  db={db} campaignId={activeId} userId={user}
+  record={editor} template={camp?.sheet_template}
+  onSave={draft=>saveNpc(editor,draft)} onSaveAsTemplate={async draft=>{
+   await read(db.from('npc_templates').insert({
+    campaign_id:activeId,name:draft.name.trim(),
+    field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath,
+    npc_bars_public:draft.barsPublic
+   }));
+   await refreshNpcs();
+  }} onClose={()=>closeNpcEditor(editor)}
   onRoll={(expression,label)=>roll(expression,label,null)}
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
-   sourceType:npcEditor.kind==='token'?'npc_token':'npc_template',
-   sourceId:npcEditor.data.id,collectionId,entryId,mode
+   sourceType:editor.kind==='token'?'npc_token':'npc_template',
+   sourceId:editor.data.id,collectionId,entryId,mode
   })}
   onEquipmentAttack={({fieldId,weaponId})=>attackWithWeapon({
-   sourceType:npcEditor.kind==='token'?'npc_token':'npc_template',
-   sourceId:npcEditor.data.id,fieldId,weaponId
+   sourceType:editor.kind==='token'?'npc_token':'npc_template',
+   sourceId:editor.data.id,fieldId,weaponId
   })}
-  onAddSpellToHotbar={assignSpellToHotbar}/>}
+  onAddSpellToHotbar={assignSpellToHotbar}/>)}
  </div>;
 }
 function configured(){return !!db}
