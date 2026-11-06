@@ -1510,9 +1510,24 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
      </div>}
      {f.type==='roll'&&<label>Dice formula<input value={f.formula||''}
       onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}
-    {f.type==='inventory'&&<label>Columns (comma separated)<input
+    {f.type==='inventory'&&<div className="inventory-designer-options">
+     <label>Inventory preset<select value={f.inventoryPreset||'list'}
+      onChange={e=>update(f.id,'inventoryPreset',e.target.value)}>
+      <option value="list">Classic list (Roll20 style)</option>
+      <option value="grid">Slot grid (drag items)</option>
+     </select></label>
+     {f.inventoryPreset==='grid'&&<>
+      <label>Grid columns<input type="number" min="2" max="20"
+       value={f.gridColumns||8} onChange={e=>update(f.id,'gridColumns',Number(e.target.value))}/></label>
+      <label>Grid rows<input type="number" min="2" max="20"
+       value={f.gridRows||5} onChange={e=>update(f.id,'gridRows',Number(e.target.value))}/></label>
+     </>}
+     <label>List columns (comma separated)<input
       value={(f.columns||[]).join(', ')}
-      onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>}
+      onChange={e=>update(f.id,'columns',e.target.value.split(',').map(x=>x.trim()).filter(Boolean))}/></label>
+     <p className="muted tiny">Use Item, Qty, Weight, Notes for carry weight and DM item distribution.
+      Switching layouts keeps the same saved items.</p>
+    </div>}
    </div>)}
   </div>
  </>;
