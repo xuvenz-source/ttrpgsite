@@ -174,7 +174,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     <option value="snow">Snow</option><option value="fog">Atmospheric fog</option>
    </select></label>
    <NumberOption title="Effect intensity (%)" min={0} max={100} value={env.effects.intensity}
-    onChange={v=>updateEnv({effects:{...env.effects,intensity:v??0})}/>
+    onChange={v=>updateEnv({effects:{...env.effects,intensity:v??0}})}/>
    <p className="muted tiny">{env.objects.length} environment objects on this map.</p>
   </>}
   <p className="map-setting-save" role="status">{saveStatus||'Not loaded'}</p>
