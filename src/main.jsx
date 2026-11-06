@@ -322,6 +322,14 @@ function App(){
    await refreshTokens();
    await refreshMonitors();
   }
+  const editorKey=record.kind+':'+record.data.id;
+  setNpcEditors(current=>current.map(editor=>editor.kind+':'+editor.data.id===editorKey?
+   {...editor,data:{
+    ...editor.data,name:draft.name.trim(),npc_bars_public:draft.barsPublic,
+    ...(editor.kind==='template'?{
+     field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath
+    }:{npc_values:draft.values,image_path:draft.tokenPath})
+   }}:editor));
  }
  async function placeNpc(npcId,x=1,y=1){
   const npc=npcs.find(n=>n.id===npcId);

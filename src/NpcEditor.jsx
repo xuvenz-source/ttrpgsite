@@ -66,7 +66,15 @@ export default function NpcEditor({
   try{await onSaveAsTemplate(draft);setNotice('Saved a reusable copy in your Bestiary.')}
   catch(e){setError(e?.message||String(e))}finally{setSaving(false)}
  }
- function close(){if(!confirm('Close NPC sheet? Unsaved changes will be lost.'))return;onClose()}
+ function close(){
+  const unsaved=JSON.stringify(draft.values)!==savedValues.current||
+   draft.name!==record.data.name||
+   draft.barsPublic!==!!record.data.npc_bars_public||
+   draft.tokenPath!==(record.kind==='template'?
+    record.data.token_path||null:record.data.image_path||null);
+  if(unsaved&&!confirm('Close NPC sheet? Unsaved changes will be lost.'))return;
+  onClose();
+ }
  const doRoll=(field)=>{
   const formula=(field.formula||'1d20').replace(/@\{([a-z0-9_-]+)\}/gi,(raw,key)=>{
    const val=draft.values[key];return val!==undefined&&String(val).match(/^-?\d+$/)?String(val):'0'
@@ -133,7 +141,10 @@ export default function NpcEditor({
  </div>
  {error&&<p className="error">{error}</p>}
  {notice&&<p className="good">{notice}</p>}
- <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button onClick={()=>save(false)} disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save NPC sheet'}</button></div>
+ <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button className="secondary" onClick={()=>void save(true)}
+  disabled={saving||!draft.name.trim()}>Save & keep open</button>
+ <button onClick={()=>void save(false)} disabled={saving||!draft.name.trim()}>
+  {saving?'Saving…':'Save & close'}</button></div>
  </section>
  </FloatingWindow>
  {studio&&<PersonalTokenLibrary db={db} campaignId={campaignId} userId={userId}
