@@ -2024,3 +2024,8 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .floating-window.floating-library>.personal-token-library,
 .floating-window.floating-studio>.tokenstudio{max-height:none!important;overflow:auto!important}
 .floating-window.floating-library .personal-token-grid{overflow-y:auto;min-height:0}
+
+/* Multiple browser-tab sheets do not obstruct the map's existing windows. */
+.unit-character-heading{gap:3px}
+.unit-character-heading .unit-character-sheet{white-space:nowrap}
+.floating-sheet-content>.heading{flex-wrap:wrap}

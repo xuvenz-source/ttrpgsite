@@ -13,7 +13,7 @@ import InventoryPanel from './InventoryPanel.jsx';
 
 /** A DM can edit a player's persistent sheet, never just the token's temporary stats. */
 export default function CharacterEditor({
- db,campaignId,viewerId,record,template,onSaved,onClose,onRoll,
+ db,campaignId,viewerId,record,template,onSaved,onClose,onRoll,onOpenBrowserTab,
  onCastSpell,onAddSpellToHotbar,onEquipmentAttack
 }){
  const initial=useMemo(()=>({
@@ -102,7 +102,10 @@ export default function CharacterEditor({
    <div className="heading"><div>
     <h2>Player character sheet</h2>
     <p className="muted small">DM editor · Edits are saved to this player's permanent campaign character.</p>
-   </div><button type="button" className="secondary" aria-label="Close character sheet" onClick={close}>✕</button></div>
+   </div>
+   {onOpenBrowserTab&&<button type="button" className="secondary"
+    title="Open character in a separate browser tab" onClick={onOpenBrowserTab}>↗ New tab</button>}
+   <button type="button" className="secondary" aria-label="Close character sheet" onClick={close}>✕</button></div>
    <div className="npc-editor-top">
     <Artwork db={db} path={draft.portrait_path||draft.token_path} alt={draft.name} className="npc-editor-portrait"/>
     <label>Character name

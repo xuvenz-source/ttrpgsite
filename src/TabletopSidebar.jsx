@@ -44,7 +44,7 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen,onStatus,canDrag,status
 }
 function UnitGroups({db,tokens,characters,members,accountNames=[],user,isDM,
  selectedToken,onSelect,onOpen,onStatus,statusCatalog,onResize,onOpenPlayerCharacter,
- onOpenOwnCharacter,onCreateCharacter,newCharacterName,onChangeNewCharacterName,
+ onOpenOwnCharacter,onOpenCharacterTab,onCreateCharacter,newCharacterName,onChangeNewCharacterName,
  onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
  const [collapsed,setCollapsed]=useState({});
  const [hiddenSheets,setHiddenSheets]=useState({});
@@ -87,6 +87,8 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],user,isDM,
        <button type="button" className="secondary unit-character-sheet" onClick={()=>
         owner.user_id===user?onOpenOwnCharacter(ch.id):onOpenPlayerCharacter(ch.id)}>
         Sheet</button>
+       <button type="button" className="secondary unit-character-sheet"
+        title="Open in separate browser tab" onClick={()=>onOpenCharacterTab(ch.id)}>↗</button>
       </div>
       {visible&&<div className="unit-character-contents">
        {activeMap&&<div draggable className="unit-character-drag"
@@ -176,7 +178,7 @@ export default function TabletopSidebar({
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  macroCount=0,onOpenMacros,
  uiScale,onChangeUiScale,
- activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,
+ activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,onOpenCharacterTab,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
@@ -236,6 +238,7 @@ export default function TabletopSidebar({
    onSelect={onSelectToken} onOpen={onOpenToken} onStatus={onOpenStatus}
    statusCatalog={statusCatalog} onResize={onResizeToken}
    onOpenPlayerCharacter={onOpenPlayerCharacter} onOpenOwnCharacter={onOpenOwnCharacter}
+   onOpenCharacterTab={onOpenCharacterTab}
    onCreateCharacter={onCreateCharacter} newCharacterName={newCharacterName}
    onChangeNewCharacterName={onChangeNewCharacterName}
    onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
