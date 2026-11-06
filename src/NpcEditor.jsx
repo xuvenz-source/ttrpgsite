@@ -110,7 +110,7 @@ export default function NpcEditor({
  {t===PERSONAL_RESOURCE_TAB?<div className="field span3">
   <PersonalResources value={draft.values[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>setField(PERSONAL_RESOURCE_KEY,v)}/></div>:
- (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>
+ (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
  f.type==='inventory'?<InventoryPanel field={f} template={template}
   value={draft.values[f.id]||[]} sheetValues={draft.values}
