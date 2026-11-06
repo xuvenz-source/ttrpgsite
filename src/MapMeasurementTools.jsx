@@ -24,7 +24,7 @@ export function MeasurementToolIcon({tool}){
   </>}
  </svg>;
 }
-export function MeasurementToolBar({tool,onPointerDown,onKeySelect}){
+export function MeasurementToolBar({tool,onPointerDown,onPointerMove,onPointerUp,onPointerCancel,onKeySelect}){
  const names={line:'Direct line',circle:'Circle radius',square:'Square radius',cone:'Cone'};
  return <div className="map-measure-toolbar" role="toolbar" aria-label="Battlemap measurement tools">
   {MEASUREMENT_TOOLS.map(id=><button key={id} type="button"
@@ -32,6 +32,9 @@ export function MeasurementToolBar({tool,onPointerDown,onKeySelect}){
    aria-label={names[id]} aria-pressed={tool===id}
    title={names[id]+': click then drag on map, or drag the icon onto the map'}
    onPointerDown={e=>onPointerDown(e,id)}
+   onPointerMove={onPointerMove}
+   onPointerUp={onPointerUp}
+   onPointerCancel={onPointerCancel}
    onClick={e=>{if(e.detail===0)onKeySelect(id)}}>
    <MeasurementToolIcon tool={id}/>
   </button>)}
