@@ -98,7 +98,7 @@ export default function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd
  const pointsString=pts=>(pts||[]).map(p=>p.x+','+p.y).join(' ');
  return <svg ref={svg} className="map-env-overlay map-env-editing" aria-label="DM environment drawing surface"
   viewBox={`0 0 ${maxX} ${maxY}`} preserveAspectRatio="none"
-  onContextMenu={e=>{e.preventDefault();e.stopPropagation();if(tool==='wall-line'&&draft.length)finishLine()}}
+  onContextMenu={e=>{e.preventDefault();e.stopPropagation()}}
   onPointerDown={pointerDown} onPointerMove={pointerMove}
   onPointerUp={pointerUp} onPointerCancel={()=>{drawing.current=false;setDraft([])}}>
   {objects.map(obj=>{
@@ -116,7 +116,7 @@ export default function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd
      {brightCells>0&&<circle cx={x} cy={y} r={brightCells} fill="none"
       stroke={obj.color||'#f6be75'} strokeOpacity=".9"
       strokeWidth=".11" vectorEffect="non-scaling-stroke"/>}
-     <circle cx={x} cy={y} r={selected?.35:.22}
+     <circle cx={x} cy={y} r={selected ? .35 : .22}
       fill={obj.color||'#f6be75'} stroke={selected?'white':'#292f3c'}
       strokeWidth=".07" vectorEffect="non-scaling-stroke"/>
     </g>;
