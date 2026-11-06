@@ -625,6 +625,9 @@ function App(){
  // solo-map coordinates being broadcast to unauthorized players.
  useEffect(()=>{
   setRemoteTokenPositions({});
+  setRemoteMeasurements({});
+  for(const timer of measureExpiry.current.values())clearTimeout(timer);
+  measureExpiry.current.clear();lastMeasureSent.current=0;
   for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
   remoteMoveExpiry.current.clear();lastMovementPreview.current.clear();
   liveMapReady.current=false;
@@ -652,6 +655,20 @@ function App(){
     void latestTokenRefresh.current?.();
    },payload.final?3000:MOVE_PREVIEW_EXPIRE_MS);
    remoteMoveExpiry.current.set(id,timer);
+  }).on('broadcast',{event:'map-measure'},({payload})=>{
+   if(!validMeasurement(payload,selectedMap)||payload.actor===user)return;
+   const key=payload.id;
+   setRemoteMeasurements(previous=>({...previous,[key]:payload}));
+   const oldTimer=measureExpiry.current.get(key);
+   if(oldTimer)clearTimeout(oldTimer);
+   const timer=setTimeout(()=>{
+    measureExpiry.current.delete(key);
+    setRemoteMeasurements(previous=>{
+     if(previous[key]!==payload)return previous;
+     const next={...previous};delete next[key];return next;
+    });
+   },payload.final?12000:4500);
+   measureExpiry.current.set(key,timer);
   }).subscribe((status,error)=>{
    liveMapReady.current=status==='SUBSCRIBED';
    if(status==='CHANNEL_ERROR')console.warn('Fast map movement unavailable',error);
@@ -662,6 +679,8 @@ function App(){
    liveMapReady.current=false;
    for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
    remoteMoveExpiry.current.clear();
+   for(const timer of measureExpiry.current.values())clearTimeout(timer);
+   measureExpiry.current.clear();setRemoteMeasurements({});
    void db.removeChannel(channel);
   };
  },[db,activeId,selectedMap,user]);
@@ -677,6 +696,18 @@ function App(){
    id:token.id,mapId:selectedMap,actor:user,x,y,
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
+ }
+ function sendLiveMeasurement(measure,final=false){
+  if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
+  const now=Date.now();
+  if(!final&&now-lastMeasureSent.current<65)return;
+  const data=liveMeasurementPayload(measure,measure.id,user,selectedMap,final);
+  if(!validMeasurement(data,selectedMap,
+   displayedMap.width/displayedMap.grid_size,
+   displayedMap.height/displayedMap.grid_size))return;
+  lastMeasureSent.current=now;
+  void liveMapChannel.current.send({type:'broadcast',event:'map-measure',
+   payload:data}).catch(error=>console.warn('Live measurement not delivered',error));
  }
  useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
