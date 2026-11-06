@@ -17,6 +17,7 @@ import {normalizeEnvironment,withObject} from './MapEnvironment.js';
 import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
+import {createDebouncedSerialWriter} from './QueuedWrites.js';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import AttributeField from './AttributeField.jsx';
@@ -124,7 +125,7 @@ function App(){
  const[mapEnvironment,setMapEnvironment]=useState(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
- const mapEnvironmentWriteQueue=useRef(Promise.resolve());
+ const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
   lockLight:false,lockBackground:true,snap:true,preset:'solid',
@@ -162,6 +163,29 @@ function App(){
  // Keep the most recent local destination authoritative until the server acknowledges it.
  const movementPending=useRef(new Map()),tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
+ if(!mapEnvironmentWriter.current){
+  mapEnvironmentWriter.current=createDebouncedSerialWriter(
+   async (prepared,{mapId,campaignId})=>{
+    const {error:saveError}=await db.from('map_environments').upsert({
+     map_id:mapId,campaign_id:campaignId,prepared,
+     updated_at:new Date().toISOString()
+    },{onConflict:'map_id'});
+    if(saveError)throw saveError;
+   },{
+    onSaved:({context})=>{
+     if(tokenContextRef.current.mapId===context.mapId&&
+        tokenContextRef.current.campaignId===context.campaignId)
+      setMapEnvironmentStatus('Saved');
+    },
+    onError:(error,{context})=>{
+     console.error('Could not save map environment',error);
+     if(tokenContextRef.current.mapId===context.mapId&&
+        tokenContextRef.current.campaignId===context.campaignId)
+      setMapEnvironmentStatus('Save failed: '+message(error));
+    }
+   }
+  );
+ }
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
  const saveTimer=useRef(null),pendingSheetSave=useRef(null),
   sheetWriteQueue=useRef(Promise.resolve()),user=session?.user?.id,isDM=roles[activeId]==='dm';
@@ -982,6 +1006,21 @@ function App(){
   return()=>document.removeEventListener('keydown',onKey);
  },[user,activeId,selectedMap,tab,camp,bindings,hotbarSlots,hotbarVisible,selectedTokenId,tokens,isDM,character]);
  useEffect(()=>()=>clearTimeout(saveTimer.current),[]);
+ useEffect(()=>{
+  const flush=()=>void mapEnvironmentWriter.current?.flush();
+  const onVisibility=()=>{
+   if(document.visibilityState==='hidden')flush();
+  };
+  document.addEventListener('visibilitychange',onVisibility);
+  window.addEventListener('pagehide',flush);
+  return()=>{
+   document.removeEventListener('visibilitychange',onVisibility);
+   window.removeEventListener('pagehide',flush);
+   flush();
+  };
+ },[]);
+ // Flush the previous map's final queued snapshot before switching targets.
+ useEffect(()=>()=>{void mapEnvironmentWriter.current?.flush()},[selectedMap,activeId]);
  async function saveMyKeybindings(next){
   if(!user)throw Error('Sign in to save your keybindings.');
   const cleaned=normalizeBindings(next);
@@ -1534,31 +1573,20 @@ function App(){
   setCamp(prev=>({...prev,token_display_config:data.token_display_config}));
   await refreshMonitors();
  }
- function saveMapEnvironment(nextValue){
+ function saveMapEnvironment(nextValue,{immediate=false}={}){
   if(!isDM||!selectedMap||mapEnvironmentMapId!==selectedMap){
    setMapEnvironmentStatus('Map settings are not loaded or cannot be edited.');return;
   }
   const next=normalizeEnvironment(nextValue);
   const mapId=selectedMap,campaignId=activeId;
   setMapEnvironment(next);setMapEnvironmentStatus('Saving…');
-  mapEnvironmentWriteQueue.current=mapEnvironmentWriteQueue.current.catch(()=>{}).then(async()=>{
-   const {error:saveError}=await db.from('map_environments').upsert({
-    map_id:mapId,campaign_id:campaignId,prepared:next,
-    updated_at:new Date().toISOString()
-   },{onConflict:'map_id'});
-   if(saveError)throw saveError;
-  }).then(()=>{
-   if(tokenContextRef.current.mapId===mapId&&tokenContextRef.current.campaignId===campaignId)
-    setMapEnvironmentStatus('Saved');
-  }).catch(error=>{
-   console.error('Could not save map environment',error);
-   if(tokenContextRef.current.mapId===mapId&&tokenContextRef.current.campaignId===campaignId)
-    setMapEnvironmentStatus('Save failed: '+message(error));
-  });
+  mapEnvironmentWriter.current.schedule(next,{mapId,campaignId},{immediate});
  }
  function addEnvironmentObject(object){
   if(mapEnvironmentMapId!==selectedMap||!mapEnvironment)return;
-  saveMapEnvironment(withObject(mapEnvironment,object));
+  // Newly drawn walls and lights persist immediately. Rapid numeric inputs
+  // use the debounced path, which is flushed on map switches and tab hiding.
+  saveMapEnvironment(withObject(mapEnvironment,object),{immediate:true});
  }
  async function saveMapCalibration(map,next){
   if(!isDM)throw Error('Only the DM can adjust map calibration.');
