@@ -9,6 +9,7 @@ on:
       - stage/inventory-grid-item-tiles
       - stage/account-settings-map-measurements
       - stage/measurement-grid-snap-and-pins
+      - stage/dm-map-environment-tools
   workflow_dispatch:
 
 permissions:
