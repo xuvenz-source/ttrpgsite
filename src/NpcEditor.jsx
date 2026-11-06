@@ -11,6 +11,7 @@ import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
+import InventoryPanel from './InventoryPanel.jsx';
 
 function Items({field,value,onChange}){
  const columns=field.columns?.length?field.columns:['Item','Qty','Notes'];const rows=Array.isArray(value)?value:[];
@@ -119,7 +120,9 @@ export default function NpcEditor({
    onChange={v=>setField(PERSONAL_RESOURCE_KEY,v)}/></div>:
  (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
- f.type==='inventory'?<Items field={f} value={draft.values[f.id]||[]} onChange={v=>setField(f.id,v)}/>:
+ f.type==='inventory'?<InventoryPanel field={f} template={template}
+  value={draft.values[f.id]||[]} sheetValues={draft.values}
+  onChange={v=>setField(f.id,v)}/>:
  f.type==='attribute'?<AttributeField field={f} template={template}
   value={draft.values[f.id]} values={draft.values}
   onChange={v=>setField(f.id,v)}
