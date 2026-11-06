@@ -251,8 +251,12 @@ export function EquipmentManager({field,value,onChange,sheetValues={},template,o
      <td><Input label="Weapon name" value={w.name}
       onChange={name=>changeItem('weapons',w.id,{name})}/></td>
      <td>{modifierList?<select aria-label={'Modifier for '+w.name}
-      value={w.modifierId||''} onChange={e=>chooseModifier(w,e.target.value)}>
+      value={w.modifierId||(w.statField?'__existing__':'')}
+      onChange={e=>chooseModifier(w,e.target.value)}>
        <option value="">Default modifier</option>
+       {!w.modifierId&&w.statField&&<option value="__existing__" disabled>
+        Existing: {stats.find(stat=>stat.id===w.statField)?.label||w.statField}
+       </option>}
        {modifierEntries.map(option=><option value={option.id} key={option.id}>{option.label}</option>)}
        {w.modifierId&&!modifierEntries.some(item=>item.id===w.modifierId)&&
         <option value={w.modifierId}>Previous selection (unchanged)</option>}
