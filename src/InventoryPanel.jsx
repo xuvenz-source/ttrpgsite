@@ -1,14 +1,15 @@
 import React,{useState} from 'react';
-import {inventoryRows,inventoryWeight,gridLayout,moveInventoryItem,rowValue,itemSize} from './InventoryMath.js';
+import {inventoryRows,inventoryWeight,gridLayout,moveInventoryItem,rowValue,itemSize,evaluateEncumbrance} from './InventoryMath.js';
 
 /** Both presets edit the same saved array; switching layouts never discards items. */
-export default function InventoryPanel({field,value,onChange}){
+export default function InventoryPanel({field,value,onChange,template,sheetValues}){
  const rows=inventoryRows(value),mode=field.inventoryPreset==='grid'?'grid':'list';
  const [error,setError]=useState('');
  const columns=field.columns?.length?field.columns:['Item','Qty','Weight','Notes'];
  const cols=Math.max(2,Math.min(20,Number(field.gridColumns)||8));
  const height=Math.max(2,Math.min(20,Number(field.gridRows)||5));
  const layout=gridLayout(rows,cols,height);
+ const enc=template?evaluateEncumbrance(template,sheetValues||{}):null;
  const edit=(index,patch)=>onChange(rows.map((r,i)=>i===index?{...r,...patch}:r));
  const remove=index=>onChange(rows.filter((_,i)=>i!==index));
  const add=()=>{
@@ -28,9 +29,13 @@ export default function InventoryPanel({field,value,onChange}){
  };
  return <section className={'inventory-panel inventory-'+mode}>
   <div className="inventory-summary"><strong>{rows.length} items</strong>
-   <span>{inventoryWeight(rows).toLocaleString()} weight units</span>
+   <span>{inventoryWeight(rows).toLocaleString()} {enc?.unit||'weight units'}</span>
    <button className="secondary" type="button" onClick={add}>+ Item</button>
   </div>
+  {enc?.enabled&&<div className="inventory-carry-summary" role="status">
+   Total carried: <strong>{enc.weight.toLocaleString()} / {enc.capacity.toLocaleString()} {enc.unit}</strong>
+   {enc.tier&&<span> · {enc.tier.label}</span>}
+  </div>}
   {mode==='list'?<div className="inventory-list">
    <div className="invrow inventory-table-head">{columns.map(c=><b key={c}>{c}</b>)}</div>
    {rows.map((row,i)=><div className="invrow" key={i}>

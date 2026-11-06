@@ -2001,3 +2001,14 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .inventory-give-form{padding:4px 2px;display:flex;flex-direction:column;gap:8px}
 .inventory-give-numbers{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .inventory-give-form input,.inventory-give-form textarea{min-width:0}
+
+.token-encumbrance-indicator{
+ position:absolute;right:2px;top:2px;z-index:3;pointer-events:none;
+ display:flex;align-items:center;justify-content:center;
+ min-width:21px;height:21px;font-size:15px;
+ border:1px solid #ecce85;border-radius:50%;
+ background:#17243ee8;color:#fff;
+ filter:drop-shadow(0 1px 1px #0009)
+}
+.inventory-carry-summary{font-size:11px;padding:5px 7px;border-radius:5px;
+ border:1px solid #536b8b;background:#203048}

@@ -128,6 +128,7 @@ export default function CharacterEditor({
      {f.type==='roll'?<button type="button" className="rollbtn" onClick={()=>doRoll(f)}>
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
       f.type==='inventory'?<InventoryPanel field={f} value={draft.field_values[f.id]||[]}
+        template={template} sheetValues={draft.field_values}
         onChange={v=>editField(f.id,v)}/>:
       f.type==='resource'?<ResourceField value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
       f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.field_values[f.id]||{}}
