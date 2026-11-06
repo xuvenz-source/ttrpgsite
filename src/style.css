@@ -1997,3 +1997,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .inventory-tier-editor button{padding:5px}
 .sheet-quickcode-field{margin-bottom:5px}.sheet-quickcode-field small{font-size:10px;font-weight:400}
 @media(max-width:650px){.inventory-tier-editor{grid-template-columns:1fr 1fr}.inventory-tier-editor button{max-width:40px}}
+
+.inventory-give-form{padding:4px 2px;display:flex;flex-direction:column;gap:8px}
+.inventory-give-numbers{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.inventory-give-form input,.inventory-give-form textarea{min-width:0}

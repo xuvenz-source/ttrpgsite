@@ -9,6 +9,7 @@ import Bestiary from './Bestiary.jsx';
 import SpellChatCard from './SpellChatCard.jsx';
 import MacroChatCard from './MacroChatCard.jsx';
 import RollMathTooltip from './RollMathTooltip.jsx';
+import DmItemDistribution from './DmItemDistribution.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const tabs=[
@@ -171,7 +172,7 @@ export default function TabletopSidebar({
  mapAssignments=[],onAssignPlayerMap,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
- statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
+ statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,onDistributedItem,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  macroCount=0,onOpenMacros,
  uiScale,onChangeUiScale,
@@ -336,6 +337,11 @@ export default function TabletopSidebar({
         template={template} onSave={onSaveTokenDisplay}/>
       </details>
      </div>
+    </details>
+    <details className="side-details">
+     <summary>Distribute inventory items</summary>
+     <DmItemDistribution db={db} characters={characters} template={template}
+      onDistributed={onDistributedItem}/>
     </details>
     <details className="side-details">
      <summary>Character sheet template</summary>

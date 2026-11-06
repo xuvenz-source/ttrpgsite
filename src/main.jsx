@@ -1261,6 +1261,7 @@ function App(){
   onCreateCharacter={createNewCharacter}
   onOpenOwnCharacter={id=>openOwnCharacter(id).catch(fail)}
  hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
+ onDistributedItem={async()=>{await fetchCampaign(activeId);await refreshMonitors()}}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)} onReturnToMenu={()=>setActiveId('')}
  uiScale={uiScale} onChangeUiScale={changeInterfaceScale}
