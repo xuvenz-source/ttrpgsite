@@ -66,8 +66,15 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
   }catch(e){setError(e?.message||String(e));setSaving(false)}
  }
  function rotate(){
-  setDraft(prev=>({...prev,gridW:bounded(prev.gridH,cols),
-   gridH:bounded(prev.gridW,rows),gridRotation:((prev.gridRotation||0)+90)%360}));
+  const width=bounded(draft.gridW,cols),height=bounded(draft.gridH,rows);
+  // Rotating must not silently shrink an item to make it fit the grid.
+  if(height>cols||width>rows){
+   setError('This item is too long to rotate within the fixed grid. Change its size first.');
+   return;
+  }
+  setError('');
+  setDraft(prev=>({...prev,gridW:height,gridH:width,
+   gridRotation:((Number(prev.gridRotation)||0)+90)%360}));
  }
  return <FloatingWindow kind="inventory" onClose={close}>
   <section className="modal inventory-item-editor" role="dialog" aria-label={title}>
