@@ -42,7 +42,7 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen,onStatus,canDrag,status
   {isDM&&<button type="button" className="secondary unit-edit" onClick={()=>onOpen(token)} title={'Open '+token.name+' sheet'}>Sheet</button>}
  </div>;
 }
-function UnitGroups({db,tokens,characters,members,accountNames=[],user,isDM,
+function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=[],user,isDM,
  selectedToken,onSelect,onOpen,onStatus,statusCatalog,onResize,onOpenPlayerCharacter,
  onOpenOwnCharacter,onOpenCharacterTab,onCreateCharacter,newCharacterName,onChangeNewCharacterName,
  onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
@@ -67,7 +67,11 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],user,isDM,
     setCollapsed(s=>({...s,[owner.user_id]:!s[owner.user_id]}))}
     aria-expanded={!collapsed[owner.user_id]}>
     <span className="unit-group-label"><span aria-hidden="true">👤</span>
-     <span>{collapsed[owner.user_id]?'▸':'▾'} {owner.label}{owner.user_id===user?' (you)':''}</span>
+     <span className="unit-account-display">
+      <span>{collapsed[owner.user_id]?'▸':'▾'} {owner.label}{owner.user_id===user?' (you)':''}</span>
+      {onlineMembers.includes(owner.user_id)&&<span className="unit-online-indicator"
+       role="img" aria-label="Online" title="Online"/>}
+     </span>
     </span>
     <span className="unit-count">{owner.sheets.length} sheets</span>
    </button>
@@ -167,7 +171,7 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],user,isDM,
 
 export default function TabletopSidebar({
  db,panel,onPanelChange,isDM,user,
- messages,characters,members,accountNames=[],tokens,selectedToken,onSelectToken,onOpenToken,onResizeToken,onOpenStatus,
+ messages,characters,members,accountNames=[],onlineMembers=[],tokens,selectedToken,onSelectToken,onOpenToken,onResizeToken,onOpenStatus,
  chat,onChatChange,onSendChat,
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onMoveEntireParty,onOpenMapLibrary,
@@ -234,7 +238,7 @@ export default function TabletopSidebar({
   </>}
   {validPanel==='units'&&<div className="right-body"><UnitGroups db={db} tokens={tokens}
    characters={characters} members={members} accountNames={accountNames}
-   user={user} isDM={isDM} selectedToken={selectedToken}
+   onlineMembers={onlineMembers} user={user} isDM={isDM} selectedToken={selectedToken}
    onSelect={onSelectToken} onOpen={onOpenToken} onStatus={onOpenStatus}
    statusCatalog={statusCatalog} onResize={onResizeToken}
    onOpenPlayerCharacter={onOpenPlayerCharacter} onOpenOwnCharacter={onOpenOwnCharacter}
