@@ -2381,3 +2381,18 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  border:1px solid #9fd8ff;background:#69b6f633;
  box-shadow:0 0 0 1px #234771aa inset;border-radius:2px}
 .map-pan-region.is-selecting{cursor:crosshair}
+
+/* Hotbar drag controls: moving a slot inserts its macro at the destination,
+   dropping outside removes the assignment without deleting the macro. */
+.macro-hotbar-slot.filled{cursor:grab;user-select:none}
+.macro-hotbar-slot.hotbar-drag-source{opacity:.45;cursor:grabbing}
+.macro-hotbar-slot.hotbar-reorder-target{
+ outline:2px solid #82d0ff;outline-offset:1px;
+ border-color:#82d0ff!important;background:#29577a!important}
+.map-only-panel .macro-hotbar-slot.hotbar-reorder-target{
+ background:#29577acc!important;border-color:#82d0ff!important}
+.macro-hotbar-drag-hint{
+ position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);
+ border:1px solid #83a8da;border-radius:6px;padding:5px 9px;
+ white-space:nowrap;background:#111b2ef2;color:#e9f3ff;
+ box-shadow:0 5px 15px #0008;pointer-events:none;font-size:11px}
