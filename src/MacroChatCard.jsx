@@ -2,12 +2,12 @@ import React from 'react';
 import RollMathTooltip from './RollMathTooltip.jsx';
 
 /** Roll20-style condensed, multi-row chat card. Values come from a server execution. */
-export default function MacroChatCard({message,preview=false}){
+export default function MacroChatCard({message,preview=false,children=null,className=''}){
  const payload=message?.result||{},rows=Array.isArray(payload.rows)?payload.rows:[];
  const title=String(payload.title||message?.body||'Macro'),subtitle=String(payload.subtitle||'');
  return <article className={'macro-chat-card'+
   (payload.type==='weapon_attack'?' weapon-attack':'')+
-  (preview?' macro-chat-preview':'')}>
+  (preview?' macro-chat-preview':'')+(className?' '+className:'')}>
   <header className="macro-chat-header">
    <strong>{title}</strong>
    {subtitle&&<span>{subtitle}</span>}
@@ -37,5 +37,6 @@ export default function MacroChatCard({message,preview=false}){
     </div>
    </div>)}
   </div>
+  {children&&<div className="macro-chat-extra">{children}</div>}
  </article>;
 }

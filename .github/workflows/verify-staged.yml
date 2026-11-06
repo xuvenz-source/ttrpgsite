@@ -5,6 +5,7 @@ on:
       - feature/token-status-markers
       - feature/compact-tabletop-ui
       - feature/weapon-attack-cards
+      - stage/attribute-equipment-spell-cards
   workflow_dispatch:
 
 permissions:

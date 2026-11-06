@@ -1,7 +1,7 @@
 import {validateModifierRules} from './SheetDerived.js';
 import {sheetQuickcodeReferences} from './SheetQuickcodes.js';
 
-const TYPES=new Set(['text','number','resource','collection','magic_dashboard',
+const TYPES=new Set(['text','number','attribute','list','resource','collection','magic_dashboard',
  'equipment','progression','proficiencies','textarea','checkbox','roll','inventory']);
 const FORMAT='tabletop-forge-sheet-template';
 const MAX_BYTES=2_000_000;
@@ -36,6 +36,21 @@ export function validateSheetTemplate(template){
     !String(field.label||'').trim())
     throw Error('Invalid or duplicated sheet field.');
    fieldIds.add(field.id);
+  }
+ }
+ const lists=Array.isArray(template.optionLists)?template.optionLists:[];
+ if(lists.length>30)throw Error('Too many reusable lists (maximum 30).');
+ const listIds=new Set();
+ for(const list of lists){
+  if(!list||typeof list.id!=='string'||!list.id||listIds.has(list.id)||
+   !String(list.name||'').trim()||!Array.isArray(list.items)||list.items.length>60)
+   throw Error('Invalid or duplicated reusable list.');
+  listIds.add(list.id);
+  const optionIds=new Set();
+  for(const item of list.items){
+   if(!item||typeof item.id!=='string'||!item.id||optionIds.has(item.id)||
+    !String(item.label||'').trim())throw Error('Invalid or duplicated list option.');
+   optionIds.add(item.id);
   }
  }
  checkSafeTree(template);

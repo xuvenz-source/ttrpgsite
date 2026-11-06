@@ -3,6 +3,8 @@ import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
+import AttributeField from './AttributeField.jsx';
+import {SheetListField} from './TemplateOptionLists.jsx';
 import {enrichSheetValues,PERSONAL_RESOURCE_KEY,PERSONAL_RESOURCE_TAB} from './SheetDerived.js';
 import {ProgressionPanel,ProficienciesPanel} from './SheetProgression.jsx';
 import PersonalResources from './PersonalResources.jsx';
@@ -118,6 +120,13 @@ export default function NpcEditor({
  (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
  f.type==='inventory'?<Items field={f} value={draft.values[f.id]||[]} onChange={v=>setField(f.id,v)}/>:
+ f.type==='attribute'?<AttributeField field={f} template={template}
+  value={draft.values[f.id]} values={draft.values}
+  onChange={v=>setField(f.id,v)}
+  onProficiencyChange={v=>setField(f.id+'__save_prof',v)}
+  onRoll={(formula,label)=>onRoll(formula,label)}/>:
+ f.type==='list'?<SheetListField field={f} template={template}
+  value={draft.values[f.id]} onChange={v=>setField(f.id,v)}/>:
  f.type==='resource'?<ResourceField value={draft.values[f.id]} onChange={v=>setField(f.id,v)}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.values[f.id]||{}}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}/>:

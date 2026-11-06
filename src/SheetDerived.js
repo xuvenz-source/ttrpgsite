@@ -42,6 +42,18 @@ export function abilityModifier(raw,mode='score',base=10,step=2){
  const value=num(raw,mode==='score'?num(base,10):0);
  return mode==='score'?Math.floor((value-num(base,10))/Math.max(1,num(step,2))):value;
 }
+/** The proficiency bonus may be configured per Attribute field or inherited
+ * from the campaign's progression module. Unconfigured saves add no proficiency.
+ */
+export function attributeSaveProficiency(field,values={},template){
+ const progressions=safeList(template?.tabs).flatMap(tab=>safeList(tab.fields))
+  .filter(entry=>entry?.type==='progression');
+ const source=progressions[0];
+ const key=field?.proficiencyField||
+  (source?.outputProficiency&&isDerivedKey(source.outputProficiency)?
+   source.outputProficiency:'proficiency_bonus');
+ return num(values[key],0);
+}
 /** DM-configured derived reference; no new visible sheet field. */
 export function modifierReferenceId(field){
  const code=String(field?.modifierCode||field?.label||'').trim().toLowerCase()
@@ -157,6 +169,9 @@ export function enrichSheetValues(template,raw){
     if(e.abilityMode==='score'&&e.abilityField&&!scoreAttrs.has(e.abilityField))
      scoreAttrs.set(e.abilityField,{base:10,step:2});
    }
+  }else if(f.type==='attribute'){
+   scoreAttrs.set(f.id,{base:template?.modifierRules?.base??10,
+    step:template?.modifierRules?.step??2});
   }else if(f.type==='equipment'){
    if(f.armorModifierMode==='score'&&f.armorModifierField&&!scoreAttrs.has(f.armorModifierField))
     scoreAttrs.set(f.armorModifierField,{base:f.scoreBase,step:f.scoreStep});
@@ -173,6 +188,12 @@ export function enrichSheetValues(template,raw){
   const key=id+'_mod';
   if(isDerivedKey(key))
    next[key]=abilityModifier(next[settings.source||id],'score',settings.base,settings.step);
+ }
+ for(const f of fields.filter(entry=>entry.type==='attribute')){
+  const key=f.id+'_save_bonus';
+  if(!isDerivedKey(key))continue;
+  const mod=abilityModifier(next[f.id],'score',rules.base??10,rules.step??2);
+  next[key]=mod+(next[f.id+'__save_prof']?attributeSaveProficiency(f,next,template):0);
  }
  return next;
 }
@@ -209,6 +230,12 @@ export function numericFieldsWithDerived(template){
  for(const f of fields.filter(f=>f.type==='number'&&f.modifierEnabled===true)){
   const alias=modifierReferenceId(f);
   if(alias)entries.push({id:alias+'_mod',label:(f.label||alias)+' modifier'});
+ }
+ for(const f of fields.filter(f=>f.type==='attribute')){
+  if(isDerivedKey(f.id+'_mod'))
+   entries.push({id:f.id+'_mod',label:(f.label||f.id)+' modifier'});
+  if(isDerivedKey(f.id+'_save_bonus'))
+   entries.push({id:f.id+'_save_bonus',label:(f.label||f.id)+' saving throw bonus'});
  }
  for(const id of scoreFields)if(isDerivedKey(id+'_mod')){
   const source=entries.find(e=>e.id===id);
