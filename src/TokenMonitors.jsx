@@ -9,6 +9,12 @@ export const DEFAULT_TOKEN_DISPLAY={
  ]
 };
 export const ICONS={heart:'♥',shield:'🛡',wing:'↟',star:'★',bolt:'⚡',magic:'✦',none:''};
+export const STATUS_POSITIONS={
+ left:'Left side (outside)',right:'Right side (outside)',
+ top:'Above token',bottom:'Below token',
+ 'top-left':'Upper-left corner','top-right':'Upper-right corner',
+ 'bottom-left':'Lower-left corner','bottom-right':'Lower-right corner'
+};
 export const POSITIONS={
  top:'Above token',bottom:'Below token',
  'top-left':'Upper left','top-right':'Upper right',
@@ -20,6 +26,7 @@ export function normalizeConfig(input){
  return {
   playerVisibility:obj.playerVisibility==='everyone'?'everyone':'owner',
   npcVisibility:obj.npcVisibility==='everyone'?'everyone':'dm',
+  statusPosition:Object.prototype.hasOwnProperty.call(STATUS_POSITIONS,obj.statusPosition)?obj.statusPosition:'left',
   widgets:widgets.filter(x=>x&&typeof x==='object')
  };
 }

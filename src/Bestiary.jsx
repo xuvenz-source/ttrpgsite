@@ -17,7 +17,7 @@ export default function Bestiary({db,npcs=[],folders=[],compact=false,onNewFolde
  function folderPrompt(){const name=prompt('Folder name');if(name?.trim())onNewFolder(name.trim(),folder||null)}
  function npcPrompt(){const name=prompt('Name for your new NPC');if(name?.trim())onNewNpc(name.trim(),folder||null)}
  return <div className={'bestiary '+(compact?'compact':'')}>
- <div className="heading"><h2>{compact?'Saved NPCs':'NPC Bestiary'}</h2>{!compact&&<button onClick={npcPrompt}>+ NPC</button>}</div>
+ {!compact&&<div className="heading"><h2>NPC Bestiary</h2><button type="button" onClick={npcPrompt}>+ NPC</button></div>}
  <div className="bestiary-toolbar"><input aria-label="Search NPCs" placeholder="Search NPCs…" value={search} onChange={e=>setSearch(e.target.value)}/>{compact&&<button className="secondary" title="Create NPC" onClick={npcPrompt}>+ NPC</button>}</div>
  <details className="npc-folders-toggle" open={!compact?true:undefined}>
   <summary>Folders {folder?'· '+(folders.find(f=>f.id===folder)?.name||'Selected'):''}</summary>

@@ -8,7 +8,7 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
-import {TokenMonitors} from './TokenMonitors.jsx';
+import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
@@ -1203,6 +1203,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       <TokenMonitors config={displayConfig} fields={monitorValues[t.id]} zoom={scale}/>
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
+       position={normalizeConfig(displayConfig).statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
       {isDM&&selectedId===t.id&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"

@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
+import {STATUS_POSITIONS} from './TokenMonitors.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 
 export const MAX_ACTIVE_EFFECTS=18;
@@ -142,11 +143,13 @@ export function StatusGlyph({name,size=17}){
  </svg>;
 }
 
-export function TokenStatusBadges({effects,catalog,onOpen,canEdit=false}){
+export function TokenStatusBadges({effects,catalog,onOpen,canEdit=false,position='left'}){
  const list=normalizedEffects(effects);
  if(!list.length)return null;
  const shown=list.slice(0,4),hidden=list.length-shown.length;
- return <div className="token-status-strip" aria-label="Token status effects"
+ return <div className={'token-status-strip status-position-'+
+  (Object.prototype.hasOwnProperty.call(STATUS_POSITIONS,position)?position:'left')}
+  aria-label="Token status effects"
   onPointerDown={e=>e.stopPropagation()}>
   {shown.map(effect=>{
    const def=statusDefinition(effect.id,catalog);

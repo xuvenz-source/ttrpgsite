@@ -171,6 +171,7 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
  }
  const hasContent=entries.length>0;
  return <div className="collection">
+  <div className="collection-toolbar">
   {groups.length>0&&<div className="collection-group-tabs" role="group" aria-label={(field.label||'Collection')+' groups'}>
    {groups.map(label=><button key={label} type="button"
     className={selected===label?'selected':''}
@@ -184,6 +185,7 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
    <span className="muted small">{entries.length} {field.entryLabel||'entry'}{entries.length===1?'':'s'}</span>
    {!readOnly&&<button type="button" className="secondary" onClick={addEntry}>+ Add {field.entryLabel||'entry'}</button>}
   </div>
+  </div>
   {!hasContent&&<div className="collection-empty">
    No {String(field.entryLabel||'entries').toLowerCase()} yet. Use <strong>+ Add {field.entryLabel||'entry'}</strong> to create one.
   </div>}
@@ -196,8 +198,15 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
       onClick={()=>setExpanded(old=>({...old,[entry.id]:!opened}))}
       aria-expanded={opened}>
       <span>{opened?'▾':'▸'} {entry.values?.[field.titleField]||'Untitled '+(field.entryLabel||'entry')}</span>
-      <small className="muted">{entry.group||''}</small>
+      {!opened&&<small className="muted">{entry.group||''}</small>}
      </button>
+     {groups.length>0&&opened&&<label className="collection-group-select">
+      <span>{field.groupLabel||'Group'}</span>
+      <select value={entry.group||groups[0]} disabled={readOnly}
+       onChange={e=>updateEntry(entry.id,{group:e.target.value})}>
+       {groups.map(g=><option value={g} key={g}>{g}</option>)}
+      </select>
+     </label>}
      {!readOnly&&<div className="collection-entry-actions">
       <button type="button" title="Move up" onClick={()=>moveEntry(entry,-1)} disabled={entries.indexOf(entry)===0}>↑</button>
       <button type="button" title="Move down" onClick={()=>moveEntry(entry,1)} disabled={entries.indexOf(entry)===entries.length-1}>↓</button>
@@ -205,20 +214,13 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
       <button type="button" title="Delete entry" onClick={()=>removeEntry(entry.id)}>×</button>
      </div>}
     </div>
-    {groups.length>0&&opened&&<label className="collection-group-select">
-     {field.groupLabel||'Group'}
-     <select value={entry.group||groups[0]} disabled={readOnly}
-      onChange={e=>updateEntry(entry.id,{group:e.target.value})}>
-      {groups.map(g=><option value={g} key={g}>{g}</option>)}
-     </select>
-    </label>}
-    <div className="collection-field-grid">
+    {opened&&<div className="collection-field-grid">
      {summary.map(child=><div className="collection-cell" key={child.id}
       style={{'--collection-span':safeColumns(child.width)}}>
       {fieldControl(child,entry.values?.[child.id],val=>updateCell(entry,child,val),
        ()=>doRoll(child,entry),section=>toggleSection(entry,section),readOnly)}
      </div>)}
-    </div>
+    </div>}
     {opened&&sections.length>0&&<div className="collection-section-tabs" aria-label="Entry detail panels">
      {sections.map(section=><button type="button" key={section.id}
       className={active.has(section.id)?'selected':''}

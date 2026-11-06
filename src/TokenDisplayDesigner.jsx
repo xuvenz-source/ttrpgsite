@@ -53,7 +53,6 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
   catch(e){setError(e?.message||String(e))}finally{setSaving(false)}
  }
  return <div className="token-designer">
-  <div className="side-heading"><h2>Token Display Designer</h2></div>
   <p className="muted small">Choose a Resource field such as “Hit Points” to connect its Current and Maximum values automatically. Use single Number fields for AC, elevation and other standalone values.</p>
   <p className="muted tiny">Create Resource fields in Sheet Designer, or use the one-click “Add / link token resource bar” option there. Existing manually linked fields still work.</p>
   <div className="token-visibility-controls">

@@ -25,7 +25,6 @@ function BearFaceIcon(){
 const tabs=[
  {id:'chat',label:'Chat',icon:'💬'},
  {id:'units',label:'Units',icon:'♟'},
- {id:'bestiary',label:'Bestiary',icon:'bear'},
  {id:'settings',label:'Settings',icon:'⚙'},
  {id:'dm',label:'DM',icon:'🛠'}
 ];
@@ -67,8 +66,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
   return sorted;
  },[members,characters,tokens,isDM,user]);
  return <div className="right-section">
-  <div className="side-heading"><h2>Controlled units</h2><span className="muted tiny">{isDM?'All campaign controllers':'Your tokens'}</span></div>
-  <p className="muted small side-description">Drag a character name onto the map to place it, or drag an existing unit to move it. Ctrl + click for resources, or Shift + click for status effects. {isDM?'Alt + double-click to edit the full sheet.':''}</p>
+  <p className="muted tiny side-description">Drag names to place · Ctrl + click resources · Shift + click effects. {isDM?'Alt + double-click edits a sheet.':''}</p>
   <div className="unit-actions">
    <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>My character sheet</button>
    <button type="button" className="secondary" onClick={onCreatePortrait}>My Token Library</button>
@@ -158,20 +156,28 @@ export default function TabletopSidebar({
  uiScale,onChangeUiScale,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
- const validPanel=(!isDM&&(panel==='bestiary'||panel==='dm'))?'units':panel;
+ const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
  return <aside className="right-sidebar panel" aria-label="Tabletop sidebar">
   <nav className="right-tabs" role="tablist" aria-label="Tabletop tools">
-   {tabs.filter(t=>isDM||!['bestiary','dm'].includes(t.id)).map(t=><button key={t.id} type="button" role="tab"
+   {tabs.filter(t=>isDM||t.id!=='dm').map(t=><button key={t.id} type="button" role="tab"
      aria-selected={validPanel===t.id} className={validPanel===t.id?'selected':''}
      onClick={()=>onPanelChange(t.id)} title={t.label}>
-    <span aria-hidden="true" className="tab-glyph">{t.icon==='bear'?<BearFaceIcon/>:t.icon}</span><span>{t.label}</span>
+    <span aria-hidden="true" className="tab-glyph">{t.icon}</span><span>{t.label}</span>
    </button>)}
   </nav>
   {validPanel==='chat'&&<>
-   <div className="right-panel-heading"><h2>Campaign chat & rolls</h2></div>
    <div className="messages right-messages">{messages.map(m=><div className="msg" key={m.id}>
     <div className="muted tiny">{m.user_id===user?'You':characters.find(c=>c.user_id===m.user_id)?.name||'Party member'} · {when(m.created_at)}</div>
-    {m.kind==='roll'?<div className="dice"><b>🎲 {m.body}</b><h2>{m.result?.total}</h2><small>{m.result?.expression} · [{(m.result?.dice||[]).join(', ')}] {m.result?.modifier?' + '+m.result.modifier:''}</small></div>:<p>{m.body}</p>}
+    {m.kind==='roll'?<div className="chat-roll">
+     <div className="chat-roll-line">
+      <span className="chat-roll-name">🎲 {m.body}</span>
+      <strong className="chat-roll-result" aria-label={'Result '+(m.result?.total??'unknown')}>{m.result?.total??'—'}</strong>
+     </div>
+     <details className="chat-roll-breakdown">
+      <summary title="Show dice breakdown">{m.result?.expression||'Roll'} <span className="chat-roll-expand">· details</span></summary>
+      <div>Dice: [{(m.result?.dice||[]).join(', ')}]{m.result?.modifier?' · Modifier: '+m.result.modifier:''}</div>
+     </details>
+    </div>:<p>{m.body}</p>}
    </div>)}</div>
    <form onSubmit={onSendChat} className="chatbox"><input aria-label="Message or dice command" value={chat}
      onChange={e=>onChatChange(e.target.value)} placeholder="Message or /roll 1d20"/>
@@ -186,15 +192,7 @@ export default function TabletopSidebar({
    onCreatePortrait={onCreatePortrait} onOpenPlayerCharacter={onOpenPlayerCharacter}
    onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
    tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}/></div>}
-  {validPanel==='bestiary'&&isDM&&<div className="right-body">
-   <div className="side-heading"><h2>Bestiary & tokens</h2></div>
-   <p className="muted small side-description">Create and organise reusable NPCs, then drag them onto the current map.</p>
-   <Bestiary db={db} compact npcs={npcs} folders={npcFolders}
-    onNewFolder={onNewNpcFolder} onNewNpc={onNewNpc} onEdit={onEditNpc}
-    onMove={onMoveNpc} onPlace={onPlaceNpc} mapReady={!!activeMap}/>
-  </div>}
   {validPanel==='settings'&&<div className="right-body">
-   <div className="side-heading"><h2>Personal settings</h2></div>
    <div className="side-form">
     <button type="button" className="secondary full-button" onClick={onReturnToMenu}>← Back to main menu</button>
     {currentPage!=='tabletop'&&<button type="button" className="secondary full-button" onClick={()=>onNavigate('tabletop')}>Return to tabletop</button>}
@@ -236,9 +234,16 @@ export default function TabletopSidebar({
    </div>
   </div>}
   {validPanel==='dm'&&isDM&&<div className="right-body">
-   <div className="side-heading"><h2>Dungeon Master tools</h2></div>
-   <p className="muted small side-description">Campaign-wide management. Sections are closed until you need them.</p>
    <div className="side-form">
+    <details className="side-details dm-bestiary-details">
+     <summary><span className="dm-bestiary-title"><BearFaceIcon/> Bestiary & NPC templates</span></summary>
+     <div className="side-form">
+      <p className="muted tiny">Manage reusable NPCs and drag them onto the map.</p>
+      <Bestiary db={db} compact npcs={npcs} folders={npcFolders}
+       onNewFolder={onNewNpcFolder} onNewNpc={onNewNpc} onEdit={onEditNpc}
+       onMove={onMoveNpc} onPlace={onPlaceNpc} mapReady={!!activeMap}/>
+     </div>
+    </details>
     <details className="side-details">
      <summary>Map management</summary>
      <div className="side-form">
