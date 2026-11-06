@@ -1450,7 +1450,15 @@ function App(){
  onCastSpell={({collectionId,entryId,mode})=>castSpell({
   sourceType:'character',sourceId:character?.id,collectionId,entryId,mode
  })}
- onAddSpellToHotbar={assignSpellToHotbar}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div>}</section>
+ onAddSpellToHotbar={assignSpellToHotbar}/>:
+ f.type==='attribute'?<AttributeField field={f}
+  value={character?.field_values?.[f.id]} values={character?.field_values||{}}
+  template={camp.sheet_template} onChange={v=>updateField(f.id,v)}
+  onProficiencyChange={v=>updateField(f.id+'__save_prof',v)}
+  onRoll={(formula,label)=>roll(formula,label)}/>:
+ f.type==='list'?<SheetListField field={f} template={camp.sheet_template}
+  value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:
+ f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div>}</section>
  </FloatingWindow>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
