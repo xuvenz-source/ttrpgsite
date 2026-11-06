@@ -46,7 +46,7 @@ export function abilityModifier(raw,mode='score',base=10,step=2){
 export function modifierReferenceId(field){
  const code=String(field?.modifierCode||field?.label||'').trim().toLowerCase()
   .replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
- return isDerivedKey(code)?code:null;
+ return isDerivedKey(code)&&isDerivedKey(code+'_mod')?code:null;
 }
 export function validateModifierRules(template){
  const fields=safeList(template?.tabs).flatMap(tab=>safeList(tab.fields,150));
