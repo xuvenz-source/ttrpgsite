@@ -1003,7 +1003,7 @@ function App(){
  }
  function openQuickToken(t){
   if(!t||(!isDM&&t.owner_id!==user))return;
-  if(!isDM&&camp?.active_map_id!==t.map_id)return;
+  if(!isDM&&playerMapId!==t.map_id)return;
   if(quickWritePatches.current.has(t.id))return;
   setQuickEditToken(t);
  }
@@ -1123,7 +1123,7 @@ function App(){
  }
  function openTokenStatuses(token){
   if(!token||!activeId)return;
-  if(!isDM&&(token.map_id!==camp?.active_map_id||!token.visible))return;
+  if(!isDM&&(token.map_id!==playerMapId||!token.visible))return;
   if(statusPatches.current.has(token.id)&&!statusPatches.current.get(token.id)?.confirmed){
    fail('Status changes for '+token.name+' are still saving. You can edit another token.');
    return;
@@ -1132,7 +1132,7 @@ function App(){
  }
  function applyTokenStatuses(token,next){
   if(!token||token.map_id!==selectedMap||!activeId)return false;
-  if(!isDM&&(token.owner_id!==user||token.map_id!==camp?.active_map_id))return false;
+  if(!isDM&&(token.owner_id!==user||token.map_id!==playerMapId))return false;
   if(statusPatches.current.has(token.id)){
    fail('Please let '+token.name+' finish its previous status save.');
    return false;
@@ -1564,13 +1564,16 @@ function App(){
  {statusEditToken&&camp&&<QuickEditBoundary key={'status_'+statusEditToken.id}
    onClose={()=>setStatusEditToken(null)}>
     <TokenStatusPicker token={statusEditToken} catalog={camp.token_status_catalog}
-     canEdit={isDM||(statusEditToken.owner_id===user&&camp.active_map_id===statusEditToken.map_id)}
+     canEdit={isDM||(statusEditToken.owner_id===user&&playerMapId===statusEditToken.map_id)}
      onClose={()=>setStatusEditToken(null)} onApply={applyTokenStatuses}/>
    </QuickEditBoundary>}
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
    allowedFields={camp.token_quick_fields||[]}
    initialValues={getLocalQuickValues(quickEditToken)}
+    statusCatalog={camp.token_status_catalog}
+    canEditStatuses={isDM||(quickEditToken.owner_id===user&&quickEditToken.map_id===playerMapId)}
+    onApplyStatuses={applyTokenStatuses}
    onRemember={values=>quickCache.current.set(quickEditToken.id,values)}
    onClose={()=>setQuickEditToken(null)} onApply={applyQuickTokenChanges}/>
  </QuickEditBoundary>}
