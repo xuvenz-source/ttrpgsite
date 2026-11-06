@@ -10,7 +10,7 @@ const BASE_ORIGINS=new Set([
 const PREVIEW=/^https:\/\/ttrpgsite-[a-z0-9-]+-ttrpg-site\.vercel\.app$/;
 const USERNAME=/^[a-z][a-z0-9_]{2,23}$/;
 const DOMAIN='accounts.tabletopforge.example.com';
-function cors(origin){
+function cors(origin:string){
  return {
   'Access-Control-Allow-Origin':origin,
   'Access-Control-Allow-Headers':'authorization,apikey,content-type,x-client-info',
@@ -18,7 +18,7 @@ function cors(origin){
   'Cache-Control':'no-store','Content-Type':'application/json','Vary':'Origin'
  };
 }
-function response(origin,status,data){
+function response(origin:string,status:number,data:Record<string,unknown>){
  return new Response(JSON.stringify(data),{status,headers:cors(origin)});
 }
 Deno.serve(async request=>{
