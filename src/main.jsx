@@ -4,7 +4,8 @@ import{createClient}from'@supabase/supabase-js';
 import './style.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
-import {validMeasurement,liveMeasurementPayload,pointOnBattlemap} from './MapMeasurements.js';
+import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
+ acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
 import Bestiary from './Bestiary.jsx';
@@ -130,6 +131,8 @@ function App(){
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
  const[remoteMeasurements,setRemoteMeasurements]=useState({});
  const measureExpiry=useRef(new Map()),lastMeasureSent=useRef(0);
+ const measureSequence=useRef(0),measureRevisions=useRef(new Map()),
+  measureClearRevisions=useRef(new Map());
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
@@ -628,6 +631,7 @@ function App(){
   setRemoteMeasurements({});
   for(const timer of measureExpiry.current.values())clearTimeout(timer);
   measureExpiry.current.clear();lastMeasureSent.current=0;
+  measureRevisions.current.clear();measureClearRevisions.current.clear();
   for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
   remoteMoveExpiry.current.clear();lastMovementPreview.current.clear();
   liveMapReady.current=false;
@@ -657,18 +661,35 @@ function App(){
    remoteMoveExpiry.current.set(id,timer);
   }).on('broadcast',{event:'map-measure'},({payload})=>{
    if(!validMeasurement(payload,selectedMap)||payload.actor===user)return;
-   const key=payload.id;
-   setRemoteMeasurements(previous=>({...previous,[key]:payload}));
-   const oldTimer=measureExpiry.current.get(key);
-   if(oldTimer)clearTimeout(oldTimer);
-   const timer=setTimeout(()=>{
+   if(!acceptMeasurementEvent(payload,measureRevisions.current,
+    measureClearRevisions.current))return;
+   if(payload.phase==='clear'){
+    for(const [key,timer] of measureExpiry.current){
+     if(key.startsWith(payload.actor+':')){
+      clearTimeout(timer);measureExpiry.current.delete(key);
+     }
+    }
+   }else{
+    const key=payload.actor+':'+payload.id;
+    const oldTimer=measureExpiry.current.get(key);
+    if(oldTimer)clearTimeout(oldTimer);
     measureExpiry.current.delete(key);
-    setRemoteMeasurements(previous=>{
-     if(previous[key]!==payload)return previous;
-     const next={...previous};delete next[key];return next;
-    });
-   },payload.final?12000:4500);
-   measureExpiry.current.set(key,timer);
+    if(payload.phase==='preview'){
+     // This timer is ONLY a network-disconnect recovery fallback.
+     // Normal left-button release broadcasts remove immediately.
+     const timer=setTimeout(()=>{
+      measureExpiry.current.delete(key);
+      setRemoteMeasurements(previous=>{
+       if(previous[payload.id]?.seq!==payload.seq)return previous;
+       const next={...previous};delete next[payload.id];return next;
+      });
+     },4500);
+     measureExpiry.current.set(key,timer);
+    }
+    // Pinned drawings have NO automatic removal timer.
+   }
+   setRemoteMeasurements(previous=>
+    applyMeasurementEventToVisible(previous,payload));
   }).subscribe((status,error)=>{
    liveMapReady.current=status==='SUBSCRIBED';
    if(status==='CHANNEL_ERROR')console.warn('Fast map movement unavailable',error);
@@ -697,11 +718,14 @@ function App(){
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
  }
- function sendLiveMeasurement(measure,final=false){
+ function sendLiveMeasurement(measure,phase='preview'){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
   const now=Date.now();
-  if(!final&&now-lastMeasureSent.current<65)return;
-  const data=liveMeasurementPayload(measure,measure.id,user,selectedMap,final);
+  if(phase==='preview'&&now-lastMeasureSent.current<65)return;
+  // Revisions keep out-of-order network previews from reappearing after clear.
+  measureSequence.current=Math.max(now*1000,measureSequence.current+1);
+  const data=liveMeasurementPayload(measure,measure?.id,user,selectedMap,
+   phase,measureSequence.current);
   if(!validMeasurement(data,selectedMap,
    displayedMap.width/displayedMap.grid_size,
    displayedMap.height/displayedMap.grid_size))return;
