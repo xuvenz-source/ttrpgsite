@@ -31,6 +31,7 @@ export function MeasurementToolBar({tool,onPointerDown,onPointerMove,onPointerUp
    className={'map-measure-tool'+(tool===id?' selected':'')}
    aria-label={names[id]} aria-pressed={tool===id}
    title={names[id]+': left-drag to measure temporarily; right-drag to pin until cleared'}
+   onContextMenu={e=>e.preventDefault()}
    onPointerDown={e=>onPointerDown(e,id)}
    onPointerMove={onPointerMove}
    onPointerUp={onPointerUp}
