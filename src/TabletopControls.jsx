@@ -12,6 +12,19 @@ export const ACTIONS=[
   defaults:['Digit'+(i+1)],count:1}))
 ];
 export const DEFAULT_BINDINGS=Object.fromEntries(ACTIONS.map(a=>[a.id,a.defaults]));
+export function normalizeBindings(data){
+ const out={};
+ for(const action of ACTIONS){
+  const raw=data&&Array.isArray(data[action.id])?data[action.id]:action.defaults;
+  out[action.id]=Array.from({length:action.count},(_,i)=>{
+   const code=raw[i];
+   return typeof code==='string'&&/^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Space|F[1-9]|F1[0-2]|Minus|Equal|Bracket(Left|Right)|Semicolon|Quote|Comma|Period|Slash|Backquote|Backslash|Numpad[0-9])$/.test(code)
+    ?code:'';
+  });
+ }
+ return out;
+}
+
 export {EMPTY_HOTBAR,normaliseHotbar,reorderHotbarSlots,removeHotbarSlot}
  from './HotbarSlots.js';
 
