@@ -133,7 +133,7 @@ function App(){
    setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);
    setCharacter(previous=>ch.find(x=>x.id===previous?.id&&x.user_id===user)||ch.find(x=>x.user_id===user)||null);
    setMapAssignments(assignments);setFolders(f);setMaps(b);
-   setMsgs(chat.filter(x=>x.map_id===(desired||null)).reverse());
+   setMsgs(chat.filter(x=>x.map_id===((dm&&b.some(map=>map.id===selectedMap)?selectedMap:desired)||null)).reverse());
    setNpcs(npcList);setNpcFolders(npcFolderList);
    setSelectedMap(old=>(dm&&b.some(x=>x.id===old))?old:(b.some(x=>x.id===desired)?desired:''));
   }catch(e){fail(e)}
