@@ -59,10 +59,10 @@ test('map gesture integration keeps left marquee and middle-button pan',()=>{
  assert.ok(main.includes('onPointerDown={startMarquee}'));
  assert.ok(main.includes('onPointerDown={onToolPointerDown}'));
  assert.ok(main.includes('onToolPointerMove'));
- assert.ok(ui.includes('<MeasurementToolBar'));
+ assert.ok(main.includes('<MeasurementToolBar'));
  assert.ok(ui.includes("tool==='circle'"));
  assert.ok(ui.includes("tool==='cone'"));
- assert.ok(ui.includes('<MapMeasurementOverlay'));
+ assert.ok(main.includes('<MapMeasurementOverlay'));
  assert.ok(css.includes('.map-measure-toolbar{position:absolute'));
  assert.ok(css.includes('.map-measure-overlay{position:absolute'));
 });
