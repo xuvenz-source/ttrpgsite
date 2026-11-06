@@ -1654,3 +1654,127 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 @media(max-width:530px){
  .spell-dashboard-pool.pool-has-level{grid-template-columns:minmax(0,1fr) repeat(3,minmax(46px,1fr))}
 }
+
+/* v2.1 staged: DM-defined advancement, proficiencies and player-owned resources */
+.progression-panel,.proficiencies-panel,.personal-resources{
+ background:#192638;border:1px solid #415675;border-radius:8px;
+ padding:9px;display:flex;flex-direction:column;gap:8px;min-width:0;width:100%;
+}
+.progression-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.progression-totals>div{display:flex;flex-direction:column;gap:3px;
+ padding:6px 8px;text-align:center;border:1px solid #3c546e;border-radius:5px;
+ background:#27364e;min-width:0}
+.progression-totals span{font-size:10px;color:#b2c3dc}
+.progression-totals strong{font-size:16px;color:#d3f0dd;line-height:1.1}
+.progression-class-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
+ gap:4px 9px;min-width:0}
+.progression-class-level{display:grid!important;grid-template-columns:minmax(0,1fr) 54px;
+ gap:6px!important;align-items:center;font-size:11px!important;
+ padding:3px 5px;background:#26354a;border-radius:5px;min-width:0}
+.progression-class-level span{min-width:0;overflow-wrap:anywhere}
+.progression-class-level input{padding:5px 4px!important;text-align:center;
+ min-width:0;font-size:11px;max-width:100%;height:30px}
+.progression-casting{display:flex;flex-direction:column;gap:7px;
+ padding:8px;border:1px dashed #4e6886;border-radius:6px}
+.progression-casting>label{display:grid;grid-template-columns:145px minmax(120px,1fr);
+ align-items:center;gap:7px;font-size:11px}
+.progression-casting select{min-width:0;padding:6px}
+.progression-casting-stats{display:flex;gap:5px 10px;flex-wrap:wrap}
+.progression-casting-stats span{display:inline-block;font-size:10px;
+ background:#263850;padding:5px 8px;border-radius:5px}
+.progression-panel>.muted{margin:0}
+.progression-class-designer{display:flex;flex-direction:column;gap:6px}
+.progression-class-design-row{display:grid;grid-template-columns:minmax(85px,1fr)
+ minmax(125px,1.2fr) minmax(125px,1.2fr) auto;gap:6px;align-items:end;
+ padding:7px;background:#25354a;border:1px solid #435974;border-radius:6px}
+.progression-class-design-row label{display:flex;flex-direction:column;gap:4px;
+ font-size:10px;min-width:0}
+.progression-class-design-row input,.progression-class-design-row select{
+ width:100%;min-width:0;min-height:30px;font-size:11px;padding:6px}
+.progression-class-design-row button{padding:6px}
+.progression-milestones{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+ gap:7px}
+.progression-milestone{display:grid;grid-template-columns:minmax(0,1fr)
+ minmax(0,1fr) auto;gap:5px;align-items:end;padding:6px;
+ border:1px solid #465875;border-radius:5px}
+.progression-milestone input{width:100%;min-width:0;padding:5px}
+.progression-milestone label{font-size:10px}
+.progression-milestone button{padding:6px}
+.proficiencies-heading{display:flex;justify-content:space-between;
+ align-items:center;flex-wrap:wrap;gap:6px}
+.proficiencies-heading strong{font-size:12px}
+.proficiencies-heading small{font-size:10px}
+.proficiencies-group{display:flex;flex-direction:column;gap:2px}
+.proficiencies-group-label{background:#39465c;color:#e2eaf7;
+ border-radius:5px;padding:4px 8px;font-size:11px;font-weight:700}
+.proficiency-entry{display:grid;grid-template-columns:minmax(100px,1fr)
+ minmax(95px,133px) 43px 32px;gap:5px;align-items:center;
+ padding:3px 4px;font-size:11px}
+.proficiency-entry:nth-child(odd){background:#233249}
+.proficiency-entry .proficiency-name{overflow-wrap:anywhere}
+.proficiency-entry select{min-width:0;padding:5px 6px;font-size:10px}
+.proficiency-entry output{text-align:center;background:#234a40;color:#c5f5df;
+ padding:6px 2px;border-radius:4px;font-weight:700}
+.proficiency-entry button{padding:5px;font-size:12px}
+.proficiency-designer-list{display:flex;flex-direction:column;gap:6px}
+.proficiency-designer-row{display:grid;grid-template-columns:1fr 100px 1fr 140px auto;
+ gap:6px;align-items:end;padding:7px;border:1px solid #435974;
+ background:#25354a;border-radius:6px}
+.proficiency-designer-row label{min-width:0;font-size:10px}
+.proficiency-designer-row input,.proficiency-designer-row select{
+ width:100%;min-width:0;padding:6px;font-size:11px}
+.proficiency-designer-row button{padding:6px}
+/* Personal resources always available on character/NPC sheets, no DM config. */
+.personal-resources-heading{display:flex;justify-content:space-between;
+ align-items:center;gap:8px;flex-wrap:wrap}
+.personal-resources-heading strong{font-size:13px}
+.personal-resources-heading p{margin:2px 0 0;line-height:1.3}
+.personal-resources-heading button{padding:6px 9px;font-size:11px}
+.personal-resource-empty{padding:19px;text-align:center;
+ border:1px dashed #455d7c;color:#a9bad3;border-radius:6px;font-size:11px}
+.personal-resource-grid{display:flex;flex-direction:column;gap:3px;min-width:0}
+.personal-resource-head,.personal-resource-row{
+ display:grid;grid-template-columns:minmax(115px,1.5fr) minmax(115px,1.25fr)
+ minmax(110px,1fr) minmax(60px,.6fr) minmax(85px,.7fr);
+ align-items:center;gap:5px;min-width:0;
+}
+.personal-resource-head{background:#39445a;border-radius:4px;
+ padding:6px 5px;font-size:10px;font-weight:650;text-align:center}
+.personal-resource-head span:first-child,.personal-resource-head span:nth-child(2){text-align:left}
+.personal-resource-row{padding:5px;background:#233349;border-radius:5px}
+.personal-resource-row>input,.personal-resource-row select{
+ width:100%;min-width:0;min-height:30px;padding:5px 6px;font-size:11px}
+.personal-resource-row>input[type=number]{text-align:center}
+.personal-resource-recharge{display:flex;flex-direction:column;gap:3px;min-width:0}
+.personal-resource-recharge input{padding:5px;min-width:0;font-size:10px}
+.personal-resource-current,.personal-resource-actions{display:flex;gap:3px;align-items:center;min-width:0}
+.personal-resource-current input{flex:1;min-width:0;width:44px;text-align:center;
+ font-size:11px;padding:5px 2px}
+.personal-resource-current button{padding:5px 6px;min-height:28px;flex:0 0 23px}
+.personal-resource-actions button{padding:5px 6px;font-size:10px}
+.personal-resource-notes{grid-column:1/-1;font-size:10px!important;
+ min-height:24px!important;padding:5px 7px!important;opacity:.82}
+.personal-resource-row input[type=number]::-webkit-inner-spin-button{
+ opacity:.4
+}
+@media(max-width:950px){
+ .progression-class-design-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .proficiency-designer-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .progression-class-design-row>button,.proficiency-designer-row>button{
+  justify-self:start
+ }
+}
+@media(max-width:670px){
+ .progression-totals{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .progression-casting>label{grid-template-columns:1fr}
+ .personal-resource-head{display:none}
+ .personal-resource-row{
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:8px
+ }
+ .personal-resource-recharge{grid-column:2}
+ .personal-resource-actions{justify-content:flex-end}
+ .personal-resource-current{grid-column:1}
+ .personal-resource-notes{grid-column:1/-1}
+ .proficiency-entry{grid-template-columns:minmax(90px,1fr)
+  minmax(80px,105px) 36px 29px}
+}

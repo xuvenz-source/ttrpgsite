@@ -10,6 +10,10 @@ import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
+import {makeProgressionField,makeProficienciesField,enrichSheetValues,
+ PERSONAL_RESOURCE_TAB,PERSONAL_RESOURCE_KEY} from './SheetDerived.js';
+import {ProgressionDesigner,ProgressionPanel,ProficienciesDesigner,ProficienciesPanel} from './SheetProgression.jsx';
+import PersonalResources from './PersonalResources.jsx';
 import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
@@ -27,7 +31,7 @@ const message=e=>e?.message||String(e);
 const read=async(q)=>{const{data,error}=await q;if(error)throw error;return data};
 const D=(field)=>field.type==='number'?0:
  ['inventory','collection'].includes(field.type)?[]:
- ['magic_dashboard','equipment'].includes(field.type)?{}:'';
+ ['magic_dashboard','equipment','progression','proficiencies'].includes(field.type)?{}:'';
 const stamp=s=>new Date(s).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const defaults=[{id:'main',name:'Character',fields:[{id:'character_name',label:'Name',type:'text',span:2},{id:'strength',label:'Strength',type:'number',span:1},{id:'dexterity',label:'Dexterity',type:'number',span:1},{id:'hp',label:'Hit points',type:'number',span:1},{id:'attack',label:'Attack',type:'roll',formula:'1d20+@{strength}',span:1}]},{id:'inventory',name:'Inventory',fields:[{id:'items',label:'Equipment',type:'inventory',columns:['Item','Qty','Weight','Notes'],span:3}]}];
 class AppErrorBoundary extends React.Component{
@@ -468,7 +472,9 @@ function App(){
  }
  function updateField(id,value){
   if(!character)return;
-  const next={...character,field_values:{...character.field_values,[id]:value}};
+  const next={...character,field_values:enrichSheetValues(
+    camp?.sheet_template,{...character.field_values,[id]:value}
+  )};
   if(id==='character_name')next.name=String(value||'New Character');
   setCharacter(next);
   // Instant, optimistic local monitor update; the server will replicate to others.
@@ -490,6 +496,10 @@ function App(){
     }else{
      const numeric=asNumber(value);
      if(numeric===null)delete fields[id];else fields[id]=numeric;
+    }
+    for(const [key,raw] of Object.entries(next.field_values)){
+     if(key===id||!Number.isFinite(Number(raw))||raw===null||raw==='')continue;
+     if(Number(old[token.id]?.[key])!==Number(raw))fields[key]=Number(raw);
     }
     updated[token.id]=fields;
    }
@@ -983,7 +993,15 @@ function App(){
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
-</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:
+</div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}
+ <button className={sheetTab===PERSONAL_RESOURCE_TAB?'selected':''}
+  onClick={()=>setSheetTab(PERSONAL_RESOURCE_TAB)}>Resources</button></div>
+ {sheetTab===PERSONAL_RESOURCE_TAB?
+ <div className="fields"><div className="field span3">
+  <PersonalResources value={character?.field_values?.[PERSONAL_RESOURCE_KEY]||[]}
+   onChange={v=>updateField(PERSONAL_RESOURCE_KEY,v)}/>
+ </div></div>:
+ <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f}
   value={character?.field_values?.[f.id]||{}}
   sheetValues={character?.field_values||{}}
@@ -991,6 +1009,13 @@ function App(){
  f.type==='equipment'?<EquipmentManager field={f} template={camp.sheet_template}
   value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
   onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}/>:
+ f.type==='progression'?<ProgressionPanel field={f}
+  value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
+  onChange={v=>updateField(f.id,v)}/>:
+ f.type==='proficiencies'?<ProficienciesPanel field={f}
+  value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
+  template={camp.sheet_template} onChange={v=>updateField(f.id,v)}
+  onRoll={(formula,label)=>roll(formula,label)}/>:
  f.type==='collection'?<RepeatingCollection field={f}
  value={character?.field_values?.[f.id]||[]} sheetValues={character?.field_values||{}}
  sourceType="character" sourceId={character?.id}
@@ -998,7 +1023,7 @@ function App(){
  onCastSpell={({collectionId,entryId,mode})=>castSpell({
   sourceType:'character',sourceId:character?.id,collectionId,entryId,mode
  })}
- onAddSpellToHotbar={assignSpellToHotbar}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>
+ onAddSpellToHotbar={assignSpellToHotbar}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div>}</section>
  </FloatingWindow>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
@@ -1013,7 +1038,14 @@ function App(){
    const preset=makeEquipmentTab();
    changeTemplate(x=>x.tabs.push(preset));setSheetTab(preset.id);
   }
- }}>+ Equipment tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate} onLinkResource={linkResourceToToken}/></section>}
+ }}>+ Equipment tab</button>
+ <button type="button" className="secondary" onClick={()=>{
+  const progression=makeProgressionField(),proficiencies=makeProficienciesField();
+  proficiencies.progressionField=progression.id;
+  const tab={id:'tab_'+uid().slice(0,8),name:'Advancement',
+   fields:[progression,proficiencies]};
+  changeTemplate(x=>x.tabs.push(tab));setSheetTab(tab.id);
+ }}>+ Advancement tab</button></div><Designer template={template} tabId={sheetTab} changeTemplate={changeTemplate} onLinkResource={linkResourceToToken}/></section>}
  {tab==='maps'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Map library</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label>
@@ -1152,9 +1184,11 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
    changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push(makeBlankCollection()));
    return;
   }
-  if(type==='magic_dashboard'||type==='equipment'){
+  if(['magic_dashboard','equipment','progression','proficiencies'].includes(type)){
    changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push(
-    type==='equipment'?makeEquipmentField():makeMagicDashboardField()));
+    type==='equipment'?makeEquipmentField():
+    type==='magic_dashboard'?makeMagicDashboardField():
+    type==='progression'?makeProgressionField():makeProficienciesField()));
    return;
   }
   changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({
@@ -1177,6 +1211,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
     <option value="collection">Repeating Collection (spellbooks, abilities…)</option>
     <option value="magic_dashboard">Magic resources dashboard</option>
     <option value="equipment">Equipment and armour rules</option>
+    <option value="progression">Class levels & automatic progression</option>
+    <option value="proficiencies">Skills & proficiencies</option>
     <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
     <option value="roll">Dice button</option><option value="inventory">Inventory</option>
    </select>
@@ -1185,6 +1221,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
     x.tabs.find(y=>y.id===t.id).fields.push(makeSpellbookField()))}>+ Spellbook preset</button>
    <button type="button" className="secondary" onClick={()=>changeTemplate(x=>
     x.tabs.find(y=>y.id===t.id).fields.push(makeMagicDashboardField()))}>+ Magic dashboard</button>
+   <button type="button" className="secondary" onClick={()=>changeTemplate(x=>
+    x.tabs.find(y=>y.id===t.id).fields.push(makeProgressionField()))}>+ Class levels</button>
   </div>
   <p className="muted small">Create ordinary fields, Current/Maximum resources, or repeating collections with nested controls. Choose the Spellbook preset for level tabs, spell entries, detail panels, and roll buttons.</p>
   {linkMessage&&<div className="designer-feedback" role="status">{linkMessage}</div>}
@@ -1222,8 +1260,10 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       changeTemplate(tpl=>{
        const field=tpl.tabs.find(tab=>tab.id===t.id).fields.find(item=>item.id===f.id);
        if(!field)return;
-       if(next==='magic_dashboard'||next==='equipment'){
-        const replacement=next==='magic_dashboard'?makeMagicDashboardField():makeEquipmentField();
+       if(['magic_dashboard','equipment','progression','proficiencies'].includes(next)){
+        const replacement=next==='magic_dashboard'?makeMagicDashboardField():
+          next==='equipment'?makeEquipmentField():
+          next==='progression'?makeProgressionField():makeProficienciesField();
         Object.assign(field,replacement,{id:field.id,label:field.label});
        }else field.type=next;
       });
@@ -1233,6 +1273,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       <option value="collection">Repeating Collection</option>
       <option value="magic_dashboard">Magic dashboard</option>
       <option value="equipment">Equipment & armour</option>
+      <option value="progression">Class levels & progression</option>
+      <option value="proficiencies">Skills & proficiencies</option>
       <option value="textarea">Notes</option><option value="checkbox">Checkbox</option>
       <option value="roll">Dice button</option><option value="inventory">Inventory</option>
      </select></label>
@@ -1240,6 +1282,16 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       const tab=x.tabs.find(y=>y.id===t.id);tab.fields=tab.fields.filter(y=>y.id!==f.id);
      })}>Delete</button>
     </div>
+    {f.type==='progression'&&<ProgressionDesigner field={f} template={template}
+      onChange={next=>changeTemplate(x=>{
+       const target=x.tabs.find(tab=>tab.id===t.id)?.fields.find(v=>v.id===f.id);
+       if(target)Object.assign(target,next);
+      })}/>}
+    {f.type==='proficiencies'&&<ProficienciesDesigner field={f} template={template}
+      onChange={next=>changeTemplate(x=>{
+       const target=x.tabs.find(tab=>tab.id===t.id)?.fields.find(v=>v.id===f.id);
+       if(target)Object.assign(target,next);
+      })}/>}
     {f.type==='magic_dashboard'&&<MagicDashboardDesigner field={f} onChange={next=>
       changeTemplate(x=>{const target=x.tabs.find(tab=>tab.id===t.id)?.fields.find(v=>v.id===f.id);
        if(target)Object.assign(target,next);})}/>}

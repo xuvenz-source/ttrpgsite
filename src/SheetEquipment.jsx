@@ -1,5 +1,6 @@
 import React from 'react';
 import {uid,num,safeList,clampNumber,numberFields} from './SheetMath.js';
+import {numericFieldsWithDerived,abilityModifier} from './SheetDerived.js';
 
 const DEFAULT_CATEGORIES=[
  {id:'light',label:'Light',role:'base',bonus:'full',cap:0},
@@ -12,7 +13,10 @@ export function makeEquipmentField(){
  return {id:uid('equipment_'),label:'Equipment & defence',type:'equipment',span:3,
   categories:structuredClone(DEFAULT_CATEGORIES),
   armorModifierField:'',unarmoredBase:10,unarmoredRule:'full',unarmoredCap:0,
-  proficiencyField:'',defaultAttackField:'',allowWeapons:true,allowArmor:true};
+  proficiencyField:'',defaultAttackField:'',
+  armorModifierMode:'score',defaultAttackMode:'score',
+  scoreBase:10,scoreStep:2,
+  allowWeapons:true,allowArmor:true};
 }
 export function makeEquipmentTab(){
  return {id:uid('equiptab_'),name:'Equipment',fields:[makeEquipmentField()]};
@@ -25,7 +29,7 @@ const bonusModes=[
 const valueObject=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
 const signed=n=>n<0?String(n):'+'+n;
 export function EquipmentDesigner({field,template,onChange}){
- const attrs=numberFields(template),categories=safeList(field.categories,16);
+ const attrs=numericFieldsWithDerived(template),categories=safeList(field.categories,16);
  const update=patch=>onChange({...field,...patch});
  const selectAttr=(name,label)=><label>{label}
   <select value={field[name]||''} onChange={e=>update({[name]:e.target.value})}>
@@ -48,6 +52,24 @@ export function EquipmentDesigner({field,template,onChange}){
    {selectAttr('armorModifierField','Armour modifier field')}
    {selectAttr('proficiencyField','Proficiency modifier for attacks')}
    {selectAttr('defaultAttackField','Default attack modifier field')}
+   <label>Armour attribute input
+    <select value={field.armorModifierMode||'modifier'}
+     onChange={e=>update({armorModifierMode:e.target.value})}>
+     <option value="score">Attribute score (calculate modifier)</option>
+     <option value="modifier">Numeric modifier (already calculated)</option>
+    </select></label>
+   <label>Default weapon attribute input
+    <select value={field.defaultAttackMode||'modifier'}
+     onChange={e=>update({defaultAttackMode:e.target.value})}>
+     <option value="score">Attribute score (calculate modifier)</option>
+     <option value="modifier">Numeric modifier (already calculated)</option>
+    </select></label>
+   <label>Attribute score baseline
+    <input type="number" value={field.scoreBase??10}
+     onChange={e=>update({scoreBase:num(e.target.value,10)})}/></label>
+   <label>Score points per modifier
+    <input type="number" min="1" max="100" value={field.scoreStep??2}
+     onChange={e=>update({scoreStep:Math.max(1,clampNumber(e.target.value,1,100))})}/></label>
    <label>Unarmoured base score<input type="number" value={field.unarmoredBase??10}
     onChange={e=>update({unarmoredBase:num(e.target.value)})}/></label>
    <label>Unarmoured attribute rule<select value={field.unarmoredRule||'full'}
@@ -101,7 +123,9 @@ function modifier(mode,cap,attribute){
 }
 export function calculateArmor(field,value,sheetValues={}){
  const data=valueObject(value),categories=safeList(field.categories,16),
-  armorAttribute=num(sheetValues[field.armorModifierField]);
+  armorAttribute=field.armorModifierField?
+   abilityModifier(sheetValues[field.armorModifierField],
+    field.armorModifierMode||'modifier',field.scoreBase,field.scoreStep):0;
  const wearing=safeList(data.armor,100).filter(row=>row.worn!==false);
  const withScores=wearing.map(item=>{
   const rule=categories.find(category=>category.id===item.categoryId)||
@@ -125,7 +149,7 @@ const newArmor=field=>({
 });
 const newWeapon=()=>({
  id:uid('weapon_'),name:'New weapon',kind:'melee',proficient:true,statField:'',
- magic:0,attackBonus:0,damageDice:'1d8',damageBonus:0,useStatForDamage:true,
+ statMode:'',magic:0,attackBonus:0,damageDice:'1d8',damageBonus:0,useStatForDamage:true,
  damageType:'',critDice:'1d8',critOn:20
 });
 function Input({value,onChange,type='text',label,...rest}){
@@ -135,14 +159,17 @@ function Input({value,onChange,type='text',label,...rest}){
 export function EquipmentManager({field,value,onChange,sheetValues={},template,onRoll}){
  const data=valueObject(value),categories=safeList(field.categories,16),
   armor=safeList(data.armor,100),weapons=safeList(data.weapons,100),
-  stats=numberFields(template);
+  stats=numericFieldsWithDerived(template);
  const def=calculateArmor(field,data,sheetValues);
  const update=(key,rows)=>onChange({...data,[key]:rows});
  const changeItem=(key,id,patch)=>update(key,safeList(data[key],100).map(row=>
   row.id===id?{...row,...patch}:row));
  function rollWeapon(weapon,kind){
   if(!onRoll)return;
-  const stat=num(sheetValues[weapon.statField||field.defaultAttackField]);
+  const source=weapon.statField||field.defaultAttackField;
+  const stat=source?abilityModifier(sheetValues[source],
+   weapon.statMode||field.defaultAttackMode||'modifier',
+   field.scoreBase,field.scoreStep):0;
   const prof=weapon.proficient?num(sheetValues[field.proficiencyField]):0;
   const attack=stat+prof+num(weapon.magic)+num(weapon.attackBonus);
   const damage=(weapon.useStatForDamage!==false?stat:0)+num(weapon.magic)+num(weapon.damageBonus);
@@ -212,11 +239,19 @@ export function EquipmentManager({field,value,onChange,sheetValues={},template,o
        <option value="other">Other</option>
       </select>
      </div></td>
-     <td><select aria-label="Attack modifier" value={w.statField||''}
-      onChange={e=>changeItem('weapons',w.id,{statField:e.target.value})}>
-      <option value="">Default</option>
-      {stats.map(s=><option value={s.id} key={s.id}>{s.label}</option>)}
-     </select></td>
+     <td><div className="equipment-weapon-name">
+      <select aria-label="Attack modifier" value={w.statField||''}
+       onChange={e=>changeItem('weapons',w.id,{statField:e.target.value})}>
+       <option value="">Default</option>
+       {stats.map(s=><option value={s.id} key={s.id}>{s.label}</option>)}
+      </select>
+      <select aria-label="Attack attribute interpretation" value={w.statMode||''}
+       onChange={e=>changeItem('weapons',w.id,{statMode:e.target.value})}>
+       <option value="">Default interpretation</option>
+       <option value="score">Convert score</option>
+       <option value="modifier">Direct modifier</option>
+      </select>
+     </div></td>
      <td><Input type="number" label="Weapon magic" value={w.magic}
       onChange={magic=>changeItem('weapons',w.id,{magic})}/></td>
      <td><Input type="number" label="Extra to hit" value={w.attackBonus}

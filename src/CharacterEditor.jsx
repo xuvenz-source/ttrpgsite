@@ -3,6 +3,9 @@ import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
+import {enrichSheetValues,PERSONAL_RESOURCE_KEY,PERSONAL_RESOURCE_TAB} from './SheetDerived.js';
+import {ProgressionPanel,ProficienciesPanel} from './SheetProgression.jsx';
+import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
@@ -29,7 +32,7 @@ export default function CharacterEditor({
 }){
  const initial=useMemo(()=>({
   name:record.name,
-  field_values:structuredClone(record.field_values||{}),
+  field_values:enrichSheetValues(template,structuredClone(record.field_values||{})),
   portrait_path:record.portrait_path||null,
   token_path:record.token_path||null
  }),[record.id]);
@@ -45,7 +48,7 @@ export default function CharacterEditor({
   setDraft(prev=>({
    ...prev,
    name:id==='character_name'?String(value||'New Character'):prev.name,
-   field_values:{...prev.field_values,[id]:value}
+   field_values:enrichSheetValues(template,{...prev.field_values,[id]:value})
   }));
  }
  function close(){
@@ -121,9 +124,15 @@ export default function CharacterEditor({
    <div className="tabs">
     {(template?.tabs||[]).map(t=><button type="button" key={t.id}
       className={t.id===activeTab?'selected':''} onClick={()=>setActiveTab(t.id)}>{t.name}</button>)}
+    <button type="button" className={activeTab===PERSONAL_RESOURCE_TAB?'selected':''}
+     onClick={()=>setActiveTab(PERSONAL_RESOURCE_TAB)}>Resources</button>
    </div>
    <div className="npc-fields fields">
-    {(tab?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}>
+    {activeTab===PERSONAL_RESOURCE_TAB?
+     <div className="field span3"><PersonalResources
+      value={draft.field_values[PERSONAL_RESOURCE_KEY]||[]}
+      onChange={v=>editField(PERSONAL_RESOURCE_KEY,v)}/></div>:
+     (tab?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}>
      <label>{f.label}</label>
      {f.type==='roll'?<button type="button" className="rollbtn" onClick={()=>doRoll(f)}>
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
@@ -133,6 +142,12 @@ export default function CharacterEditor({
       f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.field_values[f.id]||{}}
        sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}/>:
       f.type==='equipment'?<EquipmentManager field={f} template={template}
+       value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
+       onChange={v=>editField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
+      f.type==='progression'?<ProgressionPanel field={f}
+       value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
+       onChange={v=>editField(f.id,v)}/>:
+      f.type==='proficiencies'?<ProficienciesPanel field={f} template={template}
        value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
        onChange={v=>editField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
       f.type==='collection'?<RepeatingCollection field={f} value={draft.field_values[f.id]||[]}

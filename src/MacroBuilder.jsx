@@ -1,6 +1,7 @@
 import React,{useMemo,useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
 import MacroChatCard from './MacroChatCard.jsx';
+import {numericFieldsWithDerived} from './SheetDerived.js';
 
 const uid=()=>crypto.randomUUID();
 const MAX_ROWS=12,MAX_CELLS=3;
@@ -37,11 +38,7 @@ export function MacroManager({
  const [chosenId,setChosenId]=useState(()=>macros[0]?.id||'new');
  const dirty=baseline===null||JSON.stringify(draft)!==baseline;
  const editingSaved=macros.some(m=>m.id===chosenId);
- const attrs=useMemo(()=>Array.from(
-   new Map((template?.tabs||[]).flatMap(tab=>tab.fields||[])
-    .filter(f=>f.type==='number'||f.type==='resource')
-    .map(f=>[f.id,{id:f.id,label:f.label||f.id}])).values()
-  ),[template]);
+ const attrs=useMemo(()=>numericFieldsWithDerived(template),[template]);
  const sourceOptions=[
   {value:'none',label:'No sheet attributes (dice only)'},
   ...characters.filter(ch=>isDM||ch.user_id===user).map(ch=>({

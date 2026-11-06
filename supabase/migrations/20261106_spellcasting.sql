@@ -138,8 +138,11 @@ begin
    'higherLevels',left(v_values->>'higher_levels',1200));end if;
  end if;
  if p_mode in ('cast','attack') and (p_mode='attack' or coalesce(v_choices->>'attack','true')='true') then
-  v_bonus:=nullif(btrim(coalesce(v_values->>'attack_bonus','')),'');
+  -- Spell overrides take precedence; otherwise use the active casting path.
+  v_bonus:=coalesce(nullif(btrim(coalesce(v_values->>'attack_bonus','')),''),
+    nullif(btrim(coalesce(v_sheet->>'spell_attack_bonus','')),''));
   if v_bonus is not null and v_bonus ~ '^[+-]?[0-9]{1,4}$' then
+   v_values:=v_values||jsonb_build_object('attack_bonus',v_bonus);
    select coalesce(child->>'formula','') into v_attack_formula
     from jsonb_array_elements(coalesce(v_collection->'fields','[]'::jsonb)) child
     where child->>'id'='spell_attack' limit 1;
@@ -153,7 +156,8 @@ begin
  end if;
  if p_mode='cast' and coalesce(v_choices->>'save','false')='true' then
   v_save_stat:=upper(left(coalesce(v_values->>'saving_stat',''),3));
-  v_dc:=v_values->>'save_dc';
+  v_dc:=coalesce(nullif(btrim(coalesce(v_values->>'save_dc','')),''),
+    v_sheet->>'spell_save_dc');
   if v_save_stat in ('STR','DEX','CON','INT','WIS','CHA')
     and v_dc ~ '^[0-9]{1,2}$' and v_dc::integer between 1 and 99 then
    v_sections:=v_sections||jsonb_build_object('save',jsonb_build_object(

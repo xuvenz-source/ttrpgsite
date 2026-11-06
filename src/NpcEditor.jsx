@@ -3,6 +3,9 @@ import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
+import {enrichSheetValues,PERSONAL_RESOURCE_KEY,PERSONAL_RESOURCE_TAB} from './SheetDerived.js';
+import {ProgressionPanel,ProficienciesPanel} from './SheetProgression.jsx';
+import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
@@ -21,7 +24,8 @@ export default function NpcEditor({
 }){
  const [draft,setDraft]=useState(()=>({
   name:record.data.name,
-  values:structuredClone(record.kind==='template'?record.data.field_values||{}:record.data.npc_values||{}),
+  values:enrichSheetValues(template,structuredClone(record.kind==='template'?
+    record.data.field_values||{}:record.data.npc_values||{})),
   portraitPath:record.kind==='template'?record.data.portrait_path||null:null,
   tokenPath:record.kind==='template'?record.data.token_path||null:record.data.image_path||null,
   barsPublic:!!record.data.npc_bars_public
@@ -29,7 +33,8 @@ export default function NpcEditor({
  const savedValues=useRef(JSON.stringify(draft.values));
  const[t,setT]=useState(template?.tabs?.[0]?.id||'main'),[studio,setStudio]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const current=template?.tabs?.find(x=>x.id===t)||template?.tabs?.[0];const title=record.kind==='template'?'Bestiary template':'NPC token sheet';
- function setField(id,v){setDraft(d=>({...d,name:id==='character_name'?String(v):d.name,values:{...d.values,[id]:v}}))}
+ function setField(id,v){setDraft(d=>({...d,name:id==='character_name'?String(v):d.name,
+   values:enrichSheetValues(template,{...d.values,[id]:v})}))}
  async function save(keepOpen=false){
   if(saving)throw Error('An NPC save is in progress.');
   setSaving(true);setError('');
@@ -77,9 +82,14 @@ export default function NpcEditor({
     onChange={e=>setDraft(d=>({...d,barsPublic:e.target.checked}))}/>
   Show this NPC's resource bars and globes to all players (overrides campaign default)
  </label>
- <div className="tabs">{template?.tabs?.map(tab=><button key={tab.id} onClick={()=>setT(tab.id)} className={t===tab.id?'selected':''}>{tab.name}</button>)}</div>
+ <div className="tabs">{template?.tabs?.map(tab=><button key={tab.id} onClick={()=>setT(tab.id)} className={t===tab.id?'selected':''}>{tab.name}</button>)}
+ <button type="button" className={t===PERSONAL_RESOURCE_TAB?'selected':''}
+  onClick={()=>setT(PERSONAL_RESOURCE_TAB)}>Resources</button></div>
  <div className="npc-fields fields">
- {(current?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>
+ {t===PERSONAL_RESOURCE_TAB?<div className="field span3">
+  <PersonalResources value={draft.values[PERSONAL_RESOURCE_KEY]||[]}
+   onChange={v=>setField(PERSONAL_RESOURCE_KEY,v)}/></div>:
+ (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
  f.type==='inventory'?<Items field={f} value={draft.values[f.id]||[]} onChange={v=>setField(f.id,v)}/>:
  f.type==='resource'?<ResourceField value={draft.values[f.id]} onChange={v=>setField(f.id,v)}/>:
@@ -88,6 +98,11 @@ export default function NpcEditor({
  f.type==='equipment'?<EquipmentManager field={f} template={template}
    value={draft.values[f.id]||{}} sheetValues={draft.values}
    onChange={v=>setField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
+ f.type==='progression'?<ProgressionPanel field={f} value={draft.values[f.id]||{}}
+   sheetValues={draft.values} onChange={v=>setField(f.id,v)}/>:
+ f.type==='proficiencies'?<ProficienciesPanel field={f} value={draft.values[f.id]||{}}
+   sheetValues={draft.values} template={template} onChange={v=>setField(f.id,v)}
+   onRoll={(formula,label)=>onRoll(formula,label)}/>:
  f.type==='collection'?<RepeatingCollection field={f} value={draft.values[f.id]||[]}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}
    sourceType={record.kind==='token'?'npc_token':'npc_template'} sourceId={record.data.id}
