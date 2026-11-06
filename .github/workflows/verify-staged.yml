@@ -7,6 +7,7 @@ on:
       - feature/weapon-attack-cards
       - stage/attribute-equipment-spell-cards
       - stage/inventory-grid-item-tiles
+      - stage/account-settings-map-measurements
   workflow_dispatch:
 
 permissions:
