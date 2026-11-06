@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
+import FloatingWindow from './FloatingWindow.jsx';
 
 export const MAX_ACTIVE_EFFECTS=18;
 export const MAX_CUSTOM_EFFECTS=24;
@@ -195,8 +196,8 @@ export function TokenStatusPicker({token,catalog,canEdit,onClose,onApply}){
    if(result!==false)onClose();
   }catch(e){setError(e?.message||String(e))}
  }
- return <div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
-  <section className="modal token-status-modal" role="dialog" aria-modal="true"
+ return <FloatingWindow kind="status" onClose={onClose}>
+  <section className="modal token-status-modal" role="dialog"
    aria-label={'Statuses for '+token.name}>
    <div className="heading">
     <div><h2>{token.name} · Status Effects</h2>
@@ -264,7 +265,7 @@ export function TokenStatusPicker({token,catalog,canEdit,onClose,onApply}){
     {canEdit&&<button type="button" onClick={apply} disabled={!changed}>Apply effects</button>}
    </div>
   </section>
- </div>;
+ </FloatingWindow>;
 }
 
 export function StatusCatalogEditor({catalog,onSave}){

@@ -1,4 +1,5 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
+import FloatingWindow from './FloatingWindow.jsx';
 
 export function editableFields(template){
  const seen=new Set();
@@ -61,23 +62,41 @@ function parts(type,value){
  return {current:value??'',max:''};
 }
 function validNumber(n){return n!==''&&Number.isFinite(Number(n))&&Number(n)>=-1000000&&Number(n)<=1000000}
-export default function TokenQuickEdit({db,token,template,allowedFields,onClose,onApply}){
+export default function TokenQuickEdit({db,token,template,allowedFields,initialValues={},onRemember,onClose,onApply}){
  const fields=useMemo(()=>editableFields(template).filter(f=>(allowedFields||[]).includes(f.id)),[template,allowedFields]);
- const [values,setValues]=useState({}),[saved,setSaved]=useState({}),[loading,setLoading]=useState(true),[error,setError]=useState('');
+ const prepare=raw=>Object.fromEntries(fields.map(f=>[f.id,parts(f.type,raw?.[f.id])]));
+ const [values,setValues]=useState(()=>prepare(initialValues));
+ const [saved,setSaved]=useState(()=>prepare(initialValues));
+ const [error,setError]=useState('');
+ const touched=useRef(new Set());
+ const [known,setKnown]=useState(()=>new Set(fields.filter(f=>
+  Object.prototype.hasOwnProperty.call(initialValues,f.id)).map(f=>f.id)));
  useEffect(()=>{
-  let live=true;setLoading(true);setError('');
-  db.rpc('get_token_quick_values',{p_token:token.id}).then(({data,error})=>{
+  let live=true;
+  db.rpc('get_token_quick_values',{p_token:token.id}).then(({data,error:readError})=>{
    if(!live)return;
-   if(error)setError(error.message);
-   else{
-    const vals=Object.fromEntries(fields.map(f=>[f.id,parts(f.type,data?.[f.id])]));
-    setValues(vals);setSaved(vals);
-   }
-   setLoading(false);
-  });
+   if(readError){setError('Could not synchronise current values: '+readError.message);return}
+   const remote=prepare(data||{});
+   setSaved(remote);
+   setValues(previous=>{
+    const next={...previous};
+    for(const field of fields){
+     const id=field.id;
+     next[id]={...previous[id]};
+     for(const part of field.type==='resource'?['current','max']:['current']){
+      if(!touched.current.has(id+':'+part))next[id][part]=remote[id][part];
+     }
+    }
+    return next;
+   });
+   setKnown(new Set(fields.map(f=>f.id)));
+   onRemember?.(data||{});
+  }).catch(e=>{if(live)setError(e?.message||String(e))});
   return()=>{live=false};
  },[token.id,db,template,allowedFields]);
  function change(id,part,value){
+  touched.current.add(id+':'+part);
+  setKnown(old=>new Set([...old,id]));
   setValues(v=>({...v,[id]:{...v[id],[part]:value}}));
  }
  const changes=fields.flatMap(f=>{
@@ -107,13 +126,13 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
    if(onApply(token,payload)!==false)onClose();
   }catch(e){setError(e?.message||String(e))}
  }
- return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
-  <section className="modal quick-token-modal" role="dialog" aria-modal="true" aria-label={'Quick edit '+token.name}>
+ return <FloatingWindow kind="quick" onClose={onClose}>
+  <section className="modal quick-token-modal" role="dialog" aria-label={'Quick edit '+token.name}>
    <div className="heading">
-    <div><h2>{token.name} · Quick Adjust</h2><p className="muted small">Edit permitted values without opening the full character sheet.</p></div>
+    <div><h2>{token.name} · Quick Adjust</h2></div>
     <button type="button" className="secondary" onClick={onClose}>✕</button>
    </div>
-   {loading?<p className="muted">Loading attributes…</p>:fields.length===0?
+   {fields.length===0?
     <p className="muted">No quick-adjust fields enabled. Ask your DM to configure them in Settings.</p>:
     <div className="quick-token-fields">{fields.map(f=>{
      const value=values[f.id]||{current:'',max:''};
@@ -127,15 +146,16 @@ export default function TokenQuickEdit({db,token,template,allowedFields,onClose,
       </div>
       <div className="quick-token-adjustments">
        {[-5,-1,1,5].map(v=><button type="button" key={v} className="secondary"
-        onClick={()=>shift(f,v)}>{v>0?'+':''}{v}</button>)}
+        onClick={()=>shift(f,v)} disabled={!known.has(f.id)}
+        title={!known.has(f.id)?'Synchronising the original value…':''}>{v>0?'+':''}{v}</button>)}
       </div>
      </div>;
     })}</div>}
    {error&&<p className="error small" role="alert">{error}</p>}
    <div className="actions">
     <button type="button" className="secondary" onClick={onClose}>Cancel</button>
-    <button type="button" onClick={save} disabled={loading||changes.length===0}>Apply changes</button>
+    <button type="button" onClick={save} disabled={changes.length===0}>Apply changes</button>
    </div>
   </section>
- </div>;
+ </FloatingWindow>;
 }

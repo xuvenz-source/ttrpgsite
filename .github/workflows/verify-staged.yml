@@ -1,0 +1,22 @@
+name: Verify staged tabletop changes
+on:
+  push:
+    branches:
+      - feature/token-status-markers
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies without publishing
+        run: npm install --no-audit --no-fund
+      - name: Validate Vite production build (no Vercel deployment)
+        run: npm run build

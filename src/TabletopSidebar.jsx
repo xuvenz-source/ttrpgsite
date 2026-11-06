@@ -155,6 +155,7 @@ export default function TabletopSidebar({
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
  statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
+ uiScale,onChangeUiScale,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
  const validPanel=(!isDM&&(panel==='bestiary'||panel==='dm'))?'units':panel;
@@ -206,6 +207,21 @@ export default function TabletopSidebar({
        <option value="2">200%</option><option value="3">300%</option>
       </select></label>
       <p className="muted tiny">Ctrl + mouse wheel over the map changes your view zoom only.</p>
+     </div>
+    </details>
+    <details className="side-details">
+     <summary>Interface size</summary>
+     <div className="side-form">
+      <label>UI scale
+       <select value={uiScale} onChange={e=>onChangeUiScale(Number(e.target.value))}>
+        <option value={0.8}>80% — Compact</option>
+        <option value={0.9}>90% — Default</option>
+        <option value={1}>100% — Standard</option>
+        <option value={1.1}>110% — Large</option>
+        <option value={1.25}>125% — Extra large</option>
+       </select>
+      </label>
+      <p className="muted tiny">Changes menus and window text, not battlemap grid or token size. Saved to your account.</p>
      </div>
     </details>
     <details className="side-details shortcut-settings">

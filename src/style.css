@@ -944,3 +944,124 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .status-options{grid-template-columns:1fr}
  .status-filter-tabs button{padding:5px 6px}
 }
+
+/* v1.6 — Non-modal, movable tabletop windows with compact default controls.
+   This intentionally does NOT zoom or transform the map, grid or token layers. */
+.floating-window{
+ position:fixed;box-sizing:border-box;z-index:700;
+ width:min(835px,calc(100vw - 28px));height:min(655px,calc(100dvh - 28px));
+ min-width:min(290px,calc(100vw - 12px));min-height:180px;
+ resize:both;overflow:hidden;isolation:isolate;
+ background:#192437;border-radius:11px;
+ border:1px solid #6b7a99;box-shadow:0 12px 40px #000b;
+ pointer-events:auto;
+}
+.floating-window.floating-quick{
+ width:min(355px,calc(100vw - 18px));
+ height:min(325px,calc(100dvh - 24px));
+ min-width:min(295px,calc(100vw - 12px));min-height:176px;
+}
+.floating-window.floating-status{
+ width:min(650px,calc(100vw - 22px));
+ height:min(570px,calc(100dvh - 24px));
+ min-height:260px;
+}
+.floating-window>.modal,
+.floating-window>.panel{
+ box-sizing:border-box;width:100%!important;height:100%!important;
+ max-height:none!important;min-height:0;overflow:auto;
+ border:none!important;border-radius:10px!important;
+ box-shadow:none!important;padding:12px 14px!important;
+}
+.floating-window>.modal .heading,.floating-window>.panel .heading{
+ position:relative;min-height:28px;cursor:grab;
+ user-select:none;-webkit-user-select:none;
+ touch-action:none;justify-content:space-between;
+ margin-bottom:9px!important;padding-bottom:7px;
+ border-bottom:1px solid #465773;
+}
+.floating-window>.modal .heading:active,.floating-window>.panel .heading:active{cursor:grabbing}
+.floating-window .heading button,.floating-window .heading input,
+.floating-window .heading select{cursor:pointer;touch-action:auto}
+.floating-window .heading h2{font-size:calc(17px * var(--ui-scale,.9))!important}
+.floating-window .heading .character-portrait{width:36px;height:36px;min-width:36px}
+.floating-window .heading .return-to-game{font-size:calc(11px * var(--ui-scale,.9))!important}
+.floating-window .modal .actions{margin-top:10px}
+.floating-window.floating-quick>.quick-token-modal{
+ display:flex;flex-direction:column;gap:6px!important;
+ width:100%!important;padding:10px!important;overflow:auto;
+}
+.floating-window .quick-token-modal .heading h2{font-size:calc(14px * var(--ui-scale,.9))!important}
+.floating-window .quick-token-fields{gap:6px;flex:1;min-height:0;overflow-y:auto}
+.floating-window .quick-token-field{padding:6px 8px;gap:5px;border-radius:6px}
+.floating-window .quick-token-field>strong{font-size:calc(12px * var(--ui-scale,.9))}
+.floating-window .quick-token-numbers{gap:5px;grid-template-columns:repeat(auto-fit,minmax(95px,1fr))}
+.floating-window .quick-token-numbers label{gap:2px}
+.floating-window .quick-token-numbers input{
+ font-size:calc(14px * var(--ui-scale,.9))!important;
+ padding:5px 6px;min-height:29px;
+}
+.floating-window .quick-token-adjustments{gap:3px}
+.floating-window .quick-token-adjustments button{
+ padding:3px 2px!important;min-height:25px;font-size:calc(11px * var(--ui-scale,.9))!important;
+}
+.floating-window .quick-token-modal>.actions{
+ flex:0 0 auto;margin-top:4px;gap:6px;
+}
+.floating-window .quick-token-modal>.actions button{padding:6px 9px}
+.floating-window .floating-sheet-content{padding:12px 15px!important}
+.floating-window .floating-sheet-content .fields{gap:10px;margin-top:9px}
+.floating-window .floating-sheet-content>.tabs{margin:8px 0}
+.floating-window .npc-fields{gap:10px}
+.floating-window>.token-status-modal{max-height:none!important;overflow:hidden!important}
+.floating-window>.token-status-modal .status-options{flex:1;overflow-y:auto;min-height:0}
+.floating-window>.token-status-modal .heading{flex-shrink:0}
+/* User-defined, account-persisted UI scale. Explicit pixel fonts in the
+   original stylesheet are overridden only in menus and floating windows. */
+.app .right-sidebar,.app .floating-window{
+ font-size:calc(13px * var(--ui-scale,.9));
+}
+.app .right-sidebar :is(button,input,textarea,select),
+.app .floating-window :is(button,input,textarea,select){
+ font-size:calc(12px * var(--ui-scale,.9));
+}
+.app .right-sidebar :is(label,p),
+.app .floating-window :is(label,p){
+ font-size:calc(12px * var(--ui-scale,.9));
+}
+.app .right-sidebar .side-heading h2{font-size:calc(16px * var(--ui-scale,.9))}
+.app .right-sidebar :is(h3,summary){font-size:calc(12px * var(--ui-scale,.9))}
+.app .right-sidebar .tab-glyph{font-size:calc(18px * var(--ui-scale,.9))}
+.app .floating-window :is(h3,h4){font-size:calc(14px * var(--ui-scale,.9))}
+.app .right-sidebar .tiny,.app .floating-window .tiny{font-size:calc(10px * var(--ui-scale,.9))}
+@media(max-width:650px){
+ .floating-window{min-width:min(275px,calc(100vw - 10px))}
+ .floating-window.floating-sheet{width:calc(100vw - 16px);height:min(70dvh,560px)}
+ .floating-window.floating-quick{width:min(330px,calc(100vw - 12px))}
+ .floating-window>.modal,.floating-window>.panel{padding:9px!important}
+ .floating-window .floating-sheet-content .fields{gap:8px}
+}
+
+/* UI scale also adjusts side panel and initial floating-window proportions,
+   while map pixel dimensions remain untouched. */
+@media(min-width:1051px){
+ .app.no-left-rail main .workarea{
+  grid-template-columns:minmax(0,1fr) calc(320px * var(--ui-scale,.9));
+ }
+}
+@media(min-width:751px) and (max-width:1050px){
+ .app.no-left-rail main .workarea{
+  grid-template-columns:minmax(0,1fr) calc(310px * var(--ui-scale,.9));
+ }
+}
+@media(min-width:751px){
+ .app .floating-window.floating-sheet{
+  width:min(calc(835px * var(--ui-scale,.9)),calc(100vw - 28px));
+ }
+ .app .floating-window.floating-quick{
+  width:min(calc(355px * var(--ui-scale,.9)),calc(100vw - 18px));
+ }
+ .app .floating-window.floating-status{
+  width:min(calc(650px * var(--ui-scale,.9)),calc(100vw - 22px));
+ }
+}

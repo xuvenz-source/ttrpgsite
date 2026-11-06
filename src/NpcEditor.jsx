@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
+import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
@@ -35,8 +36,9 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
   });
   onRoll(formula,field.label);
  };
- return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&close()}>
- <section className="modal npc-modal" role="dialog" aria-modal="true" aria-label="Edit NPC sheet">
+ return <>
+ <FloatingWindow kind="sheet" onClose={close}>
+ <section className="modal npc-modal" role="dialog" aria-label="Edit NPC sheet">
  <div className="heading"><div><h2>{title}</h2><p className="muted small">{record.kind==='token'?'Changes apply only to this placed token.':'Changes become the default for newly placed copies.'}</p></div><button className="secondary" onClick={close}>✕</button></div>
  <div className="npc-editor-top">
  <Artwork db={db} path={draft.tokenPath||draft.portraitPath} alt={draft.name} className="npc-editor-portrait"/>
@@ -66,8 +68,9 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
  {notice&&<p className="good">{notice}</p>}
  <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button onClick={save} disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save NPC sheet'}</button></div>
  </section>
+ </FloatingWindow>
  {studio&&<PersonalTokenLibrary db={db} campaignId={campaignId} userId={userId}
   mode="npcs" defaultName={draft.name} currentTokenPath={draft.tokenPath} currentPortraitPath={draft.portraitPath}
   onClose={()=>setStudio(false)} onApply={assets=>{setDraft(d=>({...d,portraitPath:assets.portraitPath,tokenPath:assets.tokenPath}))}}/>}
- </div>;
+ </>;
 }

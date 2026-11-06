@@ -10,6 +10,7 @@ import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
+import FloatingWindow from './FloatingWindow.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
@@ -61,7 +62,7 @@ function App(){
  const[session,setSession]=useState(null),[authReady,setAuthReady]=useState(false),[email,setEmail]=useState(''),[sent,setSent]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const[campaigns,setCampaigns]=useState([]),[campaignsLoading,setCampaignsLoading]=useState(true),[roles,setRoles]=useState({}),[activeId,setActiveId]=useState(''),[camp,setCamp]=useState(null),[members,setMembers]=useState([]),[characters,setCharacters]=useState([]),[character,setCharacter]=useState(null);
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
- const[tab,setTab]=useState('sheet'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
+ const[tab,setTab]=useState('tabletop'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
@@ -78,6 +79,8 @@ function App(){
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const[hotbarVisible,setHotbarVisible]=useState(true);
+ const[uiScale,setUiScale]=useState(.9);
+ const quickCache=useRef(new Map());
  // Keep the most recent local destination authoritative until the server acknowledges it.
  const movementPending=useRef(new Map()),tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
@@ -282,16 +285,18 @@ function App(){
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
-  quickWritePatches.current.clear();++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+  quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
+  ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
-  if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);return}
+  if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);setUiScale(.9);return}
   let alive=true;
-  db.from('tabletop_user_preferences').select('bindings,hotbar_visible').eq('user_id',user).maybeSingle()
+  db.from('tabletop_user_preferences').select('bindings,hotbar_visible,ui_scale').eq('user_id',user).maybeSingle()
    .then(({data,error})=>{
     if(!alive)return;
     if(error){console.error('Could not load keybindings',error);return}
     setBindings(normalizeBindings(data?.bindings||DEFAULT_BINDINGS));
     setHotbarVisible(data?.hotbar_visible!==false);
+    setUiScale(Math.max(.8,Math.min(1.25,Number(data?.ui_scale)||.9)));
    });
   return()=>{alive=false};
  },[user]);
@@ -318,7 +323,7 @@ function App(){
  useEffect(()=>{let done=false;Promise.all(maps.map(async x=>{const{data}=await db.storage.from('battlemap-assets').createSignedUrl(x.storage_path,3600);return[x.id,data?.signedUrl||'']})).then(x=>!done&&setUrls(Object.fromEntries(x)));return()=>{done=true}},[maps]);
 
  useEffect(()=>{
-  if(!user||!camp||tab!=='tabletop')return;
+  if(!user||!camp||!['tabletop','sheet'].includes(tab))return;
   function onKey(e){
    if(e.defaultPrevented||e.ctrlKey||e.altKey||e.metaKey||e.shiftKey||e.isComposing)return;
    if(document.querySelector('.modal-backdrop')||isInputFocused(e.target))return;
@@ -352,14 +357,26 @@ function App(){
   if(!user)throw Error('Sign in to save your keybindings.');
   const cleaned=normalizeBindings(next);
   await read(db.from('tabletop_user_preferences')
-   .upsert({user_id:user,bindings:cleaned,hotbar_visible:hotbarVisible},{onConflict:'user_id'}));
+   .upsert({user_id:user,bindings:cleaned,hotbar_visible:hotbarVisible,ui_scale:uiScale},{onConflict:'user_id'}));
   setBindings(cleaned);
  }
  async function changeHotbarVisibility(visible){
   if(!user)return;
   await read(db.from('tabletop_user_preferences')
-   .upsert({user_id:user,bindings,hotbar_visible:visible},{onConflict:'user_id'}));
+   .upsert({user_id:user,bindings,hotbar_visible:visible,ui_scale:uiScale},{onConflict:'user_id'}));
   setHotbarVisible(visible);
+ }
+ async function changeInterfaceScale(next){
+  const value=Number(next);
+  if(![.8,.9,1,1.1,1.25].includes(value))throw Error('Invalid interface scale');
+  if(!user)return;
+  const previous=uiScale;
+  setUiScale(value);
+  try{
+   await read(db.from('tabletop_user_preferences')
+    .upsert({user_id:user,bindings,hotbar_visible:hotbarVisible,ui_scale:value},
+     {onConflict:'user_id'}));
+  }catch(e){setUiScale(previous);fail(e)}
  }
  async function saveMyHotbar(slots){
   if(!user||!activeId)throw Error('Join a campaign before saving a hotbar.');
@@ -448,6 +465,30 @@ function App(){
    .eq('id',activeId).select('token_quick_fields').single());
   setCamp(previous=>({...previous,token_quick_fields:next.token_quick_fields}));
  }
+ function getLocalQuickValues(token){
+  if(!token)return {};
+  const cached=quickCache.current.get(token.id)||{};
+  const allowed=camp?.token_quick_fields||[];
+  const fields=(camp?.sheet_template?.tabs||[]).flatMap(t=>t.fields||[])
+   .filter(f=>allowed.includes(f.id));
+  const visible=monitorValues[token.id]||{};
+  const record=characters.find(ch=>ch.id===token.character_id);
+  const fromSheet=(character?.id===token.character_id?character?.field_values:null)
+   ||record?.field_values||{};
+  const result={...cached};
+  for(const field of fields){
+   if(Object.prototype.hasOwnProperty.call(fromSheet,field.id)){
+    result[field.id]=fromSheet[field.id];continue;
+   }
+   if(Object.prototype.hasOwnProperty.call(result,field.id))continue;
+   if(Object.prototype.hasOwnProperty.call(visible,field.id)){
+    result[field.id]=field.type==='resource'
+     ?{current:visible[field.id],max:visible[field.id+'__max']??''}
+     :visible[field.id];
+   }
+  }
+  return result;
+ }
  function openQuickToken(t){
   if(!t||(!isDM&&t.owner_id!==user))return;
   if(!isDM&&camp?.active_map_id!==t.map_id)return;
@@ -473,6 +514,18 @@ function App(){
    (token.character_id&&t.character_id===token.character_id)).map(t=>t.id);
   const before=Object.fromEntries(affected.map(id=>[id,monitorValues[id]]));
   const entry={affected,patch,before};
+  const prior=quickCache.current.get(token.id)||{};
+  const nextCache={...prior};
+  for(const [id,parts] of Object.entries(changes)){
+   if(fieldTypes.get(id)==='resource'){
+    const old=prior[id];
+    nextCache[id]={
+     ...(old&&typeof old==='object'&&!Array.isArray(old)?old:{current:old??'',max:''}),
+     ...parts
+    };
+   }else nextCache[id]=parts.current;
+  }
+  quickCache.current.set(token.id,nextCache);
   const currentCampaign=activeId,currentMap=selectedMap;
   quickWritePatches.current.set(token.id,entry);
   setPendingQuickTokens(old=>({...old,[token.id]:true}));
@@ -517,6 +570,7 @@ function App(){
    .catch(e=>{
     if(quickWritePatches.current.get(token.id)!==entry)return;
     quickWritePatches.current.delete(token.id);
+    quickCache.current.delete(token.id);
     if(activeId!==currentCampaign||selectedMap!==currentMap)return;
     ++monitorRequest.current;
     setMonitorValues(old=>{
@@ -757,7 +811,7 @@ function App(){
   onSignOut={()=>db.auth.signOut()}
   error={error} onClearError={()=>setError('')}/>;
  if(!camp)return <div className="welcome-screen"><div className="welcome-shell"><h2>Opening campaign…</h2><p className="muted small">Loading your maps and character sheets.</p><button className="secondary" onClick={()=>setActiveId('')}>Back to main menu</button></div></div>;
- return <div className="app no-left-rail">
+ return <div className="app no-left-rail" style={{'--ui-scale':uiScale}}>
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
  <div className="workarea"><div className="primary">
@@ -770,13 +824,15 @@ function App(){
   </div>
  </section>}
  {camp&&<>
- {tab==='sheet'&&<section className="panel page-panel"><div className="heading"><div className="character-heading">
+ {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>setTab('tabletop')}>
+ <section className="panel page-panel floating-sheet-content"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='collection'?<RepeatingCollection field={f}
  value={character?.field_values?.[f.id]||[]} sheetValues={character?.field_values||{}}
- onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>}
+ onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>
+ </FloatingWindow>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <button type="button" disabled={busy} onClick={saveTemplate}>Save template</button>
@@ -785,7 +841,7 @@ function App(){
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label>
  </div></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>{setSelectedMap(m.id);setTab('tabletop')}}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
- {tab==='tabletop'&&<section className="panel tabletop-panel map-only-panel">
+ {(tab==='tabletop'||tab==='sheet')&&<section className="panel tabletop-panel map-only-panel">
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
@@ -835,6 +891,7 @@ function App(){
  hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)} onReturnToMenu={()=>setActiveId('')}
+ uiScale={uiScale} onChangeUiScale={changeInterfaceScale}
  onOpenPlayerCharacter={id=>openPlayerCharacter(id,null)} currentPage={tab}
  campaignName={camp?.name||''} campaignTokenDisplay={camp?.token_display_config}
  activeCampaignId={activeId} campaignList={campaigns}
@@ -861,6 +918,8 @@ function App(){
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
    allowedFields={camp.token_quick_fields||[]}
+   initialValues={getLocalQuickValues(quickEditToken)}
+   onRemember={values=>quickCache.current.set(quickEditToken.id,values)}
    onClose={()=>setQuickEditToken(null)} onApply={applyQuickTokenChanges}/>
  </QuickEditBoundary>}
  {npcEditor&&isDM&&<NpcEditor db={db} campaignId={activeId} userId={user}
