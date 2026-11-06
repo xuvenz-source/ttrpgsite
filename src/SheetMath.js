@@ -7,7 +7,7 @@ export const num=(v,fallback=0)=>{
 export const safeList=(arr,max=100)=>Array.isArray(arr)?arr.slice(0,max):[];
 export const clampNumber=(v,min=0,max=9999)=>Math.max(min,Math.min(max,num(v)));
 export const numberFields=template=>safeList(template?.tabs).flatMap(tab=>safeList(tab.fields))
- .filter(f=>f&&['number','resource'].includes(f.type))
+ .filter(f=>f&&['number','resource','attribute'].includes(f.type))
  .map(f=>({id:f.id,label:f.label||f.id}));
 /** Client-side, non-executable arithmetic for optional DM-derived fields.
  * Supports @{field_id}, parentheses, + - * /, min/max/floor/ceil/abs.
