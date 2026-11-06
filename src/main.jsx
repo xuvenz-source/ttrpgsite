@@ -81,6 +81,14 @@ function App(){
    {campaignId:p.get('campaign'),characterId:p.get('sheet')}:null;
  });
  const launchHandled=useRef(false);
+ const[launchNpc]=useState(()=>{
+  const params=new URLSearchParams(location.search);
+  const campaignId=params.get('campaign'),id=params.get('npc');
+  const kind=params.get('npc_kind');
+  return campaignId&&id&&['token','template'].includes(kind)?
+   {campaignId,id,kind}:null;
+ });
+ const launchNpcHandled=useRef(false);
  const[session,setSession]=useState(null),[authReady,setAuthReady]=useState(false),[email,setEmail]=useState(''),[sent,setSent]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const[campaigns,setCampaigns]=useState([]),[campaignsLoading,setCampaignsLoading]=useState(true),[roles,setRoles]=useState({}),[activeId,setActiveId]=useState(''),[camp,setCamp]=useState(null),[members,setMembers]=useState([]),[characters,setCharacters]=useState([]),[character,setCharacter]=useState(null);
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
@@ -207,6 +215,14 @@ function App(){
    await read(db.from('npc_folders').insert({campaign_id:activeId,name,parent_id:parentId}));
    await refreshNpcs();
   }catch(e){fail(e)}}
+ function openNpcBrowserWindow(record){
+  if(!isDM||!record?.data?.id)return;
+  const url=new URL(location.origin+location.pathname);
+  url.searchParams.set('campaign',activeId);
+  url.searchParams.set('npc',record.data.id);
+  url.searchParams.set('npc_kind',record.kind);
+  window.open(url.toString(),'_blank','popup,width=920,height=760,noopener,noreferrer');
+ }
  function openNpcEditor(record){
   const key=record.kind+':'+record.data.id;
   setNpcEditors(previous=>{
@@ -217,6 +233,9 @@ function App(){
   });
  }
  function closeNpcEditor(record){
+  if(launchNpc&&launchNpc.id===record.data.id&&launchNpc.kind===record.kind){
+   window.close();return;
+  }
   const key=record.kind+':'+record.data.id;
   setNpcEditors(previous=>previous.filter(item=>item.kind+':'+item.data.id!==key));
  }
@@ -363,6 +382,30 @@ function App(){
   else if(isDM)void openPlayerCharacter(row.id,null);
   else fail('This sheet is not accessible from your account.');
  },[camp,characters,activeId,user,isDM]);
+ // The browser popup is an independent authenticated client with DM-only RLS.
+ // Only the requested NPC editor is visible; no campaign-wide private fields
+ // are passed to the URL, and no state is shared unsafely between windows.
+ useEffect(()=>{
+  if(!launchNpc||launchNpcHandled.current||!camp||
+   activeId!==launchNpc.campaignId||!isDM)return;
+  launchNpcHandled.current=true;
+  const load=async()=>{
+   if(launchNpc.kind==='template'){
+    const row=await read(db.from('npc_templates').select('*')
+     .eq('campaign_id',activeId).eq('id',launchNpc.id).maybeSingle());
+    if(!row)throw Error('This NPC template is no longer available.');
+    openNpcEditor({kind:'template',data:row});
+   }else{
+    const row=await read(db.from('map_tokens').select('*')
+     .eq('campaign_id',activeId).eq('id',launchNpc.id).maybeSingle());
+    if(!row||row.character_id||row.owner_id)
+     throw Error('Only NPC tokens can open in an NPC pop-out.');
+    const vals=await read(db.rpc('get_npc_token_values',{p_token:row.id}));
+    openNpcEditor({kind:'token',data:{...row,npc_values:vals||{}}});
+   }
+  };
+  void load().catch(fail);
+ },[launchNpc,camp,activeId,isDM]);
  async function refreshChat(){
   if(!activeId)return;
   try{
@@ -431,7 +474,7 @@ function App(){
   }
  }
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
- useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
+ useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
   setMacroBuilderOpen(false);setMacros([]);
@@ -1327,7 +1370,7 @@ function App(){
   onSignOut={()=>db.auth.signOut()}
   error={error} onClearError={()=>setError('')}/>;
  if(!camp)return <div className="welcome-screen"><div className="welcome-shell"><h2>Opening campaign…</h2><p className="muted small">Loading your maps and character sheets.</p><button className="secondary" onClick={()=>setActiveId('')}>Back to main menu</button></div></div>;
- return <div className="app no-left-rail" style={{'--ui-scale':uiScale}}>
+ return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')} style={{'--ui-scale':uiScale}}>
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
  <div className="workarea"><div className="primary">
@@ -1533,6 +1576,7 @@ function App(){
  </QuickEditBoundary>}
  {isDM&&npcEditors.map(editor=><NpcEditor
   key={editor.kind+':'+editor.data.id} focusSignal={editor.focusSignal}
+  onPopOut={launchNpc?undefined:()=>openNpcBrowserWindow(editor)}
   db={db} campaignId={activeId} userId={user}
   record={editor} template={camp?.sheet_template}
   onSave={draft=>saveNpc(editor,draft)} onSaveAsTemplate={async draft=>{
