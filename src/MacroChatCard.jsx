@@ -5,7 +5,9 @@ import RollMathTooltip from './RollMathTooltip.jsx';
 export default function MacroChatCard({message,preview=false}){
  const payload=message?.result||{},rows=Array.isArray(payload.rows)?payload.rows:[];
  const title=String(payload.title||message?.body||'Macro'),subtitle=String(payload.subtitle||'');
- return <article className={'macro-chat-card'+(preview?' macro-chat-preview':'')}>
+ return <article className={'macro-chat-card'+
+  (payload.type==='weapon_attack'?' weapon-attack':'')+
+  (preview?' macro-chat-preview':'')}>
   <header className="macro-chat-header">
    <strong>{title}</strong>
    {subtitle&&<span>{subtitle}</span>}
@@ -15,7 +17,8 @@ export default function MacroChatCard({message,preview=false}){
     <span className="macro-chat-row-label">{row.label}</span>
     <div className="macro-chat-values">
      {(Array.isArray(row.cells)?row.cells:[]).map((cell,j)=>
-      <span key={cell.id||j} className={'macro-chat-cell'+(cell.kind==='text'?' text':'')}>
+      <span key={cell.id||j} className={'macro-chat-cell'+(cell.kind==='text'?' text':'')+
+        (cell.critical?' critical':'')}>
        {cell.kind==='roll'?<>
         {cell.label&&<span className="macro-chat-cell-label">{cell.label}</span>}
         {preview?<span className="macro-chat-demo">—</span>:

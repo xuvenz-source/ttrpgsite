@@ -15,7 +15,7 @@ import {makeProgressionField,makeProficienciesField,enrichSheetValues,
 import {ProgressionDesigner,ProgressionPanel,ProficienciesDesigner,ProficienciesPanel} from './SheetProgression.jsx';
 import PersonalResources from './PersonalResources.jsx';
 import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
-import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager} from './SheetEquipment.jsx';
+import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
@@ -485,9 +485,23 @@ function App(){
   ++monitorRequest.current;
   setMonitorValues(old=>{
    const updated={...old};
+   const referenceDefs=camp?.token_display_config?.references||[];
+   const equipmentFields=(camp?.sheet_template?.tabs||[]).flatMap(t=>t.fields||[]);
    for(const token of tokens){
     if(token.character_id!==character.id||!old[token.id])continue;
     const fields={...old[token.id]};
+    for(const ref of referenceDefs){
+     if(!/^=@[a-z][a-z0-9_]{0,31}$/i.test(ref.code||''))continue;
+     if(ref.source==='equipment_ac'){
+      const equipment=equipmentFields.find(f=>f.id===ref.fieldId&&f.type==='equipment');
+      if(equipment)fields[ref.code]=calculateArmor(equipment,next.field_values[ref.fieldId],next.field_values).total;
+     }else if(ref.source==='field'){
+      const item=next.field_values[ref.fieldId];
+      const raw=item&&typeof item==='object'&&!Array.isArray(item)?item.current:item;
+      if(raw!==null&&raw!==undefined&&raw!==''&&Number.isFinite(Number(raw)))
+       fields[ref.code]=Number(raw);
+     }
+    }
     const resource=value!==null&&typeof value==='object'&&!Array.isArray(value);
     if(resource){
      const current=asNumber(value.current),max=asNumber(value.max);
@@ -536,6 +550,15 @@ function App(){
   }));
   await refreshChat();
  }
+ async function attackWithWeapon({sourceType='character',sourceId,fieldId,weaponId}){
+  if(!activeId||!sourceId||!fieldId||!weaponId)throw Error('Select a saved weapon first.');
+  if(sourceType==='character')await flushSheetForCast(sourceId);
+  await read(db.rpc('roll_equipment_weapon',{
+   p_campaign_id:activeId,p_source_type:sourceType,p_source_id:sourceId,
+   p_field_id:fieldId,p_weapon_id:weaponId
+  }));
+  await refreshChat();
+ }
  function spellHotbarPayload(payload){
   const {sourceType,sourceId,collectionId,entryId}=payload||{};
   if(!['character','npc_token','npc_template'].includes(sourceType)||
@@ -567,7 +590,21 @@ function App(){
   }catch(e){setHotbarSlots(prior);throw e}
  }
  async function roll(formula,label='Dice roll',charId=character?.id){try{await read(db.rpc('roll_dice',{p_campaign_id:activeId,p_expression:formula,p_label:label,p_character_id:charId||null}));await refreshChat()}catch(e){fail(e)}}
- async function sendChat(e){e.preventDefault();const raw=chat.trim();if(!raw)return;setChat('');
+ async function sendChat(e){e.preventDefault();const raw=chat.trim();if(!raw)return;
+ setChat('');
+ const reference=raw.match(/^=@([a-z][a-z0-9_]{0,31})$/i);
+ if(reference){
+  try{
+   if(!selectedToken||selectedToken.map_id!==selectedMap)
+    throw Error('Select your token on the battlemap to use a reference code.');
+   if(selectedToken.character_id===character?.id)await flushSheetForCast(character.id);
+   await read(db.rpc('post_token_reference',{
+    p_token:selectedToken.id,p_code:'=@'+reference[1]
+   }));
+   await refreshChat();
+  }catch(e){fail(e)}
+  return;
+ }
  const builder=raw.match(/^\/builder\s+([0-9a-f-]{36})$/i);
  if(builder){try{await runMacro(builder[1])}catch(e){fail(e)}return}
  const spell=raw.match(/^\/spell\s+(character|npc_token|npc_template)\s+([0-9a-f-]{36})\s+([a-zA-Z0-9_-]{1,100})\s+([a-zA-Z0-9-]{1,100})$/i);
@@ -1008,7 +1045,10 @@ function App(){
   onChange={v=>updateField(f.id,v)}/>:
  f.type==='equipment'?<EquipmentManager field={f} template={camp.sheet_template}
   value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
-  onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}/>:
+  onChange={v=>updateField(f.id,v)}
+  onAttack={({fieldId,weaponId})=>attackWithWeapon({
+   sourceType:'character',sourceId:character?.id,fieldId,weaponId
+  })}/>:
  f.type==='progression'?<ProgressionPanel field={f}
   value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
   onChange={v=>updateField(f.id,v)}/>:
@@ -1130,6 +1170,9 @@ function App(){
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
    sourceType:'character',sourceId:characterEditor.data.id,collectionId,entryId,mode
   })}
+  onEquipmentAttack={({fieldId,weaponId})=>attackWithWeapon({
+   sourceType:'character',sourceId:characterEditor.data.id,fieldId,weaponId
+  })}
   onAddSpellToHotbar={assignSpellToHotbar}/>}
  {statusEditToken&&camp&&<QuickEditBoundary key={'status_'+statusEditToken.id}
    onClose={()=>setStatusEditToken(null)}>
@@ -1158,6 +1201,10 @@ function App(){
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
    sourceType:npcEditor.kind==='token'?'npc_token':'npc_template',
    sourceId:npcEditor.data.id,collectionId,entryId,mode
+  })}
+  onEquipmentAttack={({fieldId,weaponId})=>attackWithWeapon({
+   sourceType:npcEditor.kind==='token'?'npc_token':'npc_template',
+   sourceId:npcEditor.data.id,fieldId,weaponId
   })}
   onAddSpellToHotbar={assignSpellToHotbar}/>}
  </div>;

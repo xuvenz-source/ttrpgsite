@@ -27,6 +27,7 @@ export function normalizeConfig(input){
   playerVisibility:obj.playerVisibility==='everyone'?'everyone':'owner',
   npcVisibility:obj.npcVisibility==='everyone'?'everyone':'dm',
   statusPosition:Object.prototype.hasOwnProperty.call(STATUS_POSITIONS,obj.statusPosition)?obj.statusPosition:'left',
+  references:Array.isArray(obj.references)?obj.references.slice(0,20).filter(x=>x&&typeof x==='object'):[],
   widgets:widgets.filter(x=>x&&typeof x==='object')
  };
 }

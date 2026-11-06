@@ -1,25 +1,55 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import {DEFAULT_TOKEN_DISPLAY,normalizeConfig,ICONS,POSITIONS,TokenMonitors} from './TokenMonitors.jsx';
+import {numericFieldsWithDerived} from './SheetDerived.js';
 
 const TYPES=[['bar','Horizontal bar'],['globe','Numbered globe']];
 const ID=()=>crypto.randomUUID().slice(0,8);
 const copy=x=>JSON.parse(JSON.stringify(x));
-const keyRx=/^[a-zA-Z0-9_-]{1,64}$/;
+const keyRx=/^(?:[a-zA-Z0-9_-]{1,100}|=@[a-zA-Z][a-zA-Z0-9_]{0,31})$/;
+const refCodeRx=/^=@[a-zA-Z][a-zA-Z0-9_]{0,31}$/;
 export default function TokenDisplayDesigner({campaign,template,onSave}){
  const [config,setConfig]=useState(()=>copy(normalizeConfig(campaign?.token_display_config)));
  const [saving,setSaving]=useState(false),[status,setStatus]=useState(''),[error,setError]=useState('');
  useEffect(()=>{setConfig(copy(normalizeConfig(campaign?.token_display_config)));setStatus('');setError('')},[campaign?.id,campaign?.token_display_config]);
- const fields=useMemo(()=>Array.from(new Map((template?.tabs||[]).flatMap(t=>t.fields||[])
-   .filter(f=>f.type==='number'||f.type==='resource')
-   .map(f=>[f.id,{id:f.id,label:f.label||f.id,type:f.type}])).values()),[template]);
+ const fields=useMemo(()=>{
+  const originals=new Map((template?.tabs||[]).flatMap(t=>t.fields||[])
+   .map(f=>[f.id,f.type]));
+  return numericFieldsWithDerived(template).map(f=>({
+   id:f.id,label:f.label||f.id,
+   type:originals.get(f.id)==='resource'?'resource':'number'
+  }));
+ },[template]);
  const resources=fields.filter(f=>f.type==='resource');
  const singles=fields.filter(f=>f.type==='number');
+ const equipment=useMemo(()=>((template?.tabs||[]).flatMap(t=>t.fields||[])
+  .filter(f=>f.type==='equipment').map(f=>({id:f.id,label:f.label||'Equipment'}))),[template]);
+ const refs=config.references||[];
+ const codes=refs.map(ref=>ref.code?.toUpperCase());
+ const validCodes=refs.length<=20&&refs.every(ref=>
+  refCodeRx.test(ref.code||'')&&(ref.label||'').length<=40&&
+  (ref.source==='field'?(fields.some(f=>f.id===ref.fieldId)):
+   ref.source==='equipment_ac'&&equipment.some(f=>f.id===ref.fieldId)))&&
+  new Set(codes).size===codes.length;
+ const selectableRefs=refs.filter(ref=>refCodeRx.test(ref.code||''));
  const original=normalizeConfig(campaign?.token_display_config);
  const changed=JSON.stringify(config)!==JSON.stringify(original);
- const valid=config.widgets.length<=8&&config.widgets.every(w=>keyRx.test(w.field||'')&&
+ const valid=validCodes&&config.widgets.length<=8&&config.widgets.every(w=>keyRx.test(w.field||'')&&
    (w.type==='globe'||!w.maxField||keyRx.test(w.maxField))&&
    /^#[0-9a-f]{6}$/i.test(w.color||'')&&(w.label||'').length<=24&&
    Object.keys(POSITIONS).includes(w.position));
+ function updateReference(id,patch){
+  setStatus('');setError('');
+  setConfig(c=>({...c,references:(c.references||[]).map(r=>r.id===id?{...r,...patch}:r)}));
+ }
+ function addReference(){
+  if(refs.length>=20)return;
+  const id=ID(),field=equipment[0]||fields[0];
+  setConfig(c=>({...c,references:[...(c.references||[]),{
+   id,code:'=@NEW'+(refs.length+1),label:'New reference',
+   source:equipment.length?'equipment_ac':'field',
+   fieldId:field?.id||''
+  }]}));
+ }
  function widgetChange(id,patch){
   setStatus('');setConfig(c=>({...c,widgets:c.widgets.map(w=>w.id===id?{...w,...patch}:w)}));
  }
@@ -55,6 +85,50 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
  return <div className="token-designer">
   <p className="muted small">Choose a Resource field such as “Hit Points” to connect its Current and Maximum values automatically. Use single Number fields for AC, elevation and other standalone values.</p>
   <p className="muted tiny">Create Resource fields in Sheet Designer, or use the one-click “Add / link token resource bar” option there. Existing manually linked fields still work.</p>
+  <details className="reference-codes-editor">
+   <summary>Reference codes ({refs.length}/20)</summary>
+   <p className="muted tiny">Give a value a short campaign code such as <code>=@AC</code>.
+    Link it to a Number/Resource field or calculated Equipment defence.
+    Players can type the code into chat with their token selected; bubbles can
+    use it in Manual field ID. Codes update whenever the underlying sheet changes.</p>
+   {refs.map(r=><div className="reference-code-row" key={r.id}>
+    <label>Code
+     <input aria-label="Reference code" value={r.code||''} maxLength={34}
+      placeholder="=@AC"
+      onChange={e=>updateReference(r.id,{code:e.target.value.trim().toUpperCase()})}/>
+    </label>
+    <label>Display name
+     <input aria-label="Reference display name" value={r.label||''} maxLength={40}
+      placeholder="Armour Class"
+      onChange={e=>updateReference(r.id,{label:e.target.value})}/>
+    </label>
+    <label>Value source
+     <select value={r.source||'field'} onChange={e=>{
+      const source=e.target.value;
+      updateReference(r.id,{source,fieldId:source==='equipment_ac'?
+       equipment[0]?.id||'':fields[0]?.id||''});
+     }}>
+      <option value="field">Numeric / resource field</option>
+      <option value="equipment_ac">Calculated equipment defence</option>
+     </select>
+    </label>
+    <label>Linked sheet section
+     <select value={r.fieldId||''}
+      onChange={e=>updateReference(r.id,{fieldId:e.target.value})}>
+      <option value="">Select a field</option>
+      {(r.source==='equipment_ac'?equipment:fields).map(f=>
+       <option key={f.id} value={f.id}>{f.label}</option>)}
+     </select>
+    </label>
+    <button type="button" className="secondary"
+     title="Remove code" aria-label={'Remove '+r.code}
+     onClick={()=>setConfig(c=>({...c,references:(c.references||[]).filter(x=>x.id!==r.id)}))}>×</button>
+   </div>)}
+   <button type="button" className="secondary" disabled={refs.length>=20||!(equipment.length||fields.length)}
+    onClick={addReference}>+ Reference code</button>
+   {!validCodes&&<p className="error small">Reference codes must be unique, begin with =@,
+    contain only letters, numbers and underscores, and link to a valid sheet field.</p>}
+  </details>
   <div className="token-visibility-controls">
    <label>Player monitors visible to
     <select value={config.playerVisibility} onChange={e=>setConfig(c=>({...c,playerVisibility:e.target.value}))}>
@@ -104,9 +178,14 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
      </select></label>
     <label>Label<input maxLength={24} value={w.label||''} onChange={e=>widgetChange(w.id,{label:e.target.value})}/></label>
     <label>Linked sheet field
-     <select value={fields.some(f=>f.id===w.field)?w.field:'__custom__'}
+     <select value={fields.some(f=>f.id===w.field)||selectableRefs.some(r=>r.code===w.field)?
+       w.field:'__custom__'}
       onChange={e=>pickField(w,e.target.value)}>
-      <option value="__custom__">Manual / legacy field ID</option>
+      <option value="__custom__">Manual / code field ID</option>
+      {selectableRefs.length>0&&<optgroup label="Custom reference codes">
+       {selectableRefs.map(r=><option value={r.code} key={r.id}>
+        {r.code} — {r.label||r.fieldId}</option>)}
+      </optgroup>}
       {resources.length>0&&<optgroup label="Resources (Current + Maximum)">
        {resources.map(f=><option key={f.id} value={f.id}>{f.label} — Current / Maximum</option>)}
       </optgroup>}
@@ -115,21 +194,22 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
       </optgroup>}
      </select>
     </label>
-    {!fields.some(f=>f.id===w.field)&&<label>Manual field ID
-     <input value={w.field||''} placeholder="e.g. hp or ac"
+    {!fields.some(f=>f.id===w.field)&&!selectableRefs.some(r=>r.code===w.field)&&<label>Manual field ID
+     <input value={w.field||''} placeholder="e.g. hp or =@AC"
       onChange={e=>widgetChange(w.id,{field:e.target.value.trim()})}/>
     </label>}
     {w.type==='bar'&&(resources.some(f=>f.id===w.field)
      ?<p className="muted tiny monitor-auto-bound">✓ Uses the resource's Current and Maximum automatically — no second field needed.</p>
      :<label>Maximum value source (optional)
-       <select value={singles.some(f=>f.id===w.maxField)?w.maxField:
+       <select value={singles.some(f=>f.id===w.maxField)||selectableRefs.some(r=>r.code===w.maxField)?w.maxField:
         w.maxField?'__custom__':''}
         onChange={e=>pickMaxField(w,e.target.value)}>
         <option value="">No maximum field</option>
         <option value="__custom__">Manual / legacy field ID</option>
         {singles.map(f=><option key={f.id} value={f.id}>{f.label}</option>)}
+        {selectableRefs.map(r=><option key={r.id} value={r.code}>{r.code} — {r.label}</option>)}
        </select>
-       {w.maxField&&!singles.some(f=>f.id===w.maxField)&&
+       {w.maxField&&!singles.some(f=>f.id===w.maxField)&&!selectableRefs.some(r=>r.code===w.maxField)&&
         <input value={w.maxField||''} aria-label="Maximum field ID" placeholder="e.g. hp_max"
          onChange={e=>widgetChange(w.id,{maxField:e.target.value.trim()})}/>}
       </label>

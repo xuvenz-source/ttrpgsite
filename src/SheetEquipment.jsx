@@ -27,7 +27,6 @@ const bonusModes=[
  {id:'none',label:'No linked modifier'}
 ];
 const valueObject=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
-const signed=n=>n<0?String(n):'+'+n;
 export function EquipmentDesigner({field,template,onChange}){
  const attrs=numericFieldsWithDerived(template),categories=safeList(field.categories,16);
  const update=patch=>onChange({...field,...patch});
@@ -156,7 +155,9 @@ function Input({value,onChange,type='text',label,...rest}){
  return <input type={type} aria-label={label} value={value??''}
   onChange={e=>onChange(type==='number'?num(e.target.value):e.target.value)} {...rest}/>;
 }
-export function EquipmentManager({field,value,onChange,sheetValues={},template,onRoll}){
+export function EquipmentManager({field,value,onChange,sheetValues={},template,onAttack}){
+ const [attacking,setAttacking]=React.useState('');
+ const [attackError,setAttackError]=React.useState('');
  const data=valueObject(value),categories=safeList(field.categories,16),
   armor=safeList(data.armor,100),weapons=safeList(data.weapons,100),
   stats=numericFieldsWithDerived(template);
@@ -164,20 +165,12 @@ export function EquipmentManager({field,value,onChange,sheetValues={},template,o
  const update=(key,rows)=>onChange({...data,[key]:rows});
  const changeItem=(key,id,patch)=>update(key,safeList(data[key],100).map(row=>
   row.id===id?{...row,...patch}:row));
- function rollWeapon(weapon,kind){
-  if(!onRoll)return;
-  const source=weapon.statField||field.defaultAttackField;
-  const stat=source?abilityModifier(sheetValues[source],
-   weapon.statMode||field.defaultAttackMode||'modifier',
-   field.scoreBase,field.scoreStep):0;
-  const prof=weapon.proficient?num(sheetValues[field.proficiencyField]):0;
-  const attack=stat+prof+num(weapon.magic)+num(weapon.attackBonus);
-  const damage=(weapon.useStatForDamage!==false?stat:0)+num(weapon.magic)+num(weapon.damageBonus);
-  const expression=kind==='attack'?'1d20'+signed(attack):
-   kind==='crit'?(weapon.critDice||weapon.damageDice||'1d8'):
-   (weapon.damageDice||'1d8')+signed(damage);
-  onRoll(expression,(weapon.name||'Weapon')+' — '+
-   (kind==='attack'?'Attack':kind==='crit'?'Critical dice':'Damage'));
+ async function rollWeapon(weapon){
+  if(attacking||!onAttack)return;
+  setAttacking(weapon.id);setAttackError('');
+  try{await onAttack({fieldId:field.id,weaponId:weapon.id})}
+  catch(error){setAttackError(error?.message||String(error))}
+  finally{setAttacking('')}
  }
  return <div className="equipment-manager">
   {field.allowArmor!==false&&<section className="equipment-section">
@@ -272,18 +265,22 @@ export function EquipmentManager({field,value,onChange,sheetValues={},template,o
      <td><Input type="number" label="Critical threshold" value={w.critOn}
       onChange={critOn=>changeItem('weapons',w.id,{critOn})}/></td>
      <td><div className="equipment-weapon-actions">
-      <button type="button" className="secondary" onClick={()=>rollWeapon(w,'attack')}>Hit</button>
-      <button type="button" className="secondary" onClick={()=>rollWeapon(w,'damage')}>Dmg</button>
-      <button type="button" className="secondary" onClick={()=>rollWeapon(w,'crit')}>Crit</button>
+      <button type="button" className="secondary equipment-attack-button"
+       disabled={!!attacking||!onAttack}
+       title="Roll two attacks, damage and any critical dice in one chat card"
+       onClick={()=>rollWeapon(w)}>
+       {attacking===w.id?'Rolling…':'🎲 Attack'}
+      </button>
       <button type="button" className="secondary" aria-label={'Remove '+w.name}
        onClick={()=>update('weapons',weapons.filter(x=>x.id!==w.id))}>×</button>
      </div></td>
     </tr>)}</tbody>
    </table></div>
+   {attackError&&<p className="error small" role="alert">{attackError}</p>}
    {weapons.length===0&&<p className="muted tiny">Add a weapon to configure attack and damage rolls.</p>}
-   <p className="muted tiny">Hit = selected modifier + proficiency when checked + magical bonus
-    + extra hit. Damage = selected dice + optional modifier + magic + damage bonus.
-    The DM controls which sheet attributes are linked.</p>
+   <p className="muted tiny">Attack rolls two d20 results side by side, plus damage,
+    in one compact chat card. Critical damage appears when either d20
+    reaches the configured critical threshold.</p>
   </section>}
  </div>;
 }

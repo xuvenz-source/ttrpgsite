@@ -28,7 +28,7 @@ function InventoryEditor({field,value,onChange}){
 /** A DM can edit a player's persistent sheet, never just the token's temporary stats. */
 export default function CharacterEditor({
  db,campaignId,viewerId,record,template,onSaved,onClose,onRoll,
- onCastSpell,onAddSpellToHotbar
+ onCastSpell,onAddSpellToHotbar,onEquipmentAttack
 }){
  const initial=useMemo(()=>({
   name:record.name,
@@ -92,6 +92,11 @@ export default function CharacterEditor({
   if(!onCastSpell)throw Error('Spell casting is not available.');
   return onCastSpell(details);
  }
+ async function attackFromEditor(details){
+  if(changed)await save(true);
+  if(!onEquipmentAttack)throw Error('Weapon attacks are unavailable.');
+  return onEquipmentAttack(details);
+ }
  async function addFromEditor(details){
   if(changed)await save(true);
   if(!onAddSpellToHotbar)throw Error('Hotbar is not available.');
@@ -143,7 +148,7 @@ export default function CharacterEditor({
        sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}/>:
       f.type==='equipment'?<EquipmentManager field={f} template={template}
        value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
-       onChange={v=>editField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
+       onChange={v=>editField(f.id,v)} onAttack={attackFromEditor}/>:
       f.type==='progression'?<ProgressionPanel field={f}
        value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
        onChange={v=>editField(f.id,v)}/>:

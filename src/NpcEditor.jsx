@@ -20,7 +20,7 @@ function Items({field,value,onChange}){
 }
 export default function NpcEditor({
  db,campaignId,userId,record,template,onSave,onSaveAsTemplate,onClose,onRoll,
- onCastSpell,onAddSpellToHotbar
+ onCastSpell,onAddSpellToHotbar,onEquipmentAttack
 }){
  const [draft,setDraft]=useState(()=>({
   name:record.data.name,
@@ -51,6 +51,11 @@ export default function NpcEditor({
   if(savedValues.current!==JSON.stringify(draft.values))await save(true);
   if(!onCastSpell)throw Error('Spell casting is unavailable from this sheet.');
   return onCastSpell(details);
+ }
+ async function attackFromEditor(details){
+  if(savedValues.current!==JSON.stringify(draft.values))await save(true);
+  if(!onEquipmentAttack)throw Error('Weapon attacks are unavailable.');
+  return onEquipmentAttack(details);
  }
  async function addFromEditor(details){
   if(savedValues.current!==JSON.stringify(draft.values))await save(true);
@@ -97,7 +102,7 @@ export default function NpcEditor({
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}/>:
  f.type==='equipment'?<EquipmentManager field={f} template={template}
    value={draft.values[f.id]||{}} sheetValues={draft.values}
-   onChange={v=>setField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
+   onChange={v=>setField(f.id,v)} onAttack={attackFromEditor}/>:
  f.type==='progression'?<ProgressionPanel field={f} value={draft.values[f.id]||{}}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}/>:
  f.type==='proficiencies'?<ProficienciesPanel field={f} value={draft.values[f.id]||{}}

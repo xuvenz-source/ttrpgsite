@@ -1511,7 +1511,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .map-only-panel .macro-hotbar{
  background:transparent!important;border:none!important;
  box-shadow:none!important;backdrop-filter:none!important;
- pointer-events:none!important;bottom:9px!important;padding:2px!important;
+ pointer-events:none!important;bottom:20px!important;padding:2px!important;
 }
 .map-only-panel .macro-hotbar-slot{
  pointer-events:auto!important;background:#1720339c!important;
@@ -1786,3 +1786,42 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .proficiency-auto-paths small{font-size:10px;color:#aebfd8}
 .proficiency-auto-paths label{font-size:10px!important;white-space:nowrap}
 .proficiency-auto-paths input[type=checkbox]{width:13px;height:13px}
+
+/* Staged v2.2: compact single-action weapon cards and campaign reference codes */
+.macro-chat-cell.critical .roll-math-result{
+ background:#cbf4cc!important;color:#234d29!important;
+ box-shadow:inset 0 0 0 1px #78bc83
+}
+.macro-chat-card:has(.macro-chat-cell.critical) .macro-chat-row:first-child{
+ border-bottom:1px solid #c0cfbd
+}
+.equipment-attack-button{white-space:nowrap;min-width:74px!important}
+.reference-codes-editor{
+ margin:10px 0;padding:10px;background:#19283d;
+ border:1px solid #425b7a;border-radius:7px
+}
+.reference-codes-editor>summary{font-size:12px;font-weight:700;cursor:pointer}
+.reference-codes-editor>p{margin:8px 0!important}
+.reference-code-row{
+ display:grid;grid-template-columns:minmax(110px,.8fr)
+ minmax(130px,1fr) minmax(150px,1.1fr) minmax(130px,1.2fr) auto;
+ gap:6px;align-items:end;padding:8px 0;
+ border-top:1px solid #3b536e
+}
+.reference-code-row label{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:10px}
+.reference-code-row input,.reference-code-row select{
+ min-width:0;width:100%;min-height:30px;padding:5px 7px;font-size:11px
+}
+.reference-code-row>button{min-height:30px;padding:5px 8px}
+@media(max-width:1050px){
+ .reference-code-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .reference-code-row>button{justify-self:start}
+}
+@media(max-width:520px){
+ .reference-code-row{grid-template-columns:1fr}
+}
+
+.macro-chat-card.weapon-attack .macro-chat-header{
+ background:linear-gradient(180deg,#527b56,#365e3a);
+ color:#f9fff9
+}
