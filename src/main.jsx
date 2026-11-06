@@ -2196,6 +2196,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
+ // The token art and floating monitors share the same visible token subset.
+ const visibleTokens=isDM?tokens:tokens.filter(t=>t.visible);
+ const statusPosition=normalizeConfig(displayConfig).statusPosition;
  function selectTokens(ids){
   const unique=[...new Set(ids)];
   setSelectedIds(unique);
@@ -2561,9 +2564,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={onAddEnvironmentObject} onSelect={onSelectEnvironmentObject}/>}
-    {tokens.filter(t=>isDM||t.visible).map(t=>{
+    {visibleTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
       canMove=canControlMapToken(t,user,isDM,map.id);
+     const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
       (selectedIds.includes(t.id)?' token-selected':'')}
@@ -2571,8 +2575,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
       }}
-      title={t.name+(normalizedEffects(t.status_effects).length?
-       ' · '+normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog)).join(', '):'')+
+      title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
        (isDM?' · Alt + double-click to edit sheet':'')}
       onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
       onClick={e=>{
@@ -2591,7 +2594,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
-       position={normalizeConfig(displayConfig).statusPosition}
+       position={statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
       {isDM&&selectedId===t.id&&selectedIds.length===1&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
@@ -2637,7 +2640,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">
-     {tokens.filter(t=>isDM||t.visible).map(t=>{
+     {visibleTokens.map(t=>{
       const p={...t,...remotePositions[t.id],...preview[t.id]};
       const cell=map.grid_size*scale;
       return <div key={t.id} className="token-monitor-frame"
