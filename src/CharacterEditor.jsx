@@ -9,21 +9,7 @@ import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
-
-function InventoryEditor({field,value,onChange}){
- const columns=field.columns?.length?field.columns:['Item','Qty','Notes'];
- const rows=Array.isArray(value)?value:[];
- return <div className="inventory">
-  <div className="invrow">{columns.map(column=><b key={column}>{column}</b>)}</div>
-  {rows.map((row,index)=><div className="invrow" key={index}>
-   {columns.map(column=><input key={column} aria-label={column} value={row?.[column]??''}
-    onChange={e=>onChange(rows.map((r,i)=>i===index?{...r,[column]:e.target.value}:r))}/>)}
-   <button type="button" className="secondary" title="Remove item"
-    onClick={()=>onChange(rows.filter((_,i)=>i!==index))}>×</button>
-  </div>)}
-  <button type="button" className="secondary" onClick={()=>onChange([...rows,{}])}>+ Item</button>
- </div>;
-}
+import InventoryPanel from './InventoryPanel.jsx';
 
 /** A DM can edit a player's persistent sheet, never just the token's temporary stats. */
 export default function CharacterEditor({
@@ -141,7 +127,7 @@ export default function CharacterEditor({
      <label>{f.label}</label>
      {f.type==='roll'?<button type="button" className="rollbtn" onClick={()=>doRoll(f)}>
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
-      f.type==='inventory'?<InventoryEditor field={f} value={draft.field_values[f.id]||[]}
+      f.type==='inventory'?<InventoryPanel field={f} value={draft.field_values[f.id]||[]}
         onChange={v=>editField(f.id,v)}/>:
       f.type==='resource'?<ResourceField value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
       f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.field_values[f.id]||{}}

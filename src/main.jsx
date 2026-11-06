@@ -24,6 +24,9 @@ import TokenQuickEdit from './TokenQuickEdit.jsx';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 import {parseSheetTemplateFile,serializeSheetTemplate} from './TemplateFiles.js';
 import {sheetQuickcodeReferences,hydrateSheetQuickcodes,configWithSheetQuickcodes} from './SheetQuickcodes.js';
+import InventoryPanel from './InventoryPanel.jsx';
+import InventoryRulesDesigner from './InventoryRulesDesigner.jsx';
+import {DEFAULT_ENCUMBRANCE,evaluateEncumbrance} from './InventoryMath.js';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -1144,7 +1147,7 @@ function App(){
   <PersonalResources value={character?.field_values?.[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>updateField(PERSONAL_RESOURCE_KEY,v)}/>
  </div></div>:
- <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:
+ <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f}
   value={character?.field_values?.[f.id]||{}}
   sheetValues={character?.field_values||{}}
@@ -1326,7 +1329,7 @@ function App(){
  </div>;
 }
 function configured(){return !!db}
-function Inventory({field,value,onChange}){const cols=field.columns||['Item','Qty','Notes'];return <div className="inventory"><div className="invrow">{cols.map(c=><b key={c}>{c}</b>)}</div>{(Array.isArray(value)?value:[]).map((row,i)=><div className="invrow" key={i}>{cols.map(c=><input key={c} aria-label={c} value={row[c]||''} onChange={e=>onChange(value.map((r,j)=>j===i?{...r,[c]:e.target.value}:r))}/>)}<button className="secondary" onClick={()=>onChange(value.filter((_,j)=>j!==i))}>×</button></div>)}<button className="secondary" onClick={()=>onChange([...value,{}])}>+ Item</button></div>}
+
 function Designer({template,tabId,changeTemplate,onLinkResource}){
  const t=template?.tabs.find(x=>x.id===tabId)||template?.tabs[0],drag=useRef(null);
  const [fieldType,setFieldType]=useState('text'),[linking,setLinking]=useState(''),[linkMessage,setLinkMessage]=useState('');
@@ -1357,7 +1360,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
   changeTemplate(x=>x.tabs.find(y=>y.id===t.id).fields.push({
    id:'field_'+uid().slice(0,8),
    label:type==='resource'?'Hit Points':'New '+type,type,span:type==='resource'?2:1,
-   ...(type==='inventory'?{columns:['Item','Qty','Notes']}:type==='roll'?{formula:'1d20'}:{})
+   ...(type==='inventory'?{columns:['Item','Qty','Weight','Notes'],inventoryPreset:'list',gridColumns:8,gridRows:5}:type==='roll'?{formula:'1d20'}:{})
   }));
  }
  return <>
@@ -1371,6 +1374,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
     value={template.modifierRules?.step??2}
     onChange={e=>changeTemplate(x=>x.modifierRules={...x.modifierRules,step:Number(e.target.value)})}/></label>
   </div>
+  <InventoryRulesDesigner template={template} changeTemplate={changeTemplate}/>
   <div className="tools">
    <input aria-label="Tab name" value={t.name}
     onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/>
