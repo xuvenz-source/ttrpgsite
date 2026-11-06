@@ -10,7 +10,8 @@ test('token monitors are rendered in one shared layer above all token artwork',(
  assert.match(main,/className="token-monitors-over-all"/);
  assert.match(main,/className="token-monitor-frame"/);
  assert.match(css,/\.board>\.token-monitors-over-all\{[\s\S]*?z-index:30;pointer-events:none!important/);
- assert.equal((main.match(/<TokenMonitors config=\{displayConfig\}/g)||[]).length,1);
+ assert.equal((main.match(/<TokenMonitors config=\{displaySettings\} normalized/g)||[]).length,1);
+ assert.ok(main.includes('const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig])'));
  assert.ok(main.indexOf('className="token-monitors-over-all"')>
   main.indexOf("className={'token '+"));
 });
