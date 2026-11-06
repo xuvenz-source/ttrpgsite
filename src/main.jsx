@@ -1369,6 +1369,9 @@ function App(){
   onCreate={create} onJoin={join} onSelect={setActiveId}
   onSignOut={()=>db.auth.signOut()}
   error={error} onClearError={()=>setError('')}/>;
+ if(launchNpc&&!isDM&&camp)return <div className="center" role="alert">
+  Only the campaign DM can open an NPC pop-out.
+ </div>;
  if(!camp)return <div className="welcome-screen"><div className="welcome-shell"><h2>Opening campaign…</h2><p className="muted small">Loading your maps and character sheets.</p><button className="secondary" onClick={()=>setActiveId('')}>Back to main menu</button></div></div>;
  return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')} style={{'--ui-scale':uiScale}}>
  <main>
@@ -1577,6 +1580,9 @@ function App(){
    onRemember={values=>quickCache.current.set(quickEditToken.id,values)}
    onClose={()=>setQuickEditToken(null)} onApply={applyQuickTokenChanges}/>
  </QuickEditBoundary>}
+ {launchNpc&&!npcEditors.length&&<div className="npc-popout-loading" role="status">
+  {error||'Opening NPC sheet…'}
+ </div>}
  {isDM&&npcEditors.map(editor=><NpcEditor
   key={editor.kind+':'+editor.data.id} focusSignal={editor.focusSignal}
   onPopOut={launchNpc?undefined:()=>openNpcBrowserWindow(editor)}

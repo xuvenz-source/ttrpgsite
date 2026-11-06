@@ -78,7 +78,11 @@ export default function NpcEditor({
  <section className="modal npc-modal" role="dialog" aria-label="Edit NPC sheet">
  <div className="heading"><div><h2>{title}</h2><p className="muted small">{record.kind==='token'?'Changes apply only to this placed token.':'Changes become the default for newly placed copies.'}</p></div><div className="npc-window-actions">
    {onPopOut&&<button type="button" className="secondary" onClick={()=>{
-    if(JSON.stringify(draft.values)!==savedValues.current){
+    if(JSON.stringify(draft.values)!==savedValues.current||
+     draft.name!==record.data.name||
+     draft.barsPublic!==!!record.data.npc_bars_public||
+     draft.tokenPath!==(record.kind==='template'?
+      record.data.token_path||null:record.data.image_path||null)){
      setNotice('Save the current changes before opening a separate window.');
      return;
     }
