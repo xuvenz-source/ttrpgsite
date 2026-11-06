@@ -1,11 +1,11 @@
 import React,{useEffect,useMemo,useState} from 'react';
 import {DEFAULT_TOKEN_DISPLAY,normalizeConfig,ICONS,POSITIONS,TokenMonitors} from './TokenMonitors.jsx';
 import {numericFieldsWithDerived} from './SheetDerived.js';
+import {monitorValidationErrors} from './TokenDisplayValidation.js';
 
 const TYPES=[['bar','Horizontal bar'],['globe','Numbered globe']];
 const ID=()=>crypto.randomUUID().slice(0,8);
 const copy=x=>JSON.parse(JSON.stringify(x));
-const keyRx=/^(?:[a-zA-Z0-9_-]{1,100}|=@[a-zA-Z][a-zA-Z0-9_]{0,31})$/;
 const refCodeRx=/^=@[a-zA-Z][a-zA-Z0-9_]{0,31}$/;
 export default function TokenDisplayDesigner({campaign,template,onSave}){
  const [config,setConfig]=useState(()=>copy(normalizeConfig(campaign?.token_display_config)));
@@ -24,20 +24,13 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
  const equipment=useMemo(()=>((template?.tabs||[]).flatMap(t=>t.fields||[])
   .filter(f=>f.type==='equipment').map(f=>({id:f.id,label:f.label||'Equipment'}))),[template]);
  const refs=config.references||[];
- const codes=refs.map(ref=>ref.code?.toUpperCase());
- const validCodes=refs.length<=60&&refs.every(ref=>
-  refCodeRx.test(ref.code||'')&&(ref.label||'').length<=40&&
-  (ref.source==='field'?(fields.some(f=>f.id===ref.fieldId)):
-   ref.source==='equipment_ac'&&equipment.some(f=>f.id===ref.fieldId)))&&
-  new Set(codes).size===codes.length;
+ // Quickcode references are managed and validated in Sheet Designer. They
+ // can target text fields; monitor edits must not be blocked by them.
  const selectableRefs=refs.filter(ref=>refCodeRx.test(ref.code||''));
  const original=normalizeConfig(campaign?.token_display_config);
  const changed=JSON.stringify(config)!==JSON.stringify(original);
- const valid=validCodes&&config.widgets.length<=8&&config.widgets.every(w=>keyRx.test(w.field||'')&&
-   (w.type==='globe'||!w.maxField||keyRx.test(w.maxField))&&
-   /^#[0-9a-f]{6}$/i.test(w.color||'')&&(w.label||'').length<=24&&
-   Object.keys(POSITIONS).includes(w.position)&&
-   ['inside','outside'].includes(w.placement));
+ const widgetErrors=monitorValidationErrors(config.widgets);
+ const valid=widgetErrors.length===0;
  function updateReference(id,patch){
   setStatus('');setError('');
   setConfig(c=>({...c,references:(c.references||[]).map(r=>r.id===id?{...r,...patch}:r)}));
@@ -52,7 +45,8 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
   }]}));
  }
  function widgetChange(id,patch){
-  setStatus('');setConfig(c=>({...c,widgets:c.widgets.map(w=>w.id===id?{...w,...patch}:w)}));
+  setStatus('');setError('');
+  setConfig(c=>({...c,widgets:c.widgets.map(w=>w.id===id?{...w,...patch}:w)}));
  }
  function pickField(widget,fieldId){
   const resource=resources.find(f=>f.id===fieldId);
@@ -192,7 +186,8 @@ export default function TokenDisplayDesigner({campaign,template,onSave}){
      </label>}
    </div>
   </section>)}
-  {!valid&&<p className="error small">Each monitor needs a valid field name, position and colour.</p>}
+  {widgetErrors.map((message,index)=><p key={index} className="error small"
+   role="alert">{message}</p>)}
   {error&&<p className="error small">{error}</p>}
   {status&&<p className="good small">{status}</p>}
   <div className="calibration-actions">
