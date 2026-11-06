@@ -1825,3 +1825,13 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  background:linear-gradient(180deg,#527b56,#365e3a);
  color:#f9fff9
 }
+
+/* Staged: character roster */
+.my-character-list{display:flex;flex-direction:column;gap:6px}
+.my-character-row{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #34465e;border-radius:6px}
+.my-character-row.active{border-color:#8cbd8f}
+.my-character-name{flex:1;min-width:0;overflow-wrap:anywhere;font-size:12px;font-weight:650}
+.my-character-row button{white-space:nowrap;font-size:11px}
+.character-sheet-switch{display:flex;align-items:center;gap:6px;font-size:12px}
+.character-sheet-switch select{max-width:180px}
+@media(max-width:700px){.my-character-row{flex-wrap:wrap}.character-sheet-switch select{max-width:115px}}

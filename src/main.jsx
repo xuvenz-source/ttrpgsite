@@ -74,6 +74,7 @@ function App(){
  const[tab,setTab]=useState('tabletop'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditor,setNpcEditor]=useState(null),[characterEditor,setCharacterEditor]=useState(null);
+ const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
@@ -121,7 +122,7 @@ function App(){
   read(db.from('chat_messages').select('*').eq('campaign_id',id).order('created_at',{ascending:false}).limit(100)),
   read(db.from('npc_templates').select('*').eq('campaign_id',id).order('name')),
   read(db.from('npc_folders').select('*').eq('campaign_id',id).order('name'))]);
-   setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);setCharacter(ch.find(x=>x.user_id===user)||null);setFolders(f);setMaps(b);setMsgs(chat.reverse());setNpcs(npcList);setNpcFolders(npcFolderList);
+   setCamp(c);setTemplate(c.sheet_template);setMembers(m);setCharacters(ch);setCharacter(previous=>ch.find(x=>x.id===previous?.id&&x.user_id===user)||ch.find(x=>x.user_id===user)||null);setFolders(f);setMaps(b);setMsgs(chat.reverse());setNpcs(npcList);setNpcFolders(npcFolderList);
   setSelectedMap(old=>b.find(x=>x.id===old)?old:(c.active_map_id&&b.some(x=>x.id===c.active_map_id)?c.active_map_id:(b[0]?.id||'')));}catch(e){fail(e)}
  }
  async function refreshMaps(){if(!activeId)return;
@@ -148,6 +149,24 @@ function App(){
  async function moveNpcFolder(id,folderId){try{
   await read(db.from('npc_templates').update({folder_id:folderId}).eq('id',id));await refreshNpcs();
  }catch(e){fail(e)}}
+ async function openOwnCharacter(characterId){
+  const target=characters.find(ch=>ch.id===characterId&&ch.user_id===user);
+  if(!target)throw Error('Character sheet not found.');
+  if(character?.id&&character.id!==target.id)await flushSheetForCast(character.id);
+  setCharacter(target);setSaveState('Saved');setSheetTab('main');setTab('sheet');
+ }
+ async function createNewCharacter(name){
+  const clean=String(name||'').trim();
+  if(!clean||clean.length>100)return fail('Enter a character name up to 100 characters.');
+  try{
+   if(character?.id)await flushSheetForCast(character.id);
+   const created=await read(db.from('characters').insert({
+    campaign_id:activeId,user_id:user,name:clean,field_values:{character_name:clean}
+   }).select('*').single());
+   setCharacters(old=>[...old,created]);setCharacter(created);
+   setNewCharacterName('');setSheetTab('main');setSaveState('Saved');setTab('sheet');
+  }catch(e){fail(e)}
+ }
  async function openPlayerCharacter(characterId,ownerId){
   if(!isDM)return;
   try{
@@ -368,7 +387,8 @@ function App(){
    }else if(action==='sheet'){
     e.preventDefault();
     if(isDM&&selectedToken)openTokenSheet(selectedToken);
-    else setTab('sheet');
+    else if(character)setTab('sheet');
+    else setRightTab('characters');
    }else if(action==='hotbar'){
     e.preventDefault();changeHotbarVisibility(!hotbarVisible).catch(fail);
    }else if(action.startsWith('slot')){
@@ -873,10 +893,10 @@ function App(){
  }
  async function publishMap(id){try{await read(db.from('campaigns').update({active_map_id:id}).eq('id',activeId));setCamp(x=>({...x,active_map_id:id}));await refreshMaps()}catch(e){fail(e)}}
  async function addToken(){if(!selectedMap)return;try{
-  const ch=characters.find(c=>c.user_id===tokenOwner);
+  const ch=characters.find(c=>c.id===tokenOwner);
   await read(db.from('map_tokens').insert({
    campaign_id:activeId,map_id:selectedMap,name:newToken.trim()||ch?.name||'Token',
-   owner_id:tokenOwner||null,character_id:ch?.id||null,
+   owner_id:ch?.user_id||null,character_id:ch?.id||null,
    image_path:ch?.token_path||null,x:1,y:1
   }));refreshTokens();
  }catch(e){fail(e)}}
@@ -1029,7 +1049,16 @@ function App(){
  <section className="panel page-panel floating-sheet-content"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
- <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
+ <label className="character-sheet-switch">Sheet
+   <select aria-label="Switch character sheet" value={character?.id||''}
+    onChange={e=>openOwnCharacter(e.target.value).catch(fail)}>
+    {characters.filter(ch=>ch.user_id===user).map(ch=>
+     <option key={ch.id} value={ch.id}>{ch.name||'Unnamed character'}</option>)}
+   </select>
+  </label>
+  <button type="button" className="secondary" disabled={!character}
+   onClick={()=>setArtStudio(true)}>My Token Library</button>
+  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}
  <button className={sheetTab===PERSONAL_RESOURCE_TAB?'selected':''}
   onClick={()=>setSheetTab(PERSONAL_RESOURCE_TAB)}>Resources</button></div>
@@ -1141,6 +1170,10 @@ function App(){
  bindings={bindings} onSaveBindings={saveMyKeybindings}
  hotbarSlots={hotbarSlots} onSaveHotbar={saveMyHotbar}
  macroCount={macros.length} onOpenMacros={()=>setMacroBuilderOpen(true)}
+  activeCharacterId={character?.id||null}
+  newCharacterName={newCharacterName} onChangeNewCharacterName={setNewCharacterName}
+  onCreateCharacter={createNewCharacter}
+  onOpenOwnCharacter={id=>openOwnCharacter(id).catch(fail)}
  hotbarVisible={hotbarVisible} onChangeHotbarVisible={visible=>changeHotbarVisibility(visible).catch(fail)}
  onCopyInvite={async()=>{try{await navigator.clipboard.writeText(location.origin+'/?join='+camp?.invite_code);setSaveState('Invite link copied')}catch(e){fail(e)}}}
  onNavigate={setTab} onCreatePortrait={()=>setArtStudio(true)} onReturnToMenu={()=>setActiveId('')}
