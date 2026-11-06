@@ -1874,3 +1874,15 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .unit-character-drag{color:#b6c7e5;cursor:grab;font-size:10px;
  padding:5px 6px;border:1px dashed #526581;border-radius:5px}
 .unit-create-character{margin:3px 0}
+
+/* Staged: DM-only formula configuration for hidden character modifiers. */
+.modifier-rule-settings{display:flex;align-items:flex-end;flex-wrap:wrap;gap:9px;
+ padding:9px;border:1px solid #485b77;background:#1d2b40;border-radius:8px;margin-bottom:9px}
+.modifier-rule-settings>strong{font-size:12px}
+.modifier-rule-settings>.muted{flex:1 1 190px;min-width:160px}
+.modifier-rule-settings>label{display:flex;flex-direction:column;gap:3px;max-width:130px;font-size:11px}
+.modifier-rule-settings input{max-width:115px}
+.ability-modifier-designer{margin:7px 0;padding:8px;border:1px solid #475d7a;
+ border-radius:6px;background:#202b42;display:flex;flex-direction:column;gap:6px}
+.ability-modifier-enable{display:flex;align-items:center;gap:7px}
+.ability-modifier-enable input{width:auto}

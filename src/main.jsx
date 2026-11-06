@@ -11,7 +11,7 @@ import TabletopSidebar from './TabletopSidebar.jsx';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import {makeProgressionField,makeProficienciesField,enrichSheetValues,
- PERSONAL_RESOURCE_TAB,PERSONAL_RESOURCE_KEY} from './SheetDerived.js';
+ PERSONAL_RESOURCE_TAB,PERSONAL_RESOURCE_KEY,validateModifierRules,modifierReferenceId} from './SheetDerived.js';
 import {ProgressionDesigner,ProgressionPanel,ProficienciesDesigner,ProficienciesPanel} from './SheetProgression.jsx';
 import PersonalResources from './PersonalResources.jsx';
 import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
@@ -681,7 +681,11 @@ function App(){
   setTemplate(saved.sheet_template);
   return found?'This resource is already linked to a token bar.':'Resource and token bar saved together.';
  }
- async function saveTemplate(){setBusy(true);try{await read(db.from('campaigns').update({sheet_template:template}).eq('id',activeId));setCamp(x=>({...x,sheet_template:template}));setSaveState('Template saved')}catch(e){fail(e)}finally{setBusy(false)}}
+ async function saveTemplate(){setBusy(true);try{
+  validateModifierRules(template);
+  await read(db.from('campaigns').update({sheet_template:template}).eq('id',activeId));
+  setCamp(x=>({...x,sheet_template:template}));setSaveState('Template saved');
+ }catch(e){fail(e)}finally{setBusy(false)}}
  async function addFolder(e){e.preventDefault();if(!newFolder.trim())return;try{await read(db.from('map_folders').insert({campaign_id:activeId,parent_id:folder,name:newFolder.trim()}));setNewFolder('');refreshMaps()}catch(e){fail(e)}}
  async function uploadMap(e){const file=e.target.files?.[0];if(!file)return;setUploading(true);try{
  if(file.size>50_000_000||!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('Choose a PNG, JPEG or WebP below 50 MB');
@@ -1321,6 +1325,16 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
   }));
  }
  return <>
+  <div className="modifier-rule-settings">
+   <strong>Ability modifier formula</strong>
+   <span className="muted tiny">DM-only formula: floor((score − base) / points per +1). D&D uses base 10 and step 2.</span>
+   <label>Base score<input type="number" min="0" max="100" step="1"
+    value={template.modifierRules?.base??10}
+    onChange={e=>changeTemplate(x=>x.modifierRules={...x.modifierRules,base:Number(e.target.value)})}/></label>
+   <label>Points per +1<input type="number" min="1" max="20" step="1"
+    value={template.modifierRules?.step??2}
+    onChange={e=>changeTemplate(x=>x.modifierRules={...x.modifierRules,step:Number(e.target.value)})}/></label>
+  </div>
   <div className="tools">
    <input aria-label="Tab name" value={t.name}
     onChange={e=>changeTemplate(x=>x.tabs.find(y=>y.id===t.id).name=e.target.value)}/>
@@ -1435,7 +1449,19 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
       {linking===f.id?'Linking…':'↗ Add / link token resource bar'}
      </button>
     </>}
-    {f.type==='roll'&&<label>Dice formula<input value={f.formula||''}
+    {f.type==='number'&&<div className="ability-modifier-designer">
+      <label className="ability-modifier-enable"><input type="checkbox"
+       checked={f.modifierEnabled===true} onChange={e=>update(f.id,'modifierEnabled',e.target.checked)}/>
+       Calculate a hidden modifier from this score</label>
+      {f.modifierEnabled===true&&<>
+       <label>Modifier reference ID
+        <input value={f.modifierCode??modifierReferenceId(f)??''}
+         maxLength={76} onChange={e=>update(f.id,'modifierCode',e.target.value)}
+         placeholder="dexterity"/></label>
+       <p className="muted tiny">Use <code>@{'{'+(modifierReferenceId(f)||'dexterity')+'_mod}'}</code> in macros. No extra player field.</p>
+      </>}
+     </div>}
+     {f.type==='roll'&&<label>Dice formula<input value={f.formula||''}
       onChange={e=>update(f.id,'formula',e.target.value)} placeholder="1d20+@{strength}"/></label>}
     {f.type==='inventory'&&<label>Columns (comma separated)<input
       value={(f.columns||[]).join(', ')}
