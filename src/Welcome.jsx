@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React,{useEffect,useState} from 'react';
 
 const NAME=/^[a-z][a-z0-9_]{2,23}$/i;
 const RESERVED_DOMAIN='accounts.tabletopforge.example.com';
@@ -11,6 +11,28 @@ export function AuthGate({db}){
  const[legacyEmail,setLegacyEmail]=useState('');
  const[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const signup=mode==='register';
+ const [oauthProviders,setOauthProviders]=useState({google:false,discord:false});
+ const [oauthChecked,setOauthChecked]=useState(false);
+ // GET /auth/v1/settings exposes public provider availability, never secrets.
+ // Hide unsupported providers BEFORE the browser redirects to a raw 400 page.
+ useEffect(()=>{
+  const controller=new AbortController();
+  const base=import.meta.env.VITE_SUPABASE_URL;
+  const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if(!base||!key){setOauthChecked(true);return()=>controller.abort()}
+  fetch(base.replace(/\/+$/,'')+'/auth/v1/settings',{
+   headers:{apikey:key},signal:controller.signal
+  }).then(async response=>{
+   if(!response.ok)throw Error('Auth provider lookup failed');
+   const settings=await response.json();
+   if(!controller.signal.aborted)setOauthProviders({
+    google:settings?.external?.google===true,
+    discord:settings?.external?.discord===true
+   });
+  }).catch(e=>{if(!controller.signal.aborted)console.warn('Unable to check OAuth availability',e)})
+   .finally(()=>{if(!controller.signal.aborted)setOauthChecked(true)});
+  return()=>controller.abort();
+ },[]);
  async function submit(e){
   e.preventDefault();setError('');setNotice('');
   const raw=username.trim();
@@ -53,6 +75,10 @@ export function AuthGate({db}){
   finally{setBusy(false)}
  }
  async function social(provider){
+  if(!oauthProviders[provider]){
+   setError('This social provider is not enabled. Use username and password, or contact the site administrator.');
+   return;
+  }
   setError('');setNotice('');setBusy(true);
   try{
    const {error}=await db.auth.signInWithOAuth({provider,options:{redirectTo:location.origin}});
@@ -96,10 +122,18 @@ export function AuthGate({db}){
    <div className="welcome-social">
     <div className="welcome-or"><span>or continue with</span></div>
     <div className="welcome-social-options">
-     <button type="button" className="secondary" disabled={busy} onClick={()=>social('google')}>Google</button>
-     <button type="button" className="secondary" disabled={busy} onClick={()=>social('discord')}>Discord</button>
+     <button type="button" className="secondary" disabled={busy||!oauthProviders.google}
+      title={oauthProviders.google?'Sign in with Google':'Google sign-in is not enabled'}
+      onClick={()=>social('google')}>Google</button>
+     <button type="button" className="secondary" disabled={busy||!oauthProviders.discord}
+      title={oauthProviders.discord?'Sign in with Discord':'Discord sign-in is not enabled'}
+      onClick={()=>social('discord')}>Discord</button>
     </div>
-    <p className="muted tiny">Google and Discord require the corresponding sign-in providers to be enabled by the app administrator.</p>
+    <p className="muted tiny">{!oauthChecked?
+     'Checking enabled social sign-in methods…':
+     (!oauthProviders.discord||!oauthProviders.google)?
+      'Unavailable social sign-in buttons are disabled. You can always create a username-and-password account.':
+      'Or use your Google or Discord account to sign in.'}</p>
    </div>
    <details className="welcome-legacy">
     <summary>Use an email sign-in link (existing accounts)</summary>
