@@ -9,6 +9,10 @@ const MAX_ROWS=12,MAX_CELLS=3;
 const roll=(label='Roll',formula='1d20',critOn=null)=>({id:uid(),kind:'roll',label,formula,...(critOn==null?{}:{critOn})});
 const text=(label='Note',value='vs AC')=>({id:uid(),kind:'text',label,text:value});
 const row=(label='Attack',cells=[roll('Normal','1d20+3')])=>({id:uid(),label,cells});
+const attackCell=()=>({id:uid(),kind:'attack',label:'Attack',formula:'1d20+4',
+ mode:'normal',critOn:20,damage:'1d8+2',critDamage:'1d8'});
+const attackMacro=()=>({id:uid(),name:'New attack',subtitle:'Attack + damage',
+ source_type:'none',source_id:null,rows:[row('Attack',[attackCell()])]});
 const blankMacro=()=>({
  id:uid(),name:'New macro',subtitle:'',
  source_type:'none',source_id:null,
@@ -26,7 +30,18 @@ const swipeExample=()=>({
 export function previewMacro(macro){
  return {body:macro.name,result:{
   version:1,title:macro.name,subtitle:macro.subtitle,
-  rows:macro.rows.map(r=>({id:r.id,label:r.label,cells:r.cells.map(c=>({...c}))}))
+  rows:macro.rows.flatMap(r=>{
+   if(r.cells.length===1&&r.cells[0].kind==='attack'){
+    const a=r.cells[0],dual=a.mode!=='normal';
+    return [{id:r.id+'_hit',label:r.label,cells:[
+     {id:a.id+'_1',kind:'roll',label:dual?'Roll 1':'To hit',critOn:a.critOn},
+     ...(dual?[{id:a.id+'_2',kind:'roll',label:'Roll 2',critOn:a.critOn}]:[])]},
+     {id:r.id+'_damage',label:'Damage',cells:[
+      {id:a.id+'_damage',kind:'roll',label:'Damage'},
+      ...(a.critDamage?[{id:a.id+'_crit',kind:'roll',label:'Extra on crit'}]:[])]}];
+   }
+   return {id:r.id,label:r.label,cells:r.cells.map(c=>({...c}))};
+  })
  }};
 }
 export function MacroManager({
@@ -57,8 +72,8 @@ export function MacroManager({
   setChosenId(macro.id);setDraft(structuredClone(macro));
   setBaseline(JSON.stringify(macro));setMessage('');setError('');
  }
- function startNew(example=false){
-  setChosenId('new');setDraft(example?swipeExample():blankMacro());
+ function startNew(kind='custom'){
+  setChosenId('new');setDraft(kind==='attack'?attackMacro():kind==='example'?swipeExample():blankMacro());
   setBaseline(null);setMessage('');setError('');
  }
  function update(patch){setDraft(old=>({...old,...patch}));setMessage('');setError('')}
@@ -84,8 +99,12 @@ export function MacroManager({
   update({rows:[...draft.rows,row('New row',[roll('Roll','1d20')])]});
  }
  function addCell(r,kind){
-  if(r.cells.length>=MAX_CELLS)return;
+  if(r.cells.length>=MAX_CELLS||r.cells.some(c=>c.kind==='attack'))return;
   updateRow(r.id,{cells:[...r.cells,kind==='roll'?roll('Roll','1d20'):text('Note','')]});
+ }
+ function addAttackRow(){
+  if(draft.rows.length>=MAX_ROWS)return;
+  update({rows:[...draft.rows,row('Attack',[attackCell()])]});
  }
  function changeSource(value){
   if(value==='none')return update({source_type:'none',source_id:null});
@@ -95,13 +114,23 @@ export function MacroManager({
  async function persist(){
   if(!draft.name.trim())throw Error('Give the macro a name.');
   if(draft.rows.length===0)throw Error('Add at least one row.');
-  if(!draft.rows.some(r=>r.cells.some(c=>c.kind==='roll')))
-   throw Error('Add at least one dice or numeric roll.');
+  if(!draft.rows.some(r=>r.cells.some(c=>c.kind==='roll'||c.kind==='attack')))
+   throw Error('Add at least one dice, numeric, or linked attack roll.');
   if(draft.rows.some(r=>!r.label.trim()||r.cells.length===0))
    throw Error('Each row needs a label and at least one cell.');
   if(draft.rows.some(r=>r.cells.some(c=>c.kind==='roll'&&c.critOn!=null&&
      !supportsMacroCritical(c.formula))))
    throw Error('Critical tracking needs exactly one positive 1d20 in that roll formula, e.g. 1d20+4. Use separate rolls for advantage.');
+  if(draft.rows.some(r=>r.cells.some(c=>c.kind==='attack')&&r.cells.length!==1))
+   throw Error('A linked Attack must be the only result in its row.');
+  if(draft.rows.some(r=>r.cells.some(c=>c.kind==='attack'&&
+   (!supportsMacroCritical(c.formula)||!['normal','advantage','disadvantage'].includes(c.mode)||
+    !Number.isInteger(c.critOn)||c.critOn<1||c.critOn>20||
+    !String(c.damage||'').trim()))))
+   throw Error('Attack needs one natural d20, a roll mode, damage and a critical threshold.');
+  const estimated=draft.rows.flatMap(r=>r.cells).reduce((count,c)=>
+   count+(c.kind==='roll'?1:c.kind==='attack'?(c.mode==='normal'?3:4):0),0);
+  if(estimated>18)throw Error('A macro can use up to 18 server dice rolls.');
   const saved=await onSave({
    ...draft,name:draft.name.trim(),subtitle:draft.subtitle.trim(),
    rows:draft.rows.map(r=>({...r,label:r.label.trim(),
