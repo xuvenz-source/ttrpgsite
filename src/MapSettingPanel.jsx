@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useMemo} from 'react';
 import MapCalibration from './MapCalibration.jsx';
 import {normalizeEnvironment,patchObject,removeObject,lightRadii} from './MapEnvironment.js';
 
@@ -26,7 +26,7 @@ function Check({title,value,onChange}){
 }
 export default function MapSettingPanel({map,environment,editor,onEditorChange,
  onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus}){
- const env=normalizeEnvironment(environment);
+ const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
  const selected=env.objects.find(o=>o.id===editor.selectedId);
  const updateEditor=change=>onEditorChange({...editor,...change});
  const updateEnv=change=>onEnvironmentChange({...env,...change});
