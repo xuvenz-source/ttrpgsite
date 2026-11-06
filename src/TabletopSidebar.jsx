@@ -168,7 +168,7 @@ export default function TabletopSidebar({
  messages,characters,members,accountNames=[],tokens,selectedToken,onSelectToken,onOpenToken,onResizeToken,onOpenStatus,
  chat,onChatChange,onSendChat,
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
- activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
+ activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onMoveEntireParty,onOpenMapLibrary,
  mapAssignments=[],onAssignPlayerMap,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
@@ -298,7 +298,12 @@ export default function TabletopSidebar({
       </select></label>
       <p className="muted small">{activeMap?.id===publishedMapId?'● Current map is live to players':'This map is not yet published to players.'}</p>
       <button type="button" disabled={!activeMap||activeMap.id===publishedMapId}
-       onClick={()=>onPublishMap(selectedMap)}>Publish selected map to players</button>
+       onClick={()=>onPublishMap(selectedMap)}>Publish party default map</button>
+      <button type="button" className="secondary" disabled={!activeMap}
+       onClick={()=>onMoveEntireParty(selectedMap)}>Move entire party here</button>
+      <p className="muted tiny">Publishing changes the shared default for unassigned players.
+       Move entire party also clears private assignments and switches everyone.
+       Assign players individually below for solo or split-party scenes.</p>
       <button type="button" className="secondary" onClick={onOpenMapLibrary}>Open map library</button>
       <div className="private-map-assignments">
        <strong>Player map assignments</strong>
