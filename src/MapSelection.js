@@ -36,7 +36,7 @@ export function boundedGroupOffset(tokens,desiredX,desiredY,mapWidth,mapHeight,g
  const maxDY=Math.min(...tokens.map(t=>maxY-finite(t.y)-Math.max(.25,finite(t.span_y??1,1))));
  const clamp=(v,min,max)=>Math.max(min,Math.min(Math.max(min,max),v));
  return {
-  dx:clamp(Math.round(finite(desiredX)),minDX,maxDX),
-  dy:clamp(Math.round(finite(desiredY)),minDY,maxDY)
+  dx:clamp(Math.round(finite(desiredX)),minDX,maxDX)||0,
+  dy:clamp(Math.round(finite(desiredY)),minDY,maxDY)||0
  };
 }
