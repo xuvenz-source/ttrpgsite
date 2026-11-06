@@ -41,7 +41,8 @@ test('square has equal 5-ft radius in both axes; cone has its far-end width equa
 });
 test('measurement broadcasts are map-scoped and reject malformed data',()=>{
  const measure={tool:'circle',start:{x:1,y:2},end:{x:4,y:6}};
- const payload=liveMeasurementPayload(measure,uuid,'player_1',mapId,true);
+ const payload=liveMeasurementPayload(measure,uuid,
+  '9e79af24-89a5-4a38-89da-510a22069fd1',mapId,'pin',1000);
  assert.equal(validMeasurement(payload,mapId,10,10),true);
  assert.equal(validMeasurement(payload,'other',10,10),false);
  assert.equal(validMeasurement({...payload,tool:'unknown'},mapId),false);
