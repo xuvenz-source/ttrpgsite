@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useState} from 'react';
+import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import ResourceField from './ResourceField.jsx';
@@ -75,8 +76,9 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
   });
   onRoll(expression,field.label);
  }
- return <div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&close()}>
-  <section className="modal npc-modal character-modal" role="dialog" aria-modal="true" aria-label="Edit player character sheet">
+ return <>
+ <FloatingWindow kind="sheet" onClose={close}>
+  <section className="modal npc-modal character-modal" role="dialog" aria-label="Edit player character sheet">
    <div className="heading"><div>
     <h2>Player character sheet</h2>
     <p className="muted small">DM editor · Edits are saved to this player's permanent campaign character.</p>
@@ -123,9 +125,10 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
     </button>
    </div>
   </section>
+ </FloatingWindow>
   {studio&&<PersonalTokenLibrary db={db} campaignId={campaignId} userId={viewerId}
     mode="players" defaultName={draft.name} currentTokenPath={draft.token_path} currentPortraitPath={draft.portrait_path}
     onClose={()=>setStudio(false)}
     onApply={assets=>setDraft(d=>({...d,portrait_path:assets.portraitPath,token_path:assets.tokenPath}))}/>}
- </div>;
+ </>;
 }

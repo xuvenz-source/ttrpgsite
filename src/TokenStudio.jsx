@@ -2,6 +2,8 @@ import React,{useEffect,useRef,useState} from 'react';
 
 const SIZE=400;
 const MAX_ART_MB=10;
+const MAX_ZOOM=6;
+const PAN_FACTOR=1.5;
 const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
 const canvasBlob=(canvas,quality=.92)=>new Promise((resolve,reject)=>{
  canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Could not export artwork')),'image/webp',quality);
@@ -81,6 +83,24 @@ function detectFrameOpening(frame){
  return {canvas:mask,bounds:{x:left,y:top,w:right-left+1,h:bottom-top+1}};
 }
 
+/**
+ * Allow the image to slide all the way across (and even out of) the opening.
+ * Fixed +/-180 offsets prevented off-centre faces from reaching the middle at
+ * higher zoom. Bounds now grow with the rendered image on both axes.
+ */
+function imagePanLimits(img,zoom,ring,thickness,opening){
+ if(!img)return {x:180,y:180};
+ const weight=Number(thickness);
+ const inset=ring==='none'?8:Math.max(8,9+weight);
+ const bounds=ring==='custom'&&opening
+  ?opening.bounds:{w:SIZE-2*inset,h:SIZE-2*inset};
+ const fit=Math.max(bounds.w/img.width,bounds.h/img.height)*zoom;
+ return {
+  x:Math.max(180,Math.ceil((img.width*fit+bounds.w)/(2*PAN_FACTOR))),
+  y:Math.max(180,Math.ceil((img.height*fit+bounds.h)/(2*PAN_FACTOR)))
+ };
+}
+
 function paint(ctx,img,frame,opening,{zoom,shiftX,shiftY,ring,back,shape,border,thickness}){
  ctx.clearRect(0,0,SIZE,SIZE);
  const custom=ring==='custom'&&frame&&opening;
@@ -94,8 +114,10 @@ function paint(ctx,img,frame,opening,{zoom,shiftX,shiftY,ring,back,shape,border,
  if(custom){
   const offscreen=document.createElement('canvas');offscreen.width=SIZE;offscreen.height=SIZE;
   const layer=offscreen.getContext('2d');
-  layer.fillStyle=back;layer.fillRect(0,0,SIZE,SIZE);
-  layer.drawImage(img,cx-w/2+shiftX*1.5,cy-h/2+shiftY*1.5,w,h);
+  if(back!=='transparent'){
+   layer.fillStyle=back;layer.fillRect(0,0,SIZE,SIZE);
+  }
+  layer.drawImage(img,cx-w/2+shiftX*PAN_FACTOR,cy-h/2+shiftY*PAN_FACTOR,w,h);
   layer.globalCompositeOperation='destination-in';
   layer.drawImage(opening.canvas,0,0);
   layer.globalCompositeOperation='source-over';
@@ -106,8 +128,10 @@ function paint(ctx,img,frame,opening,{zoom,shiftX,shiftY,ring,back,shape,border,
 
  ctx.save();
  framePath(ctx,shape,inset);ctx.clip();
- ctx.fillStyle=back;ctx.fillRect(0,0,SIZE,SIZE);
- ctx.drawImage(img,cx-w/2+shiftX*1.5,cy-h/2+shiftY*1.5,w,h);
+ if(back!=='transparent'){
+  ctx.fillStyle=back;ctx.fillRect(0,0,SIZE,SIZE);
+ }
+ ctx.drawImage(img,cx-w/2+shiftX*PAN_FACTOR,cy-h/2+shiftY*PAN_FACTOR,w,h);
  ctx.restore();
  if(ring!=='none'&&weight>0){
   ctx.lineWidth=weight;ctx.strokeStyle=border;
@@ -121,18 +145,20 @@ function paint(ctx,img,frame,opening,{zoom,shiftX,shiftY,ring,back,shape,border,
 
 export default function TokenStudio({db,campaignId,userId,mode='players',onSave,onSaveBlobs,onClose}){
  const[file,setFile]=useState(null),[zoom,setZoom]=useState(1),[shiftX,setShiftX]=useState(0),[shiftY,setShiftY]=useState(0),
-  [ring,setRing]=useState('single'),[back,setBack]=useState('#1b2030'),[border,setBorder]=useState('#c29b55'),
+  [ring,setRing]=useState('single'),[back,setBack]=useState('#1b2030'),
+  [transparentBack,setTransparentBack]=useState(false),[border,setBorder]=useState('#c29b55'),
   [thickness,setThickness]=useState(10),[shape,setShape]=useState('circle'),
   [frameFile,setFrameFile]=useState(''),[saving,setSaving]=useState(false),[error,setError]=useState(''),
   [dragging,setDragging]=useState(false);
  const bmp=useRef(null),overlay=useRef(null),opening=useRef(null),cv=useRef(null),drag=useRef(null);
+ const limits=imagePanLimits(bmp.current,zoom,ring,thickness,opening.current);
  useEffect(()=>()=>{bmp.current?.close();overlay.current?.close()},[]);
  useEffect(()=>{
   if(bmp.current&&cv.current){
    paint(cv.current.getContext('2d'),bmp.current,overlay.current,opening.current,
-    {zoom,shiftX,shiftY,ring,back,shape,border,thickness});
+    {zoom,shiftX,shiftY,ring,back:transparentBack?'transparent':back,shape,border,thickness});
   }
- },[file,zoom,shiftX,shiftY,ring,back,shape,border,thickness,frameFile]);
+ },[file,zoom,shiftX,shiftY,ring,back,transparentBack,shape,border,thickness,frameFile]);
  // A native non-passive wheel listener prevents browser/page zoom only while
  // the pointer is over the token preview. The image zooms toward that pointer.
  useEffect(()=>{
@@ -143,7 +169,7 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
    e.preventDefault();
    e.stopPropagation();
    const factor=e.deltaY<0?1.12:1/1.12;
-   const nextZoom=clamp(zoom*factor,1,3);
+   const nextZoom=clamp(zoom*factor,1,MAX_ZOOM);
    if(nextZoom===zoom)return;
    const ratio=nextZoom/zoom;
    const rect=canvas.getBoundingClientRect();
@@ -152,13 +178,14 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
    const bounds=ring==='custom'&&opening.current?opening.current.bounds:null;
    const centerX=bounds?bounds.x+bounds.w/2:SIZE/2;
    const centerY=bounds?bounds.y+bounds.h/2:SIZE/2;
-   setShiftX(clamp(shiftX*ratio+(cursorX-centerX)*(1-ratio)/1.5,-180,180));
-   setShiftY(clamp(shiftY*ratio+(cursorY-centerY)*(1-ratio)/1.5,-180,180));
+   const nextLimits=imagePanLimits(bmp.current,nextZoom,ring,thickness,opening.current);
+   setShiftX(clamp(shiftX*ratio+(cursorX-centerX)*(1-ratio)/PAN_FACTOR,-nextLimits.x,nextLimits.x));
+   setShiftY(clamp(shiftY*ratio+(cursorY-centerY)*(1-ratio)/PAN_FACTOR,-nextLimits.y,nextLimits.y));
    setZoom(nextZoom);
   }
   canvas.addEventListener('wheel',wheel,{passive:false});
   return()=>canvas.removeEventListener('wheel',wheel);
- },[zoom,shiftX,shiftY,ring,file,frameFile]);
+ },[zoom,shiftX,shiftY,ring,thickness,file,frameFile]);
  async function choose(e){
   const f=e.target.files?.[0];if(!f)return;
   try{
@@ -194,12 +221,14 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
   if(!d||d.id!==e.pointerId)return;
   e.preventDefault();
   const pixels=SIZE/Math.max(1,cv.current.getBoundingClientRect().width);
-  setShiftX(clamp(d.shiftX+(e.clientX-d.startX)*pixels/1.5,-180,180));
-  setShiftY(clamp(d.shiftY+(e.clientY-d.startY)*pixels/1.5,-180,180));
+  const max=imagePanLimits(bmp.current,zoom,ring,thickness,opening.current);
+  setShiftX(clamp(d.shiftX+(e.clientX-d.startX)*pixels/PAN_FACTOR,-max.x,max.x));
+  setShiftY(clamp(d.shiftY+(e.clientY-d.startY)*pixels/PAN_FACTOR,-max.y,max.y));
  }
  function endDrag(e){
   if(!drag.current||drag.current.id!==e.pointerId)return;
   drag.current=null;setDragging(false);
+  if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);
  }
  async function save(){
   if(!bmp.current||!file)return;
@@ -228,7 +257,7 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
  return <div className="modal-backdrop" role="presentation" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
   <section className="modal tokenstudio" role="dialog" aria-modal="true" aria-label="Create character token">
    <div className="heading"><h2>Portrait & token studio</h2><button className="secondary" onClick={onClose}>✕ Close</button></div>
-   <p className="muted">Drag to reposition your portrait. Scroll over the preview to zoom in or out toward the cursor. Decorative frames follow their transparent inner opening.</p>
+   <p className="muted">Drag the portrait freely to centre the face, even at high zoom. Scroll over the preview to zoom toward the cursor. Transparent backgrounds are preserved in saved tokens.</p>
    <div className="studio-grid">
     <div className="studio-preview">
      <canvas ref={cv} width={SIZE} height={SIZE} aria-label="Drag the image to position it in the token frame"
@@ -239,12 +268,14 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
     <div className="studio-options">
      <label>Character artwork<input type="file" accept="image/png,image/jpeg,image/webp" onChange={choose}/></label>
      <label>Zoom — {zoom.toFixed(2)}× (or scroll over the preview)
-      <input type="range" min="1" max="3" step=".05" value={zoom} onChange={e=>setZoom(+e.target.value)}/></label>
+      <input type="range" min="1" max={MAX_ZOOM} step=".05" value={zoom} onChange={e=>setZoom(+e.target.value)}/></label>
      <div className="tools"><button className="secondary" type="button" onClick={()=>{setShiftX(0);setShiftY(0)}}>Centre portrait</button>
       <span className="muted small">Click and drag the image to move it</span></div>
      <details className="studio-fine-adjust"><summary>Fine position adjustments</summary>
-      <label>Horizontal<input type="range" min="-180" max="180" value={shiftX} onChange={e=>setShiftX(Number(e.target.value))}/></label>
-      <label>Vertical<input type="range" min="-180" max="180" value={shiftY} onChange={e=>setShiftY(Number(e.target.value))}/></label>
+      <label>Horizontal<input type="range" min={-limits.x} max={limits.x} step="1"
+       value={clamp(shiftX,-limits.x,limits.x)} onChange={e=>setShiftX(Number(e.target.value))}/></label>
+      <label>Vertical<input type="range" min={-limits.y} max={limits.y} step="1"
+       value={clamp(shiftY,-limits.y,limits.y)} onChange={e=>setShiftY(Number(e.target.value))}/></label>
      </details>
      <label>Frame style<select value={ring} onChange={e=>setRing(e.target.value)}>
       <option value="none">No ring</option><option value="single">Single ring</option>
@@ -260,7 +291,17 @@ export default function TokenStudio({db,campaignId,userId,mode='players',onSave,
       {ring!=='none'&&<div className="tools"><label>Ring colour<input type="color" value={border} onChange={e=>setBorder(e.target.value)}/></label></div>}
      </>}
      <label>Upload a decorative frame (transparent PNG/WebP)<input type="file" accept="image/png,image/webp" onChange={selectFrame}/></label>
-     <label>Background colour<input type="color" value={back} onChange={e=>setBack(e.target.value)}/></label>
+     <label>Background fill
+      <select value={transparentBack?'transparent':'solid'}
+       onChange={e=>setTransparentBack(e.target.value==='transparent')}>
+       <option value="solid">Solid colour</option>
+       <option value="transparent">Transparent — no background</option>
+      </select>
+     </label>
+     {!transparentBack&&<label>Background colour
+      <input type="color" value={back} onChange={e=>setBack(e.target.value)}/>
+     </label>}
+     {transparentBack&&<p className="muted small">The checkerboard shows transparent areas. Saved WebP tokens keep their transparency; uploaded frame artwork itself remains unchanged.</p>}
     </div>
    </div>
    {error&&<div className="error alert">{error}</div>}
