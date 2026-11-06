@@ -128,7 +128,7 @@ export default function CharacterEditor({
      <div className="field span3"><PersonalResources
       value={draft.field_values[PERSONAL_RESOURCE_KEY]||[]}
       onChange={v=>editField(PERSONAL_RESOURCE_KEY,v)}/></div>:
-     (tab?.fields||[]).map(f=><div className={'field span'+(f.span||1)} key={f.id}>
+     (tab?.fields||[]).map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}>
      <label>{f.label}</label>
      {f.type==='roll'?<button type="button" className="rollbtn" onClick={()=>doRoll(f)}>
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
