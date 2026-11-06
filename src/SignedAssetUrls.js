@@ -89,8 +89,15 @@ export function createSignedAssetStore({
  function clear(){
   epoch++;
   if(timer!==null){clearTimer(timer);timer=null}
-  for(const e of entries.values())for(const notify of e.listeners)notify('');
-  entries.clear();
+  // Active components keep their subscriptions. Invalidating rather than
+  // deleting them prevents images going blank after a same-tab auth change.
+  for(const [key,e] of entries){
+   e.url='';e.expires=0;e.promise=null;
+   for(const notify of e.listeners)notify('');
+   if(e.listeners.size>0)void load(e);
+   else entries.delete(key);
+  }
+  schedule();
  }
  return {subscribe,clear,get:(db,bucket,path)=>!db||!path?
   Promise.resolve(''):load(entry(db,bucket,path)),
