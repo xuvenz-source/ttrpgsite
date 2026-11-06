@@ -21,7 +21,10 @@ function InventoryEditor({field,value,onChange}){
 }
 
 /** A DM can edit a player's persistent sheet, never just the token's temporary stats. */
-export default function CharacterEditor({db,campaignId,viewerId,record,template,onSaved,onClose,onRoll}){
+export default function CharacterEditor({
+ db,campaignId,viewerId,record,template,onSaved,onClose,onRoll,
+ onCastSpell,onAddSpellToHotbar
+}){
  const initial=useMemo(()=>({
   name:record.name,
   field_values:structuredClone(record.field_values||{}),
@@ -29,9 +32,11 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
   token_path:record.token_path||null
  }),[record.id]);
  const [draft,setDraft]=useState(initial);
+ const [baseline,setBaseline]=useState(initial);
+ const [version,setVersion]=useState(record.updated_at);
  const [activeTab,setActiveTab]=useState(template?.tabs?.[0]?.id||'main');
  const [saving,setSaving]=useState(false),[studio,setStudio]=useState(false),[error,setError]=useState('');
- const changed=JSON.stringify(draft)!==JSON.stringify(initial);
+ const changed=JSON.stringify(draft)!==JSON.stringify(baseline);
  const tab=template?.tabs?.find(t=>t.id===activeTab)||template?.tabs?.[0];
 
  function editField(id,value){
@@ -45,8 +50,8 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
   if(changed&&!confirm('Discard unsaved character sheet changes?'))return;
   onClose();
  }
- async function save(){
-  if(!draft.name.trim()||saving)return;
+ async function save(keepOpen=false){
+  if(!draft.name.trim()||saving)throw Error('Cannot save an empty name or while another save is in progress.');
   setSaving(true);setError('');
   try{
    const {data,error:dbError}=await db.from('characters')
@@ -58,15 +63,34 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
     })
     .eq('id',record.id)
     .eq('campaign_id',campaignId)
-    .eq('updated_at',record.updated_at)
+    .eq('updated_at',version)
     .select('*')
     .maybeSingle();
    if(dbError)throw dbError;
    if(!data)throw Error('This character was changed elsewhere while you were editing. Close and reopen its sheet to get the latest version; nothing was overwritten.');
    onSaved(data);
-   onClose();
-  }catch(e){setError(e?.message||String(e))}
-  finally{setSaving(false)}
+   setVersion(data.updated_at);
+   setBaseline({
+    name:data.name,field_values:structuredClone(data.field_values||{}),
+    portrait_path:data.portrait_path||null,token_path:data.token_path||null
+   });
+   if(!keepOpen)onClose();
+   return data;
+  }catch(e){
+   setError(e?.message||String(e));
+   if(keepOpen)throw e;
+   return null;
+  }finally{setSaving(false)}
+ }
+ async function castFromEditor(details){
+  if(changed)await save(true);
+  if(!onCastSpell)throw Error('Spell casting is not available.');
+  return onCastSpell(details);
+ }
+ async function addFromEditor(details){
+  if(changed)await save(true);
+  if(!onAddSpellToHotbar)throw Error('Hotbar is not available.');
+  return onAddSpellToHotbar(details);
  }
  function doRoll(field){
   // Use the values visible in the DM editor, including unsaved numeric edits.
@@ -106,6 +130,8 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
       f.type==='resource'?<ResourceField value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
       f.type==='collection'?<RepeatingCollection field={f} value={draft.field_values[f.id]||[]}
        sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}
+       sourceType="character" sourceId={record.id}
+       onCastSpell={castFromEditor} onAddSpellToHotbar={addFromEditor}
        onRoll={(formula,label)=>onRoll(formula,label)}/>:
       f.type==='checkbox'?<input type="checkbox" checked={!!draft.field_values[f.id]}
         onChange={e=>editField(f.id,e.target.checked)}/>:
@@ -120,7 +146,7 @@ export default function CharacterEditor({db,campaignId,viewerId,record,template,
    <div className="actions">
     {changed&&<span className="muted small">Unsaved edits</span>}
     <button className="secondary" type="button" onClick={close}>Cancel</button>
-    <button type="button" onClick={save} disabled={saving||!draft.name.trim()}>
+    <button type="button" onClick={()=>save(false)} disabled={saving||!draft.name.trim()}>
      {saving?'Saving…':'Save player character'}
     </button>
    </div>

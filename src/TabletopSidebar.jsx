@@ -6,6 +6,7 @@ import {StatusCatalogEditor,TokenStatusBadges,normalizedEffects} from './TokenSt
 import {KeybindingsEditor,HotbarSettings} from './TabletopControls.jsx';
 import {QuickFieldsSettings} from './TokenQuickEdit.jsx';
 import Bestiary from './Bestiary.jsx';
+import SpellChatCard from './SpellChatCard.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 function BearFaceIcon(){
@@ -168,7 +169,8 @@ export default function TabletopSidebar({
   {validPanel==='chat'&&<>
    <div className="messages right-messages">{messages.map(m=><div className="msg" key={m.id}>
     <div className="muted tiny">{m.user_id===user?'You':characters.find(c=>c.user_id===m.user_id)?.name||'Party member'} · {when(m.created_at)}</div>
-    {m.kind==='roll'?<div className="chat-roll">
+    {m.kind==='spell'?<SpellChatCard message={m}/>:
+     m.kind==='roll'?<div className="chat-roll">
      <div className="chat-roll-line">
       <span className="chat-roll-name">🎲 {m.body}</span>
       <strong className="chat-roll-result" aria-label={'Result '+(m.result?.total??'unknown')}>{m.result?.total??'—'}</strong>

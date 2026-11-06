@@ -14,6 +14,16 @@ const sectionFor=field=>field.section||'main';
 const validFields=field=>Array.isArray(field?.fields)?field.fields:[];
 const validSections=field=>Array.isArray(field?.sections)?field.sections:[];
 const validGroups=field=>Array.isArray(field?.groups)?field.groups:[];
+const SPELL_ROLL_OPTIONS=[
+ ['description','Description'],['attack','Attack'],['save','Save'],
+ ['healing','Healing'],['damage','Damage'],['effects','Effects']
+];
+const DEFAULT_SPELL_DISPLAY={
+ description:false,attack:true,save:false,healing:true,damage:true,effects:false
+};
+const spellbookField=field=>field?.spellbook===true||
+ validFields(field).some(child=>child.id==='cast_spell');
+
 const newChild=(type='text')=>({
  id:'sub_'+uid(),label:type==='roll'?'Roll':type==='info'?'Show info':'New '+type,
  type,section:'main',width:type==='textarea'?6:type==='checkbox'?2:3,
@@ -33,7 +43,7 @@ export function makeBlankCollection(){
 export function makeSpellbookField(){
  return {
   id:'field_'+uid(),label:'Spellbook',type:'collection',span:3,
-  entryLabel:'Spell',titleField:'spell_name',groupLabel:'Spell level',
+  entryLabel:'Spell',titleField:'spell_name',groupLabel:'Spell level',spellbook:true,
   groups:['Cantrips',...Array.from({length:9},(_,i)=>'Level '+(i+1))],
   sections:[
    {id:'description',label:'Description'},{id:'attack',label:'Attack'},
@@ -52,7 +62,7 @@ export function makeSpellbookField(){
    {id:'components',label:'Components',type:'text',section:'main',width:2},
    {id:'prepared',label:'Prepared',type:'checkbox',section:'main',width:2},
    {id:'spell_info',label:'Spell Info',type:'info',targetSection:'description',section:'main',width:3},
-   {id:'cast_spell',label:'Cast Spell',type:'roll',formula:'1d20+@{attack_bonus}',section:'main',width:3},
+   {id:'cast_spell',label:'Cast Spell',type:'roll',formula:'',section:'main',width:3},
    {id:'description',label:'Description / flavour',type:'textarea',section:'description',width:6},
    {id:'higher_levels',label:'Higher spell-slot effect',type:'textarea',section:'description',width:6},
    {id:'attack_bonus',label:'Attack bonus',type:'number',section:'attack',width:3},
@@ -61,9 +71,9 @@ export function makeSpellbookField(){
    {id:'save_dc',label:'Save DC',type:'number',section:'save',width:3},
    {id:'successful_save',label:'On successful save',type:'text',section:'save',width:6},
    {id:'healing_amount',label:'Healing dice',type:'text',section:'healing',width:6},
-   {id:'heal_roll',label:'Roll healing',type:'roll',formula:'1d8',section:'healing',width:3},
+   {id:'heal_roll',label:'Roll healing',type:'roll',formula:'@{healing_amount}',section:'healing',width:3},
    {id:'damage_dice',label:'Damage dice',type:'text',section:'damage',width:6},
-   {id:'damage_roll',label:'Roll damage',type:'roll',formula:'2d6',section:'damage',width:3},
+   {id:'damage_roll',label:'Roll damage',type:'roll',formula:'@{damage_dice}',section:'damage',width:3},
    {id:'effects',label:'Other effects',type:'textarea',section:'effects',width:12}
   ]
  };
@@ -120,7 +130,10 @@ function fieldControl(field,value,onValue,onRoll,onInfo,readOnly=false){
  * A configurable, repeatable collection of nested sheet controls. Entry data
  * lives inside one ordinary field_values key, so existing campaign data persists.
  */
-export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,readOnly=false}){
+export function RepeatingCollection({
+ field,value,onChange,onRoll,onCastSpell,onAddSpellToHotbar,
+ sourceType='character',sourceId,sheetValues,readOnly=false
+}){
  const entries=Array.isArray(value)?value:[];
  const groups=validGroups(field),sections=validSections(field);
  const [group,setGroup]=useState(groups[0]||'all');
@@ -129,8 +142,43 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
  useEffect(()=>{setGroup(groups[0]||'all')},[field.id]);
  const selected=groups.includes(group)?group:'all';
  const filtered=entries.filter(entry=>selected==='all'||(entry.group||groups[0])===selected);
- const fields=validFields(field);
+ const fields=validFields(field),isSpellbook=spellbookField(field);
  const summary=fields.filter(f=>sectionFor(f)==='main');
+ const [spellNotice,setSpellNotice]=useState({});
+ const [spellBusy,setSpellBusy]=useState({});
+ function updateSpellOption(row,key,checked){
+  updateEntry(row.id,{values:{...(row.values||{}),roll_display:{
+   ...DEFAULT_SPELL_DISPLAY,...(row.values?.roll_display||{}),[key]:checked
+  }}});
+ }
+ async function castSpell(row,mode='cast'){
+  if(!onCastSpell)return setSpellNotice(old=>({...old,[row.id]:'Spell casting is not available from this sheet.'}));
+  if(spellBusy[row.id])return;
+  setSpellBusy(old=>({...old,[row.id]:true}));
+  setSpellNotice(old=>({...old,[row.id]:''}));
+  try{await onCastSpell({collectionId:field.id,entryId:row.id,mode});}
+  catch(e){setSpellNotice(old=>({...old,[row.id]:e?.message||String(e)}));}
+  finally{setSpellBusy(old=>({...old,[row.id]:false}));}
+ }
+ async function addSpell(row){
+  if(!onAddSpellToHotbar)return;
+  setSpellNotice(old=>({...old,[row.id]:''}));
+  try{
+   const slot=await onAddSpellToHotbar({
+    sourceType,sourceId,collectionId:field.id,entryId:row.id,
+    label:String(row.values?.[field.titleField]||'Spell').slice(0,40)
+   });
+   setSpellNotice(old=>({...old,[row.id]:'Added to hotbar slot '+(slot+1)}));
+  }catch(e){setSpellNotice(old=>({...old,[row.id]:e?.message||String(e)}))}
+ }
+ function dragSpell(e,row){
+  if(!sourceId)return e.preventDefault();
+  e.dataTransfer.setData('application/x-forge-spell',JSON.stringify({
+   sourceType,sourceId,collectionId:field.id,entryId:row.id,
+   label:String(row.values?.[field.titleField]||'Spell').slice(0,40)
+  }));
+  e.dataTransfer.effectAllowed='copy';
+ }
  function updateEntry(id,patch){
   onChange(entries.map(row=>row.id===id?{...row,...patch}:row));
  }
@@ -165,6 +213,10 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
   });
  }
  function doRoll(child,row){
+  if(isSpellbook&&['cast_spell','damage_roll','heal_roll','spell_attack'].includes(child.id)){
+   const action={cast_spell:'cast',damage_roll:'damage',heal_roll:'healing',spell_attack:'attack'}[child.id];
+   return castSpell(row,action);
+  }
   if(!onRoll)return;
   const formula=resolveExpression(child.formula,row.values||{},sheetValues);
   onRoll(formula,(row.values?.[field.titleField]||field.entryLabel||field.label)+' — '+(child.label||'Roll'));
@@ -208,6 +260,11 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
       </select>
      </label>}
      {!readOnly&&<div className="collection-entry-actions">
+      {isSpellbook&&onAddSpellToHotbar&&<button type="button" className="spell-hotbar-add"
+       onClick={()=>addSpell(entry)} title="Add this spell to the first free hotbar slot">+ Hotbar</button>}
+      {isSpellbook&&onAddSpellToHotbar&&<span className="spell-hotbar-drag" draggable
+       role="img" aria-label="Drag spell to hotbar" title="Drag this spell onto any hotbar slot"
+       onDragStart={e=>dragSpell(e,entry)}>⠿</span>}
       <button type="button" title="Move up" onClick={()=>moveEntry(entry,-1)} disabled={entries.indexOf(entry)===0}>↑</button>
       <button type="button" title="Move down" onClick={()=>moveEntry(entry,1)} disabled={entries.indexOf(entry)===entries.length-1}>↓</button>
       <button type="button" title="Duplicate entry" onClick={()=>duplicateEntry(entry)}>⧉</button>
@@ -221,6 +278,16 @@ export function RepeatingCollection({field,value,onChange,onRoll,sheetValues,rea
        ()=>doRoll(child,entry),section=>toggleSection(entry,section),readOnly)}
      </div>)}
     </div>}
+    {opened&&isSpellbook&&<div className="spell-roll-options">
+     <span className="muted tiny">Show when cast:</span>
+     {SPELL_ROLL_OPTIONS.map(([key,label])=><label key={key} className="spell-roll-checkbox">
+      <input type="checkbox" disabled={readOnly}
+       checked={(entry.values?.roll_display||{})[key]??DEFAULT_SPELL_DISPLAY[key]}
+       onChange={e=>updateSpellOption(entry,key,e.target.checked)}/>
+      {label}
+     </label>)}
+    </div>}
+    {spellNotice[entry.id]&&<p className="spell-action-notice" role="status">{spellNotice[entry.id]}</p>}
     {opened&&sections.length>0&&<div className="collection-section-tabs" aria-label="Entry detail panels">
      {sections.map(section=><button type="button" key={section.id}
       className={active.has(section.id)?'selected':''}

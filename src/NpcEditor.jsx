@@ -1,4 +1,4 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
@@ -13,7 +13,10 @@ function Items({field,value,onChange}){
   <button className="secondary" onClick={()=>onChange([...rows,{}])}>+ Item</button>
  </div>;
 }
-export default function NpcEditor({db,campaignId,userId,record,template,onSave,onSaveAsTemplate,onClose,onRoll}){
+export default function NpcEditor({
+ db,campaignId,userId,record,template,onSave,onSaveAsTemplate,onClose,onRoll,
+ onCastSpell,onAddSpellToHotbar
+}){
  const [draft,setDraft]=useState(()=>({
   name:record.data.name,
   values:structuredClone(record.kind==='template'?record.data.field_values||{}:record.data.npc_values||{}),
@@ -21,10 +24,32 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
   tokenPath:record.kind==='template'?record.data.token_path||null:record.data.image_path||null,
   barsPublic:!!record.data.npc_bars_public
  }));
+ const savedValues=useRef(JSON.stringify(draft.values));
  const[t,setT]=useState(template?.tabs?.[0]?.id||'main'),[studio,setStudio]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const current=template?.tabs?.find(x=>x.id===t)||template?.tabs?.[0];const title=record.kind==='template'?'Bestiary template':'NPC token sheet';
  function setField(id,v){setDraft(d=>({...d,name:id==='character_name'?String(v):d.name,values:{...d.values,[id]:v}}))}
- async function save(){setSaving(true);setError('');try{await onSave(draft);onClose()}catch(e){setError(e?.message||String(e))}finally{setSaving(false)}}
+ async function save(keepOpen=false){
+  if(saving)throw Error('An NPC save is in progress.');
+  setSaving(true);setError('');
+  try{
+   await onSave(draft);
+   savedValues.current=JSON.stringify(draft.values);
+   if(!keepOpen)onClose();
+  }catch(e){
+   setError(e?.message||String(e));
+   if(keepOpen)throw e;
+  }finally{setSaving(false)}
+ }
+ async function castFromEditor(details){
+  if(savedValues.current!==JSON.stringify(draft.values))await save(true);
+  if(!onCastSpell)throw Error('Spell casting is unavailable from this sheet.');
+  return onCastSpell(details);
+ }
+ async function addFromEditor(details){
+  if(savedValues.current!==JSON.stringify(draft.values))await save(true);
+  if(!onAddSpellToHotbar)throw Error('The hotbar is unavailable.');
+  return onAddSpellToHotbar(details);
+ }
  async function saveToBestiary(){setSaving(true);setNotice('');setError('');
   try{await onSaveAsTemplate(draft);setNotice('Saved a reusable copy in your Bestiary.')}
   catch(e){setError(e?.message||String(e))}finally{setSaving(false)}
@@ -58,6 +83,8 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
  f.type==='resource'?<ResourceField value={draft.values[f.id]} onChange={v=>setField(f.id,v)}/>:
  f.type==='collection'?<RepeatingCollection field={f} value={draft.values[f.id]||[]}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}
+   sourceType={record.kind==='token'?'npc_token':'npc_template'} sourceId={record.data.id}
+   onCastSpell={castFromEditor} onAddSpellToHotbar={addFromEditor}
    onRoll={(formula,label)=>onRoll(formula,label)}/>:
  f.type==='checkbox'?<input type="checkbox" checked={!!draft.values[f.id]} onChange={e=>setField(f.id,e.target.checked)}/>:
  f.type==='textarea'?<textarea value={draft.values[f.id]??''} onChange={e=>setField(f.id,e.target.value)}/>:
@@ -66,7 +93,7 @@ export default function NpcEditor({db,campaignId,userId,record,template,onSave,o
  </div>
  {error&&<p className="error">{error}</p>}
  {notice&&<p className="good">{notice}</p>}
- <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button onClick={save} disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save NPC sheet'}</button></div>
+ <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button onClick={()=>save(false)} disabled={saving||!draft.name.trim()}>{saving?'Saving…':'Save NPC sheet'}</button></div>
  </section>
  </FloatingWindow>
  {studio&&<PersonalTokenLibrary db={db} campaignId={campaignId} userId={userId}

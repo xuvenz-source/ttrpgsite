@@ -85,7 +85,8 @@ function App(){
  const movementPending=useRef(new Map()),tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
- const saveTimer=useRef(null),user=session?.user?.id,isDM=roles[activeId]==='dm';
+ const saveTimer=useRef(null),pendingSheetSave=useRef(null),
+  sheetWriteQueue=useRef(Promise.resolve()),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const activeMap=maps.find(x=>x.id===selectedMap);
  const displayedMap=activeMap&&mapCalibrationPreview?.mapId===activeMap.id
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
@@ -387,6 +388,14 @@ function App(){
  }
  async function create(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('create_campaign',{p_name:createName.trim()}));setCreateName('');await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
  async function join(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('join_campaign',{p_invite_code:joinCode.trim().toLowerCase()}));setJoinCode('');history.replaceState({},'',location.pathname);await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
+ function writeSheetSnapshot(snapshot){
+  // Preserve write order, even when a queued autosave and an immediate spell
+  // cast try to persist different versions of the same character.
+  const write=sheetWriteQueue.current.then(()=>read(db.from('characters')
+   .update({field_values:snapshot.field_values,name:snapshot.name}).eq('id',snapshot.id)));
+  sheetWriteQueue.current=write.catch(()=>{});
+  return write;
+ }
  function updateField(id,value){
   if(!character)return;
   const next={...character,field_values:{...character.field_values,[id]:value}};
@@ -416,16 +425,72 @@ function App(){
    }
    return updated;
   });
+  pendingSheetSave.current=next;
   setSaveState('Saving…');clearTimeout(saveTimer.current);
   saveTimer.current=setTimeout(async()=>{
    try{
-    await read(db.from('characters').update({field_values:next.field_values,name:next.name}).eq('id',next.id));
-    setSaveState('Saved');
+    await writeSheetSnapshot(next);
+    if(pendingSheetSave.current===next){pendingSheetSave.current=null;setSaveState('Saved');}
    }catch(e){setSaveState('Save failed');fail(e)}
   },200);
 }
+ async function flushSheetForCast(sourceId){
+  // Flush the most recent locally visible spell. A pending older autosave
+  // finishes first, preventing stale values from winning a later race.
+  while(pendingSheetSave.current?.id===sourceId){
+   const pending=pendingSheetSave.current;
+   clearTimeout(saveTimer.current);
+   await writeSheetSnapshot(pending);
+   if(pendingSheetSave.current===pending){
+    pendingSheetSave.current=null;setSaveState('Saved');
+   }
+  }
+  await sheetWriteQueue.current;
+ }
+ async function castSpell({sourceType='character',sourceId,collectionId,entryId,mode='cast'}){
+  if(!activeId||!sourceId)throw Error('No spell caster selected.');
+  if(sourceType==='character')await flushSheetForCast(sourceId);
+  await read(db.rpc('cast_collection_spell',{
+   p_campaign_id:activeId,p_source_id:sourceId,p_source_type:sourceType,
+   p_collection_id:collectionId,p_entry_id:entryId,p_mode:mode
+  }));
+  await refreshChat();
+ }
+ function spellHotbarPayload(payload){
+  const {sourceType,sourceId,collectionId,entryId}=payload||{};
+  if(!['character','npc_token','npc_template'].includes(sourceType)||
+     !/^[0-9a-f-]{36}$/i.test(String(sourceId||''))||
+     !/^[a-zA-Z0-9_-]{1,100}$/.test(String(collectionId||''))||
+     !/^[a-zA-Z0-9-]{1,100}$/.test(String(entryId||'')))
+   throw Error('This spell has an invalid hotbar reference.');
+  const hasAccess=sourceType==='character'
+   ?characters.some(ch=>ch.id===sourceId&&(ch.user_id===user||isDM))
+   :isDM&&(sourceType==='npc_token'
+     ?tokens.some(token=>token.id===sourceId)
+     :npcs.some(npc=>npc.id===sourceId));
+  if(!hasAccess)throw Error('That spell is not on a character or NPC you can control.');
+  return {label:String(payload.label||'Spell').slice(0,40),
+   command:'/spell '+sourceType+' '+sourceId+' '+collectionId+' '+entryId};
+ }
+ async function assignSpellToHotbar(payload,slotIndex=null){
+  const slot=spellHotbarPayload(payload);
+  const index=slotIndex===null?hotbarSlots.findIndex(item=>!item.command):slotIndex;
+  if(!Number.isInteger(index)||index<0||index>=8)
+   throw Error('Your hotbar is full. Drag the spell onto a slot to replace it.');
+  const prior=hotbarSlots;
+  const next=normaliseHotbar(prior).map((item,i)=>i===index?slot:item);
+  setHotbarSlots(next);
+  try{
+   await saveMyHotbar(next);
+   if(!hotbarVisible)await changeHotbarVisibility(true);
+   return index;
+  }catch(e){setHotbarSlots(prior);throw e}
+ }
  async function roll(formula,label='Dice roll',charId=character?.id){try{await read(db.rpc('roll_dice',{p_campaign_id:activeId,p_expression:formula,p_label:label,p_character_id:charId||null}));await refreshChat()}catch(e){fail(e)}}
- async function sendChat(e){e.preventDefault();const raw=chat.trim();if(!raw)return;setChat('');if(/^\/(roll|r)\s+/i.test(raw))return roll(raw.replace(/^\/(roll|r)\s+/i,''),'Dice roll',null);
+ async function sendChat(e){e.preventDefault();const raw=chat.trim();if(!raw)return;setChat('');
+ const spell=raw.match(/^\/spell\s+(character|npc_token|npc_template)\s+([0-9a-f-]{36})\s+([a-zA-Z0-9_-]{1,100})\s+([a-zA-Z0-9-]{1,100})$/i);
+ if(spell){try{await castSpell({sourceType:spell[1],sourceId:spell[2],collectionId:spell[3],entryId:spell[4]})}catch(e){fail(e)}return}
+ if(/^\/(roll|r)\s+/i.test(raw))return roll(raw.replace(/^\/(roll|r)\s+/i,''),'Dice roll',null);
  if(/^\/macro\s+/i.test(raw)){const label=raw.replace(/^\/macro\s+/i,'').trim().toLowerCase(),field=camp?.sheet_template?.tabs?.flatMap(t=>t.fields).find(f=>f.type==='roll'&&f.label.toLowerCase()===label);if(field)return roll(field.formula||'1d20',field.label);return fail('Macro not found')}
  try{await read(db.from('chat_messages').insert({campaign_id:activeId,user_id:user,body:raw.startsWith('/em ')?'*'+raw.slice(4)+'*':raw}));await refreshChat()}catch(e){fail(e)}}
  function changeTemplate(fn){setTemplate(old=>{const t=structuredClone(old||{tabs:defaults});fn(t);return t})}
@@ -700,8 +765,13 @@ function App(){
     return /^-?\d+(\.\d+)?$/.test(String(scalar??''))?String(scalar):'0';
    });
    const dice=command.match(/^\/(?:roll|r)\s+([\s\S]+)$/i);
+   const spell=command.match(/^\/spell\s+(character|npc_token|npc_template)\s+([0-9a-f-]{36})\s+([a-zA-Z0-9_-]{1,100})\s+([a-zA-Z0-9-]{1,100})$/i);
    const macro=command.match(/^\/macro\s+(.+)$/i);
    const say=command.match(/^\/(em|say)\s+([\s\S]+)$/i);
+   if(spell){
+    await castSpell({sourceType:spell[1],sourceId:spell[2],
+     collectionId:spell[3],entryId:spell[4]});return;
+   }
    if(dice){
     await roll(applyFields(dice[1]),slot.label||'Hotbar roll');return;
    }
@@ -718,7 +788,7 @@ function App(){
      body:say[1].toLowerCase()==='em'?'*'+message+'*':message}));
     await refreshChat();return;
    }
-   throw Error('Unsupported hotbar command. Use /roll, /macro, /em or /say.');
+   throw Error('Unsupported hotbar command. Use /spell, /roll, /macro, /em or /say.');
   }catch(e){fail(e)}
  }
  function queueTokenMove(token,x,y){
@@ -831,7 +901,12 @@ function App(){
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}</div><div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<Inventory field={f} value={character?.field_values?.[f.id]||[]} onChange={v=>updateField(f.id,v)}/>:f.type==='collection'?<RepeatingCollection field={f}
  value={character?.field_values?.[f.id]||[]} sheetValues={character?.field_values||{}}
- onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>
+ sourceType="character" sourceId={character?.id}
+ onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}
+ onCastSpell={({collectionId,entryId,mode})=>castSpell({
+  sourceType:'character',sourceId:character?.id,collectionId,entryId,mode
+ })}
+ onAddSpellToHotbar={assignSpellToHotbar}/>:f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div></section>
  </FloatingWindow>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
@@ -856,7 +931,8 @@ function App(){
      Saving token changes…
     </div>}
    {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
-    onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}/>}
+    onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}
+    onAssignSpell={(index,payload)=>assignSpellToHotbar(payload,index).catch(fail)}/>}
   </>
   :<div className="empty-tabletop">
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
@@ -908,7 +984,11 @@ function App(){
   db={db} campaignId={activeId} viewerId={user}
   record={characterEditor.data} template={camp?.sheet_template}
   onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
-  onRoll={(expression,label)=>roll(expression,label,null)}/>}
+  onRoll={(expression,label)=>roll(expression,label,null)}
+  onCastSpell={({collectionId,entryId,mode})=>castSpell({
+   sourceType:'character',sourceId:characterEditor.data.id,collectionId,entryId,mode
+  })}
+  onAddSpellToHotbar={assignSpellToHotbar}/>}
  {statusEditToken&&camp&&<QuickEditBoundary key={'status_'+statusEditToken.id}
    onClose={()=>setStatusEditToken(null)}>
     <TokenStatusPicker token={statusEditToken} catalog={camp.token_status_catalog}
@@ -932,7 +1012,12 @@ function App(){
     }));
     await refreshNpcs();
    }} onClose={()=>setNpcEditor(null)}
-  onRoll={(expression,label)=>roll(expression,label,null)}/>}
+  onRoll={(expression,label)=>roll(expression,label,null)}
+  onCastSpell={({collectionId,entryId,mode})=>castSpell({
+   sourceType:npcEditor.kind==='token'?'npc_token':'npc_template',
+   sourceId:npcEditor.data.id,collectionId,entryId,mode
+  })}
+  onAddSpellToHotbar={assignSpellToHotbar}/>}
  </div>;
 }
 function configured(){return !!db}

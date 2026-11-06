@@ -1261,3 +1261,89 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .app .floating-window.floating-sheet .collection-group-select select{min-width:85px;max-width:110px}
  .app .floating-window.floating-sheet .collection-heading{width:100%;justify-content:flex-end}
 }
+
+/* v1.8 staged — spell rolls and quick hotbar assignments */
+.spell-roll-options{
+ display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;
+ padding:6px 7px;background:#253148;border:1px dashed #586882;
+ border-radius:6px;min-width:0;
+}
+.spell-roll-options>.muted{white-space:nowrap}
+.spell-roll-checkbox{
+ display:inline-flex!important;flex-direction:row!important;
+ align-items:center;gap:4px;white-space:nowrap;
+ font-size:10px!important;font-weight:500;cursor:pointer;
+}
+.spell-roll-checkbox input[type=checkbox]{
+ padding:0!important;width:13px!important;height:13px!important;margin:0;
+}
+.app .floating-window.floating-sheet .spell-roll-options{
+ padding:5px 6px;gap:4px 9px;
+}
+.spell-hotbar-add{
+ min-height:23px!important;padding:4px 6px!important;
+ font-size:10px!important;background:#314966!important;border:1px solid #587499!important;
+ color:#e4eaf7!important;white-space:nowrap
+}
+.spell-hotbar-drag{
+ min-width:22px;height:25px;display:inline-grid;place-items:center;
+ border:1px solid #627895;border-radius:5px;background:#263b57;
+ color:#c6d7ed;cursor:grab;user-select:none;font-size:15px;
+}
+.spell-hotbar-drag:hover{background:#385b82}
+.spell-hotbar-drag:active{cursor:grabbing}
+.spell-action-notice{
+ padding:5px 7px;margin:0!important;border-radius:5px;
+ background:#27354b;color:#d2ddf3;font-size:10px!important;line-height:1.3;
+}
+.macro-hotbar-slot.spell-drop-target{
+ border-color:#75c1b4!important;
+ outline:2px solid #74c1b4;outline-offset:1px;
+ background:#244b51!important;
+}
+.spell-chat-card{
+ display:flex;flex-direction:column;gap:5px;margin-top:4px;
+ padding:7px 8px;border-radius:7px;
+ background:#213149;border:1px solid #51678a;border-left:3px solid #b49aed;
+ min-width:0;font-size:11px;line-height:1.35;
+}
+.spell-chat-title{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
+.spell-chat-title strong{font-size:12px;color:#f1e8ff;overflow-wrap:anywhere}
+.spell-chat-star{color:#d3b9ff}
+.spell-chat-level{font-size:10px;color:#b8ccdf;border-radius:5px;
+ padding:1px 5px;background:#334660}
+.spell-chat-meta,.spell-chat-flags,.spell-chat-components{
+ font-size:10px;color:#aebfd7
+}
+.spell-chat-rolls{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:5px}
+.spell-chat-roll{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 3px;
+ padding:5px 6px;border:1px solid #506481;border-radius:6px;
+ background:#1a283d;min-width:0
+}
+.spell-chat-roll-label{font-size:10px;color:#b6cbe5;align-self:center}
+.spell-chat-roll-total{font-size:17px;font-weight:800;color:#e4c8ff;line-height:1.1}
+.spell-chat-roll-details{grid-column:1/-1;font-size:9px;color:#a8bad3;min-width:0}
+.spell-chat-roll-details summary{overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;cursor:pointer;max-width:100%
+}
+.spell-chat-roll-details>span{display:block;white-space:normal;
+ overflow-wrap:anywhere;padding-top:4px
+}
+.spell-chat-save{font-size:10px;color:#d7e2f5}
+.spell-chat-save strong{color:#f0dcaf}
+.spell-chat-description,.spell-chat-effects{
+ white-space:pre-wrap;overflow-wrap:anywhere;font-size:10px;
+ color:#d0daeb;line-height:1.4
+}
+.spell-chat-description{max-height:135px;overflow-y:auto;
+ border-top:1px solid #3c4e68;padding-top:5px}
+.spell-chat-text-detail{font-size:10px;color:#d0daeb}
+.spell-chat-text-detail summary{cursor:pointer;color:#b9cdeb}
+.spell-chat-text-detail p{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0!important}
+.spell-chat-components{border-top:1px dashed #425875;padding-top:4px}
+@media(max-width:650px){
+ .spell-hotbar-add{padding:3px 5px!important}
+ .spell-roll-options{gap:4px 7px}
+ .spell-chat-rolls{grid-template-columns:repeat(auto-fit,minmax(75px,1fr))}
+}
