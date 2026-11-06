@@ -384,12 +384,28 @@ function App(){
   setSelectedTokenId(t.id);
  }
  async function savePlayerArtwork(art){
-  if(!character)throw Error('Character sheet is not ready');
+  const owner=character;
+  if(!owner?.id||!activeId||!user)
+   throw Error('Open a character sheet before using a library token.');
+  if(owner.user_id!==user||owner.campaign_id!==activeId)
+   throw Error('This character belongs to another account or campaign.');
   const changed=await read(db.from('characters').update({
     portrait_path:art.portraitPath,token_path:art.tokenPath
-  }).eq('id',character.id).select('*').single());
-  setCharacter(old=>({...old,portrait_path:changed.portrait_path,token_path:changed.token_path}));
-  setCharacters(old=>old.map(x=>x.id===changed.id?{...x,portrait_path:changed.portrait_path,token_path:changed.token_path}:x));
+  }).eq('id',owner.id).eq('campaign_id',activeId).eq('user_id',user)
+   .select('*').single());
+  setCharacter(old=>old?.id===changed.id?{
+   ...old,portrait_path:changed.portrait_path,token_path:changed.token_path
+  }:old);
+  setCharacters(old=>old.map(x=>x.id===changed.id?{
+   ...x,portrait_path:changed.portrait_path,token_path:changed.token_path
+  }:x));
+  // Keep any current visible map token in sync with the sheet artwork.
+  // RLS still limits edits to the player's own authorised tokens.
+  try{
+   await read(db.from('map_tokens').update({image_path:art.tokenPath})
+    .eq('campaign_id',activeId).eq('character_id',owner.id).eq('owner_id',user));
+   void refreshTokens();
+  }catch(error){console.warn('Sheet artwork saved, but map token image could not refresh',error)}
   void refreshMonitors();
  }
  // A sheet opened in a browser tab runs under its own Supabase session,
