@@ -945,8 +945,10 @@ function App(){
  }
  async function saveTokenDisplay(config){
   if(!isDM||!camp)throw Error('Only the DM can change token display settings.');
+  // The Sheet Designer owns quickcodes. Token layout edits must preserve them.
+  const latest={...config,references:camp?.token_display_config?.references||[]};
   const data=await read(db.from('campaigns')
-   .update({token_display_config:config}).eq('id',activeId)
+   .update({token_display_config:latest}).eq('id',activeId)
    .select('token_display_config').single());
   setCamp(prev=>({...prev,token_display_config:data.token_display_config}));
   await refreshMonitors();
