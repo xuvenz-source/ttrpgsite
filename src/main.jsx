@@ -103,7 +103,8 @@ function App(){
  const[mapAssignments,setMapAssignments]=useState([]),[accountNames,setAccountNames]=useState([]);
  const[onlinePresenceKeys,setOnlinePresenceKeys]=useState([]),
   [memberPresenceHashes,setMemberPresenceHashes]=useState({});
- const rosterRequest=useRef(0),chatRequest=useRef(0),latestChatRefresh=useRef(null);
+ const rosterRequest=useRef(0),chatRequest=useRef(0),
+  latestChatRefresh=useRef(null),latestRosterRefresh=useRef(null);
  const[folders,setFolders]=useState([]),[maps,setMaps]=useState([]),[folder,setFolder]=useState(null),[selectedMap,setSelectedMap]=useState(''),[urls,setUrls]=useState({}),[tokens,setTokens]=useState([]);
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),[characterEditor,setCharacterEditor]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
@@ -648,15 +649,110 @@ function App(){
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
  }
- useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',filter:'campaign_id=eq.'+activeId},()=>refreshChat()).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
+ useEffect(()=>{if(!db||!activeId)return;const c=db.channel('vtt-'+activeId).on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',filter:'campaign_id=eq.'+activeId},()=>{refreshTokens();refreshMonitors()}).on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'id=eq.'+activeId},()=>{fetchCampaign(activeId);refreshMonitors()})
  .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',filter:'campaign_id=eq.'+activeId},()=>refreshNpcs())
  .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',filter:'campaign_id=eq.'+activeId},()=>refreshMaps())
  .subscribe();return()=>db.removeChannel(c)},[activeId,selectedMap,user]);
+
+ // Keep the latest closures without tearing down network subscriptions on each
+ // map change; reconcile missed events when Realtime reconnects or the tab resumes.
+ latestChatRefresh.current=refreshChat;
+ latestRosterRefresh.current=refreshCampaignRoster;
+ useEffect(()=>{
+  if(!db||!activeId||!user)return;
+  const campaignId=activeId;
+  const channel=db.channel('vtt-chat-'+campaignId)
+   .on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',
+    filter:'campaign_id=eq.'+campaignId},()=>void latestChatRefresh.current?.())
+   .subscribe(status=>{
+    if(status==='SUBSCRIBED')void latestChatRefresh.current?.();
+    if(status==='CHANNEL_ERROR')console.warn('Chat Realtime temporarily unavailable; using reconciliation.');
+   });
+  // Backstop for lost insert notifications or RPC/server-initiated rolls.
+  const timer=setInterval(()=>{
+   if(document.visibilityState==='visible')void latestChatRefresh.current?.();
+  },4000);
+  const focus=()=>{if(document.visibilityState==='visible')void latestChatRefresh.current?.()};
+  document.addEventListener('visibilitychange',focus);
+  return()=>{
+   clearInterval(timer);document.removeEventListener('visibilitychange',focus);
+   void db.removeChannel(channel);
+  };
+ },[db,activeId,user]);
+ useEffect(()=>{
+  if(!db||!activeId||!user)return;
+  const campaignId=activeId;
+  // Character changes are published by the database. Presence detects new
+  // member connections; periodic refresh catches joins without a live session.
+  const channel=db.channel('vtt-roster-'+campaignId)
+   .on('postgres_changes',{event:'*',schema:'public',table:'characters',
+    filter:'campaign_id=eq.'+campaignId},()=>void latestRosterRefresh.current?.())
+   .subscribe(status=>{
+    if(status==='SUBSCRIBED')void latestRosterRefresh.current?.();
+   });
+  const timer=setInterval(()=>{
+   if(document.visibilityState==='visible')void latestRosterRefresh.current?.();
+  },8000);
+  const focus=()=>{if(document.visibilityState==='visible')void latestRosterRefresh.current?.()};
+  document.addEventListener('visibilitychange',focus);
+  return()=>{
+   clearInterval(timer);document.removeEventListener('visibilitychange',focus);
+   ++rosterRequest.current;
+   void db.removeChannel(channel);
+  };
+ },[db,activeId,user]);
+ useEffect(()=>{
+  let alive=true;
+  setOnlinePresenceKeys([]);
+  if(!db||!activeId||!user)return;
+  const campaignId=activeId;
+  let channel=null;
+  void campaignPresenceKey(campaignId,user).then(key=>{
+   if(!alive||!key)return;
+   // Public presence carries only a SHA-256 campaign-specific pseudonym.
+   // No account identifiers, names or protected map information are broadcast.
+   channel=db.channel('vtt-presence-'+campaignId,{
+    config:{presence:{key}}
+   });
+   const sync=()=>{
+    if(!alive)return;
+    setOnlinePresenceKeys(Object.keys(channel.presenceState()));
+    void latestRosterRefresh.current?.();
+   };
+   channel.on('presence',{event:'sync'},sync)
+    .subscribe(async status=>{
+     if(!alive)return;
+     if(status==='SUBSCRIBED'){
+      try{await channel.track({online:true})}
+      catch(error){console.warn('Could not publish online status',error)}
+     }else if(status==='CHANNEL_ERROR'){
+      setOnlinePresenceKeys([]);
+      console.warn('Player presence will retry',campaignId);
+     }
+    });
+  }).catch(error=>console.warn('Player presence unavailable',error));
+  return()=>{
+   alive=false;setOnlinePresenceKeys([]);
+   if(channel)void db.removeChannel(channel);
+  };
+ },[db,activeId,user]);
+ useEffect(()=>{
+  let alive=true;
+  void Promise.all(members.map(async m=>[
+   m.user_id,await campaignPresenceKey(activeId,m.user_id)
+  ])).then(entries=>{if(alive)setMemberPresenceHashes(Object.fromEntries(entries))})
+   .catch(error=>console.warn('Could not map party presence',error));
+  return()=>{alive=false};
+ },[activeId,members]);
  useEffect(()=>{
   movementPending.current.clear();
   ++tokenRefreshSeq.current;
  },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
+ useEffect(()=>{
+  if(rightTab==='units')void refreshCampaignRoster();
+  if(rightTab==='chat')void refreshChat();
+ },[rightTab,activeId,user]);
  useEffect(()=>{
   latestMonitorRefresh.current=refreshMonitors;
   latestTokenRefresh.current=refreshTokens;
@@ -1583,7 +1679,8 @@ function App(){
  </>}
  </div><TabletopSidebar
  db={db} panel={rightTab} onPanelChange={setRightTab} isDM={isDM} user={user}
- messages={msgs} characters={characters} members={members} accountNames={accountNames} tokens={tokens}
+ messages={msgs} characters={characters} members={members} accountNames={accountNames}
+ onlineMembers={onlineMembers} tokens={tokens}
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
  onOpenStatus={openTokenStatuses}
