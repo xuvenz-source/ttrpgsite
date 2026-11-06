@@ -1,4 +1,4 @@
-import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
+import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import './style.css';
@@ -14,6 +14,9 @@ import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import {normalizeEnvironment,withObject} from './MapEnvironment.js';
+import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
+ CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
+import {signedAssetStore} from './SignedAssetUrls.js';
 import {TokenMonitors,normalizeConfig} from './TokenMonitors.jsx';
 import ResourceField from './ResourceField.jsx';
 import AttributeField from './AttributeField.jsx';
@@ -2196,9 +2199,15 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
- // The token art and floating monitors share the same visible token subset.
- const visibleTokens=isDM?tokens:tokens.filter(t=>t.visible);
- const statusPosition=normalizeConfig(displayConfig).statusPosition;
+ // Reuse derived rendering data during drag, measurement and marquee updates.
+ const visibleTokens=useMemo(()=>isDM?tokens:tokens.filter(t=>t.visible),[tokens,isDM]);
+ const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
+ const statusPosition=displaySettings.statusPosition;
+ const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
+ const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject});
+ environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject};
+ const handleEnvironmentAdd=useCallback(object=>environmentHandlers.current.onAddEnvironmentObject?.(object),[]);
+ const handleEnvironmentSelect=useCallback(id=>environmentHandlers.current.onSelectEnvironmentObject?.(id),[]);
  function selectTokens(ids){
   const unique=[...new Set(ids)];
   setSelectedIds(unique);
@@ -2563,7 +2572,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
-     onAdd={onAddEnvironmentObject} onSelect={onSelectEnvironmentObject}/>}
+     onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}/>}
     {visibleTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
       canMove=canControlMapToken(t,user,isDM,map.id);
@@ -2635,8 +2644,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        const r=selectionRectangle(marquee.start,marquee.end);
        return {left:r.x,top:r.y,width:r.width,height:r.height};
       })()}/>}
-    <MapMeasurementOverlay map={map} scale={scale}
-     measures={[...Object.values(remoteMeasurements),...localMeasurements]}/>
+    <MapMeasurementOverlay map={map} scale={scale} measures={measures}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">
@@ -2649,7 +2657,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
         width:cell*Number(p.span_x??1),height:cell*Number(p.span_y??1),
         opacity:t.visible?1:.55
        }}>
-       <TokenMonitors config={displayConfig} fields={monitorValues[t.id]} zoom={scale}/>
+       <TokenMonitors config={displaySettings} normalized fields={monitorValues[t.id]} zoom={scale}/>
        {encumbranceBadges[t.id]&&<div className="token-encumbrance-indicator"
         title={encumbranceBadges[t.id].label}>{encumbranceBadges[t.id].icon}</div>}
       </div>;
