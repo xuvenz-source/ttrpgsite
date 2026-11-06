@@ -231,7 +231,10 @@ export function MacroManager({
          <div className="macro-edit-cell-header">
           <select aria-label="Result type" value={cell.kind} onChange={e=>{
            const kind=e.target.value;
-           if(kind==='attack'){updateRow(r.id,{cells:[attackCell()]});return}
+           if(kind==='attack'){
+            if(r.cells.length>1&&!confirm('Replace this row with one linked Attack?'))return;
+            updateRow(r.id,{cells:[attackCell()]});return;
+           }
            updateCell(r.id,cell.id,kind==='roll'?
             {kind,formula:'1d20',text:undefined,critOn:undefined,
              damage:undefined,critDamage:undefined,mode:undefined}:
@@ -311,9 +314,9 @@ export function MacroManager({
           onChange={e=>updateCell(r.id,cell.id,{text:e.target.value})}/>}
         </div>)}
         <div className="macro-edit-cell-actions">
-         <button type="button" className="secondary" disabled={r.cells.length>=MAX_CELLS}
+         <button type="button" className="secondary" disabled={r.cells.length>=MAX_CELLS||r.cells.some(c=>c.kind==='attack')}
           onClick={()=>addCell(r,'roll')}>+ Roll</button>
-         <button type="button" className="secondary" disabled={r.cells.length>=MAX_CELLS}
+         <button type="button" className="secondary" disabled={r.cells.length>=MAX_CELLS||r.cells.some(c=>c.kind==='attack')}
           onClick={()=>addCell(r,'text')}>+ Text</button>
         </div>
        </article>)}
