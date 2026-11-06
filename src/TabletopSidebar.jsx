@@ -2,6 +2,7 @@ import React,{useMemo,useState} from 'react';
 import Artwork from './Artwork.jsx';
 import MapCalibration from './MapCalibration.jsx';
 import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
+import {StatusCatalogEditor,TokenStatusBadges,normalizedEffects} from './TokenStatuses.jsx';
 import {KeybindingsEditor,HotbarSettings} from './TabletopControls.jsx';
 import {QuickFieldsSettings} from './TokenQuickEdit.jsx';
 import Bestiary from './Bestiary.jsx';
@@ -29,7 +30,7 @@ const tabs=[
  {id:'dm',label:'DM',icon:'🛠'}
 ];
 
-function UnitRow({db,token,selected,isDM,onSelect,onOpen,canDrag}){
+function UnitRow({db,token,selected,isDM,onSelect,onOpen,onStatus,canDrag,statusCatalog}){
  return <div className={'unit-row'+(selected?' unit-row-selected':'')}>
   <button className="unit-focus" type="button" draggable={canDrag}
     onDragStart={e=>{
@@ -43,10 +44,16 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen,canDrag}){
    <span className="unit-name">{token.name}</span>
    <span className="unit-size muted tiny">{Number(token.span_x??1)}×{Number(token.span_y??1)}</span>
   </button>
+  <button type="button" className="secondary unit-status-action"
+   onClick={()=>onStatus(token)} title={'View / edit '+token.name+' conditions and buffs'}
+   aria-label={'Status effects for '+token.name}>
+   ✧{normalizedEffects(token.status_effects).length>0&&
+    <small>{normalizedEffects(token.status_effects).length}</small>}
+  </button>
   {isDM&&<button type="button" className="secondary unit-edit" onClick={()=>onOpen(token)} title={'Open '+token.name+' sheet'}>Sheet</button>}
  </div>;
 }
-function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSelect,onOpen,onResize,onNavigate,onCreatePortrait,onOpenPlayerCharacter,onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
+function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSelect,onOpen,onStatus,statusCatalog,onResize,onNavigate,onCreatePortrait,onOpenPlayerCharacter,onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
  const [collapsed,setCollapsed]=useState({});
  const groups=useMemo(()=>{
   const sorted=members.map((m,index)=>{
@@ -61,7 +68,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
  },[members,characters,tokens,isDM,user]);
  return <div className="right-section">
   <div className="side-heading"><h2>Controlled units</h2><span className="muted tiny">{isDM?'All campaign controllers':'Your tokens'}</span></div>
-  <p className="muted small side-description">Drag a character name onto the map to place it, or drag an existing unit to move it. Ctrl + click a token to adjust DM-approved resources. {isDM?'Alt + double-click to edit the full sheet.':''}</p>
+  <p className="muted small side-description">Drag a character name onto the map to place it, or drag an existing unit to move it. Ctrl + click for resources, or Shift + click for status effects. {isDM?'Alt + double-click to edit the full sheet.':''}</p>
   <div className="unit-actions">
    <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>My character sheet</button>
    <button type="button" className="secondary" onClick={onCreatePortrait}>My Token Library</button>
@@ -90,6 +97,7 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
    {!collapsed[g.id]&&<div className="unit-group-items">{g.units.length?
     g.units.map(t=><UnitRow key={t.id} db={db} token={t} selected={selectedToken?.id===t.id}
       isDM={isDM} onSelect={onSelect} onOpen={onOpen}
+      onStatus={onStatus} statusCatalog={statusCatalog}
       canDrag={!!activeMap&&(isDM||t.owner_id===user)}/>)
     :<p className="muted tiny empty-units">No tokens on this map</p>}
    </div>}
@@ -111,6 +119,8 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
   </details>}
   {isDM&&selectedToken&&<div className="unit-inspector">
    <h3>Selected: {selectedToken.name}</h3>
+   <button type="button" className="secondary full-button"
+    onClick={()=>onStatus(selectedToken)}>✧ Manage conditions & buffs</button>
    <p className="muted tiny">Footprint: {Number(selectedToken.span_x??1)} × {Number(selectedToken.span_y??1)} squares</p>
    <label>Token size
     <select value={Number(selectedToken.span_x??1)===Number(selectedToken.span_y??1)
@@ -137,12 +147,13 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
 
 export default function TabletopSidebar({
  db,panel,onPanelChange,isDM,user,
- messages,characters,members,tokens,selectedToken,onSelectToken,onOpenToken,onResizeToken,
+ messages,characters,members,tokens,selectedToken,onSelectToken,onOpenToken,onResizeToken,onOpenStatus,
  chat,onChatChange,onSendChat,
  npcs,npcFolders,onNewNpcFolder,onNewNpc,onEditNpc,onMoveNpc,onPlaceNpc,
  activeMap,maps,selectedMap,onSelectMap,publishedMapId,onPublishMap,onOpenMapLibrary,
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
- mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
+ mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
+ statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
@@ -168,7 +179,9 @@ export default function TabletopSidebar({
   </>}
   {validPanel==='units'&&<div className="right-body"><UnitGroups db={db} tokens={tokens} characters={characters}
    members={members} user={user} isDM={isDM} selectedToken={selectedToken}
-   onSelect={onSelectToken} onOpen={onOpenToken} onResize={onResizeToken} onNavigate={onNavigate}
+   onSelect={onSelectToken} onOpen={onOpenToken}
+   onStatus={onOpenStatus} statusCatalog={statusCatalog}
+   onResize={onResizeToken} onNavigate={onNavigate}
    onCreatePortrait={onCreatePortrait} onOpenPlayerCharacter={onOpenPlayerCharacter}
    onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
    tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}/></div>}
@@ -234,6 +247,10 @@ export default function TabletopSidebar({
       <details className="side-details token-designer-details">
        <summary>Ctrl + click quick-adjust fields</summary>
        <QuickFieldsSettings template={template} selected={quickFields} onSave={onSaveQuickFields}/>
+      </details>
+      <details className="side-details token-designer-details">
+       <summary>Condition & buff library</summary>
+       <StatusCatalogEditor catalog={statusCatalog} onSave={onSaveStatusCatalog}/>
       </details>
       <details className="side-details token-designer-details">
        <summary>Token Display Designer</summary>

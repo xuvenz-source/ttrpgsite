@@ -13,6 +13,7 @@ import ResourceField from './ResourceField.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
 import TokenQuickEdit from './TokenQuickEdit.jsx';
+import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -68,6 +69,9 @@ function App(){
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
  const[quickEditToken,setQuickEditToken]=useState(null);
+ const[statusEditToken,setStatusEditToken]=useState(null);
+ const[statusSavingTokens,setStatusSavingTokens]=useState({});
+ const statusPatches=useRef(new Map());
  const[pendingQuickTokens,setPendingQuickTokens]=useState({});
  const quickWritePatches=useRef(new Map());
  const monitorRequest=useRef(0);
@@ -244,7 +248,7 @@ function App(){
   if(!mapId){setTokens([]);return}
   try{
    const rows=await read(db.from('map_tokens').select(
-    'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public'
+    'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
    ).eq('map_id',mapId));
    // Ignore older requests, including requests started before switching maps.
    if(request!==tokenRefreshSeq.current||
@@ -254,14 +258,21 @@ function App(){
    // Merge the latest local destination until its database write is confirmed.
    setTokens(rows.map(token=>{
     const pending=movementPending.current.get(token.id);
-    if(!pending||pending.mapId!==mapId||pending.campaignId!==campaignId)return token;
-    // Keep the destination visible even after write acknowledgement: a lagged
-    // database read must not resurrect an older tile for a single frame.
-    if(pending.confirmed&&Number(token.x)===pending.x&&Number(token.y)===pending.y){
-     movementPending.current.delete(token.id);
-     return token;
+    let projected=token;
+    if(pending&&pending.mapId===mapId&&pending.campaignId===campaignId){
+     // Preserve local movement until the snapshot actually confirms it.
+     if(pending.confirmed&&Number(token.x)===pending.x&&Number(token.y)===pending.y)
+      movementPending.current.delete(token.id);
+     else projected={...projected,x:pending.x,y:pending.y};
     }
-    return {...token,x:pending.x,y:pending.y};
+    const status=statusPatches.current.get(token.id);
+    if(status&&status.mapId===mapId&&status.campaignId===campaignId){
+     if(status.confirmed&&
+        JSON.stringify(normalizedEffects(token.status_effects))===JSON.stringify(status.effects)){
+      statusPatches.current.delete(token.id);
+     }else projected={...projected,status_effects:status.effects};
+    }
+    return projected;
    }));
   }catch(e){
    if(request===tokenRefreshSeq.current)fail(e);
@@ -269,7 +280,8 @@ function App(){
  }
  useEffect(()=>{if(!db){setAuthReady(true);return}db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});const{data}=db.auth.onAuthStateChange((_,s)=>setSession(s));return()=>data.subscription.unsubscribe()},[]);
  useEffect(()=>{if(user)fetchCampaigns();else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setPendingQuickTokens({});
+ useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
+  setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
   quickWritePatches.current.clear();++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditor(null);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
   if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);return}
@@ -533,6 +545,59 @@ function App(){
    }
   }
  }
+ async function saveStatusCatalog(next){
+  if(!isDM||!camp)throw Error('Only the DM can configure campaign effects.');
+  if(!Array.isArray(next)||next.length>24)throw Error('At most 24 custom effects are supported.');
+  const cleaned=normalizedCatalog(next);
+  if(cleaned.length!==next.length)throw Error('An effect contains invalid settings.');
+  const result=await read(db.from('campaigns')
+   .update({token_status_catalog:cleaned}).eq('id',activeId)
+   .select('token_status_catalog').single());
+  setCamp(previous=>({...previous,token_status_catalog:result.token_status_catalog}));
+ }
+ function openTokenStatuses(token){
+  if(!token||!activeId)return;
+  if(!isDM&&(token.map_id!==camp?.active_map_id||!token.visible))return;
+  if(statusPatches.current.has(token.id)&&!statusPatches.current.get(token.id)?.confirmed){
+   fail('Status changes for '+token.name+' are still saving. You can edit another token.');
+   return;
+  }
+  setStatusEditToken(token);
+ }
+ function applyTokenStatuses(token,next){
+  if(!token||token.map_id!==selectedMap||!activeId)return false;
+  if(!isDM&&(token.owner_id!==user||token.map_id!==camp?.active_map_id))return false;
+  if(statusPatches.current.has(token.id)){
+   fail('Please let '+token.name+' finish its previous status save.');
+   return false;
+  }
+  const effects=normalizedEffects(next);
+  if(effects.length!==next.length)throw Error('Invalid or duplicate effects.');
+  const currentCampaign=activeId,currentMap=selectedMap;
+  const entry={effects,confirmed:false,mapId:currentMap,campaignId:currentCampaign};
+  statusPatches.current.set(token.id,entry);
+  setStatusSavingTokens(previous=>({...previous,[token.id]:true}));
+  setTokens(previous=>previous.map(t=>t.id===token.id?{...t,status_effects:effects}:t));
+  void db.rpc('set_token_statuses',{p_token:token.id,p_statuses:effects})
+   .then(({error})=>{
+    if(error)throw error;
+    if(statusPatches.current.get(token.id)!==entry)return;
+    entry.confirmed=true;
+    if(tokenContextRef.current.mapId===currentMap&&tokenContextRef.current.campaignId===currentCampaign){
+     setStatusSavingTokens(previous=>{const updated={...previous};delete updated[token.id];return updated});
+     void refreshTokens();
+    }
+   }).catch(e=>{
+    if(statusPatches.current.get(token.id)!==entry)return;
+    statusPatches.current.delete(token.id);
+    if(tokenContextRef.current.mapId===currentMap&&tokenContextRef.current.campaignId===currentCampaign){
+     setStatusSavingTokens(previous=>{const updated={...previous};delete updated[token.id];return updated});
+     fail('Could not save '+token.name+'\'s status effects. Server values restored: '+message(e));
+     void refreshTokens();
+    }
+   });
+  return true;
+ }
  async function saveTokenDisplay(config){
   if(!isDM||!camp)throw Error('Only the DM can change token display settings.');
   const data=await read(db.from('campaigns')
@@ -724,13 +789,16 @@ function App(){
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
-   onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken} resize={resizeToken}
+   onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
+   onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
+   resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}/>
-   {Object.keys(pendingQuickTokens).length>0&&<div className="quick-save-status" role="status">
-    <span className="quick-save-pulse" aria-hidden="true"/>
-    Saving {Object.keys(pendingQuickTokens).length} token{Object.keys(pendingQuickTokens).length===1?'':'s'}…
-   </div>}
+   {(Object.keys(pendingQuickTokens).length+Object.keys(statusSavingTokens).length)>0&&
+    <div className="quick-save-status" role="status">
+     <span className="quick-save-pulse" aria-hidden="true"/>
+     Saving token changes…
+    </div>}
    {hotbarVisible&&<MacroHotbar slots={hotbarSlots} bindings={bindings}
     onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}/>}
   </>
@@ -745,6 +813,7 @@ function App(){
  messages={msgs} characters={characters} members={members} tokens={tokens}
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
+ onOpenStatus={openTokenStatuses}
  chat={chat} onChatChange={setChat} onSendChat={sendChat}
  npcs={npcs} npcFolders={npcFolders}
  onNewNpcFolder={makeNpcFolder} onNewNpc={makeNpc}
@@ -757,7 +826,9 @@ function App(){
  tokenOwner={tokenOwner} onChangeTokenOwner={setTokenOwner} onAddToken={addToken}
  mapZoom={mapZoom} onChangeZoom={setMapZoom}
  onMapCalibrationPreview={setMapCalibrationPreview} onSaveMapCalibration={saveMapCalibration}
- onSaveTokenDisplay={saveTokenDisplay} template={camp?.sheet_template}
+ onSaveTokenDisplay={saveTokenDisplay}
+ statusCatalog={camp?.token_status_catalog} onSaveStatusCatalog={saveStatusCatalog}
+ template={camp?.sheet_template}
  quickFields={camp?.token_quick_fields||[]} onSaveQuickFields={saveQuickFields}
  bindings={bindings} onSaveBindings={saveMyKeybindings}
  hotbarSlots={hotbarSlots} onSaveHotbar={saveMyHotbar}
@@ -781,6 +852,12 @@ function App(){
   record={characterEditor.data} template={camp?.sheet_template}
   onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
   onRoll={(expression,label)=>roll(expression,label,null)}/>}
+ {statusEditToken&&camp&&<QuickEditBoundary key={'status_'+statusEditToken.id}
+   onClose={()=>setStatusEditToken(null)}>
+    <TokenStatusPicker token={statusEditToken} catalog={camp.token_status_catalog}
+     canEdit={isDM||(statusEditToken.owner_id===user&&camp.active_map_id===statusEditToken.map_id)}
+     onClose={()=>setStatusEditToken(null)} onApply={applyTokenStatuses}/>
+   </QuickEditBoundary>}
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
    allowedFields={camp.token_quick_fields||[]}
@@ -910,7 +987,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues}){
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues}){
  const[preview,setPreview]=useState({});
  const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
@@ -1032,9 +1109,14 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
       }}
-      title={t.name+(isDM?' · Alt + double-click to edit sheet':'')}
+      title={t.name+(normalizedEffects(t.status_effects).length?
+       ' · '+normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog)).join(', '):'')+
+       (isDM?' · Alt + double-click to edit sheet':'')}
       onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
       onClick={e=>{
+       if(e.shiftKey&&!e.ctrlKey&&!e.altKey){
+        e.preventDefault();e.stopPropagation();onTokenStatus(t);return;
+       }
        if(e.ctrlKey&&!e.altKey&&canMove){
         e.preventDefault();e.stopPropagation();
         onTokenQuick(t);
@@ -1043,7 +1125,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       onPointerDown={e=>{
        e.stopPropagation();setSelectedId(t.id);
        viewportRef.current?.focus({preventScroll:true});
-       if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.button!==0)return;
+       if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0)return;
        e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id;
       }}
       onPointerMove={e=>{
@@ -1061,6 +1143,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       <TokenMonitors config={displayConfig} fields={monitorValues[t.id]} zoom={scale}/>
+      <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
+       canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
       {isDM&&selectedId===t.id&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
         onPointerDown={e=>{
