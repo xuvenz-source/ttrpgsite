@@ -22,6 +22,8 @@ import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,c
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,allowedMovementPreview,canSendMovementPreview,
  MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
+import {canControlMapToken,selectionRectangle,selectableTokenIds,
+ boundedGroupOffset} from './MapSelection.js';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,lookupAction,isInputFocused,MacroHotbar} from './TabletopControls.jsx';
@@ -1866,8 +1868,25 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},hotbarInset=false}){
  const[preview,setPreview]=useState({});
- const boardRef=useRef(null),viewportRef=useRef(null),drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),zoomRef=useRef(scale);
+ const[selectedIds,setSelectedIds]=useState([]);
+ const[marquee,setMarquee]=useState(null);
+ const boardRef=useRef(null),viewportRef=useRef(null),
+  drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
+  selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
+ function selectTokens(ids){
+  const unique=[...new Set(ids)];
+  setSelectedIds(unique);
+  primaryRef.current=unique[0]||null;
+  setSelectedId(primaryRef.current);
+ }
+ // Keep selections made elsewhere (new tokens, keyboard actions) in sync.
+ useEffect(()=>{
+  if(selectedId!==primaryRef.current){
+   primaryRef.current=selectedId;
+   setSelectedIds(selectedId?[selectedId]:[]);
+  }
+ },[selectedId]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
   const vp=viewportRef.current;
@@ -1877,8 +1896,15 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  },[map.id]);
  useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
- useEffect(()=>{setSelectedId(null)},[map.id]);
- useEffect(()=>{if(selectedId&&!tokens.some(t=>t.id===selectedId))setSelectedId(null)},[selectedId,tokens]);
+ useEffect(()=>{
+  primaryRef.current=null;setSelectedId(null);setSelectedIds([]);
+  setMarquee(null);selection.current=null;drag.current=null;
+ },[map.id]);
+ useEffect(()=>{
+  setSelectedIds(old=>old.filter(id=>tokens.some(t=>
+   t.id===id&&canControlMapToken(t,user,isDM,map.id))));
+  if(selectedId&&!tokens.some(t=>t.id===selectedId))selectTokens([]);
+ },[selectedId,tokens,user,isDM,map.id]);
  useEffect(()=>{
   if(!selectedId||!viewportRef.current)return;
   const token=tokens.find(t=>t.id===selectedId);
@@ -1955,46 +1981,151 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     (isDM&&types.includes('application/x-forge-npc'));
   if(allowed)e.preventDefault();
  }
+ const boardPoint=e=>{
+  const rect=boardRef.current?.getBoundingClientRect();
+  return rect?{
+   x:Math.max(0,Math.min(map.width*zoomRef.current,e.clientX-rect.left)),
+   y:Math.max(0,Math.min(map.height*zoomRef.current,e.clientY-rect.top))
+  }:{x:0,y:0};
+ };
  function startPan(e){
-  if(e.button!==0||e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
+  // Middle mouse pans even if it starts over a token. Touch keeps one-finger
+  // panning because touchscreens do not have a middle mouse button.
+  if(e.button!==1&&!(e.pointerType==='touch'&&e.button===0))return;
   const viewport=viewportRef.current;if(!viewport)return;
-  e.preventDefault();
-  setSelectedId(null);
-  pan.current={id:e.pointerId,startX:e.clientX,startY:e.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};
+  e.preventDefault();e.stopPropagation();
+  pan.current={id:e.pointerId,startX:e.clientX,startY:e.clientY,
+   left:viewport.scrollLeft,top:viewport.scrollTop};
   viewport.setPointerCapture(e.pointerId);
   setPanning(true);
  }
- function movePan(e){
-  const info=pan.current;
-  if(!info||info.id!==e.pointerId)return;
+ function startMarquee(e){
+  if(e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
+     e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
-  viewport.scrollLeft=info.left-(e.clientX-info.startX);
-  viewport.scrollTop=info.top-(e.clientY-info.startY);
+  if(!viewport||!boardRef.current)return;
+  const start=boardPoint(e);
+  e.preventDefault();
+  selection.current={id:e.pointerId,start,originX:e.clientX,
+   originY:e.clientY,additive:e.shiftKey,originalIds:selectedIds};
+  setMarquee({start,end:start});
+  viewport.setPointerCapture(e.pointerId);
  }
- function endPan(e){
-  if(!pan.current||pan.current.id!==e.pointerId)return;
-  pan.current=null;setPanning(false);
+ function moveViewportPointer(e){
+  const info=pan.current;
+  if(info&&info.id===e.pointerId){
+   const viewport=viewportRef.current;
+   viewport.scrollLeft=info.left-(e.clientX-info.startX);
+   viewport.scrollTop=info.top-(e.clientY-info.startY);
+   return;
+  }
+  const select=selection.current;
+  if(select?.id===e.pointerId)
+   setMarquee({start:select.start,end:boardPoint(e)});
+ }
+ function endViewportPointer(e,cancel=false){
+  if(pan.current?.id===e.pointerId){
+   pan.current=null;setPanning(false);
+  }
+  const info=selection.current;
+  if(info?.id===e.pointerId){
+   selection.current=null;setMarquee(null);
+   if(!cancel){
+    const dragged=Math.hypot(e.clientX-info.originX,e.clientY-info.originY)>=4;
+    if(dragged){
+     const rect=selectionRectangle(info.start,boardPoint(e));
+     const found=selectableTokenIds(tokens,rect,map.grid_size*zoomRef.current,
+      user,isDM,map.id);
+     selectTokens(info.additive?[...info.originalIds,...found]:found);
+    }else if(!info.additive)selectTokens([]);
+   }
+  }
   const viewport=viewportRef.current;
-  if(viewport?.hasPointerCapture(e.pointerId))viewport.releasePointerCapture(e.pointerId);
+  if(viewport?.hasPointerCapture(e.pointerId))
+   viewport.releasePointerCapture(e.pointerId);
+ }
+ function startTokenDrag(e,t,canMove){
+  e.stopPropagation();
+  if(e.button!==0)return;
+  const group=canMove&&selectedIds.includes(t.id)&&selectedIds.length>1?
+   selectedIds.filter(id=>tokens.some(other=>other.id===id&&
+    canControlMapToken(other,user,isDM,map.id))):[t.id];
+  if(!canMove)primaryRef.current=t.id;
+  if(canMove)selectTokens(group);
+  else{setSelectedIds([]);setSelectedId(t.id)}
+  viewportRef.current?.focus({preventScroll:true});
+  if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  const members=tokens.filter(token=>group.includes(token.id));
+  e.currentTarget.setPointerCapture(e.pointerId);
+  drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+   members,dx:0,dy:0};
+ }
+ function moveTokenDrag(e,t){
+  const info=drag.current;
+  if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
+  const cell=map.grid_size*zoomRef.current;
+  const delta=boundedGroupOffset(info.members,
+   (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
+   map.width,map.height,map.grid_size);
+  if(info.dx===delta.dx&&info.dy===delta.dy)return;
+  info.dx=delta.dx;info.dy=delta.dy;
+  setPreview(old=>{
+   const next={...old};
+   for(const token of info.members)
+    next[token.id]={...old[token.id],
+     x:Number(token.x)+delta.dx,y:Number(token.y)+delta.dy};
+   return next;
+  });
+  for(const t of info.members){
+   const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
+   onMovementPreview?.(t,next.x,next.y,false);
+  }
+ }
+ function finishTokenDrag(e,t,cancel=false){
+  const info=drag.current;
+  if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
+  drag.current=null;
+  if(e.currentTarget.hasPointerCapture(e.pointerId))
+   e.currentTarget.releasePointerCapture(e.pointerId);
+  if(cancel){
+   setPreview(old=>{
+    const next={...old};
+    for(const member of info.members)delete next[member.id];
+    return next;
+   });
+  }
+  if(info.dx===0&&info.dy===0&&!cancel)return;
+  for(const t of info.members){
+   const next=cancel?{x:Number(t.x),y:Number(t.y)}:
+    {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
+   onMovementPreview?.(t,next.x,next.y,true);
+   if(!cancel)move(t,next.x,next.y);
+  }
  }
  return <>
-  <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')} ref={viewportRef}
-    aria-label="Battlemap viewport — left-click and drag to pan" tabIndex={0}
-    onPointerDown={startPan} onPointerMove={movePan} onPointerUp={endPan}
-    onPointerCancel={endPan} onLostPointerCapture={endPan}>
+  <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
+    (marquee?' is-selecting':'')} ref={viewportRef}
+    aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
+    onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
+    onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
+    onPointerDownCapture={startPan} onPointerDown={startMarquee}
+    onPointerMove={moveViewportPointer} onPointerUp={e=>endViewportPointer(e)}
+    onPointerCancel={e=>endViewportPointer(e,true)}
+    onLostPointerCapture={e=>endViewportPointer(e,true)}>
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
    <div ref={boardRef} className="board"
-    onPointerDown={e=>{if(e.target===e.currentTarget||e.target.classList.contains('gridlines'))setSelectedId(null)}}
     onDragOver={allowMapDrop}
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:url?'url('+JSON.stringify(url)+')':undefined,backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {tokens.filter(t=>isDM||t.visible).map(t=>{
-     const p={...t,...remotePositions[t.id],...preview[t.id]},canMove=isDM||t.owner_id===user;
+     const p={...t,...remotePositions[t.id],...preview[t.id]},
+      canMove=canControlMapToken(t,user,isDM,map.id);
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
-     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+(selectedId===t.id?' token-selected':'')}
+     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
+      (selectedIds.includes(t.id)?' token-selected':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
@@ -2012,35 +2143,16 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
         onTokenQuick(t);
        }
       }}
-      onPointerDown={e=>{
-       e.stopPropagation();setSelectedId(t.id);
-       viewportRef.current?.focus({preventScroll:true});
-       if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0)return;
-       e.currentTarget.setPointerCapture(e.pointerId);drag.current=t.id;
-      }}
-      onPointerMove={e=>{
-       if(drag.current===t.id){
-         const next=pos(e);
-         setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}));
-         onMovementPreview?.(t,next.x,next.y,false);
-        }
-      }}
-      onPointerUp={e=>{
-       if(drag.current!==t.id)return;drag.current=null;
-       const next=pos(e);
-       onMovementPreview?.(t,next.x,next.y,true);
-       if(next.x!==t.x||next.y!==t.y){
-        setPreview(old=>({...old,[t.id]:{...old[t.id],x:next.x,y:next.y}}));
-        move(t,next.x,next.y);
-       }
-      }}
-      onPointerCancel={()=>{if(drag.current===t.id)onMovementPreview?.(t,Number(t.x),Number(t.y),true);drag.current=null;setPreview({})}}>
+      onPointerDown={e=>startTokenDrag(e,t,canMove)}
+      onPointerMove={e=>moveTokenDrag(e,t)}
+      onPointerUp={e=>finishTokenDrag(e,t)}
+      onPointerCancel={e=>finishTokenDrag(e,t,true)}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
        position={normalizeConfig(displayConfig).statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
-      {isDM&&selectedId===t.id&&<div className="token-resize-handle" role="button"
+      {isDM&&selectedId===t.id&&selectedIds.length===1&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
         onPointerDown={e=>{
          e.stopPropagation();e.preventDefault();
@@ -2072,6 +2184,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       </div>}
      </div>;
     })}
+    {marquee&&Math.hypot(marquee.end.x-marquee.start.x,
+     marquee.end.y-marquee.start.y)>3&&<div
+      className="map-selection-marquee" aria-hidden="true"
+      style={selectionRectangle(marquee.start,marquee.end)}/>}
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">
