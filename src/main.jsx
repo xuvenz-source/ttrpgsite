@@ -2426,7 +2426,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   setPanning(true);
  }
  function startMarquee(e){
-  if(environmentEditor?.enabled||activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
+  if(environmentEditor?.enabled)return;
+  if(activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
      e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
   if(!viewport||!boardRef.current)return;
@@ -2539,7 +2540,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
     onMouseDownCapture={pinCurrentMeasurementOnRightClick}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
-    onContextMenu={e=>{if(activeMeasureTool||environmentEditor?.enabled)e.preventDefault()}}
+    onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
