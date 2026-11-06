@@ -242,64 +242,103 @@ export function EquipmentManager({field,value,onChange,sheetValues={},template,o
      onClick={()=>update('weapons',[...weapons,newWeapon()])}>+ Weapon</button>
    </div>
    <div className="equipment-table-wrap"><table className="equipment-table equipment-weapon-table">
-    <thead><tr><th>Prof</th><th>Weapon</th><th>Modifier</th><th>Magic</th>
-     <th>To hit+</th><th>Damage dice</th><th>Damage+</th><th>Type</th><th>Crit dice</th><th>Crit on</th><th>Roll</th></tr></thead>
+    <thead><tr><th>Prof</th><th>Weapon</th><th>Modifier</th>
+     <th>Damage dice</th><th>Type</th><th>Roll / settings</th></tr></thead>
     <tbody>{weapons.map(w=><tr key={w.id}>
-     <td><input type="checkbox" aria-label="Weapon proficiency" checked={!!w.proficient}
+     <td><input type="checkbox" aria-label={'Weapon proficiency: '+w.name}
+      checked={!!w.proficient}
       onChange={e=>changeItem('weapons',w.id,{proficient:e.target.checked})}/></td>
-     <td><div className="equipment-weapon-name">
-      <Input label="Weapon name" value={w.name}
-       onChange={name=>changeItem('weapons',w.id,{name})}/>
-      <select aria-label="Weapon kind" value={w.kind||'melee'}
-       onChange={e=>changeItem('weapons',w.id,{kind:e.target.value})}>
-       <option value="melee">Melee</option><option value="ranged">Ranged</option>
-       <option value="other">Other</option>
-      </select>
-     </div></td>
-     <td><div className="equipment-weapon-name">
-      <select aria-label="Attack modifier" value={w.statField||''}
+     <td><Input label="Weapon name" value={w.name}
+      onChange={name=>changeItem('weapons',w.id,{name})}/></td>
+     <td>{modifierList?<select aria-label={'Modifier for '+w.name}
+      value={w.modifierId||''} onChange={e=>chooseModifier(w,e.target.value)}>
+       <option value="">Default modifier</option>
+       {modifierEntries.map(option=><option value={option.id} key={option.id}>{option.label}</option>)}
+       {w.modifierId&&!modifierEntries.some(item=>item.id===w.modifierId)&&
+        <option value={w.modifierId}>Previous selection (unchanged)</option>}
+      </select>:<select aria-label={'Modifier for '+w.name}
+       value={w.statField||''}
        onChange={e=>changeItem('weapons',w.id,{statField:e.target.value})}>
-       <option value="">Default</option>
-       {stats.map(s=><option value={s.id} key={s.id}>{s.label}</option>)}
-      </select>
-      <select aria-label="Attack attribute interpretation" value={w.statMode||''}
-       onChange={e=>changeItem('weapons',w.id,{statMode:e.target.value})}>
-       <option value="">Default interpretation</option>
-       <option value="score">Convert score</option>
-       <option value="modifier">Direct modifier</option>
-      </select>
-     </div></td>
-     <td><Input type="number" label="Weapon magic" value={w.magic}
-      onChange={magic=>changeItem('weapons',w.id,{magic})}/></td>
-     <td><Input type="number" label="Extra to hit" value={w.attackBonus}
-      onChange={attackBonus=>changeItem('weapons',w.id,{attackBonus})}/></td>
+       <option value="">Default modifier</option>
+       {stats.map(stat=><option key={stat.id} value={stat.id}>{stat.label}</option>)}
+      </select>}</td>
      <td><Input label="Damage dice" value={w.damageDice}
       onChange={damageDice=>changeItem('weapons',w.id,{damageDice})}/></td>
-     <td><div className="equipment-damage-bonus">
-      <Input type="number" label="Extra damage" value={w.damageBonus}
-       onChange={damageBonus=>changeItem('weapons',w.id,{damageBonus})}/>
-      <label title="Include selected attack attribute in damage" className="equipment-stat-check">
-       <input type="checkbox" checked={w.useStatForDamage!==false}
-        onChange={e=>changeItem('weapons',w.id,{useStatForDamage:e.target.checked})}/>Stat</label>
-     </div></td>
      <td><Input label="Damage type" value={w.damageType}
       onChange={damageType=>changeItem('weapons',w.id,{damageType})}/></td>
-     <td><Input label="Critical damage dice" value={w.critDice}
-      onChange={critDice=>changeItem('weapons',w.id,{critDice})}/></td>
-     <td><Input type="number" label="Critical threshold" value={w.critOn}
-      onChange={critOn=>changeItem('weapons',w.id,{critOn})}/></td>
      <td><div className="equipment-weapon-actions">
       <button type="button" className="secondary equipment-attack-button"
        disabled={!!attacking||!onAttack}
-       title="Roll two attacks, damage and any critical dice in one chat card"
+       title="Roll two attacks, damage and critical dice in one chat card"
        onClick={()=>rollWeapon(w)}>
        {attacking===w.id?'Rolling…':'🎲 Attack'}
       </button>
+      <button type="button" className="secondary equipment-settings-button"
+       aria-label={'Settings for '+w.name} title="Attack and damage settings"
+       onClick={()=>setSettingsWeaponId(w.id)}>⚙</button>
       <button type="button" className="secondary" aria-label={'Remove '+w.name}
-       onClick={()=>update('weapons',weapons.filter(x=>x.id!==w.id))}>×</button>
+       onClick={()=>{if(settingsWeaponId===w.id)setSettingsWeaponId('');
+        update('weapons',weapons.filter(x=>x.id!==w.id))}}>×</button>
      </div></td>
     </tr>)}</tbody>
    </table></div>
+   {settingsWeapon&&<div className="equipment-settings-backdrop"
+    onMouseDown={e=>{if(e.target===e.currentTarget)setSettingsWeaponId('')}}>
+    <section className="equipment-settings-dialog" role="dialog" aria-modal="true"
+     aria-label={'Settings for '+settingsWeapon.name}>
+     <div className="equipment-settings-heading">
+      <strong>{settingsWeapon.name} · Settings</strong>
+      <button type="button" className="secondary" onClick={()=>setSettingsWeaponId('')}
+       aria-label="Close weapon settings">✕</button>
+     </div>
+     <p className="muted tiny">Extra attack and damage bonuses are stored with this weapon.</p>
+     <div className="equipment-settings-grid">
+      <label>Magic bonus
+       <Input type="number" label="Magic bonus" value={settingsWeapon.magic}
+        onChange={magic=>changeItem('weapons',settingsWeapon.id,{magic})}/>
+      </label>
+      <label>Additional to hit +
+       <Input type="number" label="Additional to hit" value={settingsWeapon.attackBonus}
+        onChange={attackBonus=>changeItem('weapons',settingsWeapon.id,{attackBonus})}/>
+      </label>
+      <label>Additional damage +
+       <Input type="number" label="Additional damage" value={settingsWeapon.damageBonus}
+        onChange={damageBonus=>changeItem('weapons',settingsWeapon.id,{damageBonus})}/>
+      </label>
+      <label>Weapon type
+       <select value={settingsWeapon.kind||'melee'}
+        onChange={e=>changeItem('weapons',settingsWeapon.id,{kind:e.target.value})}>
+        <option value="melee">Melee</option><option value="ranged">Ranged</option>
+        <option value="other">Other</option>
+       </select>
+      </label>
+      <label>Critical dice
+       <Input label="Critical damage dice" value={settingsWeapon.critDice}
+        onChange={critDice=>changeItem('weapons',settingsWeapon.id,{critDice})}/>
+      </label>
+      <label>Critical on
+       <Input label="Critical threshold" type="number" min="1" max="20"
+        value={settingsWeapon.critOn}
+        onChange={critOn=>changeItem('weapons',settingsWeapon.id,{critOn})}/>
+      </label>
+      {!modifierList&&<label>Interpret selected modifier as
+       <select value={settingsWeapon.statMode||''}
+        onChange={e=>changeItem('weapons',settingsWeapon.id,{statMode:e.target.value})}>
+        <option value="">Use equipment default</option>
+        <option value="score">Attribute score → modifier</option>
+        <option value="modifier">Already a modifier</option>
+       </select>
+      </label>}
+     </div>
+     <label className="equipment-settings-check">
+      <input type="checkbox" checked={settingsWeapon.useStatForDamage!==false}
+       onChange={e=>changeItem('weapons',settingsWeapon.id,{useStatForDamage:e.target.checked})}/>
+      Add selected attribute modifier to damage
+     </label>
+     <div className="actions"><button type="button" onClick={()=>setSettingsWeaponId('')}>
+      Done</button></div>
+    </section>
+   </div>}
    {attackError&&<p className="error small" role="alert">{attackError}</p>}
    {weapons.length===0&&<p className="muted tiny">Add a weapon to configure attack and damage rolls.</p>}
    <p className="muted tiny">Attack rolls two d20 results side by side, plus damage,
