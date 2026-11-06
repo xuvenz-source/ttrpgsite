@@ -27,3 +27,9 @@ jobs:
         run: node --test tests/*.test.mjs
       - name: Validate Vite production build (no Vercel deployment)
         run: npm run build
+      - name: Prepare Deno to type-check the staged account endpoint
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check username-update Supabase Edge Function
+        run: deno check supabase/functions/username-update/index.ts
