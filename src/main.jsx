@@ -2241,6 +2241,80 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    y:Math.max(0,Math.min(map.height*zoomRef.current,e.clientY-rect.top))
   }:{x:0,y:0};
  };
+ const mapPointInCells=e=>pointOnBattlemap(e.clientX,e.clientY,
+  boardRef.current?.getBoundingClientRect(),map.width,map.height,
+  map.grid_size,zoomRef.current);
+ function beginMeasurement(pointerId,tool,point){
+  if(!point)return;
+  const measure={id:crypto.randomUUID(),tool,start:point,end:point};
+  measureDrag.current={pointerId,measure};
+  setLocalMeasurements(existing=>[...existing.slice(-7),{...measure,isLocal:true}]);
+  onMeasurementPreview?.(measure,false);
+ }
+ function updateMeasurement(e){
+  const current=measureDrag.current;
+  if(!current||current.pointerId!==e.pointerId)return;
+  const point=mapPointInCells(e);
+  if(!point)return;
+  const next={...current.measure,end:point};
+  current.measure=next;
+  setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
+   {...next,isLocal:true}:m));
+  onMeasurementPreview?.(next,false);
+ }
+ function finishMeasurement(e,cancel=false){
+  const current=measureDrag.current;
+  if(!current||current.pointerId!==e.pointerId)return;
+  measureDrag.current=null;
+  if(cancel){
+   setLocalMeasurements(existing=>existing.filter(m=>m.id!==current.measure.id));
+   return;
+  }
+  const point=mapPointInCells(e)||current.measure.end;
+  const done={...current.measure,end:point};
+  if(Math.hypot(done.end.x-done.start.x,done.end.y-done.start.y)<.02){
+   setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));return;
+  }
+  setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
+   {...done,isLocal:true}:m));
+  onMeasurementPreview?.(done,true);
+  const timer=setTimeout(()=>{
+   measureTimers.current.delete(done.id);
+   setLocalMeasurements(existing=>existing.filter(m=>m.id!==done.id));
+  },12000);
+  measureTimers.current.set(done.id,timer);
+ }
+ function onToolPointerDown(e,tool){
+  setActiveMeasureTool(tool);
+  if(e.button!==0)return;
+  e.preventDefault();e.stopPropagation();
+  toolDrag.current={pointerId:e.pointerId,tool};
+  try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+ }
+ function onToolPointerMove(e){
+  if(!toolDrag.current||toolDrag.current.pointerId!==e.pointerId)return;
+  const rect=boardRef.current?.getBoundingClientRect();
+  if(!rect)return;
+  // The user can start directly on an icon and drag into the map.
+  if(!measureDrag.current){
+   if(e.clientX<rect.left||e.clientX>rect.right||
+      e.clientY<rect.top||e.clientY>rect.bottom)return;
+   beginMeasurement(e.pointerId,toolDrag.current.tool,mapPointInCells(e));
+  }else updateMeasurement(e);
+ }
+ function onToolPointerUp(e,cancel=false){
+  if(toolDrag.current?.pointerId!==e.pointerId)return;
+  finishMeasurement(e,cancel);
+  toolDrag.current=null;
+  try{if(e.currentTarget.hasPointerCapture(e.pointerId))
+   e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
+ }
+ function startMeasurementCapture(e){
+  if(!activeMeasureTool||e.button!==0||pan.current)return;
+  e.preventDefault();e.stopPropagation();
+  beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e));
+  try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
+ }
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
   // panning because touchscreens do not have a middle mouse button.
@@ -2253,7 +2327,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   setPanning(true);
  }
  function startMarquee(e){
-  if(e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
+  if(activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
      e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
   if(!viewport||!boardRef.current)return;
@@ -2356,15 +2430,24 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   }
  }
  return <>
+  <MeasurementToolBar tool={activeMeasureTool}
+   onPointerDown={onToolPointerDown} onPointerMove={onToolPointerMove}
+   onPointerUp={e=>onToolPointerUp(e)}
+   onPointerCancel={e=>onToolPointerUp(e,true)}
+   onKeySelect={setActiveMeasureTool}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
-    onPointerDownCapture={startPan} onPointerDown={startMarquee}
-    onPointerMove={moveViewportPointer} onPointerUp={e=>endViewportPointer(e)}
-    onPointerCancel={e=>endViewportPointer(e,true)}
-    onLostPointerCapture={e=>endViewportPointer(e,true)}>
+    onPointerDownCapture={e=>{
+     if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
+     else startMeasurementCapture(e);
+    }} onPointerDown={startMarquee}
+    onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
+    onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
+    onPointerCancel={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}
+    onLostPointerCapture={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}>
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
@@ -2444,6 +2527,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        const r=selectionRectangle(marquee.start,marquee.end);
        return {left:r.x,top:r.y,width:r.width,height:r.height};
       })()}/>}
+    <MapMeasurementOverlay map={map} scale={scale}
+     measures={[...Object.values(remoteMeasurements),...localMeasurements]}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
     <div className="token-monitors-over-all" aria-hidden="true">
