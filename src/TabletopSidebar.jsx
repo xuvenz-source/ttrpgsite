@@ -11,22 +11,9 @@ import MacroChatCard from './MacroChatCard.jsx';
 import RollMathTooltip from './RollMathTooltip.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-function BearFaceIcon(){
- return <svg className="bestiary-bear-icon" width="20" height="20" viewBox="0 0 24 24"
-  xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bear face"
-  stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none">
-  <circle cx="5.7" cy="6.3" r="3.1"/>
-  <circle cx="18.3" cy="6.3" r="3.1"/>
-  <path d="M5.3 8.4C6.3 5.2 9 4.1 12 4.1s5.7 1.1 6.7 4.3c1.4 2.2 1.8 5.1.9 7.4-.8 2.8-3.3 4.7-7.6 4.7s-6.8-1.9-7.6-4.7c-.9-2.3-.5-5.2.9-7.4Z"/>
-  <circle cx="8.9" cy="11.2" r=".95" fill="currentColor" stroke="none"/>
-  <circle cx="15.1" cy="11.2" r=".95" fill="currentColor" stroke="none"/>
-  <ellipse cx="12" cy="15.2" rx="3.2" ry="2.4" strokeWidth="1.2"/>
-  <path d="m10.65 14.2 1.35 1 1.35-1Z" fill="currentColor" strokeWidth=".7"/>
-  <path d="M12 15.3v1.2m0 0-1.2.6m1.2-.6 1.2.6" strokeWidth="1.2"/>
- </svg>;
-}
 const tabs=[
  {id:'chat',label:'Chat',icon:'💬'},
+ {id:'characters',label:'Characters',icon:'📜'},
  {id:'units',label:'Units',icon:'♟'},
  {id:'settings',label:'Settings',icon:'⚙'},
  {id:'dm',label:'DM',icon:'🛠'}
@@ -58,22 +45,28 @@ function UnitRow({db,token,selected,isDM,onSelect,onOpen,onStatus,canDrag,status
 function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSelect,onOpen,onStatus,statusCatalog,onResize,onNavigate,onCreatePortrait,onOpenPlayerCharacter,onAddToken,newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,activeMap}){
  const [collapsed,setCollapsed]=useState({});
  const groups=useMemo(()=>{
-  const sorted=members.map((m,index)=>{
-   const character=characters.find(ch=>ch.user_id===m.user_id);
-   const units=tokens.filter(t=>t.owner_id===m.user_id);
-   return{id:m.user_id,label:character?.name||((m.role==='dm'?'Game Master':'Player')+' '+(index+1)),
-    character,role:m.role,units};
-  }).filter(g=>isDM||g.id===user);
+  const sorted=members.flatMap((m,index)=>{
+   const roster=characters.filter(ch=>ch.user_id===m.user_id);
+   const owned=tokens.filter(t=>t.owner_id===m.user_id);
+   const named=roster.map(ch=>({
+    id:m.user_id+':'+ch.id,owner:m.user_id,
+    label:ch.name||'Unnamed character',character:ch,role:m.role,
+    units:owned.filter(t=>t.character_id===ch.id)
+   }));
+   const others=owned.filter(t=>!t.character_id||!roster.some(ch=>ch.id===t.character_id));
+   if(others.length||!named.length)named.push({
+    id:m.user_id+':others',owner:m.user_id,
+    label:(m.role==='dm'?'Game Master':'Player '+(index+1))+' · other units',
+    character:null,role:m.role,units:others
+   });
+   return named;
+  }).filter(g=>isDM||g.owner===user);
   const other=tokens.filter(t=>!t.owner_id||!members.some(m=>m.user_id===t.owner_id));
   if(isDM)sorted.push({id:'dm-npcs',label:'Unassigned / DM NPCs',units:other,role:'dm'});
   return sorted;
  },[members,characters,tokens,isDM,user]);
  return <div className="right-section">
   <p className="muted tiny side-description">Drag names to place · Ctrl + click resources · Shift + click effects. {isDM?'Alt + double-click edits a sheet.':''}</p>
-  <div className="unit-actions">
-   <button type="button" className="secondary" onClick={()=>onNavigate('sheet')}>My character sheet</button>
-   <button type="button" className="secondary" onClick={onCreatePortrait}>My Token Library</button>
-  </div>
   {isDM&&characters.length>0&&<label>Open player character sheet
    <select defaultValue="" onChange={e=>{if(e.target.value){onOpenPlayerCharacter(e.target.value);e.target.value=''}}}>
     <option value="">Choose a player character…</option>
@@ -81,10 +74,10 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
    </select>
   </label>}
   <div className="unit-groups">{groups.map(g=><section key={g.id} className="unit-group">
-   <button type="button" className={'unit-group-head'+(g.character&&activeMap&&(isDM||g.id===user)?' unit-draggable':'')}
-    draggable={!!(g.character&&activeMap&&(isDM||g.id===user))}
+   <button type="button" className={'unit-group-head'+(g.character&&activeMap&&(isDM||g.owner===user)?' unit-draggable':'')}
+    draggable={!!(g.character&&activeMap&&(isDM||g.owner===user))}
     onDragStart={e=>{
-      if(!g.character||!activeMap||(g.id!==user&&!isDM)){e.preventDefault();return}
+      if(!g.character||!activeMap||(g.owner!==user&&!isDM)){e.preventDefault();return}
       e.dataTransfer.setData('application/x-forge-character',g.character.id);
       e.dataTransfer.effectAllowed='copy';
     }}
@@ -108,11 +101,9 @@ function UnitGroups({db,tokens,characters,members,user,isDM,selectedToken,onSele
    <summary>Place a new token</summary>
    <div className="side-form">
     <label>Token name<input value={newToken} onChange={e=>onChangeTokenName(e.target.value)} maxLength={80} placeholder="Token name"/></label>
-    <label>Controlled by<select value={tokenOwner} onChange={e=>onChangeTokenOwner(e.target.value)}>
-      <option value="">Game Master (NPC)</option>
-      {members.map((m,i)=><option key={m.user_id} value={m.user_id}>
-       {characters.find(c=>c.user_id===m.user_id)?.name||('Player '+(i+1))}
-      </option>)}
+    <label>Linked character<select value={tokenOwner} onChange={e=>onChangeTokenOwner(e.target.value)}>
+      <option value="">Game Master (unlinked NPC)</option>
+      {characters.map(ch=><option key={ch.id} value={ch.id}>{ch.name||'Unnamed character'}</option>)}
     </select></label>
     <button type="button" disabled={!activeMap} onClick={onAddToken}>Place on current map</button>
     <p className="muted tiny">For reusable NPCs, create them in Bestiary instead.</p>
@@ -158,6 +149,7 @@ export default function TabletopSidebar({
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  macroCount=0,onOpenMacros,
  uiScale,onChangeUiScale,
+ activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,hasCampaign
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
@@ -190,6 +182,23 @@ export default function TabletopSidebar({
     <button type="submit">Send</button>
    </form><p className="muted tiny right-chat-help">/roll 2d6+3 · /roll 2d20kh1 · /macro Attack</p>
   </>}
+  {validPanel==='characters'&&<div className="right-body">
+   <div className="side-form">
+    <h3>Your character sheets</h3>
+    <p className="muted tiny">Keep multiple characters in this campaign, each with its own sheet and token.</p>
+    <div className="my-character-list">{characters.filter(ch=>ch.user_id===user).map(ch=>
+     <article key={ch.id} className={'my-character-row'+(activeCharacterId===ch.id?' active':'')}>
+      <Artwork db={db} path={ch.portrait_path} alt={ch.name} className="group-unit-thumb"/>
+      <span className="my-character-name">{ch.name||'Unnamed character'}</span>
+      <button className="secondary" type="button" onClick={()=>onOpenOwnCharacter(ch.id)}>Open sheet</button>
+     </article>)}</div>
+    <form className="side-form" onSubmit={e=>{e.preventDefault();onCreateCharacter(newCharacterName)}}>
+     <label>New character name<input required maxLength={100} value={newCharacterName}
+      onChange={e=>onChangeNewCharacterName(e.target.value)} placeholder="Character name"/></label>
+     <button type="submit">+ Create character sheet</button>
+    </form>
+   </div>
+  </div>}
   {validPanel==='units'&&<div className="right-body"><UnitGroups db={db} tokens={tokens} characters={characters}
    members={members} user={user} isDM={isDM} selectedToken={selectedToken}
    onSelect={onSelectToken} onOpen={onOpenToken}
@@ -203,7 +212,7 @@ export default function TabletopSidebar({
     <button type="button" className="secondary full-button" onClick={onReturnToMenu}>← Back to main menu</button>
     {currentPage!=='tabletop'&&<button type="button" className="secondary full-button" onClick={()=>onNavigate('tabletop')}>Return to tabletop</button>}
     <details className="side-details">
-     <summary>View & zoom</summary>
+     <summary>UI</summary>
      <div className="side-form">
       <label>Battlemap zoom<select value={mapZoom} onChange={e=>onChangeZoom(Number(e.target.value))}>
        <option value=".25">25%</option><option value=".35">35%</option><option value=".5">50%</option>
@@ -211,47 +220,35 @@ export default function TabletopSidebar({
        <option value="2">200%</option><option value="3">300%</option>
       </select></label>
       <p className="muted tiny">Ctrl + mouse wheel over the map changes your view zoom only.</p>
-     </div>
-    </details>
-    <details className="side-details">
-     <summary>Interface size</summary>
-     <div className="side-form">
-      <label>UI scale
-       <select value={uiScale} onChange={e=>onChangeUiScale(Number(e.target.value))}>
-        <option value={0.8}>80% — Compact</option>
-        <option value={0.9}>90% — Default</option>
-        <option value={1}>100% — Standard</option>
-        <option value={1.1}>110% — Large</option>
-        <option value={1.25}>125% — Extra large</option>
-       </select>
-      </label>
-      <p className="muted tiny">Changes menus and window text, not battlemap grid or token size. Saved to your account.</p>
+      <label>Interface size<select value={uiScale} onChange={e=>onChangeUiScale(Number(e.target.value))}>
+       <option value={0.8}>80% — Compact</option><option value={0.9}>90% — Default</option>
+       <option value={1}>100% — Standard</option><option value={1.1}>110% — Large</option>
+       <option value={1.25}>125% — Extra large</option>
+      </select></label>
+      <p className="muted tiny">Interface scale is saved per account; map grids are unchanged.</p>
      </div>
     </details>
     <details className="side-details shortcut-settings">
      <summary>Keyboard shortcuts</summary>
      <KeybindingsEditor bindings={bindings} onSave={onSaveBindings}/>
     </details>
-    <details className="side-details">
-     <summary>Macro Builder ({macroCount})</summary>
-     <div className="side-form">
-      <p className="muted tiny">Build personal multi-roll actions with labelled rows, character attributes, compact chat cards and hotbar shortcuts.</p>
-      <button type="button" className="secondary full-button" onClick={onOpenMacros}>
-       Open Macro Builder
-      </button>
-     </div>
-    </details>
     <details className="side-details shortcut-settings">
-     <summary>Macro hotbar</summary>
-     <HotbarSettings slots={hotbarSlots} onSave={onSaveHotbar} visible={hotbarVisible}
-       onChangeVisible={onChangeHotbarVisible}/>
+     <summary>Macros</summary>
+     <div className="side-form">
+      <button type="button" className="secondary full-button" onClick={onOpenMacros}>Open Macro Builder ({macroCount})</button>
+      <details className="side-details shortcut-settings">
+       <summary>Hotbar settings</summary>
+       <HotbarSettings slots={hotbarSlots} onSave={onSaveHotbar} visible={hotbarVisible}
+        onChangeVisible={onChangeHotbarVisible}/>
+      </details>
+     </div>
     </details>
    </div>
   </div>}
   {validPanel==='dm'&&isDM&&<div className="right-body">
    <div className="side-form">
     <details className="side-details dm-bestiary-details">
-     <summary><span className="dm-bestiary-title"><BearFaceIcon/> Bestiary & NPC templates</span></summary>
+     <summary>Bestiary & NPC templates</summary>
      <div className="side-form">
       <p className="muted tiny">Manage reusable NPCs and drag them onto the map.</p>
       <Bestiary db={db} compact npcs={npcs} folders={npcFolders}
