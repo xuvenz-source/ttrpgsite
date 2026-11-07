@@ -6,7 +6,7 @@ import {FEET_PER_CELL} from './MapMeasurements.js';
 const EPS=0.00001;
 const cross=(a,b)=>a.x*b.y-a.y*b.x;
 const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
-export function wallSegments(environment,viewer){
+export function wallSegments(environment,viewer,kind='vision'){
  const segments=[];
  for(const object of environment?.objects||[]){
   if(!['wall','door','window'].includes(object.type)||!Array.isArray(object.points))continue;
@@ -14,7 +14,7 @@ export function wallSegments(environment,viewer){
    const a=object.points[i-1],b=object.points[i];
    if(Math.hypot(a.x-b.x,a.y-b.y)<EPS)continue;
    const side=cross(sub(b,a),sub(viewer,a))>=0?'a':'b';
-   if(!wallAllows(object,viewer.token,'vision',side))
+   if(!wallAllows(object,viewer.token,kind,side))
     segments.push([a,b]);
   }
  }
@@ -30,7 +30,7 @@ export function raySegmentIntersection(origin,angle,a,b){
  if(distance<0||unit<-EPS||unit>1+EPS)return null;
  return {x:origin.x+distance*direction.x,y:origin.y+distance*direction.y,distance};
 }
-export function previewVisionPolygon({map,environment,viewer,maxFeet=60}){
+export function previewVisionPolygon({map,environment,viewer,maxFeet=60,kind='vision'}){
  if(!map||!viewer)return [];
  const width=map.width/map.grid_size,height=map.height/map.grid_size;
  if(!(width>0&&height>0))return [];
@@ -42,7 +42,7 @@ export function previewVisionPolygon({map,environment,viewer,maxFeet=60}){
   [{x:width,y:height},{x:0,y:height}],
   [{x:0,y:height},{x:0,y:0}]
  ];
- const walls=wallSegments(environment,origin);
+ const walls=wallSegments(environment,origin,kind);
  const blockers=[...border,...walls];
  const candidates=[];
  for(let i=0;i<96;i++)candidates.push(i*Math.PI*2/96);
