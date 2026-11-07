@@ -15,6 +15,9 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import useCampaignHandouts from './useCampaignHandouts.js';
+import CampaignHandoutWindow from './CampaignHandoutWindow.jsx';
+import MapPinLayer from './MapPinLayer.jsx';
 import CombatTurnOrder from './CombatTurnOrder.jsx';
 import useMapCombat from './useMapCombat.js';
 import MapSettingPanel from './MapSettingPanel.jsx';
@@ -131,6 +134,7 @@ function App(){
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),
   [characterEditor,setCharacterEditor]=useState(null);
  const[accountSettingsOpen,setAccountSettingsOpen]=useState(false);
+ const[openedHandout,setOpenedHandout]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
@@ -143,7 +147,7 @@ function App(){
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
   lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
-  selectedId:null,lightBright:20,lightDim:20
+  selectedId:null,pinHandoutId:'',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
@@ -209,6 +213,12 @@ function App(){
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
  tokenContextRef.current={mapId:selectedMap,campaignId:activeId,userId:user};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
+ const campaignHandouts=useCampaignHandouts({
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
+ });
+ const activeHandout=campaignHandouts.handouts.find(h=>h.id===openedHandout?.id)||
+  openedHandout?.preview||null;
+ const activeHandoutPin=campaignHandouts.pins.find(p=>p.id===openedHandout?.pinId)||null;
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  const combatTracker=useMapCombat({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
@@ -506,6 +516,33 @@ function App(){
    setSelectedTokenId(created.id);
   }catch(e){fail(e)}
  }
+ function prepareHandoutPin(handoutId){
+  if(!isDM||!selectedMap)return fail('Select a map first.');
+  if(!campaignHandouts.handouts.some(h=>h.id===handoutId))return fail('Handout not found.');
+  setTab('tabletop');setRightTab('dm');
+  setMapSettingEditor(old=>({...old,previewing:false,layer:'light',enabled:true,
+   lockLight:false,tool:'pin',pinHandoutId:handoutId,selectedId:null}));
+ }
+ async function createHandoutPin(handoutId,point){
+  if(!isDM||!selectedMap||!campaignHandouts.handouts.some(h=>h.id===handoutId))return;
+  try{
+   const pin=await campaignHandouts.createPin({handoutId,kind:'note',...point});
+   setMapSettingEditor(old=>({...old,tool:'select',pinHandoutId:''}));
+   setOpenedHandout({id:handoutId,pinId:pin.id,
+    preview:campaignHandouts.handouts.find(h=>h.id===handoutId)});
+  }catch(e){fail(e)}
+ }
+ async function openMapHandoutPin(pin){
+  try{
+   const note=await campaignHandouts.readPinNote(pin);
+   if(!note)throw Error('This pin is no longer available to you.');
+   setOpenedHandout({id:note.id,pinId:pin.id,preview:note});
+  }catch(e){fail(e)}
+ }
+ async function moveMapHandoutPin(pin,point){
+  if(!isDM)return;
+  try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e)}
+ }
  async function dropExistingUnit(tokenId,x,y){
   const t=tokens.find(t=>t.id===tokenId);
   if(!t||t.map_id!==selectedMap)return;
@@ -676,6 +713,7 @@ function App(){
  useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setMapSettingPopped(false);setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
+  setOpenedHandout(null);
   setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
   ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setMapSettingPopped(false);setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
