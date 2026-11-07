@@ -48,6 +48,23 @@ export function fogFrameDuringRefresh(frame,mapId){
  const safe=normalizeAuthorizedFogFrame(frame,mapId);
  return safe?{...safe,enabled:true,visible:[]}:null;
 }
+/** Additional presentation guard: when a revision invalidates authorized
+ * sight, stale RLS token snapshots must not remain visible through dim fog.
+ * Server RLS remains the actual authorization boundary.
+ */
+export function tokenObservedByFogFrame(token,frame,userId){
+ if(!token||!frame||typeof frame.enabled!=='boolean')return false;
+ if(!frame.enabled)return true;
+ if(token.owner_id===userId&&userId)return true;
+ const x=Number(token.x),y=Number(token.y);
+ const w=Number(token.span_x??1),h=Number(token.span_y??1);
+ if(![x,y,w,h].every(Number.isFinite)||w<=0||h<=0||w>12||h>12)return false;
+ const visible=new Set(frame.visible||[]);
+ for(let cy=Math.max(0,Math.floor(y));cy<Math.min(frame.height,Math.ceil(y+h));cy++)
+  for(let cx=Math.max(0,Math.floor(x));cx<Math.min(frame.width,Math.ceil(x+w));cx++)
+   if(visible.has(cy*frame.width+cx))return true;
+ return false;
+}
 export function fogCellState(frame,x,y){
  if(!frame)return FOG_UNEXPLORED;
  if(!validInt(x)||!validInt(y)||x<0||y<0||

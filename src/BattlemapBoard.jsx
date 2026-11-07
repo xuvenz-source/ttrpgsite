@@ -11,6 +11,7 @@ import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
 import MapFogOverlay from './MapFogOverlay.jsx';
+import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
@@ -76,14 +77,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   previewVisionPolygon({map,environment,viewer,maxFeet:60}):[],
   [previewActive,map,environment,viewer]);
  const visibleTokens=useMemo(()=>{
-  const allowed=isDM?tokens:tokens.filter(t=>t.visible);
+  // Visibility ticks may arrive before the refreshed RLS token query. Never
+  // leave an old NPC token faintly visible through previously explored fog.
+  const allowed=isDM?tokens:tokens.filter(t=>t.visible&&
+   tokenObservedByFogFrame(t,fogFrame,user));
   if(!previewActive)return allowed;
   return allowed.filter(t=>t.visible!==false&&
    (t.id===previewToken?.id||pointInPolygon({
     x:Number(t.x)+Number(t.span_x??1)/2,
     y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)))
     .map(t=>t.id===previewToken?.id?previewToken:t);
- },[tokens,isDM,previewActive,previewToken,previewPolygon]);
+ },[tokens,isDM,previewActive,previewToken,previewPolygon,fogFrame,user]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {fogFrameDuringRefresh,fogMasks,FOG_EXPLORED,FOG_UNEXPLORED}
+import {fogFrameDuringRefresh,tokenObservedByFogFrame,fogMasks,FOG_EXPLORED,FOG_UNEXPLORED}
  from '../src/MapFogModel.js';
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const main=read('src/TabletopApp.jsx'),board=read('src/BattlemapBoard.jsx');
@@ -64,4 +64,21 @@ test('pending fog keeps dimmed exploration but drops old sight',()=>{
  assert.equal(fogFrameDuringRefresh(frame,'other'),null);
  assert.match(fog,/\+\+request\.current;\s*setFrame\(previous=>fogFrameDuringRefresh\(previous,mapId\)\)/);
  assert.match(fog,/invalidate\(\);changed\.request\(\)/);
+});
+
+test('stale non-owner tokens cannot remain visible through refreshing dim fog',()=>{
+ const frame={mapId:'test',width:4,height:3,revision:3,
+  enabled:true,partyShared:false,visible:[5],explored:[1,4,5,6]};
+ const npc={id:'npc',x:1,y:1,span_x:1,span_y:1,owner_id:null};
+ const nearby={...npc,x:0,y:0};
+ const own={...nearby,owner_id:'player-id'};
+ assert.equal(tokenObservedByFogFrame(npc,frame,'player-id'),true);
+ assert.equal(tokenObservedByFogFrame(nearby,frame,'player-id'),false);
+ const waiting=fogFrameDuringRefresh(frame,'test');
+ assert.equal(tokenObservedByFogFrame(npc,waiting,'player-id'),false);
+ assert.equal(tokenObservedByFogFrame(own,waiting,'player-id'),true);
+ assert.equal(tokenObservedByFogFrame(npc,null,'player-id'),false);
+ assert.equal(tokenObservedByFogFrame(npc,{...frame,enabled:false},'player-id'),true);
+ assert.equal(tokenObservedByFogFrame({...npc,x:1,span_x:2},frame,'player-id'),true);
+ assert.match(board,/tokenObservedByFogFrame\(t,fogFrame,user\)/);
 });
