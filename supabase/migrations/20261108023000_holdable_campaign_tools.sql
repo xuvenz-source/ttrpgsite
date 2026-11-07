@@ -42,7 +42,7 @@ begin
    if old.held_by_token_id is not null then
     select t.owner_id into v_old_carrier
      from public.map_tokens t where t.id=old.held_by_token_id;
-    if not found or v_old_carrier.owner_id is distinct from (select auth.uid()) then
+    if found and v_old_carrier.owner_id is distinct from (select auth.uid()) then
      if new.held_by_token_id is distinct from old.held_by_token_id
       or new.map_id is distinct from old.map_id
       or new.x is distinct from old.x or new.y is distinct from old.y then

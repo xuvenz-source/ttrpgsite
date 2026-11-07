@@ -100,6 +100,10 @@
     {
       "name": "stage/live-qa-light-collision-inventory-ui-2026-11-08",
       "status": "included"
+    },
+    {
+      "name": "stage/interactive-pins-held-tools-2026-11-08",
+      "status": "included"
     }
   ],
   "features": [
@@ -160,6 +164,22 @@
         "stage/password-breach-screen-2026-11-07"
       ],
       "status": "included"
+    },
+    {
+      "id": "interactive-handout-pin-preview",
+      "description": "Clickable board-local handout text/images, selectable pins, removal controls and simplified DM map rules",
+      "sources": [
+        "stage/interactive-pins-held-tools-2026-11-08"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "held-tools-and-carrier-light",
+      "description": "Holdable tool checkbox, drag to controlled token, carrier-following light, token Quick Adjust drop button",
+      "sources": [
+        "stage/interactive-pins-held-tools-2026-11-08"
+      ],
+      "status": "included"
     }
   ],
   "databaseDependencies": [
@@ -208,6 +228,27 @@
             "version": "20261108013000",
             "name": "inventory_lease_expiry_qualification",
             "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
+            "status": "staged-not-applied",
+            "requiresApproval": true
+          }
+        ],
+        "paidInfrastructure": false
+      },
+      {
+        "name": "stage/interactive-pins-held-tools-2026-11-08",
+        "status": "staging-pending-live-test-rollout",
+        "scope": [
+          "on-map pin preview and safe HTTPS handout image rendering",
+          "pin selection, delete and existing handout editing",
+          "remove redundant published map rule text",
+          "holdable tool flag, carrier attachment and torch light following token",
+          "held tools listed with drop action in token Quick Adjust"
+        ],
+        "databaseDependencies": [
+          {
+            "version": "20261108023000",
+            "name": "holdable_campaign_tools",
+            "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql",
             "status": "staged-not-applied",
             "requiresApproval": true
           }
