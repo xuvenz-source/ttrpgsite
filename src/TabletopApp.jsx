@@ -51,7 +51,7 @@ import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './S
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,allowedMovementPreview,canSendMovementPreview,
- MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
+ applyAuthoritativeTokenMotion,MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
  selectableToolIds,groupToolFootprint,boundedGroupOffset} from './MapSelection.js';
 import {chatRowsForMap} from './CampaignRealtime.js';
@@ -925,7 +925,7 @@ export default function TabletopApp(){
    const id=payload.id;
    setRemoteTokenPositions(prev=>{
     if(prev[id]?.actor===payload.actor&&prev[id].seq>=payload.seq)return prev;
-    return {...prev,[id]:{x:payload.x,y:payload.y,seq:payload.seq,actor:payload.actor}};
+    return {...prev,[id]:{x:payload.x,y:payload.y,seq:payload.seq,actor:payload.actor,final:!!payload.final}};
    });
    const last=remoteMoveExpiry.current.get(id);
    if(last)clearTimeout(last);
@@ -937,7 +937,7 @@ export default function TabletopApp(){
      const copy={...prev};delete copy[id];return copy;
     });
     void latestTokenRefresh.current?.();
-   },payload.final?3000:MOVE_PREVIEW_EXPIRE_MS);
+   },payload.final?1800:MOVE_PREVIEW_EXPIRE_MS);
    remoteMoveExpiry.current.set(id,timer);
   }).on('broadcast',{event:'tool-preview'},({payload})=>{
    const access=latestMovementAccess.current;
@@ -1070,8 +1070,25 @@ export default function TabletopApp(){
   const c=db.channel('vtt-'+activeId)
    .on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',
     filter:'campaign_id=eq.'+activeId},event=>{
-    if(eventAffectsMap(event,tokenContextRef.current.mapId))
-     tokenUpdates.request();
+    const mapId=tokenContextRef.current.mapId;
+    if(!eventAffectsMap(event,mapId))return;
+    // The database has already applied this viewer's RLS on the row event.
+    // Patch observed coordinates now, then run background reconciliation.
+    if(event.eventType==='UPDATE'){
+     setTokens(previous=>applyAuthoritativeTokenMotion(
+      previous,event,mapId,movementPending.current));
+     const id=event.new?.id;
+     if(id)setRemoteTokenPositions(previous=>{
+      const packet=previous[id];
+      if(!packet?.final||packet.x!==event.new.x||packet.y!==event.new.y)
+       return previous;
+      const timer=remoteMoveExpiry.current.get(id);
+      if(timer)clearTimeout(timer);
+      remoteMoveExpiry.current.delete(id);
+      const next={...previous};delete next[id];return next;
+     });
+    }
+    tokenUpdates.request();
    })
    .on('postgres_changes',{event:'*',schema:'public',table:'campaigns',
     filter:'id=eq.'+activeId},()=>campaignUpdates.request())
