@@ -1,0 +1,65 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {fogFrameDuringRefresh,fogMasks,FOG_EXPLORED,FOG_UNEXPLORED}
+ from '../src/MapFogModel.js';
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+const main=read('src/TabletopApp.jsx'),board=read('src/BattlemapBoard.jsx');
+const sheet=read('src/PlayerSheetFields.jsx');
+const fog=read('src/useAuthorizedMapFog.js');
+const sql=read('supabase/migrations/20261108033000_player_owned_token_artwork.sql');
+
+test('only owned player tokens open a sheet via Alt+double click',()=>{
+ assert.match(board,/onDoubleClick=\{e=>\{if\(e\.altKey&&!previewActive&&/);
+ assert.match(board,/t\.owner_id===user&&t\.visible!==false&&t\.map_id===map\.id/);
+ assert.match(main,/async function openTokenSheet\(t\)\{\s*if\(!isDM\)\{/);
+ assert.match(main,/t\.owner_id!==user\|\|t\.map_id!==playerMapId\|\|!t\.visible/);
+ assert.match(main,/try\{await openOwnCharacter\(id\)\}/);
+});
+
+test('player keystrokes update local sheet state, parent receives coalesced edits',()=>{
+ assert.match(sheet,/const \[values,setValues\]=useState/);
+ assert.match(sheet,/setValues\(previous=>enrichSheetValues\(template,\{\.\.\.previous,\[id\]:value\}\)\)/);
+ assert.match(sheet,/timer\.current=setTimeout\(\(\)=>flushRef\.current\?\.\(\),140\)/);
+ assert.match(sheet,/sendRef\.current\(characterId,patch\)/);
+ assert.match(sheet,/const castSafe=.*flush\(\);return onCastSpell/);
+ assert.match(sheet,/const attackSafe=.*flush\(\);return onEquipmentAttack/);
+ assert.match(main,/registerFlusher=\{registerSheetFlusher\}/);
+ assert.match(main,/latestLocalCharacter\.current=next/);
+ assert.match(main,/pending\.patches/);
+ assert.match(main,/React\.startTransition\(\(\)=>setCharacters/);
+});
+
+test('server trigger allows only own sheet-approved image path',()=>{
+ assert.match(sql,/CREATE OR REPLACE FUNCTION public\.protect_token_fields\(\)/);
+ assert.match(sql,/SECURITY DEFINER/);
+ assert.match(sql,/old\.image_path is distinct from new\.image_path/);
+ assert.match(sql,/to_jsonb\(new\)-'image_path'-'updated_at'/);
+ assert.match(sql,/to_jsonb\(old\)-'image_path'-'updated_at'/);
+ assert.match(sql,/old\.owner_id=auth\.uid\(\)/);
+ assert.match(sql,/old\.character_id is not null/);
+ assert.match(sql,/old\.visible/);
+ assert.match(sql,/public\.can_view_campaign_map\(old\.campaign_id,old\.map_id\)/);
+ assert.match(sql,/ch\.id=old\.character_id/);
+ assert.match(sql,/ch\.campaign_id=old\.campaign_id/);
+ assert.match(sql,/ch\.user_id=auth\.uid\(\)/);
+ assert.match(sql,/ch\.token_path is not distinct from new\.image_path/);
+ assert.match(sql,/Players may only change positions, statuses or DM-approved quick attributes/);
+ assert.doesNotMatch(sql,/alter table public\.map_tokens disable row level security/i);
+ assert.doesNotMatch(sql,/grant (all|update) on public\.map_tokens/i);
+ assert.match(main,/Character artwork saved, but a map token did not update/);
+});
+
+test('pending fog keeps dimmed exploration but drops old sight',()=>{
+ const frame={mapId:'test',width:3,height:2,revision:3,
+  enabled:true,partyShared:false,visible:[1,2],explored:[0,1,2,4]};
+ const pending=fogFrameDuringRefresh(frame,'test');
+ assert.deepEqual(pending.visible,[]);
+ const pixels=fogMasks(pending);
+ assert.equal(pixels[1],FOG_EXPLORED);
+ assert.equal(pixels[3],FOG_UNEXPLORED);
+ assert.equal(fogFrameDuringRefresh(null,'test'),null);
+ assert.equal(fogFrameDuringRefresh(frame,'other'),null);
+ assert.match(fog,/\+\+request\.current;\s*setFrame\(previous=>fogFrameDuringRefresh\(previous,mapId\)\)/);
+ assert.match(fog,/invalidate\(\);changed\.request\(\)/);
+});
