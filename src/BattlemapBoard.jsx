@@ -25,7 +25,7 @@ import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,
 export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
  onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
- onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
+ onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,authorizedLightMasks=null,
  environment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
  registerRemoteMotion,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
@@ -776,7 +776,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
      onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}
      onRead={onReadHandoutPin} onCollect={onCollectHandoutPin}
      onDelete={onDeleteHandoutPin} onSelect={onSelectHandoutPin}/>
-    <CampaignToolMapLayer motionRuntime={motion.current} map={map} scale={scale} userId={user} isDM={isDM}
+    <CampaignToolMapLayer motionRuntime={motion.current} authorizedLightMasks={authorizedLightMasks}
+     map={map} scale={scale} userId={user} isDM={isDM}
      tokens={visibleTokens} tokenPositions={{...remotePositions,...preview}}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
      placements={toolPlacements} issued={toolIssued}
