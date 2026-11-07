@@ -1,6 +1,7 @@
 /** Shared client geometry and display helpers; authorization always lives in Postgres. */
 export const PIN_ICONS={
- note:'📜',sign:'🪧',engraving:'🪨',book:'📖',clue:'🔎'
+ note:'📜',sign:'🪧',engraving:'🪨',book:'📖',clue:'🔎',
+ pin:'📍',arrow:'➡️',trap:'🪤',warning:'⚠️',flag:'🚩',skull:'💀',star:'⭐'
 };
 export const PIN_KINDS=Object.keys(PIN_ICONS);
 export function normalizePinPosition(x,y,map){

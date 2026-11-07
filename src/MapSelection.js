@@ -1,6 +1,7 @@
 /** Pure battlemap selection and multi-token movement maths.
  * Rendering uses pixels at the current zoom, persistence uses grid coordinates.
  */
+import {toolCanControl} from './CampaignTools.js';
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 export const canControlMapToken=(token,user,isDM,mapId)=>
  Boolean(token&&token.map_id===mapId&&(isDM||token.owner_id===user)&&
@@ -22,6 +23,25 @@ export function selectableTokenIds(tokens,rectangle,cell,user,isDM,mapId){
    y<r.y+r.height&&y+height>r.y;
  }).map(token=>token.id);
 }
+/** Tools have their own public placement rows; permissions derive from private
+ * issued records, never from a guessed token owner_id. */
+export function selectableToolIds(placements,issued,rectangle,cell,user,isDM,mapId){
+ if(!(cell>0)||!rectangle)return [];
+ const tools=new Map((issued||[]).map(issue=>[issue.id,issue]));
+ return (placements||[]).filter(p=>{
+  if(p.map_id!==mapId||!toolCanControl(tools.get(p.issue_id),user,isDM))
+   return false;
+  const x=finite(p.x)*cell,y=finite(p.y)*cell;
+  const span=Math.max(1,finite(p.span,1))*cell;
+  return x<rectangle.x+rectangle.width&&x+span>rectangle.x&&
+   y<rectangle.y+rectangle.height&&y+span>rectangle.y;
+ }).map(p=>p.issue_id);
+}
+export const groupToolFootprint=tool=>({
+ x:Number(tool.x),y:Number(tool.y),
+ span_x:Math.max(1,Number(tool.span)||1),
+ span_y:Math.max(1,Number(tool.span)||1)
+});
 /** Clamp the same delta for the entire group, preserving relative spacing.
  * This prevents individual members piling up against the board edge.
  */
