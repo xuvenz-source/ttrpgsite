@@ -1,0 +1,8 @@
+# Require the repository owner to review sensitive changes when branch protection is enabled.
+/.github/ @xuvenz-source
+/supabase/ @xuvenz-source
+/vercel.json @xuvenz-source
+/src/Welcome.jsx @xuvenz-source
+/src/SignupCaptcha.jsx @xuvenz-source
+/src/main.jsx @xuvenz-source
+/src/AccountSettings.jsx @xuvenz-source
