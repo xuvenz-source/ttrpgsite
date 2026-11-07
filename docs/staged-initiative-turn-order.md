@@ -51,6 +51,31 @@ This migration is versioned in GitHub **only**. It has not been applied to any p
 10. Run `node --test tests/*.test.mjs`, `npm run build`, SQL integration checks and security advisors on **staging** before approval.
 
 
+## No-cost live-database integration verification — 7 November 2026
+
+**Supabase project:** Existing free-tier database only. No billable branch, instance or replica was created.
+
+**Migration successfully installed:** `map_combat_initiative` was applied to the existing project, including both new RLS-enabled tables, two triggers, authenticated/DM-guarded RPCs and public sanitized Realtime publication. The initial syntax error caused by a reserved `natural` column was corrected to `die_roll` in the versioned SQL; the failed attempt rolled back with no new tables. The corrected migration applied successfully.
+
+**Read-only checks:** Existing campaigns/maps/tokens preserved; RLS enabled on both combat tables; authenticated users have SELECT but no direct INSERT/UPDATE/DELETE; anonymous users have no SELECT; internal helper functions cannot be executed by anon or authenticated; only public `map_combats` is published to Realtime.
+
+**Transactional live-schema integration checks (ALL PASS; test records rolled back):**
+- DM begins and ends combat, rolls a d20 initiative, sorts and advances/rewinds turns.
+- DM bulk rolls hidden NPC initiative, and hidden NPC stays anonymized in public tracker data.
+- Revealing and re-hiding a temporary NPC updates public roster via triggers; never leaks hidden token name/ID to players.
+- Normal assigned-map player can read shared roster but not DM-only entry mappings; cannot advance turns or roll an NPC.
+- Synthetic unrelated authenticated user cannot read or end an encounter.
+- A player can roll initiative for an owned character token exactly once; repeated roll is rejected.
+- After test rollback, 0 public combat rows, 0 private entries and no temporary QA NPC/player tokens remained. Existing campaign and token counts were unchanged.
+
+**Security advisors:** The signed-in-user `SECURITY DEFINER` RPC linter warns about intentionally callable combat functions. These are required public RPC endpoints with explicit authentication, campaign/DM and token ownership checks; their anonymous privileges are revoked. Other existing platform security advisories are outside this feature and should be assessed independently.
+
+**Updated frontend:** DM combat setup filters participants by the current map to avoid picking stale cached tokens from other maps. Build/unit CI must still pass for the final source commit.
+
+**Release still outstanding:** Manual connected-client visual/Realtime/browser verification, merge of clean PR #14, and Vercel frontend production deployment when the existing free-tier quota permits it. Production database is ready, but the Initiative UI is not live until frontend deployment.
+
+---
+
 ## Release-preparation audit — 7 November 2026
 
 **Safe integration branch:** `stage/initiative-release-ready-2026-11-07` based directly on current `main` (`03cc8708`). This isolates the Initiative files from an obsolete staging base that omitted already-live Cloudflare CAPTCHA, authentication hardening, and Vercel CI-only deployment policies. Only Initiative-specific files are changed.
