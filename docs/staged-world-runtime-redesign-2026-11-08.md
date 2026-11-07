@@ -23,19 +23,16 @@
 3. `MapMovementTrajectory.js` offers deterministic, advisory swept-footprint cell traversal. DM-only preview stops at the last legal cell on fast drags rather than ignoring the full gesture. Actual movement and player permissions stay server enforced. `MapCollision.js` map bounds now floor complete grid cells as current SQL does.
 4. Added executable unit tests for motion painting, fog deltas, legal movement trajectories, and revised existing structure assertions. These tests do not establish live multiplayer smoothness or database security.
 
-## Still required: do NOT claim these are fixed
+## Code-staging progress versus actual verification
 
-- Replace fog-on intermediate database writes with a secure, observer-authorized movement protocol and authoritative waypoint commits.
-- Decouple incoming remote previews, canonical token snapshots and fog ticks from full `TabletopApp` renders.
-- Define and enforce one collision schema for token footprints, diagonals, corners, closed/open portals and elevation; remove the unconditional DM bypass via an explicit server-authorized override.
-- Define atomic group movement, including mixed character/tool selections.
-- Implement a trusted incremental visibility/lighting contract using published environment revisions, dynamic lights and distinct explored memory versus current LOS. Do not disclose secret wall geometry.
-- Correct cosmetic light clipping and light intensity falloff across all client roles, using authorized masks rather than client-side secret geometry.
-- Review direct Data API/Realtime access and the forgery issue in existing cosmetic broadcast actor claims.
-- Test and profile actual DM + 2-player sessions, fog on/off, 10/50/100 tokens, multiple lights, wall ends, network loss/reconnect and 1x1/2x2/mixed footprints.
-- Consolidate all other outstanding staged work into one future approved release. Do not enable automated Vercel previews.
+The initial open issues below were addressed as **staged implementation candidates**
+in the later sections: private observer movement, turn-aware atomic collision,
+DM override, preview-projected fog and authorized torch light masks.
+This does **not** establish that the SQL runs against the existing database,
+that player/RLS confidentiality holds in practice, or that browser performance
+meets the targets. These remain required acceptance gates before release.
 
-## Dependency ordering for later staging
+## Development and release sequencing
 
 1. Establish browser performance baseline and deterministic collision/security fixtures.
 2. Isolate local and remote motion presentation (first local slice staged).
@@ -57,7 +54,7 @@
 
 ## Release/rollback guidance
 
-This first slice is frontend-only and has no schema migration. Keep the production `aa3e00f` untouched until the designer approves a consolidated release. The first slice may be reverted independently by removing the motion runtime and fog delta imports/references; it does not alter exploration persistence or map token rows. Subsequent SQL migrations require separate review, backwards-compatible data preservation and explicit live-test instructions.
+Originally the isolated rendering slice was frontend-only. The present branch also includes seven **unapplied** SQL migration candidates. Keep production `aa3e00f` untouched until the designer approves a consolidated release. The first slice may be reverted independently by removing the motion runtime and fog delta imports/references; it does not alter exploration persistence or map token rows. Subsequent SQL migrations require separate review, backwards-compatible data preservation and explicit live-test instructions.
 
 
 ## Additional implementation staged (continued development)
