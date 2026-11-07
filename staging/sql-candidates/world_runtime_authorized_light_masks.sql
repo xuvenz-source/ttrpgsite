@@ -52,9 +52,9 @@ begin
  for source in
   select p.issue_id,p.map_id,p.kind,p.light_enabled,p.light_bright,
    p.light_dim,p.span,
-   case when holder.id is null then p.x+0.5
+   case when holder.id is null then coalesce(tool_rate.last_x,p.x)+0.5
     else coalesce(rate.last_x,holder.x)+holder.span_x/2.0 end as cx,
-   case when holder.id is null then p.y+0.5
+   case when holder.id is null then coalesce(tool_rate.last_y,p.y)+0.5
     else coalesce(rate.last_y,holder.y)+holder.span_y/2.0 end as cy
   from public.campaign_tool_map_tokens p
   left join public.map_tokens holder on holder.id=p.held_by_token_id
@@ -64,6 +64,13 @@ begin
     and rate.kind='token' and rate.map_id=p_map
     and rate.base_x=holder.x and rate.base_y=holder.y
     and rate.last_sent>statement_timestamp()-interval '2 seconds'
+  left join lateral(
+   select r.last_x,r.last_y from forge_visibility.movement_preview_rates r
+   where r.piece_id=p.issue_id and r.map_id=p_map and r.kind='tool'
+    and r.base_x=p.x and r.base_y=p.y
+    and r.last_sent>statement_timestamp()-interval '2 seconds'
+   order by r.last_sent desc limit 1
+  )tool_rate on true
   where p.map_id=p_map and p.campaign_id=map_row.campaign_id
    and p.kind='torch' and p.light_enabled
    and (p.held_by_token_id is null or holder.id is not null)
