@@ -158,13 +158,18 @@ begin
   if not v_dm then raise exception 'Only DMs may issue tools';end if;
   new.revision:=0;
  end if;
- if (tg_op='INSERT' or
-     new.owner_id is distinct from old.owner_id or
-     new.party_shared is distinct from old.party_shared)
-    and not new.party_shared and not exists(
-  select 1 from public.campaign_members cm
-  where cm.campaign_id=new.campaign_id and cm.user_id=new.owner_id
- ) then raise exception 'Tool recipient must belong to campaign';end if;
+ if tg_op='INSERT' then
+  if not new.party_shared and not exists(
+   select 1 from public.campaign_members cm
+   where cm.campaign_id=new.campaign_id and cm.user_id=new.owner_id
+  ) then raise exception 'Tool recipient must belong to campaign';end if;
+ elsif new.owner_id is distinct from old.owner_id or
+       new.party_shared is distinct from old.party_shared then
+  if not new.party_shared and not exists(
+   select 1 from public.campaign_members cm
+   where cm.campaign_id=new.campaign_id and cm.user_id=new.owner_id
+  ) then raise exception 'Tool recipient must belong to campaign';end if;
+ end if;
  if new.template_id is not null and not exists(
   select 1 from public.campaign_tool_templates t
   where t.id=new.template_id and t.campaign_id=new.campaign_id
