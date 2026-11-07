@@ -187,7 +187,7 @@ begin
    and (t.owner_id=actor or
     (party and t.owner_id is not null and exists(
       select 1 from public.campaign_members cm
-      where cm.campaign_id=m.campaign_id and cm.user_id=t.owner_id)))
+      where cm.campaign_id=m.campaign_id and cm.user_id=t.owner_id and cm.role='player')))
   order by t.id limit 8
  loop
   sx:=viewer.x+viewer.span_x/2.0;sy:=viewer.y+viewer.span_y/2.0;
@@ -446,10 +446,11 @@ begin
  then raise exception 'Map unavailable';end if;
  if m.grid_size<=0 then raise exception 'Invalid map grid';end if;
  w:=floor(m.width/m.grid_size);h:=floor(m.height/m.grid_size);
- if w not between 1 and 128 or h not between 1 and 128
- then raise exception 'Fog maps support at most 128 cells per axis';end if;
  select r.fog_enforced into fog_on from forge_visibility.map_rules r where r.map_id=p_map;
  fog_on:=coalesce(fog_on,false);
+ if fog_on and (w not between 1 and 128 or h not between 1 and 128)
+ then raise exception 'Fog maps support at most 128 cells per axis';end if;
+ if not fog_on then w:=greatest(1,least(128,w));h:=greatest(1,least(128,h));end if;
  select coalesce(t.revision,0) into rev from public.map_visibility_ticks t where t.map_id=p_map;
  rev:=coalesce(rev,0);
  select live into scene from public.map_environments where map_id=p_map;
@@ -468,7 +469,7 @@ begin
    and (t.owner_id=actor or
     (shared and t.owner_id is not null and exists(
       select 1 from public.campaign_members cm
-      where cm.campaign_id=m.campaign_id and cm.user_id=t.owner_id)))
+      where cm.campaign_id=m.campaign_id and cm.user_id=t.owner_id and cm.role='player')))
   order by t.id limit 8
  ), nearby as (
   select distinct gx.x as cx,gy.y as cy from sources src
@@ -588,7 +589,227 @@ grant execute on function public.publish_map_environment(uuid,text) to authentic
 -- Removed previously overbroad surface: player-visible combat data is now
 -- returned only by get_authorized_map_combat, with per-viewer token checks.
 -- Monitor RPCs and Storage artwork policies are further narrowed below.
--- NOTE: additional patched definitions are appended from current prod DDL.
+-- Production function definitions copied and augmented for visibility filtering.
+-- Keep existing semantics but deny hidden-token output with fog on.
+CREATE OR REPLACE FUNCTION public.get_token_encumbrance_badges(p_map uuid)
+ RETURNS TABLE(token_id uuid, icon text, label text)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+ select t.id,x.badge->>'icon',x.badge->>'label'
+ from public.battle_maps map
+ join public.campaigns c on c.id=map.campaign_id
+ join public.map_tokens t on t.map_id=map.id and t.campaign_id=c.id
+ left join public.characters ch on ch.id=t.character_id and ch.campaign_id=c.id
+ cross join lateral (select public.inventory_encumbrance_badge(
+   c.sheet_template,
+   case when t.character_id is not null then coalesce(ch.field_values,'{}'::jsonb)
+        else coalesce(t.npc_values,'{}'::jsonb) end
+ ) badge) x
+ where map.id=p_map and auth.uid() is not null
+  and public.can_view_campaign_map(c.id,map.id)
+  and (public.is_campaign_dm(c.id) or (t.visible and public.can_observe_map_token(t.id)))
+  and x.badge is not null;
+$function$;
+
+-- Keep existing semantics but deny hidden-token output with fog on.
+CREATE OR REPLACE FUNCTION public.get_token_monitor_values(p_map uuid)
+ RETURNS TABLE(token_id uuid, fields jsonb)
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+with settings as (
+ select c.id campaign_id,c.token_display_config cfg,c.sheet_template template,
+        public.is_campaign_dm(c.id) dm
+ from public.battle_maps m
+ join public.campaigns c on c.id=m.campaign_id
+ where m.id=p_map
+   and (public.is_campaign_dm(c.id)
+        or (public.is_campaign_member(c.id) and public.can_view_campaign_map(c.id,p_map)))
+), field_keys as (
+ select distinct coalesce(w->>'field','') k
+ from settings s,lateral jsonb_array_elements(coalesce(s.cfg->'widgets','[]'::jsonb)) w
+ union
+ select distinct coalesce(w->>'maxField','') k
+ from settings s,lateral jsonb_array_elements(coalesce(s.cfg->'widgets','[]'::jsonb)) w
+)
+select t.id,
+ coalesce((
+  select jsonb_object_agg(v.key,v.value)
+  from (
+   select e.key,
+          case when jsonb_typeof(e.value)='object' then e.value->'current'
+               else e.value end as value
+   from jsonb_each(
+    case when t.character_id is not null then coalesce(ch.field_values,'{}'::jsonb)
+         else coalesce(t.npc_values,'{}'::jsonb) end
+   ) e
+   where e.key in (select k from field_keys)
+   union all
+   select e.key||'__max' as key,e.value->'max' as value
+   from jsonb_each(
+    case when t.character_id is not null then coalesce(ch.field_values,'{}'::jsonb)
+         else coalesce(t.npc_values,'{}'::jsonb) end
+   ) e
+   where e.key||'__max' in (select k from field_keys)
+     and jsonb_typeof(e.value)='object'
+   union all
+   select r->>'code' as key,
+    public.token_reference_value(
+     s.cfg,s.template,
+     case when t.character_id is not null then coalesce(ch.field_values,'{}'::jsonb)
+       else coalesce(t.npc_values,'{}'::jsonb) end,
+     r->>'code'
+    ) as value
+   from jsonb_array_elements(
+     case when jsonb_typeof(s.cfg->'references')='array'
+      then s.cfg->'references' else '[]'::jsonb end) r
+   where r->>'code' in (select k from field_keys)
+  ) v
+  where jsonb_typeof(v.value)='number'
+     or (jsonb_typeof(v.value)='string'
+         and v.value #>> '{}' ~ '^-?[0-9]{1,7}(\.[0-9]{1,3})?
+commit;)
+ ),'{}'::jsonb) as fields
+from settings s
+join public.map_tokens t on t.campaign_id=s.campaign_id and t.map_id=p_map
+left join public.characters ch on ch.id=t.character_id and ch.campaign_id=s.campaign_id
+where (s.dm or (t.visible and public.can_observe_map_token(t.id)))
+  and (
+   s.dm
+   or (t.character_id is not null
+       and (t.owner_id=auth.uid() or s.cfg->>'playerVisibility'='everyone'))
+   or (t.character_id is null
+       and (s.cfg->>'npcVisibility'='everyone' or t.npc_bars_public))
+  );
+$function$;
+
+-- Keep existing semantics but deny hidden-token output with fog on.
+CREATE OR REPLACE FUNCTION public.roll_map_combat_initiative(p_map uuid, p_entry uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+ v_combat public.map_combats%rowtype;
+ v_entry public.map_combat_entries%rowtype;
+ v_token public.map_tokens%rowtype;
+ v_template jsonb;v_values jsonb:='{}'::jsonb;v_fallback jsonb;
+ v_raw text;v_score numeric:=0;v_base numeric:=10;v_step numeric:=2;
+ v_has_score boolean:=false;
+ v_bonus integer;v_nat integer;v_total integer;v_result jsonb;
+ v_is_dm boolean;
+begin
+ if auth.uid() is null then raise exception 'Sign in first';end if;
+ select * into v_combat from public.map_combats where map_id=p_map for update;
+ if not found or not v_combat.active or
+  not public.can_view_campaign_map(v_combat.campaign_id,p_map)
+ then raise exception 'Encounter unavailable';end if;
+ v_is_dm:=public.is_campaign_dm(v_combat.campaign_id);
+ select * into v_entry from public.map_combat_entries
+  where map_id=p_map and entry_id=p_entry for update;
+ if not found then raise exception 'Combatant not in encounter';end if;
+ select * into v_token from public.map_tokens where id=v_entry.token_id;
+ if not found or v_token.map_id<>p_map then raise exception 'Token unavailable';end if;
+ if not v_is_dm and (not coalesce(v_token.visible,false) or
+  v_token.owner_id is distinct from auth.uid())
+ then raise exception 'You can only roll for your visible owned token';end if;
+ if v_entry.score is not null and not v_is_dm
+ then raise exception 'Your initiative has already been rolled';end if;
+ select sheet_template into v_template from public.campaigns
+  where id=v_combat.campaign_id;
+ if v_token.character_id is not null then
+  select field_values into v_values from public.characters
+   where id=v_token.character_id and campaign_id=v_combat.campaign_id;
+  if not found then raise exception 'Character unavailable';end if;
+ else
+  v_values:=coalesce(v_token.npc_values,'{}'::jsonb);
+  if v_values->v_combat.initiative_field is null and v_token.npc_template_id is not null then
+   select field_values into v_fallback from public.npc_templates
+    where id=v_token.npc_template_id and campaign_id=v_combat.campaign_id;
+   v_values:=coalesce(v_fallback,'{}'::jsonb)||v_values;
+  end if;
+ end if;
+ if jsonb_typeof(v_values)<>'object' then v_values:='{}'::jsonb;end if;
+ if jsonb_typeof(v_values->v_combat.initiative_field)='object' then
+  v_raw:=v_values->v_combat.initiative_field->>'current';
+ else v_raw:=v_values->>v_combat.initiative_field;end if;
+ if coalesce(v_raw,'')~'^[-]?[0-9]{1,5}([.][0-9]{1,3})?
+commit;
+ then v_score:=greatest(-1000,least(1000,v_raw::numeric));v_has_score:=true;end if;
+ if coalesce(v_template->'modifierRules'->>'base','')~'^[0-9]{1,3}
+commit;
+ then v_base:=least(100,(v_template->'modifierRules'->>'base')::numeric);end if;
+ if coalesce(v_template->'modifierRules'->>'step','')~'^[1-9][0-9]?
+commit;
+ then v_step:=least(20,(v_template->'modifierRules'->>'step')::numeric);end if;
+ v_bonus:=case when v_combat.initiative_mode='modifier'
+  then case when v_has_score then floor((v_score-v_base)/v_step)::integer else 0 end
+  else round(v_score)::integer end;
+ v_bonus:=greatest(-500,least(500,v_bonus));
+ v_nat:=floor(random()*20)::integer+1;
+ v_total:=v_nat+v_bonus;
+ update public.map_combat_entries
+ set die_roll=v_nat,modifier=v_bonus,score=v_total where entry_id=p_entry;
+ -- Use the existing dice-chat presentation, not a client-selected number.
+ v_result:=jsonb_build_object('expression','1d20'||case when v_bonus>=0 then '+' else '' end||v_bonus::text,
+  'dice',jsonb_build_array(v_nat),'modifier',v_bonus,'total',v_total);
+ insert into public.chat_messages(campaign_id,user_id,map_id,body,kind,result)
+ values(v_combat.campaign_id,auth.uid(),p_map,
+  'Initiative · '||case when coalesce(v_token.visible,false)
+   and not exists(select 1 from forge_visibility.map_rules r
+    where r.map_id=p_map and r.fog_enforced)
+   then left(coalesce(nullif(v_token.name,''),'Combatant'),60)
+   else 'Unknown combatant' end,
+  'roll',v_result);
+ -- Before the first turn, automatically rank rolled combatants while keeping
+ -- unresolved entries last; the DM can re-sort manually during combat later.
+ if v_combat.current_entry_id is null then
+  with ranked as (
+   select entry_id,row_number() over(order by score desc nulls last,sort_index,entry_id)-1 as idx
+   from public.map_combat_entries where map_id=p_map
+  )
+  update public.map_combat_entries e set sort_index=r.idx from ranked r
+   where e.entry_id=r.entry_id;
+  if not exists(select 1 from public.map_combat_entries where map_id=p_map and score is null) then
+   update public.map_combats set current_entry_id=(
+    select entry_id from public.map_combat_entries where map_id=p_map
+     order by sort_index,entry_id limit 1) where map_id=p_map;
+  end if;
+ end if;
+ perform public.combat_publish(p_map);
+ return jsonb_build_object('natural',v_nat,'bonus',v_bonus,'total',v_total);
+end $function$;
+
+-- Storage signing must not permit guessing a hidden NPC artwork path.
+-- Previously every campaign member could sign ANY tabletop-artwork file.
+drop policy if exists "campaign members access artwork" on storage.objects;
+create policy "artwork only for dm owned characters and observed map tokens"
+ on storage.objects for select to authenticated using (
+  bucket_id='tabletop-artwork'
+  and exists(
+   select 1 from public.campaigns c
+   where c.id::text=split_part(name,'/',1)
+    and public.is_campaign_member(c.id)
+    and (
+     public.is_campaign_dm(c.id)
+     or exists(
+      select 1 from public.characters ch
+      where ch.campaign_id=c.id and ch.user_id=auth.uid()
+       and (ch.portrait_path=storage.objects.name or ch.token_path=storage.objects.name)
+     )
+     or exists(
+      select 1 from public.map_tokens t
+      where t.campaign_id=c.id and t.image_path=storage.objects.name
+       and public.can_observe_map_token(t.id)
+     )
+    )
+  )
+);
+
 -- No map geometry becomes player-readable.
 alter publication supabase_realtime add table public.map_visibility_ticks;
 commit;
