@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-08",
   "productionBaseSha": "8f60b1bb4cebc21d039fab040ab30f7e30513c52",
-  "releaseBranch": "stage/next-release-consolidated-2026-11-07",
+  "releaseBranch": "stage/next-release-consolidated-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -99,11 +99,11 @@
     },
     {
       "name": "stage/live-qa-light-collision-inventory-ui-2026-11-08",
-      "status": "included"
+      "status": "released"
     },
     {
       "name": "stage/interactive-pins-held-tools-2026-11-08",
-      "status": "included"
+      "status": "released"
     }
   ],
   "features": [
@@ -171,7 +171,7 @@
       "sources": [
         "stage/interactive-pins-held-tools-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "held-tools-and-carrier-light",
@@ -179,7 +179,7 @@
       "sources": [
         "stage/interactive-pins-held-tools-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     }
   ],
   "databaseDependencies": [
@@ -189,6 +189,20 @@
       "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "version": "20261107113749"
+    },
+    {
+      "version": "20261108013000",
+      "name": "inventory_lease_expiry_qualification",
+      "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
+      "status": "release-approved",
+      "mustApplyBeforeFrontend": true
+    },
+    {
+      "version": "20261108023000",
+      "name": "holdable_campaign_tools",
+      "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql",
+      "status": "release-approved",
+      "mustApplyBeforeFrontend": true
     }
   ],
   "edgeFunctionDependencies": [
@@ -206,56 +220,45 @@
     "Existing test campaigns only; do not create paid preview/development resources."
   ],
   "upcomingRelease": {
+    "productionBaseSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
+    "stagePolicy": "All currently approved features are bundled in the consolidated release; new work stages after this release.",
+    "outstandingBranches": []
+  },
+  "lastRelease": {
+    "name": "Consolidated Live QA and Interactive Pins / Held Tools",
+    "date": "2026-11-08",
     "productionBaseSha": "8f60b1bb4cebc21d039fab040ab30f7e30513c52",
-    "stagePolicy": "The one next authorized production release includes this PR and all earlier release-ready staging work. No production deployment during staging.",
-    "outstandingBranches": [
+    "approvedPullRequests": [
+      38,
+      39
+    ],
+    "status": "approved-for-production-release",
+    "frontendSourceSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
+    "databaseDependencies": [
       {
-        "name": "stage/live-qa-light-collision-inventory-ui-2026-11-08",
-        "pullRequest": 38,
-        "status": "staging-pending-live-test-rollout",
-        "scope": [
-          "occlusion-correct DM light masks and torch gradients",
-          "local-only collision-checked player preview movement",
-          "spell saving-throw on-success row",
-          "sheet and tool inventory lease SQL ambiguity fix",
-          "await new inventory item persistence before opening editor",
-          "right-click ruler contextmenu fallback",
-          "map environment marquee multi-selection and default token lock",
-          "smooth optimistic handout-pin relocation"
-        ],
-        "databaseDependencies": [
-          {
-            "version": "20261108013000",
-            "name": "inventory_lease_expiry_qualification",
-            "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
-            "status": "staged-not-applied",
-            "requiresApproval": true
-          }
-        ],
-        "paidInfrastructure": false
+        "version": "20261108013000",
+        "name": "inventory_lease_expiry_qualification",
+        "status": "release-approved",
+        "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql"
       },
       {
-        "name": "stage/interactive-pins-held-tools-2026-11-08",
-        "status": "staging-pending-live-test-rollout",
-        "scope": [
-          "on-map pin preview and safe HTTPS handout image rendering",
-          "pin selection, delete and existing handout editing",
-          "remove redundant published map rule text",
-          "holdable tool flag, carrier attachment and torch light following token",
-          "held tools listed with drop action in token Quick Adjust"
-        ],
-        "databaseDependencies": [
-          {
-            "version": "20261108023000",
-            "name": "holdable_campaign_tools",
-            "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql",
-            "status": "staged-not-applied",
-            "requiresApproval": true
-          }
-        ],
-        "paidInfrastructure": false,
-        "pullRequest": 39
+        "version": "20261108023000",
+        "name": "holdable_campaign_tools",
+        "status": "release-approved",
+        "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql"
       }
     ]
-  }
+  },
+  "releaseHistory": [
+    {
+      "date": "2026-11-08",
+      "branch": "stage/next-release-consolidated-2026-11-08",
+      "sourceSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
+      "pullRequests": [
+        38,
+        39
+      ],
+      "description": "Combined light occlusion, preview collision, sheet lease fix, ruler/selection improvements, interactive pin previews and holdable torch tools; database dependencies coordinated before main merge."
+    }
+  ]
 }

@@ -10,18 +10,14 @@ test('audit migration manifest is documentary and keeps live records separate fr
  assert.equal(data.trackedFiles.length,data.counts.repositorySqlFiles);
  assert.match(data.warning,/Never run every repo migration/);
 });
-test('the next release is the current draft while previously deployed fog stays recorded',()=>{
+test('combined release records both approved drafts and compatible migration requirements',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.ok(ledger.branches.some(x=>
-  x.name==='stage/project-audit-correctness-optimization-2026-11-07'&&
-  x.status==='released'));
- const staged=ledger.upcomingRelease.outstandingBranches.find(x=>x.pullRequest===38);
- assert.ok(staged);
- assert.equal(staged.status,'staging-pending-live-test-rollout');
- assert.equal(staged.databaseDependencies.length,1);
- assert.equal(staged.databaseDependencies[0].status,'staged-not-applied');
- assert.equal(staged.databaseDependencies[0].requiresApproval,true);
- assert.match(staged.databaseDependencies[0].file,/inventory_lease_expiry_qualification\.sql$/);
+ assert.equal(ledger.releaseBranch,'stage/next-release-consolidated-2026-11-08');
+ assert.deepEqual(ledger.lastRelease.approvedPullRequests,[38,39]);
+ assert.equal(ledger.lastRelease.databaseDependencies.length,2);
+ assert.ok(ledger.lastRelease.databaseDependencies.every(item=>item.status==='release-approved'));
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,0);
+ assert.ok(ledger.branches.filter(x=>x.name.startsWith('stage/live-qa-light-')||x.name.startsWith('stage/interactive-pins-')).every(x=>x.status==='released'));
  const ci=read('.github/workflows/verify-staged.yml');
  assert.doesNotMatch(ci,/supabase db push|supabase migration up|vercel deploy/);
 });
