@@ -160,6 +160,7 @@ export default function TabletopApp(){
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),remoteToolExpiry=useRef(new Map()),latestMovementAccess=useRef({});
  const remoteMotion=useRef(null),observerRevisions=useRef(new Map());
+ const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
@@ -251,9 +252,21 @@ export default function TabletopApp(){
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user});
+ const queuePreviewFogRefresh=()=>{
+  const now=Date.now();
+  if(now-lastPreviewFogRefresh.current<250)return;
+  lastPreviewFogRefresh.current=now;
+  void fog.refresh();
+ };
+ latestPartyFogRefresh.current=()=>{
+  if(fog.frame?.enabled===true&&fog.frame.partyShared)
+   queuePreviewFogRefresh();
+ };
  const authorizedLights=useAuthorizedMapLights({
   db,mapId:selectedMap,userId:isDM?null:user,
-  revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision
+  revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision,
+  refreshNonce:fog.frame,
+  enabled:campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
  });
  const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=useCampaignPresence({
@@ -1007,6 +1020,7 @@ export default function TabletopApp(){
     else setRemoteToolPositions(markHidden);
    }else{
     remoteMotion.current?.previewRemote(visualId,payload.x,payload.y);
+    if(isToken)latestPartyFogRefresh.current?.();
     const clearHidden=prior=>{
      if(!prior[payload.id]?.hidden)return prior;
      const copy={...prior};delete copy[payload.id];return copy;
@@ -1058,8 +1072,10 @@ export default function TabletopApp(){
   void db.rpc('preview_map_motion',{
    p_map:selectedMap,p_kind:'token',p_piece:token.id,p_x:x,p_y:y,
    p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
-  }).then(({error})=>{
+  }).then(({data,error})=>{
    if(error)console.warn('Secure movement preview unavailable',error.message);
+   else if(data===true&&fog.frame?.enabled===true)
+    queuePreviewFogRefresh();
   }).catch(e=>console.warn('Secure movement preview unavailable',e));
  }
  function sendLiveToolMovement(placement,x,y,final=false){
