@@ -116,6 +116,10 @@
     {
       "name": "stage/seamless-multiplayer-token-movement-2026-11-08",
       "status": "included"
+    },
+    {
+      "name": "stage/universal-roll-hotbar-drag-2026-11-08",
+      "status": "included"
     }
   ],
   "features": [
@@ -272,6 +276,14 @@
         "stage/seamless-multiplayer-token-movement-2026-11-08"
       ],
       "status": "included"
+    },
+    {
+      "id": "universal-roll-button-hotbar-drag",
+      "description": "Drag all existing character, NPC, equipment weapon attack, spell/action, attribute save, proficiency, collection, combat initiative and saved macro roll buttons into personal hotbar slots. Hotbar replay preserves original action and uses current sheet/weapon values.",
+      "sources": [
+        "stage/universal-roll-hotbar-drag-2026-11-08"
+      ],
+      "status": "included"
     }
   ],
   "databaseDependencies": [
@@ -336,7 +348,8 @@
     "Fog-enabled movement previews cannot reveal tool/token coordinates; database collision remains authoritative.",
     "Existing test campaigns only; do not create paid preview/development resources.",
     "Macro quickcode helper is private, numeric-only, limited to an already authorized character/NPC macro source and keeps the strict server dice validator.",
-    "Movement fog presentation only reuses previously visible and explored artwork: authorized visible remains empty during RPC refresh; no hidden token or new unexplored content is revealed."
+    "Movement fog presentation only reuses previously visible and explored artwork: authorized visible remains empty during RPC refresh; no hidden token or new unexplored content is revealed.",
+    "Hotbar roll drag payloads carry only validated IDs/action references, never raw sensitive character sheet records; invoking sheet actions checks campaign and source ownership and weapon/spell/initiative RPCs keep server authorization."
   ],
   "upcomingRelease": {
     "productionBaseSha": "f5a5decaa0d6446bfe68f9d5e2bfa1ebb5f36e49",
@@ -388,6 +401,20 @@
             "requiresApproval": true
           }
         ],
+        "paidInfrastructure": false
+      },
+      {
+        "name": "stage/universal-roll-hotbar-drag-2026-11-08",
+        "status": "staged-pending-release",
+        "scope": [
+          "Drag any supported Roll/Attack button to an existing slot, replacing its contents",
+          "Weapon shortcuts retain dual attacks, damage and critical rules from server RPC",
+          "Generic sheet, attribute, proficiency and collection roll shortcuts recalculate from current authorized values",
+          "Spell buttons keep their chosen cast, attack, healing or damage mode",
+          "Combat initiative and saved macro Run buttons support hotbar dragging",
+          "Existing spell and macro hotbar assignments, in-slot reordering and removal continue to work"
+        ],
+        "databaseDependencies": [],
         "paidInfrastructure": false
       }
     ]
