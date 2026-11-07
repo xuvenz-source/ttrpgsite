@@ -8,7 +8,8 @@ const drawTools=[
  {id:'wall-pen',label:'Freehand pen'},
  {id:'door',label:'Place door'},
  {id:'window',label:'Place window'},
- {id:'light',label:'Place light'}
+ {id:'light',label:'Place light'},
+ {id:'pin',label:'Place handout pin'}
 ];
 const presets=[['solid','Solid wall'],['glass','Transparent wall'],
  ['invisible','Invisible barrier'],['one-way','One-way vision'],
@@ -25,7 +26,7 @@ function Check({title,value,onChange}){
   onChange={e=>onChange(e.target.checked)}/>{title}</label>;
 }
 export default function MapSettingPanel({map,environment,editor,onEditorChange,
- onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[]}){
+ onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],handouts=[]}){
  const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
  const selected=env.objects.find(o=>o.id===editor.selectedId);
  const updateEditor=change=>onEditorChange({...editor,...change});
@@ -93,6 +94,13 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      {presets.map(([value,label])=><option key={value} value={value}>{label}</option>)}
     </select></label>
    </>}
+   {editor.tool==='pin'&&<label>Handout
+    <select disabled={!canDraw||!handouts.length} value={editor.pinHandoutId||''}
+     onChange={e=>updateEditor({pinHandoutId:e.target.value})}>
+     <option value="">Select handout</option>
+     {handouts.map(h=><option value={h.id} key={h.id}>{h.title}</option>)}
+    </select>
+   </label>}
    {editor.tool==='light'&&<>
     <strong>New light defaults</strong>
     <NumberOption title="Bright radius (feet)" value={editor.lightBright??20}
