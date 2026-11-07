@@ -39,8 +39,8 @@ function number(value){
  const n=Number(value);
  return Number.isFinite(n)?n:null;
 }
-export function TokenMonitors({config,fields,preview=false,zoom=1}){
- const settings=normalizeConfig(config);
+export const TokenMonitors=React.memo(function TokenMonitors({config,fields,preview=false,zoom=1,normalized=false}){
+ const settings=normalized?config:normalizeConfig(config);
  if(!preview&&!fields)return null;
  const data=fields||{hp:14,hp_max:22,ac:16,elevation:25};
  const counters={};
@@ -74,4 +74,4 @@ export function TokenMonitors({config,fields,preview=false,zoom=1}){
     </div>;
   })}
  </div>;
-}
+});

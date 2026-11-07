@@ -12,6 +12,7 @@ const camp1='cc44cc26-f2c3-47e4-bb79-655021177102';
 const camp2='d1d7e2ac-a0cc-4cbf-8094-e492ffb1dfaf';
 const sidebar=readFileSync(new URL('../src/TabletopSidebar.jsx',import.meta.url),'utf8');
 const hook=readFileSync(new URL('../src/useSidebarMenus.js',import.meta.url),'utf8');
+const mapSettings=readFileSync(new URL('../src/MapSettingPanel.jsx',import.meta.url),'utf8');
 const migration=readFileSync(new URL('../supabase/migrations/20261107000100_sidebar_menu_preferences.sql',import.meta.url),'utf8');
 
 function fakeStorage(){
@@ -88,9 +89,10 @@ test('Units view uses persisted owner, sheet and NPC open states',()=>{
 });
 test('nested Settings and DM sections persist without losing tab state',()=>{
  for(const key of ['settings/ui','settings/keyboard','settings/macros',
-  'settings/hotbar','dm/bestiary','dm/maps','dm/calibration','dm/token',
+  'settings/hotbar','dm/bestiary','dm/maps','dm/map-setting','dm/token',
   'dm/quick','dm/status','dm/display','dm/distribute','dm/template','dm/invites'])
   assert.ok(sidebar.includes("menuKey={'"+key+"'}"),key);
+ assert.ok(mapSettings.includes('MapCalibration'));
  assert.ok(sidebar.includes('useSidebarMenus(db,user,activeCampaignId)'));
  assert.ok(sidebar.includes('open={sidebarMenuOpen(expanded,menuKey)}'));
  assert.ok(sidebar.includes('onMenuToggle(menuKey,event.currentTarget.open)'));

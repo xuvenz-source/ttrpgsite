@@ -2,14 +2,18 @@ name: Verify staged tabletop changes
 on:
   push:
     branches:
-      - feature/token-status-markers
-      - feature/compact-tabletop-ui
-      - feature/weapon-attack-cards
-      - stage/attribute-equipment-spell-cards
-      - stage/inventory-grid-item-tiles
-      - stage/account-settings-map-measurements
-      - stage/measurement-grid-snap-and-pins
+      - main
+      - 'stage/**'
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - 'stage/**'
   workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -25,7 +29,7 @@ jobs:
       - name: Install dependencies without publishing
         run: npm install --no-audit --no-fund
       - name: Run staged frontend unit tests
-        run: node --test tests/*.test.mjs
+        run: npm test
       - name: Validate Vite production build (no Vercel deployment)
         run: npm run build
       - name: Prepare Deno to type-check the staged account endpoint

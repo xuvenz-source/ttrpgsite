@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {campaignPresenceKey,onlineMemberIds,chatRowsForMap} from '../src/CampaignRealtime.js';
+import {CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from '../src/PerformanceScheduling.js';
 
 const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
 const sidebar=readFileSync(new URL('../src/TabletopSidebar.jsx',import.meta.url),'utf8');
@@ -45,8 +46,12 @@ test('independent roster subscriptions refresh member, sheet and display name da
 test('chat has a stable realtime channel, reconnect refetch and periodic recovery',()=>{
  assert.ok(main.includes("db.channel('vtt-chat-'+campaignId)"));
  assert.ok(main.includes("table:'chat_messages'"));
- assert.ok(main.includes("if(status==='SUBSCRIBED')void latestChatRefresh.current?.()"));
- assert.ok(main.includes("},4000)"));
+ assert.ok(main.includes("if(status==='SUBSCRIBED')reconcile.refreshNow()"));
+ assert.ok(main.includes("reconcile.setConnected(status==='SUBSCRIBED')"));
+ assert.equal(CHAT_RECONCILE_MS.fallback,4000);
+ assert.equal(CHAT_RECONCILE_MS.healthy,30000);
+ assert.equal(ROSTER_RECONCILE_MS.fallback,8000);
+ assert.equal(ROSTER_RECONCILE_MS.healthy,60000);
  assert.ok(main.includes('const request=++chatRequest.current'));
  assert.ok(main.includes('if(request===chatRequest.current)setMsgs(chatRowsForMap(rows,mapId))'));
  assert.ok(main.includes("document.addEventListener('visibilitychange',focus)"));
