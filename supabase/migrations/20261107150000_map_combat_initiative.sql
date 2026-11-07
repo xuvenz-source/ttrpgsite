@@ -106,6 +106,8 @@ begin
   (select count(*) from public.map_tokens t
    where t.id=any(p_tokens) and t.map_id=p_map and t.campaign_id=v_campaign)<>v_count
  then raise exception 'Choose between 1 and 60 unique tokens from this map';end if;
+ -- Serialize simultaneous Begin Combat requests for the same map.
+ perform pg_advisory_xact_lock(hashtextextended(p_map::text,17941));
  if exists(select 1 from public.map_combats where map_id=p_map and active)
  then raise exception 'End the current encounter before starting another';end if;
  insert into public.map_combats(map_id,campaign_id,active,round,initiative_field,
@@ -160,6 +162,7 @@ declare
  v_token public.map_tokens%rowtype;
  v_template jsonb;v_values jsonb:='{}'::jsonb;v_fallback jsonb;
  v_raw text;v_score numeric:=0;v_base numeric:=10;v_step numeric:=2;
+ v_has_score boolean:=false;
  v_bonus integer;v_nat integer;v_total integer;v_result jsonb;
  v_is_dm boolean;
 begin
@@ -198,13 +201,14 @@ begin
   v_raw:=v_values->v_combat.initiative_field->>'current';
  else v_raw:=v_values->>v_combat.initiative_field;end if;
  if coalesce(v_raw,'')~'^[-]?[0-9]{1,5}([.][0-9]{1,3})?$'
- then v_score:=greatest(-1000,least(1000,v_raw::numeric));end if;
+ then v_score:=greatest(-1000,least(1000,v_raw::numeric));v_has_score:=true;end if;
  if coalesce(v_template->'modifierRules'->>'base','')~'^[0-9]{1,3}$'
  then v_base:=least(100,(v_template->'modifierRules'->>'base')::numeric);end if;
  if coalesce(v_template->'modifierRules'->>'step','')~'^[1-9][0-9]?$'
  then v_step:=least(20,(v_template->'modifierRules'->>'step')::numeric);end if;
  v_bonus:=case when v_combat.initiative_mode='modifier'
-  then floor((v_score-v_base)/v_step)::integer else round(v_score)::integer end;
+  then case when v_has_score then floor((v_score-v_base)/v_step)::integer else 0 end
+  else round(v_score)::integer end;
  v_bonus:=greatest(-500,least(500,v_bonus));
  v_nat:=floor(random()*20)::integer+1;
  v_total:=v_nat+v_bonus;
@@ -274,7 +278,7 @@ begin
  then raise exception 'Active DM encounter required';end if;
  if p_action='end' then
   update public.map_combats set active=false,current_entry_id=null,round=0,
-   updated_at=now(),revision=revision+1 where map_id=p_map;
+   participants='[]'::jsonb,updated_at=now(),revision=revision+1 where map_id=p_map;
   return;
  elsif p_action='score' then
   if p_score is null or p_score not between -999 and 1999 then
