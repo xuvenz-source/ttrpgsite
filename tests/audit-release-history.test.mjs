@@ -17,7 +17,10 @@ test('combined release records both approved drafts and compatible migration req
  assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[43,44]);
  assert.equal(ledger.lastRelease.productionBaseSha,'fba25209757d2c55d3303ea6b0582b8d61b6632c');
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(
+  'stage/world-runtime-movement-collision-fog-2026-11-08'));
+ assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
+  feature.status==='in-progress'&&feature.releaseReady===false));
  for(const name of ['player_owned_token_artwork','macro_quickcode_resolution',
   'nonfog_token_movement_tick_optimization'])assert.ok(
    ledger.databaseDependencies.some(item=>item.name===name&&
