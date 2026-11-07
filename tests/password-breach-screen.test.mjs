@@ -15,7 +15,8 @@ test('pwned password range request sends only 5-character SHA-1 prefix and never
  });
  assert.equal(found,true);
  assert.equal(url,endpoint+'5BAA6');
- assert.equal(url.includes('password'),false);
+ assert.equal(new URL(url).pathname.includes('password'),false);
+ assert.equal(new URL(url).pathname.includes('1E4C9B93F3F0682250B6CF8331B7EE68FD8'),false);
  assert.equal(opts.method,'GET');
  assert.equal(opts.headers['Add-Padding'],'true');
  assert.equal(opts.headers['User-Agent'],'TabletopForge-Signup/1.0');
