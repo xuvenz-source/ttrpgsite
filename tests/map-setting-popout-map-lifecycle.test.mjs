@@ -25,7 +25,8 @@ test('map URLs remain identity-scoped and cached across tabs',()=>{
  assert.ok(main.includes("signedAssetStore.subscribe(db,'battlemap-assets'"));
  assert.ok(main.includes('},[maps,user]);'));
  assert.ok(urls.includes('if(e.url&&e.expires>now()+15000)notify(e.url)'));
- assert.ok(urls.includes('if(event===' )===false);
+ assert.ok(main.includes('setUrls(previous=>previous[m.id]===url?previous:'));
+ assert.ok(urls.includes('if(event===')===false);
 });
 test('DM sidebar can pop out without duplicating its live editor',()=>{
  assert.ok(sidebar.includes('onPopOutMapSetting'));
