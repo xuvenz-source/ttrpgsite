@@ -93,6 +93,11 @@ test('candidate SQL has protected DM templates, recipient ACL and sanitized map 
  assert.match(sql,/if not v_dm and not public\.can_view_campaign_map/);
  assert.match(sql,/revision bigint not null default 0/);
  assert.match(sql,/new\.revision:=old\.revision\+1/);
+ assert.match(sql,/campaign_tool_template_identity/);
+ assert.match(sql,/if tg_op='INSERT' then/);
+ assert.match(sql,/elsif new.owner_id is distinct from old.owner_id/);
+ assert.match(sql,/new.state->'lit' is not distinct from old.state->'lit'/);
+
  assert.doesNotMatch(sql,/jsonb_object_length\(/);
  assert.match(sql,/light_enabled boolean not null default false/);
 });
