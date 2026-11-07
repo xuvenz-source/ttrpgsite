@@ -1005,7 +1005,7 @@ export default function TabletopApp(){
     if(isToken)setRemoteTokenPositions(markHidden);
     else setRemoteToolPositions(markHidden);
    }else{
-    remoteMotion.current?.preview(visualId,payload.x,payload.y);
+    remoteMotion.current?.previewRemote(visualId,payload.x,payload.y);
     const clearHidden=prior=>{
      if(!prior[payload.id]?.hidden)return prior;
      const copy={...prior};delete copy[payload.id];return copy;
