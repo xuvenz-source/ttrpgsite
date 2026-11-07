@@ -74,3 +74,39 @@
  color:white;border-radius:7px;font-size:11px;pointer-events:none}
 .map-player-preview-label strong{font-size:12px}
 .map-player-preview-label span{color:#d2d7e2}
+
+/* Detachable DM map editor: compact, draggable and resizable like token windows. */
+.app .floating-window.floating-mapsetting{
+ width:min(365px,calc(100vw - 18px));
+ height:min(560px,calc(100dvh - 26px));
+ min-width:min(300px,calc(100vw - 12px));
+ min-height:235px;
+}
+.floating-window.floating-mapsetting>.floating-map-setting-content{
+ display:flex;flex-direction:column;overflow:hidden!important;
+ padding:9px 10px!important;min-height:0;
+}
+.floating-map-setting-content>.heading{
+ display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.floating-map-setting-content>.heading h2{
+ font-size:14px!important;margin:0;flex:1;
+}
+.floating-map-setting-content>.heading .map-setting-dock-button{
+ font-size:11px;padding:5px 9px;white-space:nowrap;
+}
+.map-setting-pop-body{
+ flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+ padding:2px 4px 8px 1px;
+}
+.map-setting-pop-body .map-setting-panel{gap:9px}
+.map-setting-window-actions{display:flex;justify-content:flex-end;margin-bottom:8px}
+.map-setting-window-actions button{padding:6px 10px;font-size:11px}
+.map-setting-docked-placeholder{display:flex;flex-direction:column;gap:8px;padding:8px 2px}
+.map-setting-docked-placeholder button{font-size:11px;padding:6px 10px}
+@media(max-width:750px){
+ .app .floating-window.floating-mapsetting{
+  width:min(355px,calc(100vw - 12px));
+  height:min(530px,calc(100dvh - 20px));
+ }
+}
