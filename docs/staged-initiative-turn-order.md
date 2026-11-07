@@ -49,3 +49,20 @@ This migration is versioned in GitHub **only**. It has not been applied to any p
 8. Reload and reconnect multiple clients, repeatedly advance turns, and verify no duplicate rolls, stale updates or incorrect round counts.
 9. Ensure mobile-width window controls, other draggable windows, dice chat, token dragging, Map setting and sidebar expansion are unchanged.
 10. Run `node --test tests/*.test.mjs`, `npm run build`, SQL integration checks and security advisors on **staging** before approval.
+
+
+## Release-preparation audit — 7 November 2026
+
+**Safe integration branch:** `stage/initiative-release-ready-2026-11-07` based directly on current `main` (`03cc8708`). This isolates the Initiative files from an obsolete staging base that omitted already-live Cloudflare CAPTCHA, authentication hardening, and Vercel CI-only deployment policies. Only Initiative-specific files are changed.
+
+**SQL syntax correction:** Both `combat_sync_token_change` and `combat_sync_deleted_entry` require `AS $$ ... END $$;` rather than an invalid single-dollar delimiter. The correction and a structural regression test are included.
+
+### Final sign-off blockers before production
+
+1. **Isolated Supabase rehearsal:** Provision a dedicated temporary Supabase development branch/project (may incur charges), apply `20261107150000_map_combat_initiative.sql`, run SQL advisor and verify no migration errors, data types and triggers. **Do not apply the untested migration to production just to unblock a frontend release.**
+2. **Authorization audit with distinct accounts:** Confirm anonymous, unrelated-campaign, normal member and DM capabilities for SELECT and every combat RPC. Ensure hidden NPC token IDs/names never appear in public rows, Realtime or chat. Verify visibility change, map reassignment and deletion trigger paths.
+3. **Multiplayer smoke testing:** At least 1 DM + 2 players, token ownership and initiative, NPC bulk rolls, manual score, sorting, round boundaries, private maps, reconnection, closed pop-up persistence, encounter end/restart. Confirm dice-chat formatting.
+4. **Merge sequence:** After the isolated DB+browser checks pass, merge the clean Initiative pull request based on `main` (not old PR #10). Apply the approved SQL migration to production **before** deploying the combat frontend so RPCs and tables exist. Verify RLS and inspect advisors. Then release the tested Git SHA to Vercel production once its deployment quota allows.
+5. **Rollback:** An application-only rollback does not remove the combat schema. Keep new tables/RPCs dormant if frontend rollback is needed; avoid dropping tables and discarding encounter data. Database changes should be additive and compatible with the existing application.
+
+**What CI guarantees:** Node regression tests and Vite/Deno build syntax. It cannot by itself guarantee runtime PostgreSQL migration success, connected-player permissions or production network performance.
