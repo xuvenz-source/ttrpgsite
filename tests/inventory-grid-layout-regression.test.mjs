@@ -1,10 +1,11 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gridLayout} from '../src/InventoryMath.js';
 
 const inventory=readFileSync(new URL('../src/InventoryPanel.jsx',import.meta.url),'utf8');
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const css=readAppStyles();
 
 test('grid inventory panel and fixed-cell grid do not share the same display class',()=>{
  assert.ok(inventory.includes("className={'inventory-panel inventory-'+mode}"));

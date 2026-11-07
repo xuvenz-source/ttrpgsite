@@ -1,3 +1,4 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -6,7 +7,7 @@ import {CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from '../src/PerformanceSchedulin
 
 const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const sidebar=readFileSync(new URL('../src/TabletopSidebar.jsx',import.meta.url),'utf8');
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const css=readAppStyles();
 
 test('campaign-scoped presence keys are opaque, stable and never account IDs',async()=>{
  const camp='16268cf1-4653-4a26-990f-65e841e9e779';

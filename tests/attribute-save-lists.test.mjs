@@ -1,3 +1,4 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -62,7 +63,7 @@ test('reusable lists and new fields survive template export / import unchanged',
 test('weapon and spell UI retains server roll fields and compact styling',()=>{
  const equipment=readFileSync(new URL('../src/SheetEquipment.jsx',import.meta.url),'utf8');
  const spell=readFileSync(new URL('../src/SpellChatCard.jsx',import.meta.url),'utf8');
- const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+ const css=readAppStyles();
  for(const key of ['magic','attackBonus','damageBonus','statField','statMode','critDice','critOn','useStatForDamage'])
   assert.ok(equipment.includes(key),key+' must remain editable for server rolls');
  assert.ok(spell.includes('MacroChatCard'));

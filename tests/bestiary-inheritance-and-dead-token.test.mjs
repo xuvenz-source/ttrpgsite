@@ -1,3 +1,4 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -18,7 +19,7 @@ test('Dead is a normal shared status, selectable through Quick Adjust',()=>{
 
 test('Dead status tints the full token for all viewers without obscuring badges or movement',()=>{
  const app=(source('main.jsx')+source('TabletopApp.jsx')+source('BattlemapBoard.jsx')+source('SheetTemplateDesigner.jsx'));
- const css=source('style.css');
+ const css=readAppStyles();
  assert.ok(app.includes("effect.id==='dead')?' token-dead'"));
  assert.ok(app.includes('<span className="token-dead-overlay" aria-hidden="true"/>'));
  assert.ok(app.includes("normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')"));

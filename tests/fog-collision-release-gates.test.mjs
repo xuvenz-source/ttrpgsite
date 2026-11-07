@@ -1,3 +1,4 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -28,7 +29,7 @@ test('fog overlay is fail-closed and wired to authorized player snapshots',()=>{
  assert.match(overlay,/normalizeAuthorizedFogFrame\(frame,mapId\)/);
  assert.match(overlay,/if\(!sanitized\)/);
  assert.match(overlay,/fillStyle='#040914'/);
- assert.match(source('src/style.css'),/\.map-fog-overlay\{[^}]*pointer-events:none/);
+ assert.match(readAppStyles(),/\.map-fog-overlay\{[^}]*pointer-events:none/);
  assert.match(board,/import MapFogOverlay from/);
  assert.match(board,/!isDM&&<MapFogOverlay map=\{map\}/);
  assert.match(board,/fogFrame=\{fog.frame\}/);

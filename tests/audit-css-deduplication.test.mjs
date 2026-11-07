@@ -1,7 +1,8 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const css=readAppStyles();
 const occurrences=string=>css.split(string).length-1;
 test('Units subtab base and selected colors each have only one canonical rule',()=>{
  assert.equal(occurrences('.units-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))'),1);
