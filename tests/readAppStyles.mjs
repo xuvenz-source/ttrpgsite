@@ -5,5 +5,5 @@ export function readAppStyles(){
  const imports=[...manifest.matchAll(/^@import '\.\/styles\/([^']+\.css)';$/gm)];
  if(!imports.length)throw Error('No CSS feature modules declared');
  return imports.map(([,file])=>readFileSync(
-  new URL('../src/styles/'+file,import.meta.url),'utf8')).join('\n');
+  new URL('../src/styles/'+file,import.meta.url),'utf8')).join('');
 }
