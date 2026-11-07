@@ -191,3 +191,23 @@ do $publication$ begin
   alter publication supabase_realtime add table public.campaign_tool_item_leases;
  end if;
 end $publication$;
+
+-- A direct PostgREST UPDATE(state=...) must never bypass the item lease RPC.
+-- Run this as SECURITY INVOKER: CURRENT_USER must remain 'authenticated'
+-- for direct API writes, while security-definer RPC item mutations run with
+-- the trusted function owner's role. This does not block coordinate moves.
+create or replace function public.reject_direct_tool_inventory_overwrite()
+returns trigger language plpgsql security invoker set search_path='' as $guard$
+begin
+ if current_user='authenticated'
+  and new.state->'items' is distinct from old.state->'items' then
+  raise exception 'Collaborative inventory items must be edited individually';
+ end if;
+ return new;
+end $guard$;
+revoke all on function public.reject_direct_tool_inventory_overwrite()
+ from public,anon,authenticated;
+drop trigger if exists campaign_tool_items_rpc_only on public.campaign_tool_issues;
+create trigger campaign_tool_items_rpc_only
+ before update on public.campaign_tool_issues
+ for each row execute function public.reject_direct_tool_inventory_overwrite();

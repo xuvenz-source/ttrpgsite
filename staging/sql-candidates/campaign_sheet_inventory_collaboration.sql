@@ -315,3 +315,49 @@ do $publication$ begin
   alter publication supabase_realtime add table public.npc_templates;
  end if;
 end $publication$;
+
+-- Reject legacy direct UPDATE(field_values/npc_values) requests that change
+-- an Inventory field. Noninventory attributes still work, and authorised
+-- SECURITY DEFINER item RPCs can merge a single claimed object atomically.
+create or replace function public.reject_direct_sheet_inventory_overwrite()
+returns trigger language plpgsql security invoker set search_path='' as $guard$
+declare old_values jsonb;new_values jsonb;field_record record;
+begin
+ if current_user<>'authenticated' then return new;end if;
+ if tg_table_name='characters' or tg_table_name='npc_templates' then
+  old_values:=coalesce(old.field_values,'{}'::jsonb);
+  new_values:=coalesce(new.field_values,'{}'::jsonb);
+ elsif tg_table_name='map_tokens' then
+  old_values:=coalesce(old.npc_values,'{}'::jsonb);
+  new_values:=coalesce(new.npc_values,'{}'::jsonb);
+ else return new;end if;
+ if old_values is not distinct from new_values then return new;end if;
+ for field_record in
+  select f.value->>'id' as id
+  from public.campaigns c
+  cross join lateral jsonb_array_elements(
+   coalesce(c.sheet_template->'tabs','[]'::jsonb)) as t(value)
+  cross join lateral jsonb_array_elements(
+   coalesce(t.value->'fields','[]'::jsonb)) as f(value)
+  where c.id=new.campaign_id and f.value->>'type'='inventory'
+ loop
+  if old_values->field_record.id is distinct from new_values->field_record.id then
+   raise exception 'Collaborative inventory items must be edited individually';
+  end if;
+ end loop;
+ return new;
+end $guard$;
+revoke all on function public.reject_direct_sheet_inventory_overwrite()
+ from public,anon,authenticated;
+drop trigger if exists character_sheet_items_rpc_only on public.characters;
+create trigger character_sheet_items_rpc_only
+ before update on public.characters for each row
+ execute function public.reject_direct_sheet_inventory_overwrite();
+drop trigger if exists npc_template_sheet_items_rpc_only on public.npc_templates;
+create trigger npc_template_sheet_items_rpc_only
+ before update on public.npc_templates for each row
+ execute function public.reject_direct_sheet_inventory_overwrite();
+drop trigger if exists npc_token_sheet_items_rpc_only on public.map_tokens;
+create trigger npc_token_sheet_items_rpc_only
+ before update on public.map_tokens for each row
+ execute function public.reject_direct_sheet_inventory_overwrite();
