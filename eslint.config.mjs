@@ -18,6 +18,12 @@ export default [{
   'src/useMapCombat.js',
   'src/useAuthorizedMapFog.js',
   'src/QueuedWrites.js',
+  'src/TabletopApp.jsx',
+  'src/BattlemapBoard.jsx',
+  'src/SheetTemplateDesigner.jsx',
+  'src/AppBoundaries.jsx',
+  'src/TabletopSheetDefaults.js',
+  'src/main.jsx',
   'src/LiveMovementPreview.js',
   'src/LiveTokenMovement.js',
   'src/LiveToolMovement.js'
