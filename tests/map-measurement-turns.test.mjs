@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {addLineTurn,shouldBendLineOnRightPress,MAX_LINE_TURNS,FEET_PER_CELL,measurementGeometry,
+import {addLineTurn,shouldBendLineOnRightPress,shouldBendLineOnKeyPress,MAX_LINE_TURNS,FEET_PER_CELL,measurementGeometry,
  liveMeasurementPayload,validMeasurement,acceptMeasurementEvent,
  applyMeasurementEventToVisible} from '../src/MapMeasurements.js';
 
@@ -84,4 +84,22 @@ test('board keeps right-drag pin but uses primary+secondary chord to bend line',
  assert.ok(source.includes("window.addEventListener('mouseup',onMouseUp,true)"));
  assert.ok(overlay.includes('g.path.map(p=>p.x'));
  assert.ok(overlay.includes('g.via.map((p,i)'));
+});
+
+test('R inserts another waypoint while a left-drag line is active',()=>{
+ const drag={sourceButton:0,pinned:false,measure:{tool:'line',start:point(.5,.5),
+  end:point(2.5,.5)}};
+ assert.equal(shouldBendLineOnKeyPress(drag,'r'),true);
+ assert.equal(shouldBendLineOnKeyPress(drag,'R'),true);
+ assert.equal(shouldBendLineOnKeyPress(drag,'r',true),false);
+ assert.equal(shouldBendLineOnKeyPress({...drag,pinned:true},'r'),false);
+ assert.equal(shouldBendLineOnKeyPress({...drag,measure:{tool:'cone'}},'r'),false);
+ const first=addLineTurn(drag.measure,drag.measure.end);
+ const bent={...first,end:point(2.5,4.5)};
+ assert.equal(measurementGeometry(bent).feet,30);
+ const app=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const toolbar=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
+ assert.match(app,/shouldBendLineOnKeyPress\(current,e\.key,e\.repeat\)/);
+ assert.match(app,/addLineTurn\(current\.measure,current\.measure\.end\)/);
+ assert.match(toolbar,/press R while holding left/);
 });
