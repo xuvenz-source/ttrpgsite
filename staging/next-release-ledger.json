@@ -194,15 +194,17 @@
       "version": "20261108013000",
       "name": "inventory_lease_expiry_qualification",
       "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
-      "status": "release-approved",
-      "mustApplyBeforeFrontend": true
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "appliedVersion": "20261107150259"
     },
     {
       "version": "20261108023000",
       "name": "holdable_campaign_tools",
       "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql",
-      "status": "release-approved",
-      "mustApplyBeforeFrontend": true
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "appliedVersion": "20261107150305"
     }
   ],
   "edgeFunctionDependencies": [
@@ -232,22 +234,25 @@
       38,
       39
     ],
-    "status": "approved-for-production-release",
+    "status": "backend-applied-ready-for-frontend-release",
     "frontendSourceSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
     "databaseDependencies": [
       {
         "version": "20261108013000",
         "name": "inventory_lease_expiry_qualification",
-        "status": "release-approved",
-        "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql"
+        "status": "applied-production",
+        "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
+        "appliedVersion": "20261107150259"
       },
       {
         "version": "20261108023000",
         "name": "holdable_campaign_tools",
-        "status": "release-approved",
-        "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql"
+        "status": "applied-production",
+        "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql",
+        "appliedVersion": "20261107150305"
       }
-    ]
+    ],
+    "migrationHistoryNote": "Supabase applied these two migrations under generated database versions different from the filename timestamps; only names and actual appliedVersion identify live records. Do not bulk replay all repository migrations."
   },
   "releaseHistory": [
     {

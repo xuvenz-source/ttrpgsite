@@ -15,7 +15,7 @@ test('combined release records both approved drafts and compatible migration req
  assert.equal(ledger.releaseBranch,'stage/next-release-consolidated-2026-11-08');
  assert.deepEqual(ledger.lastRelease.approvedPullRequests,[38,39]);
  assert.equal(ledger.lastRelease.databaseDependencies.length,2);
- assert.ok(ledger.lastRelease.databaseDependencies.every(item=>item.status==='release-approved'));
+ assert.ok(ledger.lastRelease.databaseDependencies.every(item=>item.status==='applied-production'&&item.appliedVersion));
  assert.equal(ledger.upcomingRelease.outstandingBranches.length,0);
  assert.ok(ledger.branches.filter(x=>x.name.startsWith('stage/live-qa-light-')||x.name.startsWith('stage/interactive-pins-')).every(x=>x.status==='released'));
  const ci=read('.github/workflows/verify-staged.yml');
