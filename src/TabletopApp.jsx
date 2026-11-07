@@ -131,7 +131,7 @@ export default function TabletopApp(){
  const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
-  lockLight:false,lockBackground:true,lockTokens:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
+  lockLight:false,lockBackground:true,lockTokens:true,ignoreCollision:false,snap:false,preset:'solid',previewing:false,previewTokenId:'',
   selectedId:null,selectedIds:[],selectedPinId:null,pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
@@ -2086,7 +2086,8 @@ export default function TabletopApp(){
   let pending=movementPending.current.get(id);
   if(!pending||pending.mapId!==selectedMap||pending.campaignId!==activeId){
    pending={mapId:selectedMap,campaignId:activeId,
-    x:Number(token.x),y:Number(token.y),saving:false,confirmed:false};
+    x:Number(token.x),y:Number(token.y),baseX:Number(token.x),baseY:Number(token.y),
+    override:isDM&&mapSettingEditor.ignoreCollision===true,saving:false,confirmed:false};
    movementPending.current.set(id,pending);
   }
   if(pending.x===x&&pending.y===y)return;
@@ -2103,12 +2104,20 @@ export default function TabletopApp(){
    // saves, skip obsolete intermediary tiles and save the newest destination.
    while(movementPending.current.get(id)===pending){
     const {x,y}=pending;
-    const {data,error}=await db.from('map_tokens')
-     .update({x,y}).eq('id',id)
-     .eq('campaign_id',pending.campaignId).eq('map_id',pending.mapId)
-     .select('id,x,y').maybeSingle();
+    const response=pending.override?
+     await db.rpc('move_map_group',{
+      p_map:pending.mapId,p_token_ids:[id],p_tool_issue_ids:[],
+      p_dx:x-pending.baseX,p_dy:y-pending.baseY,p_ignore_collision:true
+     }):
+     await db.from('map_tokens')
+      .update({x,y}).eq('id',id)
+      .eq('campaign_id',pending.campaignId).eq('map_id',pending.mapId)
+      .select('id,x,y').maybeSingle();
+    const {data,error}=response;
+    const confirmed=pending.override?data?.tokens?.find(t=>t.id===id):data;
     if(error)throw error;
-    if(!data)throw Error('Movement was not permitted for this token.');
+    if(!confirmed)throw Error('Movement was not permitted for this token.');
+    pending.baseX=Number(confirmed.x);pending.baseY=Number(confirmed.y);
     if(pending.x!==x||pending.y!==y)continue;
     // Server acknowledged the destination; keep drawing it until a fresh
     // authoritative snapshot actually contains it (no post-ack rubberband).
@@ -2132,6 +2141,60 @@ export default function TabletopApp(){
     }
    }
   }finally{pending.saving=false}
+ }
+ async function moveGroup({tokens:members=[],tools=[],dx,dy}){
+  const mapId=selectedMap,campaignId=activeId;
+  if(!mapId||!campaignId||!Number.isSafeInteger(dx)||
+    !Number.isSafeInteger(dy))return;
+  if(!members.length&&!tools.length)return;
+  if(isDM&&mapSettingEditor.previewing)return;
+  const collisionOverride=isDM&&mapSettingEditor.ignoreCollision===true;
+  // Do not race a pending single-token save with a relative group delta.
+  if(members.some(t=>movementPending.current.has(t.id))){
+   fail(Error('Another movement is still being confirmed. Try again.'));
+   return;
+  }
+  const pending=new Map();
+  for(const member of members){
+   const item={mapId,campaignId,x:Number(member.x)+dx,
+    y:Number(member.y)+dy,saving:true,confirmed:false,group:true};
+   pending.set(member.id,item);
+   movementPending.current.set(member.id,item);
+  }
+  setTokens(rows=>rows.map(t=>{
+   const item=pending.get(t.id);
+   return item?{...t,x:item.x,y:item.y}:t;
+  }));
+  try{
+   const {data,error:moveError}=await db.rpc('move_map_group',{
+    p_map:mapId,p_token_ids:members.map(t=>t.id),
+    p_tool_issue_ids:tools.map(t=>t.issue_id),
+    p_dx:dx,p_dy:dy,p_ignore_collision:collisionOverride
+   });
+   if(moveError)throw moveError;
+   if(!data||!Array.isArray(data.tokens)||!Array.isArray(data.tools)||
+      data.tokens.length!==members.length||data.tools.length!==tools.length)
+    throw Error('The movement acknowledgement was incomplete.');
+   for(const [id,item] of pending){
+    if(movementPending.current.get(id)===item){
+     item.confirmed=true;
+     const row=data.tokens.find(t=>t.id===id);
+     if(row){item.x=Number(row.x);item.y=Number(row.y)}
+    }
+   }
+  }catch(e){
+   fail(e);
+   for(const [id,item] of pending)
+    if(movementPending.current.get(id)===item)movementPending.current.delete(id);
+   ++tokenRefreshSeq.current;
+   await Promise.all([refreshTokens(),campaignTools.refresh()]);
+   throw e;
+  }
+  // Refresh both the token and issued-tool projections before dropping the
+  // local optimistic group. SQL commits all rows or no rows.
+  await Promise.all([refreshTokens(),campaignTools.refresh()]);
+  for(const [id,item] of pending)
+   if(movementPending.current.get(id)===item)movementPending.current.delete(id);
  }
  function moveSelectedByKey(dx,dy){
   if(isDM&&mapSettingEditor.previewing)return;
@@ -2295,7 +2358,7 @@ export default function TabletopApp(){
      const selectedIds=options.additive?[...new Set([...current,...incoming])]:incoming;
      return {...old,selectedPinId:null,selectedId:selectedIds[0]||null,selectedIds};
     })}
-   user={user} isDM={isDM} move={moveToken} remove={removeToken}
+   user={user} isDM={isDM} move={moveToken} moveGroup={moveGroup} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolPickUp={pickUpIssuedToolOnMap}
