@@ -170,7 +170,7 @@ declare m record;scene jsonb;enabled boolean;party boolean;viewer record;
  sx double precision;sy double precision;val jsonb;dx double precision;dy double precision;
 begin
  if actor is null or actor is distinct from auth.uid() then return false;end if;
- select campaign_id,width, height,grid_size into m from public.battle_maps where id=p_map;
+ select bm.campaign_id,bm.width,bm.height,bm.grid_size into m from public.battle_maps bm where bm.id=p_map;
  if not found or not public.can_view_campaign_map(m.campaign_id,p_map) then return false;end if;
  if not exists(select 1 from forge_visibility.map_rules r
   where r.map_id=p_map and r.fog_enforced) then return true;end if;
@@ -280,7 +280,7 @@ begin
  if not exists(select 1 from forge_visibility.map_rules
   where map_id=new.map_id and collision_enforced) then return new;end if;
  select live into scene from public.map_environments where map_id=new.map_id;
- select width,height,grid_size into m from public.battle_maps where id=new.map_id;
+ select bm.width,bm.height,bm.grid_size into m from public.battle_maps bm where bm.id=new.map_id;
  if scene is null or jsonb_typeof(scene->'objects')<>'array' or m.grid_size<=0
  then raise exception 'Published collision configuration unavailable';end if;
  width:=floor(m.width/m.grid_size);height:=floor(m.height/m.grid_size);
@@ -333,7 +333,7 @@ begin
  if not exists(select 1 from forge_visibility.map_rules r where r.map_id=new.map_id
   and r.collision_enforced) then return new;end if;
  select live into scene from public.map_environments where map_id=new.map_id;
- select width,height,grid_size into m from public.battle_maps where id=new.map_id;
+ select bm.width,bm.height,bm.grid_size into m from public.battle_maps bm where bm.id=new.map_id;
  if scene is null or jsonb_typeof(scene->'objects')<>'array' or m.grid_size<=0
  then raise exception 'Published collision configuration unavailable';end if;
  span:=case when new.kind='mount' then (new.config->>'span')::double precision else 1.0 end;
@@ -510,7 +510,7 @@ declare
  seen jsonb:='[]'::jsonb;memory jsonb:='[]'::jsonb;
 begin
  if actor is null then raise exception 'Sign in first';end if;
- select campaign_id,width,height,grid_size into m from public.battle_maps where id=p_map;
+ select bm.campaign_id,bm.width,bm.height,bm.grid_size into m from public.battle_maps bm where bm.id=p_map;
  if not found or not public.can_view_campaign_map(m.campaign_id,p_map)
  then raise exception 'Map unavailable';end if;
  if m.grid_size<=0 then raise exception 'Invalid map grid';end if;
@@ -588,7 +588,7 @@ declare m record;scene jsonb;object jsonb;points jsonb;point jsonb;
  width integer;height integer;count_points integer:=0;
  fog_enabled boolean;collision_enabled boolean;rev bigint;
 begin
- select campaign_id,width,height,grid_size into m from public.battle_maps where id=p_map;
+ select bm.campaign_id,bm.width,bm.height,bm.grid_size into m from public.battle_maps bm where bm.id=p_map;
  if not found or not public.is_campaign_dm(m.campaign_id)
  then raise exception 'DM access required';end if;
  if p_action not in ('publish','disable','reset_exploration')
