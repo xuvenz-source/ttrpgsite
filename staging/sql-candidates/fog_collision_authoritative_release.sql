@@ -437,7 +437,7 @@ create or replace function public.get_authorized_map_fog(p_map uuid)
 returns jsonb language plpgsql volatile security definer set search_path='' as $$
 declare
  m record;scene jsonb;is_dm boolean;actor uuid:=auth.uid();
- fog_on boolean;shared boolean;rev bigint;w int;h int;
+ fog_on boolean;collision_on boolean;shared boolean;rev bigint;w int;h int;
  seen jsonb:='[]'::jsonb;memory jsonb:='[]'::jsonb;
 begin
  if actor is null then raise exception 'Sign in first';end if;
@@ -446,8 +446,8 @@ begin
  then raise exception 'Map unavailable';end if;
  if m.grid_size<=0 then raise exception 'Invalid map grid';end if;
  w:=floor(m.width/m.grid_size);h:=floor(m.height/m.grid_size);
- select r.fog_enforced into fog_on from forge_visibility.map_rules r where r.map_id=p_map;
- fog_on:=coalesce(fog_on,false);
+ select r.fog_enforced,r.collision_enforced into fog_on,collision_on from forge_visibility.map_rules r where r.map_id=p_map;
+ fog_on:=coalesce(fog_on,false);collision_on:=coalesce(collision_on,false);
  if fog_on and (w not between 1 and 128 or h not between 1 and 128)
  then raise exception 'Fog maps support at most 128 cells per axis';end if;
  if not fog_on then w:=greatest(1,least(128,w));h:=greatest(1,least(128,h));end if;
@@ -460,7 +460,7 @@ begin
  then raise exception 'Published fog unavailable';end if;
  if not fog_on or is_dm then
   return jsonb_build_object('mapId',p_map,'width',w,'height',h,
-   'revision',rev,'enabled',fog_on,'partyShared',shared,
+   'revision',rev,'enabled',fog_on,'collisionEnabled',collision_on,'partyShared',shared,
    'visible',seen,'explored',memory);
  end if;
  with sources as (
@@ -504,7 +504,7 @@ begin
    where map_id=p_map and user_id=actor;
  end if;
  return jsonb_build_object('mapId',p_map,'width',w,'height',h,
-  'revision',rev,'enabled',true,'partyShared',shared,
+  'revision',rev,'enabled',true,'collisionEnabled',collision_on,'partyShared',shared,
   'visible',seen,'explored',coalesce(memory,'[]'::jsonb));
 end $$;
 revoke all on function public.get_authorized_map_fog(uuid) from public,anon;
