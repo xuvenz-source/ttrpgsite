@@ -1,4 +1,5 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useMemo,useRef,useState} from 'react';
+import useSheetAutosave from './useSheetAutosave.js';
 import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
@@ -25,11 +26,27 @@ export default function CharacterEditor({
   token_path:record.token_path||null
  }),[record.id]);
  const [draft,setDraft]=useState(initial);
- const [baseline,setBaseline]=useState(initial);
- const [version,setVersion]=useState(record.updated_at);
+ const version=useRef(record.updated_at);
  const [activeTab,setActiveTab]=useState(template?.tabs?.[0]?.id||'main');
- const [saving,setSaving]=useState(false),[studio,setStudio]=useState(false),[error,setError]=useState('');
- const changed=JSON.stringify(draft)!==JSON.stringify(baseline);
+ const [studio,setStudio]=useState(false);
+ const persist=async snapshot=>{
+  if(!snapshot.name.trim())throw Error('Character name cannot be empty.');
+  const {data,error:dbError}=await db.from('characters')
+   .update({
+    name:snapshot.name.trim(),field_values:snapshot.field_values,
+    portrait_path:snapshot.portrait_path,token_path:snapshot.token_path
+   })
+   .eq('id',record.id).eq('campaign_id',campaignId)
+   .eq('updated_at',version.current)
+   .select('*').maybeSingle();
+  if(dbError)throw dbError;
+  if(!data)throw Error('This sheet changed in another window. Your edits were not overwritten; reopen the sheet to resolve the conflict.');
+  version.current=data.updated_at;
+  onSaved(data);
+ };
+ const {status,error,flush,hasPending}=useSheetAutosave({
+  value:draft,initialValue:initial,onSave:persist
+ });
  const tab=template?.tabs?.find(t=>t.id===activeTab)||template?.tabs?.[0];
 
  function editField(id,value){
@@ -39,54 +56,22 @@ export default function CharacterEditor({
    field_values:enrichSheetValues(template,{...prev.field_values,[id]:value})
   }));
  }
- function close(){
-  if(changed&&!confirm('Discard unsaved character sheet changes?'))return;
-  onClose();
- }
- async function save(keepOpen=false){
-  if(!draft.name.trim()||saving)throw Error('Cannot save an empty name or while another save is in progress.');
-  setSaving(true);setError('');
-  try{
-   const {data,error:dbError}=await db.from('characters')
-    .update({
-     name:draft.name.trim(),
-     field_values:draft.field_values,
-     portrait_path:draft.portrait_path,
-     token_path:draft.token_path
-    })
-    .eq('id',record.id)
-    .eq('campaign_id',campaignId)
-    .eq('updated_at',version)
-    .select('*')
-    .maybeSingle();
-   if(dbError)throw dbError;
-   if(!data)throw Error('This character was changed elsewhere while you were editing. Close and reopen its sheet to get the latest version; nothing was overwritten.');
-   onSaved(data);
-   setVersion(data.updated_at);
-   setBaseline({
-    name:data.name,field_values:structuredClone(data.field_values||{}),
-    portrait_path:data.portrait_path||null,token_path:data.token_path||null
-   });
-   if(!keepOpen)onClose();
-   return data;
-  }catch(e){
-   setError(e?.message||String(e));
-   if(keepOpen)throw e;
-   return null;
-  }finally{setSaving(false)}
+ async function close(){
+  try{await flush();onClose()}
+  catch{/* Draft remains open with a visible error for recovery. */}
  }
  async function castFromEditor(details){
-  if(changed)await save(true);
+  await flush();
   if(!onCastSpell)throw Error('Spell casting is not available.');
   return onCastSpell(details);
  }
  async function attackFromEditor(details){
-  if(changed)await save(true);
+  await flush();
   if(!onEquipmentAttack)throw Error('Weapon attacks are unavailable.');
   return onEquipmentAttack(details);
  }
  async function addFromEditor(details){
-  if(changed)await save(true);
+  await flush();
   if(!onAddSpellToHotbar)throw Error('Hotbar is not available.');
   return onAddSpellToHotbar(details);
  }
@@ -170,11 +155,8 @@ export default function CharacterEditor({
    </div>
    {error&&<p className="error alert" role="alert">{error}</p>}
    <div className="actions">
-    {changed&&<span className="muted small">Unsaved edits</span>}
-    <button className="secondary" type="button" onClick={close}>Cancel</button>
-    <button type="button" onClick={()=>save(false)} disabled={saving||!draft.name.trim()}>
-     {saving?'Saving…':'Save player character'}
-    </button>
+    <span className="muted small" role="status">{status}{hasPending?' · changes pending':''}</span>
+    <button className="secondary" type="button" onClick={()=>void close()}>Close</button>
    </div>
   </section>
  </FloatingWindow>
