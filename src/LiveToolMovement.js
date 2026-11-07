@@ -12,10 +12,12 @@ export function allowedToolMovementPreview(payload,mapId,placements,issued,membe
   return false;
  const p=(placements||[]).find(row=>row.issue_id===payload.id&&row.map_id===mapId);
  const issue=(issued||[]).find(row=>row.id===payload.id);
- if(!p||!issue)return false;
+ if(!p)return false;
  const dm=(members||[]).some(member=>member.user_id===payload.actor&&member.role==='dm');
  const member=(members||[]).some(member=>member.user_id===payload.actor);
- if(!member||!toolCanControl(issue,payload.actor,dm))return false;
+ // All viewers may trust a known campaign DM's movement of a public map
+ // placement; personal issue records are intentionally invisible to others.
+ if(!member||(!dm&&!toolCanControl(issue,payload.actor,false)))return false;
  return true;
 }
 export function canSendToolMovementPreview(issue,actor,isDM,mapId){

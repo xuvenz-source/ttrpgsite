@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TOOL_KINDS,DEFAULT_TOOL_CONFIG,normaliseToolConfig,
- toolInitialState,toolCanControl,toolInventoryField,toolLightRadius} from '../src/CampaignTools.js';
+ toolInitialState,toolCanControl,toolInventoryField,toolLightRadius,
+ toolMapProjection} from '../src/CampaignTools.js';
 
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const user='user-1',other='user-2';
@@ -64,10 +65,14 @@ test('battlemap renders tool tokens and light effects, with drag/drop and sheet 
  assert.match(app,/toolPlacements=\{campaignTools\.placed\}/);
  assert.match(app,/types\.includes\('application\/x-forge-tool'\)/);
  assert.match(app,/<CampaignToolMapLayer/);
- assert.match(app,/onMove=\{\(issueId,x,y\)=>onToolPlace/);
+ assert.match(app,/onToolPlace=\{placeIssuedToolOnMap\}/);
+ assert.match(app,/onTokenPointerDown=\{startToolDrag\}/);
+ assert.match(app,/onTokenPointerMove=\{\(e,p\)=>moveTokenDrag/);
  assert.match(layer,/lightOn=p\.kind==='torch'&&p\.light_enabled/);
  assert.match(layer,/onDoubleClick=\{e=>\{if\(own\)/);
- assert.match(layer,/Math\.round\(d\.x\+\(e\.clientX-d\.startX\)\/cell\)/);
+ assert.match(layer,/onTokenPointerDown\?\.\(e,p,canMove\)/);
+ assert.match(layer,/remotePositions\[p.issue_id\]/);
+ assert.match(app,/groupToolFootprint/);
 });
 test('issued sheets reuse the existing grid/list inventory editor and mount stats',()=>{
  const sheet=source('src/CampaignToolSheet.jsx');

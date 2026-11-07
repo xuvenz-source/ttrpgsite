@@ -81,6 +81,7 @@ test('board keeps right-drag pin but uses primary+secondary chord to bend line',
  assert.ok(source.includes("if(!cancel&&e.button===2&&current.sourceButton===0)return"));
  assert.ok(source.includes("onMeasurementPreview?.(next,'preview',true)"));
  assert.ok(source.includes("window.addEventListener('mousedown',onMouseDown,true)"));
+ assert.ok(source.includes("if(e.button===2&&measureDrag.current)pinCurrentMeasurementOnRightClick(e)"));
  assert.ok(source.includes("window.addEventListener('mouseup',onMouseUp,true)"));
  assert.ok(overlay.includes('g.path.map(p=>p.x'));
  assert.ok(overlay.includes('g.via.map((p,i)'));
