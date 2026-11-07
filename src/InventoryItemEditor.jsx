@@ -1,4 +1,4 @@
-import React,{useMemo,useState} from 'react';
+import React,{useEffect,useMemo,useRef,useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
 import {itemSize,rowValue} from './InventoryMath.js';
 
@@ -44,27 +44,41 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
  const [draft,setDraft]=useState(initial);
  const [error,setError]=useState('');
  const [saving,setSaving]=useState(false);
- const changed=JSON.stringify(draft)!==JSON.stringify(initial);
+ const saved=useRef(JSON.stringify(initial));
  const update=(key,value)=>{setDraft(s=>({...s,[key]:value}));setError('')};
  const title=item?'Item details':'Create inventory item';
+ const validate=()=>{
+  if(!draft.Item.trim())return 'Give the item a name.';
+  if(!Number.isFinite(Number(draft.Qty))||Number(draft.Qty)<0||
+    !Number.isFinite(Number(draft.Weight))||Number(draft.Weight)<0)
+   return 'Quantity and weight must be zero or positive numbers.';
+  return '';
+ };
+ function persist(){
+  const failure=validate();
+  if(failure){setError(failure);return false}
+  const next={...draft,Item:draft.Item.trim(),
+   gridW:bounded(draft.gridW,cols),gridH:bounded(draft.gridH,rows)};
+  if(JSON.stringify(next)===saved.current)return true;
+  try{
+   setSaving(true);
+   onSave(next,{keepOpen:true});
+   saved.current=JSON.stringify(next);
+   setError('');setSaving(false);
+   return true;
+  }catch(e){setError(e?.message||String(e));setSaving(false);return false}
+ }
+ useEffect(()=>{
+  if(JSON.stringify(draft)===saved.current)return;
+  if(!draft.Item.trim())return;
+  const timer=setTimeout(()=>persist(),280);
+  return()=>clearTimeout(timer);
+ },[draft]);
  function close(){
-  if(changed&&!window.confirm('Discard unsaved item changes?'))return;
+  if(JSON.stringify(draft)!==saved.current&&!persist())return;
   onClose();
  }
- function submit(e){
-  e.preventDefault();
-  if(saving)return;
-  if(!draft.Item.trim()){setError('Give the item a name.');return}
-  if(!Number.isFinite(Number(draft.Qty))||Number(draft.Qty)<0||
-     !Number.isFinite(Number(draft.Weight))||Number(draft.Weight)<0){
-   setError('Quantity and weight must be zero or positive numbers.');return;
-  }
-  setSaving(true);
-  try{
-   onSave({...draft,Item:draft.Item.trim(),gridW:bounded(draft.gridW,cols),
-    gridH:bounded(draft.gridH,rows)});
-  }catch(e){setError(e?.message||String(e));setSaving(false)}
- }
+ function submit(e){e.preventDefault();persist()}
  function rotate(){
   const width=bounded(draft.gridW,cols),height=bounded(draft.gridH,rows);
   // Rotating must not silently shrink an item to make it fit the grid.
@@ -156,8 +170,9 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
        if(window.confirm('Permanently remove '+(draft.Item||'this item')+' from this inventory?'))
         onDelete();
       }}>Delete item</button>}
-     <button type="button" className="secondary" onClick={close}>Cancel</button>
-     <button type="submit" disabled={saving}>{saving?'Saving…':item?'Save item':'Create item'}</button>
+     <span className="muted tiny" role="status">
+      {saving?'Saving…':'Edits save automatically'}</span>
+     <button type="button" className="secondary" onClick={close}>Close</button>
     </div>
    </form>
   </section>

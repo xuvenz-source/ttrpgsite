@@ -1,4 +1,5 @@
-import React,{useEffect,useMemo,useState} from 'react';
+import React,{useMemo,useRef,useState} from 'react';
+import useSheetAutosave from './useSheetAutosave.js';
 import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
@@ -11,7 +12,7 @@ import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
-import InventoryPanel from './InventoryPanel.jsx';
+import SharedInventoryPanel from './SharedInventoryPanel.jsx';
 
 /** A DM can edit a player's persistent sheet, never just the token's temporary stats. */
 export default function CharacterEditor({
@@ -25,11 +26,32 @@ export default function CharacterEditor({
   token_path:record.token_path||null
  }),[record.id]);
  const [draft,setDraft]=useState(initial);
- const [baseline,setBaseline]=useState(initial);
- const [version,setVersion]=useState(record.updated_at);
+ const sent=useRef(initial);
  const [activeTab,setActiveTab]=useState(template?.tabs?.[0]?.id||'main');
- const [saving,setSaving]=useState(false),[studio,setStudio]=useState(false),[error,setError]=useState('');
- const changed=JSON.stringify(draft)!==JSON.stringify(baseline);
+ const [studio,setStudio]=useState(false);
+ const persist=async snapshot=>{
+  if(!snapshot.name.trim())throw Error('Character name cannot be empty.');
+  const patch=Object.fromEntries(Object.entries(snapshot.field_values)
+   .filter(([key,value])=>JSON.stringify(value)!==
+    JSON.stringify(sent.current.field_values?.[key])));
+  const meta={};
+  if(snapshot.name!==sent.current.name)meta.name=snapshot.name.trim();
+  if(snapshot.portrait_path!==sent.current.portrait_path)
+   meta.portrait_path=snapshot.portrait_path;
+  if(snapshot.token_path!==sent.current.token_path)
+   meta.token_path=snapshot.token_path;
+  const {data,error:dbError}=await db.rpc('patch_campaign_sheet_noninventory',{
+   p_campaign:campaignId,p_source:'character',p_source_id:record.id,
+   p_values:patch,p_meta:meta
+  });
+  if(dbError)throw dbError;
+  if(!data)throw Error('Character sheet could not be updated.');
+  sent.current=structuredClone(snapshot);
+  onSaved(data);
+ };
+ const {status,error,flush,hasPending}=useSheetAutosave({
+  value:draft,initialValue:initial,onSave:persist
+ });
  const tab=template?.tabs?.find(t=>t.id===activeTab)||template?.tabs?.[0];
 
  function editField(id,value){
@@ -39,54 +61,22 @@ export default function CharacterEditor({
    field_values:enrichSheetValues(template,{...prev.field_values,[id]:value})
   }));
  }
- function close(){
-  if(changed&&!confirm('Discard unsaved character sheet changes?'))return;
-  onClose();
- }
- async function save(keepOpen=false){
-  if(!draft.name.trim()||saving)throw Error('Cannot save an empty name or while another save is in progress.');
-  setSaving(true);setError('');
-  try{
-   const {data,error:dbError}=await db.from('characters')
-    .update({
-     name:draft.name.trim(),
-     field_values:draft.field_values,
-     portrait_path:draft.portrait_path,
-     token_path:draft.token_path
-    })
-    .eq('id',record.id)
-    .eq('campaign_id',campaignId)
-    .eq('updated_at',version)
-    .select('*')
-    .maybeSingle();
-   if(dbError)throw dbError;
-   if(!data)throw Error('This character was changed elsewhere while you were editing. Close and reopen its sheet to get the latest version; nothing was overwritten.');
-   onSaved(data);
-   setVersion(data.updated_at);
-   setBaseline({
-    name:data.name,field_values:structuredClone(data.field_values||{}),
-    portrait_path:data.portrait_path||null,token_path:data.token_path||null
-   });
-   if(!keepOpen)onClose();
-   return data;
-  }catch(e){
-   setError(e?.message||String(e));
-   if(keepOpen)throw e;
-   return null;
-  }finally{setSaving(false)}
+ async function close(){
+  try{await flush();onClose()}
+  catch{/* Draft remains open with a visible error for recovery. */}
  }
  async function castFromEditor(details){
-  if(changed)await save(true);
+  await flush();
   if(!onCastSpell)throw Error('Spell casting is not available.');
   return onCastSpell(details);
  }
  async function attackFromEditor(details){
-  if(changed)await save(true);
+  await flush();
   if(!onEquipmentAttack)throw Error('Weapon attacks are unavailable.');
   return onEquipmentAttack(details);
  }
  async function addFromEditor(details){
-  if(changed)await save(true);
+  await flush();
   if(!onAddSpellToHotbar)throw Error('Hotbar is not available.');
   return onAddSpellToHotbar(details);
  }
@@ -132,9 +122,9 @@ export default function CharacterEditor({
      <label>{f.label}</label>
      {f.type==='roll'?<button type="button" className="rollbtn" onClick={()=>doRoll(f)}>
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
-      f.type==='inventory'?<InventoryPanel field={f} value={draft.field_values[f.id]||[]}
-        template={template} sheetValues={draft.field_values}
-        onChange={v=>editField(f.id,v)}/>:
+      f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={campaignId}
+        userId={viewerId} isDM sourceType="character" sourceId={record.id}
+        field={f} template={template} sheetValues={draft.field_values}/>:
       f.type==='attribute'?<AttributeField field={f} template={template}
        value={draft.field_values[f.id]} values={draft.field_values}
        onChange={v=>editField(f.id,v)}
@@ -170,11 +160,8 @@ export default function CharacterEditor({
    </div>
    {error&&<p className="error alert" role="alert">{error}</p>}
    <div className="actions">
-    {changed&&<span className="muted small">Unsaved edits</span>}
-    <button className="secondary" type="button" onClick={close}>Cancel</button>
-    <button type="button" onClick={()=>save(false)} disabled={saving||!draft.name.trim()}>
-     {saving?'Saving…':'Save player character'}
-    </button>
+    <span className="muted small" role="status">{status}{hasPending?' · changes pending':''}</span>
+    <button className="secondary" type="button" onClick={()=>void close()}>Close</button>
    </div>
   </section>
  </FloatingWindow>

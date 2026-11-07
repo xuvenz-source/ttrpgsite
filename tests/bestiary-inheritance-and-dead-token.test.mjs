@@ -42,8 +42,10 @@ test('bestary sheet is freshly loaded for every token instance with independent 
  assert.ok(app.includes("db.from('npc_templates')"));
  assert.ok(app.includes(".eq('id',npcId).eq('campaign_id',activeId).single()"));
  assert.ok(app.includes("npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{})"));
- assert.ok(app.includes("name:draft.name.trim(),npc_values:draft.values"));
- assert.ok(app.includes('await refreshNpcs();\n   // Template edits can propagate'));
+ assert.ok(app.includes("db.rpc('patch_campaign_sheet_noninventory'"));
+ assert.ok(app.includes("record.kind==='template'?'npc_template':'npc_token'"));
+ assert.ok(app.includes("npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{})"));
+ assert.ok(app.includes("if(record.kind==='template'){\n   await refreshNpcs()"));
  const editor=source('NpcEditor.jsx');
  assert.ok(editor.includes('async function restoreBestiaryDefaults()'));
  assert.ok(editor.includes('Restore Bestiary defaults'));

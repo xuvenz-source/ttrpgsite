@@ -226,6 +226,7 @@ export default function TabletopSidebar({
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
  const {expanded:expandedMenus,toggle:onMenuToggle}=useSidebarMenus(db,user,activeCampaignId);
  const [unitsSubsection,setUnitsSubsection]=useState('characters');
+ const [dmSubsection,setDmSubsection]=useState('live');
  const chatScrollRef=useRef(null);
  const followNewChatRef=useRef(true);
  // Scroll to latest when a chat view opens or the viewed map changes.
@@ -352,6 +353,17 @@ export default function TabletopSidebar({
   </div>}
   {validPanel==='dm'&&isDM&&<div className="right-body">
    <div className="side-form">
+    <div className="dm-subtabs" role="tablist" aria-label="DM tools categories">
+     {[
+      {id:'live',label:'Live play'},
+      {id:'maps',label:'Maps'},
+      {id:'campaign',label:'Campaign'}
+     ].map(section=><button key={section.id} type="button"
+      role="tab" aria-selected={dmSubsection===section.id}
+      className={'secondary'+(dmSubsection===section.id?' selected':'')}
+      onClick={()=>setDmSubsection(section.id)}>{section.label}</button>)}
+    </div>
+    {dmSubsection==='live'&&<>
     <SavedDetails menuKey={'dm/bestiary'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details dm-bestiary-details">
      <summary>Bestiary & NPC templates</summary>
      <div className="side-form">
@@ -361,6 +373,22 @@ export default function TabletopSidebar({
        onMove={onMoveNpc} onPlace={onPlaceNpc} mapReady={!!activeMap}/>
      </div>
     </SavedDetails>
+    <SavedDetails menuKey={'dm/combat'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
+     <summary>Combat · Initiative order</summary>
+     <CombatSetupPanel map={activeMap} combat={combat} tokens={tokens}
+      template={template} privateEntries={combatPrivateEntries}
+      onBegin={onCombatBegin} onAdd={onCombatAdd} onCommand={onCombatCommand}
+      onRollNpc={onCombatRollNpcs} onRollEntry={onCombatRoll}
+      onOpenTurnOrder={onOpenCombat} busy={combatBusy}/>
+     {combatStatus&&<p role="status" className="muted tiny">{combatStatus}</p>}
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/distribute'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
+     <summary>Distribute inventory items</summary>
+     <DmItemDistribution db={db} characters={characters} template={template}
+      onDistributed={onDistributedItem}/>
+    </SavedDetails>
+    </>}
+    {dmSubsection==='maps'&&<>
     <SavedDetails menuKey={'dm/maps'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Map management</summary>
      <div className="side-form">
@@ -392,15 +420,6 @@ export default function TabletopSidebar({
       </div>
      </div>
     </SavedDetails>
-    <SavedDetails menuKey={'dm/combat'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
-     <summary>Combat · Initiative order</summary>
-     <CombatSetupPanel map={activeMap} combat={combat} tokens={tokens}
-      template={template} privateEntries={combatPrivateEntries}
-      onBegin={onCombatBegin} onAdd={onCombatAdd} onCommand={onCombatCommand}
-      onRollNpc={onCombatRollNpcs} onRollEntry={onCombatRoll}
-      onOpenTurnOrder={onOpenCombat} busy={combatBusy}/>
-     {combatStatus&&<p role="status" className="muted tiny">{combatStatus}</p>}
-    </SavedDetails>
     <SavedDetails menuKey={'dm/map-setting'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Map setting</summary>
      {mapSettingPopped?<div className="map-setting-docked-placeholder">
@@ -421,6 +440,8 @@ export default function TabletopSidebar({
        handouts={handoutsForMap}/>
      </>}
     </SavedDetails>
+    </>}
+    {dmSubsection==='campaign'&&<>
     <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Token settings & resources</summary>
      <div className="side-form">
@@ -439,11 +460,6 @@ export default function TabletopSidebar({
       </SavedDetails>
      </div>
     </SavedDetails>
-    <SavedDetails menuKey={'dm/distribute'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
-     <summary>Distribute inventory items</summary>
-     <DmItemDistribution db={db} characters={characters} template={template}
-      onDistributed={onDistributedItem}/>
-    </SavedDetails>
     <SavedDetails menuKey={'dm/template'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Character sheet template</summary>
      <div className="side-form">
@@ -458,6 +474,7 @@ export default function TabletopSidebar({
       <button type="button" className="secondary" onClick={onCopyInvite}>Copy invite link</button>
      </div>
     </SavedDetails>
+    </>}
    </div>
   </div>}
  </aside>;
