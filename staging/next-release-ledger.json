@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
+  "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
   "releaseBranch": "stage/release-seamless-movement-hotbar-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
@@ -120,6 +120,11 @@
     {
       "name": "stage/universal-roll-hotbar-drag-2026-11-08",
       "status": "released"
+    },
+    {
+      "name": "stage/world-runtime-movement-collision-fog-2026-11-08",
+      "status": "in-progress",
+      "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e"
     }
   ],
   "features": [
@@ -284,6 +289,17 @@
         "stage/universal-roll-hotbar-drag-2026-11-08"
       ],
       "status": "released"
+    },
+    {
+      "id": "unified-world-runtime-redesign",
+      "description": "First staged slice: local RAF token/monitor motion, delta-painted sanitized fog, constrained DM-preview collision trajectory; further authoritative movement/collision/lighting phases are REQUIRED before release.",
+      "sources": [
+        "stage/world-runtime-movement-collision-fog-2026-11-08"
+      ],
+      "status": "in-progress",
+      "releaseReady": false,
+      "databaseDependencies": "future-unapplied-migrations-required",
+      "verification": "GitHub CI plus browser/multiplayer QA required"
     }
   ],
   "databaseDependencies": [
@@ -356,9 +372,11 @@
     "Consolidated approved release #45 is based on production #42; Supabase migration 20261107173054 was successfully applied and post-verified before the GitHub merge. No paid infrastructure."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
+    "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
     "stagePolicy": "All currently recorded staged components are incorporated into the approved consolidated release. Future changes must be staged separately; one main deployment per approval.",
-    "outstandingBranches": []
+    "outstandingBranches": [
+      "stage/world-runtime-movement-collision-fog-2026-11-08"
+    ]
   },
   "lastRelease": {
     "name": "Seamless Multiplayer Movement and Universal Roll Hotbar",
