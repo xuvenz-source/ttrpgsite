@@ -1,3 +1,4 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -8,7 +9,7 @@ import {
 
 const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const ui=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const css=readAppStyles();
 const uuid='2f5bc7db-af91-4dcb-9e14-faa34cf05f69';
 const mapId='7b9328d0-3bbd-4c37-95ad-4f85d8408095';
 
