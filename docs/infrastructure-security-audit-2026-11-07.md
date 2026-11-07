@@ -22,7 +22,7 @@ This is a configuration and source/RLS audit, not a penetration test. All SQL qu
 **Finding:** repository is PUBLIC and repository rulesets API returned an empty array (`[]`); branch protection read returned a 403 and could not be independently verified. Public code is not inherently insecure, but this exposes source to everyone and creates a supply-chain risk if credentials are ever committed. Ownership and release privileges are important because pushes to `main` trigger production deployments.
 
 **Action for GitHub owner:** `Settings → Rules → Rulesets → New branch ruleset` targeting default branch `main`:
-- Require a pull request to merge, at least one approval, dismiss stale approvals, require **Code Owner review** for owned paths, and require conversations resolved.
+- Require a pull request to merge and all checks to pass. **If you are the only repository contributor, do not require an approval or Code Owner approval yet**: GitHub does not allow authors to approve their own PRs, and you could block all releases. Add a trusted second reviewer first (or configure a narrow emergency admin bypass) before requiring one approval, stale-review dismissal or mandatory Code Owner review. Require conversations resolved.
 - Require successful checks `build-and-test` and CodeQL once its first scan succeeds; optionally require up-to-date branch before merge if it does not disrupt the team.
 - Block force pushes and deletions; restrict bypass to the repository owner/admin only when necessary.
 - Enable 2FA/passkeys on GitHub and Cloudflare, Vercel and Supabase logins; audit/revoke unneeded OAuth integrations and personal tokens. Avoid granting broad admin permissions to bots.
