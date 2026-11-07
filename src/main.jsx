@@ -458,6 +458,9 @@ function App(){
     npc_bars_public:draft.barsPublic
    }).eq('id',record.data.id));
    await refreshNpcs();
+   // Template edits can propagate unchanged defaults to existing NPC copies.
+   await refreshTokens();
+   await refreshMonitors();
   }else{
    await read(db.from('map_tokens').update({
     name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath,
@@ -476,9 +479,12 @@ function App(){
    }}:editor));
  }
  async function placeNpc(npcId,x=1,y=1){
-  const npc=npcs.find(n=>n.id===npcId);
-  if(!npc||!selectedMap||!isDM)return;
+  if(!npcId||!selectedMap||!isDM)return;
   try{
+   // Always start from the current bestiary sheet, not cached sidebar data.
+   const npc=await read(db.from('npc_templates')
+    .select('id,name,field_values,token_path,npc_bars_public')
+    .eq('id',npcId).eq('campaign_id',activeId).single());
    await read(db.from('map_tokens').insert({
     campaign_id:activeId,map_id:selectedMap,name:npc.name,
     npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{}),
