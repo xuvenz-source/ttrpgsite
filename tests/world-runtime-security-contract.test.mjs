@@ -65,3 +65,27 @@ test('fog tick hints cannot keep fog-on sight open while awaiting authorization'
  assert.match(hook,/event\?\.new\?\.fog_enforced===false&&previous\?\.enabled===false/);
  assert.match(hook,/previous:fogFrameDuringRefresh\(previous,mapId\)/);
 });
+
+test('accepted previews extend fog only through server-authorized sources',()=>{
+ const s=sql('preview_visibility');
+ assert.match(s,/forge_visibility\.movement_preview_rates rate/);
+ assert.match(s,/rate\.actor_id=t\.owner_id/);
+ assert.match(s,/rate\.base_x=t\.x and rate\.base_y=t\.y/);
+ assert.match(s,/statement_timestamp\(\)-interval '2 seconds'/);
+ assert.match(s,/forge_visibility\.point_visible/);
+ assert.match(s,/CREATE OR REPLACE FUNCTION public\.get_authorized_map_fog/);
+ assert.match(s,/forge_visibility\.is_lit/);
+ const app=source('src/TabletopApp.jsx');
+ assert.match(app,/queuePreviewFogRefresh\(\)/);
+ assert.match(app,/db\.rpc\('end_map_motion_previews'/);
+ assert.match(app,/lastObservedFog\.current/);
+ assert.match(app,/current\.revision!==previous\.revision/);
+});
+test('DM footprint override is explicit and cannot be called by players',()=>{
+ const s=sql('dm_footprint_override');
+ assert.match(s,/language plpgsql volatile security invoker/);
+ assert.match(s,/not public\.is_campaign_dm\(row\.campaign_id\)/);
+ assert.match(s,/current_setting|set_config\('forge\.collision_override','on',true\)/);
+ assert.match(source('src/MapSettingPanel.jsx'),/DM override: allow moving through walls/);
+ assert.match(source('src/TabletopApp.jsx'),/db\.rpc\('resize_map_token'/);
+});
