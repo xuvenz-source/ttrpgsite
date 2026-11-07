@@ -25,7 +25,7 @@ test('pending ruler, tools, pin, map and account changes are all in the bundle',
  for(const name of ['shouldBendLineOnKeyPress','selectableToolIds','onToolPickUp',
   'onDeleteEnvironmentObject','onToolMovementPreview'])assert.ok(app.includes(name),name);
  assert.match(app,/db\.rpc\('preview_map_motion'/);
- assert.match(app,/get_authorized_map_light_masks/);
+ assert.match(raw('src/useAuthorizedMapLights.js'),/get_authorized_map_light_masks/);
  assert.match(app,/observerMotionTopic\(mapId,user\)/);
  assert.match(raw('supabase/functions/username-register/index.ts'),/isCompromisedPassword/);
  assert.match(raw('src/MapPinLayer.jsx'),/pin/);
