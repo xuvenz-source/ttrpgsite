@@ -32,6 +32,7 @@ import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
 import MapFogOverlay from './MapFogOverlay.jsx';
 import useAuthorizedMapFog from './useAuthorizedMapFog.js';
+import useAuthorizedMapLights from './useAuthorizedMapLights.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {normalizeEnvironment,withObject,patchObject,removeObject} from './MapEnvironment.js';
 import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
@@ -249,6 +250,10 @@ export default function TabletopApp(){
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user});
+ const authorizedLights=useAuthorizedMapLights({
+  db,mapId:selectedMap,userId:isDM?null:user,
+  revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision
+ });
  const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=useCampaignPresence({
   db,campaignId:activeId,userId:user,members,rosterRefreshRef:latestRosterRefresh
@@ -2396,6 +2401,7 @@ export default function TabletopApp(){
    onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
    registerRemoteMotion={registerRemoteMotion}
     fogFrame={fog.frame}
+    authorizedLightMasks={authorizedLights}
     onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
