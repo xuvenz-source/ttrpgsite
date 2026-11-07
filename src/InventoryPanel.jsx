@@ -51,15 +51,17 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   if(Number.isInteger(index))claim(index);
   setEditing(index);
  };
- const saveItem=draft=>{
+ const saveItem=(draft,{keepOpen=false}={})=>{
   if(editing==='new'){
    if(items.length>=250)throw Error('Inventory can hold up to 250 item records.');
+   const index=items.length;
    onChange([...items,updateInventoryItem(freshItem,draft)]);
+   setEditing(keepOpen?index:null);
   }else if(Number.isInteger(editing)&&items[editing]){
    onChange(items.map((row,i)=>i===editing?updateInventoryItem(row,draft):row));
+   if(!keepOpen){setEditing(null);release(editing)}
   }else throw Error('This item is no longer available.');
-  setError('');setEditing(null);
-  if(Number.isInteger(editing))release(editing);
+  setError('');
  };
  const deleteItem=()=>{if(Number.isInteger(editing)){
   const removed=editing;
