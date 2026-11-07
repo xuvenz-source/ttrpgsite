@@ -26,7 +26,9 @@ include player fog/collision enforcement and must not be merged wholesale.
   Players cannot create pieces on opted-in physical maps: the DM places them,
   then players move existing pieces under server collision enforcement.
 - get_authorized_map_combat returns only individually observable combat entries.
-  Player map_combats direct SELECT is closed, while initiative submission RPCs
+  Player map_combats direct SELECT is closed **when fog is published** (existing
+  non-fog maps retain the legacy read for compatibility during the release).
+  Initiative submission RPCs
   continue to authorize owned tokens. Token monitors and encumbrance RPCs are
   restricted to observed tokens. Storage artwork signing is restricted to DMs,
   uploader-owned art, owned character art and observed map token art.

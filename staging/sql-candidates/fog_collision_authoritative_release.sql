@@ -496,9 +496,22 @@ create trigger forge_visibility_combat_tick after insert or update or delete on 
 
 -- Roll initiative and share a per-viewer roster without exposing private
 -- map_combat_entries or the shared participants column to players.
+-- Preserve the old combat SELECT endpoint on maps that have not opted in.
+-- Fog-enabled maps return combat entries only through per-user RPCs.
+create or replace function public.is_map_fog_published(p_map uuid)
+returns boolean language sql stable security definer set search_path='' as $
+ select exists(select 1 from forge_visibility.map_rules r
+  where r.map_id=p_map and r.fog_enforced)
+$;
+revoke all on function public.is_map_fog_published(uuid) from public,anon;
+grant execute on function public.is_map_fog_published(uuid) to authenticated;
 drop policy if exists "members see current map turn tracker" on public.map_combats;
-create policy "only dm reads private combat roster" on public.map_combats
- for select to authenticated using(public.is_campaign_dm(campaign_id));
+create policy "dm or nonfog viewers read combat roster" on public.map_combats
+ for select to authenticated using(
+  public.is_campaign_dm(campaign_id)
+  or (public.can_view_campaign_map(campaign_id,map_id)
+   and not public.is_map_fog_published(map_id))
+ );
 create or replace function public.get_authorized_map_combat(p_map uuid)
 returns jsonb language plpgsql stable security definer set search_path='' as $$
 declare c public.map_combats%rowtype;entries jsonb;who uuid:=auth.uid();

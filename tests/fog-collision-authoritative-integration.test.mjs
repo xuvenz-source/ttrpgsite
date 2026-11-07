@@ -35,7 +35,8 @@ test('players cannot query all visible token rows outside their server sight',()
  assert.match(sql,/revoke all on forge_visibility\.exploration from public,anon,authenticated/);
 });
 test('combat and monitor endpoints are filtered before React renders them',()=>{
- assert.match(sql,/create policy "only dm reads private combat roster"/);
+ assert.match(sql,/create policy "dm or nonfog viewers read combat roster"/);
+ assert.match(sql,/not public\.is_map_fog_published\(map_id\)/);
  assert.match(sql,/create or replace function public\.get_authorized_map_combat/);
  assert.match(sql,/create or replace function public\.get_authorized_map_fog/);
  assert.match(sql,/get_token_monitor_values/);
