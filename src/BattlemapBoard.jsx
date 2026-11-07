@@ -335,10 +335,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   // A secondary click during a held primary-button line measurement
   // creates a snapped bend rather than pinning the line. A right-button
   // measurement started on its own still pins as before.
-  if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
+  if(!activeMeasureTool||!(e.button===2||e.type==='contextmenu')||!measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   const current=measureDrag.current;
-  if(shouldBendLineOnRightPress(current,e.button)){
+  if(shouldBendLineOnRightPress(current,2)){
    const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end);
    if(next!==current.measure){
     current.measure=next;
@@ -386,7 +386,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    const rect=boardRef.current?.getBoundingClientRect();
    if(!rect||e.clientX<rect.left||e.clientX>rect.right||
     e.clientY<rect.top||e.clientY>rect.bottom)return;
-   pinCurrentMeasurementOnRightClick({...e,button:2});
+   pinCurrentMeasurementOnRightClick(e);
   }
   window.addEventListener('contextmenu',onContextMenu,true);
   window.addEventListener('mousedown',onMouseDown,true);
@@ -635,7 +635,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
     onContextMenu={e=>{if(activeMeasureTool){
      e.preventDefault();
-     pinCurrentMeasurementOnRightClick({...e,button:2});
+     pinCurrentMeasurementOnRightClick(e);
     }}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
