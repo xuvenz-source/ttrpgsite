@@ -12,6 +12,7 @@ import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
 import MapFogOverlay from './MapFogOverlay.jsx';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
+import {checkTokenMovement} from './MapCollision.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -38,9 +39,14 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
+ const [previewPosition,setPreviewPosition]=useState(null);
+ const previewDrag=useRef(null);
  // Reuse derived rendering data during drag, measurement and marquee updates.
- const previewToken=isDM&&environmentEditor?.previewing?
+ const sourcePreviewToken=isDM&&environmentEditor?.previewing?
   tokens.find(t=>t.id===(environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id)):null;
+ const previewToken=sourcePreviewToken&&previewPosition?.mapId===map.id&&
+  previewPosition?.id===sourcePreviewToken.id?
+  {...sourcePreviewToken,x:previewPosition.x,y:previewPosition.y}:sourcePreviewToken;
  const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
  const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
  const previewPolygon=useMemo(()=>previewActive?
@@ -52,11 +58,16 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   return allowed.filter(t=>t.visible!==false&&
    (t.id===previewToken?.id||pointInPolygon({
     x:Number(t.x)+Number(t.span_x??1)/2,
-    y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)));
- },[tokens,isDM,previewActive,previewToken?.id,previewPolygon]);
+    y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)))
+    .map(t=>t.id===previewToken?.id?previewToken:t);
+ },[tokens,isDM,previewActive,previewToken,previewPolygon]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
+ useEffect(()=>{
+  previewDrag.current=null;
+  setPreviewPosition(null);
+ },[map.id,environmentEditor?.previewing,environmentEditor?.previewTokenId]);
  const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject});
  environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject};
  const handleEnvironmentAdd=useCallback(object=>environmentHandlers.current.onAddEnvironmentObject?.(object),[]);
@@ -469,7 +480,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  }
  function startTokenDrag(e,t,canMove){
   e.stopPropagation();
-  if(previewActive)return;
+  if(previewActive){
+   // Preview movement is local only. Never send DM-preview coordinates to the
+   // server; test the same swept-footprint collision against prepared walls.
+   if(e.button!==0||t.id!==previewToken?.id)return;
+   e.preventDefault();
+   previewDrag.current={id:t.id,pointerId:e.pointerId,
+    startX:e.clientX,startY:e.clientY,
+    token:{...previewToken}};
+   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+   return;
+  }
   if(e.button!==0)return;
   const grouped=canMove&&selectedIds.includes(t.id)&&
     selectedIds.length+selectedToolIds.length>1;
@@ -511,6 +532,18 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    dx:0,dy:0};
  }
  function moveTokenDrag(e,t){
+  const simulated=previewDrag.current;
+  if(simulated&&simulated.id===t.id&&simulated.pointerId===e.pointerId){
+   const cell=map.grid_size*zoomRef.current;
+   const delta=boundedGroupOffset([simulated.token],
+    (e.clientX-simulated.startX)/cell,(e.clientY-simulated.startY)/cell,
+    map.width,map.height,map.grid_size);
+   const destination={x:Number(simulated.token.x)+delta.dx,
+    y:Number(simulated.token.y)+delta.dy};
+   if(checkTokenMovement({token:simulated.token,destination,map,environment}).allowed)
+    setPreviewPosition({id:t.id,mapId:map.id,...destination});
+   return;
+  }
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   const cell=map.grid_size*zoomRef.current;
@@ -540,6 +573,15 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
  }
  function finishTokenDrag(e,t,cancel=false){
+  const simulated=previewDrag.current;
+  if(simulated&&simulated.id===t.id&&simulated.pointerId===e.pointerId){
+   previewDrag.current=null;
+   if(cancel)setPreviewPosition({id:t.id,mapId:map.id,
+    x:Number(simulated.token.x),y:Number(simulated.token.y)});
+   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
+    e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
+   return;
+  }
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   drag.current=null;
@@ -624,7 +666,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       onTokenPointerMove={(e,p)=>moveTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerUp={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerCancel={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id},true)}
-      onOpen={onToolOpen}/>
+      onOpen={onToolOpen} environment={isDM?environment:null}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
@@ -637,7 +679,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       onClose={()=>handleEnvironmentSelect(null)}/>}
     {visibleTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
-      canMove=!previewActive&&canControlMapToken(t,user,isDM,map.id);
+      canMove=(previewActive&&t.id===previewToken?.id)||
+       (!previewActive&&canControlMapToken(t,user,isDM,map.id));
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
