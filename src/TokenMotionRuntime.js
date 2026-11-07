@@ -21,6 +21,10 @@ export function createTokenMotionRuntime({
    if(!mount.node?.style)continue;
    const dx=preview?(preview.x-mount.x)*mount.cell:0;
    const dy=preview?(preview.y-mount.y)*mount.cell:0;
+   // Remote samples interpolate between server-approved destinations;
+   // local dragging remains immediate with no interpolation latency.
+   mount.node.style.transition=preview?.remote?
+    'translate 115ms linear':mount.baseTransition;
    // CSS translate is independent from other token CSS transform effects.
    mount.node.style.translate=number(dx)&&number(dy)&&
     (Math.abs(dx)>.01||Math.abs(dy)>.01)?
@@ -48,14 +52,21 @@ export function createTokenMotionRuntime({
     return;
    }
    if(![x,y,cell].every(number)||cell<=0)return;
-   positions.set(kind,{node,x,y,cell});
+   const existing=positions.get(kind);
+   const baseTransition=existing?.node===node?
+    existing.baseTransition:(node.style.transition||'');
+   positions.set(kind,{node,x,y,cell,baseTransition});
    // A React commit may alter the base left/top; rebase before the next paint
    // rather than briefly showing a stale transform.
    paint(id);
   },
   preview(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
-   previews.set(id,{x,y});schedule(id);
+   previews.set(id,{x,y,remote:false});schedule(id);
+  },
+  previewRemote(id,x,y){
+   if(disposed||!id||!number(x)||!number(y))return;
+   previews.set(id,{x,y,remote:true});schedule(id);
   },
   clearPreview(id){
    if(!previews.delete(id))return;
