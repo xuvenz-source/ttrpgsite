@@ -43,7 +43,7 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
    onMove?.(pin,{x:next.x,y:next.y});
   }
  }
- return <div className="map-handout-pins">
+ return <div className={"map-handout-pins"+(placing?" is-placing":isDM&&editor?.enabled?" is-editing":"")}>
   {placing&&<button type="button" className="map-handout-placement"
    aria-label="Click map to place handout pin" title="Place handout pin"
    onPointerDown={event=>{

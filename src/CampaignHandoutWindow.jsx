@@ -57,7 +57,7 @@ export default function CampaignHandoutWindow({note,pin=null,isDM,folders=[],
      <label>Pin icon<select value={pin.kind} disabled={busy}
       onChange={e=>void action(()=>onUpdatePin(pin,{kind:e.target.value}))}>
       {Object.entries(PIN_ICONS).map(([id,icon])=>
-       <option key={id} value={id}>{icon} {id}</option>)}
+       <option key={id} value={id}>{icon} {id.charAt(0).toUpperCase()+id.slice(1)}</option>)}
      </select></label>
      <button type="button" className="secondary" disabled={busy}
       onClick={()=>{if(window.confirm('Remove this pin from the map?'))

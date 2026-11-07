@@ -1,6 +1,7 @@
 import React,{useMemo} from 'react';
 import MapCalibration from './MapCalibration.jsx';
 import {normalizeEnvironment,patchObject,removeObject,lightRadii} from './MapEnvironment.js';
+import {PIN_ICONS} from './CampaignHandouts.js';
 
 const drawTools=[
  {id:'select',label:'Select / edit'},
@@ -94,13 +95,18 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      {presets.map(([value,label])=><option key={value} value={value}>{label}</option>)}
     </select></label>
    </>}
-   {editor.tool==='pin'&&<label>Handout
+   {editor.tool==='pin'&&<><label>Handout
     <select disabled={!canDraw||!handouts.length} value={editor.pinHandoutId||''}
      onChange={e=>updateEditor({pinHandoutId:e.target.value})}>
      <option value="">Select handout</option>
      {handouts.map(h=><option value={h.id} key={h.id}>{h.title}</option>)}
     </select>
-   </label>}
+   </label>
+   <label>Pin appearance<select disabled={!canDraw} value={editor.pinKind||'pin'}
+    onChange={e=>updateEditor({pinKind:e.target.value})}>
+    {Object.entries(PIN_ICONS).map(([id,icon])=><option key={id} value={id}>
+     {icon} {id.charAt(0).toUpperCase()+id.slice(1)}</option>)}
+   </select></label></>}
    {editor.tool==='light'&&<>
     <strong>New light defaults</strong>
     <NumberOption title="Bright radius (feet)" value={editor.lightBright??20}

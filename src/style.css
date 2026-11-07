@@ -2679,6 +2679,9 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .campaign-handout-window .actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .campaign-handout-window .campaign-handout-delete{color:#f0b5bc;border-color:#805260}
 .map-handout-pins{position:absolute;inset:0;z-index:12;pointer-events:none}
+/* Pin controls sit above the map editor SVG (24) and markers (26). */
+.map-handout-pins.is-editing{z-index:29}
+.map-handout-pins.is-placing{z-index:40}
 .map-handout-placement{position:absolute;inset:0;z-index:0;border:0!important;
  border-radius:0!important;background:transparent!important;
  padding:0!important;width:100%;height:100%;cursor:crosshair;
