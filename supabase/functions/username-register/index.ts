@@ -1,5 +1,6 @@
 import {createClient} from 'npm:@supabase/supabase-js@2.113.0';
 import {acceptedSignupChallenge,validCaptchaToken} from './captcha-verification.js';
+import {isCompromisedPassword} from './password-breach-check.js';
 
 const ACCEPTED_ORIGINS=new Set([
  'https://ttrpgsite.vercel.app',
@@ -58,6 +59,17 @@ Deno.serve(async req=>{
  }finally{clearTimeout(timeout)}
  if(!acceptedSignupChallenge(verification,new URL(origin).hostname))
   return respond(origin,403,{ok:false,error:'Human verification was unsuccessful or expired. Please retry.'});
+ // Free, k-anonymous Pwned Passwords check performed only after a valid
+ // Turnstile token. Never log plaintext, hash, prefix or API response.
+ let compromised=false;
+ try {
+  compromised=await isCompromisedPassword(password);
+ }catch{
+  return respond(origin,503,{ok:false,
+   error:'Password security check is temporarily unavailable. Please retry.'});
+ }
+ if(compromised)return respond(origin,400,{ok:false,
+  error:'This password has appeared in a data breach. Choose a different password.'});
  const url=Deno.env.get('SUPABASE_URL');
  const secret=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||
    JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS')||'{}').default;

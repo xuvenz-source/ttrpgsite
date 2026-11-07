@@ -30,7 +30,7 @@ export function MeasurementToolBar({tool,onPointerDown,onPointerMove,onPointerUp
   {MEASUREMENT_TOOLS.map(id=><button key={id} type="button"
    className={'map-measure-tool'+(tool===id?' selected':'')}
    aria-label={names[id]} aria-pressed={tool===id}
-   title={names[id]+(id==='line'?': left-drag to measure; right-click while holding left to add a turn; right-drag to pin':': left-drag to measure temporarily; right-drag to pin until cleared')}
+   title={names[id]+(id==='line'?': left-drag to measure; right-click or press R while holding left to add a turn; right-drag to pin':': left-drag to measure temporarily; right-drag to pin until cleared')}
    onContextMenu={e=>e.preventDefault()}
    onPointerDown={e=>onPointerDown(e,id)}
    onPointerMove={onPointerMove}

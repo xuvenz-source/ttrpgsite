@@ -23,11 +23,11 @@ Vercel evaluates multiple matching rules so that an explicit `main: true` allows
 
 ## Daily process for any development chat
 
-1. Begin from the latest appropriate base. Normally create/update a `stage/<feature>` or `fix/<feature>` branch; don't merge unrelated pending work without explicit approval.
+1. Begin from the latest appropriate base. Normally create/update a `stage/<feature>` or `fix/<feature>` branch. Register ready work in `staging/next-release-ledger.json` and integrate it into the shared next-release staging bundle based on current production code; don't let ready work wait forgotten on an older branch.
 2. Commit changes as needed. Let GitHub Actions verify each revision. The Vercel site should **not** create a preview deployment for these pushes.
 3. Summarize what has been staged, which tests passed, and what remains to be checked by a human. Avoid inventing browser test results when only static/CI tests have run.
 4. When a visual or multiplayer milestone is ready for review and the user requests a live preview, deploy **once**, not after each commit.
-5. When approved for production, create a scoped release branch based on the latest `main`, apply only that feature, test, and merge it to `main` after release authorization. Vercel may create one production deployment for that main commit; verify that a deployment actually occurred and completed.
+5. When approved for production, **audit every staged branch and release-ledger entry**, then integrate **all outstanding, release-ready staged components** on a single branch based on current `main`. Resolve all code/permission/database conflicts, run the **combined** tests, Vite build, dependency audit and CodeQL, and reconcile the complete migration/Edge Function sequence. Do not silently exclude a ready staged feature just because another request was the most recent. Merge the consolidated release into `main` **once**, after approval, so Vercel creates **one** production deployment. Verify the resulting commit was actually served.
 6. For backend changes, coordinate Supabase Edge Functions/SQL migrations in a safe compatibility order; merging frontend code is not itself a backend deployment.
 
 ## Database release and testing standard
@@ -55,6 +55,9 @@ Older draft PR notes requiring a disposable database or separate staging SQL tes
 ### Production release checklist
 
 - User requested publishing; identify exact approved scope and deployment target.
+- Fetch all `stage/*`, explicitly staged `feature/*` and `fix/*` branches, and reconcile `staging/next-release-ledger.json`. Identify what is already live, superseded, genuinely pending, or expressly deferred; all ready pending features must ship together unless the designer changes the scope.
+- Verify the consolidated staging branch includes the changes from **every** outstanding feature branch; resolve semantic overlaps (realtime security, visual interaction, RLS, schema, auth and other shared files) before deployment. Never copy an obsolete branch over newer production changes.
+- Run combined tests/build/CodeQL and document the exact migration and Edge Function deployment ordering. If even one ready feature conflicts or is not verified, block the release and report it; do not quietly leave it behind.
 - Fetch current `main`, ensure release branch is current, run tests/build/security checks; check for unintended differences.
 - Merge once (or otherwise issue one explicitly authorized production deploy), then inspect Vercel `production` deployment and expected commit SHA. **GitHub CI success does not guarantee production deployment.**
 - Verify production URL response and relevant application flows; check Edge Function deployment/version and Auth/security configuration for any backend change.
@@ -65,6 +68,7 @@ Older draft PR notes requiring a disposable database or separate staging SQL tes
 - **Vercel project setting**: governs all branches and chats immediately, independent of Git.
 - **`vercel.json`**: persisted in the repository and inherited by new branches.
 - **`AGENTS.md`**: shared instructions for developers and AI coding agents.
+- **`staging/next-release-ledger.json`**: the auditable list of live/superseded versus outstanding stage branches, bundled features, and backend dependencies.
 - **`tests/deployment-policy.test.mjs`**: regression protection for the configuration.
 - **GitHub Actions**: tests on commit, without triggering Vercel.
 

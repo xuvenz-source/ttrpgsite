@@ -35,7 +35,11 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
   const d=drag.current;
   if(!d||d.id!==pin.id||d.pointerId!==event.pointerId)return;
   drag.current=null;
-  const next=preview[d.id]||{x:d.x,y:d.y};
+  // Release coordinates are authoritative even if React has not painted the
+  // most recent pointer-move preview yet.
+  const next=cancel?{x:d.x,y:d.y}:normalizePinPosition(
+   d.x+(event.clientX-d.startX)/cell,
+   d.y+(event.clientY-d.startY)/cell,map);
   setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
   try{event.currentTarget.releasePointerCapture(event.pointerId)}catch{}
   if(!cancel&&(Math.abs(next.x-d.x)>.01||Math.abs(next.y-d.y)>.01)){
@@ -43,7 +47,7 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
    onMove?.(pin,{x:next.x,y:next.y});
   }
  }
- return <div className="map-handout-pins">
+ return <div className={"map-handout-pins"+(placing?" is-placing":isDM&&editor?.enabled?" is-editing":"")}>
   {placing&&<button type="button" className="map-handout-placement"
    aria-label="Click map to place handout pin" title="Place handout pin"
    onPointerDown={event=>{
@@ -69,7 +73,14 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
      if(skipClick.current===pin.id){skipClick.current=null;return}
      if(!drag.current)onOpen?.(pin)
     }}>
-    <span aria-hidden="true">{PIN_ICONS[pin.kind]||'📜'}</span>
+    <span aria-hidden="true">{pin.kind==='trap'?<svg
+     viewBox="0 0 32 32" width="25" height="25" fill="none"
+     stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"
+     strokeLinecap="round">
+     <path d="M7 13C5 7 10 4 16 4s11 3 9 9M7 19C5 25 10 28 16 28s11-3 9-9"/>
+     <path d="m7 13 3-5 3 5 3-5 3 5 3-5 3 5M7 19l3 5 3-5 3 5 3-5 3 5"/>
+     <circle cx="16" cy="16" r="3"/>
+    </svg>:PIN_ICONS[pin.kind]||'📜'}</span>
     {isDM&&!pin.visible&&<span className="map-handout-hidden-dot" aria-hidden="true">◌</span>}
    </button>;
   })}

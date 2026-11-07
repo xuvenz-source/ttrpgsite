@@ -1,0 +1,180 @@
+{
+  "schema": 1,
+  "updated": "2026-11-07",
+  "productionBaseSha": "d33f552f2d08db80a07b96486cf54a5457ef6f9d",
+  "releaseBranch": "stage/next-release-consolidated-2026-11-07",
+  "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
+  "branches": [
+    {
+      "name": "stage/account-settings-map-measurements",
+      "status": "released"
+    },
+    {
+      "name": "stage/attribute-equipment-spell-cards",
+      "status": "released"
+    },
+    {
+      "name": "stage/authoritative-fog-collision-foundation-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/dm-map-environment-tools",
+      "status": "released"
+    },
+    {
+      "name": "stage/dm-tools-refinement-fog-collision-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/infra-security-hardening-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/initiative-release-ready-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/initiative-turn-order-2026-11-07",
+      "status": "superseded"
+    },
+    {
+      "name": "stage/inventory-grid-item-tiles",
+      "status": "released"
+    },
+    {
+      "name": "stage/live-database-testing-policy-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/map-environment-interactions-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/map-pins-handouts-folders-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/measurement-grid-snap-and-pins",
+      "status": "released"
+    },
+    {
+      "name": "stage/password-breach-screen-2026-11-07",
+      "status": "included"
+    },
+    {
+      "name": "stage/performance-audit-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/private-artwork-and-anon-grants-2026-11-07",
+      "status": "superseded"
+    },
+    {
+      "name": "stage/realtime-inventories-dm-tabs-compact-weapons-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/ruler-bends-sheet-popouts-npc-inheritance-dead-status-2026-11-07",
+      "status": "superseded"
+    },
+    {
+      "name": "stage/ruler-turns-and-unified-tool-token-movement-2026-11-07",
+      "status": "included"
+    },
+    {
+      "name": "stage/security-audit-and-signup-captcha-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/sheet-ruler-env-delete-tools-pins-2026-11-07",
+      "status": "included"
+    },
+    {
+      "name": "stage/units-tools-issuance-torch-mount-inventories-2026-11-07",
+      "status": "released"
+    }
+  ],
+  "features": [
+    {
+      "id": "ruler-turns",
+      "description": "Right-click and R-key snapped multi-segment ruler bends",
+      "sources": [
+        "stage/ruler-turns-and-unified-tool-token-movement-2026-11-07",
+        "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "mixed-selection",
+      "description": "Optimistic issued-tool movement and marquee multi-select with character/NPC tokens; fog-safe movement previews",
+      "sources": [
+        "stage/ruler-turns-and-unified-tool-token-movement-2026-11-07",
+        "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "tool-pickup",
+      "description": "Delete an issued tool token to pick it up without removing the issued item",
+      "sources": [
+        "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "character-sheet-popouts",
+      "description": "Direct character sheet browser popup and safe navigation",
+      "sources": [
+        "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "environment-delete",
+      "description": "Delete selected unlocked DM light-layer wall, door, window or light",
+      "sources": [
+        "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "pin-icons",
+      "description": "12 pin kinds and corrected placement stacking",
+      "sources": [
+        "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "breached-password-check",
+      "description": "k-anonymity compromised-password screening for signups",
+      "sources": [
+        "stage/password-breach-screen-2026-11-07"
+      ],
+      "status": "included"
+    }
+  ],
+  "databaseDependencies": [
+    {
+      "file": "staging/sql-candidates/campaign_pin_icon_expansion.sql",
+      "name": "campaign_pin_icon_expansion",
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "version": "20261107113749"
+    }
+  ],
+  "edgeFunctionDependencies": [
+    {
+      "function": "username-register",
+      "source": "supabase/functions/username-register/index.ts",
+      "includes": "password-breach-check.js",
+      "status": "deployed-production",
+      "version": 6
+    }
+  ],
+  "securityNotes": [
+    "Do not restore the old NPC artwork policy; the fog/collision release already installed observed-token Storage authorization.",
+    "Fog-enabled movement previews cannot reveal tool/token coordinates; database collision remains authoritative.",
+    "Existing test campaigns only; do not create paid preview/development resources."
+  ]
+}

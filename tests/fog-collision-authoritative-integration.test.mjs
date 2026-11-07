@@ -74,6 +74,6 @@ test('DM publishes saved rules explicitly; player fog fails closed',()=>{
 });
 test('SQL is a pending migration only, never auto-applied by staging CI',()=>{
  assert.match(sql,/STAGING ONLY/);
- assert.match(text('AGENTS.md'),/Do not move unrelated staged changes into a release/);
+ assert.match(text('AGENTS.md'),/Batch all outstanding staged work into the next approved production update/);
  assert.doesNotMatch(text('.github/workflows/verify-staged.yml'),/supabase db push|apply_migration|supabase migration up/);
 });

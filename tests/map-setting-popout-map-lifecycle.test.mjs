@@ -16,7 +16,7 @@ test('the same Board stays mounted across workspace tab changes',()=>{
  assert.ok(main.includes("active={tab==='tabletop'||tab==='sheet'}"));
 });
 test('hiding the map cannot leave destructive keyboard shortcuts active',()=>{
- assert.ok(main.includes("if(!active||!isDM||!selectedId||e.key!=='Delete'"));
+ assert.ok(main.includes("if(!active||e.key!=='Delete'||e.defaultPrevented||e.repeat"));
  assert.ok(main.includes("if(!active||event.key!=='Escape'||!activeMeasureTool)"));
  assert.ok(main.includes("lastCenteredMap.current===map.id"));
  assert.ok(main.includes("lastCenteredMap.current=map.id"));
