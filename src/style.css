@@ -2724,3 +2724,8 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .inventory-bound-take{position:absolute;bottom:2px;right:2px;
  background:#314b6fee;border:1px solid #709ccc;border-radius:4px;
  padding:2px 5px;color:#f5f8ff;font-size:10px;cursor:pointer;z-index:2}
+
+/* Future server-authorized fog rendering. Not mounted for players yet:
+   an overlay alone cannot hide data exposed by token RLS or Realtime. */
+.map-fog-overlay{position:absolute;inset:0;z-index:145;pointer-events:none;
+ image-rendering:pixelated;max-width:none;max-height:none}
