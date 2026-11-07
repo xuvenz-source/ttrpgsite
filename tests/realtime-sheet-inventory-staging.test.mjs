@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {itemIdentity,removeItemIdentity} from '../src/useCampaignToolCollaboration.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-const app=(read('src/main.jsx')+read('src/TabletopApp.jsx')+read('src/BattlemapBoard.jsx')+read('src/SheetTemplateDesigner.jsx')),editor=read('src/InventoryItemEditor.jsx'),
+const app=(read('src/main.jsx')+read('src/TabletopApp.jsx')+read('src/PlayerSheetFields.jsx')+read('src/BattlemapBoard.jsx')+read('src/SheetTemplateDesigner.jsx')),editor=read('src/InventoryItemEditor.jsx'),
  panel=read('src/InventoryPanel.jsx'),dm=read('src/TabletopSidebar.jsx'),
  style=readAppStyles(),char=read('src/CharacterEditor.jsx'),
  npc=read('src/NpcEditor.jsx'),tool=read('src/CampaignToolSheet.jsx');
@@ -41,7 +41,7 @@ test('weapon chat header is condensed without sacrificing its green theme',()=>{
  assert.match(style,/\.macro-chat-card\.weapon-attack \.macro-chat-header strong\{font-size:11px/);
 });
 test('character, NPC and issued tool sheets autosave with live grid items',()=>{
- assert.match(app,/<SharedInventoryPanel db=\{db\} campaignId=\{activeId\}/);
+ assert.match(app,/<SharedInventoryPanel db=\{db\} campaignId=\{campaignId\}/);
  assert.match(char,/<SharedInventoryPanel db=\{db\} campaignId=\{campaignId\}/);
  assert.match(npc,/<SharedInventoryPanel db=\{db\} campaignId=\{campaignId\}/);
  assert.match(tool,/onChange=\{collab\.changeItems\}/);
