@@ -79,8 +79,8 @@ export function blockingBarrierSegments(environment,token){
  * The final server trigger must reject direct REST/keyboard/group writes too.
  */
 export function checkTokenMovement({token,destination,map,environment}){
- const grid=Number(map?.grid_size),width=Number(map?.width)/grid,
-  height=Number(map?.height)/grid;
+ const grid=Number(map?.grid_size),width=Math.floor(Number(map?.width)/grid),
+  height=Math.floor(Number(map?.height)/grid);
  const x=Number(destination?.x),y=Number(destination?.y);
  const w=Number(token?.span_x??1),h=Number(token?.span_y??1);
  if(!number(grid)||grid<=0||!number(width)||!number(height)||
