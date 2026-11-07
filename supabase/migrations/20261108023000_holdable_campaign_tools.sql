@@ -40,7 +40,7 @@ begin
    if new.state->'attrs' is distinct from old.state->'attrs' then
     raise exception 'Only the DM may change mount attributes';end if;
    if old.held_by_token_id is not null then
-    select t.owner_id into v_old_carrier
+    select t.owner_id,t.map_id,t.x,t.y into v_old_carrier
      from public.map_tokens t where t.id=old.held_by_token_id;
     if found and v_old_carrier.owner_id is distinct from (select auth.uid()) then
      if new.held_by_token_id is distinct from old.held_by_token_id
@@ -48,6 +48,12 @@ begin
       or new.x is distinct from old.x or new.y is distinct from old.y then
       raise exception 'Only the current carrier or DM can drop a held tool';
      end if;
+    end if;
+    if found and new.held_by_token_id is null and
+     (new.map_id is distinct from v_old_carrier.map_id
+      or abs(new.x-v_old_carrier.x)>1
+      or abs(new.y-v_old_carrier.y)>1) then
+     raise exception 'Drop a held tool at its carrier, not across the map';
     end if;
    end if;
   end if;
@@ -89,7 +95,7 @@ begin
   if jsonb_typeof(new.config->'holdable') is distinct from 'boolean'
    or new.config->>'holdable'<>'true' then
    raise exception 'This tool is not configured to be held';end if;
-  select t.campaign_id,t.map_id,t.owner_id,t.visible into v_carrier
+  select t.campaign_id,t.map_id,t.owner_id,t.visible,t.x,t.y into v_carrier
    from public.map_tokens t where t.id=new.held_by_token_id;
   if not found or v_carrier.campaign_id is distinct from new.campaign_id
    or v_carrier.map_id is distinct from new.map_id then
@@ -97,6 +103,11 @@ begin
   if not v_dm and (v_carrier.owner_id is distinct from (select auth.uid())
     or v_carrier.visible is not true) then
    raise exception 'You cannot attach a tool to that token';end if;
+  if not v_dm and tg_op='UPDATE' and
+   new.held_by_token_id is distinct from old.held_by_token_id and
+   (new.x is distinct from round(v_carrier.x)::integer or
+    new.y is distinct from round(v_carrier.y)::integer) then
+   raise exception 'Attach the tool at the carrier token position';end if;
  end if;
  new.updated_at:=now();
  return new;
