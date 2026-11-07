@@ -2708,10 +2708,18 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     clientX:e.clientX,clientY:e.clientY});
    if(toolDrag.current?.pointerId===current.pointerId)toolDrag.current=null;
   }
+  // Continue tracking even when a second mouse button drops pointer capture.
+  function onMouseMove(e){
+   const current=measureDrag.current;
+   if(current?.sourceButton!==0)return;
+   updateMeasurement({pointerId:current.pointerId,clientX:e.clientX,clientY:e.clientY});
+  }
   window.addEventListener('mousedown',onMouseDown,true);
+  window.addEventListener('mousemove',onMouseMove,true);
   window.addEventListener('mouseup',onMouseUp,true);
   return()=>{
    window.removeEventListener('mousedown',onMouseDown,true);
+   window.removeEventListener('mousemove',onMouseMove,true);
    window.removeEventListener('mouseup',onMouseUp,true);
   };
  },[active,activeMeasureTool]);
@@ -2835,7 +2843,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   <MeasurementToolBar tool={activeMeasureTool}
    onPointerDown={onToolPointerDown} onPointerMove={onToolPointerMove}
    onPointerUp={e=>onToolPointerUp(e)}
-   onPointerCancel={e=>onToolPointerUp(e,true)}
+   onPointerCancel={e=>{
+    if(measureDrag.current?.sourceButton===0)return;
+    onToolPointerUp(e,true);
+   }}
    onKeySelect={setActiveMeasureTool} onClearPins={clearMyPinnedMeasurements}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
@@ -2851,7 +2862,11 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
     onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
     onPointerCancel={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}
-    onLostPointerCapture={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}>
+    onLostPointerCapture={e=>{
+     // Native mouseup, not lost capture, completes a held-left route.
+     if(measureDrag.current?.sourceButton===0)return;
+     finishMeasurement(e,true);endViewportPointer(e,true);
+    }}>
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
