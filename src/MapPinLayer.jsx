@@ -1,4 +1,4 @@
-import React,{useRef,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {PIN_ICONS,normalizePinPosition,pinVisibleTo} from './CampaignHandouts.js';
 
 /** Map pins are separate from DM lighting geometry. Players receive only RLS-allowed pins. */
@@ -6,6 +6,24 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
  onCreate,onMove,onOpen}){
  const [preview,setPreview]=useState({});
  const drag=useRef(null),skipClick=useRef(null);
+ const awaitingServer=useRef(new Map());
+ // Keep the released location painted until the database refresh confirms it.
+ // Removing the preview on pointerup made pins visibly snap back and jump.
+ useEffect(()=>{
+  setPreview(old=>{
+   let changed=false;const next={...old};
+   for(const [id,point] of awaitingServer.current){
+    const saved=pins.find(pin=>pin.id===id);
+    if(!saved||Math.abs(Number(saved.x)-point.x)<.011&&
+       Math.abs(Number(saved.y)-point.y)<.011){
+     awaitingServer.current.delete(id);
+     if(id in next){delete next[id];changed=true}
+    }
+   }
+   return changed?next:old;
+  });
+ },[pins]);
+ useEffect(()=>{awaitingServer.current.clear();setPreview({})},[map?.id]);
  const cell=Math.max(1,Number(map?.grid_size)*scale);
  const placing=isDM&&editor?.enabled&&editor?.layer==='light'&&
   editor?.tool==='pin'&&!!editor?.pinHandoutId;
@@ -40,11 +58,19 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
   const next=cancel?{x:d.x,y:d.y}:normalizePinPosition(
    d.x+(event.clientX-d.startX)/cell,
    d.y+(event.clientY-d.startY)/cell,map);
-  setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
   try{event.currentTarget.releasePointerCapture(event.pointerId)}catch{}
   if(!cancel&&(Math.abs(next.x-d.x)>.01||Math.abs(next.y-d.y)>.01)){
    skipClick.current=pin.id;
-   onMove?.(pin,{x:next.x,y:next.y});
+   awaitingServer.current.set(d.id,next);
+   setPreview(prev=>({...prev,[d.id]:next}));
+   // Database failure removes the local optimistic position, allowing retry.
+   Promise.resolve().then(()=>onMove?.(pin,{x:next.x,y:next.y}))
+    .catch(()=>{
+     awaitingServer.current.delete(d.id);
+     setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
+    });
+  }else{
+   setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
   }
  }
  return <div className={"map-handout-pins"+(placing?" is-placing":isDM&&editor?.enabled?" is-editing":"")}>
