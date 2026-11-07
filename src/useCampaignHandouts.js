@@ -44,13 +44,12 @@ export default function useCampaignHandouts({db,campaignId,mapId,userId,isDM}){
  useEffect(()=>{
   if(!db||!campaignId||!userId)return;
   let hidden=false;
+  // Only publish a campaign-scoped revision tick. Never broadcast note text
+  // or hidden pin coordinates in Realtime payloads.
   const channel=db.channel('forge-handouts-'+campaignId+'-'+userId)
-   .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_handouts',filter:'campaign_id=eq.'+campaignId},()=>void refresh())
-   .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_handout_folders',filter:'campaign_id=eq.'+campaignId},()=>void refresh())
-   .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_map_pins',filter:'campaign_id=eq.'+campaignId},()=>void refresh())
+   .on('postgres_changes',{event:'UPDATE',schema:'public',
+    table:'campaign_handout_events',filter:'campaign_id=eq.'+campaignId},
+    ()=>void refresh())
    .subscribe();
   const resume=()=>{
    if(document.visibilityState==='hidden')hidden=true;
