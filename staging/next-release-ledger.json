@@ -158,8 +158,9 @@
     {
       "file": "staging/sql-candidates/campaign_pin_icon_expansion.sql",
       "name": "campaign_pin_icon_expansion",
-      "status": "staged-not-applied",
-      "mustApplyBeforeFrontend": true
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "version": "20261107113749"
     }
   ],
   "edgeFunctionDependencies": [
@@ -167,7 +168,8 @@
       "function": "username-register",
       "source": "supabase/functions/username-register/index.ts",
       "includes": "password-breach-check.js",
-      "status": "staged-not-deployed"
+      "status": "deployed-production",
+      "version": 6
     }
   ],
   "securityNotes": [

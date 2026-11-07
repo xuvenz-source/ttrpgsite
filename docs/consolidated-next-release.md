@@ -1,6 +1,6 @@
 # Consolidated next release — staging ledger and deployment plan
 
-**No production deployment authorized.** All work stays on `stage/next-release-consolidated-2026-11-07` until the designer explicitly requests the next release.
+**Production release authorized 2026-11-07.** The complete consolidated bundle was approved for release. Release branch remains `stage/next-release-consolidated-2026-11-07` until the single reviewed merge to `main`.
 
 ## Standing release contract
 
@@ -16,7 +16,7 @@ The designer's default meaning of “push an update” is: **publish all previou
 - Breached-password screening on the existing registration Edge Function using k-anonymity.
 - Fog/realtime compatibility: no public movement-coordinate preview while authoritative fog is on or its visibility state is unknown.
 
-The pin-kind CHECK constraint expansion is a **staged SQL candidate only** (`staging/sql-candidates/campaign_pin_icon_expansion.sql`). It must be applied to the existing live Supabase project in the **approved future release before the matching frontend is deployed**. The `username-register` Supabase Edge Function must be deployed in that same approved release, not by staging CI. The old proposed NPC Storage policy is **superseded** by the newer production fog security policy; never apply it.
+The pin-kind CHECK expansion was **applied and verified** on the existing production Supabase project as migration `20261107113749_campaign_pin_icon_expansion` (source record: `supabase/migrations/20261107113749_campaign_pin_icon_expansion.sql`). The `username-register` Edge Function was deployed and verified as version 6, with the existing unauthenticated JWT setting preserved. The old proposed NPC Storage policy is **superseded** by the newer production fog security policy; never apply it.
 
 ## Release procedure
 

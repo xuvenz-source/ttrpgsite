@@ -8,8 +8,8 @@ test('the next release is a consolidated staging branch, not a Vercel deployment
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
  assert.ok(ledger.features.every(x=>x.status==='included'&&x.sources.every(s=>ledger.branches.some(b=>b.name===s&&b.status==='included'))));
- assert.equal(ledger.databaseDependencies[0].status,'staged-not-applied');
- assert.equal(ledger.edgeFunctionDependencies[0].status,'staged-not-deployed');
+ assert.equal(ledger.databaseDependencies[0].status,'applied-production');
+ assert.equal(ledger.edgeFunctionDependencies[0].status,'deployed-production');
 });
 test('pending ruler, tools, pin, map and account changes are all in the bundle',()=>{
  const ids=new Set(ledger.features.map(f=>f.id));
