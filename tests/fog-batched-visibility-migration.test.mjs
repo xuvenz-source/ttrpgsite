@@ -32,3 +32,8 @@ test('exploration writes only when visibility contains cells not yet remembered'
  assert.match(sql,/if shared then[\s\S]*?forge_visibility\.exploration e/);
  assert.match(sql,/else[\s\S]*?select explored_cells into memory from forge_visibility\.exploration/);
 });
+
+test('fog snapshot fails closed when ray or lighting evaluation raises',()=>{
+ assert.match(sql,/begin\s+with sources as materialized \(/);
+ assert.match(sql,/from visible_indices;\s+exception when others then\s+seen:='\[\]'::jsonb;\s+end;/);
+});
