@@ -12,7 +12,7 @@ import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
-import InventoryPanel from './InventoryPanel.jsx';
+import SharedInventoryPanel from './SharedInventoryPanel.jsx';
 
 export default function NpcEditor({
  db,campaignId,userId,record,template,onSave,onSaveAsTemplate,onClose,onRoll,
@@ -113,9 +113,10 @@ export default function NpcEditor({
    onChange={v=>setField(PERSONAL_RESOURCE_KEY,v)}/></div>:
  (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>
  {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
- f.type==='inventory'?<InventoryPanel field={f} template={template}
-  value={draft.values[f.id]||[]} sheetValues={draft.values}
-  onChange={v=>setField(f.id,v)}/>:
+ f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={campaignId}
+  userId={userId} isDM sourceType={record.kind==='template'?'npc_template':'npc_token'}
+  sourceId={record.data.id} field={f} template={template}
+  sheetValues={draft.values}/>:
  f.type==='attribute'?<AttributeField field={f} template={template}
   value={draft.values[f.id]} values={draft.values}
   onChange={v=>setField(f.id,v)}
