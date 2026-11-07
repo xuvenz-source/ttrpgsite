@@ -12,9 +12,11 @@ export default function SpellChatCard({message}){
    rows.push({id:key,label,cells:[{id:key,kind:'roll',roll:value}]});
  }
  if(parts.save){
-  const text=[parts.save.stat,parts.save.dc!=null?'DC '+parts.save.dc:null,
-   parts.save.success?'On success: '+parts.save.success:null].filter(Boolean).join(' · ');
+  const text=[parts.save.stat,parts.save.dc!=null?'DC '+parts.save.dc:null]
+   .filter(Boolean).join(' · ');
   rows.push({id:'save',label:'Saving throw',cells:[{kind:'text',text}]});
+  if(parts.save.success)rows.push({id:'save-success',label:'On success',
+   cells:[{id:'save-success-text',kind:'text',text:parts.save.success}]});
  }
  const subtitle=[info.level,info.school,info.castingTime,info.range].filter(Boolean).join(' · ');
  const detailsPresent=!!(flags.length||info.components||parts.description||
