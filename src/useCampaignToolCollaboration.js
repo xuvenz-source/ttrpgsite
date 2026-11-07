@@ -7,7 +7,7 @@ export {itemIdentity,removeItemIdentity} from './InventoryCollaborationCore.js';
  * never become an authorization check, and only one item is patched per RPC. */
 export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
  const issueId=tool.id;
- const [claims,setClaims]=useState([]);
+ const [claims,setClaims]=useState([]),[ready,setReady]=useState(false);
  const [optimistic,setOptimistic]=useState({});
  const [error,setError]=useState('');
  const [pending,setPending]=useState(false);
@@ -20,9 +20,12 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   if(issueRef.current===issueId)setClaims(data||[]);
  },[db,issueId]);
  useEffect(()=>{
-  issueRef.current=issueId;setClaims([]);setOptimistic({});
+  let active=true;
+  issueRef.current=issueId;setClaims([]);setOptimistic({});setReady(false);
   owned.current.clear();writes.current.clear();claimsInFlight.current.clear();setError('');
-  void refreshClaims().catch(e=>setError(e.message||String(e)));
+  void refreshClaims().then(()=>{
+   if(active&&issueRef.current===issueId)setReady(true);
+  }).catch(e=>{if(active)setError(e?.message||String(e))});
   let connected=false,reconciliations=0;
   const channel=db.channel('forge-tool-item-claims-'+issueId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
@@ -46,6 +49,7 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
     void refreshClaims().catch(()=>{});
   },8000);
   return()=>{
+   active=false;
    clearInterval(interval);
    // Always let in-flight claims and writes settle before releasing, otherwise
    // closing the sheet immediately after a drag can reject its last edit.
@@ -146,6 +150,6 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   }catch(e){setError(e.message||String(e));throw e}
   finally{setPending(false)}
  },[db,issueId,refresh]);
- return {rows,locks,error,pending,claim,release,changeItems,saveDetails,
+ return {rows,locks,ready,error,pending,claim,release,changeItems,saveDetails,
   owned:owned.current,refreshClaims};
 }
