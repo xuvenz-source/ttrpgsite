@@ -7,7 +7,7 @@ import './combat.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
- measurementGeometry,addLineTurn,shouldBendLineOnRightPress,
+ measurementGeometry,addLineTurn,shouldBendLineOnRightPress,shouldBendLineOnKeyPress,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
@@ -884,6 +884,7 @@ function App(){
    config:{private:true,broadcast:{ack:false,self:false}}
   }).on('broadcast',{event:'token-preview'},({payload})=>{
    const access=latestMovementAccess.current;
+   if(access.fogEnabled)return;
    if(!allowedMovementPreview(payload,selectedMap,
     access.tokens||[],access.members||[],user))return;
    const id=payload.id;
@@ -905,6 +906,7 @@ function App(){
    remoteMoveExpiry.current.set(id,timer);
   }).on('broadcast',{event:'tool-preview'},({payload})=>{
    const access=latestMovementAccess.current;
+   if(access.fogEnabled)return;
    if(!allowedToolMovementPreview(payload,selectedMap,
     access.toolPlacements||[],access.issued||[],access.members||[],user))return;
    const id=payload.id;
@@ -1193,6 +1195,7 @@ function App(){
   latestMapsRefresh.current=refreshMaps;
   latestNpcsRefresh.current=refreshNpcs;
   latestMovementAccess.current={tokens,members,mapId:selectedMap,user,
+   fogEnabled:!fog.frame||fog.frame.mapId!==selectedMap||fog.frame.enabled,
    toolPlacements:campaignTools.placed,issued:campaignTools.issued};
  });
  // Browsers may throttle or suspend background tabs. Keep the board mounted;
@@ -2213,8 +2216,8 @@ function App(){
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolPickUp={pickUpIssuedToolOnMap}
    onToolOpen={setSelectedToolIssueId} onToolMovementPreview={sendLiveToolMovement}
-   remoteToolPositions={remoteToolPositions}
-   onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+   remoteToolPositions={fog.frame?.enabled?{}:remoteToolPositions}
+   onMovementPreview={sendLiveMovement} remotePositions={fog.frame?.enabled?{}:remoteTokenPositions}
     fogFrame={fog.frame}
     onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
@@ -3018,6 +3021,26 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    window.removeEventListener('mouseup',onMouseUp,true);
   };
  },[active,activeMeasureTool]);
+ // Preserve line bending when browsers suppress right presses during
+ // pointer capture. R adds a snapped turn at the active line endpoint.
+ useEffect(()=>{
+  if(!active||activeMeasureTool!=='line')return;
+  const onTurnKey=e=>{
+   const current=measureDrag.current;
+   if(!shouldBendLineOnKeyPress(current,e.key,e.repeat))return;
+   if(e.target instanceof Element&&e.target.closest(
+    'input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+   e.preventDefault();e.stopPropagation();
+   const next=addLineTurn(current.measure,current.measure.end);
+   if(next===current.measure)return;
+   current.measure=next;
+   setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
+    {...next,isLocal:true}:m));
+   onMeasurementPreview?.(next,'preview',true);
+  };
+  window.addEventListener('keydown',onTurnKey,true);
+  return()=>window.removeEventListener('keydown',onTurnKey,true);
+ },[active,activeMeasureTool,onMeasurementPreview]);
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
   // panning because touchscreens do not have a middle mouse button.
