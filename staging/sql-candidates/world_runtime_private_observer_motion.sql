@@ -15,6 +15,12 @@ create table if not exists forge_visibility.movement_preview_rates(
  piece_id uuid not null,
  last_sent timestamptz not null default now(),
  last_seq bigint not null,
+ map_id uuid not null,
+ kind text not null check(kind in ('token','tool')),
+ base_x integer not null,
+ base_y integer not null,
+ last_x integer not null,
+ last_y integer not null,
  primary key(actor_id,piece_id)
 );
 alter table forge_visibility.movement_preview_rates enable row level security;
@@ -112,6 +118,8 @@ declare
  scene jsonb; obstacle jsonb;pts jsonb;a jsonb;b jsonb;i integer;
  recipient record; saw_old boolean;saw_new boolean; packet jsonb;
  token_visible boolean:=true; accepted bigint;
+ canonical_x integer;canonical_y integer;history record;
+ route_steps integer;probe integer;probe_x double precision;probe_y double precision;
 begin
  if actor is null or p_kind not in ('token','tool') or p_piece is null or
     p_seq is null or p_seq<=0 or p_seq>9000000000000000 or
@@ -149,6 +157,18 @@ begin
   fw:=footprint;fh:=footprint;
   attrs:=coalesce(tool.state->'attrs','{}'::jsonb);
  end if;
+ canonical_x:=bx;canonical_y:=by;
+ -- The last accepted waypoint is trusted only while the persisted origin
+ -- is unchanged and the preview is recent. A resumed drag never reuses an
+ -- arbitrary stale user-supplied starting coordinate.
+ select h.* into history from forge_visibility.movement_preview_rates h
+ where h.actor_id=actor and h.piece_id=p_piece;
+ if found and history.map_id=p_map and history.kind=p_kind and
+  history.base_x=canonical_x and history.base_y=canonical_y and
+  history.last_sent>clock_timestamp()-interval '3 seconds' and
+  history.last_seq<p_seq then
+   bx:=history.last_x;by:=history.last_y;
+ end if;
  if fw<=0 or fh<=0 or fw>12 or fh>12 or
     p_x<0 or p_y<0 or p_x+fw>floor(m.width/m.grid_size) or
     p_y+fh>floor(m.height/m.grid_size) then return false;end if;
@@ -181,10 +201,15 @@ begin
  -- client spam. Each accepted preview updates ONLY this private rate row,
  -- not map_tokens or any map visibility tick.
  insert into forge_visibility.movement_preview_rates(
-  actor_id,piece_id,last_sent,last_seq
- )values(actor,p_piece,clock_timestamp(),p_seq)
+  actor_id,piece_id,last_sent,last_seq,
+  map_id,kind,base_x,base_y,last_x,last_y
+ )values(actor,p_piece,clock_timestamp(),p_seq,
+  p_map,p_kind,canonical_x,canonical_y,p_x,p_y)
  on conflict(actor_id,piece_id)do update set
-  last_sent=excluded.last_sent,last_seq=excluded.last_seq
+  last_sent=excluded.last_sent,last_seq=excluded.last_seq,
+  map_id=excluded.map_id,kind=excluded.kind,
+  base_x=excluded.base_x,base_y=excluded.base_y,
+  last_x=excluded.last_x,last_y=excluded.last_y
  where forge_visibility.movement_preview_rates.last_sent<=
   excluded.last_sent-interval '100 milliseconds'
   and p_seq>forge_visibility.movement_preview_rates.last_seq
@@ -202,6 +227,22 @@ begin
   if not saw_old then continue;end if;
   saw_new:=forge_visibility.observer_can_see(
    p_map,recipient.user_id,p_x+fw/2,p_y+fh/2);
+  if saw_new then
+   -- The endpoints may both be visible even when the path between them is
+   -- hidden. Never animate a private corridor into an observer's map.
+   route_steps:=ceil(greatest(abs(p_x-bx),abs(p_y-by)))::int;
+   if route_steps>12 then saw_new:=false;end if;
+   if saw_new and route_steps>1 then
+    for probe in 1..route_steps-1 loop
+     probe_x:=bx+(p_x-bx)*probe::double precision/route_steps+fw/2;
+     probe_y:=by+(p_y-by)*probe::double precision/route_steps+fh/2;
+     if not forge_visibility.observer_can_see(
+       p_map,recipient.user_id,probe_x,probe_y)then
+      saw_new:=false;exit;
+     end if;
+    end loop;
+   end if;
+  end if;
   if saw_new then
    packet:=jsonb_build_object('kind',p_kind,'id',p_piece,'mapId',p_map,
     'actor',actor,'seq',p_seq,'action','move','x',p_x,'y',p_y);
