@@ -2064,11 +2064,13 @@ function App(){
  {combatTracker.combat?.active&&combatTracker.open&&
   <CombatTurnOrder combat={combatTracker.combat}
    privateEntries={combatTracker.privateEntries}
+    db={db}
    tokens={tokens} user={user} isDM={isDM} busy={combatTracker.busy}
    onClose={()=>combatTracker.setOpen(false)}
    onNext={()=>combatTracker.command('next')}
    onPrevious={()=>combatTracker.command('previous')}
    onSort={()=>combatTracker.command('sort')}
+    onRemoveEntry={entryId=>combatTracker.command('remove',entryId)}
    onOpenSettings={()=>{setRightTab('dm');setTab('tabletop')}}
    onRollEntry={combatTracker.roll} onRollNpc={combatTracker.rollNpc}
    onLocate={tokenId=>{if(tokens.some(t=>t.id===tokenId&&(isDM||t.visible!==false))){
