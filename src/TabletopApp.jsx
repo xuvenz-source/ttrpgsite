@@ -2283,8 +2283,15 @@ export default function TabletopApp(){
  }
  async function resizeToken(t,spanX,spanY){
   if(!isDM)return;
-  try{await read(db.from('map_tokens').update({span_x:spanX,span_y:spanY}).eq('id',t.id))}
-  catch(e){fail(e)}finally{await refreshTokens()}
+  try{
+   if(mapSettingEditor.ignoreCollision){
+    await read(db.rpc('resize_map_token',{
+     p_token:t.id,p_span_x:spanX,p_span_y:spanY,p_ignore_collision:true
+    }));
+   }else{
+    await read(db.from('map_tokens').update({span_x:spanX,span_y:spanY}).eq('id',t.id));
+   }
+  }catch(e){fail(e)}finally{await refreshTokens()}
  }
  async function removeToken(t){
   if(!isDM)return;
