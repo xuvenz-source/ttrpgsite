@@ -2453,6 +2453,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .map-measure-local{stroke:#fbc56c;fill:#e8a83c}
 .map-measure-remote{stroke:#79dcff;fill:#43b6e5}
 .map-measure-start{fill:#fff;stroke:#14233a}
+.map-measure-turn{fill:#14233a;stroke:#f9efdc;stroke-width:.02}
 .map-measure-label-back{fill:#111a2df0;stroke:#738db1;stroke-width:.015}
 .map-measure-label{stroke:none;fill:#fff;paint-order:stroke;
  font-family:system-ui,sans-serif;font-weight:800;letter-spacing:0}
