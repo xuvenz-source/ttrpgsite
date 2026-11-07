@@ -7,6 +7,8 @@ import {acceptedSignupChallenge,validCaptchaToken}
 const edge=readFileSync(new URL('../supabase/functions/username-register/index.ts',import.meta.url),'utf8');
 const welcome=readFileSync(new URL('../src/Welcome.jsx',import.meta.url),'utf8');
 const widget=readFileSync(new URL('../src/SignupCaptcha.jsx',import.meta.url),'utf8');
+const fingerprintSource=readFileSync(new URL(
+ '../supabase/functions/username-register/registration-fingerprint.js',import.meta.url),'utf8');
 const vercel=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
 
 test('only Siteverify success for the expected action and exact hostname allows signup',()=>{
@@ -31,7 +33,14 @@ test('privileged username creation always performs server verification before th
  assert.ok(edge.includes('if(!turnstileSecret)return respond(origin,503'));
  assert.ok(edge.includes('if(!validCaptchaToken(captchaToken))'));
  assert.ok(!edge.includes('error.message||\'Could not create account.\''));
- assert.ok(edge.includes("crypto.subtle.sign('HMAC'"));
+ assert.ok(edge.includes('registrationFingerprint(turnstileSecret,source)'));
+});
+test('signup HMAC fingerprint explicitly supplies SHA-256, and unexpected errors preserve CORS',()=>{
+ assert.match(fingerprintSource,/name:'HMAC',hash:'SHA-256'/);
+ assert.match(fingerprintSource,/crypto\.subtle\.sign\('HMAC'/);
+ assert.match(edge,/try\{return await registerUsername\(req\)\}/);
+ assert.match(edge,/return respond\(origin,503,\{ok:false,/);
+ assert.match(edge,/if\(!ACCEPTED_ORIGINS\.has\(origin\)\)return new Response\('Forbidden'/);
 });
 test('signup collects CAPTCHA and legacy email-link login cannot create an account',()=>{
  assert.ok(widget.includes("action:'username-register'"));

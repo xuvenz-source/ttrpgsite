@@ -200,6 +200,14 @@
         "stage/shared-item-preview-collision-2026-11-08"
       ],
       "status": "included"
+    },
+    {
+      "id": "signup-hmac-edge-failure",
+      "description": "Fix verified signup Edge Function HMAC key import crash; improve 503 error path and network message",
+      "sources": [
+        "stage/shared-item-preview-collision-2026-11-08"
+      ],
+      "status": "included"
     }
   ],
   "databaseDependencies": [
@@ -251,10 +259,20 @@
         "scope": [
           "Enable shared issued-tool + Item once the initial collaboration lease fetch succeeds",
           "Collision-check both mouse drag and custom-keybound steps in DM player preview",
-          "Prevent DM preview from writing live token positions or placing units"
+          "Prevent DM preview from writing live token positions or placing units",
+          "Fix signup Edge Function HMAC-SHA-256 fingerprint crash, return CORS-readable failure responses and improve network-error UI text"
         ],
         "databaseDependencies": [],
-        "paidInfrastructure": false
+        "paidInfrastructure": false,
+        "edgeFunctionDependencies": [
+          {
+            "name": "username-register",
+            "status": "staged-not-deployed",
+            "currentVersion": 6,
+            "verifyJwt": false,
+            "requiresApproval": true
+          }
+        ]
       }
     ]
   },
