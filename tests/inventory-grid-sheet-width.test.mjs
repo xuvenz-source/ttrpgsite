@@ -30,7 +30,7 @@ test('grid retains 48px physical slots and scrolls horizontally when window is s
  assert.ok(panel.includes("gridTemplateColumns:'repeat('+cols+', '+CELL_SIZE+'px)'"));
  assert.ok(panel.includes("gridTemplateRows:'repeat('+height+', '+CELL_SIZE+'px)'"));
  assert.match(css,/\.field\.inventory-grid-field \.inventory-grid-scroll\s*\{[^}]*overflow-x:auto/);
- assert.match(css,/\.field\.inventory-grid-field \.inventory-grid\s*\{[^}]*width:max-content/);
+ assert.match(css,/\.field\.inventory-grid-field \.inventory-slot-grid\s*\{[^}]*width:max-content/);
  const layout=gridLayout([{Item:'Sword',gridX:0,gridY:0,gridW:1,gridH:1}],8,5);
  assert.equal(layout.placed[0].x,0);
  assert.equal(layout.placed[0].y,0);
