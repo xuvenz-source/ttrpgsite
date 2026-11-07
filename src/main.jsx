@@ -15,6 +15,9 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import useCampaignHandouts from './useCampaignHandouts.js';
+import CampaignHandoutWindow from './CampaignHandoutWindow.jsx';
+import MapPinLayer from './MapPinLayer.jsx';
 import useCampaignTools from './useCampaignTools.js';
 import CampaignToolSheet from './CampaignToolSheet.jsx';
 import CampaignToolMapLayer from './CampaignToolMapLayer.jsx';
@@ -135,6 +138,7 @@ function App(){
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),
   [characterEditor,setCharacterEditor]=useState(null);
  const[accountSettingsOpen,setAccountSettingsOpen]=useState(false);
+ const[openedHandout,setOpenedHandout]=useState(null);
  const[selectedToolIssueId,setSelectedToolIssueId]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
@@ -148,7 +152,7 @@ function App(){
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
   lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
-  selectedId:null,lightBright:20,lightDim:20
+  selectedId:null,pinHandoutId:'',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
@@ -214,6 +218,12 @@ function App(){
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
  tokenContextRef.current={mapId:selectedMap,campaignId:activeId,userId:user};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
+ const campaignHandouts=useCampaignHandouts({
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
+ });
+ const activeHandout=campaignHandouts.handouts.find(h=>h.id===openedHandout?.id)||
+  openedHandout?.preview||null;
+ const activeHandoutPin=campaignHandouts.pins.find(p=>p.id===openedHandout?.pinId)||null;
  const campaignTools=useCampaignTools({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
  });
@@ -528,6 +538,33 @@ function App(){
   try{await campaignTools.place(issued,selectedMap,x,y)}
   catch(e){fail(e)}
  }
+ function prepareHandoutPin(handoutId){
+  if(!isDM||!selectedMap)return fail('Select a map first.');
+  if(!campaignHandouts.handouts.some(h=>h.id===handoutId))return fail('Handout not found.');
+  setTab('tabletop');setRightTab('dm');
+  setMapSettingEditor(old=>({...old,previewing:false,layer:'light',enabled:true,
+   lockLight:false,tool:'pin',pinHandoutId:handoutId,selectedId:null}));
+ }
+ async function createHandoutPin(handoutId,point){
+  if(!isDM||!selectedMap||!campaignHandouts.handouts.some(h=>h.id===handoutId))return;
+  try{
+   const pin=await campaignHandouts.createPin({handoutId,kind:'note',...point});
+   setMapSettingEditor(old=>({...old,tool:'select',pinHandoutId:''}));
+   setOpenedHandout({id:handoutId,pinId:pin.id,
+    preview:campaignHandouts.handouts.find(h=>h.id===handoutId)});
+  }catch(e){fail(e)}
+ }
+ async function openMapHandoutPin(pin){
+  try{
+   const note=await campaignHandouts.readPinNote(pin);
+   if(!note)throw Error('This pin is no longer available to you.');
+   setOpenedHandout({id:note.id,pinId:pin.id,preview:note});
+  }catch(e){fail(e)}
+ }
+ async function moveMapHandoutPin(pin,point){
+  if(!isDM)return;
+  try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e)}
+ }
  async function dropExistingUnit(tokenId,x,y){
   const t=tokens.find(t=>t.id===tokenId);
   if(!t||t.map_id!==selectedMap)return;
@@ -709,6 +746,7 @@ function App(){
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setMapSettingPopped(false);setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
   setSelectedToolIssueId(null);
+  setOpenedHandout(null);
   setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
   ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setMapSettingPopped(false);setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
@@ -1904,7 +1942,16 @@ function App(){
   onSignOut={()=>db.auth.signOut()}
   onOpenAccountSettings={()=>setAccountSettingsOpen(true)}
   error={error} onClearError={()=>setError('')}/>
-  {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
+  {openedHandout&&activeHandout&&<CampaignHandoutWindow
+  key={activeHandout.id} note={activeHandout} pin={activeHandoutPin}
+  isDM={isDM} folders={campaignHandouts.folders}
+  onClose={()=>setOpenedHandout(null)}
+  onSave={(note,patch)=>campaignHandouts.updateHandout(note,patch)}
+  onDelete={campaignHandouts.deleteHandout}
+  onUpdatePin={campaignHandouts.updatePin}
+  onDeletePin={campaignHandouts.deletePin}
+  onCollect={campaignHandouts.collectPin}/>} 
+ {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
    onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
  </>;
  if(launchNpc&&!isDM&&camp)return <div className="center" role="alert">
@@ -2026,6 +2073,8 @@ function App(){
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
+   handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
+   onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
    onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
    template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
@@ -2065,6 +2114,8 @@ function App(){
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
  onOpenStatus={openTokenStatuses}
+ campaignHandouts={campaignHandouts} onOpenHandout={id=>setOpenedHandout({id})}
+ onPrepareHandoutPin={prepareHandoutPin} onHandoutError={fail}
  campaignTools={campaignTools} onOpenCampaignTool={setSelectedToolIssueId}
  onToolError={fail}
  chat={chat} onChatChange={setChat} onSendChat={sendChat}
@@ -2076,6 +2127,7 @@ function App(){
  mapEnvironment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
  mapEnvironmentStatus={mapEnvironmentStatus}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
+ handoutsForMap={campaignHandouts.handouts}
  mapSettingPopped={mapSettingPopped}
  combat={combatTracker.combat} combatPrivateEntries={combatTracker.privateEntries}
  combatBusy={combatTracker.busy} combatStatus={combatTracker.status}
@@ -2156,7 +2208,8 @@ function App(){
      onEnvironmentChange={saveMapEnvironment}
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
-     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}/>
+     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
+     handouts={campaignHandouts.handouts}/>
    </div>
   </section>
  </FloatingWindow>}
@@ -2471,7 +2524,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  toolPlacements=[],toolIssued=[],onToolPlace,onToolOpen,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
- onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null}){
+ onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
+ handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
@@ -2939,6 +2993,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:(isDM&&environmentEditor?.enabled&&environmentEditor.showBackground===false)?undefined:(url?'url('+JSON.stringify(url)+')':undefined),backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
+    <MapPinLayer map={map} scale={scale} pins={handoutPins} isDM={isDM}
+     editor={environmentEditor} active={active}
+     onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}/>
     <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
      placements={toolPlacements} issued={toolIssued}
