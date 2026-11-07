@@ -30,7 +30,9 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
  onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],handouts=[],
  onPublishEnvironment,onDisablePublished,onResetExploration,publishedEnvironment}){
  const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
- const selected=env.objects.find(o=>o.id===editor.selectedId);
+ const selectedIds=(editor.selectedIds?.length?editor.selectedIds:
+  editor.selectedId?[editor.selectedId]:[]).filter(id=>env.objects.some(o=>o.id===id));
+ const selected=selectedIds.length===1?env.objects.find(o=>o.id===selectedIds[0]):null;
  const updateEditor=change=>onEditorChange({...editor,...change});
  const updateEnv=change=>onEnvironmentChange({...env,...change});
  const updateSelected=change=>selected&&onEnvironmentChange(patchObject(env,selected.id,change));
@@ -50,12 +52,12 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
    </select></label>
    <button className={editor.previewing?'':'secondary'} disabled={!previewTokens.length}
     type="button" onClick={()=>updateEditor({previewing:!editor.previewing,
-     previewTokenId,enabled:false,selectedId:null})}>
+     previewTokenId,enabled:false,selectedId:null,selectedIds:[]})}>
     {editor.previewing?'Exit player preview':'Preview as player'}</button>
   </div>
   {!editor.previewing&&<>
   <label>Active layer
-   <select value={activeLayer} onChange={e=>updateEditor({layer:e.target.value,selectedId:null})}>
+   <select value={activeLayer} onChange={e=>updateEditor({layer:e.target.value,selectedId:null,selectedIds:[]})}>
     <option value="background">Map / Background</option>
     <option value="light">Light Layer</option>
    </select>
@@ -84,9 +86,11 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     </button>
    </div>
    {editor.enabled&&editor.lockLight&&<p className="muted tiny">Unlock Light Layer to draw or edit.</p>}
+   <Check title="Lock tokens while editing map" value={editor.lockTokens!==false}
+    onChange={v=>updateEditor({lockTokens:v})}/>
    <label>Map tool
     <select disabled={!canDraw} value={editor.tool||'select'}
-     onChange={e=>updateEditor({tool:e.target.value,selectedId:null})}>
+     onChange={e=>updateEditor({tool:e.target.value,selectedId:null,selectedIds:[]})}>
      {drawTools.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
     </select>
    </label>
@@ -116,6 +120,14 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      onChange={v=>updateEditor({lightDim:v??0})}/>
    </>}
    <div className="map-setting-divider"/>
+   {selectedIds.length>1&&<div className="map-setting-multi-selection">
+    <strong>{selectedIds.length} map objects selected</strong>
+    <button type="button" className="secondary map-setting-danger" disabled={!canDraw}
+     onClick={()=>{
+      onEnvironmentChange({...env,objects:env.objects.filter(o=>!selectedIds.includes(o.id))});
+      updateEditor({selectedId:null,selectedIds:[]});
+     }}>Delete selected objects</button>
+   </div>}
    {selected&&<h4>Selected object</h4>}
    {!selected?null:<>
     <strong>{selected.type.charAt(0).toUpperCase()+selected.type.slice(1)}</strong>
@@ -180,7 +192,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     </>}
     <button type="button" className="secondary map-setting-danger"
      disabled={!canDraw} onClick={()=>{
-      onEnvironmentChange(removeObject(env,selected.id));updateEditor({selectedId:null});
+      onEnvironmentChange(removeObject(env,selected.id));updateEditor({selectedId:null,selectedIds:[]});
      }}>Delete selected object</button>
    </>}
    <div className="map-setting-divider"/>
