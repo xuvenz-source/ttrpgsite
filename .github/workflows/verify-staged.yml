@@ -25,11 +25,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Install dependencies without publishing
         run: npm install --no-audit --no-fund
       - name: Run staged frontend unit tests
         run: npm test
+      - name: Audit production npm dependencies for high-severity advisories
+        run: npm audit --omit=dev --audit-level=high
       - name: Validate Vite production build (no Vercel deployment)
         run: npm run build
       - name: Prepare Deno to type-check the staged account endpoint
