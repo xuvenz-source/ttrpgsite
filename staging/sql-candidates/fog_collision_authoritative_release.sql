@@ -861,7 +861,7 @@ create policy "artwork only for dm owned characters and observed map tokens"
   bucket_id='tabletop-artwork'
   and exists(
    select 1 from public.campaigns c
-   where c.id::text=split_part(name,'/',1)
+   where c.id::text=split_part(storage.objects.name,'/',1)
     and public.is_campaign_member(c.id)
     and (
      public.is_campaign_dm(c.id)
