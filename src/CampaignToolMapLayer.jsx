@@ -1,5 +1,6 @@
 import React from 'react';
 import {toolCanControl} from './CampaignTools.js';
+import {lightOcclusionClip} from './MapVisionPreview.js';
 
 const colorParts=hex=>{
  const raw=/^#[0-9a-f]{6}$/i.test(hex||'')?hex:'#ffce7a';
@@ -8,6 +9,7 @@ const colorParts=hex=>{
 /** Tool tokens are peers of characters for selection, drag, live previews and
  * final persistence. Board owns the gesture so mixed groups move together. */
 export default function CampaignToolMapLayer({placements=[],issued=[],map,scale,userId,isDM,
+ environment=null,
  active=true,editing=false,measuring=false,preview={},remotePositions={},
  selectedIds=[],onTokenPointerDown,onTokenPointerMove,onTokenPointerUp,onTokenPointerCancel,onOpen}){
  if(!map)return null;
@@ -24,10 +26,13 @@ export default function CampaignToolMapLayer({placements=[],issued=[],map,scale,
    const radius=total/5*cell;
    const bright=Math.max(0,Math.min(100,100*(Number(p.light_bright)||0)/total));
    const rgb=colorParts(p.light_color);
+   const occlusion=lightOn?lightOcclusionClip({map,environment,
+    x:Number(at.x)+.5,y:Number(at.y)+.5,radiusFeet:total}):null;
    return <React.Fragment key={p.issue_id}>
     {lightOn&&<div className="campaign-tool-light-radius" aria-hidden="true"
      style={{left:x+cell/2-radius,top:y+cell/2-radius,width:radius*2,height:radius*2,
       opacity:Math.min(1,Math.max(0,Number(p.light_intensity)||0)/100),
+      clipPath:occlusion||undefined,
       background:`radial-gradient(circle,rgba(${rgb},.65) 0%,rgba(${rgb},.32) ${bright}%,rgba(${rgb},0) 100%)`}}/>}
     <button type="button"
      className={'campaign-tool-map-token'+(canMove?' can-move':'')+
