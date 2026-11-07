@@ -118,5 +118,4 @@ begin
   if v_count>0 then return new; end if;
  end if;
  raise exception 'Players may only change positions, statuses or DM-approved quick attributes';
-end $function$
-
+end $function$;

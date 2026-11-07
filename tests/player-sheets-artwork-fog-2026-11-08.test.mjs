@@ -32,6 +32,8 @@ test('player keystrokes update local sheet state, parent receives coalesced edit
 
 test('server trigger allows only own sheet-approved image path',()=>{
  assert.match(sql,/CREATE OR REPLACE FUNCTION public\.protect_token_fields\(\)/);
+ assert.ok(sql.trimEnd().endsWith('end $function$;'));
+ assert.equal((sql.match(/CREATE OR REPLACE FUNCTION/g)||[]).length,1);
  assert.match(sql,/SECURITY DEFINER/);
  assert.match(sql,/old\.image_path is distinct from new\.image_path/);
  assert.match(sql,/to_jsonb\(new\)-'image_path'-'updated_at'/);
