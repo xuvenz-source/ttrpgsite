@@ -13,6 +13,7 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import MapSettingPanel from './MapSettingPanel.jsx';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
@@ -133,6 +134,7 @@ function App(){
  const mapEnvironmentCurrent=useRef(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
+ const[mapSettingPopped,setMapSettingPopped]=useState(false);
  const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
@@ -649,11 +651,11 @@ function App(){
   return()=>data.subscription.unsubscribe();
  },[]);
  useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
+ useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setMapSettingPopped(false);setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
   setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
-  ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+  ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setMapSettingPopped(false);setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
   if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);setUiScale(.9);return}
   let alive=true;
@@ -1934,9 +1936,14 @@ function App(){
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label>
  </div></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>selectMap(m.id).catch(fail)}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
- {(tab==='tabletop'||tab==='sheet')&&<section className="panel tabletop-panel map-only-panel">
+ {/* Preserve the same map and viewport across other workspace tabs. Keep the
+     signed image mounted; only hide the tabletop until it is needed again. */}
+ <section className="panel tabletop-panel map-only-panel"
+  style={tab==='tabletop'||tab==='sheet'?undefined:{display:'none'}}
+  aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+   active={tab==='tabletop'||tab==='sheet'}
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
    onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
    template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
@@ -1966,7 +1973,7 @@ function App(){
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
     {isDM&&<button type="button" onClick={()=>setTab('maps')}>Open map library</button>}
    </div>}
- </section>}
+ </section>
  </>}
  </div><TabletopSidebar
  db={db} panel={rightTab} onPanelChange={setRightTab} isDM={isDM} user={user}
@@ -1984,6 +1991,9 @@ function App(){
  mapEnvironment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
  mapEnvironmentStatus={mapEnvironmentStatus}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
+ mapSettingPopped={mapSettingPopped}
+ onPopOutMapSetting={()=>setMapSettingPopped(true)}
+ onDockMapSetting={()=>{setMapSettingPopped(false);setRightTab('dm')}}
  onMapEnvironmentChange={saveMapEnvironment}
  publishedMapId={camp?.active_map_id||null} onPublishMap={publishMap}
   onMoveEntireParty={moveEntireParty}
@@ -2020,6 +2030,28 @@ function App(){
  accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
  /></div>
  </main>
+ {isDM&&mapSettingPopped&&<FloatingWindow kind="mapsetting"
+  onClose={()=>{setMapSettingPopped(false);setRightTab('dm')}}>
+  <section className="panel floating-map-setting-content" aria-label="Floating DM Map setting">
+   <div className="heading">
+    <h2>Map setting</h2>
+    <button type="button" className="secondary map-setting-dock-button"
+     onClick={()=>{setMapSettingPopped(false);setRightTab('dm')}}
+     aria-label="Dock Map setting back to DM sidebar"
+     title="Return Map setting to the DM sidebar">↙ Dock</button>
+   </div>
+   <div className="map-setting-pop-body">
+    <MapSettingPanel key={activeMap?.id||'no-map'}
+     map={activeMap}
+     environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+     editor={mapSettingEditor} onEditorChange={setMapSettingEditor}
+     onEnvironmentChange={saveMapEnvironment}
+     onMapCalibrationPreview={setMapCalibrationPreview}
+     onSaveMapCalibration={saveMapCalibration}
+     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}/>
+   </div>
+  </section>
+ </FloatingWindow>}
  {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
   onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
  {macroBuilderOpen&&<MacroManager macros={macros}
@@ -2326,13 +2358,14 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
- onPatchEnvironmentObject,characters=[],template}){
+ onPatchEnvironmentObject,characters=[],template,active=true}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
  const[activeMeasureTool,setActiveMeasureTool]=useState(null),
   [localMeasurements,setLocalMeasurements]=useState([]);
  const measureDrag=useRef(null),toolDrag=useRef(null);
+ const lastCenteredMap=useRef(null);
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
@@ -2382,7 +2415,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  },[map.id]);
  useEffect(()=>{
   function onEscape(event){
-   if(event.key!=='Escape'||!activeMeasureTool)return;
+   if(!active||event.key!=='Escape'||!activeMeasureTool)return;
    event.preventDefault();
    const current=measureDrag.current;
    if(current){
@@ -2394,14 +2427,16 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   }
   window.addEventListener('keydown',onEscape);
   return()=>window.removeEventListener('keydown',onEscape);
- },[activeMeasureTool,onMeasurementPreview]);
+ },[active,activeMeasureTool,onMeasurementPreview]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
+  if(!active||lastCenteredMap.current===map.id)return;
   const vp=viewportRef.current;
-  if(!vp)return;
+  if(!vp||!vp.clientWidth||!vp.clientHeight)return;
   vp.scrollLeft=Math.max(0,(vp.scrollWidth-vp.clientWidth)/2);
   vp.scrollTop=Math.max(0,(vp.scrollHeight-vp.clientHeight)/2);
- },[map.id]);
+  lastCenteredMap.current=map.id;
+ },[map.id,active]);
  useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
  useEffect(()=>{
@@ -2431,7 +2466,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  },[selectedId,map.id,hotbarInset]);
  useEffect(()=>{
   function handleDelete(e){
-   if(!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
+   if(!active||!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
    const el=e.target;
    if(el instanceof Element && el.closest('input,textarea,select,button,[contenteditable="true"],[role="textbox"]'))return;
    if(document.querySelector('.modal-backdrop'))return;
@@ -2441,7 +2476,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   }
   document.addEventListener('keydown',handleDelete);
   return()=>document.removeEventListener('keydown',handleDelete);
- },[selectedId,isDM,tokens,remove]);
+ },[active,selectedId,isDM,tokens,remove]);
  useEffect(()=>{
   const node=viewportRef.current;if(!node)return;
   const wheel=e=>{
