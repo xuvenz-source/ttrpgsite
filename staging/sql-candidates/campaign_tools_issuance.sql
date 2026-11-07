@@ -74,6 +74,20 @@ create table if not exists public.campaign_tool_templates(
 );
 create index if not exists campaign_tool_templates_campaign_idx
  on public.campaign_tool_templates(campaign_id,created_at);
+-- Keep templates within their original campaign even if a DM manages several.
+create or replace function public.protect_campaign_tool_template_identity()
+returns trigger language plpgsql set search_path='' as $identity$
+begin
+ if new.id is distinct from old.id or new.campaign_id is distinct from old.campaign_id
+ then raise exception 'Tool template identity cannot change'; end if;
+ return new;
+end $identity$;
+revoke all on function public.protect_campaign_tool_template_identity()
+ from public,anon,authenticated;
+create trigger campaign_tool_template_identity
+before update on public.campaign_tool_templates
+for each row execute function public.protect_campaign_tool_template_identity();
+
 
 create table if not exists public.campaign_tool_issues(
  id uuid primary key default gen_random_uuid(),
@@ -144,7 +158,10 @@ begin
   if not v_dm then raise exception 'Only DMs may issue tools';end if;
   new.revision:=0;
  end if;
- if not new.party_shared and not exists(
+ if (tg_op='INSERT' or
+     new.owner_id is distinct from old.owner_id or
+     new.party_shared is distinct from old.party_shared)
+    and not new.party_shared and not exists(
   select 1 from public.campaign_members cm
   where cm.campaign_id=new.campaign_id and cm.user_id=new.owner_id
  ) then raise exception 'Tool recipient must belong to campaign';end if;
