@@ -28,7 +28,7 @@ test('fog overlay is fail-closed and not wired to the player map yet',()=>{
  assert.match(overlay,/normalizeAuthorizedFogFrame\(frame,mapId\)/);
  assert.match(overlay,/if\(!sanitized\)/);
  assert.match(overlay,/fillStyle='#040914'/);
- assert.match(source('src/style.css'),/\\.map-fog-overlay\\{[^}]*pointer-events:none/);
+ assert.match(source('src/style.css'),/\.map-fog-overlay\{[^}]*pointer-events:none/);
  assert.doesNotMatch(board,/import MapFogOverlay from/);
  assert.doesNotMatch(board,/<MapFogOverlay/);
 });
