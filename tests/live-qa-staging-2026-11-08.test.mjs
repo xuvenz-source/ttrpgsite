@@ -73,7 +73,8 @@ test('spell save success is a separate row and ruler handles native context menu
  assert.match(spell,/id:'save-success',label:'On success'/);
  const board=source('src/BattlemapBoard.jsx');
  assert.match(board,/window\.addEventListener\('contextmenu',onContextMenu,true\)/);
- assert.match(board,/checkTokenMovement\(\{token:simulated\.token,destination,map,environment\}\)/);
+ assert.match(board,/movePreviewToken\(simulated\.token,destination\)/);
+ assert.match(board,/checkTokenMovement\(\{[\s\S]*?token:origin,destination,map,environment/);
  assert.match(board,/lockTokens!==false/);
  const setting=source('src/MapSettingPanel.jsx');
  assert.match(setting,/Lock tokens while editing map/);

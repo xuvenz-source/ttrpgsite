@@ -59,7 +59,7 @@ export default function MapPlayerPreviewOverlay({map,environment,polygon,viewerN
   </svg>
   <div className="map-player-preview-label" role="status">
    <strong>Player perspective · {viewerName||'Token'}</strong>
-   <span>DM simulation of current sight and light — not live player fog or collision</span>
+   <span>DM-only simulation of sight, light and wall collision — token movement is not saved</span>
   </div>
  </>;
 }

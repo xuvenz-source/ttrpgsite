@@ -23,7 +23,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
  onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
- environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
+ environment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
  handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
  onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
@@ -42,7 +42,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
  const [previewPosition,setPreviewPosition]=useState(null);
- const previewDrag=useRef(null);
+ const previewDrag=useRef(null),previewNudgeRef=useRef(null);
  // Reuse derived rendering data during drag, measurement and marquee updates.
  const sourcePreviewToken=isDM&&environmentEditor?.previewing?
   tokens.find(t=>t.id===(environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id)):null;
@@ -51,6 +51,27 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   {...sourcePreviewToken,x:previewPosition.x,y:previewPosition.y}:sourcePreviewToken;
  const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
  const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
+ function movePreviewToken(origin,destination){
+  if(!origin||!environment||!checkTokenMovement({
+   token:origin,destination,map,environment
+  }).allowed)return false;
+  setPreviewPosition({id:origin.id,mapId:map.id,...destination});
+  return true;
+ }
+ // Keyboard bindings and pointer dragging share one swept-wall test. All
+ // simulated moves remain board-local, never updating map_tokens.
+ previewNudgeRef.current=(dx,dy)=>{
+  if(!active||!previewActive||!previewToken)return false;
+  return movePreviewToken(previewToken,{
+   x:Number(previewToken.x)+dx,y:Number(previewToken.y)+dy
+  });
+ };
+ useEffect(()=>{
+  if(!registerPreviewStep)return;
+  const step=(dx,dy)=>previewNudgeRef.current?.(dx,dy)??false;
+  registerPreviewStep(step);
+  return()=>registerPreviewStep(null);
+ },[registerPreviewStep]);
  const previewPolygon=useMemo(()=>previewActive?
   previewVisionPolygon({map,environment,viewer,maxFeet:60}):[],
   [previewActive,map,environment,viewer]);
@@ -227,6 +248,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  };
  const snapSize=(v)=>Math.max(.25,Math.min(12,Math.round(v*4)/4));
  function dropOnMap(e){
+  if(previewActive)return;
   const kinds=['application/x-forge-character','application/x-forge-unit',
    'application/x-forge-npc','application/x-forge-tool'];
   const match=kinds.find(k=>e.dataTransfer.types.includes(k));
@@ -245,6 +267,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   else if(isDM)onNpcDrop(id,p.x,p.y);
  }
  function allowMapDrop(e){
+  if(previewActive)return;
   const types=e.dataTransfer.types;
   const allowed=types.includes('application/x-forge-character')||
     types.includes('application/x-forge-unit')||
@@ -559,8 +582,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     map.width,map.height,map.grid_size);
    const destination={x:Number(simulated.token.x)+delta.dx,
     y:Number(simulated.token.y)+delta.dy};
-   if(checkTokenMovement({token:simulated.token,destination,map,environment}).allowed)
-    setPreviewPosition({id:t.id,mapId:map.id,...destination});
+   movePreviewToken(simulated.token,destination);
    return;
   }
   const info=drag.current;

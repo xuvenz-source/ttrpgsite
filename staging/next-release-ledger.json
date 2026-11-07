@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "8f60b1bb4cebc21d039fab040ab30f7e30513c52",
-  "releaseBranch": "stage/next-release-consolidated-2026-11-08",
+  "productionBaseSha": "e2beffa4000fd7b8030ba5f6b1d57c0cb19f2c9c",
+  "releaseBranch": "stage/shared-item-preview-collision-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -104,6 +104,10 @@
     {
       "name": "stage/interactive-pins-held-tools-2026-11-08",
       "status": "released"
+    },
+    {
+      "name": "stage/shared-item-preview-collision-2026-11-08",
+      "status": "included"
     }
   ],
   "features": [
@@ -180,6 +184,30 @@
         "stage/interactive-pins-held-tools-2026-11-08"
       ],
       "status": "released"
+    },
+    {
+      "id": "shared-inventory-add-readiness",
+      "description": "Restore + Item in shared issued-tool inventories after collaboration load",
+      "sources": [
+        "stage/shared-item-preview-collision-2026-11-08"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "player-preview-collision-all-inputs",
+      "description": "Keyboard/pointer player preview uses collision gate without live token writes",
+      "sources": [
+        "stage/shared-item-preview-collision-2026-11-08"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "signup-hmac-edge-failure",
+      "description": "Fix verified signup Edge Function HMAC key import crash; improve 503 error path and network message",
+      "sources": [
+        "stage/shared-item-preview-collision-2026-11-08"
+      ],
+      "status": "included"
     }
   ],
   "databaseDependencies": [
@@ -222,9 +250,31 @@
     "Existing test campaigns only; do not create paid preview/development resources."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
-    "stagePolicy": "All currently approved features are bundled in the consolidated release; new work stages after this release.",
-    "outstandingBranches": []
+    "productionBaseSha": "e2beffa4000fd7b8030ba5f6b1d57c0cb19f2c9c",
+    "stagePolicy": "Include all outstanding release-ready staged branches together in one approved deployment; staging alone never deploys.",
+    "outstandingBranches": [
+      {
+        "name": "stage/shared-item-preview-collision-2026-11-08",
+        "status": "staged-pending-live-test-rollout",
+        "scope": [
+          "Enable shared issued-tool + Item once the initial collaboration lease fetch succeeds",
+          "Collision-check both mouse drag and custom-keybound steps in DM player preview",
+          "Prevent DM preview from writing live token positions or placing units",
+          "Fix signup Edge Function HMAC-SHA-256 fingerprint crash, return CORS-readable failure responses and improve network-error UI text"
+        ],
+        "databaseDependencies": [],
+        "paidInfrastructure": false,
+        "edgeFunctionDependencies": [
+          {
+            "name": "username-register",
+            "status": "staged-not-deployed",
+            "currentVersion": 6,
+            "verifyJwt": false,
+            "requiresApproval": true
+          }
+        ]
+      }
+    ]
   },
   "lastRelease": {
     "name": "Consolidated Live QA and Interactive Pins / Held Tools",
@@ -234,7 +284,7 @@
       38,
       39
     ],
-    "status": "backend-applied-ready-for-frontend-release",
+    "status": "released-production",
     "frontendSourceSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
     "databaseDependencies": [
       {
@@ -252,7 +302,8 @@
         "appliedVersion": "20261107150305"
       }
     ],
-    "migrationHistoryNote": "Supabase applied these two migrations under generated database versions different from the filename timestamps; only names and actual appliedVersion identify live records. Do not bulk replay all repository migrations."
+    "migrationHistoryNote": "Supabase applied these two migrations under generated database versions different from the filename timestamps; only names and actual appliedVersion identify live records. Do not bulk replay all repository migrations.",
+    "productionCommit": "e2beffa4000fd7b8030ba5f6b1d57c0cb19f2c9c"
   },
   "releaseHistory": [
     {

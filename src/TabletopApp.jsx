@@ -164,6 +164,8 @@ export default function TabletopApp(){
  const quickCache=useRef(new Map());
  // Keep the most recent local destination authoritative until the server acknowledges it.
  const movementPending=useRef(new Map()),tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
+ const previewStepHandler=useRef(null);
+ const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
  if(!mapEnvironmentWriter.current){
   mapEnvironmentWriter.current=createDebouncedSerialWriter(
@@ -1198,12 +1200,14 @@ export default function TabletopApp(){
    const isMove=['up','down','left','right'].includes(action);
    if(e.repeat&&!isMove)return;
    if(isMove){
-    if(!selectedToken||(!isDM&&selectedToken.owner_id!==user))return;
+    const simulated=isDM&&mapSettingEditor.previewing;
+    if(!simulated&&(!selectedToken||(!isDM&&selectedToken.owner_id!==user)))return;
     if(e.repeat&&performance.now()-lastKeyboardMove.current<115){e.preventDefault();return}
     lastKeyboardMove.current=performance.now();
     e.preventDefault();
     const delta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[action];
-    moveSelectedByKey(delta[0],delta[1]);
+    if(simulated)previewStepHandler.current?.(delta[0],delta[1]);
+    else moveSelectedByKey(delta[0],delta[1]);
    }else if(action==='sheet'){
     e.preventDefault();
     if(isDM&&selectedToken)openTokenSheet(selectedToken);
@@ -1217,7 +1221,7 @@ export default function TabletopApp(){
   }
   document.addEventListener('keydown',onKey);
   return()=>document.removeEventListener('keydown',onKey);
- },[user,activeId,selectedMap,tab,camp,bindings,hotbarSlots,hotbarVisible,selectedTokenId,tokens,isDM,character]);
+ },[user,activeId,selectedMap,tab,camp,bindings,hotbarSlots,hotbarVisible,selectedTokenId,tokens,isDM,character,mapSettingEditor.previewing]);
  useEffect(()=>()=>clearTimeout(saveTimer.current),[]);
  useEffect(()=>{
   const flush=()=>void mapEnvironmentWriter.current?.flush();
@@ -1936,6 +1940,9 @@ export default function TabletopApp(){
   }catch(e){fail(e)}
  }
  function queueTokenMove(token,x,y){
+  // DM player-preview movement is simulated; never persist it even if another
+  // caller attempts to use the normal movement queue while previewing.
+  if(isDM&&mapSettingEditor.previewing)return;
   if(!token||!activeId||!selectedMap||token.map_id!==selectedMap)return;
   if(!isDM&&(token.owner_id!==user||playerMapId!==selectedMap))return;
   const id=token.id;
@@ -1990,6 +1997,7 @@ export default function TabletopApp(){
   }finally{pending.saving=false}
  }
  function moveSelectedByKey(dx,dy){
+  if(isDM&&mapSettingEditor.previewing)return;
   const token=selectedToken;
   if(!token||!activeMap||!camp||!user)return;
   if(!isDM&&(token.owner_id!==user||camp.active_map_id!==activeMap.id))return;
@@ -2156,7 +2164,8 @@ export default function TabletopApp(){
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
-   environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
+   environmentEditor={mapSettingEditor} registerPreviewStep={registerPreviewStep}
+   onAddEnvironmentObject={addEnvironmentObject}
    handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
    onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
    onReadHandoutPin={readMapHandoutPin} onCollectHandoutPin={campaignHandouts.collectPin}

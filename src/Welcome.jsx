@@ -54,7 +54,11 @@ export function AuthGate({db}){
     if(registrationError){
      let details=null;
      try{details=await registrationError.context?.json()}catch{}
-     throw Error(details?.error||registrationError.message||'Could not create account.');
+     const interrupted=/failed to send a request|failed to fetch|network request failed/i
+      .test(registrationError.message||'');
+     throw Error(details?.error||(interrupted?
+      'Cannot reach the registration service. Please retry, or contact the site administrator if this continues.':
+      registrationError.message||'Could not create account.'));
     }
     if(!data?.ok)throw Error(data?.error||'Could not create your account.');
     created=true;
