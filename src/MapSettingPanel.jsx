@@ -196,7 +196,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
       'Checking published rules…'}
     </small>
     <div className="map-setting-layer-actions">
-     <button type="button" disabled={!map||!onPublishEnvironment}
+     <button type="button" disabled={!map||!environment||!onPublishEnvironment}
       onClick={()=>onPublishEnvironment?.('publish')}>Publish map rules</button>
      <button type="button" className="secondary" disabled={!map||!onDisablePublished}
       onClick={()=>onDisablePublished?.('disable')}>Disable published rules</button>

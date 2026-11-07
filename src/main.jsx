@@ -1839,7 +1839,8 @@ function App(){
   }catch(e){fail(e)}
  }
  async function publishEnvironmentRules(action){
-  if(!isDM||!selectedMap||!activeId)return fail('DM map required.');
+  if(!isDM||!selectedMap||!activeId||mapEnvironmentMapId!==selectedMap)
+   return fail('Load this map’s prepared settings before publishing.');
   try{
    // Never publish an older prepared document while autosave is pending.
    await mapEnvironmentWriter.current.flush();
