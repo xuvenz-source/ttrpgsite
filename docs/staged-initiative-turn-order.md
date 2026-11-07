@@ -28,7 +28,7 @@
 
 ### Database rollout
 
-**Applied migration:** `supabase/migrations/20261107150000_map_combat_initiative.sql`
+**Applied migration:** `supabase/migrations/20261107052003_map_combat_initiative.sql`
 
 Migration is installed on the existing live Supabase database using the corrected, versioned SQL. The frontend is not live until the tested release commit deploys; avoid claiming connected-client QA is complete.
 
