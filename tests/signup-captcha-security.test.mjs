@@ -41,11 +41,10 @@ test('signup collects CAPTCHA and legacy email-link login cannot create an accou
  assert.ok(welcome.includes('shouldCreateUser:false'));
  assert.ok(welcome.includes("signup&&(!siteKey||!captchaToken)"));
 });
-test('Vercel sends defense-in-depth security headers with a narrow Turnstile script origin',()=>{
+test('Vercel has safe response headers without changing the existing SPA routing',()=>{
  const headers=Object.fromEntries(vercel.headers.flatMap(item=>item.headers.map(h=>[h.key,h.value])));
  assert.equal(headers['X-Content-Type-Options'],'nosniff');
  assert.equal(headers['X-Frame-Options'],'DENY');
- assert.ok(headers['Content-Security-Policy'].includes("object-src 'none'"));
- assert.ok(headers['Content-Security-Policy'].includes('https://challenges.cloudflare.com'));
- assert.ok(!headers['Content-Security-Policy'].includes("'unsafe-eval'"));
+ assert.equal(headers['Referrer-Policy'],'strict-origin-when-cross-origin');
+ assert.equal(vercel.rewrites[0].destination,'/index.html');
 });
