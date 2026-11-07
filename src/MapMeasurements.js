@@ -31,6 +31,12 @@ export function shouldBendLineOnRightPress(drag,button){
  return button===2&&drag?.sourceButton===0&&!drag.pinned&&
   drag.measure?.tool==='line';
 }
+/** R provides a keyboard fallback when browsers suppress secondary mouse
+ * events during a primary-button drag or pointer capture. */
+export function shouldBendLineOnKeyPress(drag,key,repeat=false){
+ return !repeat&&String(key).toLowerCase()==='r'&&
+  shouldBendLineOnRightPress(drag,2);
+}
 export function addLineTurn(measure,point){
  if(measure?.tool!=='line'||!finite(point?.x)||!finite(point?.y))return measure;
  const via=Array.isArray(measure.via)?measure.via:[];

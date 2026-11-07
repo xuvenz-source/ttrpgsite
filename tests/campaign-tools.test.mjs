@@ -64,7 +64,8 @@ test('battlemap renders tool tokens and light effects, with drag/drop and sheet 
  assert.match(app,/toolPlacements=\{campaignTools\.placed\}/);
  assert.match(app,/types\.includes\('application\/x-forge-tool'\)/);
  assert.match(app,/<CampaignToolMapLayer/);
- assert.match(app,/onMove=\{\(issueId,x,y\)=>onToolPlace/);
+ assert.match(app,/onToolMove=\{moveIssuedToolOnMap\}/);
+ assert.match(app,/onToolPointerDown|onPointerDown=\{startToolDrag\}/);
  assert.match(layer,/lightOn=p\.kind==='torch'&&p\.light_enabled/);
  assert.match(layer,/onDoubleClick=\{e=>\{if\(own\)/);
  assert.match(layer,/onPointerDown=\{e=>\{e\.stopPropagation\(\);onPointerDown/);

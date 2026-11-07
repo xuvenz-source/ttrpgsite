@@ -7,7 +7,7 @@ import './combat.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
- measurementGeometry,addLineTurn,shouldBendLineOnRightPress,
+ measurementGeometry,addLineTurn,shouldBendLineOnRightPress,shouldBendLineOnKeyPress,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
@@ -2940,6 +2940,27 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    window.removeEventListener('mouseup',onMouseUp,true);
   };
  },[active,activeMeasureTool]);
+ // Some browsers do not deliver a second mouse-down during pointer capture.
+ // R inserts a direction change at the latest snapped line endpoint.
+ useEffect(()=>{
+  if(!active||activeMeasureTool!=='line')return;
+  const onTurnKey=e=>{
+   const current=measureDrag.current;
+   if(!shouldBendLineOnKeyPress(current,e.key,e.repeat))return;
+   const target=e.target;
+   if(target instanceof Element&&target.closest(
+    'input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+   e.preventDefault();e.stopPropagation();
+   const next=addLineTurn(current.measure,current.measure.end);
+   if(next===current.measure)return;
+   current.measure=next;
+   setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
+    {...next,isLocal:true}:m));
+   onMeasurementPreview?.(next,'preview',true);
+  };
+  window.addEventListener('keydown',onTurnKey,true);
+  return()=>window.removeEventListener('keydown',onTurnKey,true);
+ },[active,activeMeasureTool,onMeasurementPreview]);
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
   // panning because touchscreens do not have a middle mouse button.
