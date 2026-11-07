@@ -20,9 +20,12 @@ export default function CombatSetupPanel({map,combat,tokens=[],template,privateE
   }
  },[map?.id,mapId]);
  const fieldId=fields.some(x=>x.id===field)?field:fields[0]?.id||'';
- const participants=active?availableCombatTokens(tokens,{
-  entries:combat.entries.map(e=>combatEntryForUser(e,privateEntries,tokens,true))
- }):tokens;
+ // When the DM changes maps, a previous map's cached roster must never
+ // become selectable in a newly created encounter.
+ const mapTokens=tokens.filter(token=>token?.map_id===map?.id);
+ const participants=active?availableCombatTokens(mapTokens,{
+  entries:combat.entries.map(e=>combatEntryForUser(e,privateEntries,mapTokens,true))
+ }):mapTokens;
  const choices=picked??participants.filter(t=>t.visible!==false).map(t=>t.id);
  const selected=choices.filter(id=>participants.some(t=>t.id===id));
  const ready=!!(map?.id&&fieldId&&selected.length>0&&selected.length<=MAX_COMBATANTS&&!busy);
