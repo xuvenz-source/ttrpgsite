@@ -209,6 +209,7 @@ export default function TabletopSidebar({
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
   mapEnvironment,mapSettingEditor,onMapSettingEditorChange,onMapEnvironmentChange,mapEnvironmentStatus,
+ handoutsForMap=[],
    mapSettingPopped=false,onPopOutMapSetting,onDockMapSetting,
   combat,combatPrivateEntries=[],combatBusy=false,combatStatus='',
   onCombatBegin,onCombatAdd,onCombatCommand,onCombatRoll,onCombatRollNpcs,
@@ -410,7 +411,8 @@ export default function TabletopSidebar({
        onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
        saveStatus={mapEnvironmentStatus}
        onMapCalibrationPreview={onMapCalibrationPreview}
-       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}/>
+       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}
+       handouts={handoutsForMap}/>
      </>}
     </SavedDetails>
     <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
