@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {itemIdentity,removeItemIdentity} from '../src/useCampaignToolCollaboration.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-const app=read('src/main.jsx'),editor=read('src/InventoryItemEditor.jsx'),
+const app=(read('src/main.jsx')+read('src/TabletopApp.jsx')+read('src/BattlemapBoard.jsx')+read('src/SheetTemplateDesigner.jsx')),editor=read('src/InventoryItemEditor.jsx'),
  panel=read('src/InventoryPanel.jsx'),dm=read('src/TabletopSidebar.jsx'),
  style=read('src/style.css'),char=read('src/CharacterEditor.jsx'),
  npc=read('src/NpcEditor.jsx'),tool=read('src/CampaignToolSheet.jsx');

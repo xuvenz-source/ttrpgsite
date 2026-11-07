@@ -54,7 +54,7 @@ test('group movement handles larger NPC footprints at map edges',()=>{
  assert.deepEqual(boundedGroupOffset(g,-20,-20,490,350,70),{dx:0,dy:0});
 });
 test('battlemap switches mouse gestures and retains old token shortcuts',()=>{
- const m=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const m=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
  assert.ok(m.includes("e.button!==1&&!(e.pointerType==='touch'&&e.button===0)"));
  assert.ok(m.includes('onPointerDown={startMarquee}'));
