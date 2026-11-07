@@ -172,13 +172,17 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   <section className={'inventory-panel inventory-'+mode}>
    <div className="inventory-summary"><strong>{items.length} items</strong>
     <span>{inventoryWeight(items).toLocaleString()} {enc?.unit||'weight units'}</span>
-    <button className="secondary" type="button" disabled={items.length>=250}
+    <button className="secondary" type="button" disabled={items.length>=250||(!!collaboration&&!collaboration.ready)}
      onClick={()=>{
       setError('');
       if(collaboration){
+       // A new tile must exist in the authoritative inventory before opening
+       // an editor that autosaves by item ID. Otherwise it reports "gone".
        const id=crypto.randomUUID();
-       applyItems([...items,{...freshItem,Item:'New item',_inventoryId:id}]);
-       setEditing({itemId:id});
+       const initial={...freshItem,Item:'New item',_inventoryId:id};
+       void Promise.resolve().then(()=>applyItems([...items,initial])).then(()=>{
+        setEditing({itemId:id});
+       }).catch(e=>setError(e?.message||String(e)));
       }else setEditing('new');
      }}>+ Item</button>
    </div>
