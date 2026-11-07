@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
-const anon=readFileSync(new URL('../security/sql-candidates/01-revoke-unused-anonymous-grants.sql',import.meta.url),'utf8');
+const anon=readFileSync(new URL('../supabase/migrations/20261107051546_remove_unused_anon_preference_and_map_grants.sql',import.meta.url),'utf8');
 const art=readFileSync(new URL('../security/sql-candidates/02-separate-dm-npc-artwork.sql',import.meta.url),'utf8');
 const roles=readFileSync(new URL('../security/ROLE-BASED-ACCEPTANCE.md',import.meta.url),'utf8');
 
