@@ -15,6 +15,9 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import useCampaignTools from './useCampaignTools.js';
+import CampaignToolSheet from './CampaignToolSheet.jsx';
+import CampaignToolMapLayer from './CampaignToolMapLayer.jsx';
 import CombatTurnOrder from './CombatTurnOrder.jsx';
 import useMapCombat from './useMapCombat.js';
 import MapSettingPanel from './MapSettingPanel.jsx';
@@ -132,6 +135,7 @@ function App(){
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),
   [characterEditor,setCharacterEditor]=useState(null);
  const[accountSettingsOpen,setAccountSettingsOpen]=useState(false);
+ const[selectedToolIssueId,setSelectedToolIssueId]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
@@ -210,6 +214,10 @@ function App(){
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
  tokenContextRef.current={mapId:selectedMap,campaignId:activeId,userId:user};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
+ const campaignTools=useCampaignTools({
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
+ });
+ const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  const combatTracker=useMapCombat({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
@@ -514,6 +522,12 @@ function App(){
    setSelectedTokenId(created.id);
   }catch(e){fail(e)}
  }
+ async function placeIssuedToolOnMap(id,x,y){
+  const issued=campaignTools.issued.find(t=>t.id===id);
+  if(!issued||!selectedMap)return fail('Tool not available on this map.');
+  try{await campaignTools.place(issued,selectedMap,x,y)}
+  catch(e){fail(e)}
+ }
  async function dropExistingUnit(tokenId,x,y){
   const t=tokens.find(t=>t.id===tokenId);
   if(!t||t.map_id!==selectedMap)return;
@@ -694,6 +708,7 @@ function App(){
  useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setMapSettingPopped(false);setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
+  setSelectedToolIssueId(null);
   setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
   ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setMapSettingPopped(false);setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
@@ -2015,6 +2030,8 @@ function App(){
    template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
+   toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
+   onToolPlace={placeIssuedToolOnMap} onToolOpen={setSelectedToolIssueId}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
     onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
@@ -2048,6 +2065,8 @@ function App(){
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
  onOpenStatus={openTokenStatuses}
+ campaignTools={campaignTools} onOpenCampaignTool={setSelectedToolIssueId}
+ onToolError={fail}
  chat={chat} onChatChange={setChat} onSendChat={sendChat}
  npcs={npcs} npcFolders={npcFolders}
  onNewNpcFolder={makeNpcFolder} onNewNpc={makeNpc}
@@ -2170,6 +2189,10 @@ function App(){
      canEdit={isDM||(statusEditToken.owner_id===user&&playerMapId===statusEditToken.map_id)}
      onClose={()=>setStatusEditToken(null)} onApply={applyTokenStatuses}/>
    </QuickEditBoundary>}
+ {selectedToolIssue&&<CampaignToolSheet key={selectedToolIssue.id}
+  tool={selectedToolIssue} userId={user} isDM={isDM}
+  onSave={(tool,newState)=>campaignTools.updateState(tool,newState)}
+  onClose={()=>setSelectedToolIssueId(null)}/>}
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
    allowedFields={camp.token_quick_fields||[]}
@@ -2444,7 +2467,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
+ toolPlacements=[],toolIssued=[],onToolPlace,onToolOpen,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null}){
@@ -2595,7 +2619,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  };
  const snapSize=(v)=>Math.max(.25,Math.min(12,Math.round(v*4)/4));
  function dropOnMap(e){
-  const kinds=['application/x-forge-character','application/x-forge-unit','application/x-forge-npc'];
+  const kinds=['application/x-forge-character','application/x-forge-unit',
+   'application/x-forge-npc','application/x-forge-tool'];
   const match=kinds.find(k=>e.dataTransfer.types.includes(k));
   if(!match)return;
   e.preventDefault();
@@ -2604,12 +2629,14 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   const p=pos(e);
   if(match==='application/x-forge-character')onCharacterDrop(id,p.x,p.y);
   else if(match==='application/x-forge-unit')onUnitDrop(id,p.x,p.y);
+  else if(match==='application/x-forge-tool')onToolPlace?.(id,p.x,p.y);
   else if(isDM)onNpcDrop(id,p.x,p.y);
  }
  function allowMapDrop(e){
   const types=e.dataTransfer.types;
   const allowed=types.includes('application/x-forge-character')||
     types.includes('application/x-forge-unit')||
+    types.includes('application/x-forge-tool')||
     (isDM&&types.includes('application/x-forge-npc'));
   if(allowed)e.preventDefault();
  }
@@ -2912,6 +2939,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:(isDM&&environmentEditor?.enabled&&environmentEditor.showBackground===false)?undefined:(url?'url('+JSON.stringify(url)+')':undefined),backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
+    <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
+     active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
+     placements={toolPlacements} issued={toolIssued}
+     onMove={(issueId,x,y)=>onToolPlace?.(issueId,x,y)} onOpen={onToolOpen}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
