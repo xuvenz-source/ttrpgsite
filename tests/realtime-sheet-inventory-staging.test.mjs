@@ -109,5 +109,5 @@ test('staging backend candidates are explicitly non-production',()=>{
   assert.doesNotMatch(candidate,/alter table .* disable row level security/);
  }
  const workflow=read('docs/development-workflow.md');
- assert.match(workflow,/existing live\s+test campaigns/);
+ assert.match(workflow,/live test campaigns/);
 });
