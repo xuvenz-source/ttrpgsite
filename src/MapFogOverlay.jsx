@@ -2,10 +2,8 @@ import React,{useEffect,useMemo,useRef} from 'react';
 import {normalizeAuthorizedFogFrame,FOG_UNEXPLORED,FOG_EXPLORED,
  fogMasks,MAX_FOG_AXIS} from './MapFogModel.js';
 
-/** Displays a *server-authorized* fog frame. It cannot calculate who can
- * see a token and must NEVER be used as a replacement for server-side RLS.
- * Not mounted by Board until the visibility RPC and token filtering ship.
- */
+/** Displays per-viewer fog. Server RLS independently filters token,
+ * monitor, combat and artwork data; this is presentation only. */
 export default function MapFogOverlay({map,frame,scale=1}){
  const canvas=useRef(null);
  const mapId=map?.id;

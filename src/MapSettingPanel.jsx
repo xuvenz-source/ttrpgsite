@@ -26,7 +26,8 @@ function Check({title,value,onChange}){
   onChange={e=>onChange(e.target.checked)}/>{title}</label>;
 }
 export default function MapSettingPanel({map,environment,editor,onEditorChange,
- onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],handouts=[]}){
+ onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],handouts=[],
+ onPublishEnvironment,onDisablePublished,onResetExploration,publishedEnvironment}){
  const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
  const selected=env.objects.find(o=>o.id===editor.selectedId);
  const updateEditor=change=>onEditorChange({...editor,...change});
@@ -184,6 +185,26 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     onChange={v=>updateEnv({fog:{...env.fog,automatic:v}})}/>
    <Check title="Party-shared exploration by default" value={env.fog.partyShared}
     onChange={v=>updateEnv({fog:{...env.fog,partyShared:v}})}/>
+   <Check title="Enforce wall and door collision" value={env.collision.enabled}
+    onChange={v=>updateEnv({collision:{enabled:v}})}/>
+   <div className="map-setting-publication" aria-label="Published map rules">
+    <strong>Published map rules</strong>
+    <small className="muted tiny">These edits are drafts until published. Publishing applies fog and collision together.</small>
+    <small className="muted tiny" role="status">
+     {publishedEnvironment?'Live: fog '+(publishedEnvironment.fog?'on':'off')+
+      ', collision '+(publishedEnvironment.collision?'on':'off'):
+      'Checking published rules…'}
+    </small>
+    <div className="map-setting-layer-actions">
+     <button type="button" disabled={!map||!onPublishEnvironment}
+      onClick={()=>onPublishEnvironment?.('publish')}>Publish map rules</button>
+     <button type="button" className="secondary" disabled={!map||!onDisablePublished}
+      onClick={()=>onDisablePublished?.('disable')}>Disable published rules</button>
+     <button type="button" className="secondary" disabled={!map||!onResetExploration}
+      onClick={()=>{if(window.confirm('Clear explored fog for everyone on this map?'))
+       onResetExploration?.('reset_exploration')}}>Reset exploration</button>
+    </div>
+   </div>
    <label>Weather effect<select value={env.effects.weather}
     onChange={e=>updateEnv({effects:{...env.effects,weather:e.target.value}})}>
     <option value="none">None</option><option value="rain">Rain</option>
