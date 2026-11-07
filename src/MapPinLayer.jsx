@@ -36,8 +36,9 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
  function start(event,pin){
   event.stopPropagation();
   if(event.button!==0||!isDM||!active||!editor?.enabled||editor?.tool!=='select')return;
+  const at=preview[pin.id]||pin;
   const d={id:pin.id,pointerId:event.pointerId,
-   x:Number(pin.x),y:Number(pin.y),
+   x:Number(at.x),y:Number(at.y),
    startX:event.clientX,startY:event.clientY};
   drag.current=d;
   try{event.currentTarget.setPointerCapture(event.pointerId)}catch{}
