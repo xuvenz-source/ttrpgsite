@@ -113,7 +113,8 @@ begin
   raise exception 'Inventory unavailable';end if;
  if not exists(select 1 from public.campaign_tool_item_leases l
   where l.issue_id=p_issue and l.item_id=p_item
-   and l.holder_id=actor and l.expires_at>now())
+   and l.holder_id=actor and l.expires_at>now()
+  for update)
  then raise exception 'Item claim expired; select the item again';end if;
  if not p_remove and (jsonb_typeof(p_row)<>'object' or
   octet_length(p_row::text)>4096 or

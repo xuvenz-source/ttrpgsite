@@ -180,7 +180,8 @@ begin
  if not exists(select 1 from public.campaign_sheet_item_leases l
   where l.campaign_id=p_campaign and l.source_type=p_source
    and l.source_id=p_source_id and l.field_id=p_field and l.item_id=p_item
-   and l.holder_id=auth.uid() and l.expires_at>now())
+   and l.holder_id=auth.uid() and l.expires_at>now()
+  for update)
  then raise exception 'Item claim expired; select it again';end if;
  if not p_remove and (jsonb_typeof(p_row)<>'object'
   or p_row ? '_inventoryId' or octet_length(p_row::text)>4096)

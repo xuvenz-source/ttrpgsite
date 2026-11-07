@@ -81,6 +81,7 @@ test('tool item SQL authorizes edits server-side, applies one row and blocks old
  assert.match(sqlTool,/for update/);
  assert.match(sqlTool,/if not exists\(select 1 from public\.campaign_tool_item_leases/);
  assert.match(sqlTool,/holder_id=actor and l\.expires_at>now\(\)/);
+ assert.match(sqlTool,/l\.expires_at>now\(\)\s+for update/);
  assert.match(sqlTool,/jsonb_set\(target\.state,'\{items\}',next_items,true\)/);
  assert.match(sqlTool,/current_user='authenticated'/);
  assert.match(sqlTool,/reject_direct_tool_inventory_overwrite/);
@@ -94,6 +95,7 @@ test('sheet Inventory RPCs check owner and actual field type and refuse overwrit
  assert.match(sqlSheet,/get_campaign_sheet_inventory/);
  assert.match(sqlSheet,/mutate_campaign_sheet_item/);
  assert.match(sqlSheet,/p_takeover/);
+ assert.match(sqlSheet,/l\.expires_at>now\(\)\s+for update/);
  assert.match(sqlSheet,/for update/);
  assert.match(sqlSheet,/reject_direct_sheet_inventory_overwrite/);
  assert.match(sqlSheet,/jsonb_set\(coalesce\(field_values,'\{\}'::jsonb\),array\[p_field\],next_rows,true\)/);
