@@ -71,6 +71,14 @@ export function tokenAttributeValue(token,fieldId){
  return value!==''&&value!=null&&Number.isFinite(Number(value))?Number(value):null;
 }
 export function wallAllows(wall,token,kind='movement',fromSide='a'){
+ // Lighting has its own permeability rule: opaque walls block emitted light,
+ // while glass, open doors and uncurtained windows may transmit it.
+ // Match forge_visibility.wall_passes(scene, ..., 'light') on the server.
+ if(kind==='light'){
+  if(['door','window'].includes(wall.type)&&
+   ['open','broken'].includes(wall.state))return true;
+  return wall.blocksLight===false&&!(wall.type==='window'&&wall.curtains===true);
+ }
  const condition=kind==='vision'?wall.visionAt:wall.movementAt;
  if(condition!==null&&condition!==undefined&&condition!==''&&wall.attributeField){
   const value=tokenAttributeValue(token,wall.attributeField);
