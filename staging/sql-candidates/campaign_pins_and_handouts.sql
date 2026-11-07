@@ -155,7 +155,8 @@ begin
  viewer:=auth.uid();
  if viewer is null then raise exception 'Sign in required';end if;
  select p.id,p.handout_id,p.campaign_id,p.map_id,p.visible,p.collectable
-  into target from public.campaign_map_pins p where p.id=p_pin;
+  into target from public.campaign_map_pins p where p.id=p_pin
+  for update of p;
  if not found or not target.visible or not target.collectable then
   raise exception 'The note cannot be collected';end if;
  if not public.is_campaign_member(target.campaign_id)
