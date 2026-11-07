@@ -19,3 +19,5 @@ Apply `supabase/migrations/20261108023000_holdable_campaign_tools.sql` only afte
 Run CI lint, Node tests, dependency audit, Vite build and Deno checks. After the one authorized production release, live-test with two player accounts and a DM: pickup on a controlled token and from ground, attempts on other people's tokens, carrier movement, wall light occlusion, dropping via Quick Adjust, map pin permissions, visibility/pickup, and deletion.
 
 No paid infrastructure, no Vercel preview deployments during staging.
+
+- Authoritative fog `forge_visibility.is_lit` uses carrier coordinates while held; tool RLS uses the observed carrier position, and the collision trigger recognizes attach/drop transitions without allowing unrelated tool movement through walls.

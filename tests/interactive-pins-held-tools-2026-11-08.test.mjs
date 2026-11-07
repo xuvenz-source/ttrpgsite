@@ -73,3 +73,15 @@ test('staged SQL validates same-map ownership, carrier release and public light 
  assert.match(sql,/held_by_token_id=excluded\.held_by_token_id/);
  assert.doesNotMatch(sql,/alter table.*disable row level security/i);
 });
+
+test('published fog and ground collision use actual carrier semantics',()=>{
+ const sql=read('supabase/migrations/20261108023000_holdable_campaign_tools.sql');
+ assert.match(sql,/create or replace function forge_visibility\.is_lit/);
+ assert.match(sql,/t\.x\+t\.span_x\/2\.0/);
+ assert.match(sql,/p\.held_by_token_id is null or t\.id is not null/);
+ assert.match(sql,/carrier\.x\+carrier\.span_x::double precision\/2/);
+ assert.match(sql,/public\.can_observe_map_position\(carrier\.map_id/);
+ assert.match(sql,/create or replace function forge_visibility\.enforce_tool_collision/);
+ assert.match(sql,/new\.held_by_token_id is not null or old\.held_by_token_id is not null/);
+ assert.match(sql,/forge_visibility\.swept_hits_segment/);
+});

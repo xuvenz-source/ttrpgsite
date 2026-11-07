@@ -239,7 +239,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   else if(match==='application/x-forge-unit')onUnitDrop(id,p.x,p.y);
   else if(match==='application/x-forge-tool'){
    const carrier=e.target.closest('.token')?.dataset.tokenId;
-   if(carrier)onToolHold?.(id,carrier);
+   if(carrier&&toolCanBeHeld(toolIssued.find(item=>item.id===id)))onToolHold?.(id,carrier);
    else onToolPlace?.(id,p.x,p.y);
   }
   else if(isDM)onNpcDrop(id,p.x,p.y);
@@ -631,7 +631,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     info.tools?.length===1&&info.members.length===0){
    const issue=toolIssued.find(t=>t.id===info.tools[0].issue_id);
    const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
-   if(carrier){onToolHold?.(issue.id,carrier.id);return}
+   if(carrier){setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return}
   }
   if(info.dx===0&&info.dy===0&&!cancel)return;
   for(const t of info.members){
