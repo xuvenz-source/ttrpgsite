@@ -45,6 +45,9 @@ begin
  -- Materialize only the eight permitted viewers once per snapshot. The
  -- old per-cell point_visible() reloaded map, membership, scene and
  -- viewer rows repeatedly for every candidate fog cell.
+ -- Preserve the original fail-closed behavior on malformed sight inputs.
+ -- A bad ray or lighting evaluation must never disclose unauthorized cells.
+ begin
  with sources as materialized (
   select t.x,t.y,t.span_x,t.span_y,
    coalesce(ch.field_values,t.npc_values,'{}'::jsonb) as viewer_values
@@ -79,6 +82,9 @@ begin
  )
  select coalesce(jsonb_agg(cell order by cell),'[]'::jsonb) into seen
  from visible_indices;
+ exception when others then
+  seen:='[]'::jsonb;
+ end;
  -- Skip idempotent exploration writes: moving within already explored
  -- territory must not generate an UPDATE/WAL entry per fog refresh.
  -- JSONB @> compares the complete numeric array, not string keys.
