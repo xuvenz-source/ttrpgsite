@@ -90,6 +90,18 @@ test('client renders DM section, player controls, and existing floating window a
  assert.ok(hook.includes('lastEncounter.current.get(mapId)!==encounterKey'));
  assert.ok(css.includes('.token.token-current-turn'));
 });
+test('initiative migration trigger functions use valid PostgreSQL dollar quoting',()=>{
+ const sql=readFileSync(new URL('../supabase/migrations/20261107150000_map_combat_initiative.sql',import.meta.url),'utf8');
+ for(const name of ['combat_sync_token_change','combat_sync_deleted_entry']){
+  const start=sql.indexOf('create or replace function public.'+name+'()');
+  const end=sql.indexOf('revoke all on function public.'+name+'()',start);
+  assert.ok(start>=0&&end>start,'missing trigger function '+name);
+  const body=sql.slice(start,end);
+  assert.ok(body.includes("as $\\nbegin"),'function body not quoted '+name);
+  assert.ok(body.includes("end $;"),'function end not quoted '+name);
+  assert.ok(!body.includes("as $\\nbegin"),'invalid single dollar '+name);
+ }
+});
 test('SQL restricts score writes to server RPC and separates private token IDs',()=>{
  const sql=readFileSync(new URL('../supabase/migrations/20261107150000_map_combat_initiative.sql',import.meta.url),'utf8');
  assert.ok(sql.includes('public.can_view_campaign_map(campaign_id,map_id)'));
