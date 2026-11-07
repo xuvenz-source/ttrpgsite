@@ -13,8 +13,10 @@ export function appendMovementWaypoint(points,dx,dy){
  const previous=points[points.length-1];
  if(previous&&previous.dx===dx&&previous.dy===dy)return points;
  const next=[...points,{dx,dy}];
- if(next.length>=3){
-  const a=next.at(-3),b=next.at(-2),c=next.at(-1);
+ if(next.length>=2){
+  // The gesture starts at (0,0), even when the first stored point is (1,0).
+  const a=next.length===2?{dx:0,dy:0}:next.at(-3);
+  const b=next.at(-2),c=next.at(-1);
   const ux=b.dx-a.dx,uy=b.dy-a.dy;
   const vx=c.dx-b.dx,vy=c.dy-b.dy;
   const cross=ux*vy-uy*vx;
