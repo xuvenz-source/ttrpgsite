@@ -67,7 +67,8 @@ test('tool Delete is pickup rather than issued record deletion; live updates use
  assert.match(app,/onToolPickUp\?\.\(id\)/);
  assert.match(app,/onToolMovementPreview\?\.\(tool,/);
  assert.match(app,/event:'tool-preview'/);
- assert.match(app,/remoteToolPositions=\{remoteToolPositions\}/);
+ assert.match(app,/remoteToolPositions=\{fog\.frame\?\.enabled\?\{\}:remoteToolPositions\}/);
+ assert.match(app,/if\(access\.fogEnabled\)return;/);
  assert.match(app,/selectableToolIds\(toolPlacements,toolIssued/);
  assert.match(layer,/tool-selected/);
  assert.match(layer,/onTokenPointerUp\?\.\(e,p\)/);
