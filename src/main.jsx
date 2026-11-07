@@ -14,7 +14,10 @@ import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
-import {normalizeEnvironment,withObject} from './MapEnvironment.js';
+import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
+import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
+import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
+import {normalizeEnvironment,withObject,patchObject} from './MapEnvironment.js';
 import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
@@ -127,12 +130,13 @@ function App(){
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[mapEnvironment,setMapEnvironment]=useState(null);
+ const mapEnvironmentCurrent=useRef(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
  const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
-  lockLight:false,lockBackground:true,snap:true,preset:'solid',
+  lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
   selectedId:null,lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
@@ -961,8 +965,8 @@ function App(){
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
  useEffect(()=>{
   let live=true;
-  setMapEnvironment(null);setMapEnvironmentMapId('');
-  setMapSettingEditor(old=>({...old,enabled:false,selectedId:null}));
+  setMapEnvironment(null);mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
+  setMapSettingEditor(old=>({...old,enabled:false,previewing:false,previewTokenId:'',selectedId:null}));
   if(!db||!isDM||!activeId||!selectedMap){
    setMapEnvironmentStatus('Choose a map');return()=>{live=false};
   }
@@ -975,7 +979,8 @@ function App(){
     setMapEnvironmentStatus('Map storage unavailable: apply the staged environment migration first.');
     console.warn('Map environment loading failed',loadError);return;
    }
-   setMapEnvironment(normalizeEnvironment(data?.prepared));
+   mapEnvironmentCurrent.current=normalizeEnvironment(data?.prepared);
+   setMapEnvironment(mapEnvironmentCurrent.current);
    setMapEnvironmentMapId(selectedMap);
    setMapEnvironmentStatus('Saved');
   })().catch(e=>{if(live){setMapEnvironmentStatus('Environment load failed');fail(e)}});
@@ -1608,14 +1613,18 @@ function App(){
   }
   const next=normalizeEnvironment(nextValue);
   const mapId=selectedMap,campaignId=activeId;
+  mapEnvironmentCurrent.current=next;
   setMapEnvironment(next);setMapEnvironmentStatus('Saving…');
   mapEnvironmentWriter.current.schedule(next,{mapId,campaignId},{immediate});
  }
  function addEnvironmentObject(object){
-  if(mapEnvironmentMapId!==selectedMap||!mapEnvironment)return;
-  // Newly drawn walls and lights persist immediately. Rapid numeric inputs
-  // use the debounced path, which is flushed on map switches and tab hiding.
-  saveMapEnvironment(withObject(mapEnvironment,object),{immediate:true});
+  if(mapEnvironmentMapId!==selectedMap||!mapEnvironmentCurrent.current)return;
+  saveMapEnvironment(withObject(mapEnvironmentCurrent.current,object),{immediate:true});
+ }
+ function patchEnvironmentObject(id,change,{immediate=false}={}){
+  if(!isDM||mapEnvironmentMapId!==selectedMap||!mapEnvironmentCurrent.current)return;
+  if(!mapEnvironmentCurrent.current.objects.some(object=>object.id===id))return;
+  saveMapEnvironment(patchObject(mapEnvironmentCurrent.current,id,change),{immediate});
  }
  async function saveMapCalibration(map,next){
   if(!isDM)throw Error('Only the DM can adjust map calibration.');
@@ -1929,7 +1938,8 @@ function App(){
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
-   onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
+   onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
+   template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
@@ -2315,7 +2325,8 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
- environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject}){
+ environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
+ onPatchEnvironmentObject,characters=[],template}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
@@ -2327,14 +2338,30 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
  // Reuse derived rendering data during drag, measurement and marquee updates.
- const visibleTokens=useMemo(()=>isDM?tokens:tokens.filter(t=>t.visible),[tokens,isDM]);
+ const previewToken=isDM&&environmentEditor?.previewing?
+  tokens.find(t=>t.id===(environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id)):null;
+ const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
+ const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
+ const previewPolygon=useMemo(()=>previewActive?
+  previewVisionPolygon({map,environment,viewer,maxFeet:60}):[],
+  [previewActive,map,environment,viewer]);
+ const visibleTokens=useMemo(()=>{
+  const allowed=isDM?tokens:tokens.filter(t=>t.visible);
+  if(!previewActive)return allowed;
+  return allowed.filter(t=>t.visible!==false&&
+   (t.id===previewToken?.id||pointInPolygon({
+    x:Number(t.x)+Number(t.span_x??1)/2,
+    y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)));
+ },[tokens,isDM,previewActive,previewToken?.id,previewPolygon]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
- const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject});
- environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject};
+ const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject});
+ environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject};
  const handleEnvironmentAdd=useCallback(object=>environmentHandlers.current.onAddEnvironmentObject?.(object),[]);
  const handleEnvironmentSelect=useCallback(id=>environmentHandlers.current.onSelectEnvironmentObject?.(id),[]);
+ const handleEnvironmentPatch=useCallback((id,change,opts)=>
+  environmentHandlers.current.onPatchEnvironmentObject?.(id,change,opts),[]);
  function selectTokens(ids){
   const unique=[...new Set(ids)];
   setSelectedIds(unique);
@@ -2565,7 +2592,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   setPanning(true);
  }
  function startMarquee(e){
-  if(environmentEditor?.enabled)return;
+  if(environmentEditor?.enabled||previewActive)return;
   if(activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
      e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
@@ -2612,6 +2639,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  }
  function startTokenDrag(e,t,canMove){
   e.stopPropagation();
+  if(previewActive)return;
   if(e.button!==0)return;
   const group=canMove&&selectedIds.includes(t.id)&&selectedIds.length>1?
    selectedIds.filter(id=>tokens.some(other=>other.id===id&&
@@ -2683,7 +2711,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
-     else if(!environmentEditor?.enabled)startMeasurementCapture(e);
+     else if(!environmentEditor?.enabled&&!previewActive)startMeasurementCapture(e);
     }} onPointerDown={startMarquee}
     onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
     onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
@@ -2699,14 +2727,21 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
-     onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}/>}
+     onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
+     onPatch={handleEnvironmentPatch}/>}
+    {isDM&&!previewActive&&environment&&environmentEditor?.selectedId&&
+     <MapObjectQuickAdjust key={environmentEditor.selectedId}
+      map={map} scale={scale}
+      object={environment.objects.find(o=>o.id===environmentEditor.selectedId)}
+      template={template} onPatch={handleEnvironmentPatch}
+      onClose={()=>handleEnvironmentSelect(null)}/>}
     {visibleTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
-      canMove=canControlMapToken(t,user,isDM,map.id);
+      canMove=!previewActive&&canControlMapToken(t,user,isDM,map.id);
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
-      (selectedIds.includes(t.id)?' token-selected':'')}
+      (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
@@ -2715,6 +2750,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        (isDM?' · Alt + double-click to edit sheet':'')}
       onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
       onClick={e=>{
+       if(previewActive)return;
        if(e.shiftKey&&!e.ctrlKey&&!e.altKey){
         e.preventDefault();e.stopPropagation();onTokenStatus(t);return;
        }
@@ -2732,7 +2768,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
        position={statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
-      {isDM&&selectedId===t.id&&selectedIds.length===1&&<div className="token-resize-handle" role="button"
+      {isDM&&!previewActive&&selectedId===t.id&&selectedIds.length===1&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
         onPointerDown={e=>{
          e.stopPropagation();e.preventDefault();
@@ -2777,6 +2813,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     <TokenMonitorFrames tokens={visibleTokens} remotePositions={remotePositions}
      preview={preview} config={displaySettings} monitorValues={monitorValues}
      encumbranceBadges={encumbranceBadges} gridSize={map.grid_size} scale={scale}/>
+    {previewActive&&<MapPlayerPreviewOverlay map={map} environment={environment}
+     polygon={previewPolygon} viewerName={previewToken?.name}/>}
    </div>
    </div>
   </div>
