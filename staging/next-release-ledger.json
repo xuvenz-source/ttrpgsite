@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "updated": "2026-11-07",
-  "productionBaseSha": "d33f552f2d08db80a07b96486cf54a5457ef6f9d",
+  "updated": "2026-11-08",
+  "productionBaseSha": "8f60b1bb4cebc21d039fab040ab30f7e30513c52",
   "releaseBranch": "stage/next-release-consolidated-2026-11-07",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
@@ -92,6 +92,14 @@
     {
       "name": "stage/units-tools-issuance-torch-mount-inventories-2026-11-07",
       "status": "released"
+    },
+    {
+      "name": "stage/project-audit-correctness-optimization-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/live-qa-light-collision-inventory-ui-2026-11-08",
+      "status": "included"
     }
   ],
   "features": [
@@ -178,36 +186,29 @@
     "Existing test campaigns only; do not create paid preview/development resources."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "1468101ed258c033126e930503e59330470f85f5",
-    "stagePolicy": "All next-release ready branches must be consolidated with conflict review before the one approved main merge.",
+    "productionBaseSha": "8f60b1bb4cebc21d039fab040ab30f7e30513c52",
+    "stagePolicy": "The one next authorized production release includes this PR and all earlier release-ready staging work. No production deployment during staging.",
     "outstandingBranches": [
       {
-        "name": "stage/project-audit-correctness-optimization-2026-11-07",
-        "pullRequest": 37,
-        "status": "staging-verified-not-deployed",
+        "name": "stage/live-qa-light-collision-inventory-ui-2026-11-08",
+        "pullRequest": 38,
+        "status": "staging-pending-live-test-rollout",
         "scope": [
-          "character popout undefined variable fix",
-          "awaitable inventory writes and retryable editor",
-          "shared per-item collaboration helpers",
-          "tool sheet serial autosave",
-          "coalesced refreshes for tools, handouts, initiative and fog",
-          "static undefined-variable CI lint gate",
-          "migration history non-destructive inventory",
-          "shared movement packet validation deduplicated",
-          "safe CSS subtab and pan-cursor deduplication",
-          "full main.jsx bootstrap split into independent TabletopApp, BattlemapBoard and SheetTemplateDesigner modules",
-          "independent campaign-presence hook with pseudonymous member status",
-          "11 CSS feature files with exact cascade snapshot and updated regression tests",
-          "staged server-authoritative fog batch visibility and exploration write optimization"
+          "occlusion-correct DM light masks and torch gradients",
+          "local-only collision-checked player preview movement",
+          "spell saving-throw on-success row",
+          "sheet and tool inventory lease SQL ambiguity fix",
+          "await new inventory item persistence before opening editor",
+          "right-click ruler contextmenu fallback",
+          "map environment marquee multi-selection and default token lock",
+          "smooth optimistic handout-pin relocation"
         ],
         "databaseDependencies": [
           {
-            "version": "20261107124000",
-            "name": "fog_visibility_batch_optimization",
-            "file": "supabase/migrations/20261107124000_fog_visibility_batch_optimization.sql",
+            "version": "20261108013000",
+            "name": "inventory_lease_expiry_qualification",
+            "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
             "status": "staged-not-applied",
-            "compatibility": "existing get_authorized_map_fog(uuid) RPC with unchanged signature and RLS",
-            "rollback": "staging/sql-candidates/rollback_fog_visibility_batch_optimization.sql",
             "requiresApproval": true
           }
         ],
