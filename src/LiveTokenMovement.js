@@ -2,6 +2,13 @@
 // final x/y positions and which token each user may edit.
 import {validMapMovementPacket} from './LiveMovementPreview.js';
 export const MOVE_PREVIEW_INTERVAL_MS=50;
+// Fog-enabled maps cannot use shared preview broadcasts: RLS-authorized
+// token writes convey intermediate positions instead at a bounded rate.
+export const FOG_DRAG_PERSIST_INTERVAL_MS=180;
+export function shouldPersistFogDrag(fogEnabled,lastSent,now){
+ return fogEnabled===true&&Number.isFinite(now)&&
+  (lastSent===0||now-lastSent>=FOG_DRAG_PERSIST_INTERVAL_MS);
+}
 export const MOVE_PREVIEW_EXPIRE_MS=1200;
 export const movementTopic=mapId=>'forge-map:'+mapId;
 /** Apply RLS-authorized Realtime coordinates immediately without remounting
