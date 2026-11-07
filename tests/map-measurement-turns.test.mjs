@@ -75,7 +75,8 @@ test('ruler turn classification tracks the original left drag, independent of e.
 test('board keeps right-drag pin but uses primary+secondary chord to bend line',()=>{
  const source=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const overlay=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
- assert.ok(source.includes("shouldBendLineOnRightPress(current,e.button)"));
+ assert.ok(source.includes("shouldBendLineOnRightPress(current,2)"));
+ assert.ok(source.includes("window.addEventListener('contextmenu',onContextMenu,true)"));
  assert.ok(source.includes("const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end)"));
  assert.ok(source.includes("measureDrag.current.pinned=true"));
  assert.ok(source.includes("if(!cancel&&e.button===2&&current.sourceButton===0)return"));
