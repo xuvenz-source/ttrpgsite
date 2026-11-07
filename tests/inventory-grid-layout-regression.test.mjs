@@ -28,7 +28,8 @@ test('configured inventory dimensions remain full sized and scroll within its fi
  assert.deepEqual(gridLayout([],12,7),{placed:[],unplaced:[],cols:12,rows:7});
 });
 test('grid item rotation and inventory data remain unchanged',()=>{
- assert.ok(inventory.includes('moveInventoryItem(items,current.index,current.x,current.y,cols,height,current.turns)'));
+ assert.ok(inventory.includes('moveInventoryItem(items,index,current.x,current.y,cols,height,current.turns)'));
+ assert.ok(inventory.includes('const index=dragIndex(current)'));
  assert.ok(inventory.includes("gridColumn:(x+1)+' / span '+w"));
  assert.ok(inventory.includes("gridRow:(y+1)+' / span '+h"));
 });
