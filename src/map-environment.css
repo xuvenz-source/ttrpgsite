@@ -14,53 +14,55 @@
 .map-setting-panel .map-setting-save{color:#c9dfb8;font-weight:600;overflow-wrap:anywhere}
 .map-setting-panel .map-setting-danger{border-color:#7f4c4c;color:#ffdfd7}
 
-/* Roll20-inspired editing affordances, with original icon artwork. */
+/* DM map quick controls use Tabletop Forge's existing dark panel language. */
 .map-env-marker-layer{position:absolute;inset:0;z-index:26;pointer-events:none}
 .map-env-marker{position:absolute;display:grid;place-items:center;transform:translate(-50%,-50%);
- width:32px;height:32px;min-width:32px;padding:3px;border:2px solid #47566a;
- border-radius:4px;background:#f7f9fa;color:#17212f;box-shadow:0 2px 8px #0009;
- pointer-events:auto;cursor:pointer;touch-action:manipulation}
-.map-env-marker-window{border-color:#5fd6d6}
-.map-env-marker-door{border-color:#ee8968}
-.map-env-marker-light{border-color:#e5c25c}
+ width:30px;height:30px;min-width:30px;padding:3px;border:1px solid #60738f;
+ border-radius:7px;background:#202e43;color:#e8f0fb;box-shadow:0 3px 10px #050913b8;
+ pointer-events:auto;cursor:pointer;touch-action:none}
+.map-env-marker-window{border-color:#58adb5;color:#a5f2ed}
+.map-env-marker-door{border-color:#ca8c6f;color:#f4c1a0}
+.map-env-marker-light{border-color:#c0a465;color:#ffe1a0}
 .map-env-marker:hover,.map-env-marker:focus-visible,.map-env-marker.is-selected{
- outline:2px solid #77d5ff;outline-offset:1px}
-.map-env-marker-state{position:absolute;top:-9px;right:-8px;font-size:10px;line-height:14px;
- min-width:15px;height:15px;text-align:center;background:#1b2940;color:white;border-radius:7px}
+ outline:2px solid #91b9f3;outline-offset:1px;background:#334a66}
+.map-env-marker-state{position:absolute;top:-8px;right:-7px;font-size:10px;line-height:14px;
+ min-width:15px;height:15px;text-align:center;background:#172236;color:#e4eefa;
+ border:1px solid #566b87;border-radius:8px}
 .map-object-quick-adjust{position:absolute;z-index:38;display:flex;flex-direction:column;
- width:250px;max-width:calc(100% - 8px);max-height:min(445px,76vh);overflow:hidden;
- background:#eef0f4;color:#232b38;border:1px solid #bac4d1;border-radius:9px;
- box-shadow:0 10px 25px #050913aa;font-size:13px;pointer-events:auto}
-.map-quick-header{display:flex;align-items:center;gap:8px;padding:8px 10px;
- border-bottom:1px solid #c9cdd6}
-.map-quick-header strong{flex:1}
-.map-quick-type-icon{font-size:19px;width:22px;text-align:center}
-.map-object-quick-adjust .map-quick-close{background:#c72b54!important;color:white!important;
- border:1px solid #ae2449!important;font-size:17px;line-height:1;padding:4px 8px;
- border-radius:4px;min-width:27px}
-.map-quick-body{display:flex;flex-direction:column;gap:9px;padding:10px;overflow-y:auto}
-.map-object-quick-adjust label{color:#273040!important}
-.map-object-quick-adjust .muted{color:#536274!important}
+ width:256px;max-width:calc(100% - 8px);max-height:min(445px,76vh);overflow:hidden;
+ background:#1a2536;color:#e5edf9;border:1px solid #425571;border-radius:9px;
+ box-shadow:0 12px 26px #02060dd1;font-size:12px;pointer-events:auto}
+.map-quick-header{display:flex;align-items:center;gap:8px;padding:9px 11px;
+ border-bottom:1px solid #344860;background:#1c2b3f}
+.map-quick-header strong{flex:1;font-size:13px;color:#f3f6ff}
+.map-quick-type-icon{font-size:18px;width:22px;text-align:center;color:#9bb8e4}
+.map-object-quick-adjust .map-quick-close{
+ background:#263a53!important;color:#e5edf9!important;border:1px solid #4a617f!important;
+ font-size:16px;line-height:1;padding:4px 8px;border-radius:5px;min-width:27px}
+.map-object-quick-adjust .map-quick-close:hover{background:#455978!important}
+.map-quick-body{display:flex;flex-direction:column;gap:9px;padding:11px;overflow-y:auto}
+.map-object-quick-adjust label{color:#dce6f6!important}
+.map-object-quick-adjust .muted{color:#a9bcd3!important}
 .map-quick-toggle,.map-quick-number,.map-quick-color,.map-quick-select{
  display:flex!important;justify-content:space-between;align-items:center;
- gap:10px;margin:0!important;min-height:25px}
+ gap:10px;margin:0!important;min-height:26px}
 .map-quick-toggle span,.map-quick-number span,.map-quick-select span,.map-quick-color span{flex:1}
 .map-quick-toggle input[type=checkbox]{appearance:none;display:block;position:relative;flex:0 0 auto;
- width:39px!important;height:21px!important;border:0;border-radius:12px;
- background:#b6bdc7;cursor:pointer;margin:0}
-.map-quick-toggle input[type=checkbox]:checked{background:#db1686}
+ width:36px!important;height:20px!important;border:1px solid #59708b;border-radius:12px;
+ background:#32435a;cursor:pointer;margin:0}
+.map-quick-toggle input[type=checkbox]:checked{background:#648dc9;border-color:#89aeeb}
 .map-quick-toggle input[type=checkbox]:before{content:'';position:absolute;
- top:3px;left:3px;width:15px;height:15px;background:white;border-radius:50%;
- box-shadow:0 1px 3px #0004;transition:left .12s}
-.map-quick-toggle input[type=checkbox]:checked:before{left:21px}
+ top:2px;left:2px;width:14px;height:14px;background:#f3f7ff;border-radius:50%;
+ box-shadow:0 1px 3px #0006;transition:left .12s}
+.map-quick-toggle input[type=checkbox]:checked:before{left:18px}
 .map-quick-number input,.map-quick-select select{
- width:92px!important;min-width:76px!important;max-width:105px!important;
- padding:4px!important;background:white!important;color:#1e2935!important;
- border:1px solid #aebccc!important;border-radius:5px}
-.map-quick-color input{width:78px!important;height:28px!important;padding:2px!important;
- border:1px solid #b0bac8!important}
-.map-quick-advanced{border-top:1px solid #c5ccd5;padding-top:8px}
-.map-quick-advanced summary{font-weight:600;cursor:pointer}
+ width:96px!important;min-width:76px!important;max-width:112px!important;
+ padding:5px!important;background:#101c2c!important;color:#ecf3ff!important;
+ border:1px solid #4b627e!important;border-radius:5px}
+.map-quick-color input{width:80px!important;height:28px!important;padding:2px!important;
+ background:#101c2c!important;border:1px solid #536b87!important}
+.map-quick-advanced{border-top:1px solid #384c64;padding-top:9px}
+.map-quick-advanced summary{font-weight:600;cursor:pointer;color:#dce7f9}
 .map-quick-advanced-fields{display:flex;flex-direction:column;gap:9px;margin-top:9px}
 .map-setting-preview-controls{display:flex;flex-direction:column;gap:8px;
  padding:9px;border:1px solid #536b8a;border-radius:8px;background:#182535}

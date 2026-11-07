@@ -101,3 +101,15 @@
 .token.token-current-turn{outline:3px solid #a9f29a;outline-offset:2px;
  box-shadow:0 0 17px 4px #80e38b99;z-index:8}
 @media(prefers-reduced-motion:reduce){.token.token-current-turn{transition:none}}
+
+.combat-turn-avatar{overflow:hidden;position:relative}
+.combat-turn-avatar .combat-turn-art,
+.combat-turn-avatar img.combat-turn-art{
+ display:block;width:100%;height:100%;object-fit:cover;border-radius:4px;
+}
+.combat-turn-avatar .art-fallback{font-size:11px}
+.combat-turn-entry .combat-entry-remove{
+ padding:2px;min-width:23px;min-height:25px;font-size:16px;
+ color:#d9a2ab;border-color:#63495c;
+}
+.combat-turn-entry .combat-entry-remove:hover{color:#fff;border-color:#c56b7e}
