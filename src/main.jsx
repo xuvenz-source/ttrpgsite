@@ -2871,7 +2871,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
-      (combatActiveTokenId===t.id?' token-current-turn':'')}
+      (combatActiveTokenId===t.id?' token-current-turn':'')+
+      (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
@@ -2895,6 +2896,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       onPointerCancel={e=>finishTokenDrag(e,t,true)}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
+      {normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')&&
+       <span className="token-dead-overlay" aria-hidden="true"/>}
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
        position={statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
