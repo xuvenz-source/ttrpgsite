@@ -14,6 +14,7 @@ import MapFogOverlay from './MapFogOverlay.jsx';
 import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
+import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
 import {shouldPersistFogDrag} from './LiveTokenMovement.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
@@ -58,10 +59,14 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
  const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
  function movePreviewToken(origin,destination){
-  if(!origin||!environment||!checkTokenMovement({
+  if(!origin||!environment)return false;
+  const direct=checkTokenMovement({token:origin,destination,map,environment});
+  const legal=direct.allowed?destination:traceLegalTokenDestination({
    token:origin,destination,map,environment
-  }).allowed)return false;
-  setPreviewPosition({id:origin.id,mapId:map.id,...destination});
+  });
+  if(!direct.allowed&&legal.x===Number(origin.x)&&legal.y===Number(origin.y))
+   return false;
+  setPreviewPosition({id:origin.id,mapId:map.id,x:legal.x,y:legal.y});
   return true;
  }
  // Keyboard bindings and pointer dragging share one swept-wall test. All
