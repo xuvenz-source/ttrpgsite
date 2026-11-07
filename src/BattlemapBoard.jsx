@@ -27,7 +27,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
  onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,authorizedLightMasks=null,
- environment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
+ environment,publishedEnvironment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
  registerRemoteMotion,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
  onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
@@ -62,12 +62,13 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   previewPosition?.id===sourcePreviewToken.id?
   {...sourcePreviewToken,x:previewPosition.x,y:previewPosition.y}:sourcePreviewToken;
  const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
- const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
+ const previewEnvironment=publishedEnvironment||environment;
+ const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&previewEnvironment);
  function movePreviewToken(origin,destination){
-  if(!origin||!environment)return false;
-  const direct=checkTokenMovement({token:origin,destination,map,environment});
+  if(!origin||!previewEnvironment)return false;
+  const direct=checkTokenMovement({token:origin,destination,map,environment:previewEnvironment});
   const legal=direct.allowed?destination:traceLegalTokenDestination({
-   token:origin,destination,map,environment
+   token:origin,destination,map,environment:previewEnvironment
   });
   if(!direct.allowed&&legal.x===Number(origin.x)&&legal.y===Number(origin.y))
    return false;
@@ -89,8 +90,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   return()=>registerPreviewStep(null);
  },[registerPreviewStep]);
  const previewPolygon=useMemo(()=>previewActive?
-  previewVisionPolygon({map,environment,viewer,maxFeet:60}):[],
-  [previewActive,map,environment,viewer]);
+  previewVisionPolygon({map,environment:previewEnvironment,viewer,maxFeet:60}):[],
+  [previewActive,map,previewEnvironment,viewer]);
  const visibleTokens=useMemo(()=>{
   // Visibility ticks may arrive before the refreshed RLS token query. Never
   // leave an old NPC token faintly visible through previously explored fog.
@@ -796,7 +797,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
       onTokenPointerMove={(e,p)=>moveTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerUp={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerCancel={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id},true)}
-      onOpen={onToolOpen} environment={isDM?environment:null}/>
+      onOpen={onToolOpen} environment={isDM?(previewActive?previewEnvironment:environment):null}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
@@ -901,7 +902,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     <TokenMonitorFrames motionRuntime={motion.current} tokens={visibleTokens} remotePositions={remotePositions}
      preview={preview} config={displaySettings} monitorValues={monitorValues}
      encumbranceBadges={encumbranceBadges} gridSize={map.grid_size} scale={scale}/>
-    {previewActive&&<MapPlayerPreviewOverlay map={map} environment={environment}
+    {previewActive&&<MapPlayerPreviewOverlay map={map} environment={previewEnvironment}
      polygon={previewPolygon} viewerName={previewToken?.name}/>}
    </div>
    </div>
