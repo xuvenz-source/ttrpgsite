@@ -30,11 +30,16 @@ Never use production passwords, service-role credentials or actual player's priv
 - Confirm `campaign_map_views`, `campaign_player_maps`, and `tabletop_menu_preferences` work for logged-in users after anonymous SQL grants are revoked.
 
 ## Deployment gate
-Keep the two SQL candidates **outside** `supabase/migrations/` so they cannot
-be mistaken for applied migrations. Create official migrations using the
-Supabase CLI **after** staged tests pass; deploy in a reviewed release,
-then re-run Supabase Security Advisor. Do not modify production RLS from
-a Github CI or Vercel frontend build.
+**Already applied and independently verified:** anonymous SQL grants revoked from
+three authenticated-only tables in production using migration
+`20261107051546_remove_unused_anon_preference_and_map_grants`; authenticated
+privileges and RLS remained intact. The exact migration is recorded under
+`supabase/migrations/` for repository parity.
+
+The **NPC artwork** policy remains **candidate-only** under
+`security/sql-candidates/` and is NOT yet deployed. Generate an official
+migration after DM/player acceptance testing and a reviewed rollback plan.
+Do not modify production Storage RLS from GitHub CI or a Vercel frontend build.
 
 ## Rollback plan
 - Anonymous grants: restore only the specifically needed ACL grants if a documented legacy anonymous flow depends on them (prefer fixing that flow).
