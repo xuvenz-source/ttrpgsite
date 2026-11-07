@@ -1,52 +1,86 @@
-# Recovered staging — authoritative fog of war and collision
+# Authoritative fog and collision — staging integration
 
-**Status: foundation implemented on GitHub staging; full enforcement NOT yet implemented.**
-**Branch:** `stage/authoritative-fog-collision-foundation-2026-11-07`
-**Original planning branch:** `stage/dm-tools-refinement-fog-collision-2026-11-07`
-**Deployment:** none. **Supabase changes:** none. **Paid infrastructure:** none.
+**Branch:** stage/authoritative-fog-collision-foundation-2026-11-07
+**Status:** Complete frontend/database release candidate under CI checks. **Not deployed; SQL not applied.**
+**Cost:** Existing GitHub, Supabase Free, Vercel Free; no paid branch or worker.
 
-## Recovery
+## Recovered work
+Original design and constraints were preserved from
+stage/dm-tools-refinement-fog-collision-2026-11-07. The older branch did not
+include player fog/collision enforcement and must not be merged wholesale.
 
-The earlier branch and its design contract are intact. Its items 1–5 cover unrelated DM map refinements that already exist in the current application; item 6 explicitly documents fog/collision as missing. Do **not** cherry-pick that older branch into `main`: it diverged from released improvements. This focused branch starts from the latest production `main` and isolates the missing functionality.
+## Staged connected implementation
+- DM prepares lights, walls, doors/windows, ambient and fog as before.
+  A new **Enforce wall and door collision** checkbox controls physical blocking.
+  **Publish map rules** copies prepared to live in one authorized server
+  transaction and opts in fog/collision per map. **Disable published rules**
+  safely turns both off; **Reset exploration** clears that map's memory on
+  explicit DM confirmation.
+- Supabase candidate staging/sql-candidates/fog_collision_authoritative_release.sql:
+  private map-rule flags and per-player explored cells, DM publish/reset RPC,
+  server LOS/light calculations, bounded 128×128 fog masks, token row-level
+  visibility, observed tool projections, map revision invalidation, and
+  server-side swept-footprint collision triggers on tokens and issued tools.
+- RLS now filters direct map_tokens SELECT and token INSERT positions for player
+  calls; hidden NPC names and IDs are not delivered to an unauthorized player.
+  Players cannot create pieces on opted-in physical maps: the DM places them,
+  then players move existing pieces under server collision enforcement.
+- get_authorized_map_combat returns only individually observable combat entries.
+  Player map_combats direct SELECT is closed, while initiative submission RPCs
+  continue to authorize owned tokens. Token monitors and encumbrance RPCs are
+  restricted to observed tokens. Storage artwork signing is restricted to DMs,
+  uploader-owned art, owned character art and observed map token art.
+- On move/publish/door/light/tool/combat changes, map_visibility_ticks emits
+  ONLY map/revision; player clients request fresh authorized fog and tokens.
+  The shared token-preview coordinates are suppressed unless an authenticated
+  snapshot explicitly confirms fog is disabled, avoiding hidden NPC coordinates
+  in public map broadcasts. Browser focus/resubscribe re-fetches snapshots.
+- Player canvas renders unexplored opaque, explored dim, current visible clear;
+  when the fog endpoint fails the map stays covered, not accidentally revealed.
 
-## What this foundation actually stages
+## Safety and scope constraints
+- The candidate SQL is UNAPPLIED. A green JS test/build cannot prove a
+  PostgreSQL migration compiles, role-specific RLS, or active multiplayer UX.
+  The existing free production Supabase is the agreed live-test environment,
+  but needs a separate explicit designer release instruction.
+- Critical: the full **background map image** is still served to legitimate
+  map viewers by the existing battlemap-assets policy. Like most browser VTT
+  masks, fog protects the *rendered view and NPC data*, not a determined player
+  inspecting a previously downloaded full map image. True terrain-image secrecy
+  requires a separately designed server-side tile delivery/protection system.
+- Server LOS currently supports 60 ft from player-controlled tokens, blocking
+  vision through walls/doors/window curtains and one-way/elevation exceptions.
+  Ambient brightness and environmental/issued light sources affect sight.
+  Allowed maximum is 128 cells per axis, 120 environment objects and 2500
+  points per published map. DM sees all, player partyShared configuration
+  chooses combined light of sight and exploration; the first eight eligible
+  source tokens per map are considered to bound free-tier load.
+- DM placement is required once fog/collision is active. Group dragging
+  currently writes members individually (a collision failure can move some
+  members but not others); each individual crossing is rejected, never bypassed.
+- Previously issued signed image URLs may remain usable until expiration;
+  staging the new policy does not revoke URLs already handed out.
+- The fog frame uses an opt-in published state. No migration automatically
+  activates an existing campaign or changes its maps without DM publishing.
 
-- `src/MapCollision.js`: bounded swept token footprint geometry in map cells. A move checks the whole path and token span, not just its destination. Doors, windows, movement-block flags, open/broken state, conditional elevation/attribute values, corners and edges are covered by deterministic tests. **Advisory/test model only** until equivalent server geometry is installed; it does not authorize movement.
-- `src/MapFogModel.js`: strict parser for server-authorized fog frames, using visible/explored/unexplored states. Bad map IDs, geometry, token data, oversized masks and malformed cells are rejected. **No fog frames are issued by the server yet.**
-- `staging/sql-candidates/fog_collision_visibility_foundation.sql`: additive proposal for a private feature-gate table and per-map/per-user exploration storage, with RLS and no client grants. **Not applied.** Fog and collision default off. This alone does not enforce movement or conceal tokens.
-- `tests/map-fog-collision-foundation.test.mjs`: regression coverage for line crossings, diagonal long moves, larger footprints, passage through open or broken portals, map bounds, elevation conditions and redacted fog frames.
+## Coordinated deployment when the designer approves
+1. Verify branch/release diff and GitHub checks (npm tests/build/security).
+2. Apply the staged SQL candidate **once** to the existing free Supabase
+   project, observing errors and recording a migration. Ensure functions,
+   triggers, RLS, Storage and Realtime publication are in the same transaction.
+3. Deploy the matching approved frontend by merging a scoped release branch
+   into main **once**. Do not leave an old client active alongside new RLS.
+4. DM visits an existing test campaign and publishes one low-risk map with
+   walls and light, confirms status and player map access.
+5. Two players + DM: observe outside/inside walls; turn light/doors on/off
+   then republish; private/party-shared explored memory; reload/map switch/
+   background reconnect; larger tokens, doors, one-way/elevation, group movement.
+6. Verify hostile read/write paths from real player sessions: direct Data API
+   select map_tokens and combat tables, direct REST movement/creation,
+   hidden NPC image signing, token monitor/encumbrance RPCs, Realtime
+   token-preview/broadcast/network frames. Hidden NPC data must not leak.
+7. Evaluate response times on the free tier; reduce geometry/source limits
+   if needed. If activation fails, disable that map's published rules and
+   investigate, rather than automatically dropping migrations/data.
 
-## Confirmed live schema constraints
-
-1. `map_environments` already has separate `prepared` and `live` JSON columns and is DM-readable only. Do not make either readable by players; publishing should copy a validated prepared document into live using an explicitly authorized DM action, not leak geometry.
-2. `map_tokens` player SELECT currently accepts *every* `visible=true` token on an accessible map. This leaks unrevealed NPC name, position and artwork even if an overlay covers the board. It must be replaced or guarded by server-observed visibility before fog can be called secure.
-3. `map_tokens` participates in Supabase Realtime; clients can receive authorized row data there. Subscriptions must be reviewed alongside database RLS and sanitized views/RPC results.
-4. Combat turn order currently publishes token details when `visible=true` without a sight check. Monitors, artwork URL issuance and reference-code operations also require visibility audit.
-5. `map_environments.live` is not a reliable enforcement switch today. No server movement trigger currently enforces collision using its geometry.
-
-## Next implementation phases (must be completed before enabling)
-
-### A. Authoritative publishing and physical collision
-
-- Validate geometry, finite bounds, max objects/points, portal states, blocker heights and permitted elevation field names on the server.
-- Add explicit DM **Publish** and **Reset** for one map. Preserve prepared edits independently and revision the effective live state.
-- Install a database trigger for player movement on `map_tokens` to check the swept footprint, including diagonal/corner, multi-cell token, doors/windows and elevation. Cover direct REST UPDATE, keyboards, single and group drags, and every RPC that edits x/y. The DM may override. Rejected writes must restore the authoritative position in UI.
-- Explicitly resolve existing blocked placements and map changes. Do not turn the trigger on before its geometry and safe opt-in behavior are tested.
-
-### B. Secure fog and exploration
-
-- Compute current line of sight and illumination **server-side** from *published* map geometry, light sources, current user-controlled tokens, one-way rules and elevation. Recalculate on move, light/door change and DM publish. Persist explored cells for each player (or server-authorized party sharing).
-- Return only bounded, sanitized per-viewer fog masks and observed token records. Default deny when map/visibility state is invalid.
-- Replace broad player reads of `map_tokens`; audit Realtime, token artwork signing, monitoring/quick-status RPCs, combat roster payloads, hotbar/reference codes, handouts and all alternate data paths. A CSS mask is not authorization.
-- Ensure private exploration is never sent to a different player. Re-fetch authoritative snapshot after reconnect or returning from a paused browser tab.
-
-### C. Controlled release and acceptance
-
-- Keep flags off until client and server are installed together and privacy review passes. Avoid any production SQL changes during staging.
-- Use existing test campaigns and the free Supabase/Vercel plans only. No paid staging database, background worker or hourly resource.
-- Live acceptance with DM + two players: open/close doors; light on/off; fog enabled/disabled; private and party-shared exploration; map switch/reload; hidden NPC name/image isolation via Data API and Realtime; one-way/elevation; group moves and direct REST attempts through barriers; DM override; reconnect.
-- **Do not report fog or collision as working gameplay features until the server and two-client checks are completed.** Older planning text requiring a paid/disposable test database is superseded by the project live-campaign testing standard.
-
-## Safety invariant
-
-A movement block drawn in the browser is not authoritative. An unseen token covered by CSS is not hidden from an API user. The staging branch must never activate either feature until server authorization and data filtering exist.
+No paid test database, hourly services or automatic Vercel preview deployments.
