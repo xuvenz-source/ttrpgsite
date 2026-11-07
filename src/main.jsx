@@ -28,7 +28,7 @@ import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
-import {normalizeEnvironment,withObject,patchObject} from './MapEnvironment.js';
+import {normalizeEnvironment,withObject,patchObject,removeObject} from './MapEnvironment.js';
 import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
@@ -152,7 +152,7 @@ function App(){
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
   lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
-  selectedId:null,pinHandoutId:'',lightBright:20,lightDim:20
+  selectedId:null,pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
@@ -450,8 +450,12 @@ function App(){
   const url=new URL(location.origin+location.pathname);
   url.searchParams.set('campaign',activeId);
   url.searchParams.set('sheet',characterId);
-  window.open(url.toString(),'_blank',
-   'popup=yes,width=920,height=760,resizable=yes,scrollbars=yes,noopener,noreferrer');
+  // Request the final pop-out directly during the user click, not a tab intermediary.
+  const popup=window.open(url.toString(),'forge-sheet-'+characterId,
+   'popup=yes,width=920,height=760,resizable=yes,scrollbars=yes');
+  if(!popup){fail('Your browser blocked the character pop-out. Allow pop-ups for Tabletop Forge.');return false}
+  try{popup.opener=null;popup.focus()}catch{}
+  return true;
  }
  async function openOwnCharacter(characterId){
   const target=characters.find(ch=>ch.id===characterId&&ch.user_id===user);
@@ -581,7 +585,8 @@ function App(){
  async function createHandoutPin(handoutId,point){
   if(!isDM||!selectedMap||!campaignHandouts.handouts.some(h=>h.id===handoutId))return;
   try{
-   const pin=await campaignHandouts.createPin({handoutId,kind:'note',...point});
+   const pin=await campaignHandouts.createPin({handoutId,
+    kind:mapSettingEditor.pinKind||'pin',...point});
    setMapSettingEditor(old=>({...old,tool:'select',pinHandoutId:''}));
    setOpenedHandout({id:handoutId,pinId:pin.id,
     preview:campaignHandouts.handouts.find(h=>h.id===handoutId)});
@@ -2016,9 +2021,9 @@ function App(){
      <option key={ch.id} value={ch.id}>{ch.name||'Unnamed character'}</option>)}
    </select>
   </label>
-  <button type="button" className="secondary" disabled={!character}
+  {!launchSheet&&<button type="button" className="secondary" disabled={!character}
    onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a separate browser window">
-   ↗ Pop out</button>
+   ↗ Pop out</button>}
   <button type="button" className="secondary" disabled={!character}
    onClick={()=>setArtStudio(true)}>My Token Library</button>
   <button type="button" className="secondary return-to-game" onClick={()=>launchSheet?window.close():setTab('tabletop')}>{launchSheet?'Close window':'← Return to Game'}</button>
@@ -2108,7 +2113,12 @@ function App(){
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
    handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
    onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
-   onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
+   onPatchEnvironmentObject={patchEnvironmentObject}
+   onDeleteEnvironmentObject={id=>{
+    if(!isDM||!mapEnvironmentCurrent.current)return;
+    saveMapEnvironment(removeObject(mapEnvironmentCurrent.current,id));
+    setMapSettingEditor(old=>({...old,selectedId:null}));
+   }} characters={characters}
    template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
@@ -2260,7 +2270,7 @@ function App(){
   db={db} campaignId={activeId} viewerId={user}
   record={characterEditor.data} template={camp?.sheet_template}
   onSaved={afterPlayerSheetSaved} onClose={()=>launchSheet?window.close():setCharacterEditor(null)}
-   onOpenBrowserTab={()=>openSheetBrowserTab(characterEditor.data.id)}
+   onOpenBrowserTab={launchSheet?undefined:()=>openSheetBrowserTab(characterEditor.data.id)}
   onRoll={(expression,label)=>roll(expression,label,null)}
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
    sourceType:'character',sourceId:characterEditor.data.id,collectionId,entryId,mode
@@ -2558,7 +2568,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
- handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin}){
+ handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
@@ -2666,17 +2676,26 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  },[selectedId,map.id,hotbarInset]);
  useEffect(()=>{
   function handleDelete(e){
-   if(!active||!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
+   if(!active||!isDM||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
    const el=e.target;
-   if(el instanceof Element && el.closest('input,textarea,select,button,[contenteditable="true"],[role="textbox"]'))return;
+   if(el instanceof Element && (el.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]')||
+     (el.closest('button')&&!el.closest('.map-env-marker'))))return;
    if(document.querySelector('.modal-backdrop'))return;
+   if(environmentEditor?.enabled&&environmentEditor.layer==='light'&&
+      !environmentEditor.lockLight&&environmentEditor.selectedId){
+    const target=environment?.objects?.find(o=>o.id===environmentEditor.selectedId);
+    if(target){
+     e.preventDefault();e.stopPropagation();
+     onDeleteEnvironmentObject?.(target.id);return;
+    }
+   }
    const t=tokens.find(x=>x.id===selectedId);
    if(!t)return;
    e.preventDefault();e.stopPropagation();setSelectedId(null);remove(t);
   }
   document.addEventListener('keydown',handleDelete);
   return()=>document.removeEventListener('keydown',handleDelete);
- },[active,selectedId,isDM,tokens,remove]);
+ },[active,selectedId,isDM,tokens,remove,environmentEditor,environment,onDeleteEnvironmentObject]);
  useEffect(()=>{
   const node=viewportRef.current;if(!node)return;
   const wheel=e=>{
@@ -2785,6 +2804,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  }
  function onToolPointerDown(e,tool){
   if(e.button!==0&&e.button!==2)return;
+  // On a chorded right-click, keep the original left-drag and add a turn.
+  if(e.button===2&&measureDrag.current){pinCurrentMeasurementOnRightClick(e);return}
+  if(toolDrag.current)return;
   setActiveMeasureTool(tool);
   e.preventDefault();e.stopPropagation();
   toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2,sourceButton:e.button};
@@ -3007,7 +3029,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
-     if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
+     if(e.button===2&&measureDrag.current)pinCurrentMeasurementOnRightClick(e);
+     else if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
      else if(!environmentEditor?.enabled&&!previewActive)startMeasurementCapture(e);
     }} onPointerDown={startMarquee}
     onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
