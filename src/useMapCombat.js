@@ -19,7 +19,7 @@ export default function useMapCombat({db,campaignId,mapId,userId,isDM,onError,on
   const key=++request.current;
   setCombat(null);setPrivateEntries([]);setOpen(false);setStatus('');
   refreshRef.current=null;
-  if(!db||!userId||!mapId||!campaignId)return;
+  if(!db||!userId||!mapId||!campaignId){lastEncounter.current.clear();return;}
   let active=true,sequence=0;
   const refresh=async()=>{
    const number=++sequence;
