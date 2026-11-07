@@ -7,6 +7,7 @@ create table if not exists public.map_combats (
  map_id uuid primary key,
  campaign_id uuid not null,
  active boolean not null default false,
+ encounter_id uuid not null default gen_random_uuid(),
  round integer not null default 0 check(round between 0 and 1000000),
  current_entry_id uuid,
  initiative_field text not null default '',
@@ -110,7 +111,7 @@ begin
  insert into public.map_combats(map_id,campaign_id,active,round,initiative_field,
   initiative_mode,current_entry_id,participants)
  values(p_map,v_campaign,true,1,p_field,p_mode,null,'[]'::jsonb)
- on conflict(map_id) do update set active=true,round=1,
+ on conflict(map_id) do update set active=true,encounter_id=gen_random_uuid(),round=1,
   initiative_field=excluded.initiative_field,initiative_mode=excluded.initiative_mode,
   current_entry_id=null,participants='[]'::jsonb,revision=public.map_combats.revision+1,
   updated_at=now();
