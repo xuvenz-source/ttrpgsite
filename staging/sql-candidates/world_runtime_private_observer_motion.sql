@@ -282,4 +282,28 @@ revoke all on function public.preview_map_motion(
  uuid,text,uuid,integer,integer,bigint,boolean) from public,anon;
 grant execute on function public.preview_map_motion(
  uuid,text,uuid,integer,integer,bigint,boolean) to authenticated;
+
+-- Clear only the caller's own temporary, server-verified preview after a
+-- committed movement or canceled drag; never delete another actor's rate.
+create or replace function public.end_map_motion_previews(
+ p_map uuid,p_token_ids uuid[],p_tool_issue_ids uuid[]
+)returns integer language plpgsql volatile security definer
+set search_path='' as $
+declare deleted integer;
+begin
+ if auth.uid() is null or p_map is null or
+    p_token_ids is null or p_tool_issue_ids is null or
+    cardinality(p_token_ids)+cardinality(p_tool_issue_ids)>48
+ then raise exception 'Invalid preview cleanup request';end if;
+ delete from forge_visibility.movement_preview_rates r
+ where r.actor_id=auth.uid() and r.map_id=p_map and
+   ((r.kind='token' and r.piece_id=any(p_token_ids)) or
+    (r.kind='tool' and r.piece_id=any(p_tool_issue_ids)));
+ get diagnostics deleted=row_count;
+ return deleted;
+end $;
+revoke all on function public.end_map_motion_previews(uuid,uuid[],uuid[])
+ from public,anon;
+grant execute on function public.end_map_motion_previews(uuid,uuid[],uuid[])
+ to authenticated;
 commit;
