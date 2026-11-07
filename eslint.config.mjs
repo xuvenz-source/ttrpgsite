@@ -17,7 +17,10 @@ export default [{
   'src/useCampaignHandouts.js',
   'src/useMapCombat.js',
   'src/useAuthorizedMapFog.js',
-  'src/QueuedWrites.js'
+  'src/QueuedWrites.js',
+  'src/LiveMovementPreview.js',
+  'src/LiveTokenMovement.js',
+  'src/LiveToolMovement.js'
  ],
  languageOptions:{
   ecmaVersion:2022,sourceType:'module',

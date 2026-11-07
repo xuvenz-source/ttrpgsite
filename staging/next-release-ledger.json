@@ -192,7 +192,9 @@
           "tool sheet serial autosave",
           "coalesced refreshes for tools, handouts, initiative and fog",
           "static undefined-variable CI lint gate",
-          "migration history non-destructive inventory"
+          "migration history non-destructive inventory",
+          "shared movement packet validation deduplicated",
+          "safe CSS subtab and pan-cursor deduplication"
         ],
         "databaseDependencies": [],
         "paidInfrastructure": false
