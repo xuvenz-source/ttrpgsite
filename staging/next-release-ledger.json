@@ -292,14 +292,22 @@
     },
     {
       "id": "unified-world-runtime-redesign",
-      "description": "First staged slice: local RAF token/monitor motion, delta-painted sanitized fog, constrained DM-preview collision trajectory; further authoritative movement/collision/lighting phases are REQUIRED before release.",
+      "description": "Staged local RAF and interpolated remote token/tool motion; RLS-invoker transactional route commits, explicit DM collision override, server-validated private observer broadcasts, preview-authorized fog and wall-clipped tool lighting. Draft candidate only; migrations unapplied and multiplayer/live SQL verification outstanding.",
       "sources": [
         "stage/world-runtime-movement-collision-fog-2026-11-08"
       ],
       "status": "in-progress",
       "releaseReady": false,
-      "databaseDependencies": "future-unapplied-migrations-required",
-      "verification": "GitHub CI plus browser/multiplayer QA required"
+      "databaseDependencies": [
+        "world_runtime_collision_and_group_move",
+        "world_runtime_dm_footprint_override",
+        "world_runtime_atomic_trajectory",
+        "world_runtime_private_observer_motion",
+        "world_runtime_preview_visibility",
+        "world_runtime_authorized_light_masks",
+        "world_runtime_visibility_tick_metadata"
+      ],
+      "verification": "GitHub CI/static source checks only. Multiuser browser, privilege, geometry parity, SQL compile and live test campaigns after explicit release approval are REQUIRED."
     }
   ],
   "databaseDependencies": [
@@ -351,6 +359,62 @@
       "mustApplyBeforeFrontend": true,
       "dependsOn": "20261108043000_macro_quickcode_resolution",
       "appliedVersion": "20261107173054"
+    },
+    {
+      "name": "world_runtime_collision_and_group_move",
+      "file": "staging/sql-candidates/world_runtime_collision_and_group_move.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": null,
+      "releaseApprovalRequired": true
+    },
+    {
+      "name": "world_runtime_dm_footprint_override",
+      "file": "staging/sql-candidates/world_runtime_dm_footprint_override.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": "world_runtime_collision_and_group_move",
+      "releaseApprovalRequired": true
+    },
+    {
+      "name": "world_runtime_atomic_trajectory",
+      "file": "staging/sql-candidates/world_runtime_atomic_trajectory.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": "world_runtime_collision_and_group_move",
+      "releaseApprovalRequired": true
+    },
+    {
+      "name": "world_runtime_private_observer_motion",
+      "file": "staging/sql-candidates/world_runtime_private_observer_motion.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": "world_runtime_collision_and_group_move",
+      "releaseApprovalRequired": true
+    },
+    {
+      "name": "world_runtime_preview_visibility",
+      "file": "staging/sql-candidates/world_runtime_preview_visibility.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": "world_runtime_private_observer_motion",
+      "releaseApprovalRequired": true
+    },
+    {
+      "name": "world_runtime_authorized_light_masks",
+      "file": "staging/sql-candidates/world_runtime_authorized_light_masks.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": "world_runtime_preview_visibility",
+      "releaseApprovalRequired": true
+    },
+    {
+      "name": "world_runtime_visibility_tick_metadata",
+      "file": "staging/sql-candidates/world_runtime_visibility_tick_metadata.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": null,
+      "releaseApprovalRequired": true
     }
   ],
   "edgeFunctionDependencies": [
@@ -373,7 +437,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
-    "stagePolicy": "All currently recorded staged components are incorporated into the approved consolidated release. Future changes must be staged separately; one main deployment per approval.",
+    "stagePolicy": "All previously staged release-ready components must be reconciled in one designer-approved production deployment. Unified world runtime SQL remains unapplied and this branch is not release ready.",
     "outstandingBranches": [
       "stage/world-runtime-movement-collision-fog-2026-11-08"
     ]
