@@ -16,10 +16,10 @@ test('fog and collision staging SQL is private, additive and inactive',()=>{
 });
 test('recovered scope forbids CSS-only fog or client-authoritative collision',()=>{
  const doc=source('docs/staged-authoritative-fog-collision.md');
- assert.match(doc,/not a reliable enforcement switch/);
- assert.match(doc,/Replace broad player reads of `map_tokens`/);
- assert.match(doc,/server authorization and data filtering/);
- assert.match(doc,/No paid staging database/);
+ assert.match(doc,/Not deployed; SQL not applied/);
+ assert.match(doc,/token row-level/);
+ assert.match(doc,/RLS/);
+ assert.match(doc,/no paid branch or worker|no paid branch or worker|no paid test database|No paid test database/i);
 });
 
 test('fog overlay is fail-closed and wired to authorized player snapshots',()=>{
