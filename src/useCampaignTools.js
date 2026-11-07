@@ -1,5 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {normaliseToolConfig,toolInitialState,toolCanControl,toolMapProjection} from './CampaignTools.js';
+import {createCoalescedRefresh} from './PerformanceScheduling.js';
 
 /** Keep in-flight local placement authoritative until the server responds.
  * This hides network latency from dragging without altering permission checks. */
@@ -54,20 +55,24 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
  useEffect(()=>{
   if(!db||!campaignId||!userId)return;
   let hidden=false;
+  const changed=createCoalescedRefresh(()=>void refresh(),100);
   const c=db.channel('forge-tools-'+campaignId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_tool_issues',filter:'campaign_id=eq.'+campaignId},()=>void refresh())
+    table:'campaign_tool_issues',filter:'campaign_id=eq.'+campaignId},()=>changed.request())
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_tool_map_tokens',filter:'campaign_id=eq.'+campaignId},()=>void refresh())
+    table:'campaign_tool_map_tokens',filter:'campaign_id=eq.'+campaignId},()=>changed.request())
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_tool_templates',filter:'campaign_id=eq.'+campaignId},()=>{if(isDM)void refresh()})
-   .subscribe();
+    table:'campaign_tool_templates',filter:'campaign_id=eq.'+campaignId},()=>{if(isDM)changed.request()})
+   .subscribe(status=>{if(status==='SUBSCRIBED')changed.request()});
   const onVisibility=()=>{
    if(document.visibilityState==='hidden')hidden=true;
    else if(hidden){hidden=false;void refresh()}
   };
   document.addEventListener('visibilitychange',onVisibility);
-  return()=>{document.removeEventListener('visibilitychange',onVisibility);void db.removeChannel(c)};
+  return()=>{
+   changed.cancel();document.removeEventListener('visibilitychange',onVisibility);
+   void db.removeChannel(c);
+  };
  },[db,campaignId,userId,isDM,refresh]);
  async function mutate(operation){
   if(!db||!campaignId||!userId)throw Error('Open a campaign first.');

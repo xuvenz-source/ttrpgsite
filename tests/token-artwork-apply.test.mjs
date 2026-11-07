@@ -31,7 +31,7 @@ test('only transient image upload errors are retried',()=>{
 });
 test('applying library token validates ownership, reports failed step and refreshes map art',()=>{
  const lib=readFileSync(new URL('../src/PersonalTokenLibrary.jsx',import.meta.url),'utf8');
- const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  assert.ok(lib.includes("db.auth.getUser()"));
  assert.ok(lib.includes("db.from('campaign_members')"));
  assert.ok(lib.includes('validateTokenArtwork(portraitBlob,tokenBlob)'));

@@ -1,8 +1,9 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const s=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const s=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
+const css=readAppStyles();
 test('DM popup opens standalone authenticated NPC editor window',()=>{
  assert.ok(s.includes("url.searchParams.set('npc',record.data.id)"));
  assert.ok(s.includes("url.searchParams.set('npc_kind',record.kind)"));

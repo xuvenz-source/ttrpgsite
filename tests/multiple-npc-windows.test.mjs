@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const m=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+const m=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const npc=readFileSync(new URL('../src/NpcEditor.jsx',import.meta.url),'utf8');
 const floating=readFileSync(new URL('../src/FloatingWindow.jsx',import.meta.url),'utf8');
 test('five simultaneous NPC editors have unique identities and save targets',()=>{

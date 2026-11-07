@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const side=readFileSync(new URL('../src/TabletopSidebar.jsx',import.meta.url),'utf8');
 test('map routing has persistent per-campaign realtime notifications',()=>{
  assert.ok(main.includes("db.channel('vtt-routing-'+activeId"));

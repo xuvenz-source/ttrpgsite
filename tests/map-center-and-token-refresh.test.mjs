@@ -1,8 +1,9 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const m=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const m=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
+const css=readAppStyles();
 test('new character sheet, map token, and DM edits refresh token monitors',()=>{
  assert.match(m,/setNewCharacterName\(''\);setSheetTab\('main'\);setSaveState\('Saved'\);setTab\('sheet'\);\s+void refreshMonitors\(\)/);
  assert.match(m,/await refreshTokens\(\);\s+await refreshMonitors\(\);\s+setSelectedTokenId\(created\.id\)/);

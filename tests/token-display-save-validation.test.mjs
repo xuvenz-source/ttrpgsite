@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {monitorValidationErrors,canSaveMonitorWidgets} from '../src/TokenDisplayValidation.js';
 
 const editor=readFileSync(new URL('../src/TokenDisplayDesigner.jsx',import.meta.url),'utf8');
-const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const quickcodes=readFileSync(new URL('../src/SheetQuickcodes.js',import.meta.url),'utf8');
 
 const validBar={

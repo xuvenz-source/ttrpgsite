@@ -45,6 +45,7 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
  const [error,setError]=useState('');
  const [saving,setSaving]=useState(false);
  const saved=useRef(JSON.stringify(initial));
+ const writing=useRef(Promise.resolve());
  const update=(key,value)=>{setDraft(s=>({...s,[key]:value}));setError('')};
  const title=item?'Item details':'Create inventory item';
  const validate=()=>{
@@ -54,31 +55,37 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
    return 'Quantity and weight must be zero or positive numbers.';
   return '';
  };
- function persist(){
+ async function persist(){
   const failure=validate();
   if(failure){setError(failure);return false}
   const next={...draft,Item:draft.Item.trim(),
    gridW:bounded(draft.gridW,cols),gridH:bounded(draft.gridH,rows)};
-  if(JSON.stringify(next)===saved.current)return true;
-  try{
-   setSaving(true);
-   onSave(next,{keepOpen:true});
-   saved.current=JSON.stringify(next);
-   setError('');setSaving(false);
-   return true;
-  }catch(e){setError(e?.message||String(e));setSaving(false);return false}
+  const encoded=JSON.stringify(next);
+  // Serialize saves and await the actual per-item RPC, not just an optimistic
+  // local onChange callback. A failed write retains the draft for retry.
+  const write=writing.current.catch(()=>{}).then(async()=>{
+   if(encoded!==saved.current)await onSave(next,{keepOpen:true});
+   saved.current=encoded;
+  });
+  writing.current=write;
+  setSaving(true);
+  try{await write;setError('');return true}
+  catch(e){setError(e?.message||String(e));return false}
+  finally{if(writing.current===write)setSaving(false)}
  }
  useEffect(()=>{
   if(JSON.stringify(draft)===saved.current)return;
   if(!draft.Item.trim())return;
-  const timer=setTimeout(()=>persist(),280);
+  const timer=setTimeout(()=>{void persist()},280);
   return()=>clearTimeout(timer);
  },[draft]);
- function close(){
-  if(JSON.stringify(draft)!==saved.current&&!persist())return;
+ async function close(){
+  // Do not release an item lease or destroy the editor before its final
+  // database write has completed (or failed visibly).
+  if(!await persist())return;
   onClose();
  }
- function submit(e){e.preventDefault();persist()}
+ function submit(e){e.preventDefault();void persist()}
  function rotate(){
   const width=bounded(draft.gridW,cols),height=bounded(draft.gridH,rows);
   // Rotating must not silently shrink an item to make it fit the grid.
@@ -90,11 +97,11 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
   setDraft(prev=>({...prev,gridW:height,gridH:width,
    gridRotation:((Number(prev.gridRotation)||0)+90)%360}));
  }
- return <FloatingWindow kind="inventory" onClose={close}>
+ return <FloatingWindow kind="inventory" onClose={()=>void close()}>
   <section className="modal inventory-item-editor" role="dialog" aria-label={title}>
    <header className="heading">
     <h2>{title}</h2>
-    <button type="button" className="secondary" onClick={close} aria-label="Close item editor">✕</button>
+    <button type="button" className="secondary" onClick={()=>void close()} aria-label="Close item editor">✕</button>
    </header>
    <form className="inventory-item-form" onSubmit={submit}>
     <div className="inventory-item-preview-row">
@@ -171,8 +178,8 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
         onDelete();
       }}>Delete item</button>}
      <span className="muted tiny" role="status">
-      {saving?'Saving…':'Edits save automatically'}</span>
-     <button type="button" className="secondary" onClick={close}>Close</button>
+      {saving?'Saving…':error?'Save failed — retry before closing':'Edits save automatically'}</span>
+     <button type="button" className="secondary" onClick={()=>void close()}>Close</button>
     </div>
    </form>
   </section>

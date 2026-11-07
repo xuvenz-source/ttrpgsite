@@ -26,6 +26,8 @@ jobs:
           node-version: '24'
       - name: Install dependencies without publishing
         run: npm install --no-audit --no-fund
+      - name: Catch undeclared variables in safety-critical interactive components
+        run: npm run lint:critical
       - name: Run staged frontend unit tests
         run: npm test
       - name: Audit production dependencies for high-severity issues

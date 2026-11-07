@@ -1,0 +1,220 @@
+/* V0.4: keep the battlemap clear; all controls live in the right-hand dock. */
+.workarea{grid-template-columns:minmax(0,1fr) 335px;gap:8px;padding:8px;min-height:0}
+.primary{min-height:0;min-width:0;overflow:hidden}
+.map-only-panel{background:transparent!important;border:0!important;border-radius:7px!important;padding:0!important;overflow:hidden!important}
+.map-only-panel>.mapscroll{flex:1;min-height:0;height:100%;max-height:none;border-radius:7px}
+.empty-tabletop{height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;border:1px dashed #45516b;border-radius:10px;background:#1d2634}
+.right-sidebar{height:100%;min-height:0;max-height:none;overflow:hidden;display:flex;flex-direction:column;padding:0!important;border-radius:10px}
+.right-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:0 0 auto;border-bottom:1px solid #334257;background:#141e2c}
+.right-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;padding:9px 2px 8px;line-height:1.2;background:transparent;border:0;border-radius:0;color:#9eafc7;font-size:11px}
+.right-tabs button:hover{background:#253249}
+.right-tabs button.selected{background:#27374d;color:#e9edfb;box-shadow:inset 0 -3px #a283df}
+.tab-glyph{font-size:17px}
+.right-panel-heading{flex:0 0 auto;padding:14px 13px 9px}
+.right-panel-heading h2{font-size:15px}
+.right-messages{padding:0 13px;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.right-sidebar .chatbox{padding:9px 10px 2px;flex:0 0 auto;margin-top:0}
+.right-sidebar .chatbox input{width:100%}
+.right-sidebar .chatbox button{padding:8px 11px}
+.right-chat-help{padding:4px 13px 10px}
+.right-body{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;padding:13px}
+.right-section{display:flex;flex-direction:column;gap:12px}
+.side-heading{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-bottom:10px}
+.side-heading h2{font-size:16px}
+.side-description{margin:0 0 8px}
+.side-form{display:flex;flex-direction:column;gap:12px}
+.side-form input,.side-form select{width:100%;max-width:100%}
+.side-form h3,.unit-inspector h3{font-size:13px}
+.side-divider{border-top:1px solid #38465a;margin:5px 0}
+.side-details{border:1px solid #384c65;border-radius:8px;padding:10px;margin:10px 0}
+.side-details summary{cursor:pointer;font-weight:600}
+.side-details .side-form{margin-top:14px}
+.full-button{width:100%}
+.unit-groups{display:flex;flex-direction:column;gap:10px}
+.unit-group{border:1px solid #36485f;border-radius:9px;overflow:hidden;background:#1d2839}
+.unit-group-head{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;background:#2a364a;border:0;border-radius:0;padding:11px 10px;font-weight:600;font-size:12px}
+.unit-count{background:#151d29;border-radius:999px;padding:2px 7px;color:#c5d0e0;min-width:24px;text-align:center}
+.unit-group-items{padding:5px;display:flex;flex-direction:column;gap:4px}
+.unit-row{display:flex;gap:4px;align-items:center;border-radius:7px}
+.unit-row-selected{background:#483f63}
+.unit-focus{background:transparent;border:1px solid transparent;display:flex;align-items:center;gap:8px;text-align:left;flex:1;min-width:0;padding:7px 4px}
+.unit-focus:hover{border-color:#566884;background:#303d50}
+.unit-thumb{width:32px!important;height:32px!important;min-width:32px;object-fit:contain;display:grid;place-items:center;border-radius:50%;background:#202a3e}
+.unit-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.unit-size{white-space:nowrap}
+.unit-edit{font-size:11px;padding:5px 7px;flex:0 0 auto}
+.empty-units{padding:8px;margin:0}
+.unit-inspector{border:1px solid #56617e;border-radius:9px;background:#252f43;padding:12px;display:flex;flex-direction:column;gap:10px}
+.unit-inspector label{display:flex;flex-direction:column;gap:6px}
+.unit-inspector select{width:100%}
+.npc-folders-toggle{padding:8px;border-radius:7px;background:#212c40;border:1px solid #3b4d67}
+.npc-folders-toggle summary{cursor:pointer;color:#d6ddee;font-size:12px;font-weight:600}
+.npc-folders-toggle .npc-folderlist{border:0;padding:6px 0 0;margin:0;max-height:210px;overflow:auto}
+.right-sidebar .bestiary{max-width:100%;min-width:0}
+.right-sidebar .bestiary .heading{margin:10px 0 8px}
+.right-sidebar .bestiary .heading h2{font-size:14px}
+.right-sidebar .bestiary-toolbar{margin:8px 0}
+.right-sidebar .bestiary-toolbar input{min-width:0;width:100%}
+.right-sidebar .bestiary-toolbar button{white-space:nowrap}
+.right-sidebar .bestiary.compact .bestiary-cards{grid-template-columns:1fr}
+.right-sidebar .bestiary.compact .npc-card{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center}
+.right-sidebar .bestiary.compact .npc-card-body{min-width:80px}
+.right-sidebar .bestiary.compact .npc-card .npc-actions{gap:5px}
+.right-sidebar .bestiary.compact .npc-card .npc-actions button{flex:1}
+.right-sidebar .bestiary.compact .npc-thumb{width:44px;height:44px}
+@media(max-width:1050px){
+ .workarea{grid-template-columns:minmax(0,1fr) 300px}
+}
+@media(max-width:750px){
+ .workarea{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(190px,33vh)}
+ .right-sidebar{height:100%;max-height:none}
+ .right-tabs button{flex-direction:row;padding:6px 2px}
+ .right-tabs .tab-glyph{font-size:13px}
+ .right-body{padding:9px}
+ .right-panel-heading{padding:7px 11px 2px}
+ .right-chat-help{display:none}
+}
+
+
+/* v0.5: no top header — campaign and page navigation live in the left rail. */
+.app{grid-template-columns:252px minmax(0,1fr)!important;height:100dvh}
+.app.collapsed{grid-template-columns:54px minmax(0,1fr)!important}
+.app .sidebar,.app.collapsed .sidebar{
+ display:flex!important;flex-direction:column;align-items:stretch;
+ position:relative;min-width:0;width:100%;height:100dvh;max-height:none;
+ padding:8px 7px;gap:8px;overflow:hidden;
+ background:#151d2a;border-right:1px solid #314157;box-shadow:none;
+}
+.rail-menu-toggle{
+ display:flex;align-items:center;justify-content:center;
+ width:39px;height:39px;min-height:39px;flex:0 0 auto;
+ border:1px solid #3a4d68;background:#233349;color:#f1effc;
+ border-radius:8px;font-size:20px;line-height:1;padding:4px;
+}
+.rail-menu-toggle:hover{background:#324963}
+.sidebar-inner{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:4px 5px 10px}
+.app.collapsed .sidebar-inner{display:none!important}
+.sidebar-inner .brand{font-size:19px;margin:0 0 1px}
+.sidebar-account{overflow-wrap:anywhere;font-size:11px}
+.sidebar-inner h3{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:#a9bad4;margin:10px 2px 0}
+.campaign-nav{display:flex!important;flex-direction:column;align-items:flex-start;gap:3px}
+.campaign-nav-name{font-weight:600;text-align:left;overflow-wrap:anywhere}
+.sidebar-pages{display:flex;flex-direction:column;gap:5px}
+.sidebar-page{font-size:13px;padding:11px 12px}
+.sidebar-divider{border-top:1px solid #344259;margin:7px 0 4px}
+.sidebar-inner .stack{margin:0}
+.sidebar-inner .logout{margin-top:auto;flex:none}
+.app main{height:100dvh;max-height:100dvh;min-height:0;overflow:hidden}
+.app main .workarea{height:100%;flex:1;min-height:0}
+.map-pan-region{cursor:grab;touch-action:none;user-select:none}
+.map-pan-region .board,.map-pan-region .gridlines{cursor:inherit}
+.map-pan-region .token{touch-action:none}
+@media(max-width:750px){
+ .app,.app.collapsed{grid-template-columns:47px minmax(0,1fr)!important}
+ .app .sidebar,.app.collapsed .sidebar{
+  display:flex!important;position:relative;z-index:2;
+  width:47px;max-height:none;height:100dvh;box-shadow:none
+ }
+ .app:not(.collapsed) .sidebar{
+  position:fixed;width:min(290px,88vw);top:0;left:0;bottom:0;z-index:60;
+  box-shadow:20px 0 60px #0009
+ }
+ .app main{height:100dvh;overflow:hidden!important}
+ .rail-menu-toggle{width:34px;height:38px}
+}
+
+/* v0.6 — single uninterrupted workspace, with all navigation in the right dock. */
+.app.no-left-rail{
+ display:block!important;
+ grid-template-columns:none!important;
+ width:100vw;
+ height:100dvh;
+ max-height:100dvh;
+ overflow:hidden;
+}
+.app.no-left-rail main{
+ width:100%;
+ height:100dvh;
+ max-height:100dvh;
+ min-width:0;
+ overflow:hidden;
+}
+.app.no-left-rail main .workarea{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 335px;
+ gap:8px;
+ padding:8px;
+ height:100%;
+ min-height:0;
+ width:100%;
+ overflow:hidden;
+}
+.campaign-empty{
+ background:linear-gradient(140deg,#141c2a,#1e2a3d);
+ text-align:center;
+}
+.campaign-empty-content{
+ display:flex;
+ align-items:center;
+ flex-direction:column;
+ gap:14px;
+ padding:24px;
+ max-width:460px;
+}
+.campaign-empty-content h2{font-size:24px;color:#efdcff}
+.campaign-empty-content p{line-height:1.5}
+.campaigns-panel{display:flex;flex-direction:column;gap:12px}
+.campaigns-panel .side-heading{margin-bottom:0}
+.campaigns-panel h3{font-size:13px}
+.campaign-switcher{
+ display:flex;
+ flex-direction:column;
+ gap:7px;
+}
+.campaign-switch{
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ gap:4px;
+ padding:11px;
+ text-align:left;
+ color:#dfe9f7;
+ background:#222e42;
+ border:1px solid #41526c;
+ border-radius:8px;
+}
+.campaign-switch.selected{
+ background:#3a3156;
+ border-color:#9475cf;
+}
+.campaign-switch-title{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.campaign-page-links{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.campaign-page-links button{font-size:12px;text-align:left;padding:10px 8px}
+.campaign-action-details{
+ border:1px solid #374861;
+ border-radius:8px;
+ padding:10px;
+ background:#1c2637;
+}
+.campaign-action-details summary{
+ cursor:pointer;
+ font-size:12px;
+ font-weight:600;
+ color:#e1e6f4;
+}
+.campaign-action-form{margin-top:12px}
+.account-email{overflow-wrap:anywhere}
+.app.no-left-rail .right-sidebar{min-width:0}
+@media(max-width:1050px){
+ .app.no-left-rail main .workarea{grid-template-columns:minmax(0,1fr) 310px}
+}
+@media(max-width:750px){
+ .app.no-left-rail main .workarea{
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) minmax(190px,35vh);
+  gap:6px;
+  padding:6px;
+ }
+ .campaign-page-links{grid-template-columns:1fr 1fr}
+}
+

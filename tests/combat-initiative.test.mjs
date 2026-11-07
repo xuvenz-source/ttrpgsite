@@ -67,7 +67,7 @@ test('combatants are individual tokens; sorting leaves unresolved rolls last',()
   {tokenId:'t1'},{tokenId:'t2'}]}).map(t=>t.id),['t3']);
 });
 test('client renders DM section, player controls, and existing floating window architecture',()=>{
- const source=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const source=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const sidebar=readFileSync(new URL('../src/TabletopSidebar.jsx',import.meta.url),'utf8');
  const window=readFileSync(new URL('../src/CombatTurnOrder.jsx',import.meta.url),'utf8');
  const panel=readFileSync(new URL('../src/CombatSetupPanel.jsx',import.meta.url),'utf8');

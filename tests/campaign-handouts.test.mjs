@@ -1,3 +1,4 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -57,7 +58,7 @@ test('handout window permits DM editing and note pickup without exposing edit co
 });
 test('battlemap places and moves clickable pins without mixing them into light geometry',()=>{
  const mapPins=source('src/MapPinLayer.jsx');
- const app=source('src/main.jsx');
+ const app=(source('src/main.jsx')+source('src/TabletopApp.jsx')+source('src/BattlemapBoard.jsx')+source('src/SheetTemplateDesigner.jsx'));
  const settings=source('src/MapSettingPanel.jsx');
  assert.match(mapPins,/pinVisibleTo\(pin,isDM\)/);
  assert.match(mapPins,/onCreate\?\.\(editor\.pinHandoutId,p\)/);
@@ -71,7 +72,7 @@ test('battlemap places and moves clickable pins without mixing them into light g
  assert.match(settings,/pinHandoutId/);
  assert.match(settings,/Pin appearance/);
  assert.match(app,/kind:mapSettingEditor.pinKind/);
- const css=source('src/style.css');
+ const css=readAppStyles();
  assert.match(css,/\.map-handout-pins\.is-placing\{z-index:40\}/);
  const migration=source('staging/sql-candidates/campaign_pin_icon_expansion.sql');
  assert.match(migration,/drop constraint if exists campaign_map_pins_kind_check/);

@@ -41,7 +41,7 @@ test('map overlay supports move dragging, portal endpoint editing and immediate 
 
 test('combat window uses signed token artwork, obscures unknown tokens, and exposes DM-only removal',()=>{
  const combat=source('CombatTurnOrder.jsx');
- const app=source('main.jsx');
+ const app=(source('main.jsx')+source('TabletopApp.jsx')+source('BattlemapBoard.jsx')+source('SheetTemplateDesigner.jsx'));
  const server=readFileSync(new URL('../supabase/migrations/20261107052003_map_combat_initiative.sql',import.meta.url),'utf8');
  assert.match(combat,/portrait\?\.image_path\?<Artwork/);
  assert.match(combat,/e\.kind==='unknown'\?'\?'/);
@@ -51,7 +51,7 @@ test('combat window uses signed token artwork, obscures unknown tokens, and expo
 });
 
 test('inactive browser tab resumes without invalidating signed map art for the same identity',()=>{
- const app=source('main.jsx');
+ const app=(source('main.jsx')+source('TabletopApp.jsx')+source('BattlemapBoard.jsx')+source('SheetTemplateDesigner.jsx'));
  assert.match(app,/signedAssetIdentity\.current!==identity/);
  assert.doesNotMatch(app,/event==='SIGNED_IN'\|\|event==='SIGNED_OUT'/);
  assert.match(app,/document\.addEventListener\('visibilitychange',resync\)/);
