@@ -14,6 +14,7 @@ import MapFogOverlay from './MapFogOverlay.jsx';
 import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
+import {shouldPersistFogDrag} from './LiveTokenMovement.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -555,7 +556,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
   e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
-   members,tools,dx:0,dy:0};
+   members,tools,dx:0,dy:0,lastFogWrite:0,persistedDuringDrag:false};
  }
  function startToolDrag(e,p,canMove){
   e.stopPropagation();
@@ -617,6 +618,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   });
   for(const tool of info.tools||[])
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
+  // Fog prevents shared broadcast previews because spectators could receive
+  // hidden coordinates. Persist intermediate steps at a modest cadence instead:
+  // Supabase RLS distributes only the movements each viewer may observe.
+  const now=Date.now();
+  if(info.members.length&&shouldPersistFogDrag(
+   fogFrame?.enabled,info.lastFogWrite,now)){
+   info.lastFogWrite=now;
+   info.persistedDuringDrag=true;
+   for(const token of info.members)
+    move(token,Number(token.x)+delta.dx,Number(token.y)+delta.dy);
+  }
  }
  function toolDropCarrier(event){
   const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
@@ -666,12 +678,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    for(const token of info.members)delete next[token.id];
    return next;
   });
-  if(info.dx===0&&info.dy===0&&!cancel)return;
+  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag)return;
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
    onMovementPreview?.(t,next.x,next.y,true);
-   if(!cancel)move(t,next.x,next.y);
+   if(!cancel||info.persistedDuringDrag)move(t,next.x,next.y);
   }
   for(const tool of info.tools||[]){
    const next=cancel?{x:Number(tool.x),y:Number(tool.y)}:
