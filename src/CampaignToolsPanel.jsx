@@ -50,9 +50,21 @@ function ToolConfigFields({draft,onChange}){
    {kind==='mount'&&<div className="campaign-tool-stats">
     <strong>Starting attributes</strong>
     {Object.entries(config.attributes||{}).map(([id,value])=><label key={id}>
-     {id}<input type="number" min="-10000" max="10000" value={value}
-      onChange={e=>set('attributes',{...config.attributes,[id]:Number(e.target.value)})}/>
+     {id}
+     <span className="campaign-tool-attribute-control">
+      <input type="number" min="-10000" max="10000" value={value}
+       onChange={e=>set('attributes',{...config.attributes,[id]:Number(e.target.value)})}/>
+      <button type="button" className="secondary" title={'Remove '+id}
+       aria-label={'Remove '+id} onClick={()=>set('attributes',
+        Object.fromEntries(Object.entries(config.attributes).filter(([key])=>key!==id)))}>×</button>
+     </span>
     </label>)}
+    {Object.keys(config.attributes||{}).length<16&&<button type="button"
+     className="secondary campaign-tool-add-attribute" onClick={()=>{
+      const name=window.prompt('Attribute code (e.g. wisdom):')?.trim().toLowerCase();
+      if(name&&/^[a-z][a-z0-9_]{0,31}$/.test(name)&&!(name in config.attributes))
+       set('attributes',{...config.attributes,[name]:0});
+     }}>+ Attribute</button>}
    </div>}
   </>}
  </>;
