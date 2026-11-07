@@ -25,7 +25,7 @@ export default function CombatSetupPanel({map,combat,tokens=[],template,privateE
  }):tokens;
  const choices=picked??participants.filter(t=>t.visible!==false).map(t=>t.id);
  const selected=choices.filter(id=>participants.some(t=>t.id===id));
- const ready=!!(map?.id&&fieldId&&selected.length>0&&!busy);
+ const ready=!!(map?.id&&fieldId&&selected.length>0&&selected.length<=MAX_COMBATANTS&&!busy);
  return <div className="combat-setup side-form">
   <p className="muted tiny">Initiative is attached to individual map tokens. Each token rolls separately even when multiple NPCs share a template.</p>
   {!active?<div className="combat-setup-group">
