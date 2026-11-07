@@ -129,8 +129,8 @@ export default function TabletopApp(){
  const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
-  lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
-  selectedId:null,pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
+  lockLight:false,lockBackground:true,lockTokens:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
+  selectedId:null,selectedIds:[],pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
@@ -585,7 +585,7 @@ export default function TabletopApp(){
  }
  async function moveMapHandoutPin(pin,point){
   if(!isDM)return;
-  try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e)}
+  try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e);throw e}
  }
  async function dropExistingUnit(tokenId,x,y){
   const t=tokens.find(t=>t.id===tokenId);
@@ -2137,12 +2137,21 @@ export default function TabletopApp(){
    handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
    onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
    onPatchEnvironmentObject={patchEnvironmentObject}
-   onDeleteEnvironmentObject={id=>{
+   onDeleteEnvironmentObject={selection=>{
     if(!isDM||!mapEnvironmentCurrent.current)return;
-    saveMapEnvironment(removeObject(mapEnvironmentCurrent.current,id));
-    setMapSettingEditor(old=>({...old,selectedId:null}));
+    const ids=Array.isArray(selection)?selection:[selection];
+    const base=normalizeEnvironment(mapEnvironmentCurrent.current);
+    if(!ids.length)return;
+    saveMapEnvironment({...base,objects:base.objects.filter(o=>!ids.includes(o.id))});
+    setMapSettingEditor(old=>({...old,selectedId:null,selectedIds:[]}));
    }} characters={characters}
-   template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
+   template={camp?.sheet_template} onSelectEnvironmentObject={(selection,options={})=>
+    setMapSettingEditor(old=>{
+     const incoming=Array.isArray(selection)?selection:selection?[selection]:[];
+     const current=old.selectedIds||[];
+     const selectedIds=options.additive?[...new Set([...current,...incoming])]:incoming;
+     return {...old,selectedId:selectedIds[0]||null,selectedIds};
+    })}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
