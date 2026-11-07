@@ -1,3 +1,4 @@
+-- SUPERSEDED DESIGN DRAFT. DO NOT APPLY THIS FILE. Use fog_collision_authoritative_release.sql only.
 -- STAGING CANDIDATE ONLY — DO NOT APPLY TO PRODUCTION.
 -- Foundation for authoritative fog/collision; intentionally NOT activation.
 -- The player-readable map_tokens policy must remain unchanged until all
