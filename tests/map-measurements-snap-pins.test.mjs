@@ -108,7 +108,8 @@ test('the board supports both right-drag and right-click while left-dragging',()
  assert.ok(main.includes('e.button!==0&&e.button!==2'));
  assert.ok(main.includes('pinned:e.button===2'));
  assert.ok(main.includes('measureDrag.current.pinned=true'));
- assert.ok(main.includes('onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}'));
+ assert.ok(main.includes("window.addEventListener('contextmenu',onContextMenu,true)"));
+ assert.ok(main.includes("pinCurrentMeasurementOnRightClick(e)"));
  assert.ok(bar.includes('aria-label="Clear my pinned measurements"'));
  assert.ok(bar.includes('onClearPins'));
  assert.ok(bar.includes('onContextMenu={e=>e.preventDefault()}'));
