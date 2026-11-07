@@ -16,8 +16,24 @@ const tileStyle=row=>({
 });
 
 /** Same saved rows are used by classic list and fixed-cell inventory grid. */
-export default function InventoryPanel({field,value,onChange,template,sheetValues}){
+export default function InventoryPanel({field,value,onChange,template,sheetValues,
+ collaboration=null}){
  const items=inventoryRows(value),mode=field.inventoryPreset==='grid'?'grid':'list';
+ const itemId=index=>items[index]?._inventoryId;
+ const bound=index=>{
+  const id=itemId(index),other=id&&collaboration?.locks?.[id];
+  return !!other&&other!==collaboration.userId;
+ };
+ const claim=(index,force=false)=>{
+  const id=itemId(index);
+  if(!collaboration||!id)return;
+  void collaboration.claim(id,force).catch(e=>setError(e.message||String(e)));
+ };
+ const release=index=>{
+  const id=itemId(index);
+  if(collaboration&&id)void collaboration.release(id);
+ };
+ const allow=index=>!bound(index);
  const cols=Math.max(2,Math.min(20,Number(field.gridColumns)||8));
  const height=Math.max(2,Math.min(20,Number(field.gridRows)||5));
  const layout=gridLayout(items,cols,height);
@@ -29,7 +45,12 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
  const dragRef=useRef(null),gridRef=useRef(null);
  const setDrag=next=>{dragRef.current=next;setDragState(next)};
  const edit=(index,patch)=>onChange(items.map((row,i)=>i===index?{...row,...patch}:row));
- const openItem=index=>{setError('');setEditing(index)};
+ const openItem=index=>{
+  if(index!=='new'&&bound(index))return;
+  setError('');
+  if(Number.isInteger(index))claim(index);
+  setEditing(index);
+ };
  const saveItem=draft=>{
   if(editing==='new'){
    if(items.length>=250)throw Error('Inventory can hold up to 250 item records.');
@@ -38,9 +59,12 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    onChange(items.map((row,i)=>i===editing?updateInventoryItem(row,draft):row));
   }else throw Error('This item is no longer available.');
   setError('');setEditing(null);
+  if(Number.isInteger(editing))release(editing);
  };
  const deleteItem=()=>{if(Number.isInteger(editing)){
+  const removed=editing;
   onChange(items.filter((_,i)=>i!==editing));setEditing(null);setError('');
+  release(removed);
  }};
  const remove=index=>onChange(items.filter((_,i)=>i!==index));
  function gridPosition(clientX,clientY,grabX,grabY){
@@ -52,7 +76,8 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   };
  }
  function startDrag(e,index,x,y){
-  if(e.button!==0||dragRef.current)return;
+  if(e.button!==0||dragRef.current||!allow(index))return;
+  claim(index);
   const box=e.currentTarget.getBoundingClientRect();
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{return}
   e.currentTarget.focus();
@@ -79,7 +104,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
   setDrag(null);
-  if(cancel)return;
+  if(cancel){release(current.index);return}
   if(!current.moved&&!current.turns){openItem(current.index);return}
   const placed=moveInventoryItem(items,current.index,current.x,current.y,cols,height,current.turns);
   if(!placed){
@@ -87,6 +112,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    return;
   }
   onChange(placed);setError('');
+  release(current.index);
  }
  // Browser-native HTML dragging suppresses keydown events. Pointer capture
  // keeps the left button held while we listen for R to rotate the footprint.
@@ -126,13 +152,21 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    </div>}
    {mode==='list'?<div className="inventory-list">
     <div className="invrow inventory-table-head">{columns.map(c=><b key={c}>{c}</b>)}</div>
-    {items.map((row,i)=><div className="invrow" key={i}>
+    {items.map((row,i)=><div className={'invrow'+(bound(i)?' inventory-row-bound':'')}
+     key={row._inventoryId||i}>
      {columns.map(c=><input key={c} aria-label={c} value={rowValue(row,c)??''}
+      disabled={bound(i)}
+      onFocus={()=>claim(i)}
+      onBlur={()=>release(i)}
       onChange={e=>edit(i,{[c]:e.target.value})}/>)}
-     <button type="button" className="secondary" onClick={()=>openItem(i)}
-      title="Open item details">Details</button>
-     <button type="button" className="secondary" onClick={()=>{
-      if(window.confirm('Remove this item?'))remove(i);
+     {bound(i)&&<span className="inventory-bound-indicator" title="Another player is using this item">In use</span>}
+     {bound(i)&&collaboration?.isDM&&<button type="button" className="secondary"
+      onClick={()=>claim(i,true)} title="DM: take control of this item">Take</button>}
+     <button type="button" className="secondary" disabled={bound(i)}
+      onClick={()=>openItem(i)} title="Open item details">Details</button>
+     <button type="button" className="secondary" disabled={bound(i)}
+      onClick={()=>{
+       if(window.confirm('Remove this item?'))remove(i);
      }} title="Remove item">×</button>
     </div>)}
    </div>:<>
@@ -152,11 +186,13 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
       })}
       {layout.placed.map(({index,row,x,y,w,h})=>
        <button key={'item_'+index} type="button"
-        className={'inventory-grid-item'+(drag?.index===index?' inventory-grid-item-held':'')}
+        className={'inventory-grid-item'+(drag?.index===index?' inventory-grid-item-held':'')+
+         (bound(index)?' inventory-grid-item-bound':'')}
         style={{...tileStyle(row),
          gridColumn:(x+1)+' / span '+w,gridRow:(y+1)+' / span '+h}}
         aria-label={'Open '+(rowValue(row,'Item')||'item')+' details'}
-        title={(rowValue(row,'Item')||'Item')+' — click for details; hold and press R to rotate'}
+        title={bound(index)?'In use by another player':
+         (rowValue(row,'Item')||'Item')+' — click for details; hold and press R to rotate'}
         onPointerDown={e=>startDrag(e,index,x,y)}
         onPointerMove={moveDrag}
         onPointerUp={e=>endDrag(e)}
@@ -166,6 +202,11 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
          style={{transform:'rotate('+((Number(row.gridRotation)||0)%360)+'deg)'}}>
          {row.gridIcon||'📦'}</span>
         <strong className="inventory-tile-name">{shortLabel(row)}</strong>
+        {bound(index)&&<span className="inventory-bound-indicator">In use</span>}
+        {bound(index)&&collaboration?.isDM&&<span className="inventory-bound-take"
+         role="button" tabIndex={0} title="DM: take control of this item"
+         onPointerDown={e=>e.stopPropagation()}
+         onClick={e=>{e.stopPropagation();claim(index,true)}}>Take</span>}
         {Number(rowValue(row,'Qty')??1)!==1&&
          <span className="inventory-tile-qty">×{rowValue(row,'Qty')}</span>}
        </button>)}
@@ -184,7 +225,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
       drag a tile into the grid.</p>
      <div className="inventory-grid-overflow-items">
       {layout.unplaced.map(i=><button key={i} type="button"
-       className="inventory-overflow-tile"
+       className={'inventory-overflow-tile'+(bound(i)?' inventory-grid-item-bound':'')}
        style={tileStyle(items[i])}
        onPointerDown={e=>startDrag(e,i,-1,-1)}
        onPointerMove={moveDrag}
@@ -201,6 +242,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   {editing!==null&&createPortal(<InventoryItemEditor
    key={String(editing)}
    item={editing==='new'?null:items[editing]} cols={cols} rows={height}
-   onSave={saveItem} onDelete={deleteItem} onClose={()=>setEditing(null)}/>,document.body)}
+   onSave={saveItem} onDelete={deleteItem}
+   onClose={()=>{if(Number.isInteger(editing))release(editing);setEditing(null)}}/>,document.body)}
  </>;
 }

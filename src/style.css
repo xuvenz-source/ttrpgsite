@@ -2710,3 +2710,17 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 }
 .macro-chat-card.weapon-attack .macro-chat-header strong{font-size:11px;line-height:1.15}
 .macro-chat-card.weapon-attack .macro-chat-header span{font-size:10px;line-height:1.15}
+
+/* Server leases: non-DM viewers cannot interact with another player's held item. */
+.inventory-grid-item-bound,.inventory-overflow-tile.inventory-grid-item-bound{
+ filter:grayscale(1);opacity:.47;cursor:not-allowed!important;
+}
+.inventory-grid-item-bound .inventory-bound-indicator{
+ position:absolute;top:2px;right:2px;background:#111925ee;border-radius:3px;
+ color:#f5e4e4;font-size:9px;padding:2px 4px;line-height:1.1;
+}
+.inventory-bound-indicator{font-size:10px;color:#dfb8b9;white-space:nowrap}
+.inventory-row-bound{opacity:.7}
+.inventory-bound-take{position:absolute;bottom:2px;right:2px;
+ background:#314b6fee;border:1px solid #709ccc;border-radius:4px;
+ padding:2px 5px;color:#f5f8ff;font-size:10px;cursor:pointer;z-index:2}
