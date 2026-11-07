@@ -5,12 +5,12 @@ import {normalizeAuthorizedLightMasks} from './AuthorizedLightMasks.js';
  * Any failed or stale RPC removes player light rather than showing unoccluded
  * radial gradients through walls. DM previews render from prepared geometry.
  */
-export default function useAuthorizedMapLights({db,mapId,userId,revision}){
+export default function useAuthorizedMapLights({db,mapId,userId,revision,refreshNonce,enabled=true}){
  const [result,setResult]=useState(null);
  useEffect(()=>{
   let cancelled=false;
   setResult(null);
-  if(!db||!mapId||!userId||!Number.isSafeInteger(revision))return;
+  if(!enabled||!db||!mapId||!userId||!Number.isSafeInteger(revision))return;
   void db.rpc('get_authorized_map_light_masks',{p_map:mapId})
    .then(({data,error})=>{
     if(error)throw error;
@@ -24,6 +24,6 @@ export default function useAuthorizedMapLights({db,mapId,userId,revision}){
     }
    });
   return()=>{cancelled=true};
- },[db,mapId,userId,revision]);
- return result?.mapId===mapId&&result?.revision===revision?result:null;
+ },[db,mapId,userId,revision,refreshNonce,enabled]);
+ return enabled&&result?.mapId===mapId&&result?.revision===revision?result:null;
 }
