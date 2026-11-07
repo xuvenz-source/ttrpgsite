@@ -176,5 +176,27 @@
     "Do not restore the old NPC artwork policy; the fog/collision release already installed observed-token Storage authorization.",
     "Fog-enabled movement previews cannot reveal tool/token coordinates; database collision remains authoritative.",
     "Existing test campaigns only; do not create paid preview/development resources."
-  ]
+  ],
+  "upcomingRelease": {
+    "productionBaseSha": "1468101ed258c033126e930503e59330470f85f5",
+    "stagePolicy": "All next-release ready branches must be consolidated with conflict review before the one approved main merge.",
+    "outstandingBranches": [
+      {
+        "name": "stage/project-audit-correctness-optimization-2026-11-07",
+        "pullRequest": 37,
+        "status": "staging-verified-not-deployed",
+        "scope": [
+          "character popout undefined variable fix",
+          "awaitable inventory writes and retryable editor",
+          "shared per-item collaboration helpers",
+          "tool sheet serial autosave",
+          "coalesced refreshes for tools, handouts, initiative and fog",
+          "static undefined-variable CI lint gate",
+          "migration history non-destructive inventory"
+        ],
+        "databaseDependencies": [],
+        "paidInfrastructure": false
+      }
+    ]
+  }
 }
