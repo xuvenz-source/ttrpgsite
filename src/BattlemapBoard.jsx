@@ -15,6 +15,7 @@ import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
 import {shouldPersistFogDrag} from './LiveTokenMovement.js';
+import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -31,6 +32,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
  onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
+ const motion=useRef(null);
+ if(!motion.current)motion.current=createTokenMotionRuntime();
+ useEffect(()=>{const runtime=motion.current;return()=>runtime.dispose()},[]);
  const[toolPreview,setToolPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[selectedToolIds,setSelectedToolIds]=useState([]);
@@ -150,6 +154,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  // A remote snapshot must not cancel the drag that is actively in progress.
  useEffect(()=>{if(!drag.current)setPreview({})},[tokens]);
  useEffect(()=>{
+  motion.current?.clear();
   primaryRef.current=null;setSelectedId(null);setSelectedIds([]);
   setMarquee(null);selection.current=null;drag.current=null;
   setSelectedToolIds([]);setToolPreview({});
@@ -599,13 +604,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    map.width,map.height,map.grid_size);
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
   info.dx=delta.dx;info.dy=delta.dy;
-  setPreview(old=>{
-   const next={...old};
-   for(const token of info.members)
-    next[token.id]={...old[token.id],
-     x:Number(token.x)+delta.dx,y:Number(token.y)+delta.dy};
-   return next;
-  });
+  // Hot pointer path: move affected sprites without a React commit.
+  for(const token of info.members)
+   motion.current?.preview(token.id,
+    Number(token.x)+delta.dx,Number(token.y)+delta.dy);
   for(const t of info.members){
    const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
    onMovementPreview?.(t,next.x,next.y,false);
@@ -651,6 +653,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   drag.current=null;
+  for(const member of info.members)motion.current?.clearPreview(member.id);
   if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId);
   if(cancel){
@@ -767,7 +770,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
         !(isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false));
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
-     return <div key={t.id} data-token-id={t.id} className={'token '+(t.image_path?'token-image':'')+
+     return <div key={t.id} data-token-id={t.id}
+      ref={node=>motion.current?.bind(t.id,'sprite',node,
+       {x:Number(p.x),y:Number(p.y),cell})} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
       (combatActiveTokenId===t.id?' token-current-turn':'')+
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
@@ -848,7 +853,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     <MapMeasurementOverlay map={map} scale={scale} measures={measures}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
-    <TokenMonitorFrames tokens={visibleTokens} remotePositions={remotePositions}
+    <TokenMonitorFrames motionRuntime={motion.current} tokens={visibleTokens} remotePositions={remotePositions}
      preview={preview} config={displaySettings} monitorValues={monitorValues}
      encumbranceBadges={encumbranceBadges} gridSize={map.grid_size} scale={scale}/>
     {previewActive&&<MapPlayerPreviewOverlay map={map} environment={environment}
