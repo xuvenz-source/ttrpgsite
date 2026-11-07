@@ -2582,3 +2582,8 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  .campaign-tool-inline{grid-template-columns:1fr 1fr}
  .campaign-tool-map-token{font-size:18px}
 }
+
+.campaign-tool-attribute-control{display:flex;gap:4px}
+.campaign-tool-attribute-control input{flex:1;min-width:0}
+.campaign-tool-attribute-control button{flex:0 0 auto;padding:1px 6px}
+.campaign-tool-add-attribute{font-size:10px;align-self:end}
