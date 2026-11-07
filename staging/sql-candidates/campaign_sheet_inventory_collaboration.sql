@@ -64,11 +64,11 @@ returns boolean language sql stable security definer set search_path='' as $acl$
  and exists(
   select 1 from public.campaigns c
   cross join lateral jsonb_array_elements(
-   coalesce(c.sheet_template->'tabs','[]'::jsonb)) tab
+   coalesce(c.sheet_template->'tabs','[]'::jsonb)) as tab(value)
   cross join lateral jsonb_array_elements(
-   coalesce(tab->'fields','[]'::jsonb)) field
-  where c.id=p_campaign and field->>'type'='inventory'
-   and field->>'id'=p_field
+   coalesce(tab.value->'fields','[]'::jsonb)) as fld(value)
+  where c.id=p_campaign and fld.value->>'type'='inventory'
+   and fld.value->>'id'=p_field
  );
 $acl$;
 revoke all on function public.can_edit_campaign_sheet_inventory(uuid,text,uuid,text)
@@ -242,11 +242,11 @@ begin
  if jsonb_typeof(p_values)<>'object' or octet_length(p_values::text)>1000000
   or jsonb_typeof(p_meta)<>'object' or octet_length(p_meta::text)>4096
  then raise exception 'Invalid sheet update';end if;
- select coalesce(array_agg(f->>'id'),'{}'::text[]) into inventory_fields
+ select coalesce(array_agg(f.value->>'id'),'{}'::text[]) into inventory_fields
  from public.campaigns c
- cross join lateral jsonb_array_elements(coalesce(c.sheet_template->'tabs','[]'::jsonb)) t
- cross join lateral jsonb_array_elements(coalesce(t->'fields','[]'::jsonb)) f
- where c.id=p_campaign and f->>'type'='inventory';
+ cross join lateral jsonb_array_elements(coalesce(c.sheet_template->'tabs','[]'::jsonb)) as t(value)
+ cross join lateral jsonb_array_elements(coalesce(t.value->'fields','[]'::jsonb)) as f(value)
+ where c.id=p_campaign and f.value->>'type'='inventory';
  filtered:=p_values-inventory_fields;
  if p_source='character' then
   update public.characters as c set

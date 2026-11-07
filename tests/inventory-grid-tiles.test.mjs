@@ -16,7 +16,9 @@ test('new items and tile clicks open a separate compact floating editor',()=>{
   'gridBorderColor','gridBackgroundColor','gridW','gridH'])
   assert.ok(editor.includes(field),field+' editor control must be retained');
  assert.ok(editor.includes('onSubmit={submit}'));
- assert.ok(editor.includes("setError('Give the item a name.')"));
+ assert.ok(editor.includes("if(!draft.Item.trim())return 'Give the item a name.'"));
+ assert.ok(editor.includes('Edits save automatically'));
+ assert.doesNotMatch(editor,/>Save item<\/button>/);
 });
 test('inventory tiles render icon, abbreviation and border rather than inputs',()=>{
  assert.ok(panel.includes('inventory-tile-icon'));
