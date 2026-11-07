@@ -18,10 +18,11 @@ test('combat refreshes on visibility ticks only when an encounter is active',()=
 });
 test('fog tick invalidates player visibility immediately while batching authorized fetches',()=>{
  const s=read('src/useAuthorizedMapFog.js');
- assert.match(s,/invalidate\(\);changed\.request\(\)/);
+ assert.match(s,/invalidate\(event\);changed\.request\(\)/);
  assert.match(s,/fogFrameDuringRefresh\(previous,mapId\)/);
  assert.match(s,/\+\+request\.current/);
  assert.match(s,/createCoalescedRefresh\(\(\)=>void refresh\(\),60\)/);
  assert.match(s,/invalidate\(\);changed\.flush\(\)/);
+ assert.match(s,/fog_enforced===false&&previous\?\.enabled===false/);
  assert.match(s,/changed\.cancel\(\)/);
 });
