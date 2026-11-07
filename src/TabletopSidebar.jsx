@@ -14,6 +14,7 @@ import MacroChatCard from './MacroChatCard.jsx';
 import RollMathTooltip from './RollMathTooltip.jsx';
 import DmItemDistribution from './DmItemDistribution.jsx';
 import CampaignToolsPanel from './CampaignToolsPanel.jsx';
+import CampaignHandoutsPanel from './CampaignHandoutsPanel.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const tabs=[
@@ -219,7 +220,8 @@ export default function TabletopSidebar({
  uiScale,onChangeUiScale,
  activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,onOpenCharacterTab,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,onOpenAccountSettings,hasCampaign,
- campaignTools,onOpenCampaignTool,onToolError
+ campaignTools,onOpenCampaignTool,onToolError,
+ campaignHandouts,onOpenHandout,onPrepareHandoutPin,onHandoutError,handoutsForMap=[]
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
  const {expanded:expandedMenus,toggle:onMenuToggle}=useSidebarMenus(db,user,activeCampaignId);
@@ -286,6 +288,8 @@ export default function TabletopSidebar({
      aria-pressed={unitsSubsection==='characters'} onClick={()=>setUnitsSubsection('characters')}>Characters</button>
     <button type="button" className={'secondary'+(unitsSubsection==='tools'?' selected':'')}
      aria-pressed={unitsSubsection==='tools'} onClick={()=>setUnitsSubsection('tools')}>Tools</button>
+    <button type="button" className={'secondary'+(unitsSubsection==='handouts'?' selected':'')}
+     aria-pressed={unitsSubsection==='handouts'} onClick={()=>setUnitsSubsection('handouts')}>Handouts</button>
    </div>
    {unitsSubsection==='characters'?<UnitGroups db={db} tokens={tokens}
    characters={characters} members={members} accountNames={accountNames}
@@ -299,9 +303,12 @@ export default function TabletopSidebar({
    onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
    tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}
    expandedMenus={expandedMenus} onMenuToggle={onMenuToggle}/>:
-    <CampaignToolsPanel tools={campaignTools} members={members}
+    unitsSubsection==='tools'?<CampaignToolsPanel tools={campaignTools} members={members}
      accountNames={accountNames} userId={user} isDM={isDM} mapId={activeMap?.id}
-     onOpenTool={onOpenCampaignTool} onError={onToolError}/>}
+     onOpenTool={onOpenCampaignTool} onError={onToolError}/>:
+    <CampaignHandoutsPanel library={campaignHandouts} isDM={isDM}
+     onOpenHandout={onOpenHandout} onPreparePin={onPrepareHandoutPin}
+     onError={onHandoutError}/>}
   </div>}
   {validPanel==='settings'&&<div className="right-body">
    <div className="side-form">
@@ -410,7 +417,8 @@ export default function TabletopSidebar({
        onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
        saveStatus={mapEnvironmentStatus}
        onMapCalibrationPreview={onMapCalibrationPreview}
-       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}/>
+       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}
+       handouts={handoutsForMap}/>
      </>}
     </SavedDetails>
     <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
