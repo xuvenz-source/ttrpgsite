@@ -13,10 +13,11 @@ export function normalizeCombat(raw){
    id:e.id,tokenId:typeof e.token_id==='string'?e.token_id:null,
    name:String(e.name||'Unknown combatant').slice(0,80),
    score:Number.isFinite(Number(e.score))&&e.score!==null?Number(e.score):null,
-   kind:e.kind==='npc'?'npc':'character',
+   kind:['npc','character','unknown'].includes(e.kind)?e.kind:'unknown',
    rolled:e.score!==null&&e.score!==undefined
   })):[];
  return {mapId:raw.map_id||'',campaignId:raw.campaign_id||'',
+  encounterId:raw.encounter_id||'',
   active:raw.active===true,
   round:Math.max(0,Math.floor(num(raw.round,0))),
   currentEntryId:raw.current_entry_id||null,
