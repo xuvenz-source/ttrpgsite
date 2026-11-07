@@ -35,7 +35,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  const[preview,setPreview]=useState({});
  const motion=useRef(null);
  if(!motion.current)motion.current=createTokenMotionRuntime();
- useEffect(()=>{const runtime=motion.current;return()=>runtime.dispose()},[]);
+ // Reusable through React dev effect remounts; clear without retiring runtime.
+ useEffect(()=>{const runtime=motion.current;return()=>runtime.clear()},[]);
  const[toolPreview,setToolPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[selectedToolIds,setSelectedToolIds]=useState([]);
