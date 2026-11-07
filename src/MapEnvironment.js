@@ -90,6 +90,25 @@ export function resizeBarrierEndpoint(points,index,position){
  if(Math.hypot(result[1].x-result[0].x,result[1].y-result[0].y)<.01)return null;
  return result;
 }
+/** Translate an entire geometry object without snapping or distorting its shape at map edges. */
+export function translateEnvironmentObject(object,offset,bounds){
+ if(!object||!['wall','door','window','light'].includes(object.type))return null;
+ const maxX=Number(bounds?.x),maxY=Number(bounds?.y);
+ if(!Number.isFinite(maxX)||!Number.isFinite(maxY)||maxX<=0||maxY<=0)return null;
+ const ox=Number(offset?.x),oy=Number(offset?.y);
+ if(!Number.isFinite(ox)||!Number.isFinite(oy))return null;
+ const points=object.type==='light'?[{x:Number(object.x),y:Number(object.y)}]:
+  object.points?.map(p=>({x:Number(p.x),y:Number(p.y)}));
+ if(!points?.length||points.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y)))return null;
+ const minX=Math.min(...points.map(p=>p.x)),maxPointX=Math.max(...points.map(p=>p.x));
+ const minY=Math.min(...points.map(p=>p.y)),maxPointY=Math.max(...points.map(p=>p.y));
+ const dx=Math.max(-minX,Math.min(maxX-maxPointX,ox));
+ const dy=Math.max(-minY,Math.min(maxY-maxPointY,oy));
+ const round=n=>Math.round(n*10000)/10000;
+ const translated=points.map(p=>({x:round(p.x+dx),y:round(p.y+dy)}));
+ return object.type==='light'?{x:translated[0].x,y:translated[0].y}:
+  {points:translated};
+}
 export function lightRadii(light){
  const bright=between(finite(light?.bright),0,500),dim=between(finite(light?.dim),0,500);
  return {bright,dim,outer:bright+dim};
