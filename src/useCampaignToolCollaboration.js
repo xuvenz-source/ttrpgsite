@@ -1,13 +1,8 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
-import {inventoryRows} from './InventoryMath.js';
-
-const validUuid=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value||''));
-export const itemIdentity=row=>validUuid(row?._inventoryId)?row._inventoryId:null;
-export const removeItemIdentity=row=>{
- const copy={...(row||{})};
- delete copy._inventoryId;
- return copy;
-};
+import {validInventoryItemId,removeItemIdentity,mergeInventoryRows,
+ inventoryChangeSet,activeInventoryLocks} from './InventoryCollaborationCore.js';
+// Keep existing imports/tests compatible while sharing the canonical rules.
+export {itemIdentity,removeItemIdentity} from './InventoryCollaborationCore.js';
 /** Atomic, per-item server claims are the sole authority. Optimistic snapshots
  * never become an authorization check, and only one item is patched per RPC. */
 export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
@@ -28,11 +23,17 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   issueRef.current=issueId;setClaims([]);setOptimistic({});
   owned.current.clear();writes.current.clear();claimsInFlight.current.clear();setError('');
   void refreshClaims().catch(e=>setError(e.message||String(e)));
+  let connected=false,reconciliations=0;
   const channel=db.channel('forge-tool-item-claims-'+issueId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
     table:'campaign_tool_item_leases',filter:'issue_id=eq.'+issueId},
     ()=>void refreshClaims().catch(e=>setError(e.message||String(e))))
-   .subscribe();
+   .subscribe(status=>{
+    const wasConnected=connected;
+    connected=status==='SUBSCRIBED';
+    if(connected&&!wasConnected)
+     void refreshClaims().catch(e=>setError(e.message||String(e)));
+   });
   const interval=setInterval(()=>{
    const ids=[...owned.current];
    for(const id of ids){
@@ -41,7 +42,8 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
       if(e){owned.current.delete(id);setError('Item claim expired: '+e.message)}
      });
    }
-   void refreshClaims().catch(()=>{});
+   if(!connected||++reconciliations%8===0)
+    void refreshClaims().catch(()=>{});
   },8000);
   return()=>{
    clearInterval(interval);
@@ -62,7 +64,7 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   };
  },[db,issueId,userId,refreshClaims]);
  const claim=useCallback((id,force=false)=>{
-  if(!validUuid(id))return Promise.reject(Error('Inventory item identity is unavailable until the collaboration migration is applied.'));
+  if(!validInventoryItemId(id))return Promise.reject(Error('Inventory item identity is unavailable until the collaboration migration is applied.'));
   if(owned.current.has(id)&&!force)return Promise.resolve();
   if(claimsInFlight.current.has(id)&&!force)return claimsInFlight.current.get(id);
   const op=(async()=>{
@@ -80,7 +82,7 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   return op;
  },[db,issueId,userId]);
  const release=useCallback(async id=>{
-  if(!validUuid(id))return;
+  if(!validInventoryItemId(id))return;
   try{
    await (claimsInFlight.current.get(id)||Promise.resolve()).catch(()=>{});
    await (writes.current.get(id)||Promise.resolve()).catch(()=>{});
@@ -92,25 +94,11 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
    setClaims(old=>old.filter(row=>row.item_id!==id||row.holder_id!==userId));
   }catch(e){setError(e.message||String(e))}
  },[db,issueId,userId]);
- const rows=useMemo(()=>{
-  const base=inventoryRows(tool.state?.items);
-  const found=new Set();
-  const next=base.flatMap(row=>{
-   const id=itemIdentity(row);
-   if(!id)return [row];
-   found.add(id);
-   if(!Object.prototype.hasOwnProperty.call(optimistic,id))return [row];
-   return optimistic[id]===null?[]:[optimistic[id]];
-  });
-  for(const [id,row] of Object.entries(optimistic))
-   if(!found.has(id)&&row!==null)next.push(row);
-  return next;
- },[tool.state?.items,optimistic]);
- const locks=useMemo(()=>Object.fromEntries(claims
-  .filter(l=>Date.parse(l.expires_at)>Date.now())
-  .map(l=>[l.item_id,l.holder_id])),[claims]);
+ const rows=useMemo(()=>mergeInventoryRows(tool.state?.items,optimistic),
+  [tool.state?.items,optimistic]);
+ const locks=useMemo(()=>activeInventoryLocks(claims),[claims]);
  const mutate=useCallback((id,row,remove=false)=>{
-  if(!validUuid(id))return Promise.reject(Error('Invalid inventory item.'));
+  if(!validInventoryItemId(id))return Promise.reject(Error('Invalid inventory item.'));
   const before=writes.current.get(id)||Promise.resolve();
   const next=before.catch(()=>{}).then(async()=>{
    await claim(id);
@@ -137,20 +125,7 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
  /** Infer exactly which object a grid/list gesture changed. Never send a
   * whole inventory array, preventing unrelated item lost-update races. */
  const changeItems=useCallback(nextRows=>{
-  const current=rows;
-  const currentById=new Map(current.map(row=>[itemIdentity(row),row]));
-  const nextById=new Map();
-  for(const incoming of nextRows){
-   const id=itemIdentity(incoming)||crypto.randomUUID();
-   const row={...incoming,_inventoryId:id};
-   nextById.set(id,row);
-  }
-  const changes=[];
-  for(const [id,row] of nextById)
-   if(!currentById.has(id)||JSON.stringify(currentById.get(id))!==JSON.stringify(row))
-    changes.push({id,row});
-  for(const [id,row] of currentById)
-   if(id&&!nextById.has(id))changes.push({id,row:null});
+  const changes=inventoryChangeSet(rows,nextRows);
   if(!changes.length)return;
   setOptimistic(old=>{
    const next={...old};

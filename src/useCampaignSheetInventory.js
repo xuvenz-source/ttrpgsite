@@ -1,27 +1,13 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {inventoryRows} from './InventoryMath.js';
-import {itemIdentity,removeItemIdentity} from './useCampaignToolCollaboration.js';
+import {validInventoryItemId,removeItemIdentity,mergeInventoryRows,
+ inventoryChangeSet,activeInventoryLocks} from './InventoryCollaborationCore.js';
 
 const sources={
  character:{table:'characters',column:'field_values'},
  npc_template:{table:'npc_templates',column:'field_values'},
  npc_token:{table:'map_tokens',column:'npc_values'}
 };
-const uuid=value=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value||''));
-const mapRows=(rows,optimistic)=>{
- const seen=new Set();
- const next=inventoryRows(rows).flatMap(row=>{
-  const id=itemIdentity(row);
-  if(!id)return [row];
-  seen.add(id);
-  if(!Object.hasOwn(optimistic,id))return [row];
-  return optimistic[id]===null?[]:[optimistic[id]];
- });
- for(const [id,row] of Object.entries(optimistic))
-  if(!seen.has(id)&&row!==null)next.push(row);
- return next;
-};
-
 /** All sheet Inventory fields share the same lease and per-object write model.
  * The server checks campaign membership/DM role, Inventory field type, and
  * active lease before applying an atomic JSONB patch. */
@@ -72,6 +58,7 @@ export default function useCampaignSheetInventory({
   void Promise.all([refreshRows(true),refreshClaims()]).then(()=>{
    if(scope.current===signature)setReady(true);
   }).catch(e=>setError(e?.message||String(e)));
+  let connected=false,reconciliations=0;
   const channel=db.channel('forge-sheet-grid-'+sourceId+'-'+fieldId+'-'+userId)
    .on('postgres_changes',{event:'UPDATE',schema:'public',
     table:target.table,filter:'id=eq.'+sourceId},
@@ -79,15 +66,26 @@ export default function useCampaignSheetInventory({
    .on('postgres_changes',{event:'*',schema:'public',
     table:'campaign_sheet_item_leases',filter:'source_id=eq.'+sourceId},
     ()=>void refreshClaims().catch(e=>setError(e?.message||String(e))))
-   .subscribe();
+   .subscribe(status=>{
+    const wasConnected=connected;
+    connected=status==='SUBSCRIBED';
+    if(connected&&!wasConnected){
+     void refreshRows(false).catch(e=>setError(e?.message||String(e)));
+     void refreshClaims().catch(e=>setError(e?.message||String(e)));
+    }
+   });
   const interval=setInterval(()=>{
    for(const id of [...owned.current])
     void db.rpc('claim_campaign_sheet_item',{...args,p_item:id,p_takeover:false})
      .then(({error:e})=>{
       if(e){owned.current.delete(id);setError('Item claim expired: '+e.message)}
      });
-   void refreshRows(false).catch(()=>{});
-   void refreshClaims().catch(()=>{});
+   // Lease renewal remains every 8 seconds (18-second expiry). Healthy
+   // Realtime uses a 64-second backstop; a disconnect restores 8-second reads.
+   if(!connected||++reconciliations%8===0){
+    void refreshRows(false).catch(()=>{});
+    void refreshClaims().catch(()=>{});
+   }
   },8000);
   return()=>{
    clearInterval(interval);
@@ -108,7 +106,7 @@ export default function useCampaignSheetInventory({
   };
  },[db,campaignId,sourceType,sourceId,fieldId,userId,target,args,refreshRows,refreshClaims]);
  const claim=useCallback((id,force=false)=>{
-  if(!uuid(id))return Promise.reject(Error('Item identities have not loaded.'));
+  if(!validInventoryItemId(id))return Promise.reject(Error('Item identities have not loaded.'));
   if(owned.current.has(id)&&!force)return Promise.resolve();
   if(claimsInFlight.current.has(id)&&!force)return claimsInFlight.current.get(id);
   const work=(async()=>{
@@ -128,7 +126,7 @@ export default function useCampaignSheetInventory({
   return work;
  },[db,args,userId]);
  const release=useCallback(async id=>{
-  if(!uuid(id))return;
+  if(!validInventoryItemId(id))return;
   try{
    await (claimsInFlight.current.get(id)||Promise.resolve()).catch(()=>{});
    await (writes.current.get(id)||Promise.resolve()).catch(()=>{});
@@ -140,9 +138,8 @@ export default function useCampaignSheetInventory({
    setClaims(old=>old.filter(l=>l.item_id!==id||l.holder_id!==userId));
   }catch(e){setError(e?.message||String(e))}
  },[db,args,userId]);
- const rows=useMemo(()=>mapRows(serverRows,optimistic),[serverRows,optimistic]);
- const locks=useMemo(()=>Object.fromEntries(claims.filter(l=>
-  Date.parse(l.expires_at)>Date.now()).map(l=>[l.item_id,l.holder_id])),[claims]);
+ const rows=useMemo(()=>mergeInventoryRows(serverRows,optimistic),[serverRows,optimistic]);
+ const locks=useMemo(()=>activeInventoryLocks(claims),[claims]);
  const mutate=useCallback((id,row,remove)=>{
   const before=writes.current.get(id)||Promise.resolve();
   const work=before.catch(()=>{}).then(async()=>{
@@ -169,18 +166,7 @@ export default function useCampaignSheetInventory({
  },[db,args,claim,refreshRows]);
  const changeItems=useCallback(nextRows=>{
   if(!ready)return;
-  const previous=new Map(rows.map(row=>[itemIdentity(row),row]));
-  const incoming=new Map();
-  for(const item of nextRows){
-   const id=itemIdentity(item)||crypto.randomUUID();
-   incoming.set(id,{...item,_inventoryId:id});
-  }
-  const changes=[];
-  for(const [id,row] of incoming)
-   if(!previous.has(id)||JSON.stringify(previous.get(id))!==JSON.stringify(row))
-    changes.push({id,row});
-  for(const [id] of previous)
-   if(id&&!incoming.has(id))changes.push({id,row:null});
+  const changes=inventoryChangeSet(rows,nextRows);
   if(!changes.length)return;
   setOptimistic(old=>{
    const next={...old};
