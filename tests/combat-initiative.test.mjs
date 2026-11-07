@@ -100,7 +100,7 @@ test('SQL restricts score writes to server RPC and separates private token IDs',
  assert.ok(!sql.includes('grant update on public.map_combat_entries to authenticated'));
  assert.ok(sql.includes('alter publication supabase_realtime add table public.map_combats'));
  assert.ok(!sql.includes('alter publication supabase_realtime add table public.map_combat_entries'));
- assert.ok(sql.includes("then 'Unknown combatant' end"));
+ assert.ok(sql.includes("else 'Unknown combatant' end"));
  assert.ok(sql.includes('v_token.owner_id is distinct from auth.uid()'));
  assert.ok(sql.includes('Roll or set all initiative scores before advancing'));
  assert.ok(sql.includes('public.is_campaign_dm(v_combat.campaign_id)'));
