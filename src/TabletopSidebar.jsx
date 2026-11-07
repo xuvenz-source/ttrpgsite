@@ -3,6 +3,7 @@ import useSidebarMenus from './useSidebarMenus.js';
 import {sidebarMenuOpen} from './SidebarMenuState.js';
 import Artwork from './Artwork.jsx';
 import MapSettingPanel from './MapSettingPanel.jsx';
+import CombatSetupPanel from './CombatSetupPanel.jsx';
 import TokenDisplayDesigner from './TokenDisplayDesigner.jsx';
 import {StatusCatalogEditor,TokenStatusBadges,normalizedEffects} from './TokenStatuses.jsx';
 import {KeybindingsEditor,HotbarSettings} from './TabletopControls.jsx';
@@ -208,6 +209,9 @@ export default function TabletopSidebar({
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
   mapEnvironment,mapSettingEditor,onMapSettingEditorChange,onMapEnvironmentChange,mapEnvironmentStatus,
    mapSettingPopped=false,onPopOutMapSetting,onDockMapSetting,
+  combat,combatPrivateEntries=[],combatBusy=false,combatStatus='',
+  onCombatBegin,onCombatAdd,onCombatCommand,onCombatRoll,onCombatRollNpcs,
+  combatOpen=false,onOpenCombat,onCloseCombat,
  statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,onDistributedItem,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  macroCount=0,onOpenMacros,
@@ -245,6 +249,12 @@ export default function TabletopSidebar({
     <span aria-hidden="true" className="tab-glyph">{t.icon}</span><span>{t.label}</span>
    </button>)}
   </nav>
+  {combat?.active&&<div className="combat-sidebar-shortcut">
+   <button type="button" className="secondary" onClick={combatOpen?onCloseCombat:onOpenCombat}
+    aria-label={combatOpen?'Hide Turn Order':'Open Turn Order'}>
+    ⚔ {combatOpen?'Hide':'Open'} Turn Order · Round {combat.round}
+   </button>
+  </div>}
   {validPanel==='chat'&&<>
    <div className="messages right-messages" ref={chatScrollRef}
     onScroll={onChatScroll}>{messages.map(m=><div className="msg" key={m.id}>
@@ -360,6 +370,15 @@ export default function TabletopSidebar({
         </label>)}
       </div>
      </div>
+    </SavedDetails>
+    <SavedDetails menuKey={'dm/combat'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
+     <summary>Combat · Initiative order</summary>
+     <CombatSetupPanel map={activeMap} combat={combat} tokens={tokens}
+      template={template} privateEntries={combatPrivateEntries}
+      onBegin={onCombatBegin} onAdd={onCombatAdd} onCommand={onCombatCommand}
+      onRollNpc={onCombatRollNpcs} onRollEntry={onCombatRoll}
+      onOpenTurnOrder={onOpenCombat} busy={combatBusy}/>
+     {combatStatus&&<p role="status" className="muted tiny">{combatStatus}</p>}
     </SavedDetails>
     <SavedDetails menuKey={'dm/map-setting'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Map setting</summary>
