@@ -22,13 +22,17 @@ test('recovered scope forbids CSS-only fog or client-authoritative collision',()
  assert.match(doc,/No paid staging database/);
 });
 
-test('fog overlay is fail-closed and not wired to the player map yet',()=>{
+test('fog overlay is fail-closed and wired to authorized player snapshots',()=>{
  const overlay=source('src/MapFogOverlay.jsx');
  const board=source('src/main.jsx');
  assert.match(overlay,/normalizeAuthorizedFogFrame\(frame,mapId\)/);
  assert.match(overlay,/if\(!sanitized\)/);
  assert.match(overlay,/fillStyle='#040914'/);
  assert.match(source('src/style.css'),/\.map-fog-overlay\{[^}]*pointer-events:none/);
- assert.doesNotMatch(board,/import MapFogOverlay from/);
- assert.doesNotMatch(board,/<MapFogOverlay/);
+ assert.match(board,/import MapFogOverlay from/);
+ assert.match(board,/!isDM&&<MapFogOverlay map=\{map\}/);
+ assert.match(board,/fogFrame=\{fog.frame\}/);
+ assert.match(board,/!fog.frame\|\|fog.frame.mapId!==selectedMap\|\|fog.frame.enabled/);
+ assert.match(source('src/useAuthorizedMapFog.js'),/get_authorized_map_fog/);
+ assert.match(source('src/useMapCombat.js'),/get_authorized_map_combat/);
 });
