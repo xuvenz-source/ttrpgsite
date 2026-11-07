@@ -85,3 +85,20 @@ export function previewViewer(token,characters=[]){
   y:Number(token.y)+(Number(token.span_y??1)/2),
   token:{...token,field_values:sheet?.field_values||token.field_values||{}}};
 }
+
+/** CSS clip path for a radial light gradient, evaluated from the light source.
+ * Rays travel around the ends of finite wall segments, not through their faces.
+ * Returns null only when no safe clipping geometry can be calculated.
+ */
+export function lightOcclusionClip({map,environment,x,y,radiusFeet}){
+ const cx=Number(x),cy=Number(y),radius=Number(radiusFeet)/FEET_PER_CELL;
+ if(!map||!environment||!Number.isFinite(cx)||!Number.isFinite(cy)||
+  !Number.isFinite(radius)||radius<=0)return null;
+ const polygon=previewVisionPolygon({map,environment,viewer:{x:cx,y:cy},
+  maxFeet:radiusFeet,kind:'light'});
+ if(polygon.length<3)return null;
+ const percent=n=>Math.round(n*10000)/10000+'%';
+ return 'polygon('+polygon.map(p=>
+  percent((p.x-(cx-radius))/(2*radius)*100)+' '+
+  percent((p.y-(cy-radius))/(2*radius)*100)).join(',')+')';
+}
