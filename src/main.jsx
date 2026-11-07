@@ -2601,6 +2601,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  }
  function onToolPointerUp(e,cancel=false){
   if(toolDrag.current?.pointerId!==e.pointerId)return;
+  if(e.button===2&&(e.buttons&1)!==0)return;
   finishMeasurement(e,cancel);
   toolDrag.current=null;
   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
@@ -2633,6 +2634,23 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   }
   measureDrag.current.pinned=true;
  }
+ // When a measurement begins on the floating toolbar, the button captures
+ // its pointer while the user drags onto the map. A second mouse button can
+ // therefore be retargeted to the toolbar rather than the map viewport.
+ // Catch chorded right-clicks globally during a measurement, without affecting
+ // standalone right-drag pinning or interactions outside the battlemap.
+ useEffect(()=>{
+  if(!active||!activeMeasureTool)return;
+  function onMouseDown(e){
+   if(e.button!==2||!measureDrag.current)return;
+   const rect=boardRef.current?.getBoundingClientRect();
+   if(!rect||e.clientX<rect.left||e.clientX>rect.right||
+    e.clientY<rect.top||e.clientY>rect.bottom)return;
+   pinCurrentMeasurementOnRightClick(e);
+  }
+  window.addEventListener('mousedown',onMouseDown,true);
+  return()=>window.removeEventListener('mousedown',onMouseDown,true);
+ },[active,activeMeasureTool]);
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
   // panning because touchscreens do not have a middle mouse button.
