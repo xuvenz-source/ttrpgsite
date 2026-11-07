@@ -48,8 +48,10 @@ import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,c
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,allowedMovementPreview,canSendMovementPreview,
  MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
+import {allowedToolMovementPreview,canSendToolMovementPreview,
+ TOOL_MOVE_PREVIEW_INTERVAL_MS,TOOL_MOVE_PREVIEW_EXPIRE_MS} from './LiveToolMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
- boundedGroupOffset} from './MapSelection.js';
+ selectableToolIds,selectedMapMembers,boundedGroupOffset} from './MapSelection.js';
 import {campaignPresenceKey,onlineMemberIds,chatRowsForMap} from './CampaignRealtime.js';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
@@ -169,6 +171,7 @@ function App(){
  const latestMonitorRefresh=useRef(null),latestTokenRefresh=useRef(null);
  const latestCampaignMetadataRefresh=useRef(null),latestMapsRefresh=useRef(null),latestNpcsRefresh=useRef(null);
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
+ const[remoteToolPositions,setRemoteToolPositions]=useState({});
  const[remoteMeasurements,setRemoteMeasurements]=useState({});
  const measureExpiry=useRef(new Map()),lastMeasureSent=useRef(0);
  const measureSequence=useRef(0),measureRevisions=useRef(new Map()),
@@ -176,6 +179,8 @@ function App(){
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),latestMovementAccess=useRef({});
+ const remoteToolExpiry=useRef(new Map()),lastToolMovementPreview=useRef(new Map());
+ const liveToolMovementSeq=useRef(0),latestToolsRefresh=useRef(null);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const latestHotbar=useRef(normaliseHotbar([])),hotbarWriteQueue=useRef(Promise.resolve());
@@ -568,6 +573,9 @@ function App(){
   try{await campaignTools.place(issued,selectedMap,x,y)}
   catch(e){fail(e)}
  }
+ function moveIssuedToolOnMap(id,x,y){
+  void campaignTools.movePlaced(id,x,y).catch(fail);
+ }
  function prepareHandoutPin(handoutId){
   if(!isDM||!selectedMap)return fail('Select a map first.');
   if(!campaignHandouts.handouts.some(h=>h.id===handoutId))return fail('Handout not found.');
@@ -852,12 +860,15 @@ function App(){
  // solo-map coordinates being broadcast to unauthorized players.
  useEffect(()=>{
   setRemoteTokenPositions({});
+  setRemoteToolPositions({});
   setRemoteMeasurements({});
   for(const timer of measureExpiry.current.values())clearTimeout(timer);
   measureExpiry.current.clear();lastMeasureSent.current=0;
   measureRevisions.current.clear();measureClearRevisions.current.clear();
   for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
   remoteMoveExpiry.current.clear();lastMovementPreview.current.clear();
+  for(const timer of remoteToolExpiry.current.values())clearTimeout(timer);
+  remoteToolExpiry.current.clear();lastToolMovementPreview.current.clear();
   liveMapReady.current=false;
   if(!db||!activeId||!selectedMap||!user)return;
   const channel=db.channel(movementTopic(selectedMap),{
@@ -883,6 +894,27 @@ function App(){
     void latestTokenRefresh.current?.();
    },payload.final?3000:MOVE_PREVIEW_EXPIRE_MS);
    remoteMoveExpiry.current.set(id,timer);
+  }).on('broadcast',{event:'tool-preview'},({payload})=>{
+   const access=latestMovementAccess.current;
+   if(!allowedToolMovementPreview(payload,selectedMap,
+    access.toolPlacements||[],access.issuedTools||[],access.members||[],user))return;
+   const id=payload.id;
+   setRemoteToolPositions(prev=>{
+    if(prev[id]?.actor===payload.actor&&prev[id].seq>=payload.seq)return prev;
+    return {...prev,[id]:{x:payload.x,y:payload.y,actor:payload.actor,seq:payload.seq}};
+   });
+   const last=remoteToolExpiry.current.get(id);
+   if(last)clearTimeout(last);
+   const seq=payload.seq;
+   const timer=setTimeout(()=>{
+    remoteToolExpiry.current.delete(id);
+    setRemoteToolPositions(prev=>{
+     if(prev[id]?.seq!==seq)return prev;
+     const next={...prev};delete next[id];return next;
+    });
+    void latestToolsRefresh.current?.();
+   },payload.final?3000:TOOL_MOVE_PREVIEW_EXPIRE_MS);
+   remoteToolExpiry.current.set(id,timer);
   }).on('broadcast',{event:'map-measure'},({payload})=>{
    if(!validMeasurement(payload,selectedMap)||payload.actor===user)return;
    if(!acceptMeasurementEvent(payload,measureRevisions.current,
@@ -924,6 +956,8 @@ function App(){
    liveMapReady.current=false;
    for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
    remoteMoveExpiry.current.clear();
+   for(const timer of remoteToolExpiry.current.values())clearTimeout(timer);
+   remoteToolExpiry.current.clear();
    for(const timer of measureExpiry.current.values())clearTimeout(timer);
    measureExpiry.current.clear();setRemoteMeasurements({});
    void db.removeChannel(channel);
@@ -941,6 +975,19 @@ function App(){
    id:token.id,mapId:selectedMap,actor:user,x,y,
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
+ }
+ function sendLiveToolMovement(issueId,x,y,final=false){
+  const placement=campaignTools.placed.find(p=>p.issue_id===issueId);
+  const issue=campaignTools.issued.find(t=>t.id===issueId);
+  if(!canSendToolMovementPreview(placement,issue,user,selectedMap,isDM)||
+     !Number.isInteger(x)||!Number.isInteger(y)||!liveMapReady.current)return;
+  const now=Date.now(),last=lastToolMovementPreview.current.get(issueId)||0;
+  if(!final&&now-last<TOOL_MOVE_PREVIEW_INTERVAL_MS)return;
+  lastToolMovementPreview.current.set(issueId,now);
+  void liveMapChannel.current?.send({type:'broadcast',event:'tool-preview',
+   payload:{id:issueId,mapId:selectedMap,actor:user,x,y,
+    seq:++liveToolMovementSeq.current,final}
+  }).catch(error=>console.warn('Tool movement preview unavailable',error));
  }
  function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
@@ -1122,7 +1169,9 @@ function App(){
   latestCampaignMetadataRefresh.current=refreshCampaignMetadata;
   latestMapsRefresh.current=refreshMaps;
   latestNpcsRefresh.current=refreshNpcs;
-  latestMovementAccess.current={tokens,members,mapId:selectedMap,user};
+  latestMovementAccess.current={tokens,members,mapId:selectedMap,user,
+   toolPlacements:campaignTools.placed,issuedTools:campaignTools.issued};
+  latestToolsRefresh.current=campaignTools.refresh;
  });
  // Browsers may throttle or suspend background tabs. Keep the board mounted;
  // reconcile only after a meaningful absence, without clearing image URLs.
@@ -2121,8 +2170,10 @@ function App(){
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
-   onToolPlace={placeIssuedToolOnMap} onToolOpen={setSelectedToolIssueId}
-    onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+   onToolPlace={placeIssuedToolOnMap} onToolMove={moveIssuedToolOnMap}
+   onToolOpen={setSelectedToolIssueId}
+   onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+   onToolMovementPreview={sendLiveToolMovement} remoteToolPositions={remoteToolPositions}
     onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
@@ -2562,13 +2613,16 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 }
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
- toolPlacements=[],toolIssued=[],onToolPlace,onToolOpen,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
+ toolPlacements=[],toolIssued=[],onToolPlace,onToolMove,onToolOpen,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
+ onToolMovementPreview,remoteToolPositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
  handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
+ const[selectedToolIds,setSelectedToolIds]=useState([]);
+ const[toolPreview,setToolPreview]=useState({});
  const[marquee,setMarquee]=useState(null);
  const[activeMeasureTool,setActiveMeasureTool]=useState(null),
   [localMeasurements,setLocalMeasurements]=useState([]);
@@ -2603,9 +2657,9 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const handleEnvironmentSelect=useCallback(id=>environmentHandlers.current.onSelectEnvironmentObject?.(id),[]);
  const handleEnvironmentPatch=useCallback((id,change,opts)=>
   environmentHandlers.current.onPatchEnvironmentObject?.(id,change,opts),[]);
- function selectTokens(ids){
-  const unique=[...new Set(ids)];
-  setSelectedIds(unique);
+ function selectTokens(ids,toolIds=[]){
+  const unique=[...new Set(ids)],tools=[...new Set(toolIds)];
+  setSelectedIds(unique);setSelectedToolIds(tools);
   primaryRef.current=unique[0]||null;
   setSelectedId(primaryRef.current);
  }
@@ -2614,6 +2668,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(selectedId!==primaryRef.current){
    primaryRef.current=selectedId;
    setSelectedIds(selectedId?[selectedId]:[]);
+   setSelectedToolIds([]);
   }
  },[selectedId]);
  // Pinned measurements remain until the creator clears them.
@@ -2648,14 +2703,17 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
  useEffect(()=>{
-  primaryRef.current=null;setSelectedId(null);setSelectedIds([]);
-  setMarquee(null);selection.current=null;drag.current=null;
+  primaryRef.current=null;setSelectedId(null);setSelectedIds([]);setSelectedToolIds([]);
+  setToolPreview({});setMarquee(null);selection.current=null;drag.current=null;
  },[map.id]);
  useEffect(()=>{
   setSelectedIds(old=>old.filter(id=>tokens.some(t=>
    t.id===id&&canControlMapToken(t,user,isDM,map.id))));
+  setSelectedToolIds(old=>old.filter(id=>toolPlacements.some(p=>
+   p.issue_id===id&&p.map_id===map.id&&toolIssued.some(issue=>
+    issue.id===id&&(isDM||issue.owner_id===user||issue.party_shared)))));
   if(selectedId&&!tokens.some(t=>t.id===selectedId))selectTokens([]);
- },[selectedId,tokens,user,isDM,map.id]);
+ },[selectedId,tokens,toolPlacements,toolIssued,user,isDM,map.id]);
  useEffect(()=>{
   if(!selectedId||!viewportRef.current)return;
   const token=tokens.find(t=>t.id===selectedId);
@@ -2896,13 +2954,14 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  function startMarquee(e){
   if(environmentEditor?.enabled||previewActive)return;
   if(activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
-     e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
+     e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token,.campaign-tool-map-token'))return;
   const viewport=viewportRef.current;
   if(!viewport||!boardRef.current)return;
   const start=boardPoint(e);
   e.preventDefault();
   selection.current={id:e.pointerId,start,originX:e.clientX,
-   originY:e.clientY,additive:e.shiftKey,originalIds:selectedIds};
+   originY:e.clientY,additive:e.shiftKey,originalIds:selectedIds,
+   originalToolIds:selectedToolIds};
   setMarquee({start,end:start});
   viewport.setPointerCapture(e.pointerId);
  }
@@ -2931,7 +2990,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
      const rect=selectionRectangle(info.start,boardPoint(e));
      const found=selectableTokenIds(tokens,rect,map.grid_size*zoomRef.current,
       user,isDM,map.id);
-     selectTokens(info.additive?[...info.originalIds,...found]:found);
+     const foundTools=selectableToolIds(toolPlacements,toolIssued,rect,
+      map.grid_size*zoomRef.current,user,isDM,map.id);
+     selectTokens(info.additive?[...info.originalIds,...found]:found,
+      info.additive?[...info.originalToolIds,...foundTools]:foundTools);
     }else if(!info.additive)selectTokens([]);
    }
   }
@@ -2939,26 +3001,45 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(viewport?.hasPointerCapture(e.pointerId))
    viewport.releasePointerCapture(e.pointerId);
  }
+ function startToolDrag(e,p,canMove){
+  if(previewActive||e.button!==0)return;
+  const group=canMove&&selectedToolIds.includes(p.issue_id)&&
+   selectedToolIds.length+selectedIds.length>1;
+  const tokensInGroup=group?selectedIds:[],
+   toolsInGroup=group?selectedToolIds:[p.issue_id];
+  if(canMove)selectTokens(tokensInGroup,toolsInGroup);
+  else selectTokens([],[p.issue_id]);
+  viewportRef.current?.focus({preventScroll:true});
+  if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  const members=selectedMapMembers(tokensInGroup,toolsInGroup,
+   tokens,toolPlacements,toolIssued,user,isDM,map.id);
+  if(!members.length)return;
+  try{e.currentTarget.setPointerCapture(e.pointerId)}catch{return}
+  drag.current={id:p.issue_id,source:'tool',pointerId:e.pointerId,
+   startX:e.clientX,startY:e.clientY,members,dx:0,dy:0};
+ }
  function startTokenDrag(e,t,canMove){
   e.stopPropagation();
   if(previewActive)return;
   if(e.button!==0)return;
-  const group=canMove&&selectedIds.includes(t.id)&&selectedIds.length>1?
-   selectedIds.filter(id=>tokens.some(other=>other.id===id&&
-    canControlMapToken(other,user,isDM,map.id))):[t.id];
+  const grouped=canMove&&selectedIds.includes(t.id)&&
+   selectedIds.length+selectedToolIds.length>1;
+  const group=grouped?selectedIds:[t.id],
+   toolsInGroup=grouped?selectedToolIds:[];
   if(!canMove)primaryRef.current=t.id;
-  if(canMove)selectTokens(group);
-  else{setSelectedIds([]);setSelectedId(t.id)}
+  if(canMove)selectTokens(group,toolsInGroup);
+  else{setSelectedIds([]);setSelectedToolIds([]);setSelectedId(t.id)}
   viewportRef.current?.focus({preventScroll:true});
   if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
-  const members=tokens.filter(token=>group.includes(token.id));
+  const members=selectedMapMembers(group,toolsInGroup,
+   tokens,toolPlacements,toolIssued,user,isDM,map.id);
   e.currentTarget.setPointerCapture(e.pointerId);
-  drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
-   members,dx:0,dy:0};
+  drag.current={id:t.id,source:'token',pointerId:e.pointerId,
+   startX:e.clientX,startY:e.clientY,members,dx:0,dy:0};
  }
- function moveTokenDrag(e,t){
+ function moveGroupDrag(e,source,id){
   const info=drag.current;
-  if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
+  if(!info||info.source!==source||info.id!==id||info.pointerId!==e.pointerId)return;
   const cell=map.grid_size*zoomRef.current;
   const delta=boundedGroupOffset(info.members,
    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
@@ -2967,36 +3048,56 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   info.dx=delta.dx;info.dy=delta.dy;
   setPreview(old=>{
    const next={...old};
-   for(const token of info.members)
-    next[token.id]={...old[token.id],
-     x:Number(token.x)+delta.dx,y:Number(token.y)+delta.dy};
+   for(const t of info.members.filter(m=>m.source==='token'))
+    next[t.id]={...old[t.id],x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
+   return next;
+  });
+  setToolPreview(old=>{
+   const next={...old};
+   for(const t of info.members.filter(m=>m.source==='tool'))
+    next[t.id]={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
    return next;
   });
   for(const t of info.members){
    const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
-   onMovementPreview?.(t,next.x,next.y,false);
+   if(t.source==='tool')onToolMovementPreview?.(t.id,next.x,next.y,false);
+   else onMovementPreview?.(t,next.x,next.y,false);
   }
  }
- function finishTokenDrag(e,t,cancel=false){
+ function finishGroupDrag(e,source,id,cancel=false){
   const info=drag.current;
-  if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
+  if(!info||info.source!==source||info.id!==id||info.pointerId!==e.pointerId)return;
   drag.current=null;
   if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId);
-  if(cancel){
-   setPreview(old=>{
-    const next={...old};
-    for(const member of info.members)delete next[member.id];
-    return next;
-   });
-  }
+  setPreview(old=>{
+   const next={...old};
+   for(const t of info.members.filter(m=>m.source==='token'))delete next[t.id];
+   return next;
+  });
+  setToolPreview(old=>{
+   const next={...old};
+   for(const t of info.members.filter(m=>m.source==='tool'))delete next[t.id];
+   return next;
+  });
   if(info.dx===0&&info.dy===0&&!cancel)return;
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
-   onMovementPreview?.(t,next.x,next.y,true);
-   if(!cancel)move(t,next.x,next.y);
+   if(t.source==='tool'){
+    onToolMovementPreview?.(t.id,next.x,next.y,true);
+    if(!cancel)onToolMove?.(t.id,next.x,next.y);
+   }else{
+    onMovementPreview?.(t,next.x,next.y,true);
+    if(!cancel)move(t,next.x,next.y);
+   }
   }
+ }
+ function moveTokenDrag(e,t){moveGroupDrag(e,'token',t.id)}
+ function finishTokenDrag(e,t,cancel=false){finishGroupDrag(e,'token',t.id,cancel)}
+ function moveToolDrag(e,p){moveGroupDrag(e,'tool',p.issue_id)}
+ function finishToolDrag(e,p,cancel=false){
+  finishGroupDrag(e,'tool',p.issue_id,cancel);
  }
  return <>
   <MeasurementToolBar tool={activeMeasureTool}
@@ -3009,7 +3110,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    onKeySelect={setActiveMeasureTool} onClearPins={clearMyPinnedMeasurements}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
-    aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
+    aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens and tools" tabIndex={0}
     onMouseDownCapture={pinCurrentMeasurementOnRightClick}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
     onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
@@ -3039,8 +3140,12 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
      onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}/>
     <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
-     placements={toolPlacements} issued={toolIssued}
-     onMove={(issueId,x,y)=>onToolPlace?.(issueId,x,y)} onOpen={onToolOpen}/>
+     placements={toolPlacements} issued={toolIssued} selectedIds={selectedToolIds}
+     preview={toolPreview} remotePositions={remoteToolPositions}
+     onPointerDown={startToolDrag} onPointerMove={moveToolDrag}
+     onPointerUp={finishToolDrag}
+     onPointerCancel={(e,p)=>finishToolDrag(e,p,true)}
+     onOpen={onToolOpen}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
