@@ -19,6 +19,8 @@ test('hidden pins are DM-only; collected/revealed handouts are party-readable',(
  assert.equal(handoutInLibrary({revealed:false},true),true);
  assert.equal(handoutInLibrary({revealed:true},false),true);
  assert.ok(PIN_ICONS.sign&&PIN_ICONS.engraving&&PIN_ICONS.note);
+ assert.ok(PIN_ICONS.pin&&PIN_ICONS.arrow&&PIN_ICONS.trap);
+ assert.equal(Object.keys(PIN_ICONS).length,12);
 });
 test('folder listings exclude unrelated documents and retain alphabetical order',()=>{
  const docs=[
@@ -60,11 +62,20 @@ test('battlemap places and moves clickable pins without mixing them into light g
  assert.match(mapPins,/pinVisibleTo\(pin,isDM\)/);
  assert.match(mapPins,/onCreate\?\.\(editor\.pinHandoutId,p\)/);
  assert.match(mapPins,/onMove\?\.\(pin,\{x:next\.x,y:next\.y\}\)/);
+ assert.match(mapPins,/pin.kind==='trap'\?<svg/);
+ assert.match(mapPins,/event.clientX-d.startX/);
  assert.match(app,/onCreateHandoutPin=\{createHandoutPin\}/);
  assert.match(app,/onOpenHandoutPin=\{openMapHandoutPin\}/);
  assert.match(app,/<MapPinLayer/);
  assert.match(settings,/\{id:'pin',label:'Place handout pin'\}/);
  assert.match(settings,/pinHandoutId/);
+ assert.match(settings,/Pin appearance/);
+ assert.match(app,/kind:mapSettingEditor.pinKind/);
+ const css=source('src/style.css');
+ assert.match(css,/\.map-handout-pins\.is-placing\{z-index:40\}/);
+ const migration=source('staging/sql-candidates/campaign_pin_icon_expansion.sql');
+ assert.match(migration,/drop constraint if exists campaign_map_pins_kind_check/);
+ assert.match(migration,/'trap','warning','flag','skull','star'/);
 });
 test('private note contents never travel in a Realtime broadcast payload',()=>{
  const hook=source('src/useCampaignHandouts.js');

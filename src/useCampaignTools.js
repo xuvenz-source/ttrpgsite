@@ -1,6 +1,16 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {normaliseToolConfig,toolInitialState,toolCanControl} from './CampaignTools.js';
+import {normaliseToolConfig,toolInitialState,toolCanControl,toolMapProjection} from './CampaignTools.js';
 
+/** Keep in-flight local placement authoritative until the server responds.
+ * This hides network latency from dragging without altering permission checks. */
+export function overlayToolPlacements(rows,pending,mapId){
+ const found=new Map((rows||[]).map(p=>[p.issue_id,p]));
+ for(const [id,entry] of pending||[]){
+  if(entry?.row?.map_id===mapId)found.set(id,entry.row);
+  else found.delete(id);
+ }
+ return [...found.values()];
+}
 /** RLS protects private issued sheets; public map tokens are in a separate table. */
 export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
  const [templates,setTemplates]=useState([]);
@@ -8,6 +18,11 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
  const [placed,setPlaced]=useState([]);
  const [loading,setLoading]=useState(false),[error,setError]=useState('');
  const seq=useRef(0);
+ const pendingPositions=useRef(new Map()),writeChains=useRef(new Map());
+ const moveSerial=useRef(0);
+ useEffect(()=>{
+  pendingPositions.current.clear();writeChains.current.clear();moveSerial.current=0;
+ },[campaignId,mapId,userId]);
  const refresh=useCallback(async()=>{
   if(!db||!userId||!campaignId){
    setTemplates([]);setIssued([]);setPlaced([]);return;
@@ -29,7 +44,7 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
    if(seq.current!==request)return;
    setTemplates(templatesReply.data||[]);
    setIssued(issuesReply.data||[]);
-   setPlaced(placedReply.data||[]);
+   setPlaced(overlayToolPlacements(placedReply.data||[],pendingPositions.current,mapId));
    setError('');
   }catch(e){
    if(seq.current===request)setError(e?.message||String(e));
@@ -95,17 +110,48 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
   db.from('campaign_tool_issues').update({state:newState})
    .eq('id',issue.id).eq('revision',issue.revision)
    .eq('campaign_id',campaignId).select('*').maybeSingle()));
- const place=(issue,targetMap,x,y)=>mutate(()=>{
+ // Position-only writes may follow one another before a prior revision arrives.
+ // Serialize per issue and let the DB's RLS/validation enforce ownership.
+ function inOrder(id,write){
+  const before=writeChains.current.get(id)||Promise.resolve();
+  const next=before.catch(()=>{}).then(write);
+  writeChains.current.set(id,next);
+  void next.finally(()=>{
+   if(writeChains.current.get(id)===next)writeChains.current.delete(id);
+  }).catch(()=>{});
+  return next;
+ }
+ async function moveIssue(issue,targetMap,x,y){
+  if(!db||!userId||!campaignId)throw Error('Open a campaign first.');
   if(!toolCanControl(issue,userId,isDM))throw Error('This tool was not issued to you.');
-  if(!targetMap||targetMap!==mapId)throw Error('Select an accessible map.');
-  return one(db.from('campaign_tool_issues').update({map_id:targetMap,x,y})
-   .eq('id',issue.id).eq('revision',issue.revision)
-   .eq('campaign_id',campaignId).select('*').maybeSingle());
- });
- const pickUp=issue=>mutate(()=>one(
-  db.from('campaign_tool_issues').update({map_id:null})
-   .eq('id',issue.id).eq('revision',issue.revision)
-   .eq('campaign_id',campaignId).select('*').maybeSingle()));
+  if(targetMap&&targetMap!==mapId)throw Error('Select an accessible map.');
+  const stamp=++moveSerial.current;
+  pendingPositions.current.set(issue.id,{
+   stamp,row:targetMap?toolMapProjection(issue,targetMap,x,y):null
+  });
+  setPlaced(old=>overlayToolPlacements(old,pendingPositions.current,mapId));
+  try{
+   const updated=await inOrder(issue.id,()=>one(
+    db.from('campaign_tool_issues').update({map_id:targetMap,x,y})
+     .eq('id',issue.id).eq('campaign_id',campaignId)
+     .select('*').maybeSingle()));
+   setIssued(old=>old.map(item=>item.id===updated.id?updated:item));
+   if(pendingPositions.current.get(issue.id)?.stamp===stamp){
+    pendingPositions.current.delete(issue.id);
+    await refresh();
+   }
+   return updated;
+  }catch(e){
+   if(pendingPositions.current.get(issue.id)?.stamp===stamp){
+    pendingPositions.current.delete(issue.id);
+    await refresh();
+   }
+   setError(e?.message||String(e));throw e;
+  }
+ }
+ const place=(issue,targetMap,x,y)=>moveIssue(issue,targetMap,x,y);
+ // Delete on the board means 'pick up', not removeIssued().
+ const pickUp=issue=>moveIssue(issue,null,issue.x||0,issue.y||0);
  return {templates,issued,placed,loading,error,refresh,createTemplate,updateTemplate,
   deleteTemplate,issueTool,removeIssued,updateState,place,pickUp};
 }
