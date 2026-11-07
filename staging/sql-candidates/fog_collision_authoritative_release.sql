@@ -78,7 +78,8 @@ begin
  if o->>'type' in ('door','window') and o->>'state' in ('open','broken')
  then return true;end if;
  if mode='movement' then return o->>'blocksMovement'='false';end if;
- if mode='light' then return o->>'blocksLight'='false';end if;
+ if mode='light' then return o->>'blocksLight'='false'
+  and not (o->>'type'='window' and o->>'curtains'='true');end if;
  if o->>'type'='window' and o->>'curtains'='true' then return false;end if;
  if o->>'vision'='pass' then return true;end if;
  if o->>'vision'='one-way' then
@@ -311,8 +312,76 @@ end $$;
 drop trigger if exists forge_player_collision on public.map_tokens;
 create trigger forge_player_collision before update of x,y on public.map_tokens
  for each row execute function forge_visibility.enforce_collision();
--- No INSERT trigger: the revised INSERT policy below denies unobserved player
--- placements while fog is active; when fog is off existing placement remains.
+-- The revised player INSERT policy requires DM placement on physical maps.
+
+-- Issued tool/mount movement uses the same server-side swept-footprint
+-- collision enforcement as characters/NPCs. DM is the intentional bypass.
+create or replace function forge_visibility.enforce_tool_collision()
+returns trigger language plpgsql volatile security definer set search_path='' as $
+declare
+ scene jsonb;m record;item jsonb;pts jsonb;a jsonb;b jsonb;i integer;
+ span double precision;w double precision;h double precision;
+ attrs jsonb;
+begin
+ if auth.uid() is null or public.is_campaign_dm(new.campaign_id) then return new;end if;
+ if new.map_id is null then return new;end if;
+ if not exists(select 1 from forge_visibility.map_rules r where r.map_id=new.map_id
+  and (r.collision_enforced or r.fog_enforced)) then return new;end if;
+ if old.map_id is null or old.map_id is distinct from new.map_id
+ then raise exception 'Ask the DM to place this tool on a published map';end if;
+ if old.x=new.x and old.y=new.y then return new;end if;
+ if not exists(select 1 from forge_visibility.map_rules r where r.map_id=new.map_id
+  and r.collision_enforced) then return new;end if;
+ select live into scene from public.map_environments where map_id=new.map_id;
+ select width,height,grid_size into m from public.battle_maps where id=new.map_id;
+ if scene is null or jsonb_typeof(scene->'objects')<>'array' or m.grid_size<=0
+ then raise exception 'Published collision configuration unavailable';end if;
+ span:=case when new.kind='mount' then (new.config->>'span')::double precision else 1.0 end;
+ w:=floor(m.width/m.grid_size);h:=floor(m.height/m.grid_size);
+ if span<1 or span>4 or new.x<0 or new.y<0 or
+    new.x+span>w or new.y+span>h
+ then raise exception 'Tool movement leaves the map bounds';end if;
+ attrs:=coalesce(new.state->'attrs','{}'::jsonb);
+ for item in select value from jsonb_array_elements(scene->'objects') loop
+  if item->>'type' not in ('wall','door','window') or
+    item->>'state'='broken' then continue;end if;
+  if forge_visibility.wall_passes(item,attrs,'movement') then continue;end if;
+  pts:=item->'points';
+  for i in 1..jsonb_array_length(pts)-1 loop
+   a:=pts->(i-1);b:=pts->i;
+   if forge_visibility.swept_hits_segment(
+     old.x,old.y,span,span,new.x,new.y,
+     (a->>'x')::double precision,(a->>'y')::double precision,
+     (b->>'x')::double precision,(b->>'y')::double precision)
+   then raise exception 'Tool movement blocked by a wall or closed portal';end if;
+  end loop;
+ end loop;
+ return new;
+end $;
+drop trigger if exists forge_tool_collision on public.campaign_tool_issues;
+create trigger forge_tool_collision before update of map_id,x,y on public.campaign_tool_issues
+ for each row execute function forge_visibility.enforce_tool_collision();
+
+
+
+-- A published physical map requires the DM to place new pieces.
+-- Players can move already-placed pieces through collision guards, but
+-- cannot bypass a wall by spawning a piece on the opposite side.
+create or replace function public.can_player_place_map_piece(p_map uuid,
+ px double precision,py double precision)
+returns boolean language plpgsql stable security definer set search_path='' as $
+declare c uuid;
+begin
+ if auth.uid() is null then return false;end if;
+ select campaign_id into c from public.battle_maps where id=p_map;
+ if c is null or not public.can_view_campaign_map(c,p_map) then return false;end if;
+ if public.is_campaign_dm(c) then return true;end if;
+ if exists(select 1 from forge_visibility.map_rules r where r.map_id=p_map
+  and (r.collision_enforced or r.fog_enforced)) then return false;end if;
+ return forge_visibility.point_visible(p_map,px,py,auth.uid());
+end $;
+revoke all on function public.can_player_place_map_piece(uuid,double precision,double precision) from public,anon;
+grant execute on function public.can_player_place_map_piece(uuid,double precision,double precision) to authenticated;
 
 -- Require observations on every direct Data API / Realtime row read.
 drop policy if exists "members view visible tokens" on public.map_tokens;
@@ -332,7 +401,7 @@ create policy "player creates owned character only where already observed" on pu
   and exists(select 1 from public.characters ch where ch.id=character_id
    and ch.campaign_id=campaign_id and ch.user_id=auth.uid()
    and image_path is not distinct from ch.token_path)
-  and public.can_observe_map_position(map_id,x+span_x::double precision/2,
+  and public.can_player_place_map_piece(map_id,x+span_x::double precision/2,
     y+span_y::double precision/2)
  );
 drop policy if exists "authorized viewers see sanitized tool map tokens" on public.campaign_tool_map_tokens;
