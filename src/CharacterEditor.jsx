@@ -12,7 +12,7 @@ import PersonalResources from './PersonalResources.jsx';
 import {MagicDashboard} from './SheetMagic.jsx';
  import {EquipmentManager} from './SheetEquipment.jsx';
 import {RepeatingCollection} from './RepeatingCollection.jsx';
-import InventoryPanel from './InventoryPanel.jsx';
+import SharedInventoryPanel from './SharedInventoryPanel.jsx';
 
 /** A DM can edit a player's persistent sheet, never just the token's temporary stats. */
 export default function CharacterEditor({
@@ -26,22 +26,27 @@ export default function CharacterEditor({
   token_path:record.token_path||null
  }),[record.id]);
  const [draft,setDraft]=useState(initial);
- const version=useRef(record.updated_at);
+ const sent=useRef(initial);
  const [activeTab,setActiveTab]=useState(template?.tabs?.[0]?.id||'main');
  const [studio,setStudio]=useState(false);
  const persist=async snapshot=>{
   if(!snapshot.name.trim())throw Error('Character name cannot be empty.');
-  const {data,error:dbError}=await db.from('characters')
-   .update({
-    name:snapshot.name.trim(),field_values:snapshot.field_values,
-    portrait_path:snapshot.portrait_path,token_path:snapshot.token_path
-   })
-   .eq('id',record.id).eq('campaign_id',campaignId)
-   .eq('updated_at',version.current)
-   .select('*').maybeSingle();
+  const patch=Object.fromEntries(Object.entries(snapshot.field_values)
+   .filter(([key,value])=>JSON.stringify(value)!==
+    JSON.stringify(sent.current.field_values?.[key])));
+  const meta={};
+  if(snapshot.name!==sent.current.name)meta.name=snapshot.name.trim();
+  if(snapshot.portrait_path!==sent.current.portrait_path)
+   meta.portrait_path=snapshot.portrait_path;
+  if(snapshot.token_path!==sent.current.token_path)
+   meta.token_path=snapshot.token_path;
+  const {data,error:dbError}=await db.rpc('patch_campaign_sheet_noninventory',{
+   p_campaign:campaignId,p_source:'character',p_source_id:record.id,
+   p_values:patch,p_meta:meta
+  });
   if(dbError)throw dbError;
-  if(!data)throw Error('This sheet changed in another window. Your edits were not overwritten; reopen the sheet to resolve the conflict.');
-  version.current=data.updated_at;
+  if(!data)throw Error('Character sheet could not be updated.');
+  sent.current=structuredClone(snapshot);
   onSaved(data);
  };
  const {status,error,flush,hasPending}=useSheetAutosave({
@@ -117,9 +122,9 @@ export default function CharacterEditor({
      <label>{f.label}</label>
      {f.type==='roll'?<button type="button" className="rollbtn" onClick={()=>doRoll(f)}>
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
-      f.type==='inventory'?<InventoryPanel field={f} value={draft.field_values[f.id]||[]}
-        template={template} sheetValues={draft.field_values}
-        onChange={v=>editField(f.id,v)}/>:
+      f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={campaignId}
+        userId={viewerId} isDM sourceType="character" sourceId={record.id}
+        field={f} template={template} sheetValues={draft.field_values}/>:
       f.type==='attribute'?<AttributeField field={f} template={template}
        value={draft.field_values[f.id]} values={draft.field_values}
        onChange={v=>editField(f.id,v)}
