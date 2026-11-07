@@ -71,7 +71,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject});
  environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject};
  const handleEnvironmentAdd=useCallback(object=>environmentHandlers.current.onAddEnvironmentObject?.(object),[]);
- const handleEnvironmentSelect=useCallback(id=>environmentHandlers.current.onSelectEnvironmentObject?.(id),[]);
+ const handleEnvironmentSelect=useCallback((ids,options)=>environmentHandlers.current.onSelectEnvironmentObject?.(ids,options),[]);
  const handleEnvironmentPatch=useCallback((id,change,opts)=>
   environmentHandlers.current.onPatchEnvironmentObject?.(id,change,opts),[]);
  function selectTokens(ids,toolIds=[]){
@@ -160,13 +160,16 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    if(el instanceof Element && (el.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]')||
      (el.closest('button')&&!el.closest('.map-env-marker,.campaign-tool-map-token'))))return;
    if(document.querySelector('.modal-backdrop'))return;
-   if(isDM&&environmentEditor?.enabled&&environmentEditor.layer==='light'&&
-      !environmentEditor.lockLight&&environmentEditor.selectedId){
-    const target=environment?.objects?.find(o=>o.id===environmentEditor.selectedId);
-    if(target){
+   if(isDM&&environmentEditor?.enabled&&environmentEditor.layer==='light'){
+    const ids=(environmentEditor.selectedIds?.length?environmentEditor.selectedIds:
+     environmentEditor.selectedId?[environmentEditor.selectedId]:[])
+     .filter(id=>environment?.objects?.some(o=>o.id===id));
+    if(!environmentEditor.lockLight&&ids.length){
      e.preventDefault();e.stopPropagation();
-     onDeleteEnvironmentObject?.(target.id);return;
+     onDeleteEnvironmentObject?.(ids);return;
     }
+    // Lock is on by default so map-editing Delete never destroys a token.
+    if(environmentEditor.lockTokens!==false)return;
    }
    const removableTools=selectedToolIds.filter(id=>
     toolCanControl(toolIssued.find(t=>t.id===id),user,isDM));
@@ -480,6 +483,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  }
  function startTokenDrag(e,t,canMove){
   e.stopPropagation();
+  if(isDM&&environmentEditor?.enabled&&environmentEditor.layer==='light'&&
+   environmentEditor.lockTokens!==false)return;
   if(previewActive){
    // Preview movement is local only. Never send DM-preview coordinates to the
    // server; test the same swept-footprint collision against prepared walls.
@@ -672,6 +677,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
      onPatch={handleEnvironmentPatch}/>}
     {isDM&&!previewActive&&environment&&environmentEditor?.selectedId&&
+     (environmentEditor.selectedIds?.length||1)===1&&
      <MapObjectQuickAdjust key={environmentEditor.selectedId}
       map={map} scale={scale}
       object={environment.objects.find(o=>o.id===environmentEditor.selectedId)}
@@ -680,7 +686,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     {visibleTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
       canMove=(previewActive&&t.id===previewToken?.id)||
-       (!previewActive&&canControlMapToken(t,user,isDM,map.id));
+       (!previewActive&&canControlMapToken(t,user,isDM,map.id)&&
+        !(isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false));
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
