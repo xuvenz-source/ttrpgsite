@@ -31,7 +31,9 @@ export function normaliseToolConfig(kind,raw={}){
  };
  if(key==='mount'){
   const attributes={};
-  for(const [name,value] of Object.entries({...defaults.attributes,...input.attributes})){
+  const supplied=input.attributes&&typeof input.attributes==='object'&&
+   !Array.isArray(input.attributes)?input.attributes:defaults.attributes;
+  for(const [name,value] of Object.entries(supplied)){
    if(!/^[a-z][a-z0-9_]{0,31}$/.test(name)||Object.keys(attributes).length>=16)continue;
    attributes[name]=clamp(value,-10000,10000,0);
   }
