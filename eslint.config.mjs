@@ -23,6 +23,7 @@ export default [{
   'src/SheetTemplateDesigner.jsx',
   'src/AppBoundaries.jsx',
   'src/TabletopSheetDefaults.js',
+  'src/useCampaignPresence.js',
   'src/main.jsx',
   'src/LiveMovementPreview.js',
   'src/LiveTokenMovement.js',

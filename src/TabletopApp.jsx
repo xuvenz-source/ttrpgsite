@@ -54,7 +54,8 @@ import {movementTopic,allowedMovementPreview,canSendMovementPreview,
  MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
  selectableToolIds,groupToolFootprint,boundedGroupOffset} from './MapSelection.js';
-import {campaignPresenceKey,onlineMemberIds,chatRowsForMap} from './CampaignRealtime.js';
+import {chatRowsForMap} from './CampaignRealtime.js';
+import useCampaignPresence from './useCampaignPresence.js';
 import {MacroManager} from './MacroBuilder.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import {DEFAULT_BINDINGS,normalizeBindings,normaliseHotbar,
@@ -106,8 +107,7 @@ export default function TabletopApp(){
  const[createName,setCreateName]=useState(''),[joinCode,setJoinCode]=useState(new URLSearchParams(location.search).get('join')||'');
  const[tab,setTab]=useState('tabletop'),[sheetTab,setSheetTab]=useState('main'),[template,setTemplate]=useState(null),[saveState,setSaveState]=useState('Saved');
  const[mapAssignments,setMapAssignments]=useState([]),[accountNames,setAccountNames]=useState([]);
- const[onlinePresenceKeys,setOnlinePresenceKeys]=useState([]),
-  [memberPresenceHashes,setMemberPresenceHashes]=useState({});
+
  const rosterRequest=useRef(0),chatRequest=useRef(0),
   campaignFetchRequest=useRef(0),campaignListRequest=useRef(0),
   mapLibraryRequest=useRef(0),npcLibraryRequest=useRef(0),
@@ -241,7 +241,9 @@ export default function TabletopApp(){
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user});
  const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
- const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
+ const onlineMembers=useCampaignPresence({
+  db,campaignId:activeId,userId:user,members,rosterRefreshRef:latestRosterRefresh
+ });
  const combatTracker=useMapCombat({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   onError:fail,onRefreshChat:refreshChat,
@@ -1079,49 +1081,6 @@ export default function TabletopApp(){
    void db.removeChannel(channel);
   };
  },[db,activeId,user]);
- useEffect(()=>{
-  let alive=true;
-  setOnlinePresenceKeys([]);
-  if(!db||!activeId||!user)return;
-  const campaignId=activeId;
-  let channel=null;
-  void campaignPresenceKey(campaignId,user).then(key=>{
-   if(!alive||!key)return;
-   // Public presence carries only a SHA-256 campaign-specific pseudonym.
-   // No account identifiers, names or protected map information are broadcast.
-   channel=db.channel('vtt-presence-'+campaignId,{
-    config:{presence:{key}}
-   });
-   const sync=()=>{
-    if(!alive)return;
-    setOnlinePresenceKeys(Object.keys(channel.presenceState()));
-    void latestRosterRefresh.current?.();
-   };
-   channel.on('presence',{event:'sync'},sync)
-    .subscribe(async status=>{
-     if(!alive)return;
-     if(status==='SUBSCRIBED'){
-      try{await channel.track({online:true})}
-      catch(error){console.warn('Could not publish online status',error)}
-     }else if(status==='CHANNEL_ERROR'){
-      setOnlinePresenceKeys([]);
-      console.warn('Player presence will retry',campaignId);
-     }
-    });
-  }).catch(error=>console.warn('Player presence unavailable',error));
-  return()=>{
-   alive=false;setOnlinePresenceKeys([]);
-   if(channel)void db.removeChannel(channel);
-  };
- },[db,activeId,user]);
- useEffect(()=>{
-  let alive=true;
-  void Promise.all(members.map(async m=>[
-   m.user_id,await campaignPresenceKey(activeId,m.user_id)
-  ])).then(entries=>{if(alive)setMemberPresenceHashes(Object.fromEntries(entries))})
-   .catch(error=>console.warn('Could not map party presence',error));
-  return()=>{alive=false};
- },[activeId,members]);
  useEffect(()=>{
   movementPending.current.clear();
   ++tokenRefreshSeq.current;
