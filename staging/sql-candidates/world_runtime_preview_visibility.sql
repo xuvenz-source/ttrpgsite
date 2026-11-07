@@ -7,6 +7,62 @@
 -- visibility on every pointer movement. Authentication comes from the RPC.
 -- A failed or expired preview reverts to the authoritative saved token row.
 begin;
+
+-- Keep holder-carried torch light synchronized with validated preview positions.
+CREATE OR REPLACE FUNCTION forge_visibility.is_lit(p_map uuid, scene jsonb, viewer_x double precision, viewer_y double precision, target_x double precision, target_y double precision, grid_size integer)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+ ambient double precision; source jsonb;
+ sx double precision;sy double precision;reach double precision;
+ light record;
+begin
+ ambient:=coalesce((scene->>'ambient')::double precision,25);
+ if ambient>=50 then return true;end if;
+ if ambient>0 and sqrt((target_x-viewer_x)^2+(target_y-viewer_y)^2)<=6
+ then return true;end if;
+ if sqrt((target_x-viewer_x)^2+(target_y-viewer_y)^2)<=1.5
+ then return true;end if;
+ for source in select value from jsonb_array_elements(scene->'objects')
+  where value->>'type'='light' and value->>'enabled'<>'false' limit 60 loop
+  sx:=(source->>'x')::double precision;sy:=(source->>'y')::double precision;
+  reach:=(coalesce((source->>'bright')::double precision,0)+
+   coalesce((source->>'dim')::double precision,0))/5;
+  if reach>0 and (target_x-sx)^2+(target_y-sy)^2<=reach^2 and
+   not forge_visibility.ray_blocked(scene,sx,sy,target_x,target_y,'light')
+  then return true;end if;
+ end loop;
+ for light in
+  select case when t.id is null then p.x+0.5
+    else coalesce(rate.last_x,t.x)+t.span_x/2.0 end as cx,
+   case when t.id is null then p.y+0.5
+    else coalesce(rate.last_y,t.y)+t.span_y/2.0 end as cy,
+   p.light_bright,p.light_dim
+  from public.campaign_tool_map_tokens p
+  left join public.map_tokens t on t.id=p.held_by_token_id
+   and t.map_id=p_map and t.visible
+  left join forge_visibility.movement_preview_rates rate
+   on rate.piece_id=t.id and rate.actor_id=t.owner_id
+    and rate.kind='token' and rate.map_id=p_map
+    and rate.base_x=t.x and rate.base_y=t.y
+    and rate.last_sent>statement_timestamp()-interval '2 seconds'
+  where p.map_id=p_map and p.light_enabled and p.kind='torch'
+   and (p.held_by_token_id is null or t.id is not null)
+  limit 50
+ loop
+  sx:=light.cx;sy:=light.cy;
+  reach:=(light.light_bright+light.light_dim)/5.0;
+  if reach>0 and (target_x-sx)^2+(target_y-sy)^2<=reach^2 and
+   not forge_visibility.ray_blocked(scene,sx,sy,target_x,target_y,'light')
+  then return true;end if;
+ end loop;
+ return false;
+exception when others then return false;
+end $function$;
+
 create or replace function forge_visibility.point_visible(p_map uuid,
  target_x double precision,target_y double precision,actor uuid)
 returns boolean language plpgsql stable security definer set search_path='' as $$
