@@ -96,7 +96,10 @@ export default function CharacterEditor({
     <p className="muted small">DM editor · Edits are saved to this player's permanent campaign character.</p>
    </div>
    {onOpenBrowserTab&&<button type="button" className="secondary"
-    title="Open character in a separate browser tab" onClick={onOpenBrowserTab}>↗ New tab</button>}
+    title="Pop this character sheet into a separate window" onClick={()=>{
+     if(changed){setError("Save your changes before popping out the sheet.");return}
+     if(onOpenBrowserTab()!==false)onClose();
+    }}>↗ Pop out</button>}
    <button type="button" className="secondary" aria-label="Close character sheet" onClick={close}>✕</button></div>
    <div className="npc-editor-top">
     <Artwork db={db} path={draft.portrait_path||draft.token_path} alt={draft.name} className="npc-editor-portrait"/>
