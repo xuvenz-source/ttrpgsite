@@ -15,7 +15,7 @@ export function fogPaintMask(frame,displayVisible=[]){
  for(const index of frame.visible||[])
   if(Number.isSafeInteger(index)&&index>=0&&index<count)result[index]=FOG_VISIBLE;
  const exploredSet=new Set(frame.explored||[]);
- for(const index of displayVisible)
+ for(const index of displayVisible||[])
   if(Number.isSafeInteger(index)&&index>=0&&index<count&&exploredSet.has(index))
    result[index]=FOG_VISIBLE;
  return result;
