@@ -39,8 +39,8 @@ set state=jsonb_set(i.state,'{items}',coalesce((
 ),'[]'::jsonb),true)
 where i.kind in ('mount','inventory')
  and exists (
-  select 1 from jsonb_array_elements(i.state->'items') row
-  where coalesce(row->>'_inventoryId','') !~
+  select 1 from jsonb_array_elements(i.state->'items') as entry(value)
+  where coalesce(entry.value->>'_inventoryId','') !~
   '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
  );
 

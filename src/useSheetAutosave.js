@@ -40,9 +40,12 @@ export default function useSheetAutosave({value,initialValue,onSave,delay=300,en
   timer.current=setTimeout(()=>{timer.current=null;void flush().catch(()=>{})},delay);
   return()=>{if(timer.current!==null){clearTimeout(timer.current);timer.current=null}};
  },[value,enabled,delay,flush]);
- useEffect(()=>()=>{
-  active.current=false;
-  if(timer.current!==null)clearTimeout(timer.current);
+ useEffect(()=>{
+  active.current=true;
+  return()=>{
+   active.current=false;
+   if(timer.current!==null)clearTimeout(timer.current);
+  };
  },[]);
  return {status,error,flush,hasPending:JSON.stringify(value)!==persisted.current};
 }

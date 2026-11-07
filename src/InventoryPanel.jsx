@@ -109,6 +109,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   const placed=moveInventoryItem(items,current.index,current.x,current.y,cols,height,current.turns);
   if(!placed){
    setError('Not enough empty slots for that position or orientation. No items were moved.');
+   release(current.index);
    return;
   }
   onChange(placed);setError('');

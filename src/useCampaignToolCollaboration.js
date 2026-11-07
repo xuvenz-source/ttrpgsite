@@ -71,9 +71,11 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   return op;
  },[db,issueId,userId]);
  const release=useCallback(async id=>{
-  if(!validUuid(id)||!owned.current.has(id))return;
+  if(!validUuid(id))return;
   try{
+   await (claimsInFlight.current.get(id)||Promise.resolve()).catch(()=>{});
    await (writes.current.get(id)||Promise.resolve()).catch(()=>{});
+   if(!owned.current.has(id))return;
    if(!owned.current.has(id))return;
    owned.current.delete(id);
    const {error:releaseError}=await db.rpc('release_campaign_tool_item',
@@ -109,11 +111,17 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
     p_row:remove?{}:removeItemIdentity(row),p_remove:remove});
    if(changeError)throw changeError;
    await refresh();
-   setOptimistic(old=>{const copy={...old};delete copy[id];return copy});
+   setOptimistic(old=>{
+    if(JSON.stringify(old[id])!==JSON.stringify(remove?null:row))return old;
+    const copy={...old};delete copy[id];return copy;
+   });
   });
   writes.current.set(id,next);
   void next.catch(e=>{
-   setOptimistic(old=>{const copy={...old};delete copy[id];return copy});
+   setOptimistic(old=>{
+    if(JSON.stringify(old[id])!==JSON.stringify(remove?null:row))return old;
+    const copy={...old};delete copy[id];return copy;
+   });
    setError(e.message||String(e));void refresh();
   }).finally(()=>{if(writes.current.get(id)===next)writes.current.delete(id)});
   return next;
