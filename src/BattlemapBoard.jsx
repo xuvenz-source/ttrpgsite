@@ -15,7 +15,6 @@ import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
 import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
-import {shouldPersistFogDrag} from './LiveTokenMovement.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
@@ -29,7 +28,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
  environment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
- handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
+ registerRemoteMotion,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
  onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
  onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
@@ -37,6 +36,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  if(!motion.current)motion.current=createTokenMotionRuntime();
  // Reusable through React dev effect remounts; clear without retiring runtime.
  useEffect(()=>{const runtime=motion.current;return()=>runtime.clear()},[]);
+ useEffect(()=>{
+  registerRemoteMotion?.(motion.current);
+  return()=>registerRemoteMotion?.(null);
+ },[registerRemoteMotion]);
  const[toolPreview,setToolPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[selectedToolIds,setSelectedToolIds]=useState([]);
@@ -626,19 +629,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   });
   for(const tool of info.tools||[])
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
-  // Fog prevents shared broadcast previews because spectators could receive
-  // hidden coordinates. Persist intermediate steps at a modest cadence instead:
-  // Supabase RLS distributes only the movements each viewer may observe.
-  const now=Date.now();
-  // A mixed group must commit atomically. Never partially persist its
-  // intermediate positions while the gesture is still in progress.
-  if(info.members.length===1&&!(info.tools||[]).length&&shouldPersistFogDrag(
-   fogFrame?.enabled,info.lastFogWrite,now)){
-   info.lastFogWrite=now;
-   info.persistedDuringDrag=true;
-   for(const token of info.members)
-    move(token,Number(token.x)+delta.dx,Number(token.y)+delta.dy);
-  }
+  // Server-validated observer previews carry movement without writing
+  // token positions or invalidating fog on every pointer sample.
+  // Only the final release persists via authoritative movement writes.
  }
  function toolDropCarrier(event){
   const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
@@ -783,7 +776,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
      onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}
      onRead={onReadHandoutPin} onCollect={onCollectHandoutPin}
      onDelete={onDeleteHandoutPin} onSelect={onSelectHandoutPin}/>
-    <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
+    <CampaignToolMapLayer motionRuntime={motion.current} map={map} scale={scale} userId={user} isDM={isDM}
      tokens={visibleTokens} tokenPositions={{...remotePositions,...preview}}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
      placements={toolPlacements} issued={toolIssued}
