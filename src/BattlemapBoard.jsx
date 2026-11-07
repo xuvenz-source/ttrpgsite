@@ -365,10 +365,21 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    if(current?.sourceButton!==0)return;
    updateMeasurement({pointerId:current.pointerId,clientX:e.clientX,clientY:e.clientY});
   }
+  // Context-menu events are more reliable than secondary pointerdown when
+  // the primary pointer is captured by the measurement toolbar or viewport.
+  function onContextMenu(e){
+   if(!shouldBendLineOnRightPress(measureDrag.current,2))return;
+   const rect=boardRef.current?.getBoundingClientRect();
+   if(!rect||e.clientX<rect.left||e.clientX>rect.right||
+    e.clientY<rect.top||e.clientY>rect.bottom)return;
+   pinCurrentMeasurementOnRightClick({...e,button:2});
+  }
+  window.addEventListener('contextmenu',onContextMenu,true);
   window.addEventListener('mousedown',onMouseDown,true);
   window.addEventListener('mousemove',onMouseMove,true);
   window.addEventListener('mouseup',onMouseUp,true);
   return()=>{
+   window.removeEventListener('contextmenu',onContextMenu,true);
    window.removeEventListener('mousedown',onMouseDown,true);
    window.removeEventListener('mousemove',onMouseMove,true);
    window.removeEventListener('mouseup',onMouseUp,true);
@@ -575,7 +586,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
     onMouseDownCapture={pinCurrentMeasurementOnRightClick}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
-    onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
+    onContextMenu={e=>{if(activeMeasureTool){
+     e.preventDefault();
+     pinCurrentMeasurementOnRightClick({...e,button:2});
+    }}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===2&&measureDrag.current)pinCurrentMeasurementOnRightClick(e);
