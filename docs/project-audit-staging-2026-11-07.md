@@ -37,7 +37,7 @@
 ## Items intentionally not refactored blindly
 
 - The large `src/main.jsx` still deserves staged module extraction, but moving the entire Board/controller without browser profiling risks pointer capture, fog permissions and mixed token/tool selection. Split along tested feature boundaries incrementally in a later batch.
-- Repeated CSS selectors include responsive and cascade overrides. Only deduplicate after checking actual selector/media scope and browser layouts; duplicate selector text alone is not a safe deletion criterion.
+- **Conservative CSS cleanup completed:** removed older identical Units subtab declarations and the earlier redundant map panning cursor rule after checking scope and later overrides. Remaining repeated selectors include responsive and cascade rules; do not mass-delete them without browser layout checks.
 - `get_authorized_map_fog` currently updates exploration records when called. Before changing backend computation, profile workloads and verify visibility/RLS semantics. Client-side request coalescing reduces redundant calls without a migration.
 - Source and CI verification are not full browser/multiplayer acceptance; there is no claim that all interactions have been manually tested.
 

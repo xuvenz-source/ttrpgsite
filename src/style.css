@@ -303,7 +303,6 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .app main{height:100dvh;max-height:100dvh;min-height:0;overflow:hidden}
 .app main .workarea{height:100%;flex:1;min-height:0}
 .map-pan-region{cursor:grab;touch-action:none;user-select:none}
-.map-pan-region.is-panning,.map-pan-region.is-panning .board{cursor:grabbing!important}
 .map-pan-region .board,.map-pan-region .gridlines{cursor:inherit}
 .map-pan-region .token{touch-action:none}
 @media(max-width:750px){
@@ -2565,10 +2564,8 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  accent-color:#d95b67;
 }
 
-/* Units → Tools. Match the existing dark compact Units panel. */
-.units-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 9px}
-.units-subtabs button{padding:7px 8px;font-size:12px;border-radius:6px}
-.units-subtabs button.selected{background:#354a68;border-color:#7b9ed0;color:#f5f8ff}
+/* Units → Tools. Shared Units subtab rules are declared once below
+   alongside the handouts section to avoid cascade drift. */
 .campaign-tools-pane{display:flex;flex-direction:column;gap:11px;min-width:0}
 .campaign-tool-section{background:#192537;border:1px solid #384a64;
  border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:7px;min-width:0}
