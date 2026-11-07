@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {createBarrier,createLight,normalizePoint} from './MapEnvironment.js';
+import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint} from './MapEnvironment.js';
 import {FEET_PER_CELL} from './MapMeasurements.js';
 
 const pointText=points=>(points||[]).map(p=>p.x+','+p.y).join(' ');
@@ -82,7 +82,8 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
   if(drag.current&&drag.current.pointerId===e.pointerId){
    const p=point(e);if(!p)return;
    const current=drag.current;
-   const points=current.points.map((pt,index)=>index===current.index?p:pt);
+   const points=resizeBarrierEndpoint(current.points,current.index,p);
+   if(!points)return;
    current.points=points;
    setDragPreview({id:current.id,points});
    return;
@@ -104,8 +105,7 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
    e.preventDefault();e.stopPropagation();
    const {id,points}=drag.current;
    drag.current=null;setDragPreview(null);
-   if(Math.hypot(points[1].x-points[0].x,points[1].y-points[0].y)>.01)
-    onPatch(id,{points},{immediate:true});
+   onPatch(id,{points},{immediate:true});
    return;
   }
   if(tool!=='wall-pen'||!drawing.current)return;
@@ -143,7 +143,7 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
        stroke={object.color||'#f6be75'} opacity=".5" strokeWidth=".12" strokeDasharray=".45 .3"/>}
       {inner>0&&<circle cx={x} cy={y} r={inner} fill="none"
        stroke={object.color||'#f6be75'} opacity=".95" strokeWidth=".12"/>}
-      <circle cx={x} cy={y} r={selected?.3:.19} fill={object.color||'#f6be75'}/>
+      <circle cx={x} cy={y} r={selected ? .3 : .19} fill={object.color||'#f6be75'}/>
      </g>;
     }
     const pts=dragPreview?.id===object.id?dragPreview.points:object.points||[];
