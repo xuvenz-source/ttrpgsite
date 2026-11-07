@@ -2,7 +2,7 @@
 
 **Branch:** `stage/world-runtime-movement-collision-fog-2026-11-08`
 **Production base:** `aa3e00f184b1f230f5d43556295c54a88f25e77e` (PR #45)
-**Status:** IN PROGRESS, NOT RELEASE READY. No production merge, database change, or preview deployment.
+**Status:** IMPLEMENTATION STAGED; SECURITY/BROWSER/SQL VERIFICATION PENDING. NOT RELEASE READY. No production merge, database change, or preview deployment.
 **Design ownership:** Designer controls gameplay semantics; developer proposes and implements underlying mechanics.
 **Infrastructure:** React/Vite, Supabase Free, Vercel Free. Do not introduce always-on paid infrastructure.
 
@@ -58,3 +58,57 @@
 ## Release/rollback guidance
 
 This first slice is frontend-only and has no schema migration. Keep the production `aa3e00f` untouched until the designer approves a consolidated release. The first slice may be reverted independently by removing the motion runtime and fog delta imports/references; it does not alter exploration persistence or map token rows. Subsequent SQL migrations require separate review, backwards-compatible data preservation and explicit live-test instructions.
+
+
+## Additional implementation staged (continued development)
+
+### 1. Server-authoritative group motion and collision
+
+- `world_runtime_collision_and_group_move.sql` stages a published-map collision trigger that applies to both player and DM tokens, including resize. DM override is no longer implicit: the DM must opt into it in map controls and the SQL RPC validates DM role.
+- `world_runtime_atomic_trajectory.sql` validates every preserved bend of a token/tool drag in one RLS-invoker Postgres transaction. A rejection rolls the entire route back. This prevents a legal bend through a doorway from being evaluated as an illegal straight-line teleport.
+- `world_runtime_dm_footprint_override.sql` lets a DM deliberately resize a token through walls without enabling uncontrolled privileges for players.
+- `MapMovementPath.js` coalesces straight movement without losing path turns, bounded to 64 segments.
+
+### 2. Real-time observer movement without map-wide coordinate leaks
+
+- `world_runtime_private_observer_motion.sql` stages an authenticated movement-preview RPC and a private rate/waypoint table. Public callers can send a token or issued-tool intent, never a client-provided actor identity or recipient list. The database checks map membership, ownership, fresh sequence, published geometry and a per-piece rate cap.
+- Validated positions are distributed through private `forge-observer:<map-id>:<viewer-id>` broadcast channels. Only the recipient user can subscribe. No client can send messages to those channels; the database emits them through `realtime.send`.
+- The server checks both motion endpoints and interpolated intermediate positions for the recipient's visibility. A transition out of sight emits a coordinate-free `hide` rather than hidden movement.
+- `TokenMotionRuntime.js` animates authorized remote samples between network ticks; local pointer motion remains immediate. Reconciliation still uses authorized table events as the source of truth.
+- Canceled and completed drags clear actor-owned preview positions; expired or stale previews fail back to persisted positions. This ephemeral table is NOT an authoritative token location and is not a replacement for final collision/position commits.
+
+### 3. Fog moving with server-validated previews
+
+- `world_runtime_preview_visibility.sql` stages additive substitutions in the existing visibility and lighting functions. Only a fresh validated server preview belonging to the token owner, with an unchanged canonical starting position, may influence viewer rays. Existing party-sharing and RLS checks are preserved.
+- The client coalesces sight refreshes to approximately four requests per second *at most while movement previews are being accepted*. Preview frame updates can discover newly RLS-authorized NPC rows even when the persistent map tick revision is unchanged.
+- This is an implementation candidate, **not verified live**. Fog preview exploration, party sharing, carried light, collision rejections, map transfers and RPC concurrency require multi-account testing before publishing.
+- `world_runtime_visibility_tick_metadata.sql` marks fog-enforced ticks so fog-off token movement does not blank the map, but fog-on sight invalidation still hides stale NPCs before a refreshed authorization arrives.
+
+### 4. Authoritative lighting
+
+- `world_runtime_authorized_light_masks.sql` computes illuminated torch cells from the published scene, clipped by wall-aware rays and the player's authorized sight. It uses validated movement previews for moving issued torches and their token carriers.
+- The player light layer applies these sanitized cell masks to the existing radial light gradient. Failure returns no unoccluded player light, never raw private wall geometry.
+- This candidate covers **issued-tool torches**. It does not yet establish final photometric-quality smooth shadows for *every* light type; cell-edge artifacts, static map lights, windows, elevations and non-torch light sources remain explicit browser-acceptance cases.
+
+## Staging SQL dependency order (UNAPPLIED)
+
+All candidates currently live only as committed GitHub source:
+
+1. `staging/sql-candidates/world_runtime_collision_and_group_move.sql`
+2. `staging/sql-candidates/world_runtime_dm_footprint_override.sql`
+3. `staging/sql-candidates/world_runtime_atomic_trajectory.sql`
+4. `staging/sql-candidates/world_runtime_private_observer_motion.sql`
+5. `staging/sql-candidates/world_runtime_preview_visibility.sql`
+6. `staging/sql-candidates/world_runtime_authorized_light_masks.sql`
+7. `staging/sql-candidates/world_runtime_visibility_tick_metadata.sql`
+
+These are **not yet deployable migration filenames**. Before an approved release, reconcile them against the live Supabase functions, review `SECURITY DEFINER` authorization, compile and release as ordered immutable migrations. Do not run them merely to obtain test feedback before the designer authorizes live testing.
+
+## Release blockers and required acceptance
+
+- Run the GitHub unit-test, lint, build and security workflows on the **latest consolidated commit**, not simply an earlier feature commit. Green static tests do not prove SQL compiles or multiplayer works.
+- Perform a deliberate privilege review: anonymous API denied, unowned map token and tool denied, forged observer topic SEND denied, viewer topic SELECT restricted, DM override denied to players, drag canceled/rejected/reconnected without lingering sight.
+- Exercise a DM + two real players against *existing live test campaigns after designer release approval*, both fog on/off and shared/private LOS. Test 1x1 and larger footprints, diagonals, wall ends, doors, windows, moving torches, dynamic lighting, grouped tokens/tools, and rollbacks.
+- Profile 10/50/100 token boards, rapid drags, network loss/rejoin and map changes. Do not claim latency or 60fps targets from static checks.
+- Check known limitations: the current map background artwork remains inspectable by the recipient browser; visual fog does not cryptographically hide unrevealed background art. Full terrain confidentiality needs protected tiles or player-safe map images.
+- **Implementation remains in draft PR #46.** Do not merge or deploy independently of other pending staged components; preserve Vercel deployment quota and free-tier project policy.
