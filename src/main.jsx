@@ -60,6 +60,7 @@ import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,
 import {parseSheetTemplateFile,serializeSheetTemplate,validateSheetTemplate} from './TemplateFiles.js';
 import {sheetQuickcodeReferences,hydrateSheetQuickcodes,configWithSheetQuickcodes} from './SheetQuickcodes.js';
 import InventoryPanel from './InventoryPanel.jsx';
+import SharedInventoryPanel from './SharedInventoryPanel.jsx';
 import InventoryRulesDesigner from './InventoryRulesDesigner.jsx';
 import {DEFAULT_ENCUMBRANCE,evaluateEncumbrance} from './InventoryMath.js';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
@@ -504,31 +505,27 @@ function App(){
  }
  async function saveNpc(record,draft){
   if(!record)return;
+  const former=record.kind==='template'?
+   record.data.field_values||{}:record.data.npc_values||{};
+  const changed=Object.fromEntries(Object.entries(draft.values)
+   .filter(([key,value])=>JSON.stringify(value)!==JSON.stringify(former[key])));
+  const updated=await read(db.rpc('patch_campaign_sheet_noninventory',{
+   p_campaign:activeId,p_source:record.kind==='template'?'npc_template':'npc_token',
+   p_source_id:record.data.id,p_values:changed,
+   p_meta:{
+    name:draft.name.trim(),token_path:draft.tokenPath,
+    bars_public:draft.barsPublic,
+    ...(record.kind==='template'?{portrait_path:draft.portraitPath}:{})
+   }
+  }));
   if(record.kind==='template'){
-   await read(db.from('npc_templates').update({
-    name:draft.name.trim(),field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath,
-    npc_bars_public:draft.barsPublic
-   }).eq('id',record.data.id));
-   await refreshNpcs();
-   // Template edits can propagate unchanged defaults to existing NPC copies.
-   await refreshTokens();
-   await refreshMonitors();
+   await refreshNpcs();await refreshTokens();await refreshMonitors();
   }else{
-   await read(db.from('map_tokens').update({
-    name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath,
-    npc_bars_public:draft.barsPublic
-   }).eq('id',record.data.id));
-   await refreshTokens();
-   await refreshMonitors();
+   await refreshTokens();await refreshMonitors();
   }
   const editorKey=record.kind+':'+record.data.id;
   setNpcEditors(current=>current.map(editor=>editor.kind+':'+editor.data.id===editorKey?
-   {...editor,data:{
-    ...editor.data,name:draft.name.trim(),npc_bars_public:draft.barsPublic,
-    ...(editor.kind==='template'?{
-     field_values:draft.values,portrait_path:draft.portraitPath,token_path:draft.tokenPath
-    }:{npc_values:draft.values,image_path:draft.tokenPath})
-   }}:editor));
+   {...editor,data:updated}:editor));
  }
  async function placeNpc(npcId,x=1,y=1){
   if(!npcId||!selectedMap||!isDM)return;
@@ -1324,8 +1321,11 @@ function App(){
  function writeSheetSnapshot(snapshot){
   // Preserve write order, even when a queued autosave and an immediate spell
   // cast try to persist different versions of the same character.
-  const write=sheetWriteQueue.current.then(()=>read(db.from('characters')
-   .update({field_values:snapshot.field_values,name:snapshot.name}).eq('id',snapshot.id)))
+  const write=sheetWriteQueue.current.then(()=>read(db.rpc(
+   'patch_campaign_sheet_noninventory',{
+    p_campaign:snapshot.campaign_id,p_source:'character',p_source_id:snapshot.id,
+    p_values:snapshot.patches||{},p_meta:{name:snapshot.name}
+   })))
    .then(result=>{notifyMonitorRefresh();return result});
   sheetWriteQueue.current=write.catch(()=>{});
   return write;
@@ -1390,12 +1390,20 @@ function App(){
    }
    return updated;
   });
-  pendingSheetSave.current=next;
+  const priorPending=pendingSheetSave.current?.id===next.id?
+   pendingSheetSave.current:null;
+  const changes=Object.fromEntries(Object.entries(next.field_values)
+   .filter(([key,fieldValue])=>JSON.stringify(fieldValue)!==
+    JSON.stringify(character.field_values?.[key])));
+  pendingSheetSave.current={...next,patches:{
+   ...(priorPending?.patches||{}),...changes
+  }};
+  const pending=pendingSheetSave.current;
   setSaveState('Saving…');clearTimeout(saveTimer.current);
   saveTimer.current=setTimeout(async()=>{
    try{
-    await writeSheetSnapshot(next);
-    if(pendingSheetSave.current===next){pendingSheetSave.current=null;setSaveState('Saved');}
+    await writeSheetSnapshot(pending);
+    if(pendingSheetSave.current===pending){pendingSheetSave.current=null;setSaveState('Saved');}
     refreshMonitors();
    }catch(e){setSaveState('Save failed');fail(e)}
   },200);
@@ -2030,9 +2038,9 @@ function App(){
   <PersonalResources value={character?.field_values?.[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>updateField(PERSONAL_RESOURCE_KEY,v)}/>
  </div></div>:
- <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<InventoryPanel field={f} value={character?.field_values?.[f.id]||[]}
-       template={camp?.sheet_template} sheetValues={character?.field_values}
-       onChange={v=>updateField(f.id,v)}/>:
+ <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={activeId}
+       userId={user} isDM={isDM} sourceType="character" sourceId={character?.id}
+       field={f} template={camp?.sheet_template} sheetValues={character?.field_values}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f}
   value={character?.field_values?.[f.id]||{}}
   sheetValues={character?.field_values||{}}
@@ -2276,8 +2284,8 @@ function App(){
      onClose={()=>setStatusEditToken(null)} onApply={applyTokenStatuses}/>
    </QuickEditBoundary>}
  {selectedToolIssue&&<CampaignToolSheet key={selectedToolIssue.id}
-  tool={selectedToolIssue} userId={user} isDM={isDM}
-  onSave={(tool,newState)=>campaignTools.updateState(tool,newState)}
+  db={db} tool={selectedToolIssue} userId={user} isDM={isDM}
+  onRefresh={campaignTools.refresh}
   onClose={()=>setSelectedToolIssueId(null)}/>}
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}

@@ -73,9 +73,11 @@ test('issued sheets reuse the existing grid/list inventory editor and mount stat
  const sheet=source('src/CampaignToolSheet.jsx');
  assert.match(sheet,/<InventoryPanel field=\{inventory\}/);
  assert.match(sheet,/tool\.kind==='mount'/);
- assert.match(sheet,/draft\.lit!==false/);
+ assert.match(sheet,/checked=\{meta\.lit\}/);
  assert.match(sheet,/disabled=\{!isDM\}/);
- assert.match(sheet,/onSave\(tool,draft\)/);
+ assert.match(sheet,/useCampaignToolCollaboration/);
+ assert.match(sheet,/onChange=\{collab\.changeItems\}/);
+ assert.doesNotMatch(sheet,/>Save changes<\/button>/);
 });
 test('candidate SQL has protected DM templates, recipient ACL and sanitized map projections',()=>{
  const sql=source('staging/sql-candidates/campaign_tools_issuance.sql');

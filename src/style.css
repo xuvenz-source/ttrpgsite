@@ -2698,3 +2698,29 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  width:14px;height:14px;display:grid;place-items:center;
  background:#182338;color:#e7ecf8;border:1px solid #8c98ad;
  border-radius:8px;font-size:11px;pointer-events:none}
+
+/* DM tab: common live operations, map controls, and lasting configuration. */
+.dm-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 10px}
+.dm-subtabs button{min-width:0;padding:7px 4px;font-size:11px;border-radius:6px}
+.dm-subtabs button.selected{background:#354a68;border-color:#7b9ed0;color:#f5f8ff}
+/* Weapon attack cards retain green identity with macro-size headers. */
+.macro-chat-card.weapon-attack .macro-chat-header{
+ flex-direction:row;justify-content:flex-start;align-items:center;
+ text-align:left;min-height:0;padding:3px 7px;gap:6px;
+}
+.macro-chat-card.weapon-attack .macro-chat-header strong{font-size:11px;line-height:1.15}
+.macro-chat-card.weapon-attack .macro-chat-header span{font-size:10px;line-height:1.15}
+
+/* Server leases: non-DM viewers cannot interact with another player's held item. */
+.inventory-grid-item-bound,.inventory-overflow-tile.inventory-grid-item-bound{
+ filter:grayscale(1);opacity:.47;cursor:not-allowed!important;
+}
+.inventory-grid-item-bound .inventory-bound-indicator{
+ position:absolute;top:2px;right:2px;background:#111925ee;border-radius:3px;
+ color:#f5e4e4;font-size:9px;padding:2px 4px;line-height:1.1;
+}
+.inventory-bound-indicator{font-size:10px;color:#dfb8b9;white-space:nowrap}
+.inventory-row-bound{opacity:.7}
+.inventory-bound-take{position:absolute;bottom:2px;right:2px;
+ background:#314b6fee;border:1px solid #709ccc;border-radius:4px;
+ padding:2px 5px;color:#f5f8ff;font-size:10px;cursor:pointer;z-index:2}
