@@ -53,3 +53,20 @@ test('invalid previews are ignored, detached nodes no longer updated',()=>{
  assert.equal(node.style.translate,'100px 100px');
  motion.dispose();
 });
+
+test('remote samples ease between network ticks and local dragging stays instant',()=>{
+ const {motion,flush}=runtime();
+ const token={style:{}},monitor={style:{}};
+ motion.bind('a','sprite',token,{x:1,y:1,cell:70});
+ motion.bind('a','monitor',monitor,{x:1,y:1,cell:70});
+ motion.previewRemote('a',3,1);flush();
+ assert.equal(token.style.transition,'translate 115ms linear');
+ assert.equal(monitor.style.translate,'140px 0px');
+ motion.preview('a',4,1);flush();
+ assert.equal(token.style.transition,'');
+ assert.equal(token.style.translate,'210px 0px');
+ motion.clearPreview('a');flush();
+ assert.equal(token.style.transition,'');
+ assert.equal(monitor.style.translate,'');
+ motion.dispose();
+});
