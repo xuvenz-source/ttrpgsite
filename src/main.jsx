@@ -398,7 +398,8 @@ function App(){
   const url=new URL(location.origin+location.pathname);
   url.searchParams.set('campaign',activeId);
   url.searchParams.set('sheet',characterId);
-  window.open(url.toString(),'_blank','noopener,noreferrer');
+  window.open(url.toString(),'_blank',
+   'popup=yes,width=920,height=760,resizable=yes,scrollbars=yes,noopener,noreferrer');
  }
  async function openOwnCharacter(characterId){
   const target=characters.find(ch=>ch.id===characterId&&ch.user_id===user);
@@ -538,7 +539,7 @@ function App(){
   }catch(error){console.warn('Sheet artwork saved, but map token image could not refresh',error)}
   void refreshMonitors();
  }
- // A sheet opened in a browser tab runs under its own Supabase session,
+ // A sheet pop-out runs under its own Supabase session,
  // with normal character RLS and account permissions.
  useEffect(()=>{
   if(!launchSheet||launchHandled.current||!camp||activeId!==launchSheet.campaignId)return;
@@ -1854,7 +1855,8 @@ function App(){
   Only the campaign DM can open an NPC pop-out.
  </div>;
  if(!camp)return <div className="welcome-screen"><div className="welcome-shell"><h2>Opening campaign…</h2><p className="muted small">Loading your maps and character sheets.</p><button className="secondary" onClick={()=>setActiveId('')}>Back to main menu</button></div></div>;
- return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')} style={{'--ui-scale':uiScale}}>
+ return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')+
+  (launchSheet?' sheet-popup-app':'')} style={{'--ui-scale':uiScale}}>
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
  <div className="workarea"><div className="primary">
@@ -1867,7 +1869,7 @@ function App(){
   </div>
  </section>}
  {camp&&<>
- {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>setTab('tabletop')}>
+ {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>launchSheet?window.close():setTab('tabletop')}>
  <section className="panel page-panel floating-sheet-content"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
@@ -1879,11 +1881,11 @@ function App(){
    </select>
   </label>
   <button type="button" className="secondary" disabled={!character}
-   onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a browser tab">
-   ↗ New tab</button>
+   onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a separate browser window">
+   ↗ Pop out</button>
   <button type="button" className="secondary" disabled={!character}
    onClick={()=>setArtStudio(true)}>My Token Library</button>
-  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
+  <button type="button" className="secondary return-to-game" onClick={()=>launchSheet?window.close():setTab('tabletop')}>{launchSheet?'Close window':'← Return to Game'}</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}
  <button className={sheetTab===PERSONAL_RESOURCE_TAB?'selected':''}
   onClick={()=>setSheetTab(PERSONAL_RESOURCE_TAB)}>Resources</button></div>
@@ -2109,7 +2111,7 @@ function App(){
  {characterEditor&&isDM&&<CharacterEditor
   db={db} campaignId={activeId} viewerId={user}
   record={characterEditor.data} template={camp?.sheet_template}
-  onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
+  onSaved={afterPlayerSheetSaved} onClose={()=>launchSheet?window.close():setCharacterEditor(null)}
    onOpenBrowserTab={()=>openSheetBrowserTab(characterEditor.data.id)}
   onRoll={(expression,label)=>roll(expression,label,null)}
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
