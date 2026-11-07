@@ -30,7 +30,7 @@ create or replace function forge_visibility.observer_can_see(
 declare
  m record; member_role text; assigned uuid; active uuid;
  scene jsonb; party boolean; viewer record;
- sx double precision; sy double precision; values jsonb;
+ sx double precision; sy double precision; sheet_values jsonb;
 begin
  if p_recipient is null then return false;end if;
  select bm.campaign_id,bm.width,bm.height,bm.grid_size into m
@@ -68,8 +68,8 @@ begin
  loop
   sx:=viewer.x+viewer.span_x/2.0; sy:=viewer.y+viewer.span_y/2.0;
   if (p_x-sx)^2+(p_y-sy)^2>144 then continue;end if;
-  values:=viewer.sheet_values;
-  if not forge_visibility.ray_blocked(scene,sx,sy,p_x,p_y,'vision',values)
+  sheet_values:=viewer.sheet_values;
+  if not forge_visibility.ray_blocked(scene,sx,sy,p_x,p_y,'vision',sheet_values)
    and forge_visibility.is_lit(p_map,scene,sx,sy,p_x,p_y,m.grid_size)
   then return true;end if;
  end loop;
