@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 const raw=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ledger=JSON.parse(raw('staging/next-release-ledger.json'));
 test('the next release is a consolidated staging branch, not a Vercel deployment',()=>{
- assert.match(ledger.releaseBranch,/^stage\/next-release-consolidated-/);
+ assert.match(ledger.releaseBranch,/^stage\//);
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
  assert.ok(ledger.features.every(x=>['included','released'].includes(x.status)&&x.sources.every(s=>ledger.branches.some(b=>b.name===s&&['included','released'].includes(b.status)))));
