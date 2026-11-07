@@ -1,4 +1,4 @@
-import React,{useEffect,useState} from 'react';
+import React,{useState} from 'react';
 import {TOOL_KINDS,DEFAULT_TOOL_CONFIG,normaliseToolConfig,toolCanControl} from './CampaignTools.js';
 
 const preset=kind=>({
@@ -81,7 +81,6 @@ export default function CampaignToolsPanel({tools,members=[],accountNames=[],use
   setDraft({name:t.name,icon:t.icon,kind:t.kind,config:t.config});
   setRecipient('party');
  }
- useEffect(()=>{setEditing(null);setIssueFor(null);setNotice('')},[tools,undefined]);
  // If the DM withdraws an issuance while the sheet is open, the parent closes it.
  return <div className="campaign-tools-pane">
   {tools.error&&<p role="alert" className="error small">Tools unavailable: {tools.error}</p>}
