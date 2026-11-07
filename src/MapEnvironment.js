@@ -81,6 +81,13 @@ export function wallAllows(wall,token,kind='movement',fromSide='a'){
  if(wall.vision==='one-way')return wall.oneWay===(fromSide==='a'?'a-to-b':'b-to-a');
  return false;
 }
+/** Move exactly one door/window endpoint. Other end remains fixed; no grid snapping. */
+export function resizeBarrierEndpoint(points,index,position){
+ if(!Array.isArray(points)||points.length!==2||![0,1].includes(index))return null;
+ const result=points.map((p,i)=>i===index?normalizePoint(position):normalizePoint(p));
+ if(Math.hypot(result[1].x-result[0].x,result[1].y-result[0].y)<.01)return null;
+ return result;
+}
 export function lightRadii(light){
  const bright=between(finite(light?.bright),0,500),dim=between(finite(light?.dim),0,500);
  return {bright,dim,outer:bright+dim};
