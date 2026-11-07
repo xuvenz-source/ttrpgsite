@@ -8,7 +8,7 @@ const colorParts=hex=>{
 };
 /** Tool tokens are peers of characters for selection, drag, live previews and
  * final persistence. Board owns the gesture so mixed groups move together. */
-export default function CampaignToolMapLayer({placements=[],issued=[],tokens=[],tokenPositions={},map,scale,userId,isDM,
+export default function CampaignToolMapLayer({placements=[],issued=[],tokens=[],tokenPositions={},map,scale,userId,isDM,motionRuntime,
  environment=null,
  active=true,editing=false,measuring=false,preview={},remotePositions={},
  selectedIds=[],onTokenPointerDown,onTokenPointerMove,onTokenPointerUp,onTokenPointerCancel,onOpen}){
@@ -16,6 +16,7 @@ export default function CampaignToolMapLayer({placements=[],issued=[],tokens=[],
  const cell=Number(map.grid_size)*scale;
  return <div className="campaign-tool-map-layer" aria-label="Issued tool tokens">
   {placements.map(p=>{
+   if(remotePositions[p.issue_id]?.hidden)return null;
    const own=issued.find(t=>t.id===p.issue_id);
    const carrier=p.held_by_token_id?
     tokens.find(token=>token.id===p.held_by_token_id&&token.visible!==false):null;
@@ -36,11 +37,15 @@ export default function CampaignToolMapLayer({placements=[],issued=[],tokens=[],
     x:Number(at.x)+centerX,y:Number(at.y)+centerY,radiusFeet:total}):null;
    return <React.Fragment key={p.issue_id}>
     {lightOn&&<div className="campaign-tool-light-radius" aria-hidden="true"
+     ref={node=>motionRuntime?.bind(carrier?.id||'tool:'+p.issue_id,
+      'light:'+p.issue_id,node,{x:Number(at.x),y:Number(at.y),cell})}
      style={{left:x+cell*centerX-radius,top:y+cell*centerY-radius,width:radius*2,height:radius*2,
       opacity:Math.min(1,Math.max(0,Number(p.light_intensity)||0)/100),
       clipPath:occlusion||undefined,
       background:`radial-gradient(circle,rgba(${rgb},.65) 0%,rgba(${rgb},.32) ${bright}%,rgba(${rgb},0) 100%)`}}/>}
     {!carrier&&<button type="button"
+     ref={node=>motionRuntime?.bind('tool:'+p.issue_id,
+      'sprite',node,{x:Number(at.x),y:Number(at.y),cell})}
      className={'campaign-tool-map-token'+(canMove?' can-move':'')+
       (selectedIds.includes(p.issue_id)?' tool-selected':'')}
      style={{left:x,top:y,width:cell*span,height:cell*span}}
