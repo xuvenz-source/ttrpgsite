@@ -6,6 +6,7 @@ import './map-environment.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
+ measurementGeometry,addLineTurn,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
@@ -13,8 +14,12 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import MapSettingPanel from './MapSettingPanel.jsx';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
-import {normalizeEnvironment,withObject} from './MapEnvironment.js';
+import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
+import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
+import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
+import {normalizeEnvironment,withObject,patchObject} from './MapEnvironment.js';
 import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
@@ -127,12 +132,14 @@ function App(){
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[mapEnvironment,setMapEnvironment]=useState(null);
+ const mapEnvironmentCurrent=useRef(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
+ const[mapSettingPopped,setMapSettingPopped]=useState(false);
  const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
-  lockLight:false,lockBackground:true,snap:true,preset:'solid',
+  lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
   selectedId:null,lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
@@ -645,11 +652,11 @@ function App(){
   return()=>data.subscription.unsubscribe();
  },[]);
  useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
- useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
+ useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setMapSettingPopped(false);setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
   setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
-  ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
+  ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setMapSettingPopped(false);setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
  useEffect(()=>{
   if(!db||!user){setBindings(normalizeBindings(DEFAULT_BINDINGS));setHotbarVisible(true);setUiScale(.9);return}
   let alive=true;
@@ -961,8 +968,8 @@ function App(){
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
  useEffect(()=>{
   let live=true;
-  setMapEnvironment(null);setMapEnvironmentMapId('');
-  setMapSettingEditor(old=>({...old,enabled:false,selectedId:null}));
+  setMapEnvironment(null);mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
+  setMapSettingEditor(old=>({...old,enabled:false,previewing:false,previewTokenId:'',selectedId:null}));
   if(!db||!isDM||!activeId||!selectedMap){
    setMapEnvironmentStatus('Choose a map');return()=>{live=false};
   }
@@ -975,7 +982,8 @@ function App(){
     setMapEnvironmentStatus('Map storage unavailable: apply the staged environment migration first.');
     console.warn('Map environment loading failed',loadError);return;
    }
-   setMapEnvironment(normalizeEnvironment(data?.prepared));
+   mapEnvironmentCurrent.current=normalizeEnvironment(data?.prepared);
+   setMapEnvironment(mapEnvironmentCurrent.current);
    setMapEnvironmentMapId(selectedMap);
    setMapEnvironmentStatus('Saved');
   })().catch(e=>{if(live){setMapEnvironmentStatus('Environment load failed');fail(e)}});
@@ -1608,14 +1616,18 @@ function App(){
   }
   const next=normalizeEnvironment(nextValue);
   const mapId=selectedMap,campaignId=activeId;
+  mapEnvironmentCurrent.current=next;
   setMapEnvironment(next);setMapEnvironmentStatus('Saving…');
   mapEnvironmentWriter.current.schedule(next,{mapId,campaignId},{immediate});
  }
  function addEnvironmentObject(object){
-  if(mapEnvironmentMapId!==selectedMap||!mapEnvironment)return;
-  // Newly drawn walls and lights persist immediately. Rapid numeric inputs
-  // use the debounced path, which is flushed on map switches and tab hiding.
-  saveMapEnvironment(withObject(mapEnvironment,object),{immediate:true});
+  if(mapEnvironmentMapId!==selectedMap||!mapEnvironmentCurrent.current)return;
+  saveMapEnvironment(withObject(mapEnvironmentCurrent.current,object),{immediate:true});
+ }
+ function patchEnvironmentObject(id,change,{immediate=false}={}){
+  if(!isDM||mapEnvironmentMapId!==selectedMap||!mapEnvironmentCurrent.current)return;
+  if(!mapEnvironmentCurrent.current.objects.some(object=>object.id===id))return;
+  saveMapEnvironment(patchObject(mapEnvironmentCurrent.current,id,change),{immediate});
  }
  async function saveMapCalibration(map,next){
   if(!isDM)throw Error('Only the DM can adjust map calibration.');
@@ -1925,11 +1937,17 @@ function App(){
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
  <label className="button">+ Upload map <input hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadMap}/></label>
  </div></div>{uploading&&<p>Compressing and uploading…</p>}<div className="library"><div><button className={'nav '+(!folder?'active':'')} onClick={()=>setFolder(null)}>All maps</button>{folders.map(f=><button key={f.id} className={'nav '+(folder===f.id?'active':'')} style={{paddingLeft:f.parent_id?26:10}} onClick={()=>setFolder(f.id)}>📁 {f.name}</button>)}<form className="stack" onSubmit={addFolder}><input required placeholder="Folder name" value={newFolder} onChange={e=>setNewFolder(e.target.value)}/><button className="secondary">+ Folder</button></form></div><div className="mapcards">{maps.filter(m=>m.folder_id===folder).map(m=><article className="mapcard" key={m.id} onClick={()=>selectMap(m.id).catch(fail)}>{urls[m.id]?<img src={urls[m.id]}/>:<div className="placeholder">Map</div>}<strong>{m.name}</strong><small>{m.width} × {m.height}</small></article>)}</div></div></section>}
- {(tab==='tabletop'||tab==='sheet')&&<section className="panel tabletop-panel map-only-panel">
+ {/* Preserve the same map and viewport across other workspace tabs. Keep the
+     signed image mounted; only hide the tabletop until it is needed again. */}
+ <section className="panel tabletop-panel map-only-panel"
+  style={tab==='tabletop'||tab==='sheet'?undefined:{display:'none'}}
+  aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+   active={tab==='tabletop'||tab==='sheet'}
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
-   onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
+   onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
+   template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
@@ -1956,7 +1974,7 @@ function App(){
     <p>{isDM?'No map selected. Upload a map to get started.':'The DM has not published a map yet.'}</p>
     {isDM&&<button type="button" onClick={()=>setTab('maps')}>Open map library</button>}
    </div>}
- </section>}
+ </section>
  </>}
  </div><TabletopSidebar
  db={db} panel={rightTab} onPanelChange={setRightTab} isDM={isDM} user={user}
@@ -1974,6 +1992,9 @@ function App(){
  mapEnvironment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
  mapEnvironmentStatus={mapEnvironmentStatus}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
+ mapSettingPopped={mapSettingPopped}
+ onPopOutMapSetting={()=>setMapSettingPopped(true)}
+ onDockMapSetting={()=>{setMapSettingPopped(false);setRightTab('dm')}}
  onMapEnvironmentChange={saveMapEnvironment}
  publishedMapId={camp?.active_map_id||null} onPublishMap={publishMap}
   onMoveEntireParty={moveEntireParty}
@@ -2010,6 +2031,28 @@ function App(){
  accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
  /></div>
  </main>
+ {isDM&&mapSettingPopped&&<FloatingWindow kind="mapsetting"
+  onClose={()=>{setMapSettingPopped(false);setRightTab('dm')}}>
+  <section className="panel floating-map-setting-content" aria-label="Floating DM Map setting">
+   <div className="heading">
+    <h2>Map setting</h2>
+    <button type="button" className="secondary map-setting-dock-button"
+     onClick={()=>{setMapSettingPopped(false);setRightTab('dm')}}
+     aria-label="Dock Map setting back to DM sidebar"
+     title="Return Map setting to the DM sidebar">↙ Dock</button>
+   </div>
+   <div className="map-setting-pop-body">
+    <MapSettingPanel key={activeMap?.id||'no-map'}
+     map={activeMap}
+     environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+     editor={mapSettingEditor} onEditorChange={setMapSettingEditor}
+     onEnvironmentChange={saveMapEnvironment}
+     onMapCalibrationPreview={setMapCalibrationPreview}
+     onSaveMapCalibration={saveMapCalibration}
+     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}/>
+   </div>
+  </section>
+ </FloatingWindow>}
  {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
   onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
  {macroBuilderOpen&&<MacroManager macros={macros}
@@ -2315,26 +2358,44 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
- environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject}){
+ environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
+ onPatchEnvironmentObject,characters=[],template,active=true}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
  const[activeMeasureTool,setActiveMeasureTool]=useState(null),
   [localMeasurements,setLocalMeasurements]=useState([]);
  const measureDrag=useRef(null),toolDrag=useRef(null);
+ const lastCenteredMap=useRef(null);
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
  // Reuse derived rendering data during drag, measurement and marquee updates.
- const visibleTokens=useMemo(()=>isDM?tokens:tokens.filter(t=>t.visible),[tokens,isDM]);
+ const previewToken=isDM&&environmentEditor?.previewing?
+  tokens.find(t=>t.id===(environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id)):null;
+ const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
+ const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
+ const previewPolygon=useMemo(()=>previewActive?
+  previewVisionPolygon({map,environment,viewer,maxFeet:60}):[],
+  [previewActive,map,environment,viewer]);
+ const visibleTokens=useMemo(()=>{
+  const allowed=isDM?tokens:tokens.filter(t=>t.visible);
+  if(!previewActive)return allowed;
+  return allowed.filter(t=>t.visible!==false&&
+   (t.id===previewToken?.id||pointInPolygon({
+    x:Number(t.x)+Number(t.span_x??1)/2,
+    y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)));
+ },[tokens,isDM,previewActive,previewToken?.id,previewPolygon]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
- const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject});
- environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject};
+ const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject});
+ environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject};
  const handleEnvironmentAdd=useCallback(object=>environmentHandlers.current.onAddEnvironmentObject?.(object),[]);
  const handleEnvironmentSelect=useCallback(id=>environmentHandlers.current.onSelectEnvironmentObject?.(id),[]);
+ const handleEnvironmentPatch=useCallback((id,change,opts)=>
+  environmentHandlers.current.onPatchEnvironmentObject?.(id,change,opts),[]);
  function selectTokens(ids){
   const unique=[...new Set(ids)];
   setSelectedIds(unique);
@@ -2355,7 +2416,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  },[map.id]);
  useEffect(()=>{
   function onEscape(event){
-   if(event.key!=='Escape'||!activeMeasureTool)return;
+   if(!active||event.key!=='Escape'||!activeMeasureTool)return;
    event.preventDefault();
    const current=measureDrag.current;
    if(current){
@@ -2367,14 +2428,16 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   }
   window.addEventListener('keydown',onEscape);
   return()=>window.removeEventListener('keydown',onEscape);
- },[activeMeasureTool,onMeasurementPreview]);
+ },[active,activeMeasureTool,onMeasurementPreview]);
  // Recenter only when opening a different map, not during zoom/pan.
  useLayoutEffect(()=>{
+  if(!active||lastCenteredMap.current===map.id)return;
   const vp=viewportRef.current;
-  if(!vp)return;
+  if(!vp||!vp.clientWidth||!vp.clientHeight)return;
   vp.scrollLeft=Math.max(0,(vp.scrollWidth-vp.clientWidth)/2);
   vp.scrollTop=Math.max(0,(vp.scrollHeight-vp.clientHeight)/2);
- },[map.id]);
+  lastCenteredMap.current=map.id;
+ },[map.id,active]);
  useEffect(()=>{zoomRef.current=scale},[scale]);
  useEffect(()=>{setPreview({})},[tokens]);
  useEffect(()=>{
@@ -2404,7 +2467,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  },[selectedId,map.id,hotbarInset]);
  useEffect(()=>{
   function handleDelete(e){
-   if(!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
+   if(!active||!isDM||!selectedId||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
    const el=e.target;
    if(el instanceof Element && el.closest('input,textarea,select,button,[contenteditable="true"],[role="textbox"]'))return;
    if(document.querySelector('.modal-backdrop'))return;
@@ -2414,7 +2477,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   }
   document.addEventListener('keydown',handleDelete);
   return()=>document.removeEventListener('keydown',handleDelete);
- },[selectedId,isDM,tokens,remove]);
+ },[active,selectedId,isDM,tokens,remove]);
  useEffect(()=>{
   const node=viewportRef.current;if(!node)return;
   const wheel=e=>{
@@ -2494,12 +2557,16 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  function finishMeasurement(e,cancel=false){
   const current=measureDrag.current;
   if(!current||current.pointerId!==e.pointerId)return;
+  // Releasing the secondary button while primary remains down must NOT
+  // finish a multi-leg movement measurement.
+  if(e.button===2&&(e.buttons&1)!==0)return;
   measureDrag.current=null;
   const point=cancel?current.measure.end:
    mapPointInCells(e)||current.measure.end;
   const done={...current.measure,end:point};
-  const meaningful=Math.hypot(done.end.x-done.start.x,
-   done.end.y-done.start.y)>=.5;
+  const meaningful=done.tool==='line'?
+   (measurementGeometry(done)?.feet||0)>0:
+   Math.hypot(done.end.x-done.start.x,done.end.y-done.start.y)>=.5;
   if(!cancel&&meaningful&&current.pinned){
    setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
     {...done,isLocal:true,pinned:true}:m));
@@ -2534,6 +2601,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  }
  function onToolPointerUp(e,cancel=false){
   if(toolDrag.current?.pointerId!==e.pointerId)return;
+  if(e.button===2&&(e.buttons&1)!==0)return;
   finishMeasurement(e,cancel);
   toolDrag.current=null;
   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
@@ -2548,11 +2616,41 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
  }
  function pinCurrentMeasurementOnRightClick(e){
-  // Chorded mouse buttons do not generate a second pointerdown.
+  // A secondary click during a held primary-button line measurement
+  // creates a snapped bend rather than pinning the line. A right-button
+  // measurement started on its own still pins as before.
   if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
+  const current=measureDrag.current;
+  if(current.measure.tool==='line'&&!current.pinned&&(e.buttons&1)!==0){
+   const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end);
+   if(next!==current.measure){
+    current.measure=next;
+    setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
+     {...next,isLocal:true}:m));
+    onMeasurementPreview?.(next,'preview');
+   }
+   return;
+  }
   measureDrag.current.pinned=true;
  }
+ // When a measurement begins on the floating toolbar, the button captures
+ // its pointer while the user drags onto the map. A second mouse button can
+ // therefore be retargeted to the toolbar rather than the map viewport.
+ // Catch chorded right-clicks globally during a measurement, without affecting
+ // standalone right-drag pinning or interactions outside the battlemap.
+ useEffect(()=>{
+  if(!active||!activeMeasureTool)return;
+  function onMouseDown(e){
+   if(e.button!==2||!measureDrag.current)return;
+   const rect=boardRef.current?.getBoundingClientRect();
+   if(!rect||e.clientX<rect.left||e.clientX>rect.right||
+    e.clientY<rect.top||e.clientY>rect.bottom)return;
+   pinCurrentMeasurementOnRightClick(e);
+  }
+  window.addEventListener('mousedown',onMouseDown,true);
+  return()=>window.removeEventListener('mousedown',onMouseDown,true);
+ },[active,activeMeasureTool]);
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
   // panning because touchscreens do not have a middle mouse button.
@@ -2565,7 +2663,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   setPanning(true);
  }
  function startMarquee(e){
-  if(environmentEditor?.enabled)return;
+  if(environmentEditor?.enabled||previewActive)return;
   if(activeMeasureTool||e.button!==0||e.pointerType==='touch'||pan.current||drag.current||
      e.altKey||e.ctrlKey||e.metaKey||e.target.closest('.token'))return;
   const viewport=viewportRef.current;
@@ -2612,6 +2710,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  }
  function startTokenDrag(e,t,canMove){
   e.stopPropagation();
+  if(previewActive)return;
   if(e.button!==0)return;
   const group=canMove&&selectedIds.includes(t.id)&&selectedIds.length>1?
    selectedIds.filter(id=>tokens.some(other=>other.id===id&&
@@ -2683,7 +2782,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===1||e.pointerType==='touch'&&!activeMeasureTool)startPan(e);
-     else if(!environmentEditor?.enabled)startMeasurementCapture(e);
+     else if(!environmentEditor?.enabled&&!previewActive)startMeasurementCapture(e);
     }} onPointerDown={startMarquee}
     onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
     onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
@@ -2699,14 +2798,21 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
-     onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}/>}
+     onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
+     onPatch={handleEnvironmentPatch}/>}
+    {isDM&&!previewActive&&environment&&environmentEditor?.selectedId&&
+     <MapObjectQuickAdjust key={environmentEditor.selectedId}
+      map={map} scale={scale}
+      object={environment.objects.find(o=>o.id===environmentEditor.selectedId)}
+      template={template} onPatch={handleEnvironmentPatch}
+      onClose={()=>handleEnvironmentSelect(null)}/>}
     {visibleTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
-      canMove=canControlMapToken(t,user,isDM,map.id);
+      canMove=!previewActive&&canControlMapToken(t,user,isDM,map.id);
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
-      (selectedIds.includes(t.id)?' token-selected':'')}
+      (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
@@ -2715,6 +2821,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        (isDM?' · Alt + double-click to edit sheet':'')}
       onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
       onClick={e=>{
+       if(previewActive)return;
        if(e.shiftKey&&!e.ctrlKey&&!e.altKey){
         e.preventDefault();e.stopPropagation();onTokenStatus(t);return;
        }
@@ -2732,7 +2839,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
        position={statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>
-      {isDM&&selectedId===t.id&&selectedIds.length===1&&<div className="token-resize-handle" role="button"
+      {isDM&&!previewActive&&selectedId===t.id&&selectedIds.length===1&&<div className="token-resize-handle" role="button"
         aria-label={'Resize '+t.name} title="Drag to change token footprint"
         onPointerDown={e=>{
          e.stopPropagation();e.preventDefault();
@@ -2777,6 +2884,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     <TokenMonitorFrames tokens={visibleTokens} remotePositions={remotePositions}
      preview={preview} config={displaySettings} monitorValues={monitorValues}
      encumbranceBadges={encumbranceBadges} gridSize={map.grid_size} scale={scale}/>
+    {previewActive&&<MapPlayerPreviewOverlay map={map} environment={environment}
+     polygon={previewPolygon} viewerName={previewToken?.name}/>}
    </div>
    </div>
   </div>

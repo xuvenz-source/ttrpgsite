@@ -207,6 +207,7 @@ export default function TabletopSidebar({
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
   mapEnvironment,mapSettingEditor,onMapSettingEditorChange,onMapEnvironmentChange,mapEnvironmentStatus,
+   mapSettingPopped=false,onPopOutMapSetting,onDockMapSetting,
  statusCatalog,onSaveStatusCatalog,template,quickFields,onSaveQuickFields,onCopyInvite,onNavigate,onCreatePortrait,onOpenPlayerCharacter,currentPage,onDistributedItem,
  bindings,onSaveBindings,hotbarSlots,onSaveHotbar,hotbarVisible,onChangeHotbarVisible,
  macroCount=0,onOpenMacros,
@@ -362,12 +363,22 @@ export default function TabletopSidebar({
     </SavedDetails>
     <SavedDetails menuKey={'dm/map-setting'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Map setting</summary>
-     <MapSettingPanel key={activeMap?.id||'no-map'}
-      map={activeMap} environment={mapEnvironment} editor={mapSettingEditor}
-      onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
-      saveStatus={mapEnvironmentStatus}
-      onMapCalibrationPreview={onMapCalibrationPreview}
-      onSaveMapCalibration={onSaveMapCalibration} template={template}/>
+     {mapSettingPopped?<div className="map-setting-docked-placeholder">
+      <p className="muted small">Map setting is open in a floating window. You can switch sidebar tabs while it stays open.</p>
+      <button type="button" className="secondary" onClick={onDockMapSetting}>Dock to sidebar</button>
+     </div>:<>
+      <div className="map-setting-window-actions">
+       <button type="button" className="secondary" onClick={onPopOutMapSetting}
+        aria-label="Pop out Map setting to a floating window"
+        title="Keep Map setting open when switching sidebar tabs">↗ Pop out Map setting</button>
+      </div>
+      <MapSettingPanel key={activeMap?.id||'no-map'}
+       map={activeMap} environment={mapEnvironment} editor={mapSettingEditor}
+       onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
+       saveStatus={mapEnvironmentStatus}
+       onMapCalibrationPreview={onMapCalibrationPreview}
+       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}/>
+     </>}
     </SavedDetails>
     <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Token settings & resources</summary>

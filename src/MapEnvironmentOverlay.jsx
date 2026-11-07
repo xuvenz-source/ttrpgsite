@@ -1,51 +1,59 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {createBarrier,createLight,snapEnvironmentPoint} from './MapEnvironment.js';
+import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint} from './MapEnvironment.js';
 import {FEET_PER_CELL} from './MapMeasurements.js';
 
-/** DM-only editor overlay. None of these geometry objects are sent to players. */
-function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect}){
- const [draft,setDraft]=useState([]);
- const [cursor,setCursor]=useState(null);
- const drawing=useRef(false),svg=useRef(null);
+const pointText=points=>(points||[]).map(p=>p.x+','+p.y).join(' ');
+const center=o=>o.type==='light'?{x:o.x,y:o.y}:
+ {x:((o.points?.[0]?.x||0)+(o.points?.[1]?.x||0))/2,
+  y:((o.points?.[0]?.y||0)+(o.points?.[1]?.y||0))/2};
+const colors={door:'#ed956d',window:'#64ddd6'};
+
+/** DM-only editor/markers. Never mounted in the player client or preview. */
+function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPatch}){
+ const [draft,setDraft]=useState([]),[cursor,setCursor]=useState(null),[dragPreview,setDragPreview]=useState(null);
+ const drawing=useRef(false),drag=useRef(null),svg=useRef(null);
  const maxX=map.width/map.grid_size,maxY=map.height/map.grid_size;
- const active=editor?.enabled&&editor.layer==='light'&&!editor.lockLight&&editor.showLight!==false;
+ const shown=editor?.showLight!==false&&!editor?.previewing;
+ const editing=shown&&editor?.enabled&&editor.layer==='light'&&!editor.lockLight;
  const tool=editor?.tool||'select';
- useEffect(()=>{setDraft([]);setCursor(null);drawing.current=false},[map.id,tool]);
+ const cell=map.grid_size*scale;
  useEffect(()=>{
-  if(!active)return;
-  const handle=e=>{
-   if(e.key==='Escape'){setDraft([]);drawing.current=false}
+  setDraft([]);setCursor(null);setDragPreview(null);drawing.current=false;drag.current=null;
+ },[map.id,tool,editing]);
+ useEffect(()=>{
+  if(!editing)return;
+  function keydown(e){
+   if(e.key==='Escape'){setDraft([]);setCursor(null);drawing.current=false;return}
    if(e.key==='Enter'&&tool==='wall-line'&&draft.length>1){
-    const object=createBarrier('wall',draft,editor.preset);
-    if(object)onAdd(object);
-    setDraft([]);
+    e.preventDefault();const wall=createBarrier('wall',draft,editor.preset);
+    if(wall)onAdd(wall);setDraft([]);setCursor(null);
    }
-  };
-  window.addEventListener('keydown',handle);
-  return()=>window.removeEventListener('keydown',handle);
- },[active,tool,draft,editor.preset,onAdd]);
- if(!active)return null;
- const clamp=p=>({x:Math.min(maxX,Math.max(0,p.x)),y:Math.min(maxY,Math.max(0,p.y))});
+  }
+  window.addEventListener('keydown',keydown);
+  return()=>window.removeEventListener('keydown',keydown);
+ },[editing,tool,draft,editor?.preset,onAdd]);
+ if(!shown)return null;
  function point(e){
   const rect=svg.current?.getBoundingClientRect();
-  if(!rect||rect.width<=0||rect.height<=0)return null;
-  return clamp(snapEnvironmentPoint({x:(e.clientX-rect.left)/rect.width*maxX,
-   y:(e.clientY-rect.top)/rect.height*maxY},editor.snap!==false));
+  if(!rect||!rect.width||!rect.height)return null;
+  const p=normalizePoint({x:(e.clientX-rect.left)/rect.width*maxX,
+   y:(e.clientY-rect.top)/rect.height*maxY});
+  // Fractional cells preserve true cursor placement on map artwork.
+  return {x:Math.round(Math.max(0,Math.min(maxX,p.x))*10000)/10000,
+   y:Math.round(Math.max(0,Math.min(maxY,p.y))*10000)/10000};
  }
  function finishLine(){
   if(draft.length>1){
-   const object=createBarrier('wall',draft,editor.preset);
-   if(object)onAdd(object);
+   const wall=createBarrier('wall',draft,editor.preset);
+   if(wall)onAdd(wall);
   }
   setDraft([]);setCursor(null);drawing.current=false;
  }
  function pointerDown(e){
-  if(e.button!==0&&e.button!==2)return;
-  e.stopPropagation();e.preventDefault();
-  if(e.button===2){
-   if(tool==='wall-line')finishLine();
-   return;
-  }
+  if(!editing)return;
+  if(e.button===2){e.preventDefault();e.stopPropagation();return}
+  if(e.button!==0)return;
+  e.preventDefault();e.stopPropagation();
   const p=point(e);if(!p)return;
   if(tool==='wall-line'){setDraft(old=>[...old,p].slice(0,500));return}
   if(tool==='wall-pen'){
@@ -54,103 +62,147 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect}){
    return;
   }
   if(tool==='select'){onSelect(null);return}
-  if(tool==='light'){
-   onAdd(createLight(p,{bright:editor.lightBright??20,dim:editor.lightDim??20}));
-   return;
-  }
+  if(tool==='light'){onAdd(createLight(p,{bright:editor.lightBright??20,dim:editor.lightDim??20}));return}
   if(tool==='door'||tool==='window'){
    const end={x:Math.min(maxX,p.x+1),y:p.y};
    const first=end.x===p.x?{x:Math.max(0,p.x-1),y:p.y}:p;
-   const obj=createBarrier(tool,[first,end]);
-   if(obj)onAdd(obj);
+   const barrier=createBarrier(tool,[first,end]);
+   if(barrier)onAdd(barrier);
   }
  }
+ function startHandle(e,object,index){
+  if(!editing||tool!=='select'||e.button!==0)return;
+  e.preventDefault();e.stopPropagation();
+  drag.current={id:object.id,index,pointerId:e.pointerId,
+   points:object.points.map(p=>({...p}))};
+  setDragPreview({id:object.id,points:object.points.map(p=>({...p}))});
+  try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+ }
  function pointerMove(e){
-  // Only the connected-line tool needs a hover preview. Grid snapping means
-  // many pointer events share a coordinate: retain state when it is unchanged.
-  if(tool==='wall-line'){
+  if(drag.current&&drag.current.pointerId===e.pointerId){
    const p=point(e);if(!p)return;
-   setCursor(old=>old?.x===p.x&&old?.y===p.y?old:p);
+   const current=drag.current;
+   const points=resizeBarrierEndpoint(current.points,current.index,p);
+   if(!points)return;
+   current.points=points;
+   setDragPreview({id:current.id,points});
+   return;
+  }
+  if(!editing)return;
+  if(tool==='wall-line'){
+   const p=point(e);if(p)setCursor(old=>old?.x===p.x&&old?.y===p.y?old:p);
+  }else if(tool==='wall-pen'&&drawing.current){
+   const p=point(e);if(!p)return;
+   setDraft(old=>{
+    if(old.length>=500)return old;
+    const last=old[old.length-1];
+    return last&&Math.hypot(last.x-p.x,last.y-p.y)<.065?old:[...old,p];
+   });
+  }
+ }
+ function pointerUp(e){
+  if(drag.current&&drag.current.pointerId===e.pointerId){
+   e.preventDefault();e.stopPropagation();
+   const {id,points}=drag.current;
+   drag.current=null;setDragPreview(null);
+   onPatch(id,{points},{immediate:true});
    return;
   }
   if(tool!=='wall-pen'||!drawing.current)return;
-  const p=point(e);if(!p)return;
-  setDraft(old=>{
-   if(old.length>=500)return old;
-   const last=old[old.length-1];
-   return last&&Math.hypot(last.x-p.x,last.y-p.y)<.12?old:[...old,p];
-  });
- }
- function pointerUp(e){
-  if(tool!=='wall-pen'||!drawing.current)return;
-  e.preventDefault();e.stopPropagation();
-  drawing.current=false;
-  const p=point(e);
-  const last=draft[draft.length-1];
-  const points=last&&p&&Math.hypot(p.x-last.x,p.y-last.y)>.05?
+  e.preventDefault();e.stopPropagation();drawing.current=false;
+  const p=point(e),last=draft[draft.length-1];
+  const points=last&&p&&Math.hypot(p.x-last.x,p.y-last.y)>.035?
    [...draft,p]:draft;
-  const obj=createBarrier('wall',points,editor.preset);
-  if(obj)onAdd(obj);
+  const wall=createBarrier('wall',points,editor.preset);
+  if(wall)onAdd(wall);
   setDraft([]);
   try{e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
  }
- function segmentColor(obj){
-  if(obj.type==='door')return '#f3a96b';
-  if(obj.type==='window')return '#7bd9e4';
-  if(obj.vision==='one-way')return '#e5b0ff';
-  if(obj.vision==='pass')return '#6ddfd4';
+ function color(object){
+  if(object.type==='door'||object.type==='window')return colors[object.type];
+  if(object.vision==='one-way')return '#e5b0ff';
+  if(object.vision==='pass')return '#6ddfd4';
   return '#ffc36b';
  }
- const pointsString=pts=>(pts||[]).map(p=>p.x+','+p.y).join(' ');
- return <svg ref={svg} className="map-env-overlay map-env-editing" aria-label="DM environment drawing surface"
-  viewBox={`0 0 ${maxX} ${maxY}`} preserveAspectRatio="none"
-  onContextMenu={e=>{e.preventDefault();e.stopPropagation()}}
-  onPointerDown={pointerDown} onPointerMove={pointerMove}
-  onPointerUp={pointerUp} onPointerCancel={()=>{drawing.current=false;setDraft([])}}>
-  {objects.map(obj=>{
-   const selected=obj.id===editor.selectedId;
-   if(obj.type==='light'){
-    const {x=0,y=0,bright=0,dim=0}=obj;
-    const brightCells=Number(bright)/FEET_PER_CELL;
-    const outer=(Number(bright)+Number(dim))/FEET_PER_CELL;
-    return <g key={obj.id} onPointerDown={e=>{
-     if(tool!=='select')return;e.stopPropagation();e.preventDefault();onSelect(obj.id);
-    }}>
-     {outer>0&&<circle cx={x} cy={y} r={outer} fill="none"
-      stroke={obj.color||'#f6be75'} strokeOpacity=".52" strokeDasharray=".4 .4"
-      strokeWidth=".08" vectorEffect="non-scaling-stroke"/>}
-     {brightCells>0&&<circle cx={x} cy={y} r={brightCells} fill="none"
-      stroke={obj.color||'#f6be75'} strokeOpacity=".9"
-      strokeWidth=".11" vectorEffect="non-scaling-stroke"/>}
-     <circle cx={x} cy={y} r={selected ? .35 : .22}
-      fill={obj.color||'#f6be75'} stroke={selected?'white':'#292f3c'}
-      strokeWidth=".07" vectorEffect="non-scaling-stroke"/>
+ const canResize=editing&&tool==='select';
+ const radius=Math.max(.10,5/cell);
+ return <>
+  <svg ref={svg} className={'map-env-overlay '+(editing?'map-env-editing':'map-env-readonly')}
+   aria-label="DM environment map geometry" viewBox={`0 0 ${maxX} ${maxY}`} preserveAspectRatio="none"
+   onContextMenu={e=>{if(editing){e.preventDefault();e.stopPropagation();if(tool==='wall-line')finishLine()}}}
+   onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp}
+   onPointerCancel={()=>{drag.current=null;setDragPreview(null);drawing.current=false;setDraft([])}}>
+   {objects.map(object=>{
+    const selected=editor.selectedId===object.id;
+    if(object.type==='light'){
+     if(!editing)return null;
+     const {x=0,y=0,bright=0,dim=0}=object;
+     const inner=Number(bright)/FEET_PER_CELL,outer=(Number(bright)+Number(dim))/FEET_PER_CELL;
+     return <g key={object.id}>
+      {outer>0&&<circle cx={x} cy={y} r={outer} fill="none"
+       stroke={object.color||'#f6be75'} opacity=".5" strokeWidth=".12" strokeDasharray=".45 .3"/>}
+      {inner>0&&<circle cx={x} cy={y} r={inner} fill="none"
+       stroke={object.color||'#f6be75'} opacity=".95" strokeWidth=".12"/>}
+      <circle cx={x} cy={y} r={selected ? .3 : .19} fill={object.color||'#f6be75'}/>
+     </g>;
+    }
+    const pts=dragPreview?.id===object.id?dragPreview.points:object.points||[];
+    if(pts.length<2)return null;
+    const isPortal=object.type==='door'||object.type==='window';
+    return <g key={object.id}>
+     {editing&&<polyline points={pointText(pts)} fill="none"
+      stroke={selected?'#ffffff':color(object)} strokeWidth={selected?3.5:2.6}
+      vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round"
+      strokeDasharray={object.vision==='pass'?'6 4':undefined}/>}
+     {editing&&object.vision==='one-way'&&<text x={(pts[0].x+pts[1].x)/2}
+      y={(pts[0].y+pts[1].y)/2-.3} fontSize=".52" fill="#f1ddff" textAnchor="middle">
+       {object.oneWay==='b-to-a'?'B → A':'A → B'}</text>}
+     {editing&&<polyline points={pointText(pts)} fill="none"
+      stroke="transparent" strokeWidth={15} vectorEffect="non-scaling-stroke"
+      onPointerDown={e=>{
+       if(tool!=='select')return;
+       e.preventDefault();e.stopPropagation();onSelect(object.id);
+      }}/>}
+     {isPortal&&pts.slice(0,2).map((p,i)=><g key={i}>
+      <circle cx={p.x} cy={p.y} r={radius} fill="#f43f51" stroke="#ffffff"
+       strokeWidth={1.6} vectorEffect="non-scaling-stroke"
+       pointerEvents={canResize?'all':'none'}
+       onPointerDown={e=>startHandle(e,object,i)}/>
+      {canResize&&<circle cx={p.x} cy={p.y} r={Math.max(.26,12/cell)}
+       fill="transparent" pointerEvents="all"
+       onPointerDown={e=>startHandle(e,object,i)}/>}
+     </g>)}
+     {selected&&editing&&!isPortal&&pts.map((p,i)=><circle key={i}
+      cx={p.x} cy={p.y} r={radius} fill="white" stroke="#e5a457"
+      strokeWidth={1.2} vectorEffect="non-scaling-stroke"/>)}
     </g>;
-   }
-   const pts=obj.points||[];
-   if(pts.length<2)return null;
-   return <g key={obj.id}>
-    <polyline points={pointsString(pts)} fill="none" stroke={selected?'#ffffff':segmentColor(obj)}
-     strokeWidth={selected?4:3} vectorEffect="non-scaling-stroke"
-     strokeLinecap="round" strokeLinejoin="round"
-     strokeDasharray={obj.vision==='pass'?'7 5':undefined}/>
-    {obj.vision==='one-way'&&<text x={(pts[0].x+pts[1].x)/2}
-     y={(pts[0].y+pts[1].y)/2-.3} fill="#f5d8ff" fontSize=".65"
-     textAnchor="middle">{obj.oneWay==='b-to-a'?'B → A':'A → B'}</text>}
-    <polyline points={pointsString(pts)} fill="none" stroke="transparent"
-     strokeWidth={16} vectorEffect="non-scaling-stroke" onPointerDown={e=>{
-      if(tool!=='select')return;
-      e.stopPropagation();e.preventDefault();onSelect(obj.id);
-     }}/>
-    {selected&&pts.map((p,i)=><circle key={i} cx={p.x} cy={p.y}
-     r=".16" fill="white" stroke="#e5a457" strokeWidth=".05"/>)}
-   </g>;
-  })}
-  {draft.length>0&&<polyline points={pointsString(tool==='wall-line'&&cursor?[...draft,cursor]:draft)}
-   fill="none" stroke="#ffffff" strokeDasharray="5 4" strokeWidth={3}
-   strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
-   pointerEvents="none"/>}
- </svg>;
+   })}
+   {editing&&draft.length>0&&<polyline
+    points={pointText(tool==='wall-line'&&cursor?[...draft,cursor]:draft)}
+    fill="none" stroke="#ffffff" strokeWidth={2.6} strokeDasharray="6 4"
+    vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round"
+    pointerEvents="none"/>}
+  </svg>
+  <div className="map-env-marker-layer" aria-label="DM map object markers">
+   {objects.filter(o=>o.type==='door'||o.type==='window'||o.type==='light').map(o=>{
+    const p=center(o),selected=o.id===editor.selectedId;
+    return <button type="button" key={o.id}
+     className={'map-env-marker map-env-marker-'+o.type+(selected?' is-selected':'')}
+     style={{left:p.x*cell,top:p.y*cell}}
+     title={'Adjust '+o.type+(o.locked?' (locked)':'')}
+     aria-label={'Adjust '+o.type+(o.locked?' (locked)':'')}
+     onPointerDown={e=>e.stopPropagation()}
+     onClick={e=>{e.preventDefault();e.stopPropagation();onSelect(o.id)}}>
+     <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
+      {o.type==='door'?<><rect x="6" y="3" width="12" height="18" rx="1.3" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M8 5v14" stroke="currentColor" strokeWidth="1.2"/></>:
+      o.type==='window'?<><rect x="3" y="4" width="18" height="16" rx="1" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M12 4v16M3 12h18" stroke="currentColor" strokeWidth="1.7"/></>:
+      <><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M12 1v5m0 12v5M1 12h5m12 0h5M4 4l4 4m8 8 4 4M20 4l-4 4M8 16l-4 4" stroke="currentColor" strokeWidth="1.6"/></>}
+     </svg>
+     {(o.locked||o.state==='open')&&<span className="map-env-marker-state">
+      {o.locked?'🔒':'↗'}</span>}
+    </button>;
+   })}
+  </div>
+ </>;
 }
-
 export default React.memo(MapEnvironmentOverlay);

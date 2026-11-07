@@ -140,7 +140,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
      and drag to move it; press <kbd>R</kbd> while holding to rotate 90°. Grid cells always
      remain the same size.</p>
     <div className="inventory-grid-scroll">
-     <div className="inventory-grid" ref={gridRef}
+     <div className="inventory-slot-grid" ref={gridRef}
       style={{
        gridTemplateColumns:'repeat('+cols+', '+CELL_SIZE+'px)',
        gridTemplateRows:'repeat('+height+', '+CELL_SIZE+'px)'

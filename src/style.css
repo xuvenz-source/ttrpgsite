@@ -1960,7 +1960,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .monitor-demo-token .token-monitor-layer{z-index:3}
 
 /* Inventory grid, classic list and DM-controlled carrying rules. */
-.inventory-panel{min-width:0;display:flex;flex-direction:column;gap:8px}
+.inventory-panel{width:100%;min-width:0;max-width:100%;display:flex;flex-direction:column;gap:8px}
 .inventory-summary{display:flex;align-items:center;flex-wrap:wrap;gap:9px;font-size:11px}
 .inventory-summary button{margin-left:auto;padding:4px 7px;font-size:11px}
 .inventory-list{min-width:0;overflow-x:auto}
@@ -1971,7 +1971,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .inventory-grid-scroll{width:100%;max-width:100%;min-width:0;
  overflow:auto;max-height:min(66vh,750px);overscroll-behavior:contain;
  background:#141f30;border:1px solid #556581;border-radius:8px}
-.inventory-grid{display:grid;gap:2px;width:max-content;min-width:0;
+.inventory-slot-grid{display:grid;gap:2px;width:max-content;min-width:0;
  padding:4px;background:#141f30;box-sizing:border-box;
  grid-auto-columns:48px;grid-auto-rows:48px;align-items:stretch}
 .inventory-grid-cell{z-index:0;min-width:0;min-height:0;border:1px dashed #51647a85;
@@ -2453,6 +2453,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .map-measure-local{stroke:#fbc56c;fill:#e8a83c}
 .map-measure-remote{stroke:#79dcff;fill:#43b6e5}
 .map-measure-start{fill:#fff;stroke:#14233a}
+.map-measure-turn{fill:#14233a;stroke:#f9efdc;stroke-width:.02}
 .map-measure-label-back{fill:#111a2df0;stroke:#738db1;stroke-width:.015}
 .map-measure-label{stroke:none;fill:#fff;paint-order:stroke;
  font-family:system-ui,sans-serif;font-weight:800;letter-spacing:0}
@@ -2506,7 +2507,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .field.inventory-grid-field .inventory-grid-scroll{
  display:block;overflow-x:auto;overflow-y:auto;
 }
-.field.inventory-grid-field .inventory-grid{
+.field.inventory-grid-field .inventory-slot-grid{
  width:max-content;max-width:none;
 }
 /* The window itself can be narrower than three columns; avoid overflowing the

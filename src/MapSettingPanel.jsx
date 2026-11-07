@@ -25,18 +25,34 @@ function Check({title,value,onChange}){
   onChange={e=>onChange(e.target.checked)}/>{title}</label>;
 }
 export default function MapSettingPanel({map,environment,editor,onEditorChange,
- onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus}){
+ onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[]}){
  const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
  const selected=env.objects.find(o=>o.id===editor.selectedId);
  const updateEditor=change=>onEditorChange({...editor,...change});
  const updateEnv=change=>onEnvironmentChange({...env,...change});
  const updateSelected=change=>selected&&onEnvironmentChange(patchObject(env,selected.id,change));
  const fields=fieldOptions(template);
+ const previewTokens=tokens.filter(t=>t.visible!==false);
+ const previewTokenId=editor.previewTokenId||previewTokens[0]?.id||'';
  const activeLayer=editor.layer||'light';
  const locked=activeLayer==='background'?editor.lockBackground:editor.lockLight;
  const canDraw=editor.enabled&&activeLayer==='light'&&!editor.lockLight;
  return <div className="side-form map-setting-panel">
   <p className="muted tiny">All geometry is saved separately for this map. Layer outlines and drawing controls are DM-only.</p>
+  <div className="map-setting-preview-controls">
+   <strong>Player perspective preview</strong>
+   <p className="muted tiny">Choose a token to simulate its current line of sight and nearby lighting. This is a DM-only visual check; player fog and collision still require server-side implementation.</p>
+   <label>View from token<select aria-label="Preview token" disabled={editor.previewing||!previewTokens.length}
+    value={previewTokenId} onChange={e=>updateEditor({previewTokenId:e.target.value})}>
+    {previewTokens.length===0&&<option value="">Place a visible token first</option>}
+    {previewTokens.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+   </select></label>
+   <button className={editor.previewing?'':'secondary'} disabled={!previewTokens.length}
+    type="button" onClick={()=>updateEditor({previewing:!editor.previewing,
+     previewTokenId,enabled:false,selectedId:null})}>
+    {editor.previewing?'Exit player preview':'Preview as player'}</button>
+  </div>
+  {!editor.previewing&&<>
   <label>Active layer
    <select value={activeLayer} onChange={e=>updateEditor({layer:e.target.value,selectedId:null})}>
     <option value="background">Map / Background</option>
@@ -75,8 +91,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      {drawTools.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
     </select>
    </label>
-   <Check title="Snap wall endpoints to the grid" value={editor.snap!==false}
-    onChange={snap=>updateEditor({snap})}/>
+   <p className="muted tiny">Walls, doors and windows use precise free placement, not grid snapping. Select an existing door or window and drag either red endpoint to resize or rotate it.</p>
    {['wall-line','wall-pen'].includes(editor.tool)&&<>
     <label>New wall preset<select disabled={!canDraw} value={editor.preset||'solid'}
      onChange={e=>updateEditor({preset:e.target.value})}>
@@ -118,6 +133,8 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      </select></label>
     </>:<>
      {selected.type!=='wall'&&<>
+      {selected.type==='window'&&<Check title="Curtains closed" value={selected.curtains}
+       onChange={v=>updateSelected({curtains:v})}/>}
       <label>Prepared state<select value={selected.state||'closed'}
        onChange={e=>updateSelected({state:e.target.value})}>
        <option value="closed">Closed</option><option value="open">Open</option>
@@ -177,7 +194,8 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     onChange={v=>updateEnv({effects:{...env.effects,intensity:v??0}})}/>
    <p className="muted tiny">{env.objects.length} environment objects on this map.</p>
   </>}
+  </>}
   <p className="map-setting-save" role="status">{saveStatus||'Not loaded'}</p>
-  <p className="muted tiny">Preparation tools only in this first staged implementation. Server-authoritative player collision, fog visibility and lighting are not active until their validation and rendering phases are completed.</p>
+  <p className="muted tiny">Editor geometry and preview controls are DM-only. Player collision, persistent fog and lighting enforcement remain separate server-side work.</p>
  </div>;
 }
