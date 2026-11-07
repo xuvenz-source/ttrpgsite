@@ -30,6 +30,19 @@ Vercel evaluates multiple matching rules so that an explicit `main: true` allows
 5. When approved for production, create a scoped release branch based on the latest `main`, apply only that feature, test, and merge it to `main` after release authorization. Vercel may create one production deployment for that main commit; verify that a deployment actually occurred and completed.
 6. For backend changes, coordinate Supabase Edge Functions/SQL migrations in a safe compatibility order; merging frontend code is not itself a backend deployment.
 
+## Database release and testing standard
+
+**Designer decision, 7 November 2026:** this project has **no dedicated database test platform** and will not pay to create one. Database functionality is verified by **live tests after an authorized production release**, using the existing test campaigns. If an issue is discovered, stage and release a fix through the normal approval path.
+
+1. **Prepare on a staging Git branch:** author proposed SQL/RLS/RPC changes alongside related frontend code and inspect them for correctness and authorization boundaries. Automated frontend tests and builds stay part of routine CI. A separate test database, Supabase paid branch, synthetic data environment, and disposable-data SQL runs are **not release gates**.
+2. **Assess change safety:** inspect existing live schema and dependencies with read-only queries when possible. For destructive changes, document which data could be lost and provide a feasible rollback/recovery plan; prefer additive migrations and smaller coordinated updates.
+3. **Obtain designer's release approval** before running SQL or deploying backend/frontend. An instruction to stage changes is not permission to modify the production database.
+4. **Apply migrations on the existing live Supabase Free project** in a compatible order, then deploy the matching approved frontend once. Do not install hourly/paid testing infrastructure.
+5. **Test in live:** run the intended actions as DM and players using current test campaigns; inspect permissions, real-time updates, data persistence, and feature-specific regressions. Explicitly disclose what was and was not tested.
+6. **Fix issues found in live** with a reviewed, authorized follow-up patch or rollback as appropriate. Urgent access-control exposures may require temporarily disabling the affected action until resolved; never assume a successful SQL execution proves security.
+
+Older draft PR notes requiring a disposable database or separate staging SQL test should be read using this newer policy. A developer can still run optional non-destructive checks, but should not block releases because a database test platform does not exist.
+
 ### On-demand preview checklist
 
 - Confirm the user's approval to create one preview and the quota's remaining availability.
