@@ -2701,3 +2701,5 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  width:14px;height:14px;display:grid;place-items:center;
  background:#182338;color:#e7ecf8;border:1px solid #8c98ad;
  border-radius:8px;font-size:11px;pointer-events:none}
+
+.campaign-tool-map-token.tool-selected{outline:3px solid #7fd9ff;outline-offset:2px;box-shadow:0 0 0 2px #0d152cbb,0 0 13px #57acfa70}

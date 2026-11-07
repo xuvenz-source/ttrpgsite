@@ -56,6 +56,19 @@ export function toolInventoryField(issue){
   gridColumns:config.columns||8,gridRows:config.rows||5,
   columns:['Item','Qty','Weight','Notes']};
 }
+/** Public visual projection only. Private inventory, attributes and recipient
+ * fields stay on the issue record and never enter map-movement broadcasts. */
+export function toolMapProjection(issue,mapId,x,y){
+ const c=normaliseToolConfig(issue.kind,issue.config);
+ return {issue_id:issue.id,campaign_id:issue.campaign_id,
+  map_id:mapId,name:issue.name,icon:issue.icon,kind:issue.kind,x,y,
+  span:issue.kind==='mount'?c.span:1,
+  light_bright:issue.kind==='torch'?c.bright:0,
+  light_dim:issue.kind==='torch'?c.dim:0,
+  light_color:issue.kind==='torch'?c.color:'#ffce7a',
+  light_intensity:issue.kind==='torch'?c.intensity:0,
+  light_enabled:issue.kind==='torch'&&issue.state?.lit!==false};
+}
 export function toolLightRadius(config){
  const normal=normaliseToolConfig('torch',config);
  return {bright:normal.bright,outer:normal.bright+normal.dim};
