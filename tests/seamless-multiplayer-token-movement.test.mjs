@@ -38,7 +38,8 @@ test('fog refresh revokes sight but avoids repainting previously explored map ar
  assert.equal(fogFrameDuringRefresh(source,'wrong-map'),null);
  assert.deepEqual(fogFrameDuringRefresh({...source,enabled:false},map).displayVisibleDuringRefresh,[]);
  const ui=readFileSync(new URL('../src/MapFogOverlay.jsx',import.meta.url),'utf8');
- assert.match(ui,/state===FOG_EXPLORED&&displayVisible/);
+ assert.match(ui,/fogPaintMask\(sanitized,displayVisible\)/);
+ assert.match(ui,/changedFogCells\(sameMap\?old.mask:null,next\)/);
 });
 test('SQL keeps fog-on invalidations and only skips movement-only fog-off ticks',()=>{
  const sql=readFileSync(new URL('../supabase/migrations/20261108055000_nonfog_token_movement_tick_optimization.sql',import.meta.url),'utf8');
