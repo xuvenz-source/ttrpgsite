@@ -14,6 +14,7 @@ import MapFogOverlay from './MapFogOverlay.jsx';
 import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
+import {shouldPersistFogDrag} from './LiveTokenMovement.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -146,7 +147,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   lastCenteredMap.current=map.id;
  },[map.id,active]);
  useEffect(()=>{zoomRef.current=scale},[scale]);
- useEffect(()=>{setPreview({})},[tokens]);
+ // A remote snapshot must not cancel the drag that is actively in progress.
+ useEffect(()=>{if(!drag.current)setPreview({})},[tokens]);
  useEffect(()=>{
   primaryRef.current=null;setSelectedId(null);setSelectedIds([]);
   setMarquee(null);selection.current=null;drag.current=null;
@@ -554,7 +556,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
   e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
-   members,tools,dx:0,dy:0};
+   members,tools,dx:0,dy:0,lastFogWrite:0,persistedDuringDrag:false};
  }
  function startToolDrag(e,p,canMove){
   e.stopPropagation();
@@ -616,6 +618,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   });
   for(const tool of info.tools||[])
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
+  // Fog prevents shared broadcast previews because spectators could receive
+  // hidden coordinates. Persist intermediate steps at a modest cadence instead:
+  // Supabase RLS distributes only the movements each viewer may observe.
+  const now=Date.now();
+  if(info.members.length&&shouldPersistFogDrag(
+   fogFrame?.enabled,info.lastFogWrite,now)){
+   info.lastFogWrite=now;
+   info.persistedDuringDrag=true;
+   for(const token of info.members)
+    move(token,Number(token.x)+delta.dx,Number(token.y)+delta.dy);
+  }
  }
  function toolDropCarrier(event){
   const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
@@ -659,12 +672,18 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
    if(carrier){setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return}
   }
-  if(info.dx===0&&info.dy===0&&!cancel)return;
+  // Complete the local drag in the same React batch as the optimistic move.
+  setPreview(old=>{
+   const next={...old};
+   for(const token of info.members)delete next[token.id];
+   return next;
+  });
+  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag)return;
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
    onMovementPreview?.(t,next.x,next.y,true);
-   if(!cancel)move(t,next.x,next.y);
+   if(!cancel||info.persistedDuringDrag)move(t,next.x,next.y);
   }
   for(const tool of info.tools||[]){
    const next=cancel?{x:Number(tool.x),y:Number(tool.y)}:
@@ -754,7 +773,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
-       opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
+       opacity:t.visible?1:.55,cursor:canMove?'grab':'default',
+        transition:remotePositions[t.id]&&!preview[t.id]?
+         'left 50ms linear, top 50ms linear':undefined
       }}
       title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
        ((isDM||t.owner_id===user)?' · Alt + double-click to edit sheet':'')}

@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React from 'react';
 import {num} from './SheetMath.js';
 import {abilityModifier,attributeSaveProficiency} from './SheetDerived.js';
@@ -5,7 +6,7 @@ import {abilityModifier,attributeSaveProficiency} from './SheetDerived.js';
 /** Numeric character score with an independent saving-throw proficiency checkbox.
  * The score is stored at the normal field ID, preserving Number-field values.
  */
-export default function AttributeField({field,value,values={},template,onChange,onProficiencyChange,onRoll}){
+export default function AttributeField({field,value,values={},template,onChange,onProficiencyChange,onRoll,rollSource=null}){
  const base=num(template?.modifierRules?.base,10);
  const step=Math.max(1,num(template?.modifierRules?.step,2));
  const modifier=abilityModifier(value,'score',base,step);
@@ -30,6 +31,8 @@ export default function AttributeField({field,value,values={},template,onChange,
     Saving throw proficient
    </label>
    <button type="button" className="secondary attribute-save-roll" disabled={!onRoll}
+    {...rollDragProps(rollSource?{kind:'save',...rollSource,fieldId:field.id,
+     label:field.label+' Save'}:null,!onRoll)}
     onClick={()=>onRoll('1d20'+signed(saveBonus),field.label+' saving throw')}
     title={'1d20 '+signed(modifier)+(proficient?' + proficiency '+signed(proficiency):'')}>
     🎲 Save {signed(saveBonus)}

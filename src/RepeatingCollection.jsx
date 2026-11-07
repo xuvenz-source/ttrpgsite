@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React,{useEffect,useMemo,useState} from 'react';
 
 const uid=()=>crypto.randomUUID().slice(0,8);
@@ -95,11 +96,11 @@ function defaultFor(type){
  if(type==='number')return '';
  return '';
 }
-function fieldControl(field,value,onValue,onRoll,onInfo,readOnly=false){
+function fieldControl(field,value,onValue,onRoll,onInfo,readOnly=false,dragAction=null){
  const type=field.type;
  if(type==='static')return <span className="collection-static">{field.text||field.label}</span>;
  if(type==='roll')return <button type="button" className="secondary collection-action"
-  disabled={readOnly} onClick={()=>onRoll(field)}
+  disabled={readOnly} {...rollDragProps(dragAction,readOnly)} onClick={()=>onRoll(field)}
   title={field.formula||'1d20'}>🎲 {field.label||'Roll'}</button>;
  if(type==='info')return <button type="button" className="secondary collection-action"
   onClick={()=>onInfo(field.targetSection)}>▤ {field.label||'Information'}</button>;
@@ -132,7 +133,7 @@ function fieldControl(field,value,onValue,onRoll,onInfo,readOnly=false){
  */
 export function RepeatingCollection({
  field,value,onChange,onRoll,onCastSpell,onAddSpellToHotbar,
- sourceType='character',sourceId,sheetValues,readOnly=false
+ sourceType='character',sourceId,sheetValues,readOnly=false,rollSource=null
 }){
  const entries=Array.isArray(value)?value:[];
  const groups=validGroups(field),sections=validSections(field);
@@ -212,6 +213,18 @@ export function RepeatingCollection({
    return {...old,[row.id]:[...mine]};
   });
  }
+ function rollActionFor(child,row){
+  if(child.type!=='roll'||!sourceId)return null;
+  const label=String(row.values?.[field.titleField]||field.entryLabel||field.label)+
+   ' — '+(child.label||'Roll');
+  const specials={cast_spell:'cast',damage_roll:'damage',
+   heal_roll:'healing',spell_attack:'attack'};
+  if(isSpellbook&&specials[child.id])
+   return {kind:'spell',sourceType,sourceId,fieldId:field.id,
+    entryId:row.id,mode:specials[child.id],label};
+  return {kind:'collection',sourceType,sourceId,fieldId:field.id,
+   entryId:row.id,childId:child.id,label};
+ }
  function doRoll(child,row){
   if(isSpellbook&&['cast_spell','damage_roll','heal_roll','spell_attack'].includes(child.id)){
    const action={cast_spell:'cast',damage_roll:'damage',heal_roll:'healing',spell_attack:'attack'}[child.id];
@@ -275,7 +288,8 @@ export function RepeatingCollection({
      {summary.map(child=><div className="collection-cell" key={child.id}
       style={{'--collection-span':safeColumns(child.width)}}>
       {fieldControl(child,entry.values?.[child.id],val=>updateCell(entry,child,val),
-       ()=>doRoll(child,entry),section=>toggleSection(entry,section),readOnly)}
+       ()=>doRoll(child,entry),section=>toggleSection(entry,section),readOnly,
+       rollActionFor(child,entry))}
      </div>)}
     </div>}
     {opened&&isSpellbook&&<div className="spell-roll-options">
@@ -303,7 +317,8 @@ export function RepeatingCollection({
         <div className="collection-cell" key={child.id}
          style={{'--collection-span':safeColumns(child.width)}}>
          {fieldControl(child,entry.values?.[child.id],val=>updateCell(entry,child,val),
-          ()=>doRoll(child,entry),id=>toggleSection(entry,id),readOnly)}
+          ()=>doRoll(child,entry),id=>toggleSection(entry,id),readOnly,
+          rollActionFor(child,entry))}
         </div>)}
       </div>
      </section>)}

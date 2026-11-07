@@ -12,13 +12,25 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('combined release records both approved drafts and compatible migration requirements',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/player-sheets-token-artwork-fog-2026-11-08');
- assert.deepEqual(ledger.lastRelease.approvedPullRequests,[41]);
- assert.equal(ledger.lastRelease.databaseDependencies.length,0);
- assert.ok(ledger.lastRelease.edgeFunctionDependencies.some(item=>item.name==='username-register'&&item.version===7&&item.status==='deployed-production'));
- assert.ok(ledger.databaseDependencies.some(item=>item.name==='player_owned_token_artwork'&&item.status==='staged-not-applied'&&item.mustApplyBeforeFrontend));
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,1);
- assert.equal(ledger.upcomingRelease.outstandingBranches[0].name,ledger.releaseBranch);
+ assert.equal(ledger.releaseBranch,'stage/release-seamless-movement-hotbar-2026-11-08');
+ assert.deepEqual(ledger.lastRelease.approvedPullRequests,[45]);
+ assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[43,44]);
+ assert.equal(ledger.lastRelease.productionBaseSha,'fba25209757d2c55d3303ea6b0582b8d61b6632c');
+ assert.ok(ledger.lastRelease.paidInfrastructure===false);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ for(const name of ['player_owned_token_artwork','macro_quickcode_resolution',
+  'nonfog_token_movement_tick_optimization'])assert.ok(
+   ledger.databaseDependencies.some(item=>item.name===name&&
+    item.status==='applied-production'&&item.appliedVersion),
+   'Migration must be recorded as applied: '+name);
+ assert.ok(ledger.releaseHistory.some(item=>item.productionCommit===
+  'fba25209757d2c55d3303ea6b0582b8d61b6632c'&&item.pullRequests?.includes(42)));
+ for(const name of ['stage/player-sheets-token-artwork-fog-2026-11-08',
+  'stage/seamless-multiplayer-token-movement-2026-11-08',
+  'stage/universal-roll-hotbar-drag-2026-11-08'])
+  assert.ok(ledger.branches.some(item=>item.name===name&&item.status==='released'),name);
+ for(const id of ['seamless-multiplayer-token-movement','universal-roll-button-hotbar-drag'])
+  assert.ok(ledger.features.some(item=>item.id===id&&item.status==='released'),id);
  assert.ok(ledger.branches.filter(x=>x.name.startsWith('stage/live-qa-light-')||x.name.startsWith('stage/interactive-pins-')).every(x=>x.status==='released'));
  const ci=read('.github/workflows/verify-staged.yml');
  assert.doesNotMatch(ci,/supabase db push|supabase migration up|vercel deploy/);

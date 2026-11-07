@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React from 'react';
 import {uid,num,safeList,clampNumber,numberFields} from './SheetMath.js';
 import {numericFieldsWithDerived,abilityModifier} from './SheetDerived.js';
@@ -168,7 +169,7 @@ function Input({value,onChange,type='text',label,...rest}){
  return <input type={type} aria-label={label} value={value??''}
   onChange={e=>onChange(type==='number'?num(e.target.value):e.target.value)} {...rest}/>;
 }
-export function EquipmentManager({field,value,onChange,sheetValues={},template,onAttack}){
+export function EquipmentManager({field,value,onChange,sheetValues={},template,onAttack,rollSource=null}){
  const [attacking,setAttacking]=React.useState('');
  const [attackError,setAttackError]=React.useState('');
  const [settingsWeaponId,setSettingsWeaponId]=React.useState('');
@@ -273,7 +274,9 @@ export function EquipmentManager({field,value,onChange,sheetValues={},template,o
      <td><div className="equipment-weapon-actions">
       <button type="button" className="secondary equipment-attack-button"
        disabled={!!attacking||!onAttack}
-       title="Roll two attacks, damage and critical dice in one chat card"
+       {...rollDragProps(rollSource?{kind:'weapon',...rollSource,fieldId:field.id,
+        weaponId:w.id,label:w.name||'Weapon attack'}:null,!!attacking||!onAttack)}
+       title="Roll two attacks, damage and critical dice in one chat card (or drag to hotbar)"
        onClick={()=>rollWeapon(w)}>
        {attacking===w.id?'Rolling…':'🎲 Attack'}
       </button>

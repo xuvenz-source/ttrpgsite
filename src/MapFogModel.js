@@ -46,7 +46,15 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
  */
 export function fogFrameDuringRefresh(frame,mapId){
  const safe=normalizeAuthorizedFogFrame(frame,mapId);
- return safe?{...safe,enabled:true,visible:[]}:null;
+ if(!safe)return null;
+ // Sight permission is revoked immediately. Only previously visible cells
+ // already in explored memory may stay bright *visually* during the RPC.
+ const explored=new Set(safe.explored);
+ const previous=Array.isArray(frame?.displayVisibleDuringRefresh)?
+  frame.displayVisibleDuringRefresh:safe.visible;
+ const displayVisibleDuringRefresh=safe.enabled?
+  previous.filter(index=>explored.has(index)):[];
+ return {...safe,enabled:true,visible:[],displayVisibleDuringRefresh};
 }
 /** Additional presentation guard: when a revision invalidates authorized
  * sight, stale RLS token snapshots must not remain visible through dim fog.

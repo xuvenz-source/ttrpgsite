@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React,{useMemo,useRef,useState} from 'react';
 import useSheetAutosave from './useSheetAutosave.js';
 import FloatingWindow from './FloatingWindow.jsx';
@@ -124,12 +125,14 @@ export default function CharacterEditor({
       onChange={v=>editField(PERSONAL_RESOURCE_KEY,v)}/></div>:
      (tab?.fields||[]).map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}>
      <label>{f.label}</label>
-     {f.type==='roll'?<button type="button" className="rollbtn" onClick={()=>doRoll(f)}>
+     {f.type==='roll'?<button type="button" className="rollbtn"
+  {...rollDragProps({kind:'sheet',sourceType:'character',sourceId:record.id,fieldId:f.id,label:f.label})}
+  onClick={()=>doRoll(f)}>
         🎲 {f.label}<small>{f.formula||'1d20'}</small></button>:
       f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={campaignId}
         userId={viewerId} isDM sourceType="character" sourceId={record.id}
         field={f} template={template} sheetValues={draft.field_values}/>:
-      f.type==='attribute'?<AttributeField field={f} template={template}
+      f.type==='attribute'?<AttributeField rollSource={{sourceType:'character',sourceId:record.id}} field={f} template={template}
        value={draft.field_values[f.id]} values={draft.field_values}
        onChange={v=>editField(f.id,v)}
        onProficiencyChange={v=>editField(f.id+'__save_prof',v)}
@@ -139,16 +142,16 @@ export default function CharacterEditor({
       f.type==='resource'?<ResourceField value={draft.field_values[f.id]} onChange={v=>editField(f.id,v)}/>:
       f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.field_values[f.id]||{}}
        sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}/>:
-      f.type==='equipment'?<EquipmentManager field={f} template={template}
+      f.type==='equipment'?<EquipmentManager rollSource={{sourceType:'character',sourceId:record.id}} field={f} template={template}
        value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
        onChange={v=>editField(f.id,v)} onAttack={attackFromEditor}/>:
       f.type==='progression'?<ProgressionPanel field={f}
        value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
        onChange={v=>editField(f.id,v)}/>:
-      f.type==='proficiencies'?<ProficienciesPanel field={f} template={template}
+      f.type==='proficiencies'?<ProficienciesPanel rollSource={{sourceType:'character',sourceId:record.id}} field={f} template={template}
        value={draft.field_values[f.id]||{}} sheetValues={draft.field_values}
        onChange={v=>editField(f.id,v)} onRoll={(formula,label)=>onRoll(formula,label)}/>:
-      f.type==='collection'?<RepeatingCollection field={f} value={draft.field_values[f.id]||[]}
+      f.type==='collection'?<RepeatingCollection rollSource={{sourceType:'character',sourceId:record.id}} field={f} value={draft.field_values[f.id]||[]}
        sheetValues={draft.field_values} onChange={v=>editField(f.id,v)}
        sourceType="character" sourceId={record.id}
        onCastSpell={castFromEditor} onAddSpellToHotbar={addFromEditor}

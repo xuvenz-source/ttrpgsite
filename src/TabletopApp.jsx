@@ -1,3 +1,4 @@
+import {rollHotbarSlot,parseRollHotbarCommand,resolveSheetHotbarRoll} from './HotbarRollActions.js';
 import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 
 import{createClient}from'@supabase/supabase-js';
@@ -51,7 +52,7 @@ import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './S
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,allowedMovementPreview,canSendMovementPreview,
- MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
+ applyAuthoritativeTokenMotion,MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
  selectableToolIds,groupToolFootprint,boundedGroupOffset} from './MapSelection.js';
 import {chatRowsForMap} from './CampaignRealtime.js';
@@ -925,7 +926,7 @@ export default function TabletopApp(){
    const id=payload.id;
    setRemoteTokenPositions(prev=>{
     if(prev[id]?.actor===payload.actor&&prev[id].seq>=payload.seq)return prev;
-    return {...prev,[id]:{x:payload.x,y:payload.y,seq:payload.seq,actor:payload.actor}};
+    return {...prev,[id]:{x:payload.x,y:payload.y,seq:payload.seq,actor:payload.actor,final:!!payload.final}};
    });
    const last=remoteMoveExpiry.current.get(id);
    if(last)clearTimeout(last);
@@ -937,7 +938,7 @@ export default function TabletopApp(){
      const copy={...prev};delete copy[id];return copy;
     });
     void latestTokenRefresh.current?.();
-   },payload.final?3000:MOVE_PREVIEW_EXPIRE_MS);
+   },payload.final?1800:MOVE_PREVIEW_EXPIRE_MS);
    remoteMoveExpiry.current.set(id,timer);
   }).on('broadcast',{event:'tool-preview'},({payload})=>{
    const access=latestMovementAccess.current;
@@ -1070,8 +1071,25 @@ export default function TabletopApp(){
   const c=db.channel('vtt-'+activeId)
    .on('postgres_changes',{event:'*',schema:'public',table:'map_tokens',
     filter:'campaign_id=eq.'+activeId},event=>{
-    if(eventAffectsMap(event,tokenContextRef.current.mapId))
-     tokenUpdates.request();
+    const mapId=tokenContextRef.current.mapId;
+    if(!eventAffectsMap(event,mapId))return;
+    // The database has already applied this viewer's RLS on the row event.
+    // Patch observed coordinates now, then run background reconciliation.
+    if(event.eventType==='UPDATE'){
+     setTokens(previous=>applyAuthoritativeTokenMotion(
+      previous,event,mapId,movementPending.current));
+     const id=event.new?.id;
+     if(id)setRemoteTokenPositions(previous=>{
+      const packet=previous[id];
+      if(!packet?.final||packet.x!==event.new.x||packet.y!==event.new.y)
+       return previous;
+      const timer=remoteMoveExpiry.current.get(id);
+      if(timer)clearTimeout(timer);
+      remoteMoveExpiry.current.delete(id);
+      const next={...previous};delete next[id];return next;
+     });
+    }
+    tokenUpdates.request();
    })
    .on('postgres_changes',{event:'*',schema:'public',table:'campaigns',
     filter:'id=eq.'+activeId},()=>campaignUpdates.request())
@@ -1383,6 +1401,64 @@ export default function TabletopApp(){
  }
  function clearHotbarSlot(index){
   return changeHotbarByDrag(slots=>removeHotbarSlot(slots,index));
+ }
+ async function assignRollToHotbar(payload,index){
+  const slot=rollHotbarSlot(payload);
+  // Drag data can be forged. Validate sheet ownership even if a user edits
+  // the JSON payload; execution also rechecks access via the database.
+  if(payload?.sourceType==='character'){
+   const ch=characters.find(c=>c.id===payload.sourceId);
+   if(!ch||(ch.user_id!==user&&!isDM))
+    throw Error('You cannot assign rolls from another player\'s character.');
+  }else if(payload?.sourceType&&
+   (!isDM||!['npc_token','npc_template'].includes(payload.sourceType))){
+   throw Error('Only the DM may assign NPC rolls.');
+  }
+  if(payload?.kind==='initiative-npcs'&&!isDM)
+   throw Error('Only the DM may roll NPC initiatives.');
+  if(!Number.isInteger(index)||index<0||index>=8)
+   throw Error('Choose a valid hotbar slot.');
+  await changeHotbarByDrag(slots=>
+   normaliseHotbar(slots).map((item,i)=>i===index?slot:item));
+ }
+ async function executeSheetHotbarRoll(action){
+  if(!camp?.sheet_template)throw Error('The campaign sheet is unavailable.');
+  const {sourceType,sourceId}=action;
+  let values={};
+  if(sourceType==='character'){
+   if(character?.id===sourceId)await flushSheetForCast(sourceId);
+   const {data,error:loadError}=await db.from('characters')
+    .select('user_id,field_values').eq('campaign_id',activeId)
+    .eq('id',sourceId).maybeSingle();
+   if(loadError)throw loadError;
+   if(!data||(data.user_id!==user&&!isDM))
+    throw Error('That character sheet is no longer available to you.');
+   values=data.field_values||{};
+  }else if(sourceType==='npc_token'&&isDM){
+   const {data,error:loadError}=await db.from('map_tokens')
+    .select('npc_values,npc_template_id').eq('campaign_id',activeId)
+    .eq('id',sourceId).maybeSingle();
+   if(loadError)throw loadError;
+   if(!data)throw Error('That NPC token no longer exists.');
+   values=data.npc_values||{};
+   if(data.npc_template_id){
+    const {data:base,error:baseError}=await db.from('npc_templates')
+     .select('field_values').eq('campaign_id',activeId)
+     .eq('id',data.npc_template_id).maybeSingle();
+    if(baseError)throw baseError;
+    // A placed NPC uses its own saved overrides over Bestiary defaults.
+    values={...(base?.field_values||{}),...values};
+   }
+  }else if(sourceType==='npc_template'&&isDM){
+   const {data,error:loadError}=await db.from('npc_templates')
+    .select('field_values').eq('campaign_id',activeId)
+    .eq('id',sourceId).maybeSingle();
+   if(loadError)throw loadError;
+   if(!data)throw Error('That Bestiary creature no longer exists.');
+   values=data.field_values||{};
+  }else throw Error('You cannot use rolls from this sheet.');
+  const resolved=resolveSheetHotbarRoll(action,camp.sheet_template,values);
+  await roll(resolved.formula,resolved.label,sourceType==='character'&&!isDM?sourceId:null);
  }
  async function create(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('create_campaign',{p_name:createName.trim()}));setCreateName('');await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
  async function join(e){e.preventDefault();setBusy(true);try{const id=await read(db.rpc('join_campaign',{p_invite_code:joinCode.trim().toLowerCase()}));setJoinCode('');history.replaceState({},'',location.pathname);await fetchCampaigns(id)}catch(e){fail(e)}finally{setBusy(false)}}
@@ -1949,6 +2025,26 @@ export default function TabletopApp(){
     const scalar=value&&typeof value==='object'?value.current:value;
     return /^-?\d+(\.\d+)?$/.test(String(scalar??''))?String(scalar):'0';
    });
+   const shortcut=parseRollHotbarCommand(command);
+   if(shortcut){
+    if(shortcut.kind==='weapon'){
+     await attackWithWeapon({sourceType:shortcut.sourceType,sourceId:shortcut.sourceId,
+      fieldId:shortcut.fieldId,weaponId:shortcut.weaponId});return;
+    }
+    if(shortcut.kind==='spell'){
+     await castSpell({sourceType:shortcut.sourceType,sourceId:shortcut.sourceId,
+      collectionId:shortcut.fieldId,entryId:shortcut.entryId,mode:shortcut.mode});return;
+    }
+    if(shortcut.kind==='initiative'){
+     await combatTracker.roll(shortcut.entryId);return;
+    }
+    if(shortcut.kind==='initiative-npcs'){
+     if(!isDM)throw Error('Only the DM can roll NPC initiative.');
+     await combatTracker.rollNpc();return;
+    }
+    await executeSheetHotbarRoll(shortcut);
+    return;
+   }
    const dice=command.match(/^\/(?:roll|r)\s+([\s\S]+)$/i);
    const spell=command.match(/^\/spell\s+(character|npc_token|npc_template)\s+([0-9a-f-]{36})\s+([a-zA-Z0-9_-]{1,100})\s+([a-zA-Z0-9-]{1,100})$/i);
    const builder=command.match(/^\/builder\s+([0-9a-f-]{36})$/i);
@@ -2224,6 +2320,7 @@ export default function TabletopApp(){
     onExecute={useHotbarSlot} onConfigure={()=>setRightTab('settings')}
     onAssignSpell={(index,payload)=>assignSpellToHotbar(payload,index).catch(fail)}
     onAssignMacro={(index,payload)=>assignMacro(payload,index).catch(fail)}
+    onAssignRoll={(index,payload)=>assignRollToHotbar(payload,index).catch(fail)}
     onReorderSlot={(from,to)=>rearrangeHotbar(from,to).catch(fail)}
     onRemoveSlot={index=>clearHotbarSlot(index).catch(fail)}/>}
   </>

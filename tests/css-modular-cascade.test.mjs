@@ -30,11 +30,12 @@ test('modular CSS retains the exact pre-split cascade, not merely the same selec
  // pin preview, selected-pin and held-tool styles. Further edits update this
  // checksum with their own visual regression review. This revision includes
  // the macro attribute/quickcode dropdown row and its responsive wrapping.
+ // This staging revision adds only cursor affordances for draggable roll buttons.
  const text=readAppStyles().trimEnd();
  let hash=2166136261>>>0;
  for(let i=0;i<text.length;i++){
   hash^=text.charCodeAt(i);
   hash=Math.imul(hash,16777619);
  }
- assert.equal((hash>>>0).toString(16).padStart(8,'0'),'b6cd1169');
+ assert.equal((hash>>>0).toString(16).padStart(8,'0'),'c22cae3f');
 });

@@ -244,3 +244,13 @@
  .macro-manager-meta{gap:5px}
 }
 
+
+/* Native drag to hotbar is available from every saved dice/action button.
+   Keep keyboard click semantics; only pointer styling signals drag support. */
+.app :is(.rollbtn,.equipment-attack-button,.attribute-save-roll,
+ .collection-action,.proficiency-entry button,.combat-entry-roll,
+ .combat-roll-npcs)[draggable="true"],
+.app .combat-setup [draggable="true"],
+.app .macro-manager-footer button[draggable="true"]{cursor:grab}
+.app :is(.rollbtn,.equipment-attack-button,.attribute-save-roll,
+ .collection-action)[draggable="true"]:active{cursor:grabbing}
