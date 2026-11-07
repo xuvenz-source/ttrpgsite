@@ -31,6 +31,11 @@ test('each issued tool has its own inventory and starting mount stats',()=>{
  assert.deepEqual([first.attrs.ac,second.attrs.ac],[12,12]);
  assert.equal(toolInventoryField({kind:'mount',config}).inventoryPreset,'grid');
  assert.equal(toolInventoryField({kind:'mount',config}).gridColumns,10);
+ const trimmed=normaliseToolConfig('mount',{...config,
+  attributes:{hp:5,custom_save:3}});
+ assert.deepEqual(trimmed.attributes,{hp:5,custom_save:3});
+ assert.ok(!Object.hasOwn(trimmed.attributes,'ac'));
+
  assert.equal(toolInventoryField({kind:'inventory',
   config:normaliseToolConfig('inventory',{inventoryMode:'list'})}).inventoryPreset,'list');
 });
