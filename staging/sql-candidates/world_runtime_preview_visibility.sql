@@ -36,9 +36,9 @@ begin
   then return true;end if;
  end loop;
  for light in
-  select case when t.id is null then p.x+0.5
+  select case when t.id is null then coalesce(tool_rate.last_x,p.x)+0.5
     else coalesce(rate.last_x,t.x)+t.span_x/2.0 end as cx,
-   case when t.id is null then p.y+0.5
+   case when t.id is null then coalesce(tool_rate.last_y,p.y)+0.5
     else coalesce(rate.last_y,t.y)+t.span_y/2.0 end as cy,
    p.light_bright,p.light_dim
   from public.campaign_tool_map_tokens p
@@ -49,6 +49,13 @@ begin
     and rate.kind='token' and rate.map_id=p_map
     and rate.base_x=t.x and rate.base_y=t.y
     and rate.last_sent>statement_timestamp()-interval '2 seconds'
+  left join lateral(
+   select r.last_x,r.last_y from forge_visibility.movement_preview_rates r
+   where r.piece_id=p.issue_id and r.map_id=p_map and r.kind='tool'
+    and r.base_x=p.x and r.base_y=p.y
+    and r.last_sent>statement_timestamp()-interval '2 seconds'
+   order by r.last_sent desc limit 1
+  )tool_rate on true
   where p.map_id=p_map and p.light_enabled and p.kind='torch'
    and (p.held_by_token_id is null or t.id is not null)
   limit 50
