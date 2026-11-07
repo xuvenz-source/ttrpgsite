@@ -5,7 +5,7 @@ import {PIN_ICONS,normalizePinPosition,pinVisibleTo} from './CampaignHandouts.js
 export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
  onCreate,onMove,onOpen}){
  const [preview,setPreview]=useState({});
- const drag=useRef(null);
+ const drag=useRef(null),skipClick=useRef(null);
  const cell=Math.max(1,Number(map?.grid_size)*scale);
  const placing=isDM&&editor?.enabled&&editor?.layer==='light'&&
   editor?.tool==='pin'&&!!editor?.pinHandoutId;
@@ -38,8 +38,10 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
   const next=preview[d.id]||{x:d.x,y:d.y};
   setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
   try{event.currentTarget.releasePointerCapture(event.pointerId)}catch{}
-  if(!cancel&&(Math.abs(next.x-d.x)>.01||Math.abs(next.y-d.y)>.01))
+  if(!cancel&&(Math.abs(next.x-d.x)>.01||Math.abs(next.y-d.y)>.01)){
+   skipClick.current=pin.id;
    onMove?.(pin,{x:next.x,y:next.y});
+  }
  }
  return <div className="map-handout-pins">
   {placing&&<button type="button" className="map-handout-placement"
@@ -62,7 +64,11 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
     onPointerMove={e=>move(e,pin)}
     onPointerUp={e=>finish(e,pin)}
     onPointerCancel={e=>finish(e,pin,true)}
-    onClick={e=>{e.stopPropagation();if(!drag.current)onOpen?.(pin)}}>
+    onClick={e=>{
+     e.stopPropagation();
+     if(skipClick.current===pin.id){skipClick.current=null;return}
+     if(!drag.current)onOpen?.(pin)
+    }}>
     <span aria-hidden="true">{PIN_ICONS[pin.kind]||'📜'}</span>
     {isDM&&!pin.visible&&<span className="map-handout-hidden-dot" aria-hidden="true">◌</span>}
    </button>;
