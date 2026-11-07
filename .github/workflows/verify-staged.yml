@@ -1,0 +1,44 @@
+name: Verify staged tabletop changes
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - 'stage/**'
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies without publishing
+        run: npm install --no-audit --no-fund
+      - name: Catch undeclared variables in safety-critical interactive components
+        run: npm run lint:critical
+      - name: Run staged frontend unit tests
+        run: npm test
+      - name: Audit production dependencies for high-severity issues
+        run: npm audit --omit=dev --audit-level=high
+      - name: Validate Vite production build (no Vercel deployment)
+        run: npm run build
+      - name: Prepare Deno to type-check the staged account endpoint
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check signup Turnstile Supabase Edge Function
+        run: deno check supabase/functions/username-register/index.ts
+      - name: Type-check username-update Supabase Edge Function
+        run: deno check supabase/functions/username-update/index.ts

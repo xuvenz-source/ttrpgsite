@@ -1,0 +1,224 @@
+/* Compact draggable inventory item window, shared by player and NPC sheets. */
+.floating-window.floating-inventory{
+ width:min(430px,calc(100vw - 24px));height:min(550px,calc(100dvh - 22px));
+ min-width:min(300px,calc(100vw - 12px));min-height:270px}
+.inventory-item-editor .heading h2{font-size:15px}
+.inventory-item-form{display:flex;flex-direction:column;gap:9px;min-width:0}
+.inventory-item-preview-row{display:flex;align-items:center;gap:13px;
+ border:1px solid #435c77;border-radius:8px;padding:8px}
+.inventory-item-preview-row p{margin:0!important;flex:1;line-height:1.45}
+.inventory-item-preview{display:flex;flex-direction:column;align-items:center;justify-content:center;
+ text-align:center;flex:0 0 74px;width:74px;height:74px;
+ border:3px solid #91b4e9;border-radius:7px;padding:4px;
+ box-sizing:border-box;overflow:hidden}
+.inventory-item-preview-icon{font-size:22px;line-height:1.2}
+.inventory-item-preview strong{font-size:11px;max-width:100%;white-space:nowrap;
+ text-overflow:ellipsis;overflow:hidden}
+.inventory-item-preview small{font-size:10px}
+.inventory-item-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px;align-items:end}
+.inventory-item-editor-grid label{display:flex;flex-direction:column;
+ min-width:0;gap:4px;font-size:11px}
+.inventory-item-editor-grid :is(input,textarea){width:100%;min-width:0;max-width:100%;
+ box-sizing:border-box;font-size:12px}
+.inventory-item-editor-grid input[type=color]{height:33px;padding:2px;cursor:pointer}
+.inventory-item-editor-grid textarea{min-height:76px;resize:vertical}
+.inventory-item-wide{grid-column:1/-1}
+.inventory-icon-presets{display:flex;flex-wrap:wrap;gap:3px}
+.inventory-icon-presets button{min-width:33px;padding:4px 5px;font-size:14px}
+.inventory-item-rotation{display:flex;gap:7px;align-items:center;
+ justify-content:space-between;grid-column:1/-1}
+.inventory-item-rotation button{font-size:11px;padding:5px 8px}
+.inventory-item-editor-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end;
+ padding-top:5px;border-top:1px solid #455872}
+.inventory-item-editor-actions button{font-size:11px}
+.inventory-item-editor-actions .inventory-item-delete{margin-right:auto;
+ color:#ffb9b6}
+@media(max-width:380px){
+ .inventory-item-editor-grid{grid-template-columns:1fr}
+ .inventory-item-preview-row{gap:7px}
+}
+
+
+/* Battlemap mouse controls: middle-drag pans, left-drag draws a token marquee.
+   Token dragging remains the existing left-button action. */
+.map-pan-region{cursor:crosshair}
+.map-pan-region .board,.map-pan-region .gridlines{cursor:crosshair}
+.map-pan-region.is-panning,.map-pan-region.is-panning .board,
+.map-pan-region.is-panning .token{cursor:grabbing!important}
+.map-pan-region .token{cursor:grab}
+.map-pan-region .token.token-selected::after{
+ border:2px solid #7fd9ff;box-shadow:0 0 0 2px #0d152cbb,0 0 13px #57acfa70;
+}
+.map-selection-marquee{position:absolute;z-index:95;pointer-events:none;
+ border:1px solid #9fd8ff;background:#69b6f633;
+ box-shadow:0 0 0 1px #234771aa inset;border-radius:2px}
+.map-pan-region.is-selecting{cursor:crosshair}
+
+/* Hotbar drag controls: moving a slot inserts its macro at the destination,
+   dropping outside removes the assignment without deleting the macro. */
+.macro-hotbar-slot.filled{cursor:grab;user-select:none}
+.macro-hotbar-slot.hotbar-drag-source{opacity:.45;cursor:grabbing}
+.macro-hotbar-slot.hotbar-reorder-target{
+ outline:2px solid #82d0ff;outline-offset:1px;
+ border-color:#82d0ff!important;background:#29577a!important}
+.map-only-panel .macro-hotbar-slot.hotbar-reorder-target{
+ background:#29577acc!important;border-color:#82d0ff!important}
+.macro-hotbar-drag-hint{
+ position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);
+ border:1px solid #83a8da;border-radius:6px;padding:5px 9px;
+ white-space:nowrap;background:#111b2ef2;color:#e9f3ff;
+ box-shadow:0 5px 15px #0008;pointer-events:none;font-size:11px}
+
+/* Campaign roster presence: green means an authenticated account currently
+   has an active tabletop connection, not merely that a character exists. */
+.unit-account-display{display:inline-flex;align-items:center;gap:7px;min-width:0}
+.unit-account-display>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.unit-online-indicator{display:inline-block;flex:0 0 9px;width:9px;height:9px;
+ border-radius:50%;background:#42db7d;box-shadow:0 0 0 2px #152b24,0 0 7px #42db7d90}
+
+
+/* Account profile/settings: a compact movable pane, never a site-wide modal. */
+.floating-window.floating-account{
+ width:min(445px,calc(100vw - 22px));height:min(580px,calc(100dvh - 20px));
+ min-width:min(315px,calc(100vw - 12px));min-height:320px
+}
+.account-settings-dialog{height:100%;min-height:0;display:flex;flex-direction:column;
+ overflow:hidden;padding:15px}
+.account-settings-dialog .heading{flex:0 0 auto;margin:0 0 8px}
+.account-settings-dialog .heading h2{font-size:17px}
+.account-settings-scroll{min-height:0;flex:1;overflow-y:auto;display:flex;
+ flex-direction:column;gap:10px;padding:2px 4px 10px 0}
+.account-settings-scroll>p{margin:0}
+.account-login-info{display:flex;flex-direction:column;gap:3px;padding:9px 12px;
+ border:1px solid #4a5970;border-radius:8px;background:#1d2b3f;font-size:11px}
+.account-login-info strong{font-size:12px}
+.account-login-info small{color:#acbbd1;overflow-wrap:anywhere}
+.account-settings-form{border:1px solid #495873;border-radius:8px;
+ display:flex;flex-direction:column;gap:9px;padding:11px;background:#1b293e}
+.account-settings-form h3{font-size:13px;margin:0 0 2px}
+.account-settings-form>p{margin:0}
+.account-settings-form label{display:flex;flex-direction:column;gap:5px;font-size:11px}
+.account-settings-form input{width:100%;min-width:0;box-sizing:border-box}
+.account-settings-form button{align-self:flex-start}
+.welcome-account-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+
+/* All four ruler modes use the real map grid, fixed at 5 ft per cell.
+ * Floating control bar does not take room away from the battlemap. */
+.map-only-panel{position:relative!important}
+.map-measure-toolbar{position:absolute;z-index:350;top:50%;left:9px;
+ transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;
+ padding:5px;border:1px solid #657b9b;border-radius:10px;
+ background:#101b2de8;backdrop-filter:blur(5px);box-shadow:0 4px 13px #05090f88}
+.map-measure-tool{display:grid;place-items:center;width:37px;height:37px;
+ min-width:37px;min-height:37px;padding:6px!important;border-radius:7px!important;
+ background:#253850!important;border:1px solid #47617f!important;
+ color:#cad7ec!important;cursor:crosshair;touch-action:none}
+.map-measure-tool:hover,.map-measure-tool:focus-visible{
+ border-color:#9cd5ff!important;background:#365174!important;color:#fff!important}
+.map-measure-tool.selected{border-color:#adf1b4!important;
+ box-shadow:0 0 0 1px #75e5a2,inset 0 0 13px #39795a88;
+ color:#c3ffd4!important;background:#244739!important}
+.map-measure-tool svg{pointer-events:none}
+.map-measure-close{color:#d4b7cb!important;border-color:#82657a!important}
+.map-measure-overlay{position:absolute;top:0;left:0;z-index:155;
+ overflow:hidden;pointer-events:none}
+.map-measure-local{stroke:#fbc56c;fill:#e8a83c}
+.map-measure-remote{stroke:#79dcff;fill:#43b6e5}
+.map-measure-start{fill:#fff;stroke:#14233a}
+.map-measure-turn{fill:#14233a;stroke:#f9efdc;stroke-width:.02}
+.map-measure-label-back{fill:#111a2df0;stroke:#738db1;stroke-width:.015}
+.map-measure-label{stroke:none;fill:#fff;paint-order:stroke;
+ font-family:system-ui,sans-serif;font-weight:800;letter-spacing:0}
+@media(max-width:650px){
+ .map-measure-toolbar{left:5px;top:48%;padding:3px;gap:3px}
+ .map-measure-tool{width:33px;height:33px;min-width:33px;min-height:33px}
+}
+
+
+/* Inventory grid width regression: character/NPC sheet layouts must give an
+   inventory field its configured 1/2/3 sheet columns. A fixed-slot grid must
+   scroll inside that space; it must never shrink its parent to min-content. */
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields.fields,
+.app .floating-window.floating-npc>.npc-modal>.npc-fields.fields{
+ display:grid;
+ width:100%;
+ min-width:0;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ justify-items:stretch;
+ align-items:start;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field{
+ display:flex;
+ flex-direction:column;
+ width:100%;
+ min-width:0;
+ max-width:100%;
+ justify-self:stretch;
+ align-self:start;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field.span1{
+ grid-column:span 1;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field.span2{
+ grid-column:span 2;
+}
+.app .floating-window .npc-fields.fields>.field.inventory-grid-field.span3{
+ grid-column:1 / -1;
+}
+/* Player main sheet can also render inventory in its ordinary fields grid. */
+.fields>.field.inventory-grid-field{width:100%;min-width:0;max-width:100%}
+.fields>.field.inventory-grid-field.span3{grid-column:1 / -1}
+.field.inventory-grid-field>.inventory-panel.inventory-grid{
+ width:100%;min-width:0;max-width:100%;align-self:stretch;
+}
+.field.inventory-grid-field .inventory-summary,
+.field.inventory-grid-field .inventory-grid-scroll{
+ width:100%;min-width:0;max-width:100%;
+ align-self:stretch;
+}
+.field.inventory-grid-field .inventory-grid-scroll{
+ display:block;overflow-x:auto;overflow-y:auto;
+}
+.field.inventory-grid-field .inventory-slot-grid{
+ width:max-content;max-width:none;
+}
+/* The window itself can be narrower than three columns; avoid overflowing the
+   sheet, retain the same 48px slots and scroll horizontally instead. */
+@media(max-width:700px){
+ .app .floating-window.floating-sheet>.npc-modal>.npc-fields.fields,
+ .app .floating-window.floating-npc>.npc-modal>.npc-fields.fields{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ .app .floating-window .npc-fields.fields>.field.inventory-grid-field.span3{
+  grid-column:1 / -1;
+ }
+}
+
+/* Signup-only Turnstile widget: fluid width without changing other auth UI. */
+.signup-captcha{display:flex;flex-direction:column;align-items:stretch;gap:6px;width:100%;min-width:0;min-height:64px}
+.signup-captcha>div{min-width:0;max-width:100%}
+
+/* Standalone character sheet pop-out: no duplicate tabletop/sidebar shell. */
+.app.sheet-popup-app{min-height:100dvh;background:#111a2a}
+/* The player's floating sheet lives inside main/primary. Keep that exact
+   window mounted while hiding the rest of the tabletop instead of main itself. */
+.app.sheet-popup-app>main,
+.app.sheet-popup-app>main>.workarea,
+.app.sheet-popup-app>main>.workarea>.primary{display:contents!important}
+.app.sheet-popup-app>main>:not(.workarea),
+.app.sheet-popup-app>main>.workarea>:not(.primary),
+.app.sheet-popup-app>main>.workarea>.primary>:not(.floating-window.floating-sheet){
+ display:none!important;
+}
+.app.sheet-popup-app .floating-window.floating-sheet{
+ width:calc(100vw - 14px)!important;height:calc(100dvh - 14px)!important;
+ left:7px!important;top:7px!important;max-width:none;max-height:none;
+}
+.app.sheet-popup-app .floating-window.floating-sheet>.floating-sheet-content{
+ height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+}
+.app.sheet-popup-app .floating-window.floating-sheet .fields{
+ flex:1;min-height:0;overflow-y:auto;
+}
+
