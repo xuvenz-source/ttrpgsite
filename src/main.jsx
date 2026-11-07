@@ -2276,8 +2276,8 @@ function App(){
      onClose={()=>setStatusEditToken(null)} onApply={applyTokenStatuses}/>
    </QuickEditBoundary>}
  {selectedToolIssue&&<CampaignToolSheet key={selectedToolIssue.id}
-  tool={selectedToolIssue} userId={user} isDM={isDM}
-  onSave={(tool,newState)=>campaignTools.updateState(tool,newState)}
+  db={db} tool={selectedToolIssue} userId={user} isDM={isDM}
+  onRefresh={campaignTools.refresh}
   onClose={()=>setSelectedToolIssueId(null)}/>}
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
