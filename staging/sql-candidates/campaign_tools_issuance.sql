@@ -23,7 +23,7 @@ begin
   if p_kind='mount' then
    if (p_config->>'span') !~ '^[1-4]$' then return false;end if;
    v:=p_config->'attributes';
-   if jsonb_typeof(v)<>'object' or jsonb_object_length(v)>16 then return false;end if;
+   if jsonb_typeof(v)<>'object' or (select count(*) from jsonb_object_keys(v))>16 then return false;end if;
    for v_attr in select key,value from jsonb_each(v) loop
     if v_attr.key !~ '^[a-z][a-z0-9_]{0,31}$'
      or jsonb_typeof(v_attr.value)<>'number' or
@@ -43,7 +43,7 @@ begin
   or (p_state - 'items' - 'attrs' - 'lit') <> '{}'::jsonb then return false;end if;
  v_items:=p_state->'items';v_attrs:=p_state->'attrs';
  if jsonb_typeof(v_items)<>'array' or jsonb_array_length(v_items)>250
-  or jsonb_typeof(v_attrs)<>'object' or jsonb_object_length(v_attrs)>16
+  or jsonb_typeof(v_attrs)<>'object' or (select count(*) from jsonb_object_keys(v_attrs))>16
   or jsonb_typeof(p_state->'lit')<>'boolean' then return false;end if;
  for v_item in select value from jsonb_array_elements(v_items) loop
   if jsonb_typeof(v_item)<>'object' or octet_length(v_item::text)>4096 then return false;end if;
