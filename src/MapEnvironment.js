@@ -127,3 +127,31 @@ export function snapEnvironmentPoint(point,snap=true){
  const p=normalizePoint(point);
  return snap?{x:Math.round(p.x),y:Math.round(p.y)}:p;
 }
+
+/** Select actual geometry touching a map-editor marquee, not every object
+ * whose broad bounding box happens to overlap the rectangle.
+ */
+export function selectEnvironmentObjectIds(objects,rectangle){
+ if(!rectangle)return [];
+ const {left,right,top,bottom}=rectangle;
+ if(![left,right,top,bottom].every(Number.isFinite)||right<left||bottom<top)return [];
+ const inside=p=>p&&p.x>=left&&p.x<=right&&p.y>=top&&p.y<=bottom;
+ const segmentHits=(a,b)=>{
+  if(inside(a)||inside(b))return true;
+  const dx=b.x-a.x,dy=b.y-a.y;
+  let entry=0,exit=1;
+  for(const [p,q] of [[-dx,a.x-left],[dx,right-a.x],[-dy,a.y-top],[dy,bottom-a.y]]){
+   if(Math.abs(p)<1e-9){if(q<0)return false;continue}
+   const t=q/p;
+   if(p<0)entry=Math.max(entry,t);
+   else exit=Math.min(exit,t);
+   if(entry>exit)return false;
+  }
+  return true;
+ };
+ return (objects||[]).filter(object=>{
+  if(object?.type==='light')return inside({x:Number(object.x),y:Number(object.y)});
+  const points=object?.points;
+  return Array.isArray(points)&&points.some((p,i)=>i>0&&segmentHits(points[i-1],p));
+ }).map(object=>object.id);
+}
