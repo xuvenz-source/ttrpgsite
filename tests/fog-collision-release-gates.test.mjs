@@ -24,7 +24,7 @@ test('recovered scope forbids CSS-only fog or client-authoritative collision',()
 
 test('fog overlay is fail-closed and wired to authorized player snapshots',()=>{
  const overlay=source('src/MapFogOverlay.jsx');
- const board=source('src/main.jsx');
+ const board=(source('src/main.jsx')+source('src/TabletopApp.jsx')+source('src/BattlemapBoard.jsx')+source('src/SheetTemplateDesigner.jsx'));
  assert.match(overlay,/normalizeAuthorizedFogFrame\(frame,mapId\)/);
  assert.match(overlay,/if\(!sanitized\)/);
  assert.match(overlay,/fillStyle='#040914'/);

@@ -57,7 +57,7 @@ test('handout window permits DM editing and note pickup without exposing edit co
 });
 test('battlemap places and moves clickable pins without mixing them into light geometry',()=>{
  const mapPins=source('src/MapPinLayer.jsx');
- const app=source('src/main.jsx');
+ const app=(source('src/main.jsx')+source('src/TabletopApp.jsx')+source('src/BattlemapBoard.jsx')+source('src/SheetTemplateDesigner.jsx'));
  const settings=source('src/MapSettingPanel.jsx');
  assert.match(mapPins,/pinVisibleTo\(pin,isDM\)/);
  assert.match(mapPins,/onCreate\?\.\(editor\.pinHandoutId,p\)/);

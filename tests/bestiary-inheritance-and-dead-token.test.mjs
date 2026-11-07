@@ -17,7 +17,7 @@ test('Dead is a normal shared status, selectable through Quick Adjust',()=>{
 });
 
 test('Dead status tints the full token for all viewers without obscuring badges or movement',()=>{
- const app=source('main.jsx');
+ const app=(source('main.jsx')+source('TabletopApp.jsx')+source('BattlemapBoard.jsx')+source('SheetTemplateDesigner.jsx'));
  const css=source('style.css');
  assert.ok(app.includes("effect.id==='dead')?' token-dead'"));
  assert.ok(app.includes('<span className="token-dead-overlay" aria-hidden="true"/>'));
@@ -28,7 +28,7 @@ test('Dead status tints the full token for all viewers without obscuring badges 
 });
 
 test('status update uses the existing validated RPC; staging candidate expands its whitelist',()=>{
- const app=source('main.jsx');
+ const app=(source('main.jsx')+source('TabletopApp.jsx')+source('BattlemapBoard.jsx')+source('SheetTemplateDesigner.jsx'));
  assert.ok(app.includes("db.rpc('set_token_statuses',{p_token:token.id,p_statuses:effects})"));
  assert.ok(sql.includes("create or replace function public.valid_token_statuses"));
  assert.match(sql,/'blinded','charmed','deafened','dead','exhaustion'/);
@@ -38,7 +38,7 @@ test('status update uses the existing validated RPC; staging candidate expands i
 });
 
 test('bestary sheet is freshly loaded for every token instance with independent values',()=>{
- const app=source('main.jsx');
+ const app=(source('main.jsx')+source('TabletopApp.jsx')+source('BattlemapBoard.jsx')+source('SheetTemplateDesigner.jsx'));
  assert.ok(app.includes("db.from('npc_templates')"));
  assert.ok(app.includes(".eq('id',npcId).eq('campaign_id',activeId).single()"));
  assert.ok(app.includes("npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{})"));

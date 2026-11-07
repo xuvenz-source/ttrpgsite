@@ -5,7 +5,7 @@ import {ACCOUNT_USERNAME,validateAccountUsername,validateAccountPassword,
  isNativeUsernameAccount,accountDisplayName} from '../src/AccountIdentity.js';
 
 const settings=readFileSync(new URL('../src/AccountSettings.jsx',import.meta.url),'utf8');
-const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const hub=readFileSync(new URL('../src/Welcome.jsx',import.meta.url),'utf8');
 const sidebar=readFileSync(new URL('../src/TabletopSidebar.jsx',import.meta.url),'utf8');
 const edge=readFileSync(new URL('../supabase/functions/username-update/index.ts',import.meta.url),'utf8');

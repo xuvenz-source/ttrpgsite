@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {campaignPresenceKey,onlineMemberIds,chatRowsForMap} from '../src/CampaignRealtime.js';
 import {CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from '../src/PerformanceScheduling.js';
 
-const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const sidebar=readFileSync(new URL('../src/TabletopSidebar.jsx',import.meta.url),'utf8');
 const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
 
