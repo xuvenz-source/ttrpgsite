@@ -1,9 +1,10 @@
 import React,{useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
+import Artwork from './Artwork.jsx';
 import {currentCombatant,canRollCombatEntry,combatEntryForUser} from './CombatInitiative.js';
 
-export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],user,isDM,
- onClose,onNext,onPrevious,onSort,onOpenSettings,onRollEntry,onRollNpc,onLocate,busy=false}){
+export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],db,user,isDM,
+ onClose,onNext,onPrevious,onSort,onOpenSettings,onRollEntry,onRollNpc,onLocate,onRemoveEntry,busy=false}){
  const [minimized,setMinimized]=useState(false);
  if(!combat?.active)return null;
  const current=currentCombatant(combat);
@@ -41,11 +42,15 @@ export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],user
       const e=combatEntryForUser(entry,privateEntries,tokens,isDM);
       const focused=e.id===combat.currentEntryId;
       const canRoll=canRollCombatEntry(entry,tokens,user,isDM);
+      // Unknown participants never have an authorized token ID on player clients.
+      const portrait=e.tokenId?tokens.find(token=>token.id===e.tokenId):null;
       return <div className={'combat-turn-entry'+(focused?' is-active-turn':'')}
        key={e.id} role="listitem">
        <div className="combat-turn-number">{index+1}</div>
        <div className="combat-turn-avatar" aria-hidden="true">
-        {e.kind==='unknown'?'?':e.kind==='npc'?'♟':'♞'}
+        {portrait?.image_path?<Artwork db={db} path={portrait.image_path}
+         alt="" className="combat-turn-art"/>:
+         e.kind==='unknown'?'?':e.name.slice(0,1).toUpperCase()}
        </div>
        <div className="combat-turn-identity">
         <strong title={e.name}>{e.name}</strong>
@@ -58,6 +63,10 @@ export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],user
        {e.tokenId&&<button type="button" className="secondary combat-entry-find"
         title={'Find '+e.name+' on map'} aria-label={'Find '+e.name+' on map'}
         onClick={()=>onLocate(e.tokenId)}>◎</button>}
+       {isDM&&<button type="button" className="secondary combat-entry-remove"
+        disabled={busy} title={'Remove '+e.name+' from turn order'}
+        aria-label={'Remove '+e.name+' from turn order'}
+        onClick={()=>onRemoveEntry(e.id)}>×</button>}
       </div>;
      })}
     </div>
