@@ -244,6 +244,22 @@
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
       "status": "included"
+    },
+    {
+      "id": "macro-attribute-insert-operators",
+      "description": "Automatically insert exactly one arithmetic + before sheet attributes, with insertion selectors on linked Attack hit/damage/critical and standard roll cells",
+      "sources": [
+        "stage/player-sheets-token-artwork-fog-2026-11-08"
+      ],
+      "status": "included"
+    },
+    {
+      "id": "macro-quickcode-numeric-resolution",
+      "description": "Use player/DM-authorized current sheet values for =@ quickcodes in all macro roll expressions, enforcing numeric-only values before dice validation",
+      "sources": [
+        "stage/player-sheets-token-artwork-fog-2026-11-08"
+      ],
+      "status": "included"
     }
   ],
   "databaseDependencies": [
@@ -276,6 +292,14 @@
       "file": "supabase/migrations/20261108033000_player_owned_token_artwork.sql",
       "status": "staged-not-applied",
       "mustApplyBeforeFrontend": true
+    },
+    {
+      "version": "20261108043000",
+      "name": "macro_quickcode_resolution",
+      "file": "supabase/migrations/20261108043000_macro_quickcode_resolution.sql",
+      "status": "staged-not-applied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": "20261108033000_player_owned_token_artwork"
     }
   ],
   "edgeFunctionDependencies": [
@@ -290,7 +314,8 @@
   "securityNotes": [
     "Do not restore the old NPC artwork policy; the fog/collision release already installed observed-token Storage authorization.",
     "Fog-enabled movement previews cannot reveal tool/token coordinates; database collision remains authoritative.",
-    "Existing test campaigns only; do not create paid preview/development resources."
+    "Existing test campaigns only; do not create paid preview/development resources.",
+    "Macro quickcode helper is private, numeric-only, limited to an already authorized character/NPC macro source and keeps the strict server dice validator."
   ],
   "upcomingRelease": {
     "productionBaseSha": "f5a5decaa0d6446bfe68f9d5e2bfa1ebb5f36e49",
@@ -303,7 +328,10 @@
           "Player owned Alt+double-click opens character sheet",
           "Immediate local draft rendering with deferred/batched autosave",
           "Player character art can update owned map tokens without changing other fields",
-          "Player fog no longer flashes unexplored black on movement"
+          "Player fog no longer flashes unexplored black on movement",
+          "Macro sheet-attribute insertion automatically supplies + where needed in normal and linked Attack formulas",
+          "Linked Attack supports sheet-attribute and quickcode dropdowns for to-hit, damage and critical damage",
+          "Macro quickcodes resolve numeric character/NPC sheet references securely before dice parsing, including equipment AC quickcodes"
         ],
         "databaseDependencies": [
           {
@@ -311,6 +339,13 @@
             "file": "supabase/migrations/20261108033000_player_owned_token_artwork.sql",
             "status": "staged-not-applied",
             "requiresApproval": true
+          },
+          {
+            "name": "macro_quickcode_resolution",
+            "file": "supabase/migrations/20261108043000_macro_quickcode_resolution.sql",
+            "status": "staged-not-applied",
+            "requiresApproval": true,
+            "applyAfter": "player_owned_token_artwork"
           }
         ],
         "paidInfrastructure": false
