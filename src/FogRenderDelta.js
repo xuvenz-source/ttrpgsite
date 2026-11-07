@@ -1,4 +1,4 @@
-import {FOG_UNEXPLORED,FOG_EXPLORED,FOG_VISIBLE} from './MapFogModel.js';
+import {FOG_UNEXPLORED,FOG_EXPLORED,FOG_VISIBLE,MAX_FOG_AXIS} from './MapFogModel.js';
 
 /** Prepare an opaque, presentation-only fog mask from a sanitized frame.
  * A pending RPC may preserve previously authorized artwork for continuity,
@@ -6,7 +6,7 @@ import {FOG_UNEXPLORED,FOG_EXPLORED,FOG_VISIBLE} from './MapFogModel.js';
  */
 export function fogPaintMask(frame,displayVisible=[]){
  if(!frame||!Number.isSafeInteger(frame.width)||!Number.isSafeInteger(frame.height)||
-    frame.width<1||frame.height<1||frame.width*frame.height>65536)return null;
+    frame.width<1||frame.height<1||frame.width>MAX_FOG_AXIS||frame.height>MAX_FOG_AXIS)return null;
  const count=frame.width*frame.height;
  const result=new Uint8Array(count);
  if(frame.enabled===false){result.fill(FOG_VISIBLE);return result}
