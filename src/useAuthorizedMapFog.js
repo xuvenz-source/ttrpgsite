@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {normalizeAuthorizedFogFrame} from './MapFogModel.js';
+import {normalizeAuthorizedFogFrame,fogFrameDuringRefresh} from './MapFogModel.js';
 import {createCoalescedRefresh} from './PerformanceScheduling.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
@@ -31,18 +31,23 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId}){
   setFrame(null);setPublished(null);setError('');
   void refresh();
   if(!db||!campaignId||!mapId||!userId)return;
-  // Always obscure the previous frame immediately on a revision; batch only
-  // the expensive authorized RPC, never the security invalidation.
+  // Invalidate in-flight RPCs before the 60ms batched refresh: a stale
+  // pre-movement response must never reinstate old visibility permissions.
+  // Keep previously explored cells dimmed instead of painting the map black.
+  const invalidate=()=>{
+   ++request.current;
+   setFrame(previous=>fogFrameDuringRefresh(previous,mapId));
+  };
   const changed=createCoalescedRefresh(()=>void refresh(),60);
   const channel=db.channel('forge-visibility-'+mapId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
     table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},()=>{
-    setFrame(null);changed.request();
+    invalidate();changed.request();
    }).subscribe(state=>{
     if(state==='SUBSCRIBED')changed.request();
    });
   const onVisibility=()=>{
-   if(document.visibilityState==='visible'){setFrame(null);changed.flush()}
+   if(document.visibilityState==='visible'){invalidate();changed.flush()}
   };
   document.addEventListener('visibilitychange',onVisibility);
   return()=>{

@@ -477,7 +477,14 @@ export default function TabletopApp(){
   }catch(e){fail(e)}
  }
  async function openTokenSheet(t){
-  if(!isDM)return;
+  if(!isDM){
+   if(!t||t.owner_id!==user||t.map_id!==playerMapId||!t.visible)return;
+   const own=characters.filter(ch=>ch.user_id===user);
+   const id=t.character_id||(own.length===1?own[0].id:null);
+   if(!id){fail('This token is not linked to your character sheet. Ask the DM to link it.');return}
+   try{await openOwnCharacter(id)}catch(error){fail(error)}
+   return;
+  }
   if(t.character_id||t.owner_id){
    await openPlayerCharacter(t.character_id,t.owner_id);
   }else{

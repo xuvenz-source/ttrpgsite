@@ -39,6 +39,15 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
   revision:raw.revision,enabled:raw.enabled,partyShared:raw.partyShared,
   visible,explored};
 }
+/** A revision revokes the old visible cells immediately. Retain only cells
+ * already explored (dimmed) while fetching the next authorized frame, so a
+ * moving player's entire map does not flash to unexplored black.
+ * This never grants sight or maps previously unseen cells.
+ */
+export function fogFrameDuringRefresh(frame,mapId){
+ const safe=normalizeAuthorizedFogFrame(frame,mapId);
+ return safe?{...safe,enabled:true,visible:[]}:null;
+}
 export function fogCellState(frame,x,y){
  if(!frame)return FOG_UNEXPLORED;
  if(!validInt(x)||!validInt(y)||x<0||y<0||

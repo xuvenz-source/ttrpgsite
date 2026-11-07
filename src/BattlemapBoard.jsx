@@ -753,9 +753,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
       }}
       title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
-       (isDM?' · Alt + double-click to edit sheet':'')}
-      onDoubleClick={e=>{if(e.altKey&&isDM&&
-       !(environmentEditor?.enabled&&environmentEditor.lockTokens!==false)){
+       ((isDM||t.owner_id===user)?' · Alt + double-click to edit sheet':'')}
+      onDoubleClick={e=>{if(e.altKey&&!previewActive&&
+       (isDM||(t.owner_id===user&&t.visible!==false&&t.map_id===map.id))&&
+       !(isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false)){
        e.preventDefault();e.stopPropagation();onTokenEdit(t)
       }}}
       onClick={e=>{
