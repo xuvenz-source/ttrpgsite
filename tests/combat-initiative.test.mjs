@@ -85,6 +85,9 @@ test('client renders DM section, player controls, and existing floating window a
  assert.ok(window.includes('Next combatant'));
  assert.ok(window.includes('Re-sort by initiative'));
  assert.ok(panel.includes('Begin Combat'));
+ assert.ok(panel.includes('const mapTokens=tokens.filter(token=>token?.map_id===map?.id)'));
+ assert.ok(panel.includes('availableCombatTokens(mapTokens'));
+
  assert.ok(panel.includes('Roll all unrolled NPCs'));
  assert.ok(hook.includes("event:'*',schema:'public',table:'map_combats'"));
  assert.ok(hook.includes('lastEncounter.current.get(mapId)!==encounterKey'));
