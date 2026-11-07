@@ -436,6 +436,37 @@ drop trigger if exists forge_visibility_token_tick on public.map_tokens;
 create trigger forge_visibility_token_tick after insert or update or delete on public.map_tokens
  for each row execute function forge_visibility.tick_tokens();
 
+-- Character elevation/resource changes can change sight through high walls.
+-- Only invalidate maps whose published barrier actually uses a changed
+-- attribute, instead of broadcasting every routine sheet keystroke.
+create or replace function forge_visibility.tick_character_elevation()
+returns trigger language plpgsql volatile security definer set search_path='' as $
+declare item record;
+begin
+ if new.field_values is not distinct from old.field_values then return new;end if;
+ for item in
+  select distinct t.map_id
+  from public.map_tokens t
+  join forge_visibility.map_rules rules on rules.map_id=t.map_id
+   and (rules.fog_enforced or rules.collision_enforced)
+  join public.map_environments e on e.map_id=t.map_id
+  cross join lateral jsonb_array_elements(
+   case when jsonb_typeof(e.live->'objects')='array'
+    then e.live->'objects' else '[]'::jsonb end) barrier
+  where t.character_id=new.id and
+   coalesce(barrier->>'attributeField','')<>'' and
+   new.field_values->(barrier->>'attributeField')
+     is distinct from old.field_values->(barrier->>'attributeField')
+ loop
+  perform forge_visibility.bump_tick(item.map_id);
+ end loop;
+ return new;
+end $;
+drop trigger if exists forge_character_elevation_tick on public.characters;
+create trigger forge_character_elevation_tick
+ after update of field_values on public.characters
+ for each row execute function forge_visibility.tick_character_elevation();
+
 create or replace function forge_visibility.tick_tools()
 returns trigger language plpgsql volatile security definer set search_path='' as $$
 begin
