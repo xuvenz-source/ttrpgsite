@@ -127,6 +127,7 @@ export default function TabletopApp(){
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[mapEnvironment,setMapEnvironment]=useState(null);
+ const[publishedMapEnvironment,setPublishedMapEnvironment]=useState(null);
  const mapEnvironmentCurrent=useRef(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
@@ -1253,14 +1254,15 @@ export default function TabletopApp(){
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
-  setMapEnvironment(null);mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
+  setMapEnvironment(null);setPublishedMapEnvironment(null);
+  mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
   setMapSettingEditor(old=>({...old,enabled:false,previewing:false,previewTokenId:'',selectedId:null}));
   if(!db||!isDM||!activeId||!selectedMap){
    setMapEnvironmentStatus('Choose a map');return()=>{live=false};
   }
   setMapEnvironmentStatus('Loading map environment…');
   (async()=>{
-   const {data,error:loadError}=await db.from('map_environments').select('prepared')
+   const {data,error:loadError}=await db.from('map_environments').select('prepared,live')
     .eq('campaign_id',activeId).eq('map_id',selectedMap).maybeSingle();
    if(!live)return;
    if(loadError){
@@ -1269,6 +1271,7 @@ export default function TabletopApp(){
    }
    mapEnvironmentCurrent.current=normalizeEnvironment(data?.prepared);
    setMapEnvironment(mapEnvironmentCurrent.current);
+   setPublishedMapEnvironment(data?.live?normalizeEnvironment(data.live):null);
    setMapEnvironmentMapId(selectedMap);
    setMapEnvironmentStatus('Saved');
   })().catch(e=>{if(live){setMapEnvironmentStatus('Environment load failed');fail(e)}});
@@ -2066,6 +2069,12 @@ export default function TabletopApp(){
    setMapEnvironmentStatus(action==='publish'?'Publishing map rules…':
     action==='disable'?'Disabling published rules…':'Resetting exploration…');
    await read(db.rpc('publish_map_environment',{p_map:selectedMap,p_action:action}));
+   // Player preview must use published rules, not an unpublished DM draft.
+   const {data:published,error:publishedError}=await db.from('map_environments')
+    .select('live').eq('map_id',selectedMap)
+    .eq('campaign_id',activeId).maybeSingle();
+   if(publishedError)throw publishedError;
+   setPublishedMapEnvironment(published?.live?normalizeEnvironment(published.live):null);
    await fog.refresh();
    await Promise.all([refreshTokens(),refreshMonitors(),campaignTools.refresh()]);
    setMapEnvironmentStatus(action==='publish'?'Published to players.':'Saved.');
@@ -2432,6 +2441,7 @@ export default function TabletopApp(){
   aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+   publishedEnvironment={mapEnvironmentMapId===selectedMap?publishedMapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} registerPreviewStep={registerPreviewStep}
    onAddEnvironmentObject={addEnvironmentObject}
