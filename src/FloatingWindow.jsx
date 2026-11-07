@@ -11,7 +11,8 @@ const CONFIG={
  inventory:{width:430,height:520},
  account:{width:445,height:565},
  status:{width:650,height:610},
- mapsetting:{width:365,height:560}
+ mapsetting:{width:365,height:560},
+ combat:{width:305,height:485}
 };
 function initialPosition(kind){
  const preset=CONFIG[kind]||CONFIG.sheet;

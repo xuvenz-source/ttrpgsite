@@ -3,6 +3,7 @@ import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import './style.css';
 import './map-environment.css';
+import './combat.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
@@ -14,6 +15,8 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import CombatTurnOrder from './CombatTurnOrder.jsx';
+import useMapCombat from './useMapCombat.js';
 import MapSettingPanel from './MapSettingPanel.jsx';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
@@ -207,6 +210,25 @@ function App(){
  tokenContextRef.current={mapId:selectedMap,campaignId:activeId,userId:user};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
+ const combatTracker=useMapCombat({
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
+  onError:fail,onRefreshChat:refreshChat,
+  beforeRoll:async entryId=>{
+   // Roll initiative from the latest saved character sheet if this user is
+   // editing the participating character in the same session.
+   const roster=combatTracker.combat?.entries||[];
+   const entry=roster.find(e=>e.id===entryId);
+   const privateId=isDM?combatTracker.privateEntries.find(e=>e.entry_id===entryId)?.token_id:null;
+   const token=tokens.find(t=>t.id===(privateId||entry?.tokenId));
+   if(token?.character_id&&token.character_id===character?.id)
+    await flushSheetForCast(character.id);
+  }
+ });
+ const currentCombatEntry=combatTracker.combat?.entries.find(e=>
+  e.id===combatTracker.combat?.currentEntryId);
+ const combatActiveTokenId=currentCombatEntry?.tokenId||
+  (isDM?combatTracker.privateEntries.find(e=>
+   e.entry_id===combatTracker.combat?.currentEntryId)?.token_id:null);
  function fail(e){setError(message(e));console.error(e)}
  async function accountUpdated(){
   const {data,error:identityError}=await db.auth.getUser();
@@ -1944,7 +1966,7 @@ function App(){
   aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
-   active={tab==='tabletop'||tab==='sheet'}
+   active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
    onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
    template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
@@ -1993,6 +2015,14 @@ function App(){
  mapEnvironmentStatus={mapEnvironmentStatus}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
  mapSettingPopped={mapSettingPopped}
+ combat={combatTracker.combat} combatPrivateEntries={combatTracker.privateEntries}
+ combatBusy={combatTracker.busy} combatStatus={combatTracker.status}
+ combatOpen={combatTracker.open}
+ onCombatBegin={combatTracker.begin} onCombatAdd={combatTracker.add}
+ onCombatCommand={combatTracker.command} onCombatRoll={combatTracker.roll}
+ onCombatRollNpcs={combatTracker.rollNpc}
+ onOpenCombat={()=>combatTracker.setOpen(true)}
+ onCloseCombat={()=>combatTracker.setOpen(false)}
  onPopOutMapSetting={()=>setMapSettingPopped(true)}
  onDockMapSetting={()=>{setMapSettingPopped(false);setRightTab('dm')}}
  onMapEnvironmentChange={saveMapEnvironment}
@@ -2031,6 +2061,19 @@ function App(){
  accountEmail={session.user.email} onSignOut={()=>db.auth.signOut()}
  /></div>
  </main>
+ {combatTracker.combat?.active&&combatTracker.open&&
+  <CombatTurnOrder combat={combatTracker.combat}
+   privateEntries={combatTracker.privateEntries}
+   tokens={tokens} user={user} isDM={isDM} busy={combatTracker.busy}
+   onClose={()=>combatTracker.setOpen(false)}
+   onNext={()=>combatTracker.command('next')}
+   onPrevious={()=>combatTracker.command('previous')}
+   onSort={()=>combatTracker.command('sort')}
+   onOpenSettings={()=>{setRightTab('dm');setTab('tabletop')}}
+   onRollEntry={combatTracker.roll} onRollNpc={combatTracker.rollNpc}
+   onLocate={tokenId=>{if(tokens.some(t=>t.id===tokenId&&(isDM||t.visible!==false))){
+    setTab('tabletop');setSelectedTokenId(tokenId);
+   }}}/>}
  {isDM&&mapSettingPopped&&<FloatingWindow kind="mapsetting"
   onClose={()=>{setMapSettingPopped(false);setRightTab('dm')}}>
   <section className="panel floating-map-setting-content" aria-label="Floating DM Map setting">
@@ -2359,7 +2402,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
- onPatchEnvironmentObject,characters=[],template,active=true}){
+ onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
@@ -2812,7 +2855,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
-      (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')}
+      (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
+      (combatActiveTokenId===t.id?' token-current-turn':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
