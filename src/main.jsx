@@ -1885,7 +1885,16 @@ function App(){
   onSignOut={()=>db.auth.signOut()}
   onOpenAccountSettings={()=>setAccountSettingsOpen(true)}
   error={error} onClearError={()=>setError('')}/>
-  {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
+  {openedHandout&&activeHandout&&<CampaignHandoutWindow
+  key={activeHandout.id} note={activeHandout} pin={activeHandoutPin}
+  isDM={isDM} folders={campaignHandouts.folders}
+  onClose={()=>setOpenedHandout(null)}
+  onSave={(note,patch)=>campaignHandouts.updateHandout(note,patch)}
+  onDelete={campaignHandouts.deleteHandout}
+  onUpdatePin={campaignHandouts.updatePin}
+  onDeletePin={campaignHandouts.deletePin}
+  onCollect={campaignHandouts.collectPin}/>} 
+ {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
    onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
  </>;
  if(launchNpc&&!isDM&&camp)return <div className="center" role="alert">
@@ -2006,6 +2015,8 @@ function App(){
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
+   handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
+   onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
    onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
    template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
@@ -2043,6 +2054,8 @@ function App(){
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
  onOpenStatus={openTokenStatuses}
+ campaignHandouts={campaignHandouts} onOpenHandout={id=>setOpenedHandout({id})}
+ onPrepareHandoutPin={prepareHandoutPin} onHandoutError={fail}
  chat={chat} onChatChange={setChat} onSendChat={sendChat}
  npcs={npcs} npcFolders={npcFolders}
  onNewNpcFolder={makeNpcFolder} onNewNpc={makeNpc}
@@ -2052,6 +2065,7 @@ function App(){
  mapEnvironment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
  mapEnvironmentStatus={mapEnvironmentStatus}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
+ handoutsForMap={campaignHandouts.handouts}
  mapSettingPopped={mapSettingPopped}
  combat={combatTracker.combat} combatPrivateEntries={combatTracker.privateEntries}
  combatBusy={combatTracker.busy} combatStatus={combatTracker.status}
@@ -2130,7 +2144,8 @@ function App(){
      onEnvironmentChange={saveMapEnvironment}
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
-     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}/>
+     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
+     handouts={campaignHandouts.handouts}/>
    </div>
   </section>
  </FloatingWindow>}
