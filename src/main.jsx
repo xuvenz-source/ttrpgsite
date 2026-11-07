@@ -7,7 +7,7 @@ import './combat.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
- measurementGeometry,addLineTurn,
+ measurementGeometry,addLineTurn,shouldBendLineOnRightPress,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
@@ -842,10 +842,10 @@ function App(){
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
  }
- function sendLiveMeasurement(measure,phase='preview'){
+ function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
   const now=Date.now();
-  if(phase==='preview'&&now-lastMeasureSent.current<65)return;
+  if(phase==='preview'&&!force&&now-lastMeasureSent.current<65)return;
   // Revisions keep out-of-order network previews from reappearing after clear.
   measureSequence.current=Math.max(now*1000,measureSequence.current+1);
   const data=liveMeasurementPayload(measure,measure?.id,user,selectedMap,
@@ -2580,10 +2580,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const mapPointInCells=e=>pointOnBattlemap(e.clientX,e.clientY,
   boardRef.current?.getBoundingClientRect(),map.width,map.height,
   map.grid_size,zoomRef.current);
- function beginMeasurement(pointerId,tool,point,pinned=false){
+ function beginMeasurement(pointerId,tool,point,pinned=false,sourceButton=0){
   if(!point||measureDrag.current)return;
   const measure={id:crypto.randomUUID(),tool,start:point,end:point};
-  measureDrag.current={pointerId,measure,pinned};
+  measureDrag.current={pointerId,measure,pinned,sourceButton};
   setLocalMeasurements(existing=>[...existing,{...measure,isLocal:true}]);
   onMeasurementPreview?.(measure,'preview');
  }
@@ -2604,7 +2604,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!current||current.pointerId!==e.pointerId)return;
   // Releasing the secondary button while primary remains down must NOT
   // finish a multi-leg movement measurement.
-  if(e.button===2&&(e.buttons&1)!==0)return;
+  if(!cancel&&e.button===2&&current.sourceButton===0)return;
   measureDrag.current=null;
   const point=cancel?current.measure.end:
    mapPointInCells(e)||current.measure.end;
@@ -2630,7 +2630,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(e.button!==0&&e.button!==2)return;
   setActiveMeasureTool(tool);
   e.preventDefault();e.stopPropagation();
-  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2};
+  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2,sourceButton:e.button};
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
  }
  function onToolPointerMove(e){
@@ -2641,12 +2641,12 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!measureDrag.current){
    if(e.clientX<rect.left||e.clientX>rect.right||
       e.clientY<rect.top||e.clientY>rect.bottom)return;
-   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned);
+   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned,current.sourceButton);
   }else updateMeasurement(e);
  }
  function onToolPointerUp(e,cancel=false){
   if(toolDrag.current?.pointerId!==e.pointerId)return;
-  if(e.button===2&&(e.buttons&1)!==0)return;
+  if(!cancel&&e.button===2&&measureDrag.current?.sourceButton===0)return;
   finishMeasurement(e,cancel);
   toolDrag.current=null;
   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
@@ -2657,7 +2657,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    pan.current||measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e),
-   e.button===2);
+   e.button===2,e.button);
   try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
  }
  function pinCurrentMeasurementOnRightClick(e){
@@ -2667,13 +2667,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   const current=measureDrag.current;
-  if(current.measure.tool==='line'&&!current.pinned&&(e.buttons&1)!==0){
+  if(shouldBendLineOnRightPress(current,e.button)){
    const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end);
    if(next!==current.measure){
     current.measure=next;
     setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
      {...next,isLocal:true}:m));
-    onMeasurementPreview?.(next,'preview');
+    onMeasurementPreview?.(next,'preview',true);
    }
    return;
   }
@@ -2693,8 +2693,21 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     e.clientY<rect.top||e.clientY>rect.bottom)return;
    pinCurrentMeasurementOnRightClick(e);
   }
+  // Some browsers delay pointerup until both mouse buttons are released.
+  // Native left mouseup always terminates a left-drag measurement promptly.
+  function onMouseUp(e){
+   const current=measureDrag.current;
+   if(e.button!==0||current?.sourceButton!==0)return;
+   finishMeasurement({pointerId:current.pointerId,button:0,
+    clientX:e.clientX,clientY:e.clientY});
+   if(toolDrag.current?.pointerId===current.pointerId)toolDrag.current=null;
+  }
   window.addEventListener('mousedown',onMouseDown,true);
-  return()=>window.removeEventListener('mousedown',onMouseDown,true);
+  window.addEventListener('mouseup',onMouseUp,true);
+  return()=>{
+   window.removeEventListener('mousedown',onMouseDown,true);
+   window.removeEventListener('mouseup',onMouseUp,true);
+  };
  },[active,activeMeasureTool]);
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
