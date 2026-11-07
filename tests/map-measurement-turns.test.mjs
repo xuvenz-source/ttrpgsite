@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {addLineTurn,MAX_LINE_TURNS,FEET_PER_CELL,measurementGeometry,
+import {addLineTurn,shouldBendLineOnRightPress,MAX_LINE_TURNS,FEET_PER_CELL,measurementGeometry,
  liveMeasurementPayload,validMeasurement,acceptMeasurementEvent,
  applyMeasurementEventToVisible} from '../src/MapMeasurements.js';
 
@@ -63,16 +63,25 @@ test('realtime pin and preview preserve turns; missing via remains backwards com
  const remove=liveMeasurementPayload(measure,id,actor,mapId,'remove',114);
  assert.deepEqual(applyMeasurementEventToVisible(live,remove),{});
 });
+test('ruler turn classification tracks the original left drag, independent of e.buttons',()=>{
+ const drag={sourceButton:0,pinned:false,measure:{tool:'line'}};
+ assert.equal(shouldBendLineOnRightPress(drag,2),true);
+ assert.equal(shouldBendLineOnRightPress({...drag,sourceButton:2},2),false);
+ assert.equal(shouldBendLineOnRightPress({...drag,pinned:true},2),false);
+ assert.equal(shouldBendLineOnRightPress({...drag,measure:{tool:'cone'}},2),false);
+ assert.equal(shouldBendLineOnRightPress(drag,0),false);
+ assert.equal(shouldBendLineOnRightPress(null,2),false);
+});
 test('board keeps right-drag pin but uses primary+secondary chord to bend line',()=>{
  const source=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
  const overlay=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
- assert.ok(source.includes("current.measure.tool==='line'&&!current.pinned&&(e.buttons&1)!==0"));
+ assert.ok(source.includes("shouldBendLineOnRightPress(current,e.button)"));
  assert.ok(source.includes("const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end)"));
  assert.ok(source.includes("measureDrag.current.pinned=true"));
- assert.ok(source.includes("if(e.button===2&&(e.buttons&1)!==0)return"));
- assert.ok(source.includes("onMeasurementPreview?.(next,'preview')"));
+ assert.ok(source.includes("if(!cancel&&e.button===2&&current.sourceButton===0)return"));
+ assert.ok(source.includes("onMeasurementPreview?.(next,'preview',true)"));
  assert.ok(source.includes("window.addEventListener('mousedown',onMouseDown,true)"));
- assert.ok(source.includes("if(e.button===2&&(e.buttons&1)!==0)return"));
+ assert.ok(source.includes("window.addEventListener('mouseup',onMouseUp,true)"));
  assert.ok(overlay.includes('g.path.map(p=>p.x'));
  assert.ok(overlay.includes('g.via.map((p,i)'));
 });

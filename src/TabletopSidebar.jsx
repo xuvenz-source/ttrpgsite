@@ -106,7 +106,7 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=
         owner.user_id===user?onOpenOwnCharacter(ch.id):onOpenPlayerCharacter(ch.id)}>
         Sheet</button>
        <button type="button" className="secondary unit-character-sheet"
-        title="Open in separate browser tab" onClick={()=>onOpenCharacterTab(ch.id)}>↗</button>
+        title="Open character sheet in separate window" aria-label={"Pop out "+ch.name+" character sheet"} onClick={()=>onOpenCharacterTab(ch.id)}>↗</button>
       </div>
       {visible&&<div className="unit-character-contents">
        {activeMap&&<div draggable className="unit-character-drag"

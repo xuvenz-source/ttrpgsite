@@ -18,6 +18,7 @@ const item=(id,name,category,icon,options={})=>({
  id,name,category,icon,color:COLORS[category],stackable:false,...options
 });
 export const STATUS_PRESETS=[
+ item('dead','Dead','conditions','skull'),
  item('blinded','Blinded','conditions','eye-off'),
  item('charmed','Charmed','conditions','heart'),
  item('deafened','Deafened','conditions','ear-off'),

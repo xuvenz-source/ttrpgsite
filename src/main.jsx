@@ -7,7 +7,7 @@ import './combat.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
- measurementGeometry,addLineTurn,
+ measurementGeometry,addLineTurn,shouldBendLineOnRightPress,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
@@ -399,7 +399,8 @@ function App(){
   const url=new URL(location.origin+location.pathname);
   url.searchParams.set('campaign',activeId);
   url.searchParams.set('sheet',characterId);
-  window.open(url.toString(),'_blank','noopener,noreferrer');
+  window.open(url.toString(),'_blank',
+   'popup=yes,width=920,height=760,resizable=yes,scrollbars=yes,noopener,noreferrer');
  }
  async function openOwnCharacter(characterId){
   const target=characters.find(ch=>ch.id===characterId&&ch.user_id===user);
@@ -458,6 +459,9 @@ function App(){
     npc_bars_public:draft.barsPublic
    }).eq('id',record.data.id));
    await refreshNpcs();
+   // Template edits can propagate unchanged defaults to existing NPC copies.
+   await refreshTokens();
+   await refreshMonitors();
   }else{
    await read(db.from('map_tokens').update({
     name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath,
@@ -476,9 +480,12 @@ function App(){
    }}:editor));
  }
  async function placeNpc(npcId,x=1,y=1){
-  const npc=npcs.find(n=>n.id===npcId);
-  if(!npc||!selectedMap||!isDM)return;
+  if(!npcId||!selectedMap||!isDM)return;
   try{
+   // Always start from the current bestiary sheet, not cached sidebar data.
+   const npc=await read(db.from('npc_templates')
+    .select('id,name,field_values,token_path,npc_bars_public')
+    .eq('id',npcId).eq('campaign_id',activeId).single());
    await read(db.from('map_tokens').insert({
     campaign_id:activeId,map_id:selectedMap,name:npc.name,
     npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{}),
@@ -539,7 +546,7 @@ function App(){
   }catch(error){console.warn('Sheet artwork saved, but map token image could not refresh',error)}
   void refreshMonitors();
  }
- // A sheet opened in a browser tab runs under its own Supabase session,
+ // A sheet pop-out runs under its own Supabase session,
  // with normal character RLS and account permissions.
  useEffect(()=>{
   if(!launchSheet||launchHandled.current||!camp||activeId!==launchSheet.campaignId)return;
@@ -852,10 +859,10 @@ function App(){
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
  }
- function sendLiveMeasurement(measure,phase='preview'){
+ function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
   const now=Date.now();
-  if(phase==='preview'&&now-lastMeasureSent.current<65)return;
+  if(phase==='preview'&&!force&&now-lastMeasureSent.current<65)return;
   // Revisions keep out-of-order network previews from reappearing after clear.
   measureSequence.current=Math.max(now*1000,measureSequence.current+1);
   const data=liveMeasurementPayload(measure,measure?.id,user,selectedMap,
@@ -1889,7 +1896,8 @@ function App(){
   Only the campaign DM can open an NPC pop-out.
  </div>;
  if(!camp)return <div className="welcome-screen"><div className="welcome-shell"><h2>Opening campaign…</h2><p className="muted small">Loading your maps and character sheets.</p><button className="secondary" onClick={()=>setActiveId('')}>Back to main menu</button></div></div>;
- return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')} style={{'--ui-scale':uiScale}}>
+ return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')+
+  (launchSheet?' sheet-popup-app':'')} style={{'--ui-scale':uiScale}}>
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
  <div className="workarea"><div className="primary">
@@ -1902,7 +1910,7 @@ function App(){
   </div>
  </section>}
  {camp&&<>
- {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>setTab('tabletop')}>
+ {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>launchSheet?window.close():setTab('tabletop')}>
  <section className="panel page-panel floating-sheet-content"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
@@ -1914,11 +1922,11 @@ function App(){
    </select>
   </label>
   <button type="button" className="secondary" disabled={!character}
-   onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a browser tab">
-   ↗ New tab</button>
+   onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a separate browser window">
+   ↗ Pop out</button>
   <button type="button" className="secondary" disabled={!character}
    onClick={()=>setArtStudio(true)}>My Token Library</button>
-  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
+  <button type="button" className="secondary return-to-game" onClick={()=>launchSheet?window.close():setTab('tabletop')}>{launchSheet?'Close window':'← Return to Game'}</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}
  <button className={sheetTab===PERSONAL_RESOURCE_TAB?'selected':''}
   onClick={()=>setSheetTab(PERSONAL_RESOURCE_TAB)}>Resources</button></div>
@@ -2146,7 +2154,7 @@ function App(){
  {characterEditor&&isDM&&<CharacterEditor
   db={db} campaignId={activeId} viewerId={user}
   record={characterEditor.data} template={camp?.sheet_template}
-  onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
+  onSaved={afterPlayerSheetSaved} onClose={()=>launchSheet?window.close():setCharacterEditor(null)}
    onOpenBrowserTab={()=>openSheetBrowserTab(characterEditor.data.id)}
   onRoll={(expression,label)=>roll(expression,label,null)}
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
@@ -2615,10 +2623,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const mapPointInCells=e=>pointOnBattlemap(e.clientX,e.clientY,
   boardRef.current?.getBoundingClientRect(),map.width,map.height,
   map.grid_size,zoomRef.current);
- function beginMeasurement(pointerId,tool,point,pinned=false){
+ function beginMeasurement(pointerId,tool,point,pinned=false,sourceButton=0){
   if(!point||measureDrag.current)return;
   const measure={id:crypto.randomUUID(),tool,start:point,end:point};
-  measureDrag.current={pointerId,measure,pinned};
+  measureDrag.current={pointerId,measure,pinned,sourceButton};
   setLocalMeasurements(existing=>[...existing,{...measure,isLocal:true}]);
   onMeasurementPreview?.(measure,'preview');
  }
@@ -2639,7 +2647,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!current||current.pointerId!==e.pointerId)return;
   // Releasing the secondary button while primary remains down must NOT
   // finish a multi-leg movement measurement.
-  if(e.button===2&&(e.buttons&1)!==0)return;
+  if(!cancel&&e.button===2&&current.sourceButton===0)return;
   measureDrag.current=null;
   const point=cancel?current.measure.end:
    mapPointInCells(e)||current.measure.end;
@@ -2665,7 +2673,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(e.button!==0&&e.button!==2)return;
   setActiveMeasureTool(tool);
   e.preventDefault();e.stopPropagation();
-  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2};
+  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2,sourceButton:e.button};
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
  }
  function onToolPointerMove(e){
@@ -2676,12 +2684,12 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!measureDrag.current){
    if(e.clientX<rect.left||e.clientX>rect.right||
       e.clientY<rect.top||e.clientY>rect.bottom)return;
-   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned);
+   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned,current.sourceButton);
   }else updateMeasurement(e);
  }
  function onToolPointerUp(e,cancel=false){
   if(toolDrag.current?.pointerId!==e.pointerId)return;
-  if(e.button===2&&(e.buttons&1)!==0)return;
+  if(!cancel&&e.button===2&&measureDrag.current?.sourceButton===0)return;
   finishMeasurement(e,cancel);
   toolDrag.current=null;
   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
@@ -2692,7 +2700,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    pan.current||measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e),
-   e.button===2);
+   e.button===2,e.button);
   try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
  }
  function pinCurrentMeasurementOnRightClick(e){
@@ -2702,13 +2710,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   const current=measureDrag.current;
-  if(current.measure.tool==='line'&&!current.pinned&&(e.buttons&1)!==0){
+  if(shouldBendLineOnRightPress(current,e.button)){
    const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end);
    if(next!==current.measure){
     current.measure=next;
     setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
      {...next,isLocal:true}:m));
-    onMeasurementPreview?.(next,'preview');
+    onMeasurementPreview?.(next,'preview',true);
    }
    return;
   }
@@ -2728,8 +2736,29 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     e.clientY<rect.top||e.clientY>rect.bottom)return;
    pinCurrentMeasurementOnRightClick(e);
   }
+  // Some browsers delay pointerup until both mouse buttons are released.
+  // Native left mouseup always terminates a left-drag measurement promptly.
+  function onMouseUp(e){
+   const current=measureDrag.current;
+   if(e.button!==0||current?.sourceButton!==0)return;
+   finishMeasurement({pointerId:current.pointerId,button:0,
+    clientX:e.clientX,clientY:e.clientY});
+   if(toolDrag.current?.pointerId===current.pointerId)toolDrag.current=null;
+  }
+  // Continue tracking even when a second mouse button drops pointer capture.
+  function onMouseMove(e){
+   const current=measureDrag.current;
+   if(current?.sourceButton!==0)return;
+   updateMeasurement({pointerId:current.pointerId,clientX:e.clientX,clientY:e.clientY});
+  }
   window.addEventListener('mousedown',onMouseDown,true);
-  return()=>window.removeEventListener('mousedown',onMouseDown,true);
+  window.addEventListener('mousemove',onMouseMove,true);
+  window.addEventListener('mouseup',onMouseUp,true);
+  return()=>{
+   window.removeEventListener('mousedown',onMouseDown,true);
+   window.removeEventListener('mousemove',onMouseMove,true);
+   window.removeEventListener('mouseup',onMouseUp,true);
+  };
  },[active,activeMeasureTool]);
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
@@ -2851,7 +2880,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   <MeasurementToolBar tool={activeMeasureTool}
    onPointerDown={onToolPointerDown} onPointerMove={onToolPointerMove}
    onPointerUp={e=>onToolPointerUp(e)}
-   onPointerCancel={e=>onToolPointerUp(e,true)}
+   onPointerCancel={e=>{
+    if(measureDrag.current?.sourceButton===0)return;
+    onToolPointerUp(e,true);
+   }}
    onKeySelect={setActiveMeasureTool} onClearPins={clearMyPinnedMeasurements}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
@@ -2867,7 +2899,11 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
     onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
     onPointerCancel={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}
-    onLostPointerCapture={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}>
+    onLostPointerCapture={e=>{
+     // Native mouseup, not lost capture, completes a held-left route.
+     if(measureDrag.current?.sourceButton===0)return;
+     finishMeasurement(e,true);endViewportPointer(e,true);
+    }}>
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
@@ -2893,7 +2929,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
-      (combatActiveTokenId===t.id?' token-current-turn':'')}
+      (combatActiveTokenId===t.id?' token-current-turn':'')+
+      (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
@@ -2917,6 +2954,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       onPointerCancel={e=>finishTokenDrag(e,t,true)}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
+      {normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')&&
+       <span className="token-dead-overlay" aria-hidden="true"/>}
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
        position={statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>

@@ -1,7 +1,7 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
 import QuickStatusControls from './QuickStatusControls.jsx';
-import {normalizedEffects} from './TokenStatuses.jsx';
+import {normalizedEffects,MAX_ACTIVE_EFFECTS} from './TokenStatuses.jsx';
 
 export function editableFields(template){
  const seen=new Set();
@@ -73,6 +73,14 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
  const [statusValues,setStatusValues]=useState(()=>normalizedEffects(token.status_effects));
  const startingEffects=useRef(normalizedEffects(token.status_effects));
  const statusChanged=JSON.stringify(statusValues)!==JSON.stringify(startingEffects.current);
+ const isDead=statusValues.some(effect=>effect.id==='dead');
+ const deadLimitReached=!isDead&&statusValues.length>=MAX_ACTIVE_EFFECTS;
+ function toggleDead(checked){
+  if(!canEditStatuses||checked&&deadLimitReached)return;
+  setStatusValues(previous=>normalizedEffects(checked?
+   [...previous.filter(effect=>effect.id!=='dead'),{id:'dead',level:1}]:
+   previous.filter(effect=>effect.id!=='dead')));
+ }
  const touched=useRef(new Set());
  const [known,setKnown]=useState(()=>new Set(fields.filter(f=>
   Object.prototype.hasOwnProperty.call(initialValues,f.id)).map(f=>f.id)));
@@ -162,6 +170,11 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
       </div>
      </div>;
     })}</div>}
+   <label className="quick-token-dead-toggle" title={deadLimitReached?'Remove another status before marking this token Dead':''}>
+    <input type="checkbox" checked={isDead} disabled={!canEditStatuses||deadLimitReached}
+     onChange={event=>toggleDead(event.target.checked)}/>
+    <span>Dead</span>
+   </label>
    <QuickStatusControls catalog={statusCatalog} values={statusValues}
     onChange={setStatusValues} disabled={!canEditStatuses}/>
    {error&&<p className="error small" role="alert">{error}</p>}
