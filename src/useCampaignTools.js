@@ -149,6 +149,13 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
      if(pending.x!==nextX||pending.y!==nextY)continue;
      pending.confirmed=true;
      await refresh();
+     // A newer drop can arrive while the acknowledgement is refreshing.
+     // Never finish an older request without persisting the newest tile.
+     if(pendingMoves.current.get(issueId)===pending&&
+        (pending.x!==nextX||pending.y!==nextY)){
+      pending.confirmed=false;
+      continue;
+     }
      break;
     }
    }catch(e){

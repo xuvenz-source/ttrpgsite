@@ -71,3 +71,10 @@ test('Board handles mixed movement, previews, and commits without whole inventor
  assert.match(hook,/\.update\(\{x:nextX,y:nextY\}\)/);
  assert.doesNotMatch(hook,/\.update\(\{state:.*x:nextX/);
 });
+
+test('queued tool moves always check for newer coordinates after refresh',()=>{
+ const hook=readFileSync(new URL('../src/useCampaignTools.js',import.meta.url),'utf8');
+ assert.match(hook,/await refresh\(\);\s*\/\/ A newer drop/);
+ assert.match(hook,/pending\.x!==nextX\|\|pending\.y!==nextY/);
+ assert.match(hook,/pending\.confirmed=false;\s*continue;/);
+});
