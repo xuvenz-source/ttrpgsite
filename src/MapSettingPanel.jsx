@@ -105,7 +105,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
    <label>Pin appearance<select disabled={!canDraw} value={editor.pinKind||'pin'}
     onChange={e=>updateEditor({pinKind:e.target.value})}>
     {Object.entries(PIN_ICONS).map(([id,icon])=><option key={id} value={id}>
-     {icon} {id.charAt(0).toUpperCase()+id.slice(1)}</option>)}
+     {icon} {id==='trap'?'Bear trap':id.charAt(0).toUpperCase()+id.slice(1)}</option>)}
    </select></label></>}
    {editor.tool==='light'&&<>
     <strong>New light defaults</strong>

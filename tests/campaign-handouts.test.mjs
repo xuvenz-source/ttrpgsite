@@ -62,6 +62,8 @@ test('battlemap places and moves clickable pins without mixing them into light g
  assert.match(mapPins,/pinVisibleTo\(pin,isDM\)/);
  assert.match(mapPins,/onCreate\?\.\(editor\.pinHandoutId,p\)/);
  assert.match(mapPins,/onMove\?\.\(pin,\{x:next\.x,y:next\.y\}\)/);
+ assert.match(mapPins,/pin.kind==='trap'\?<svg/);
+ assert.match(mapPins,/event.clientX-d.startX/);
  assert.match(app,/onCreateHandoutPin=\{createHandoutPin\}/);
  assert.match(app,/onOpenHandoutPin=\{openMapHandoutPin\}/);
  assert.match(app,/<MapPinLayer/);

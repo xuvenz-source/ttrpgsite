@@ -448,8 +448,9 @@ function App(){
   await read(db.from('npc_templates').update({folder_id:folderId}).eq('id',id));await refreshNpcs();
  }catch(e){fail(e)}}
  function openSheetBrowserTab(characterId){
-  if(!activeId||!characters.some(ch=>ch.id===characterId&&(ch.user_id===user||isDM)))
-   return fail('You cannot open that character.');
+  if(!activeId||!characters.some(ch=>ch.id===characterId&&(ch.user_id===user||isDM))){
+   fail('You cannot open that character.');return false;
+  }
   const url=new URL(location.origin+location.pathname);
   url.searchParams.set('campaign',activeId);
   url.searchParams.set('sheet',characterId);
