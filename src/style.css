@@ -2566,7 +2566,7 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 }
 
 /* Units → Tools. Match the existing dark compact Units panel. */
-.units-subtabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0 0 9px}
+.units-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 9px}
 .units-subtabs button{padding:7px 8px;font-size:12px;border-radius:6px}
 .units-subtabs button.selected{background:#354a68;border-color:#7b9ed0;color:#f5f8ff}
 .campaign-tools-pane{display:flex;flex-direction:column;gap:11px;min-width:0}
@@ -2626,3 +2626,75 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .campaign-tool-attribute-control input{flex:1;min-width:0}
 .campaign-tool-attribute-control button{flex:0 0 auto;padding:1px 6px}
 .campaign-tool-add-attribute{font-size:10px;align-self:end}
+
+/* Units / Handouts: simple folders and documents, in the native dark UI. */
+.units-subtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 9px}
+.units-subtabs button{font-size:12px;min-height:29px;padding:6px;border-radius:6px}
+.units-subtabs button.selected{background:#354a68;border-color:#7b9ed0;color:#f5f8ff}
+.campaign-handouts-pane{display:flex;flex-direction:column;gap:9px;min-width:0}
+.campaign-handouts-actions{display:flex;gap:6px;flex-wrap:wrap}
+.campaign-handouts-actions button{font-size:11px;padding:6px 9px}
+.campaign-handout-create{background:#1a2639;border:1px solid #425673;
+ border-radius:7px;padding:10px;gap:8px}
+.campaign-handout-create textarea{resize:vertical;max-width:100%}
+.campaign-handout-check{display:flex!important;flex-direction:row!important;
+ align-items:center;gap:8px;font-size:12px}
+.campaign-handout-check input[type=checkbox]{width:16px!important;height:16px!important;
+ flex:0 0 16px;accent-color:#88aee7}
+.campaign-handout-list{display:flex;flex-direction:column;gap:7px}
+.campaign-handout-folder{min-width:0;background:#1b283b;border:1px solid #3b506c;
+ border-radius:7px;padding:5px}
+.campaign-handout-folder:has(.campaign-handout-folder-items){border-color:#4b6484}
+.campaign-handout-folder-heading{display:flex;align-items:center;gap:5px}
+.campaign-handout-folder-heading>button.secondary{
+ padding:3px 6px;min-width:24px;min-height:23px;font-size:11px}
+.campaign-handout-folder-toggle{border:none;background:transparent;
+ flex:1;text-align:left;padding:5px 4px;color:#dbe7f8;display:flex;gap:6px;
+ align-items:center;min-width:0;font-size:12px}
+.campaign-handout-folder-toggle strong{flex:1;overflow-wrap:anywhere;font-size:12px}
+.campaign-handout-folder-items{display:flex;flex-direction:column;gap:5px;
+ padding:4px 0 2px}
+.campaign-handout-row{display:flex;align-items:center;gap:4px;padding:5px;
+ background:#26344a;border:1px solid #354a67;border-radius:6px;min-width:0}
+.campaign-handout-title{flex:1;border:0;background:transparent;color:#edf3fd;
+ text-align:left;display:flex;gap:7px;align-items:center;min-width:0;
+ font-size:12px;padding:3px}
+.campaign-handout-title>span:nth-child(2){min-width:0;flex:1;overflow-wrap:anywhere}
+.campaign-handout-title small{display:block;color:#a9bcd5;font-size:10px}
+.campaign-handout-row>button.secondary{font-size:12px;padding:4px 6px;
+ min-width:25px;min-height:26px}
+.campaign-handout-window{width:100%;height:100%;min-height:0;display:flex;
+ flex-direction:column;gap:10px;overflow:auto}
+.campaign-handout-window .heading{flex:0 0 auto}
+.campaign-handout-window .heading h2{font-size:16px;overflow-wrap:anywhere}
+.campaign-handout-edit{display:flex;flex-direction:column;gap:9px;min-height:0}
+.campaign-handout-edit textarea{resize:vertical;min-height:170px;max-width:100%}
+.campaign-handout-read{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;
+ min-height:80px;flex:1;overflow:auto;padding:15px;background:#172338;
+ border:1px solid #3b4f6a;border-radius:8px;font-size:13px;color:#edf3fb}
+.campaign-handout-pin-controls{display:flex;gap:9px;flex-direction:column;
+ padding:9px 11px;border:1px solid #3b5069;border-radius:7px;background:#1d2c42}
+.campaign-handout-pin-controls>strong{font-size:12px}
+.campaign-handout-pin-controls label{font-size:12px}
+.campaign-handout-window .actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.campaign-handout-window .campaign-handout-delete{color:#f0b5bc;border-color:#805260}
+.map-handout-pins{position:absolute;inset:0;z-index:12;pointer-events:none}
+.map-handout-placement{position:absolute;inset:0;z-index:0;border:0!important;
+ border-radius:0!important;background:transparent!important;
+ padding:0!important;width:100%;height:100%;cursor:crosshair;
+ pointer-events:auto;touch-action:none}
+.map-handout-pin{position:absolute;z-index:1;width:31px;height:31px;
+ transform:translate(-50%,-50%);display:grid;place-items:center;
+ padding:2px;background:#283951ee;border:1px solid #b6c8df;
+ border-radius:8px;box-shadow:0 3px 8px #030810ad;color:#eff4fb;
+ font-size:19px;line-height:1;pointer-events:auto;touch-action:none}
+.map-handout-pin:hover,.map-handout-pin:focus-visible{
+ background:#394f70;outline:2px solid #8eaff0;outline-offset:1px}
+.map-handout-pin.is-hidden{opacity:.62;border-style:dashed;border-color:#a7a6bf}
+.map-handout-pin.is-movable{cursor:grab}
+.map-handout-pin.is-movable:active{cursor:grabbing}
+.map-handout-pin>span:first-child{pointer-events:none}
+.map-handout-hidden-dot{position:absolute;right:-6px;top:-6px;
+ width:14px;height:14px;display:grid;place-items:center;
+ background:#182338;color:#e7ecf8;border:1px solid #8c98ad;
+ border-radius:8px;font-size:11px;pointer-events:none}
