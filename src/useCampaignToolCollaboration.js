@@ -45,10 +45,19 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   },8000);
   return()=>{
    clearInterval(interval);
-   const ids=[...owned.current];
-   owned.current.clear();
-   for(const id of ids)void db.rpc('release_campaign_tool_item',{
-    p_issue:issueId,p_item:id}).then(()=>{},()=>{});
+   // Always let in-flight claims and writes settle before releasing, otherwise
+   // closing the sheet immediately after a drag can reject its last edit.
+   const ids=new Set([...owned.current,...claimsInFlight.current.keys(),...writes.current.keys()]);
+   for(const id of ids){
+    const waiting=Promise.allSettled([
+     claimsInFlight.current.get(id)||Promise.resolve(),
+     writes.current.get(id)||Promise.resolve()
+    ]);
+    void waiting.then(async()=>{
+     owned.current.delete(id);
+     await db.rpc('release_campaign_tool_item',{p_issue:issueId,p_item:id});
+    }).catch(()=>{});
+   }
    void db.removeChannel(channel);
   };
  },[db,issueId,userId,refreshClaims]);

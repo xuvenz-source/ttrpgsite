@@ -24,6 +24,19 @@ export default function CampaignToolSheet({db,tool,userId,isDM,onRefresh,onClose
  },[tool.revision,tool.state]);
  const changeMeta=updater=>{dirty.current=true;setMeta(updater)};
  const serverLit=tool.state?.lit!==false,serverAttrs=tool.state?.attrs||{};
+ async function close(){
+  if(dirty.current){
+   const litChanged=meta.lit!==serverLit,
+    attrsChanged=isDM&&JSON.stringify(meta.attrs)!==JSON.stringify(serverAttrs);
+   if(litChanged||attrsChanged){
+    try{
+     await collab.saveDetails(litChanged?meta.lit:null,attrsChanged?meta.attrs:null);
+     dirty.current=false;
+    }catch(e){setMetaError(e?.message||String(e));return}
+   }
+  }
+  onClose();
+ }
  useEffect(()=>{
   if(!dirty.current)return;
   const litChanged=meta.lit!==serverLit,
@@ -38,10 +51,10 @@ export default function CampaignToolSheet({db,tool,userId,isDM,onRefresh,onClose
   },300);
   return()=>clearTimeout(timer);
  },[meta,tool.revision,isDM]);
- return <FloatingWindow kind="inventory" onClose={onClose}>
+ return <FloatingWindow kind="inventory" onClose={()=>void close()}>
   <section className="modal campaign-tool-sheet" role="dialog" aria-label={tool.name+' tool sheet'}>
    <div className="heading"><h2>{tool.icon} {tool.name}</h2>
-    <button type="button" className="secondary" onClick={onClose} aria-label="Close tool sheet">×</button>
+    <button type="button" className="secondary" onClick={()=>void close()} aria-label="Close tool sheet">×</button>
    </div>
    {tool.kind==='torch'&&<div className="campaign-tool-details">
     <div>Bright: <b>{config.bright} ft</b> · Dim: <b>{config.dim} ft</b></div>
@@ -70,7 +83,7 @@ export default function CampaignToolSheet({db,tool,userId,isDM,onRefresh,onClose
     <span className="muted tiny" role="status">
      {metaSaving||collab.pending?'Saving…':'Changes save automatically · Items in use are greyed out'}
     </span>
-    <button type="button" className="secondary" onClick={onClose}>Close</button>
+    <button type="button" className="secondary" onClick={()=>void close()}>Close</button>
    </div>
   </section>
  </FloatingWindow>;

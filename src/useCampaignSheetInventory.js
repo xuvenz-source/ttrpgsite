@@ -91,9 +91,18 @@ export default function useCampaignSheetInventory({
   },8000);
   return()=>{
    clearInterval(interval);
-   const ids=[...owned.current];owned.current.clear();
-   for(const id of ids)void db.rpc('release_campaign_sheet_item',
-    {...args,p_item:id}).then(()=>{},()=>{});
+   // Preserve the final autosaved item edit when the editor is closed.
+   const ids=new Set([...owned.current,...claimsInFlight.current.keys(),...writes.current.keys()]);
+   for(const id of ids){
+    const waiting=Promise.allSettled([
+     claimsInFlight.current.get(id)||Promise.resolve(),
+     writes.current.get(id)||Promise.resolve()
+    ]);
+    void waiting.then(async()=>{
+     owned.current.delete(id);
+     await db.rpc('release_campaign_sheet_item',{...args,p_item:id});
+    }).catch(()=>{});
+   }
    void db.removeChannel(channel);
    scope.current='';
   };
