@@ -654,7 +654,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
-   <div ref={boardRef} className="board"
+   <div ref={boardRef} className={'board'+(isDM&&environmentEditor?.enabled?
+    (environmentEditor.lockTokens!==false?' map-editor-tokens-locked':' map-editor-tokens-unlocked'):'')}
     onDragOver={allowMapDrop}
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:(isDM&&environmentEditor?.enabled&&environmentEditor.showBackground===false)?undefined:(url?'url('+JSON.stringify(url)+')':undefined),backgroundSize:'100% 100%'}}>
@@ -700,9 +701,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       }}
       title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
        (isDM?' · Alt + double-click to edit sheet':'')}
-      onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
+      onDoubleClick={e=>{if(e.altKey&&isDM&&
+       !(environmentEditor?.enabled&&environmentEditor.lockTokens!==false)){
+       e.preventDefault();e.stopPropagation();onTokenEdit(t)
+      }}}
       onClick={e=>{
-       if(previewActive)return;
+       if(previewActive||isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false)return;
        if(e.shiftKey&&!e.ctrlKey&&!e.altKey){
         e.preventDefault();e.stopPropagation();onTokenStatus(t);return;
        }
