@@ -25,6 +25,12 @@ export function pointOnBattlemap(clientX,clientY,rect,width,height,gridSize,zoom
  * number of bends so malformed/untrusted remote drawings cannot grow forever.
  */
 export const MAX_LINE_TURNS=64;
+/** A secondary mouse press bends an actively left-dragged line, regardless
+ * of the browser's unreliable e.buttons mask under pointer capture. */
+export function shouldBendLineOnRightPress(drag,button){
+ return button===2&&drag?.sourceButton===0&&!drag.pinned&&
+  drag.measure?.tool==='line';
+}
 export function addLineTurn(measure,point){
  if(measure?.tool!=='line'||!finite(point?.x)||!finite(point?.y))return measure;
  const via=Array.isArray(measure.via)?measure.via:[];
