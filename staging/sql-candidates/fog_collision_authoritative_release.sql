@@ -317,7 +317,7 @@ create trigger forge_player_collision before update of x,y on public.map_tokens
 -- Issued tool/mount movement uses the same server-side swept-footprint
 -- collision enforcement as characters/NPCs. DM is the intentional bypass.
 create or replace function forge_visibility.enforce_tool_collision()
-returns trigger language plpgsql volatile security definer set search_path='' as $
+returns trigger language plpgsql volatile security definer set search_path='' as $$
 declare
  scene jsonb;m record;item jsonb;pts jsonb;a jsonb;b jsonb;i integer;
  span double precision;w double precision;h double precision;
@@ -357,7 +357,7 @@ begin
   end loop;
  end loop;
  return new;
-end $;
+end $$;
 drop trigger if exists forge_tool_collision on public.campaign_tool_issues;
 create trigger forge_tool_collision before update of map_id,x,y on public.campaign_tool_issues
  for each row execute function forge_visibility.enforce_tool_collision();
@@ -369,7 +369,7 @@ create trigger forge_tool_collision before update of map_id,x,y on public.campai
 -- cannot bypass a wall by spawning a piece on the opposite side.
 create or replace function public.can_player_place_map_piece(p_map uuid,
  px double precision,py double precision)
-returns boolean language plpgsql stable security definer set search_path='' as $
+returns boolean language plpgsql stable security definer set search_path='' as $$
 declare c uuid;
 begin
  if auth.uid() is null then return false;end if;
@@ -379,7 +379,7 @@ begin
  if exists(select 1 from forge_visibility.map_rules r where r.map_id=p_map
   and (r.collision_enforced or r.fog_enforced)) then return false;end if;
  return forge_visibility.point_visible(p_map,px,py,auth.uid());
-end $;
+end $$;
 revoke all on function public.can_player_place_map_piece(uuid,double precision,double precision) from public,anon;
 grant execute on function public.can_player_place_map_piece(uuid,double precision,double precision) to authenticated;
 
@@ -440,7 +440,7 @@ create trigger forge_visibility_token_tick after insert or update or delete on p
 -- Only invalidate maps whose published barrier actually uses a changed
 -- attribute, instead of broadcasting every routine sheet keystroke.
 create or replace function forge_visibility.tick_character_elevation()
-returns trigger language plpgsql volatile security definer set search_path='' as $
+returns trigger language plpgsql volatile security definer set search_path='' as $$
 declare item record;
 begin
  if new.field_values is not distinct from old.field_values then return new;end if;
@@ -461,7 +461,7 @@ begin
   perform forge_visibility.bump_tick(item.map_id);
  end loop;
  return new;
-end $;
+end $$;
 drop trigger if exists forge_character_elevation_tick on public.characters;
 create trigger forge_character_elevation_tick
  after update of field_values on public.characters
@@ -499,10 +499,10 @@ create trigger forge_visibility_combat_tick after insert or update or delete on 
 -- Preserve the old combat SELECT endpoint on maps that have not opted in.
 -- Fog-enabled maps return combat entries only through per-user RPCs.
 create or replace function public.is_map_fog_published(p_map uuid)
-returns boolean language sql stable security definer set search_path='' as $
+returns boolean language sql stable security definer set search_path='' as $$
  select exists(select 1 from forge_visibility.map_rules r
   where r.map_id=p_map and r.fog_enforced)
-$;
+$$;
 revoke all on function public.is_map_fog_published(uuid) from public,anon;
 grant execute on function public.is_map_fog_published(uuid) to authenticated;
 drop policy if exists "members see current map turn tracker" on public.map_combats;
