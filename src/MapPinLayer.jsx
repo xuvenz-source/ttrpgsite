@@ -1,11 +1,63 @@
-import React,{useRef,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {PIN_ICONS,normalizePinPosition,pinVisibleTo} from './CampaignHandouts.js';
-
+import HandoutBody from './HandoutBody.jsx';
 /** Map pins are separate from DM lighting geometry. Players receive only RLS-allowed pins. */
 export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
- onCreate,onMove,onOpen}){
+ onCreate,onMove,onOpen,onRead,onCollect,onDelete,onSelect}){
  const [preview,setPreview]=useState({});
- const drag=useRef(null),skipClick=useRef(null);
+ const drag=useRef(null),skipClick=useRef(null),request=useRef(0);
+ const [opened,setOpened]=useState(null),[note,setNote]=useState(null);
+ const [error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const selectedPin=pins.find(pin=>pin.id===opened&&pinVisibleTo(pin,isDM));
+ useEffect(()=>{
+  if(opened&&!selectedPin){setOpened(null);setNote(null);++request.current}
+ },[opened,selectedPin]);
+ const awaitingServer=useRef(new Map());
+ // Keep the released location painted until the database refresh confirms it.
+ // Removing the preview on pointerup made pins visibly snap back and jump.
+ useEffect(()=>{
+  setPreview(old=>{
+   let changed=false;const next={...old};
+   for(const [id,point] of awaitingServer.current){
+    const saved=pins.find(pin=>pin.id===id);
+    if(!saved||Math.abs(Number(saved.x)-point.x)<.011&&
+       Math.abs(Number(saved.y)-point.y)<.011){
+     awaitingServer.current.delete(id);
+     if(id in next){delete next[id];changed=true}
+    }
+   }
+   return changed?next:old;
+  });
+ },[pins]);
+ useEffect(()=>{
+  awaitingServer.current.clear();setPreview({});setOpened(null);setNote(null);++request.current;
+ },[map?.id]);
+ useEffect(()=>{
+  if(!opened)return;
+  const key=event=>{
+   if(event.key==='Escape'){setOpened(null);setNote(null)}
+  };
+  document.addEventListener('keydown',key);
+  return()=>document.removeEventListener('keydown',key);
+ },[opened]);
+ async function show(pin){
+  onSelect?.(pin);
+  if(opened===pin.id){setOpened(null);setNote(null);return}
+  const serial=++request.current;
+  setOpened(pin.id);setNote(null);setError('');
+  try{
+   const value=await onRead?.(pin);
+   if(request.current!==serial)return;
+   if(!value)throw Error('This handout is no longer available.');
+   setNote(value);
+  }catch(e){if(request.current===serial)setError(e?.message||String(e))}
+ }
+ async function action(job){
+  if(busy)return;
+  setBusy(true);setError('');
+  try{await job()}catch(e){setError(e?.message||String(e))}
+  finally{setBusy(false)}
+ }
  const cell=Math.max(1,Number(map?.grid_size)*scale);
  const placing=isDM&&editor?.enabled&&editor?.layer==='light'&&
   editor?.tool==='pin'&&!!editor?.pinHandoutId;
@@ -18,8 +70,9 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
  function start(event,pin){
   event.stopPropagation();
   if(event.button!==0||!isDM||!active||!editor?.enabled||editor?.tool!=='select')return;
+  const at=preview[pin.id]||pin;
   const d={id:pin.id,pointerId:event.pointerId,
-   x:Number(pin.x),y:Number(pin.y),
+   x:Number(at.x),y:Number(at.y),
    startX:event.clientX,startY:event.clientY};
   drag.current=d;
   try{event.currentTarget.setPointerCapture(event.pointerId)}catch{}
@@ -40,11 +93,19 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
   const next=cancel?{x:d.x,y:d.y}:normalizePinPosition(
    d.x+(event.clientX-d.startX)/cell,
    d.y+(event.clientY-d.startY)/cell,map);
-  setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
   try{event.currentTarget.releasePointerCapture(event.pointerId)}catch{}
   if(!cancel&&(Math.abs(next.x-d.x)>.01||Math.abs(next.y-d.y)>.01)){
    skipClick.current=pin.id;
-   onMove?.(pin,{x:next.x,y:next.y});
+   awaitingServer.current.set(d.id,next);
+   setPreview(prev=>({...prev,[d.id]:next}));
+   // Database failure removes the local optimistic position, allowing retry.
+   Promise.resolve().then(()=>onMove?.(pin,{x:next.x,y:next.y}))
+    .catch(()=>{
+     awaitingServer.current.delete(d.id);
+     setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
+    });
+  }else{
+   setPreview(prev=>{const copy={...prev};delete copy[d.id];return copy});
   }
  }
  return <div className={"map-handout-pins"+(placing?" is-placing":isDM&&editor?.enabled?" is-editing":"")}>
@@ -59,7 +120,7 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
   {pins.filter(pin=>pinVisibleTo(pin,isDM)).map(pin=>{
    const at=preview[pin.id]||pin;
    return <button key={pin.id} type="button"
-    className={'map-handout-pin'+(!pin.visible?' is-hidden':'')+
+    className={'map-handout-pin'+(opened===pin.id||editor?.selectedPinId===pin.id?' is-selected':'')+(!pin.visible?' is-hidden':'')+
      (isDM&&editor?.enabled&&editor.tool==='select'?' is-movable':'')}
     style={{left:Number(at.x)*cell,top:Number(at.y)*cell}}
     title={(pin.visible?'Open ':'Hidden · ')+(PIN_ICONS[pin.kind]||'📜')+' handout pin'}
@@ -71,7 +132,7 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
     onClick={e=>{
      e.stopPropagation();
      if(skipClick.current===pin.id){skipClick.current=null;return}
-     if(!drag.current)onOpen?.(pin)
+     if(!drag.current)void show(pin)
     }}>
     <span aria-hidden="true">{pin.kind==='trap'?<svg
      viewBox="0 0 32 32" width="25" height="25" fill="none"
@@ -84,5 +145,33 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
     {isDM&&!pin.visible&&<span className="map-handout-hidden-dot" aria-hidden="true">◌</span>}
    </button>;
   })}
+  {selectedPin&&<section className="map-handout-bubble" role="dialog"
+   aria-label="Map handout preview"
+   style={{
+    left:Math.max(8,Math.min(Number(selectedPin.x)*cell+24,map.width*scale-330)),
+    top:Math.max(8,Math.min(Number(selectedPin.y)*cell+24,map.height*scale-220))
+   }} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
+   <div className="map-handout-bubble-heading">
+    <strong>{note?.title||'Handout'}</strong>
+    <button type="button" className="secondary" aria-label="Close pin preview"
+     onClick={()=>{setOpened(null);setNote(null)}}>×</button>
+   </div>
+   {error?<p role="alert" className="error small">{error}</p>:
+    note?<HandoutBody body={note.body}/>:<p className="muted small">Loading handout…</p>}
+   <div className="map-handout-bubble-actions">
+    {isDM&&<>
+     <button type="button" className="secondary" disabled={busy||!note}
+      onClick={()=>onOpen?.(selectedPin)}>Edit handout</button>
+     <button type="button" className="secondary map-handout-delete"
+      disabled={busy} onClick={()=>{if(window.confirm('Remove this pin from the map?'))
+       void action(async()=>{await onDelete?.(selectedPin);setOpened(null);setNote(null)})}}>
+      Delete pin</button>
+    </>}
+    {!isDM&&selectedPin.collectable&&note&&!note.revealed&&
+     <button type="button" disabled={busy} onClick={()=>void action(async()=>{
+      await onCollect?.(selectedPin);setOpened(null);setNote(null);
+     })}>Pick up · Save to Handouts</button>}
+   </div>
+  </section>}
  </div>;
 }

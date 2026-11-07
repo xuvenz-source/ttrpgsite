@@ -112,3 +112,23 @@
   height:min(530px,calc(100dvh - 20px));
  }
 }
+
+
+/* DM geometry marquee, independent of the token-and-tool drag selection. */
+.map-env-selection-marquee{
+ fill:rgba(110,183,255,.19);
+ stroke:#a9dcff;
+ stroke-width:1.4;
+ stroke-dasharray:6 4;
+}
+.map-setting-multi-selection{
+ display:flex;flex-direction:column;gap:7px;padding:9px;
+ border:1px solid #5a7898;border-radius:7px;background:#22384b;
+}
+.map-setting-multi-selection strong{font-size:12px}
+
+
+/* Tokens cannot intercept DM wall-selection gestures while locked; the
+ * explicitly unlocked state allows direct token picking above the SVG. */
+.board.map-editor-tokens-locked>.token{pointer-events:none!important}
+.board.map-editor-tokens-unlocked>.token{z-index:31!important;pointer-events:auto}

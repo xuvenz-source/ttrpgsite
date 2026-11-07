@@ -26,7 +26,8 @@ test('global sheet, environment and combat CSS imports retain their historical o
 test('modular CSS retains the exact pre-split cascade, not merely the same selectors',()=>{
  // Snapshot is the old consolidated style.css after verified duplicate cleanup.
  // No whitespace, media nesting, selector or declaration reordering is allowed
- // during the architecture split. Deliberate future style edits update this
+ // during the architecture split. This checksum includes intentionally added
+ // pin preview, selected-pin and held-tool styles. Further edits update this
  // checksum with their own visual regression review.
  const text=readAppStyles().trimEnd();
  let hash=2166136261>>>0;
@@ -34,5 +35,5 @@ test('modular CSS retains the exact pre-split cascade, not merely the same selec
   hash^=text.charCodeAt(i);
   hash=Math.imul(hash,16777619);
  }
- assert.equal((hash>>>0).toString(16).padStart(8,'0'),'7b65d301');
+ assert.equal((hash>>>0).toString(16).padStart(8,'0'),'8111efdf');
 });

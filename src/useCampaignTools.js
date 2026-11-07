@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {normaliseToolConfig,toolInitialState,toolCanControl,toolMapProjection} from './CampaignTools.js';
+import {normaliseToolConfig,toolInitialState,toolCanControl,toolCanBeHeld,toolMapProjection} from './CampaignTools.js';
 import {createCoalescedRefresh} from './PerformanceScheduling.js';
 
 /** Keep in-flight local placement authoritative until the server responds.
@@ -129,6 +129,7 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
  async function moveIssue(issue,targetMap,x,y){
   if(!db||!userId||!campaignId)throw Error('Open a campaign first.');
   if(!toolCanControl(issue,userId,isDM))throw Error('This tool was not issued to you.');
+  if(issue.held_by_token_id)throw Error('Drop this held tool from the token quick-adjust menu first.');
   if(targetMap&&targetMap!==mapId)throw Error('Select an accessible map.');
   const stamp=++moveSerial.current;
   pendingPositions.current.set(issue.id,{
@@ -139,6 +140,7 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
    const updated=await inOrder(issue.id,()=>one(
     db.from('campaign_tool_issues').update({map_id:targetMap,x,y})
      .eq('id',issue.id).eq('campaign_id',campaignId)
+     .is('held_by_token_id',null)
      .select('*').maybeSingle()));
    setIssued(old=>old.map(item=>item.id===updated.id?updated:item));
    if(pendingPositions.current.get(issue.id)?.stamp===stamp){
@@ -154,9 +156,42 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
    setError(e?.message||String(e));throw e;
   }
  }
+ async function hold(issue,token){
+  if(!toolCanControl(issue,userId,isDM)||!toolCanBeHeld(issue))
+   throw Error('This tool cannot be held by you.');
+  if(issue.held_by_token_id)throw Error('This tool is already held.');
+  if(!token||token.map_id!==mapId||token.campaign_id!==campaignId||
+    (!isDM&&(token.owner_id!==userId||token.visible===false)))
+   throw Error('You cannot attach a tool to that token.');
+  return mutate(async()=>{
+   const updated=await inOrder(issue.id,()=>one(
+    db.from('campaign_tool_issues').update({
+     held_by_token_id:token.id,map_id:mapId,
+     x:Math.round(Number(token.x)),y:Math.round(Number(token.y))
+    }).eq('id',issue.id).eq('campaign_id',campaignId)
+     .is('held_by_token_id',null).select('*').maybeSingle()));
+   setIssued(old=>old.map(item=>item.id===updated.id?updated:item));
+   return updated;
+  });
+ }
+ async function dropHeld(issue,token){
+  if(!toolCanControl(issue,userId,isDM)||issue.held_by_token_id!==token?.id||
+   token.map_id!==mapId||(!isDM&&token.owner_id!==userId))
+   throw Error('This tool cannot be dropped from that token.');
+  return mutate(async()=>{
+   const updated=await inOrder(issue.id,()=>one(
+    db.from('campaign_tool_issues').update({
+     held_by_token_id:null,map_id:mapId,
+     x:Math.round(Number(token.x)),y:Math.round(Number(token.y))
+    }).eq('id',issue.id).eq('campaign_id',campaignId)
+     .eq('held_by_token_id',token.id).select('*').maybeSingle()));
+   setIssued(old=>old.map(item=>item.id===updated.id?updated:item));
+   return updated;
+  });
+ }
  const place=(issue,targetMap,x,y)=>moveIssue(issue,targetMap,x,y);
  // Delete on the board means 'pick up', not removeIssued().
  const pickUp=issue=>moveIssue(issue,null,issue.x||0,issue.y||0);
  return {templates,issued,placed,loading,error,refresh,createTemplate,updateTemplate,
-  deleteTemplate,issueTool,removeIssued,updateState,place,pickUp};
+  deleteTemplate,issueTool,removeIssued,updateState,place,pickUp,hold,dropHeld};
 }

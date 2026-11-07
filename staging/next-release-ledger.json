@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "updated": "2026-11-07",
-  "productionBaseSha": "d33f552f2d08db80a07b96486cf54a5457ef6f9d",
-  "releaseBranch": "stage/next-release-consolidated-2026-11-07",
+  "updated": "2026-11-08",
+  "productionBaseSha": "8f60b1bb4cebc21d039fab040ab30f7e30513c52",
+  "releaseBranch": "stage/next-release-consolidated-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -92,6 +92,18 @@
     {
       "name": "stage/units-tools-issuance-torch-mount-inventories-2026-11-07",
       "status": "released"
+    },
+    {
+      "name": "stage/project-audit-correctness-optimization-2026-11-07",
+      "status": "released"
+    },
+    {
+      "name": "stage/live-qa-light-collision-inventory-ui-2026-11-08",
+      "status": "released"
+    },
+    {
+      "name": "stage/interactive-pins-held-tools-2026-11-08",
+      "status": "released"
     }
   ],
   "features": [
@@ -152,6 +164,22 @@
         "stage/password-breach-screen-2026-11-07"
       ],
       "status": "included"
+    },
+    {
+      "id": "interactive-handout-pin-preview",
+      "description": "Clickable board-local handout text/images, selectable pins, removal controls and simplified DM map rules",
+      "sources": [
+        "stage/interactive-pins-held-tools-2026-11-08"
+      ],
+      "status": "released"
+    },
+    {
+      "id": "held-tools-and-carrier-light",
+      "description": "Holdable tool checkbox, drag to controlled token, carrier-following light, token Quick Adjust drop button",
+      "sources": [
+        "stage/interactive-pins-held-tools-2026-11-08"
+      ],
+      "status": "released"
     }
   ],
   "databaseDependencies": [
@@ -161,6 +189,22 @@
       "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "version": "20261107113749"
+    },
+    {
+      "version": "20261108013000",
+      "name": "inventory_lease_expiry_qualification",
+      "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "appliedVersion": "20261107150259"
+    },
+    {
+      "version": "20261108023000",
+      "name": "holdable_campaign_tools",
+      "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql",
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "appliedVersion": "20261107150305"
     }
   ],
   "edgeFunctionDependencies": [
@@ -178,41 +222,48 @@
     "Existing test campaigns only; do not create paid preview/development resources."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "1468101ed258c033126e930503e59330470f85f5",
-    "stagePolicy": "All next-release ready branches must be consolidated with conflict review before the one approved main merge.",
-    "outstandingBranches": [
+    "productionBaseSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
+    "stagePolicy": "All currently approved features are bundled in the consolidated release; new work stages after this release.",
+    "outstandingBranches": []
+  },
+  "lastRelease": {
+    "name": "Consolidated Live QA and Interactive Pins / Held Tools",
+    "date": "2026-11-08",
+    "productionBaseSha": "8f60b1bb4cebc21d039fab040ab30f7e30513c52",
+    "approvedPullRequests": [
+      38,
+      39
+    ],
+    "status": "backend-applied-ready-for-frontend-release",
+    "frontendSourceSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
+    "databaseDependencies": [
       {
-        "name": "stage/project-audit-correctness-optimization-2026-11-07",
-        "pullRequest": 37,
-        "status": "staging-verified-not-deployed",
-        "scope": [
-          "character popout undefined variable fix",
-          "awaitable inventory writes and retryable editor",
-          "shared per-item collaboration helpers",
-          "tool sheet serial autosave",
-          "coalesced refreshes for tools, handouts, initiative and fog",
-          "static undefined-variable CI lint gate",
-          "migration history non-destructive inventory",
-          "shared movement packet validation deduplicated",
-          "safe CSS subtab and pan-cursor deduplication",
-          "full main.jsx bootstrap split into independent TabletopApp, BattlemapBoard and SheetTemplateDesigner modules",
-          "independent campaign-presence hook with pseudonymous member status",
-          "11 CSS feature files with exact cascade snapshot and updated regression tests",
-          "staged server-authoritative fog batch visibility and exploration write optimization"
-        ],
-        "databaseDependencies": [
-          {
-            "version": "20261107124000",
-            "name": "fog_visibility_batch_optimization",
-            "file": "supabase/migrations/20261107124000_fog_visibility_batch_optimization.sql",
-            "status": "staged-not-applied",
-            "compatibility": "existing get_authorized_map_fog(uuid) RPC with unchanged signature and RLS",
-            "rollback": "staging/sql-candidates/rollback_fog_visibility_batch_optimization.sql",
-            "requiresApproval": true
-          }
-        ],
-        "paidInfrastructure": false
+        "version": "20261108013000",
+        "name": "inventory_lease_expiry_qualification",
+        "status": "applied-production",
+        "file": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
+        "appliedVersion": "20261107150259"
+      },
+      {
+        "version": "20261108023000",
+        "name": "holdable_campaign_tools",
+        "status": "applied-production",
+        "file": "supabase/migrations/20261108023000_holdable_campaign_tools.sql",
+        "appliedVersion": "20261107150305"
       }
-    ]
-  }
+    ],
+    "migrationHistoryNote": "Supabase applied these two migrations under generated database versions different from the filename timestamps; only names and actual appliedVersion identify live records. Do not bulk replay all repository migrations."
+  },
+  "releaseHistory": [
+    {
+      "date": "2026-11-08",
+      "branch": "stage/next-release-consolidated-2026-11-08",
+      "sourceSha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e",
+      "pullRequests": [
+        38,
+        39
+      ],
+      "description": "Combined light occlusion, preview collision, sheet lease fix, ruler/selection improvements, interactive pin previews and holdable torch tools; database dependencies coordinated before main merge."
+    }
+  ]
 }

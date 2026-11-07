@@ -10,15 +10,14 @@ test('audit migration manifest is documentary and keeps live records separate fr
  assert.equal(data.trackedFiles.length,data.counts.repositorySqlFiles);
  assert.match(data.warning,/Never run every repo migration/);
 });
-test('audit release remains a draft staging branch with no paid or automatic SQL deployment',()=>{
+test('combined release records both approved drafts and compatible migration requirements',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- const staged=ledger.upcomingRelease.outstandingBranches.find(x=>x.pullRequest===37);
- assert.ok(staged);
- assert.equal(staged.status,'staging-verified-not-deployed');
- assert.equal(staged.databaseDependencies.length,1);
- assert.equal(staged.databaseDependencies[0].status,'staged-not-applied');
- assert.equal(staged.databaseDependencies[0].requiresApproval,true);
- assert.match(staged.databaseDependencies[0].file,/fog_visibility_batch_optimization\.sql$/);
+ assert.equal(ledger.releaseBranch,'stage/next-release-consolidated-2026-11-08');
+ assert.deepEqual(ledger.lastRelease.approvedPullRequests,[38,39]);
+ assert.equal(ledger.lastRelease.databaseDependencies.length,2);
+ assert.ok(ledger.lastRelease.databaseDependencies.every(item=>item.status==='applied-production'&&item.appliedVersion));
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,0);
+ assert.ok(ledger.branches.filter(x=>x.name.startsWith('stage/live-qa-light-')||x.name.startsWith('stage/interactive-pins-')).every(x=>x.status==='released'));
  const ci=read('.github/workflows/verify-staged.yml');
  assert.doesNotMatch(ci,/supabase db push|supabase migration up|vercel deploy/);
 });

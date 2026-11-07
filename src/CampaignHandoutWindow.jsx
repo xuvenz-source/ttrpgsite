@@ -1,6 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
 import {PIN_ICONS} from './CampaignHandouts.js';
+import HandoutBody from './HandoutBody.jsx';
 
 export default function CampaignHandoutWindow({note,pin=null,isDM,folders=[],
  onClose,onSave,onDelete,onUpdatePin,onDeletePin,onCollect}){
@@ -43,7 +44,7 @@ export default function CampaignHandoutWindow({note,pin=null,isDM,folders=[],
      onChange={e=>setDraft(d=>({...d,revealed:e.target.checked}))}/>
      Revealed in party Handouts</label>
    </div>:<article className="campaign-handout-read">
-    {note.body||'No text'}</article>}
+    <HandoutBody body={note.body}/></article>}
    {pin&&<div className="campaign-handout-pin-controls">
     {isDM?<><strong>Map pin</strong>
      <label className="campaign-handout-check"><input type="checkbox"

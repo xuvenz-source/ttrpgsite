@@ -182,3 +182,43 @@
 .map-fog-overlay{position:absolute;inset:0;z-index:145;pointer-events:none;
  image-rendering:pixelated;max-width:none;max-height:none}
 
+
+
+/* Handout pins open a compact board-local preview instead of a full window. */
+.map-handout-pin.is-selected{outline:2px solid #77d1ff;outline-offset:2px;
+ box-shadow:0 0 0 3px #12253b,0 0 13px #68baff88}
+.map-handout-bubble{position:absolute;z-index:4;width:min(324px,calc(100% - 16px));
+ max-height:300px;overflow:auto;pointer-events:auto;
+ padding:10px;background:#1c2b41f5;border:1px solid #7396c0;
+ border-radius:10px;box-shadow:0 10px 28px #030712dc;color:#eef4fc}
+.map-handout-bubble-heading{display:flex;align-items:center;gap:8px}
+.map-handout-bubble-heading strong{flex:1;min-width:0;overflow-wrap:anywhere;
+ font-size:13px}
+.map-handout-bubble-heading button{padding:2px 7px;min-height:23px}
+.map-handout-bubble-body{white-space:pre-wrap;overflow-wrap:anywhere;
+ font-size:12px;line-height:1.5;margin:8px 0;max-height:194px;overflow:auto}
+.map-handout-bubble-body img{max-width:100%;height:auto;display:block;
+ margin:8px auto;border-radius:5px}
+.map-handout-bubble-actions{display:flex;flex-wrap:wrap;gap:5px}
+.map-handout-bubble-actions button{min-height:27px;font-size:11px;padding:5px 8px}
+.map-handout-delete{color:#fac0c4!important;border-color:#945765!important}
+
+.campaign-tool-hold-option{display:flex!important;align-items:center;gap:8px;
+ font-size:12px;text-transform:none}
+.campaign-tool-hold-option input[type="checkbox"]{width:17px!important;
+ min-width:17px;height:17px!important}
+.quick-token-held-tools{display:flex;flex-direction:column;gap:6px;
+ margin:8px 0;padding:9px;background:#1b3042;border:1px solid #50728a;
+ border-radius:8px;font-size:12px}
+.quick-token-held-tool{display:flex;justify-content:space-between;
+ align-items:center;gap:9px}
+.quick-token-held-tool span{flex:1;overflow-wrap:anywhere}
+.quick-token-held-tool button{min-width:28px;min-height:26px;
+ color:#f9bfc3;font-weight:700}
+
+.map-setting-pin-selection{display:flex;flex-direction:column;gap:7px;
+ margin:9px 0;padding:9px;background:#1b2b3d;border:1px solid #6686a6;
+ border-radius:7px}
+.map-setting-pin-selection strong{font-size:12px;overflow-wrap:anywhere}
+.campaign-handout-read .map-handout-bubble-body{max-height:none;overflow:visible;
+ font-size:inherit;margin:0}

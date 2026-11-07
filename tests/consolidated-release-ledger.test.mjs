@@ -7,7 +7,7 @@ test('the next release is a consolidated staging branch, not a Vercel deployment
  assert.match(ledger.releaseBranch,/^stage\/next-release-consolidated-/);
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
- assert.ok(ledger.features.every(x=>x.status==='included'&&x.sources.every(s=>ledger.branches.some(b=>b.name===s&&b.status==='included'))));
+ assert.ok(ledger.features.every(x=>['included','released'].includes(x.status)&&x.sources.every(s=>ledger.branches.some(b=>b.name===s&&['included','released'].includes(b.status)))));
  assert.equal(ledger.databaseDependencies[0].status,'applied-production');
  assert.equal(ledger.edgeFunctionDependencies[0].status,'deployed-production');
 });

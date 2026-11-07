@@ -64,12 +64,20 @@ function parts(type,value){
  return {current:value??'',max:''};
 }
 function validNumber(n){return n!==''&&Number.isFinite(Number(n))&&Number(n)>=-1000000&&Number(n)<=1000000}
-export default function TokenQuickEdit({db,token,template,allowedFields,initialValues={},onRemember,onClose,onApply,statusCatalog,onApplyStatuses,canEditStatuses=false}){
+export default function TokenQuickEdit({db,token,template,allowedFields,initialValues={},onRemember,onClose,onApply,statusCatalog,onApplyStatuses,canEditStatuses=false,heldTools=[],onDropHeldTool}){
  const fields=useMemo(()=>editableFields(template).filter(f=>(allowedFields||[]).includes(f.id)),[template,allowedFields]);
  const prepare=raw=>Object.fromEntries(fields.map(f=>[f.id,parts(f.type,raw?.[f.id])]));
  const [values,setValues]=useState(()=>prepare(initialValues));
  const [saved,setSaved]=useState(()=>prepare(initialValues));
  const [error,setError]=useState('');
+ const [dropping,setDropping]=useState(null);
+ async function dropHeldTool(tool){
+  if(dropping||!onDropHeldTool)return;
+  setDropping(tool.id);setError('');
+  try{await onDropHeldTool(tool)}
+  catch(e){setError(e?.message||String(e))}
+  finally{setDropping(null)}
+ }
  const [statusValues,setStatusValues]=useState(()=>normalizedEffects(token.status_effects));
  const startingEffects=useRef(normalizedEffects(token.status_effects));
  const statusChanged=JSON.stringify(statusValues)!==JSON.stringify(startingEffects.current);
@@ -152,7 +160,7 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
     <button type="button" className="secondary" onClick={onClose}>✕</button>
    </div>
    {fields.length===0?
-    <p className="muted">No numeric quick-adjust fields configured. Status effects remain available below.</p>:
+    <p className="muted">No numeric quick-adjust fields configured. Status effects and held tools remain available below.</p>:
     <div className="quick-token-fields">{fields.map(f=>{
      const value=values[f.id]||{current:'',max:''};
      return <div className="quick-token-field" key={f.id}>
@@ -170,6 +178,16 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
       </div>
      </div>;
     })}</div>}
+   {heldTools.length>0&&<section className="quick-token-held-tools"
+    aria-label="Held tools">
+    <strong>Held tools</strong>
+    {heldTools.map(tool=><div key={tool.id} className="quick-token-held-tool">
+     <span>{tool.icon||'🧰'} {tool.name}</span>
+     <button type="button" className="secondary" disabled={!!dropping}
+      title={'Drop '+tool.name+' onto the map'} aria-label={'Drop '+tool.name}
+      onClick={()=>void dropHeldTool(tool)}>{dropping===tool.id?'…':'×'}</button>
+    </div>)}
+   </section>}
    <label className="quick-token-dead-toggle" title={deadLimitReached?'Remove another status before marking this token Dead':''}>
     <input type="checkbox" checked={isDead} disabled={!canEditStatuses||deadLimitReached}
      onChange={event=>toggleDead(event.target.checked)}/>

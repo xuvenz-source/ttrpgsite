@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint,translateEnvironmentObject} from './MapEnvironment.js';
+import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint,translateEnvironmentObject,selectEnvironmentObjectIds} from './MapEnvironment.js';
 import {FEET_PER_CELL} from './MapMeasurements.js';
 
 const pointText=points=>(points||[]).map(p=>p.x+','+p.y).join(' ');
@@ -11,14 +11,16 @@ const colors={door:'#ed956d',window:'#64ddd6'};
 /** DM-only editor/markers. Never mounted in the player client or preview. */
 function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPatch}){
  const [draft,setDraft]=useState([]),[cursor,setCursor]=useState(null),[dragPreview,setDragPreview]=useState(null);
- const drawing=useRef(false),drag=useRef(null),svg=useRef(null);
+ const [selectionBox,setSelectionBox]=useState(null);
+ const drawing=useRef(false),drag=useRef(null),svg=useRef(null),marquee=useRef(null);
  const maxX=map.width/map.grid_size,maxY=map.height/map.grid_size;
  const shown=editor?.showLight!==false&&!editor?.previewing;
  const editing=shown&&editor?.enabled&&editor.layer==='light'&&!editor.lockLight;
  const tool=editor?.tool||'select';
  const cell=map.grid_size*scale;
  useEffect(()=>{
-  setDraft([]);setCursor(null);setDragPreview(null);drawing.current=false;drag.current=null;
+  setDraft([]);setCursor(null);setDragPreview(null);setSelectionBox(null);
+  drawing.current=false;drag.current=null;marquee.current=null;
  },[map.id,tool,editing]);
  useEffect(()=>{
   if(!editing)return;
@@ -61,7 +63,12 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
    try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
    return;
   }
-  if(tool==='select'){onSelect(null);return}
+  if(tool==='select'){
+   marquee.current={pointerId:e.pointerId,start:p};
+   setSelectionBox({start:p,end:p});
+   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+   return;
+  }
   if(tool==='light'){onAdd(createLight(p,{bright:editor.lightBright??20,dim:editor.lightDim??20}));return}
   if(tool==='door'||tool==='window'){
    const end={x:Math.min(maxX,p.x+1),y:p.y};
@@ -74,6 +81,7 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
   if(!editing||tool!=='select'||e.button!==0)return;
   const origin=point(e);if(!origin)return;
   e.preventDefault();e.stopPropagation();
+  if(e.shiftKey){onSelect(object.id,{additive:true});return}
   onSelect(object.id);
   drag.current={kind:'translate',id:object.id,pointerId:e.pointerId,
    origin,original:object,patch:null,moved:false};
@@ -88,6 +96,11 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
  }
  function pointerMove(e){
+  if(marquee.current?.pointerId===e.pointerId){
+   const p=point(e);
+   if(p)setSelectionBox({start:marquee.current.start,end:p});
+   return;
+  }
   if(drag.current&&drag.current.pointerId===e.pointerId){
    const p=point(e);if(!p)return;
    const current=drag.current;
@@ -119,6 +132,19 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
   }
  }
  function pointerUp(e){
+  if(marquee.current?.pointerId===e.pointerId){
+   const origin=marquee.current.start,destination=point(e)||origin;
+   marquee.current=null;setSelectionBox(null);
+   const left=Math.min(origin.x,destination.x),right=Math.max(origin.x,destination.x);
+   const top=Math.min(origin.y,destination.y),bottom=Math.max(origin.y,destination.y);
+   if(Math.hypot(right-left,bottom-top)>Math.max(.07,4/cell)){
+    const ids=selectEnvironmentObjectIds(objects,{left,right,top,bottom});
+    onSelect(ids,{additive:e.shiftKey});
+   }else if(!e.shiftKey)onSelect(null);
+   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
+    e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
+   return;
+  }
   if(drag.current&&drag.current.pointerId===e.pointerId){
    e.preventDefault();e.stopPropagation();
    const current=drag.current;
@@ -151,9 +177,10 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
    aria-label="DM environment map geometry" viewBox={`0 0 ${maxX} ${maxY}`} preserveAspectRatio="none"
    onContextMenu={e=>{if(editing){e.preventDefault();e.stopPropagation();if(tool==='wall-line')finishLine()}}}
    onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp}
-   onPointerCancel={()=>{drag.current=null;setDragPreview(null);drawing.current=false;setDraft([])}}>
+   onPointerCancel={()=>{drag.current=null;setDragPreview(null);drawing.current=false;
+    setDraft([]);marquee.current=null;setSelectionBox(null)}}>
    {objects.map(object=>{
-    const selected=editor.selectedId===object.id;
+    const selected=(editor.selectedIds||[]).includes(object.id)||editor.selectedId===object.id;
     const rendered=dragPreview?.id===object.id&&dragPreview.patch?
      {...object,...dragPreview.patch}:object;
     if(object.type==='light'){
@@ -200,6 +227,13 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
       strokeWidth={1.2} vectorEffect="non-scaling-stroke"/>)}
     </g>;
    })}
+   {editing&&selectionBox&&<rect
+    className="map-env-selection-marquee"
+    x={Math.min(selectionBox.start.x,selectionBox.end.x)}
+    y={Math.min(selectionBox.start.y,selectionBox.end.y)}
+    width={Math.abs(selectionBox.end.x-selectionBox.start.x)}
+    height={Math.abs(selectionBox.end.y-selectionBox.start.y)}
+    vectorEffect="non-scaling-stroke" pointerEvents="none"/>}
    {editing&&draft.length>0&&<polyline
     points={pointText(tool==='wall-line'&&cursor?[...draft,cursor]:draft)}
     fill="none" stroke="#ffffff" strokeWidth={2.6} strokeDasharray="6 4"
@@ -210,7 +244,7 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
    {objects.filter(o=>o.type==='door'||o.type==='window'||o.type==='light').map(o=>{
     const rendered=dragPreview?.id===o.id&&dragPreview.patch?
      {...o,...dragPreview.patch}:o;
-    const p=center(rendered),selected=o.id===editor.selectedId;
+    const p=center(rendered),selected=(editor.selectedIds||[]).includes(o.id)||o.id===editor.selectedId;
     return <button type="button" key={o.id}
      className={'map-env-marker map-env-marker-'+o.type+(selected?' is-selected':'')}
      style={{left:p.x*cell,top:p.y*cell}}
@@ -219,7 +253,7 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
      onPointerDown={e=>{e.stopPropagation();startMove(e,o)}}
      onPointerMove={pointerMove} onPointerUp={pointerUp}
      onPointerCancel={()=>{drag.current=null;setDragPreview(null)}}
-     onClick={e=>{e.preventDefault();e.stopPropagation();onSelect(o.id)}}>
+     onClick={e=>{e.preventDefault();e.stopPropagation();onSelect(o.id,{additive:e.shiftKey})}}>
      <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
       {o.type==='door'?<><rect x="6" y="3" width="12" height="18" rx="1.3" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M8 5v14" stroke="currentColor" strokeWidth="1.2"/></>:
       o.type==='window'?<><rect x="3" y="4" width="18" height="16" rx="1" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M12 4v16M3 12h18" stroke="currentColor" strokeWidth="1.7"/></>:

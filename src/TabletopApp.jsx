@@ -129,8 +129,8 @@ export default function TabletopApp(){
  const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
-  lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
-  selectedId:null,pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
+  lockLight:false,lockBackground:true,lockTokens:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
+  selectedId:null,selectedIds:[],selectedPinId:null,pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
@@ -553,6 +553,12 @@ export default function TabletopApp(){
   if(!issue)return;
   try{await campaignTools.pickUp(issue)}catch(e){fail(e)}
  }
+ async function holdIssuedToolOnToken(id,tokenId){
+  const issued=campaignTools.issued.find(item=>item.id===id);
+  const token=tokens.find(item=>item.id===tokenId);
+  if(!issued||!token||token.map_id!==selectedMap)return fail('Tool or token not available.');
+  try{await campaignTools.hold(issued,token)}catch(e){fail(e)}
+ }
  async function placeIssuedToolOnMap(id,x,y){
   const issued=campaignTools.issued.find(t=>t.id===id);
   if(!issued||!selectedMap)return fail('Tool not available on this map.');
@@ -583,9 +589,26 @@ export default function TabletopApp(){
    setOpenedHandout({id:note.id,pinId:pin.id,preview:note});
   }catch(e){fail(e)}
  }
+ async function readMapHandoutPin(pin){
+  const note=await campaignHandouts.readPinNote(pin);
+  if(!note)throw Error('This pin is no longer available to you.');
+  return note;
+ }
+ async function deleteMapHandoutPin(pin){
+  if(!isDM)throw Error('Only the DM may remove pins.');
+  try{
+   await campaignHandouts.deletePin(pin);
+   setMapSettingEditor(old=>old.selectedPinId===pin.id?
+    {...old,selectedPinId:null}:old);
+  }catch(e){fail(e);throw e}
+ }
+ async function updateMapHandoutPin(pin,patch){
+  if(!isDM)throw Error('Only the DM can change pins.');
+  try{await campaignHandouts.updatePin(pin,patch)}catch(e){fail(e)}
+ }
  async function moveMapHandoutPin(pin,point){
   if(!isDM)return;
-  try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e)}
+  try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e);throw e}
  }
  async function dropExistingUnit(tokenId,x,y){
   const t=tokens.find(t=>t.id===tokenId);
@@ -2136,17 +2159,32 @@ export default function TabletopApp(){
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
    handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
    onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
+   onReadHandoutPin={readMapHandoutPin} onCollectHandoutPin={campaignHandouts.collectPin}
+   onDeleteHandoutPin={deleteMapHandoutPin}
+   onSelectHandoutPin={pin=>setMapSettingEditor(old=>({
+    ...old,selectedPinId:pin.id,selectedId:null,selectedIds:[]
+   }))}
    onPatchEnvironmentObject={patchEnvironmentObject}
-   onDeleteEnvironmentObject={id=>{
+   onDeleteEnvironmentObject={selection=>{
     if(!isDM||!mapEnvironmentCurrent.current)return;
-    saveMapEnvironment(removeObject(mapEnvironmentCurrent.current,id));
-    setMapSettingEditor(old=>({...old,selectedId:null}));
+    const ids=Array.isArray(selection)?selection:[selection];
+    const base=normalizeEnvironment(mapEnvironmentCurrent.current);
+    if(!ids.length)return;
+    saveMapEnvironment({...base,objects:base.objects.filter(o=>!ids.includes(o.id))});
+    setMapSettingEditor(old=>({...old,selectedId:null,selectedIds:[]}));
    }} characters={characters}
-   template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
+   template={camp?.sheet_template} onSelectEnvironmentObject={(selection,options={})=>
+    setMapSettingEditor(old=>{
+     const incoming=Array.isArray(selection)?selection:selection?[selection]:[];
+     const current=old.selectedIds||[];
+     const selectedIds=options.additive?[...new Set([...current,...incoming])]:incoming;
+     return {...old,selectedPinId:null,selectedId:selectedIds[0]||null,selectedIds};
+    })}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolPickUp={pickUpIssuedToolOnMap}
+   onToolHold={holdIssuedToolOnToken}
    onToolOpen={setSelectedToolIssueId} onToolMovementPreview={sendLiveToolMovement}
    remoteToolPositions={fog.frame?.enabled?{}:remoteToolPositions}
    onMovementPreview={sendLiveMovement} remotePositions={fog.frame?.enabled?{}:remoteTokenPositions}
@@ -2199,6 +2237,8 @@ export default function TabletopApp(){
  onDisablePublished={publishEnvironmentRules}
  onResetExploration={publishEnvironmentRules}
  publishedEnvironment={fog.published}
+ pinsForMap={campaignHandouts.pins}
+ onUpdateHandoutPin={updateMapHandoutPin} onDeleteHandoutPin={deleteMapHandoutPin}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
  handoutsForMap={campaignHandouts.handouts}
  mapSettingPopped={mapSettingPopped}
@@ -2286,7 +2326,8 @@ export default function TabletopApp(){
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
      template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
-     handouts={campaignHandouts.handouts}/>
+     handouts={campaignHandouts.handouts} pins={campaignHandouts.pins}
+     onUpdatePin={updateMapHandoutPin} onDeletePin={deleteMapHandoutPin}/>
    </div>
   </section>
  </FloatingWindow>}
@@ -2326,6 +2367,9 @@ export default function TabletopApp(){
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
    allowedFields={camp.token_quick_fields||[]}
+   heldTools={campaignTools.issued.filter(tool=>tool.held_by_token_id===quickEditToken.id)}
+   onDropHeldTool={issue=>campaignTools.dropHeld(issue,
+    tokens.find(token=>token.id===quickEditToken.id)||quickEditToken)}
    initialValues={getLocalQuickValues(quickEditToken)}
     statusCatalog={camp.token_status_catalog}
     canEditStatuses={isDM||(quickEditToken.owner_id===user&&quickEditToken.map_id===playerMapId)}

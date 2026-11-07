@@ -6,12 +6,13 @@ import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.js
 import Artwork from './Artwork.jsx';
 import MapPinLayer from './MapPinLayer.jsx';
 import CampaignToolMapLayer from './CampaignToolMapLayer.jsx';
-import {toolCanControl} from './CampaignTools.js';
+import {toolCanControl,toolCanBeHeld} from './CampaignTools.js';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
 import MapFogOverlay from './MapFogOverlay.jsx';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
+import {checkTokenMovement} from './MapCollision.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -19,12 +20,14 @@ import {canControlMapToken,selectionRectangle,selectableTokenIds,
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 
 export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
- toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,
+ toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
  onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
- handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,onDeleteEnvironmentObject}){
+ handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
+ onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
+ onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
  const[toolPreview,setToolPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
@@ -38,9 +41,14 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
  const [panning,setPanning]=useState(false);
+ const [previewPosition,setPreviewPosition]=useState(null);
+ const previewDrag=useRef(null);
  // Reuse derived rendering data during drag, measurement and marquee updates.
- const previewToken=isDM&&environmentEditor?.previewing?
+ const sourcePreviewToken=isDM&&environmentEditor?.previewing?
   tokens.find(t=>t.id===(environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id)):null;
+ const previewToken=sourcePreviewToken&&previewPosition?.mapId===map.id&&
+  previewPosition?.id===sourcePreviewToken.id?
+  {...sourcePreviewToken,x:previewPosition.x,y:previewPosition.y}:sourcePreviewToken;
  const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
  const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
  const previewPolygon=useMemo(()=>previewActive?
@@ -52,15 +60,20 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   return allowed.filter(t=>t.visible!==false&&
    (t.id===previewToken?.id||pointInPolygon({
     x:Number(t.x)+Number(t.span_x??1)/2,
-    y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)));
- },[tokens,isDM,previewActive,previewToken?.id,previewPolygon]);
+    y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)))
+    .map(t=>t.id===previewToken?.id?previewToken:t);
+ },[tokens,isDM,previewActive,previewToken,previewPolygon]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
+ useEffect(()=>{
+  previewDrag.current=null;
+  setPreviewPosition(null);
+ },[map.id,environmentEditor?.previewing,environmentEditor?.previewTokenId]);
  const environmentHandlers=useRef({onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject});
  environmentHandlers.current={onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject};
  const handleEnvironmentAdd=useCallback(object=>environmentHandlers.current.onAddEnvironmentObject?.(object),[]);
- const handleEnvironmentSelect=useCallback(id=>environmentHandlers.current.onSelectEnvironmentObject?.(id),[]);
+ const handleEnvironmentSelect=useCallback((ids,options)=>environmentHandlers.current.onSelectEnvironmentObject?.(ids,options),[]);
  const handleEnvironmentPatch=useCallback((id,change,opts)=>
   environmentHandlers.current.onPatchEnvironmentObject?.(id,change,opts),[]);
  function selectTokens(ids,toolIds=[]){
@@ -147,15 +160,25 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    if(!active||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
    const el=e.target;
    if(el instanceof Element && (el.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]')||
-     (el.closest('button')&&!el.closest('.map-env-marker,.campaign-tool-map-token'))))return;
+     (el.closest('button')&&!el.closest('.map-env-marker,.campaign-tool-map-token,.map-handout-pin'))))return;
    if(document.querySelector('.modal-backdrop'))return;
-   if(isDM&&environmentEditor?.enabled&&environmentEditor.layer==='light'&&
-      !environmentEditor.lockLight&&environmentEditor.selectedId){
-    const target=environment?.objects?.find(o=>o.id===environmentEditor.selectedId);
-    if(target){
+   if(isDM&&environmentEditor?.enabled&&environmentEditor.layer==='light'){
+    const pin=handoutPins.find(item=>item.id===environmentEditor.selectedPinId);
+    if(!environmentEditor.lockLight&&pin){
      e.preventDefault();e.stopPropagation();
-     onDeleteEnvironmentObject?.(target.id);return;
+     if(window.confirm('Remove this pin from the map?'))
+      void Promise.resolve(onDeleteHandoutPin?.(pin)).catch(console.error);
+     return;
     }
+    const ids=(environmentEditor.selectedIds?.length?environmentEditor.selectedIds:
+     environmentEditor.selectedId?[environmentEditor.selectedId]:[])
+     .filter(id=>environment?.objects?.some(o=>o.id===id));
+    if(!environmentEditor.lockLight&&ids.length){
+     e.preventDefault();e.stopPropagation();
+     onDeleteEnvironmentObject?.(ids);return;
+    }
+    // Lock is on by default so map-editing Delete never destroys a token.
+    if(environmentEditor.lockTokens!==false)return;
    }
    const removableTools=selectedToolIds.filter(id=>
     toolCanControl(toolIssued.find(t=>t.id===id),user,isDM));
@@ -173,7 +196,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   document.addEventListener('keydown',handleDelete);
   return()=>document.removeEventListener('keydown',handleDelete);
  },[active,selectedId,selectedToolIds,isDM,user,tokens,toolIssued,
-   remove,onToolPickUp,environmentEditor,environment,onDeleteEnvironmentObject]);
+   remove,onToolPickUp,environmentEditor,environment,onDeleteEnvironmentObject,
+   handoutPins,onDeleteHandoutPin]);
  useEffect(()=>{
   const node=viewportRef.current;if(!node)return;
   const wheel=e=>{
@@ -213,7 +237,11 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   const p=pos(e);
   if(match==='application/x-forge-character')onCharacterDrop(id,p.x,p.y);
   else if(match==='application/x-forge-unit')onUnitDrop(id,p.x,p.y);
-  else if(match==='application/x-forge-tool')onToolPlace?.(id,p.x,p.y);
+  else if(match==='application/x-forge-tool'){
+   const carrier=e.target.closest('.token')?.dataset.tokenId;
+   if(carrier&&toolCanBeHeld(toolIssued.find(item=>item.id===id)))onToolHold?.(id,carrier);
+   else onToolPlace?.(id,p.x,p.y);
+  }
   else if(isDM)onNpcDrop(id,p.x,p.y);
  }
  function allowMapDrop(e){
@@ -321,10 +349,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   // A secondary click during a held primary-button line measurement
   // creates a snapped bend rather than pinning the line. A right-button
   // measurement started on its own still pins as before.
-  if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
+  if(!activeMeasureTool||!(e.button===2||e.type==='contextmenu')||!measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   const current=measureDrag.current;
-  if(shouldBendLineOnRightPress(current,e.button)){
+  if(shouldBendLineOnRightPress(current,2)){
    const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end);
    if(next!==current.measure){
     current.measure=next;
@@ -365,10 +393,21 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    if(current?.sourceButton!==0)return;
    updateMeasurement({pointerId:current.pointerId,clientX:e.clientX,clientY:e.clientY});
   }
+  // Context-menu events are more reliable than secondary pointerdown when
+  // the primary pointer is captured by the measurement toolbar or viewport.
+  function onContextMenu(e){
+   if(!shouldBendLineOnRightPress(measureDrag.current,2))return;
+   const rect=boardRef.current?.getBoundingClientRect();
+   if(!rect||e.clientX<rect.left||e.clientX>rect.right||
+    e.clientY<rect.top||e.clientY>rect.bottom)return;
+   pinCurrentMeasurementOnRightClick(e);
+  }
+  window.addEventListener('contextmenu',onContextMenu,true);
   window.addEventListener('mousedown',onMouseDown,true);
   window.addEventListener('mousemove',onMouseMove,true);
   window.addEventListener('mouseup',onMouseUp,true);
   return()=>{
+   window.removeEventListener('contextmenu',onContextMenu,true);
    window.removeEventListener('mousedown',onMouseDown,true);
    window.removeEventListener('mousemove',onMouseMove,true);
    window.removeEventListener('mouseup',onMouseUp,true);
@@ -458,7 +497,19 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  }
  function startTokenDrag(e,t,canMove){
   e.stopPropagation();
-  if(previewActive)return;
+  if(isDM&&environmentEditor?.enabled&&environmentEditor.layer==='light'&&
+   environmentEditor.lockTokens!==false)return;
+  if(previewActive){
+   // Preview movement is local only. Never send DM-preview coordinates to the
+   // server; test the same swept-footprint collision against prepared walls.
+   if(e.button!==0||t.id!==previewToken?.id)return;
+   e.preventDefault();
+   previewDrag.current={id:t.id,pointerId:e.pointerId,
+    startX:e.clientX,startY:e.clientY,
+    token:{...previewToken}};
+   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+   return;
+  }
   if(e.button!==0)return;
   const grouped=canMove&&selectedIds.includes(t.id)&&
     selectedIds.length+selectedToolIds.length>1;
@@ -500,6 +551,18 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    dx:0,dy:0};
  }
  function moveTokenDrag(e,t){
+  const simulated=previewDrag.current;
+  if(simulated&&simulated.id===t.id&&simulated.pointerId===e.pointerId){
+   const cell=map.grid_size*zoomRef.current;
+   const delta=boundedGroupOffset([simulated.token],
+    (e.clientX-simulated.startX)/cell,(e.clientY-simulated.startY)/cell,
+    map.width,map.height,map.grid_size);
+   const destination={x:Number(simulated.token.x)+delta.dx,
+    y:Number(simulated.token.y)+delta.dy};
+   if(checkTokenMovement({token:simulated.token,destination,map,environment}).allowed)
+    setPreviewPosition({id:t.id,mapId:map.id,...destination});
+   return;
+  }
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   const cell=map.grid_size*zoomRef.current;
@@ -528,7 +591,24 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   for(const tool of info.tools||[])
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
  }
+ function toolDropCarrier(event){
+  const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
+  if(!rect||!(cell>0))return null;
+  const x=(event.clientX-rect.left)/cell,y=(event.clientY-rect.top)/cell;
+  return tokens.find(token=>canControlMapToken(token,user,isDM,map.id)&&
+   x>=Number(token.x)&&x<Number(token.x)+Number(token.span_x??1)&&
+   y>=Number(token.y)&&y<Number(token.y)+Number(token.span_y??1));
+ }
  function finishTokenDrag(e,t,cancel=false){
+  const simulated=previewDrag.current;
+  if(simulated&&simulated.id===t.id&&simulated.pointerId===e.pointerId){
+   previewDrag.current=null;
+   if(cancel)setPreviewPosition({id:t.id,mapId:map.id,
+    x:Number(simulated.token.x),y:Number(simulated.token.y)});
+   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
+    e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
+   return;
+  }
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   drag.current=null;
@@ -547,6 +627,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    for(const tool of info.tools||[])delete next[tool.issue_id];
    return next;
   });
+  if(!cancel&&Math.hypot(e.clientX-info.startX,e.clientY-info.startY)>8&&
+    info.tools?.length===1&&info.members.length===0){
+   const issue=toolIssued.find(t=>t.id===info.tools[0].issue_id);
+   const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
+   if(carrier){setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return}
+  }
   if(info.dx===0&&info.dy===0&&!cancel)return;
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
@@ -575,7 +661,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     aria-label="Battlemap viewport — middle mouse drag to pan, left drag to select tokens" tabIndex={0}
     onMouseDownCapture={pinCurrentMeasurementOnRightClick}
     onMouseDown={e=>{if(e.button===1)e.preventDefault()}}
-    onContextMenu={e=>{if(activeMeasureTool)e.preventDefault()}}
+    onContextMenu={e=>{if(activeMeasureTool){
+     e.preventDefault();
+     pinCurrentMeasurementOnRightClick(e);
+    }}}
     onAuxClick={e=>{if(e.button===1)e.preventDefault()}}
     onPointerDownCapture={e=>{
      if(e.button===2&&measureDrag.current)pinCurrentMeasurementOnRightClick(e);
@@ -593,15 +682,19 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
-   <div ref={boardRef} className="board"
+   <div ref={boardRef} className={'board'+(isDM&&environmentEditor?.enabled?
+    (environmentEditor.lockTokens!==false?' map-editor-tokens-locked':' map-editor-tokens-unlocked'):'')}
     onDragOver={allowMapDrop}
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:(isDM&&environmentEditor?.enabled&&environmentEditor.showBackground===false)?undefined:(url?'url('+JSON.stringify(url)+')':undefined),backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     <MapPinLayer map={map} scale={scale} pins={handoutPins} isDM={isDM}
      editor={environmentEditor} active={active}
-     onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}/>
+     onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}
+     onRead={onReadHandoutPin} onCollect={onCollectHandoutPin}
+     onDelete={onDeleteHandoutPin} onSelect={onSelectHandoutPin}/>
     <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
+     tokens={visibleTokens} tokenPositions={{...remotePositions,...preview}}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
      placements={toolPlacements} issued={toolIssued}
      remotePositions={remoteToolPositions} preview={toolPreview}
@@ -610,12 +703,13 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       onTokenPointerMove={(e,p)=>moveTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerUp={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerCancel={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id},true)}
-      onOpen={onToolOpen}/>
+      onOpen={onToolOpen} environment={isDM?environment:null}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
      onPatch={handleEnvironmentPatch}/>}
     {isDM&&!previewActive&&environment&&environmentEditor?.selectedId&&
+     (environmentEditor.selectedIds?.length||1)===1&&
      <MapObjectQuickAdjust key={environmentEditor.selectedId}
       map={map} scale={scale}
       object={environment.objects.find(o=>o.id===environmentEditor.selectedId)}
@@ -623,10 +717,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       onClose={()=>handleEnvironmentSelect(null)}/>}
     {visibleTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
-      canMove=!previewActive&&canControlMapToken(t,user,isDM,map.id);
+      canMove=(previewActive&&t.id===previewToken?.id)||
+       (!previewActive&&canControlMapToken(t,user,isDM,map.id)&&
+        !(isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false));
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
-     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
+     return <div key={t.id} data-token-id={t.id} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
       (combatActiveTokenId===t.id?' token-current-turn':'')+
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
@@ -636,9 +732,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       }}
       title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
        (isDM?' · Alt + double-click to edit sheet':'')}
-      onDoubleClick={e=>{if(e.altKey&&isDM){e.preventDefault();e.stopPropagation();onTokenEdit(t)}}}
+      onDoubleClick={e=>{if(e.altKey&&isDM&&
+       !(environmentEditor?.enabled&&environmentEditor.lockTokens!==false)){
+       e.preventDefault();e.stopPropagation();onTokenEdit(t)
+      }}}
       onClick={e=>{
-       if(previewActive)return;
+       if(previewActive||isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false)return;
        if(e.shiftKey&&!e.ctrlKey&&!e.altKey){
         e.preventDefault();e.stopPropagation();onTokenStatus(t);return;
        }
