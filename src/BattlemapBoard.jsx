@@ -146,7 +146,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   lastCenteredMap.current=map.id;
  },[map.id,active]);
  useEffect(()=>{zoomRef.current=scale},[scale]);
- useEffect(()=>{setPreview({})},[tokens]);
+ // A remote snapshot must not cancel the drag that is actively in progress.
+ useEffect(()=>{if(!drag.current)setPreview({})},[tokens]);
  useEffect(()=>{
   primaryRef.current=null;setSelectedId(null);setSelectedIds([]);
   setMarquee(null);selection.current=null;drag.current=null;
@@ -659,6 +660,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
    if(carrier){setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return}
   }
+  // Complete the local drag in the same React batch as the optimistic move.
+  setPreview(old=>{
+   const next={...old};
+   for(const token of info.members)delete next[token.id];
+   return next;
+  });
   if(info.dx===0&&info.dy===0&&!cancel)return;
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
@@ -754,7 +761,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
-       opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
+       opacity:t.visible?1:.55,cursor:canMove?'grab':'default',
+        transition:remotePositions[t.id]&&!preview[t.id]?
+         'left 50ms linear, top 50ms linear':undefined
       }}
       title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
        ((isDM||t.owner_id===user)?' · Alt + double-click to edit sheet':'')}
