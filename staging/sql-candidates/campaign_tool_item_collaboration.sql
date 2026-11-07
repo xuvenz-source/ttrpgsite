@@ -28,6 +28,11 @@ create policy "issued recipient can see temporary item claims"
 
 -- Stable IDs are added once without changing item text, position or order.
 -- Restrict updates to legacy rows so repeated migration is idempotent.
+-- The existing validator checks a signed-in DM, so SQL migration maintenance
+-- cannot rewrite these legacy rows through that trigger. Hold the table's DDL
+-- lock and suspend only this validator during the single migration transaction;
+-- restore it immediately, with transaction rollback on any error.
+alter table public.campaign_tool_issues disable trigger campaign_tool_validate_issue;
 update public.campaign_tool_issues i
 set state=jsonb_set(i.state,'{items}',coalesce((
  select jsonb_agg(
@@ -43,6 +48,7 @@ where i.kind in ('mount','inventory')
   where coalesce(entry.value->>'_inventoryId','') !~
   '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
  );
+alter table public.campaign_tool_issues enable trigger campaign_tool_validate_issue;
 
 -- Lock acquisition is a server-atomic lease. Only the DM can forcibly take
 -- another player's claim; on expiry an abandoned item becomes editable.
