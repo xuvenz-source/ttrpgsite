@@ -1,10 +1,4 @@
 import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import{createRoot}from'react-dom/client';
-import{createClient}from'@supabase/supabase-js';
-import './style.css';
-import './map-environment.css';
-import './combat.css';
-import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
  measurementGeometry,addLineTurn,shouldBendLineOnRightPress,shouldBendLineOnKeyPress,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
@@ -23,6 +17,7 @@ import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
  selectableToolIds,groupToolFootprint,boundedGroupOffset} from './MapSelection.js';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
+import Board from './BattlemapBoard.jsx';
 
 export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,

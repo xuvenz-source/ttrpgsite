@@ -1,10 +1,4 @@
 import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import{createRoot}from'react-dom/client';
-import{createClient}from'@supabase/supabase-js';
-import './style.css';
-import './map-environment.css';
-import './combat.css';
-import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import {TemplateListsDesigner,SheetListField,optionLists} from './TemplateOptionLists.jsx';
 import {makeProgressionField,makeProficienciesField,enrichSheetValues,
  PERSONAL_RESOURCE_TAB,PERSONAL_RESOURCE_KEY,validateModifierRules,modifierReferenceId,
@@ -14,6 +8,7 @@ import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './S
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import InventoryRulesDesigner from './InventoryRulesDesigner.jsx';
+import Designer from './SheetTemplateDesigner.jsx';
 import {uid,D} from './TabletopSheetDefaults.js';
 
 export default function Designer({template,tabId,changeTemplate,onLinkResource}){
