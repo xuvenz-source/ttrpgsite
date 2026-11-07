@@ -126,3 +126,9 @@
  border:1px solid #5a7898;border-radius:7px;background:#22384b;
 }
 .map-setting-multi-selection strong{font-size:12px}
+
+
+/* Tokens cannot intercept DM wall-selection gestures while locked; the
+ * explicitly unlocked state allows direct token picking above the SVG. */
+.board.map-editor-tokens-locked>.token{pointer-events:none!important}
+.board.map-editor-tokens-unlocked>.token{z-index:31!important;pointer-events:auto}
