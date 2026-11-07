@@ -8,7 +8,6 @@ import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './S
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import {RepeatingCollection,CollectionDesigner,makeBlankCollection,makeSpellbookField} from './RepeatingCollection.jsx';
 import InventoryRulesDesigner from './InventoryRulesDesigner.jsx';
-import Designer from './SheetTemplateDesigner.jsx';
 import {uid,D} from './TabletopSheetDefaults.js';
 
 export default function Designer({template,tabId,changeTemplate,onLinkResource}){
