@@ -46,3 +46,17 @@ No database migration, schema change, deployment or change to player access poli
 - Change to another map intentionally: confirm recalculation, per-map saving and expected recentering occur.
 - Press Delete while in an unrelated workspace tab: the previously selected map token must not be deleted. Check normal Delete in active tabletop still works.
 - Use browser Network tab to distinguish image cache hits, signed URL requests and unrelated roster/chat requests when switching tabs; do not infer server load from visual redraws alone.
+
+## Additional staging batch — inventory layout and multi-leg measurement
+
+8. **Grid inventory width / corner collapse:** The inventory grid CSS selector was also applied to its outer panel because both used the `inventory-grid` class. The actual 48-pixel tile matrix now uses `inventory-slot-grid` while the outer `inventory-panel inventory-grid` remains a full-width flex layout. Field spans, item layouts, saved inventory data, drag positioning, rotation and scrolling remain compatible. The sheet-width regression test and a new explicit class-collision test cover the fix.
+
+9. **Line ruler route turns:** While **left-dragging** a line measurement, **right-click** adds a snapped 5-ft-cell waypoint. The live ruler continues from that point, allowing multiple bends. Displayed footage adds each leg (rounded to 5-ft increments) instead of calculating the straight displacement from origin to final point. A right-button drag started independently **still pins** its measurement as before. Releasing the original left button immediately clears unpinned previews; existing pinned measurements remain until the user clears them. Preview and pin Realtime events include optional validated waypoint arrays for the same private map channel (maximum 64 turns). Older one-segment payloads remain compatible. A global mouse-down capture handler handles browser pointer capture when a drag begins on the ruler toolbar.
+
+### Follow-up QA
+
+- Confirm 8×5 and 12×7 inventory layouts occupy their configured sheet field width on player and NPC sheet windows. Resize a window narrower than the grid, verify scrolling rather than squeezing 48-pixel cells. Open an item and rotate it while dragging.
+- Begin a line measurement on the map: drag 10 ft right, press right-click while holding the left button, drag another 15 ft down. Confirm visible right-angle path and **25 ft** label. Repeat for multiple turns and returning to the start (distance must not reset to zero).
+- Repeat starting the measurement from its floating toolbar (pointer capture), and verify pressing right mid-drag still turns.
+- Confirm circle/square/cone behaviour, separate right-drag pinning, immediate left-release removal, right-button release not ending the active line, and clearing pinned measurements still work.
+- Verify another connected player receives the same multi-leg preview and pinned path, and malformed or excessive waypoint payloads are rejected.
