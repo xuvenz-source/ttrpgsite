@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "f5a5decaa0d6446bfe68f9d5e2bfa1ebb5f36e49",
-  "releaseBranch": "stage/player-sheets-token-artwork-fog-2026-11-08",
+  "productionBaseSha": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
+  "releaseBranch": "stage/release-seamless-movement-hotbar-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -59,7 +59,7 @@
     },
     {
       "name": "stage/password-breach-screen-2026-11-07",
-      "status": "included"
+      "status": "released"
     },
     {
       "name": "stage/performance-audit-2026-11-07",
@@ -79,7 +79,7 @@
     },
     {
       "name": "stage/ruler-turns-and-unified-tool-token-movement-2026-11-07",
-      "status": "included"
+      "status": "released"
     },
     {
       "name": "stage/security-audit-and-signup-captcha-2026-11-07",
@@ -87,7 +87,7 @@
     },
     {
       "name": "stage/sheet-ruler-env-delete-tools-pins-2026-11-07",
-      "status": "included"
+      "status": "released"
     },
     {
       "name": "stage/units-tools-issuance-torch-mount-inventories-2026-11-07",
@@ -111,15 +111,15 @@
     },
     {
       "name": "stage/player-sheets-token-artwork-fog-2026-11-08",
-      "status": "included"
+      "status": "released"
     },
     {
       "name": "stage/seamless-multiplayer-token-movement-2026-11-08",
-      "status": "included"
+      "status": "released"
     },
     {
       "name": "stage/universal-roll-hotbar-drag-2026-11-08",
-      "status": "included"
+      "status": "released"
     }
   ],
   "features": [
@@ -130,7 +130,7 @@
         "stage/ruler-turns-and-unified-tool-token-movement-2026-11-07",
         "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "mixed-selection",
@@ -139,7 +139,7 @@
         "stage/ruler-turns-and-unified-tool-token-movement-2026-11-07",
         "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "tool-pickup",
@@ -147,7 +147,7 @@
       "sources": [
         "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "character-sheet-popouts",
@@ -155,7 +155,7 @@
       "sources": [
         "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "environment-delete",
@@ -163,7 +163,7 @@
       "sources": [
         "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "pin-icons",
@@ -171,7 +171,7 @@
       "sources": [
         "stage/sheet-ruler-env-delete-tools-pins-2026-11-07"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "breached-password-check",
@@ -179,7 +179,7 @@
       "sources": [
         "stage/password-breach-screen-2026-11-07"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "interactive-handout-pin-preview",
@@ -227,7 +227,7 @@
       "sources": [
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "instant-buffered-player-sheet",
@@ -235,7 +235,7 @@
       "sources": [
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "safe-player-artwork-sync",
@@ -243,7 +243,7 @@
       "sources": [
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "seamless-fog-refresh",
@@ -251,7 +251,7 @@
       "sources": [
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "macro-attribute-insert-operators",
@@ -259,7 +259,7 @@
       "sources": [
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "macro-quickcode-numeric-resolution",
@@ -267,7 +267,7 @@
       "sources": [
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "seamless-multiplayer-token-movement",
@@ -275,7 +275,7 @@
       "sources": [
         "stage/seamless-multiplayer-token-movement-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     },
     {
       "id": "universal-roll-button-hotbar-drag",
@@ -283,7 +283,7 @@
       "sources": [
         "stage/universal-roll-hotbar-drag-2026-11-08"
       ],
-      "status": "included"
+      "status": "released"
     }
   ],
   "databaseDependencies": [
@@ -314,24 +314,27 @@
       "version": "20261108033000",
       "name": "player_owned_token_artwork",
       "file": "supabase/migrations/20261108033000_player_owned_token_artwork.sql",
-      "status": "staged-not-applied",
-      "mustApplyBeforeFrontend": true
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "appliedVersion": "20261107164822"
     },
     {
       "version": "20261108043000",
       "name": "macro_quickcode_resolution",
       "file": "supabase/migrations/20261108043000_macro_quickcode_resolution.sql",
-      "status": "staged-not-applied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "dependsOn": "20261108033000_player_owned_token_artwork"
+      "dependsOn": "20261108033000_player_owned_token_artwork",
+      "appliedVersion": "20261107164849"
     },
     {
       "version": "20261108055000",
       "name": "nonfog_token_movement_tick_optimization",
       "file": "supabase/migrations/20261108055000_nonfog_token_movement_tick_optimization.sql",
-      "status": "staged-not-applied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "dependsOn": "20261108043000_macro_quickcode_resolution"
+      "dependsOn": "20261108043000_macro_quickcode_resolution",
+      "appliedVersion": "20261107173054"
     }
   ],
   "edgeFunctionDependencies": [
@@ -349,94 +352,44 @@
     "Existing test campaigns only; do not create paid preview/development resources.",
     "Macro quickcode helper is private, numeric-only, limited to an already authorized character/NPC macro source and keeps the strict server dice validator.",
     "Movement fog presentation only reuses previously visible and explored artwork: authorized visible remains empty during RPC refresh; no hidden token or new unexplored content is revealed.",
-    "Hotbar roll drag payloads carry only validated IDs/action references, never raw sensitive character sheet records; invoking sheet actions checks campaign and source ownership and weapon/spell/initiative RPCs keep server authorization."
+    "Hotbar roll drag payloads carry only validated IDs/action references, never raw sensitive character sheet records; invoking sheet actions checks campaign and source ownership and weapon/spell/initiative RPCs keep server authorization.",
+    "Consolidated approved release #45 is based on production #42; Supabase migration 20261107173054 was successfully applied and post-verified before the GitHub merge. No paid infrastructure."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "f5a5decaa0d6446bfe68f9d5e2bfa1ebb5f36e49",
-    "stagePolicy": "Stage all changes without deployment. The next explicitly approved consolidated release must apply required database migration before one main merge.",
-    "outstandingBranches": [
-      {
-        "name": "stage/player-sheets-token-artwork-fog-2026-11-08",
-        "status": "staged-pending-release",
-        "scope": [
-          "Player owned Alt+double-click opens character sheet",
-          "Immediate local draft rendering with deferred/batched autosave",
-          "Player character art can update owned map tokens without changing other fields",
-          "Player fog no longer flashes unexplored black on movement",
-          "Macro sheet-attribute insertion automatically supplies + where needed in normal and linked Attack formulas",
-          "Linked Attack supports sheet-attribute and quickcode dropdowns for to-hit, damage and critical damage",
-          "Macro quickcodes resolve numeric character/NPC sheet references securely before dice parsing, including equipment AC quickcodes"
-        ],
-        "databaseDependencies": [
-          {
-            "name": "player_owned_token_artwork",
-            "file": "supabase/migrations/20261108033000_player_owned_token_artwork.sql",
-            "status": "staged-not-applied",
-            "requiresApproval": true
-          },
-          {
-            "name": "macro_quickcode_resolution",
-            "file": "supabase/migrations/20261108043000_macro_quickcode_resolution.sql",
-            "status": "staged-not-applied",
-            "requiresApproval": true,
-            "applyAfter": "player_owned_token_artwork"
-          }
-        ],
-        "paidInfrastructure": false
-      },
-      {
-        "name": "stage/seamless-multiplayer-token-movement-2026-11-08",
-        "status": "staged-pending-release",
-        "scope": [
-          "Direct real-time position updates visible to DM and authorized players",
-          "Stable local movement and smoothed remote movement previews",
-          "No dimming of previously visible fog cells during server reauthorization",
-          "Avoid redundant visibility tick on fog-OFF pure movement"
-        ],
-        "databaseDependencies": [
-          {
-            "name": "nonfog_token_movement_tick_optimization",
-            "file": "supabase/migrations/20261108055000_nonfog_token_movement_tick_optimization.sql",
-            "status": "staged-not-applied",
-            "requiresApproval": true
-          }
-        ],
-        "paidInfrastructure": false
-      },
-      {
-        "name": "stage/universal-roll-hotbar-drag-2026-11-08",
-        "status": "staged-pending-release",
-        "scope": [
-          "Drag any supported Roll/Attack button to an existing slot, replacing its contents",
-          "Weapon shortcuts retain dual attacks, damage and critical rules from server RPC",
-          "Generic sheet, attribute, proficiency and collection roll shortcuts recalculate from current authorized values",
-          "Spell buttons keep their chosen cast, attack, healing or damage mode",
-          "Combat initiative and saved macro Run buttons support hotbar dragging",
-          "Existing spell and macro hotbar assignments, in-slot reordering and removal continue to work"
-        ],
-        "databaseDependencies": [],
-        "paidInfrastructure": false
-      }
-    ]
+    "productionBaseSha": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
+    "stagePolicy": "All currently recorded staged components are incorporated into the approved consolidated release. Future changes must be staged separately; one main deployment per approval.",
+    "outstandingBranches": []
   },
   "lastRelease": {
-    "name": "Shared Inventory, DM Preview Collision and Signup Repair",
+    "name": "Seamless Multiplayer Movement and Universal Roll Hotbar",
     "date": "2026-11-08",
     "approvedPullRequests": [
-      41
+      45
+    ],
+    "includedStagedPullRequests": [
+      43,
+      44
     ],
     "status": "released-production",
-    "productionCommit": "f5a5decaa0d6446bfe68f9d5e2bfa1ebb5f36e49",
-    "frontendSourceSha": "478388e6b20e0892249ee8cd36a9705350d6be20",
-    "databaseDependencies": [],
-    "edgeFunctionDependencies": [
+    "productionCommit": null,
+    "productionBaseSha": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
+    "sourceBranch": "stage/release-seamless-movement-hotbar-2026-11-08",
+    "priorRelease": {
+      "approvedPullRequests": [
+        42
+      ],
+      "productionCommit": "fba25209757d2c55d3303ea6b0582b8d61b6632c"
+    },
+    "frontendSourceSha": "cc1ae0e532d88e5adb35dca3ff334c4a8900d699",
+    "databaseDependencies": [
       {
-        "name": "username-register",
-        "version": 7,
-        "status": "deployed-production",
-        "verifyJwt": false
+        "name": "nonfog_token_movement_tick_optimization",
+        "appliedVersion": "20261107173054",
+        "status": "applied-production"
       }
-    ]
+    ],
+    "edgeFunctionDependencies": [],
+    "paidInfrastructure": false
   },
   "releaseHistory": [
     {
@@ -458,6 +411,37 @@
         41
       ],
       "description": "Restored tool inventory item creation, simulation-only player preview collision and signup HMAC hotfix; username-register v7 deployed."
+    },
+    {
+      "date": "2026-11-08",
+      "branch": "stage/player-sheets-token-artwork-fog-2026-11-08",
+      "productionCommit": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
+      "pullRequests": [
+        42
+      ],
+      "description": "Released player-sheet instant editing, token artwork, fog rendering, macro attribute/quickcode fixes; artwork + quickcode migrations already applied and verified."
+    },
+    {
+      "date": "2026-11-08",
+      "branch": "stage/release-seamless-movement-hotbar-2026-11-08",
+      "productionBaseSha": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
+      "pullRequests": [
+        43,
+        44,
+        45
+      ],
+      "includedStagingBranches": [
+        "stage/seamless-multiplayer-token-movement-2026-11-08",
+        "stage/universal-roll-hotbar-drag-2026-11-08"
+      ],
+      "databaseMigrations": [
+        {
+          "name": "nonfog_token_movement_tick_optimization",
+          "appliedVersion": "20261107173054"
+        }
+      ],
+      "description": "Consolidated and approved one-main-merge release of RLS-authorized smooth real-time token movement and all current roll-button hotbar assignments. Both source staging branches combined; migration applied and verified before merge.",
+      "paidInfrastructure": false
     }
   ]
 }
