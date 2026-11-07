@@ -22,7 +22,7 @@ test('item identity survives edits without exposing the reserved internal field'
 });
 
 test('DM tab subcategories preserve the actual three workflows',()=>{
- assert.match(dm,/setDmSubsection\('live'\)/);
+ assert.match(dm,/\[dmSubsection,setDmSubsection\]=useState\('live'\)/);
  assert.match(dm,/dmSubsection==='live'/);
  assert.match(dm,/dmSubsection==='maps'/);
  assert.match(dm,/dmSubsection==='campaign'/);
@@ -66,6 +66,9 @@ test('item edits and releases use leases rather than entire inventory saves',()=
   assert.match(text,/claimsInFlight\.current/);
  }
  assert.match(panel,/inventory-grid-item-bound/);
+ assert.match(panel,/row\._inventoryId\|\|index/);
+ assert.match(panel,/const dragIndex=current=>current\?\.itemId/);
+ assert.match(panel,/editingIndex=editing&&typeof editing==='object'/);
  assert.match(panel,/title="DM: take control of this item"/);
  assert.match(panel,/claim\(index,true\)/);
  assert.match(style,/\.inventory-grid-item-bound/);
@@ -106,5 +109,5 @@ test('staging backend candidates are explicitly non-production',()=>{
   assert.doesNotMatch(candidate,/alter table .* disable row level security/);
  }
  const workflow=read('docs/development-workflow.md');
- assert.match(workflow,/existing live test campaigns/);
+ assert.match(workflow,/existing live\s+test campaigns/);
 });
