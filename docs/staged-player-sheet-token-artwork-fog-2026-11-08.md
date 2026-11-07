@@ -33,6 +33,10 @@ the live function and adds a tightly scoped exception:
 - Only a currently controlled, visible, accessible token with a linked
   character in the same campaign owned by the authenticated player.
 - The token image must match `characters.token_path` exactly.
+- The actual asset path must be a campaign/user-scoped UUID WebP token file
+  created through the personal token-library flow. Because character
+  `token_path` can be user-edited, matching that field alone is insufficient
+  and could expose someone else's protected NPC artwork.
 - DM changes, collision, movement, statuses, and approved quick changes
   remain governed by existing rules.
 The client paints an optimistic new image for the owner's visible tokens

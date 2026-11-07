@@ -46,6 +46,8 @@ test('server trigger allows only own sheet-approved image path',()=>{
  assert.match(sql,/ch\.campaign_id=old\.campaign_id/);
  assert.match(sql,/ch\.user_id=auth\.uid\(\)/);
  assert.match(sql,/ch\.token_path is not distinct from new\.image_path/);
+ assert.match(sql,/old\.campaign_id::text\|\|\x27\/players\/\x27\|\|old\.owner_id::text/);
+ assert.match(sql,/\[0-9a-f\]\{12\}-token\[\.\]webp\$/);
  assert.match(sql,/Players may only change positions, statuses or DM-approved quick attributes/);
  assert.doesNotMatch(sql,/alter table public\.map_tokens disable row level security/i);
  assert.doesNotMatch(sql,/grant (all|update) on public\.map_tokens/i);
