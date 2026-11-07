@@ -44,6 +44,12 @@ test('bestary sheet is freshly loaded for every token instance with independent 
  assert.ok(app.includes("npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{})"));
  assert.ok(app.includes("name:draft.name.trim(),npc_values:draft.values"));
  assert.ok(app.includes('await refreshNpcs();\n   // Template edits can propagate'));
+ const editor=source('NpcEditor.jsx');
+ assert.ok(editor.includes('async function restoreBestiaryDefaults()'));
+ assert.ok(editor.includes('Restore Bestiary defaults'));
+ assert.ok(editor.includes("record.kind==='token'&&record.data.npc_template_id"));
+ assert.ok(editor.includes(".eq('campaign_id',campaignId).maybeSingle()"));
+ assert.ok(editor.includes('setDraft(old=>({...old,values:enrichSheetValues(template,'));
 });
 
 test('inherited bestiary stats update only when still equal to the previous default',()=>{
