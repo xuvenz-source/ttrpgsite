@@ -47,7 +47,7 @@ export default function useCampaignHandouts({db,campaignId,mapId,userId,isDM}){
   // Only publish a campaign-scoped revision tick. Never broadcast note text
   // or hidden pin coordinates in Realtime payloads.
   const channel=db.channel('forge-handouts-'+campaignId+'-'+userId)
-   .on('postgres_changes',{event:'UPDATE',schema:'public',
+   .on('postgres_changes',{event:'*',schema:'public',
     table:'campaign_handout_events',filter:'campaign_id=eq.'+campaignId},
     ()=>void refresh())
    .subscribe();
