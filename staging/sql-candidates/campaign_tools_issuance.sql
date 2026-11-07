@@ -10,7 +10,7 @@ begin
  if p_kind not in ('torch','mount','inventory') or
   jsonb_typeof(p_config)<>'object' or octet_length(p_config::text)>4096 then return false;end if;
  if p_kind='torch' then
-  if p_config ?& array['bright','dim','color','intensity'] is false then return false;end if;
+  if (p_config ?& array['bright','dim','color','intensity']) is false then return false;end if;
   if (p_config->>'bright') !~ '^([0-9]|[1-9][0-9]|1[01][0-9]|120)$'
    or (p_config->>'dim') !~ '^([0-9]|[1-9][0-9]|1[01][0-9]|120)$'
    or (p_config->>'intensity') !~ '^([0-9]|[1-9][0-9]|100)$'
@@ -180,6 +180,13 @@ begin
   delete from public.campaign_tool_map_tokens where issue_id=old.id;
   return old;
  end if;
+ if tg_op='UPDATE'
+  and new.map_id is not distinct from old.map_id
+  and new.x=old.x and new.y=old.y
+  and new.kind=old.kind and new.name=old.name and new.icon=old.icon
+  and new.config is not distinct from old.config
+  and new.state->'lit' is not distinct from old.state->'lit'
+ then return new; end if;
  if new.map_id is null then
   delete from public.campaign_tool_map_tokens where issue_id=new.id;
  else
