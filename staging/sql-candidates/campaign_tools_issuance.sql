@@ -15,7 +15,8 @@ begin
    or jsonb_typeof(p_config->'dim')<>'number'
    or jsonb_typeof(p_config->'intensity')<>'number'
    or jsonb_typeof(p_config->'color')<>'string' then return false;end if;
-  if (p_config->>'bright') !~ '^([0-9]|[1-9][0-9]|1[01][0-9]|120)   or (p_config->>'dim') !~ '^([0-9]|[1-9][0-9]|1[01][0-9]|120)$'
+  if (p_config->>'bright') !~ '^([0-9]|[1-9][0-9]|1[01][0-9]|120)$'
+   or (p_config->>'dim') !~ '^([0-9]|[1-9][0-9]|1[01][0-9]|120)$'
    or (p_config->>'intensity') !~ '^([0-9]|[1-9][0-9]|100)$'
    or (p_config->>'color') !~ '^#[0-9a-fA-F]{6}$'
   then return false;end if;
@@ -31,7 +32,8 @@ begin
   if p_kind='mount' then
    if not (p_config ?& array['span','attributes'])
     or jsonb_typeof(p_config->'span')<>'number' then return false;end if;
-   if (p_config->>'span') !~ '^[1-4]   v:=p_config->'attributes';
+   if (p_config->>'span') !~ '^[1-4]$' then return false;end if;
+   v:=p_config->'attributes';
    if jsonb_typeof(v)<>'object' or (select count(*) from jsonb_object_keys(v))>16 then return false;end if;
    for v_attr in select key,value from jsonb_each(v) loop
     if v_attr.key !~ '^[a-z][a-z0-9_]{0,31}$'
