@@ -66,6 +66,7 @@ import {parseSheetTemplateFile,serializeSheetTemplate,validateSheetTemplate} fro
 import {sheetQuickcodeReferences,hydrateSheetQuickcodes,configWithSheetQuickcodes} from './SheetQuickcodes.js';
 import InventoryPanel from './InventoryPanel.jsx';
 import SharedInventoryPanel from './SharedInventoryPanel.jsx';
+import PlayerSheetFields from './PlayerSheetFields.jsx';
 import InventoryRulesDesigner from './InventoryRulesDesigner.jsx';
 import {DEFAULT_ENCUMBRANCE,evaluateEncumbrance} from './InventoryMath.js';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
@@ -191,6 +192,8 @@ export default function TabletopApp(){
   );
  }
  const[msgs,setMsgs]=useState([]),[chat,setChat]=useState(''),[newFolder,setNewFolder]=useState(''),[uploading,setUploading]=useState(false),[newToken,setNewToken]=useState('Token'),[tokenOwner,setTokenOwner]=useState('');
+ const playerSheetFlusher=useRef(null),latestLocalCharacter=useRef(null);
+ const registerSheetFlusher=useCallback(fn=>{playerSheetFlusher.current=fn},[]);
  const saveTimer=useRef(null),pendingSheetSave=useRef(null),
   sheetWriteQueue=useRef(Promise.resolve()),user=session?.user?.id,isDM=roles[activeId]==='dm';
  const playerMapId=mapAssignments.find(a=>a.user_id===user)?.map_id||camp?.active_map_id||null;
@@ -429,6 +432,7 @@ export default function TabletopApp(){
   await read(db.from('npc_templates').update({folder_id:folderId}).eq('id',id));await refreshNpcs();
  }catch(e){fail(e)}}
  function openSheetBrowserTab(characterId){
+  playerSheetFlusher.current?.();
   if(!activeId||!characters.some(ch=>ch.id===characterId&&(ch.user_id===user||isDM))){
    fail('You cannot open that character.');return false;
   }
@@ -443,12 +447,14 @@ export default function TabletopApp(){
   return true;
  }
  async function openOwnCharacter(characterId){
+  playerSheetFlusher.current?.();
   const target=characters.find(ch=>ch.id===characterId&&ch.user_id===user);
   if(!target)throw Error('Character sheet not found.');
   if(character?.id&&character.id!==target.id)await flushSheetForCast(character.id);
   setCharacter(target);setSaveState('Saved');setSheetTab('main');setTab('sheet');
  }
  async function createNewCharacter(name){
+  playerSheetFlusher.current?.();
   const clean=String(name||'').trim();
   if(!clean||clean.length>100)return fail('Enter a character name up to 100 characters.');
   try{
@@ -477,7 +483,14 @@ export default function TabletopApp(){
   }catch(e){fail(e)}
  }
  async function openTokenSheet(t){
-  if(!isDM)return;
+  if(!isDM){
+   if(!t||t.owner_id!==user||t.map_id!==playerMapId||!t.visible)return;
+   const own=characters.filter(ch=>ch.user_id===user);
+   const id=t.character_id||(own.length===1?own[0].id:null);
+   if(!id){fail('This token is not linked to your character sheet. Ask the DM to link it.');return}
+   try{await openOwnCharacter(id)}catch(error){fail(error)}
+   return;
+  }
   if(t.character_id||t.owner_id){
    await openPlayerCharacter(t.character_id,t.owner_id);
   }else{
@@ -635,13 +648,28 @@ export default function TabletopApp(){
   setCharacters(old=>old.map(x=>x.id===changed.id?{
    ...x,portrait_path:changed.portrait_path,token_path:changed.token_path
   }:x));
-  // Keep any current visible map token in sync with the sheet artwork.
-  // RLS still limits edits to the player's own authorised tokens.
+  // Update the visible owned map token immediately; do not wait for the
+  // Supabase round trip before showing the character's newly equipped art.
+  // The server trigger still permits ONLY the character's approved token_path.
+  const affected=tokens.filter(t=>t.owner_id===user&&t.character_id===owner.id);
+  const before=new Map(affected.map(t=>[t.id,t.image_path]));
+  if(affected.length)setTokens(rows=>rows.map(t=>before.has(t.id)?
+   {...t,image_path:art.tokenPath}:t));
   try{
-   await read(db.from('map_tokens').update({image_path:art.tokenPath})
-    .eq('campaign_id',activeId).eq('character_id',owner.id).eq('owner_id',user));
+   const saved=await read(db.from('map_tokens').update({image_path:art.tokenPath})
+    .eq('campaign_id',activeId).eq('character_id',owner.id).eq('owner_id',user)
+    .select('id'));
+   if(affected.some(t=>!saved.some(row=>row.id===t.id)))
+    throw Error('A controlled token could not be updated in the current map.');
    void refreshTokens();
-  }catch(error){console.warn('Sheet artwork saved, but map token image could not refresh',error)}
+  }catch(error){
+   // The character sheet artwork remains saved; do not throw back to the
+   // library uploader, which would delete files the sheet now references.
+   setTokens(rows=>rows.map(t=>before.has(t.id)?
+    {...t,image_path:before.get(t.id)}:t));
+   fail('Character artwork saved, but a map token did not update: '+message(error));
+   void refreshTokens();
+  }
   void refreshMonitors();
  }
  // A sheet pop-out runs under its own Supabase session,
@@ -703,8 +731,15 @@ export default function TabletopApp(){
    ]);
    if(request!==rosterRequest.current)return;
    setMembers(roster);setCharacters(sheets);setAccountNames(names||[]);
-   setCharacter(current=>sheets.find(ch=>ch.id===current?.id&&ch.user_id===user)||
-    sheets.find(ch=>ch.user_id===user)||null);
+   setCharacter(current=>{
+    const server=sheets.find(ch=>ch.id===current?.id&&ch.user_id===user)||
+     sheets.find(ch=>ch.user_id===user)||null;
+    const pending=pendingSheetSave.current;
+    return server&&pending?.id===server.id?
+     {...server,name:pending.name,field_values:enrichSheetValues(camp?.sheet_template,{
+      ...server.field_values,...pending.patches
+     })}:server;
+   });
   }catch(e){
    if(request===rosterRequest.current)
     console.warn('Could not refresh campaign roster',e);
@@ -1365,13 +1400,18 @@ export default function TabletopApp(){
  }
  function updateField(id,value){
   if(!character)return;
-  const next={...character,field_values:enrichSheetValues(
-    camp?.sheet_template,{...character.field_values,[id]:value}
+  // Multiple buffered fields must compose even before React's next render.
+  const previous=latestLocalCharacter.current?.id===character.id?
+   latestLocalCharacter.current:character;
+  const next={...previous,field_values:enrichSheetValues(
+    camp?.sheet_template,{...previous.field_values,[id]:value}
   )};
+  latestLocalCharacter.current=next;
   if(id==='character_name')next.name=String(value||'New Character');
   setCharacter(next);
-  setCharacters(old=>old.map(ch=>ch.id===next.id?next:ch));
-  // Instant, optimistic local monitor update; the server will replicate to others.
+  React.startTransition(()=>setCharacters(old=>old.map(ch=>ch.id===next.id?next:ch)));
+  // Local field edits are already instant; refresh these secondary previews
+  // once per buffered batch, not on every keystroke.
   const enc=evaluateEncumbrance(camp?.sheet_template,next.field_values);
   setEncumbranceBadges(old=>{
    const nextBadges={...old};
@@ -1427,7 +1467,7 @@ export default function TabletopApp(){
    pendingSheetSave.current:null;
   const changes=Object.fromEntries(Object.entries(next.field_values)
    .filter(([key,fieldValue])=>JSON.stringify(fieldValue)!==
-    JSON.stringify(character.field_values?.[key])));
+    JSON.stringify(previous.field_values?.[key])));
   pendingSheetSave.current={...next,patches:{
    ...(priorPending?.patches||{}),...changes
   }};
@@ -1442,6 +1482,7 @@ export default function TabletopApp(){
   },200);
 }
  async function flushSheetForCast(sourceId){
+  playerSheetFlusher.current?.();
   // Flush the most recent locally visible spell. A pending older autosave
   // finishes first, preventing stale values from winning a later race.
   while(pendingSheetSave.current?.id===sourceId){
@@ -2064,7 +2105,7 @@ export default function TabletopApp(){
   </div>
  </section>}
  {camp&&<>
- {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>launchSheet?window.close():setTab('tabletop')}>
+ {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>{playerSheetFlusher.current?.();launchSheet?window.close():setTab('tabletop')}}>
  <section className="panel page-panel floating-sheet-content"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
@@ -2080,51 +2121,20 @@ export default function TabletopApp(){
    ↗ Pop out</button>}
   <button type="button" className="secondary" disabled={!character}
    onClick={()=>setArtStudio(true)}>My Token Library</button>
-  <button type="button" className="secondary return-to-game" onClick={()=>launchSheet?window.close():setTab('tabletop')}>{launchSheet?'Close window':'← Return to Game'}</button>
+  <button type="button" className="secondary return-to-game" onClick={()=>{playerSheetFlusher.current?.();launchSheet?window.close():setTab('tabletop')}}>{launchSheet?'Close window':'← Return to Game'}</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}
  <button className={sheetTab===PERSONAL_RESOURCE_TAB?'selected':''}
   onClick={()=>setSheetTab(PERSONAL_RESOURCE_TAB)}>Resources</button></div>
- {sheetTab===PERSONAL_RESOURCE_TAB?
- <div className="fields"><div className="field span3">
-  <PersonalResources value={character?.field_values?.[PERSONAL_RESOURCE_KEY]||[]}
-   onChange={v=>updateField(PERSONAL_RESOURCE_KEY,v)}/>
- </div></div>:
- <div className="fields">{(camp.sheet_template.tabs.find(t=>t.id===sheetTab)||camp.sheet_template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>roll(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={activeId}
-       userId={user} isDM={isDM} sourceType="character" sourceId={character?.id}
-       field={f} template={camp?.sheet_template} sheetValues={character?.field_values}/>:
- f.type==='magic_dashboard'?<MagicDashboard field={f}
-  value={character?.field_values?.[f.id]||{}}
-  sheetValues={character?.field_values||{}}
-  onChange={v=>updateField(f.id,v)}/>:
- f.type==='equipment'?<EquipmentManager field={f} template={camp.sheet_template}
-  value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
-  onChange={v=>updateField(f.id,v)}
-  onAttack={({fieldId,weaponId})=>attackWithWeapon({
-   sourceType:'character',sourceId:character?.id,fieldId,weaponId
-  })}/>:
- f.type==='progression'?<ProgressionPanel field={f}
-  value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
-  onChange={v=>updateField(f.id,v)}/>:
- f.type==='proficiencies'?<ProficienciesPanel field={f}
-  value={character?.field_values?.[f.id]||{}} sheetValues={character?.field_values||{}}
-  template={camp.sheet_template} onChange={v=>updateField(f.id,v)}
-  onRoll={(formula,label)=>roll(formula,label)}/>:
- f.type==='collection'?<RepeatingCollection field={f}
- value={character?.field_values?.[f.id]||[]} sheetValues={character?.field_values||{}}
- sourceType="character" sourceId={character?.id}
- onChange={v=>updateField(f.id,v)} onRoll={(formula,label)=>roll(formula,label)}
- onCastSpell={({collectionId,entryId,mode})=>castSpell({
-  sourceType:'character',sourceId:character?.id,collectionId,entryId,mode
- })}
- onAddSpellToHotbar={assignSpellToHotbar}/>:
- f.type==='attribute'?<AttributeField field={f}
-  value={character?.field_values?.[f.id]} values={character?.field_values||{}}
-  template={camp.sheet_template} onChange={v=>updateField(f.id,v)}
-  onProficiencyChange={v=>updateField(f.id+'__save_prof',v)}
-  onRoll={(formula,label)=>roll(formula,label)}/>:
- f.type==='list'?<SheetListField field={f} template={camp.sheet_template}
-  value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:
- f.type==='resource'?<ResourceField value={character?.field_values?.[f.id]} onChange={v=>updateField(f.id,v)}/>:f.type==='checkbox'?<input type="checkbox" checked={!!character?.field_values?.[f.id]} onChange={e=>updateField(f.id,e.target.checked)}/>:f.type==='textarea'?<textarea value={character?.field_values?.[f.id]??''} onChange={e=>updateField(f.id,e.target.value)}/>:<input type={f.type==='number'?'number':'text'} value={character?.field_values?.[f.id]??D(f)} onChange={e=>updateField(f.id,e.target.value)} />}</div>)}</div>}</section>
+ <PlayerSheetFields key={character?.id||'missing-character'}
+  db={db} campaignId={activeId} userId={user} isDM={isDM}
+  character={character} template={camp.sheet_template} tabId={sheetTab}
+  onBatchChange={(id,patch)=>{
+   if(id!==character?.id)return;
+   for(const [fieldId,value] of Object.entries(patch))updateField(fieldId,value);
+  }}
+  registerFlusher={registerSheetFlusher}
+  onRoll={roll} onCastSpell={castSpell} onEquipmentAttack={attackWithWeapon}
+  onAddSpellToHotbar={assignSpellToHotbar}/></section>
  </FloatingWindow>}
  {tab==='designer'&&isDM&&<section className="panel page-panel"><div className="heading"><h2>Visual sheet designer</h2><div className="page-header-actions">
  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>

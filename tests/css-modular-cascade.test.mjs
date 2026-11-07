@@ -28,12 +28,13 @@ test('modular CSS retains the exact pre-split cascade, not merely the same selec
  // No whitespace, media nesting, selector or declaration reordering is allowed
  // during the architecture split. This checksum includes intentionally added
  // pin preview, selected-pin and held-tool styles. Further edits update this
- // checksum with their own visual regression review.
+ // checksum with their own visual regression review. This revision includes
+ // the macro attribute/quickcode dropdown row and its responsive wrapping.
  const text=readAppStyles().trimEnd();
  let hash=2166136261>>>0;
  for(let i=0;i<text.length;i++){
   hash^=text.charCodeAt(i);
   hash=Math.imul(hash,16777619);
  }
- assert.equal((hash>>>0).toString(16).padStart(8,'0'),'8111efdf');
+ assert.equal((hash>>>0).toString(16).padStart(8,'0'),'b6cd1169');
 });

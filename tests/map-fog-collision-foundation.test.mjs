@@ -81,3 +81,20 @@ test('fog disabled is a server decision; client must never infer it from missing
  assert.deepEqual(fogMasks(off),Array(6).fill(FOG_VISIBLE));
  assert.equal(fogMasks(null),null);
 });
+
+// Map visibility updates may invalidate line of sight without making the
+// entire map appear unexplored during every player's token movement.
+test('pending authorization refresh retains explored cells but revokes sight',async()=>{
+ const {fogFrameDuringRefresh,fogMasks,FOG_UNEXPLORED,FOG_EXPLORED}=await import('../src/MapFogModel.js');
+ const source={mapId:'test-map',width:3,height:2,revision:12,
+  enabled:true,partyShared:false,visible:[1,2],explored:[0,1,2,5]};
+ const safe=fogFrameDuringRefresh(source,'test-map');
+ assert.deepEqual(safe.visible,[]);
+ assert.deepEqual(safe.explored,[0,1,2,5]);
+ const mask=fogMasks(safe);
+ assert.equal(mask[1],FOG_EXPLORED);
+ assert.equal(mask[2],FOG_EXPLORED);
+ assert.equal(mask[3],FOG_UNEXPLORED);
+ assert.equal(fogFrameDuringRefresh(source,'wrong-map'),null);
+ assert.equal(fogFrameDuringRefresh(null,'test-map'),null);
+});

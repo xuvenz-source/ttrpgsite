@@ -3,6 +3,8 @@ import FloatingWindow from './FloatingWindow.jsx';
 import MacroChatCard from './MacroChatCard.jsx';
 import {numericFieldsWithDerived} from './SheetDerived.js';
 import {supportsMacroCritical} from './MacroCritical.js';
+import {sheetQuickcodeReferences} from './SheetQuickcodes.js';
+import {appendMacroReference} from './MacroFormula.js';
 
 const uid=()=>crypto.randomUUID();
 const MAX_ROWS=12,MAX_CELLS=3;
@@ -27,6 +29,34 @@ const swipeExample=()=>({
   row('Charge 20ft',[roll('Extra','1d6'),roll('Crit','1d6')])
  ]
 });
+/** Shared insertion UI: ordinary rolls and linked Attack fields use the
+ * same signed expression construction, without adding a duplicate '+'.
+ */
+function FormulaReferenceInsert({attributes,quickcodes,formula,onInsert}){
+ return <div className="macro-formula-inserts">
+  {attributes.length>0&&<select className="macro-attribute-insert"
+   aria-label="Insert sheet attribute" value=""
+   onChange={e=>{
+    if(e.target.value)onInsert(appendMacroReference(formula,'@{'+e.target.value+'}'));
+   }}>
+   <option value="">+ Insert sheet attribute</option>
+   {attributes.map(field=><option key={field.id} value={field.id}>
+    {field.label} — {field.id}
+   </option>)}
+  </select>}
+  {quickcodes.length>0&&<select className="macro-attribute-insert"
+   aria-label="Insert sheet quickcode" value=""
+   onChange={e=>{
+    if(e.target.value)onInsert(appendMacroReference(formula,e.target.value));
+   }}>
+   <option value="">+ Insert sheet quickcode</option>
+   {quickcodes.map(ref=><option key={ref.code} value={ref.code}>
+    {ref.label} — {ref.code}
+   </option>)}
+  </select>}
+ </div>;
+}
+
 export function previewMacro(macro){
  return {body:macro.name,result:{
   version:1,title:macro.name,subtitle:macro.subtitle,
@@ -55,6 +85,11 @@ export function MacroManager({
  const dirty=baseline===null||JSON.stringify(draft)!==baseline;
  const editingSaved=macros.some(m=>m.id===chosenId);
  const attrs=useMemo(()=>numericFieldsWithDerived(template),[template]);
+ const quickcodes=useMemo(()=>{
+  const numeric=new Set(attrs.map(field=>field.id));
+  return sheetQuickcodeReferences(template).filter(ref=>
+   ref.source==='equipment_ac'||numeric.has(ref.fieldId));
+ },[template,attrs]);
  const sourceOptions=[
   {value:'none',label:'No sheet attributes (dice only)'},
   ...characters.filter(ch=>isDM||ch.user_id===user).map(ch=>({
@@ -257,6 +292,9 @@ export function MacroManager({
           <label>To-hit formula<input className="macro-formula-input" value={cell.formula||''}
            placeholder="1d20+@{dexterity_mod}" maxLength={120}
            onChange={e=>updateCell(r.id,cell.id,{formula:e.target.value})}/></label>
+          <FormulaReferenceInsert attributes={attrs} quickcodes={quickcodes}
+           formula={cell.formula||''}
+           onInsert={formula=>updateCell(r.id,cell.id,{formula})}/>
           <label>Roll mode<select value={cell.mode||'normal'}
            onChange={e=>updateCell(r.id,cell.id,{mode:e.target.value})}>
            <option value="normal">Normal — one d20</option>
@@ -271,9 +309,15 @@ export function MacroManager({
           <label>Damage formula<input className="macro-formula-input" value={cell.damage||''}
            placeholder="1d8+2" maxLength={120}
            onChange={e=>updateCell(r.id,cell.id,{damage:e.target.value})}/></label>
+          <FormulaReferenceInsert attributes={attrs} quickcodes={quickcodes}
+           formula={cell.damage||''}
+           onInsert={damage=>updateCell(r.id,cell.id,{damage})}/>
           <label>Extra damage on crit<input className="macro-formula-input"
            value={cell.critDamage||''} placeholder="1d8 (or leave blank)" maxLength={120}
            onChange={e=>updateCell(r.id,cell.id,{critDamage:e.target.value})}/></label>
+          <FormulaReferenceInsert attributes={attrs} quickcodes={quickcodes}
+           formula={cell.critDamage||''}
+           onInsert={critDamage=>updateCell(r.id,cell.id,{critDamage})}/>
           <p className="muted tiny">One linked action: choose the hit by its natural die,
            roll damage once, then add the extra damage only when that hit is critical.</p>
          </div>:cell.kind==='roll'?<>
@@ -298,17 +342,9 @@ export function MacroManager({
             'Uses the unmodified d20 face, not the total after bonuses.':
             'Use exactly one positive 1d20 (e.g. 1d20+4). Separate cells for advantage.'}
           </p>}
-          {attrs.length>0&&<select className="macro-attribute-insert"
-           aria-label="Insert character attribute" value=""
-           onChange={e=>{
-            if(e.target.value)updateCell(r.id,cell.id,{
-             formula:(cell.formula||'')+'@{'+e.target.value+'}'});
-           }}>
-           <option value="">+ Insert sheet attribute</option>
-           {attrs.map(field=><option key={field.id} value={field.id}>
-            {field.label} — {field.id}
-           </option>)}
-          </select>}
+          <FormulaReferenceInsert attributes={attrs} quickcodes={quickcodes}
+           formula={cell.formula||''}
+           onInsert={formula=>updateCell(r.id,cell.id,{formula})}/>
          </>:<input value={cell.text||''} maxLength={90}
           aria-label="Result text" placeholder="vs AC, Force, etc."
           onChange={e=>updateCell(r.id,cell.id,{text:e.target.value})}/>}
@@ -321,7 +357,9 @@ export function MacroManager({
         </div>
        </article>)}
        <p className="muted tiny">Up to 12 rows, three results each, and 18 rolls total.
-        Use <code>@{'{dexterity_mod}'}</code> for a DM-configured modifier.
+        Use <code>@{'{dexterity_mod}'}</code> for a modifier, or
+        <code> =@AC</code> for a DM-defined numeric quickcode. Choose a sheet
+        source above to resolve its current value.
         Linked Attack rolls damage and conditional critical bonus together;
         custom Dice / Number cells remain independent.</p>
       </div>

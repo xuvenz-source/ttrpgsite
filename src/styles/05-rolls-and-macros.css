@@ -213,6 +213,9 @@
  min-width:0;font-size:11px;padding:6px 7px;min-height:29px
 }
 .macro-formula-input{font-family:ui-monospace,Consolas,monospace}
+.macro-formula-inserts{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.macro-formula-inserts>.macro-attribute-insert{flex:1 1 155px;width:auto;
+ min-width:0;max-width:100%;font-size:10px}
 .macro-edit-cell-actions{display:flex;gap:5px}
 .macro-edit-cell-actions button{font-size:10px;padding:5px 7px}
 .macro-manager-preview{min-width:0;min-height:0;overflow-y:auto;
