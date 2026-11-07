@@ -28,6 +28,7 @@ test('NPC image access requires DM or a revealed NPC token on an authorized map'
 test('privacy changes have a role-switched test matrix and safe rollout gate',()=>{
  for(const role of ['DM-A','Player-A','Player-B','Player-C','Signed-out'])
   assert.ok(roles.includes(role));
- assert.match(roles,/outside.*supabase\/migrations/i);
+ assert.match(roles,/NPC artwork.*candidate-only/i);
+ assert.match(roles,/NOT yet deployed/i);
  assert.match(roles,/signed URL/i);
 });
