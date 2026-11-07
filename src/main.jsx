@@ -6,6 +6,7 @@ import './map-environment.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
+ measurementGeometry,addLineTurn,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
@@ -2556,12 +2557,16 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  function finishMeasurement(e,cancel=false){
   const current=measureDrag.current;
   if(!current||current.pointerId!==e.pointerId)return;
+  // Releasing the secondary button while primary remains down must NOT
+  // finish a multi-leg movement measurement.
+  if(e.button===2&&(e.buttons&1)!==0)return;
   measureDrag.current=null;
   const point=cancel?current.measure.end:
    mapPointInCells(e)||current.measure.end;
   const done={...current.measure,end:point};
-  const meaningful=Math.hypot(done.end.x-done.start.x,
-   done.end.y-done.start.y)>=.5;
+  const meaningful=done.tool==='line'?
+   (measurementGeometry(done)?.feet||0)>0:
+   Math.hypot(done.end.x-done.start.x,done.end.y-done.start.y)>=.5;
   if(!cancel&&meaningful&&current.pinned){
    setLocalMeasurements(existing=>existing.map(m=>m.id===done.id?
     {...done,isLocal:true,pinned:true}:m));
@@ -2610,9 +2615,22 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
  }
  function pinCurrentMeasurementOnRightClick(e){
-  // Chorded mouse buttons do not generate a second pointerdown.
+  // A secondary click during a held primary-button line measurement
+  // creates a snapped bend rather than pinning the line. A right-button
+  // measurement started on its own still pins as before.
   if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
+  const current=measureDrag.current;
+  if(current.measure.tool==='line'&&!current.pinned&&(e.buttons&1)!==0){
+   const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end);
+   if(next!==current.measure){
+    current.measure=next;
+    setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
+     {...next,isLocal:true}:m));
+    onMeasurementPreview?.(next,'preview');
+   }
+   return;
+  }
   measureDrag.current.pinned=true;
  }
  function startPan(e){
