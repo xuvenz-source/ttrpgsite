@@ -5,6 +5,7 @@
 ## Implemented
 - RLS-authorized Realtime map-token UPDATE coordinates immediately patch the DM/player board. Background full-token refresh remains the reconciliation fallback for missing or deleted rows.
 - Local movement and keyboard commands stay optimistic. Unrelated token refreshes no longer interrupt a live drag, and incoming 50ms movement previews get a brief CSS transition without delaying local movement.
+- On **fog-enabled** maps, shared coordinate previews remain disabled for privacy. Instead, active dragging persists intermediate x/y destinations through existing server-authorized token writes, throttled to about 5–6 steps/second per controlled drag. The queued-writes layer coalesces intermediate steps when the network is slower. DM and observing players receive these through RLS-filtered change events, without waiting for mouse-up. Canceling a drag restores its initial destination.
 - A final preview is removed when the database confirms its exact destination; unconfirmed previews expire earlier and fall back to the canonical row.
 - On a visibility revision, token authorization still immediately revokes previously visible cells. Only map artwork inside the previously visible **and already explored** set can remain bright while the per-viewer RPC returns. Unknown/unexplored cells and secret tokens remain hidden.
 - A staged SQL migration skips visibility ticks for pure x/y token movement when the map has fog OFF. It still generates ticks on fog ON and on access-changing or map-changing updates.
