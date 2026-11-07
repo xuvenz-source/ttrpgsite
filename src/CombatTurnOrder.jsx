@@ -7,6 +7,7 @@ export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],user
  const [minimized,setMinimized]=useState(false);
  if(!combat?.active)return null;
  const current=currentCombatant(combat);
+ const activeDisplay=current?combatEntryForUser(current,privateEntries,tokens,isDM):null;
  const allScored=combat.entries.every(e=>e.score!==null);
  return <FloatingWindow kind="combat" className={minimized?'is-combat-minimized':''}
   onClose={onClose}>
@@ -71,7 +72,7 @@ export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],user
       aria-label="Previous combatant" disabled={!isDM||busy||!allScored||!combat.entries.length}
       onClick={onPrevious}>←</button>
      <span title={current?.name||'Waiting for initiative'}>
-      {current?'Current: '+current.name:'Waiting for rolls'}
+      {activeDisplay?'Current: '+activeDisplay.name:'Waiting for rolls'}
      </span>
      <button type="button" title="Next combatant" aria-label="Next combatant"
       disabled={!isDM||busy||!allScored||!combat.entries.length}
