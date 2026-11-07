@@ -222,7 +222,8 @@ function App(){
  // A DM hide/revoke must close any document whose current read permission
  // disappears. The cached pin preview is never a source of authorization.
  useEffect(()=>{
-  if(!openedHandout||isDM||campaignHandouts.loading||campaignHandouts.error)return;
+  if(!openedHandout||isDM||campaignHandouts.loading)return;
+  if(campaignHandouts.error){setOpenedHandout(null);return}
   const inLibrary=campaignHandouts.handouts.some(h=>h.id===openedHandout.id);
   const pinAllowed=campaignHandouts.pins.some(p=>p.id===openedHandout.pinId&&p.visible);
   if(!inLibrary&&!pinAllowed)setOpenedHandout(null);
