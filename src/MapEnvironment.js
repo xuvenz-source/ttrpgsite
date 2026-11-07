@@ -77,6 +77,8 @@ export function wallAllows(wall,token,kind='movement',fromSide='a'){
  if(kind==='movement')return wall.blocksMovement===false||
   ((wall.type==='door'||wall.type==='window')&&wall.state==='open');
  if((wall.type==='door'||wall.type==='window')&&wall.state==='open')return true;
+ // Closed curtains obscure sight through an otherwise transparent window.
+ if(wall.type==='window'&&wall.curtains===true)return false;
  if(wall.vision==='pass')return true;
  if(wall.vision==='one-way')return wall.oneWay===(fromSide==='a'?'a-to-b':'b-to-a');
  return false;
