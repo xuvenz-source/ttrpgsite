@@ -783,8 +783,7 @@ select t.id,
   ) v
   where jsonb_typeof(v.value)='number'
      or (jsonb_typeof(v.value)='string'
-         and v.value #>> '{}' ~ '^-?[0-9]{1,7}(\.[0-9]{1,3})?
-commit;)
+         and v.value #>> '{}' ~ '^-?[0-9]{1,7}(\.[0-9]{1,3})?$')
  ),'{}'::jsonb) as fields
 from settings s
 join public.map_tokens t on t.campaign_id=s.campaign_id and t.map_id=p_map
@@ -850,14 +849,11 @@ begin
  if jsonb_typeof(v_values->v_combat.initiative_field)='object' then
   v_raw:=v_values->v_combat.initiative_field->>'current';
  else v_raw:=v_values->>v_combat.initiative_field;end if;
- if coalesce(v_raw,'')~'^[-]?[0-9]{1,5}([.][0-9]{1,3})?
-commit;
+ if coalesce(v_raw,'')~'^[-]?[0-9]{1,5}([.][0-9]{1,3})?$'
  then v_score:=greatest(-1000,least(1000,v_raw::numeric));v_has_score:=true;end if;
- if coalesce(v_template->'modifierRules'->>'base','')~'^[0-9]{1,3}
-commit;
+ if coalesce(v_template->'modifierRules'->>'base','')~'^[0-9]{1,3}$'
  then v_base:=least(100,(v_template->'modifierRules'->>'base')::numeric);end if;
- if coalesce(v_template->'modifierRules'->>'step','')~'^[1-9][0-9]?
-commit;
+ if coalesce(v_template->'modifierRules'->>'step','')~'^[1-9][0-9]?$'
  then v_step:=least(20,(v_template->'modifierRules'->>'step')::numeric);end if;
  v_bonus:=case when v_combat.initiative_mode='modifier'
   then case when v_has_score then floor((v_score-v_base)/v_step)::integer else 0 end
