@@ -2564,3 +2564,65 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
  width:17px!important;height:17px!important;min-width:17px;cursor:pointer;
  accent-color:#d95b67;
 }
+
+/* Units → Tools. Match the existing dark compact Units panel. */
+.units-subtabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0 0 9px}
+.units-subtabs button{padding:7px 8px;font-size:12px;border-radius:6px}
+.units-subtabs button.selected{background:#354a68;border-color:#7b9ed0;color:#f5f8ff}
+.campaign-tools-pane{display:flex;flex-direction:column;gap:11px;min-width:0}
+.campaign-tool-section{background:#192537;border:1px solid #384a64;
+ border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.campaign-tool-heading{display:flex;justify-content:space-between;align-items:center;gap:7px}
+.campaign-tool-heading>strong{font-size:12px;color:#e9f0fb}
+.campaign-tool-heading button{min-height:27px;padding:4px 8px;font-size:11px}
+.campaign-tool-row{display:flex;align-items:center;gap:5px;min-width:0;
+ background:#263349;border:1px solid #364d6a;border-radius:6px;padding:5px}
+.campaign-tool-icon{display:grid;place-items:center;font-size:20px;flex:0 0 27px}
+.campaign-tool-name{flex:1;min-width:0;overflow-wrap:anywhere;font-size:12px;font-weight:650}
+.campaign-tool-name small{display:block;font-size:10px;font-weight:400;color:#abbcd2}
+.campaign-tool-row button{font-size:10px;min-width:25px;min-height:25px;padding:4px 6px}
+.campaign-tool-drag{cursor:grab!important}
+.campaign-tool-editor{padding:10px;background:#182336;border:1px solid #536680;border-radius:7px}
+.campaign-tool-editor>strong{font-size:12px}
+.campaign-tool-inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.campaign-tool-inline label{min-width:0}
+.campaign-tool-inline input,.campaign-tool-inline select{min-width:0;width:100%;max-width:100%}
+.campaign-tool-actions{display:flex;gap:5px;flex-wrap:wrap}
+.campaign-tool-actions button{font-size:11px;padding:6px 8px}
+.campaign-tool-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.campaign-tool-stats>strong{grid-column:1/-1;font-size:11px}
+.campaign-tool-stats label{display:flex;flex-direction:column;text-transform:capitalize;font-size:10px}
+.campaign-tool-stats input{width:100%;min-width:0}
+.campaign-tool-map-layer{position:absolute;inset:0;pointer-events:none;z-index:4}
+.campaign-tool-light-radius{position:absolute;pointer-events:none;z-index:0;
+ border-radius:50%;mix-blend-mode:screen}
+.campaign-tool-map-token{position:absolute;z-index:1;pointer-events:auto;
+ display:grid;place-items:center;padding:4px;border:2px solid #a3b8d7;
+ border-radius:50%;background:#26364be8;color:#fff;font-size:clamp(16px,2vw,32px);
+ box-shadow:0 2px 8px #0009;touch-action:none;user-select:none}
+.campaign-tool-map-token.can-move{cursor:grab;border-color:#eccb82}
+.campaign-tool-map-token.can-move:active{cursor:grabbing}
+.campaign-tool-map-token span{line-height:1;pointer-events:none}
+.campaign-tool-sheet{width:100%;height:100%;min-height:0;display:flex;
+ flex-direction:column;gap:10px;overflow:auto}
+.campaign-tool-sheet .heading{flex:0 0 auto}
+.campaign-tool-sheet .heading h2{font-size:16px;overflow-wrap:anywhere}
+.campaign-tool-details{border:1px solid #394d68;border-radius:8px;
+ padding:10px;background:#233147;display:flex;flex-direction:column;gap:8px}
+.campaign-tool-switch{display:flex;align-items:center;gap:8px;font-size:12px}
+.campaign-tool-switch input{width:17px;height:17px}
+.campaign-tool-sheet-inventory{flex:1;min-height:90px;overflow:auto}
+.campaign-tool-sheet-inventory h3,.campaign-tool-details h3{margin:0 0 6px;font-size:13px}
+.campaign-tool-sheet-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.campaign-tool-sheet-stats label{font-size:11px;display:flex;flex-direction:column;
+ gap:3px;text-transform:capitalize}
+.campaign-tool-sheet-stats input{width:100%;min-width:0}
+@media(max-width:640px){
+ .campaign-tool-inline{grid-template-columns:1fr 1fr}
+ .campaign-tool-map-token{font-size:18px}
+}
+
+.campaign-tool-attribute-control{display:flex;gap:4px}
+.campaign-tool-attribute-control input{flex:1;min-width:0}
+.campaign-tool-attribute-control button{flex:0 0 auto;padding:1px 6px}
+.campaign-tool-add-attribute{font-size:10px;align-self:end}
