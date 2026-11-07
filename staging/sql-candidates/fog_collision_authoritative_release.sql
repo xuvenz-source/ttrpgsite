@@ -865,6 +865,7 @@ create policy "artwork only for dm owned characters and observed map tokens"
     and public.is_campaign_member(c.id)
     and (
      public.is_campaign_dm(c.id)
+     or storage.objects.owner_id=auth.uid()::text
      or exists(
       select 1 from public.characters ch
       where ch.campaign_id=c.id and ch.user_id=auth.uid()
