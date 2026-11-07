@@ -2,6 +2,7 @@
 export const EMPTY_ENVIRONMENT={
  version:1,ambient:25,
  fog:{automatic:true,partyShared:true},
+ collision:{enabled:false},
  effects:{weather:'none',intensity:0},
  objects:[]
 };
@@ -13,6 +14,7 @@ export function normalizeEnvironment(raw){
  const source=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
  return {version:1,ambient:between(finite(source.ambient,25),0,100),
   fog:{automatic:source.fog?.automatic!==false,partyShared:source.fog?.partyShared!==false},
+  collision:{enabled:source.collision?.enabled===true},
   effects:{weather:['none','rain','snow','fog'].includes(source.effects?.weather)?source.effects.weather:'none',
    intensity:between(finite(source.effects?.intensity),0,100)},
   objects:Array.isArray(source.objects)?source.objects.slice(0,2500).filter(o=>

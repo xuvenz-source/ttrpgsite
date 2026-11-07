@@ -24,8 +24,7 @@ export default function useMapCombat({db,campaignId,mapId,userId,isDM,onError,on
   const refresh=async()=>{
    const number=++sequence;
    const [{data,error},secret]=await Promise.all([
-    db.from('map_combats').select('map_id,campaign_id,encounter_id,active,round,current_entry_id,initiative_field,initiative_mode,participants,revision')
-     .eq('map_id',mapId).eq('campaign_id',campaignId).maybeSingle(),
+    db.rpc('get_authorized_map_combat',{p_map:mapId}),
     isDM?db.from('map_combat_entries').select('entry_id,token_id').eq('map_id',mapId):
      Promise.resolve({data:[],error:null})
    ]);
@@ -55,6 +54,9 @@ export default function useMapCombat({db,campaignId,mapId,userId,isDM,onError,on
    .on('postgres_changes',{
     event:'*',schema:'public',table:'map_combats',filter:'map_id=eq.'+mapId
    },()=>{void refresh().catch(e=>console.warn('Combat refresh failed',e))})
+   .on('postgres_changes',{event:'*',schema:'public',
+    table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},
+    ()=>{void refresh().catch(e=>console.warn('Visible combat refresh failed',e))})
    .subscribe(state=>{if(state==='SUBSCRIBED'){
     void refresh().catch(e=>console.warn('Combat reconnect failed',e));
    }});

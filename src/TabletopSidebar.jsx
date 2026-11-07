@@ -210,6 +210,7 @@ export default function TabletopSidebar({
  newToken,onChangeTokenName,tokenOwner,onChangeTokenOwner,onAddToken,
  mapZoom,onChangeZoom,onMapCalibrationPreview,onSaveMapCalibration,onSaveTokenDisplay,
   mapEnvironment,mapSettingEditor,onMapSettingEditorChange,onMapEnvironmentChange,mapEnvironmentStatus,
+  onPublishEnvironment,onDisablePublished,onResetExploration,publishedEnvironment,
    mapSettingPopped=false,onPopOutMapSetting,onDockMapSetting,
   combat,combatPrivateEntries=[],combatBusy=false,combatStatus='',
   onCombatBegin,onCombatAdd,onCombatCommand,onCombatRoll,onCombatRollNpcs,
@@ -435,6 +436,10 @@ export default function TabletopSidebar({
        map={activeMap} environment={mapEnvironment} editor={mapSettingEditor}
        onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
        saveStatus={mapEnvironmentStatus}
+       onPublishEnvironment={onPublishEnvironment}
+       onDisablePublished={onDisablePublished}
+       onResetExploration={onResetExploration}
+       publishedEnvironment={publishedEnvironment}
        onMapCalibrationPreview={onMapCalibrationPreview}
        onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}
        handouts={handoutsForMap}/>
