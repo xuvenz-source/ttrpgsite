@@ -112,6 +112,10 @@
     {
       "name": "stage/player-sheets-token-artwork-fog-2026-11-08",
       "status": "included"
+    },
+    {
+      "name": "stage/seamless-multiplayer-token-movement-2026-11-08",
+      "status": "included"
     }
   ],
   "features": [
@@ -260,6 +264,14 @@
         "stage/player-sheets-token-artwork-fog-2026-11-08"
       ],
       "status": "included"
+    },
+    {
+      "id": "seamless-multiplayer-token-movement",
+      "description": "Immediate DM/player RLS-authorized token movement updates, stable drag previews, previously seen fog artwork continuity, and fewer nonfog visibility ticks",
+      "sources": [
+        "stage/seamless-multiplayer-token-movement-2026-11-08"
+      ],
+      "status": "included"
     }
   ],
   "databaseDependencies": [
@@ -300,6 +312,14 @@
       "status": "staged-not-applied",
       "mustApplyBeforeFrontend": true,
       "dependsOn": "20261108033000_player_owned_token_artwork"
+    },
+    {
+      "version": "20261108055000",
+      "name": "nonfog_token_movement_tick_optimization",
+      "file": "supabase/migrations/20261108055000_nonfog_token_movement_tick_optimization.sql",
+      "status": "staged-not-applied",
+      "mustApplyBeforeFrontend": true,
+      "dependsOn": "20261108043000_macro_quickcode_resolution"
     }
   ],
   "edgeFunctionDependencies": [
@@ -315,7 +335,8 @@
     "Do not restore the old NPC artwork policy; the fog/collision release already installed observed-token Storage authorization.",
     "Fog-enabled movement previews cannot reveal tool/token coordinates; database collision remains authoritative.",
     "Existing test campaigns only; do not create paid preview/development resources.",
-    "Macro quickcode helper is private, numeric-only, limited to an already authorized character/NPC macro source and keeps the strict server dice validator."
+    "Macro quickcode helper is private, numeric-only, limited to an already authorized character/NPC macro source and keeps the strict server dice validator.",
+    "Movement fog presentation only reuses previously visible and explored artwork: authorized visible remains empty during RPC refresh; no hidden token or new unexplored content is revealed."
   ],
   "upcomingRelease": {
     "productionBaseSha": "f5a5decaa0d6446bfe68f9d5e2bfa1ebb5f36e49",
@@ -346,6 +367,25 @@
             "status": "staged-not-applied",
             "requiresApproval": true,
             "applyAfter": "player_owned_token_artwork"
+          }
+        ],
+        "paidInfrastructure": false
+      },
+      {
+        "name": "stage/seamless-multiplayer-token-movement-2026-11-08",
+        "status": "staged-pending-release",
+        "scope": [
+          "Direct real-time position updates visible to DM and authorized players",
+          "Stable local movement and smoothed remote movement previews",
+          "No dimming of previously visible fog cells during server reauthorization",
+          "Avoid redundant visibility tick on fog-OFF pure movement"
+        ],
+        "databaseDependencies": [
+          {
+            "name": "nonfog_token_movement_tick_optimization",
+            "file": "supabase/migrations/20261108055000_nonfog_token_movement_tick_optimization.sql",
+            "status": "staged-not-applied",
+            "requiresApproval": true
           }
         ],
         "paidInfrastructure": false
