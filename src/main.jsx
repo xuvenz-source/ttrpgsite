@@ -108,6 +108,7 @@ function App(){
    {campaignId:p.get('campaign'),characterId:p.get('sheet')}:null;
  });
  const launchHandled=useRef(false);
+ const signedAssetIdentity=useRef(null);
  const[launchNpc]=useState(()=>{
   const params=new URLSearchParams(location.search);
   const campaignId=params.get('campaign'),id=params.get('npc');
@@ -665,10 +666,20 @@ function App(){
  }
  useEffect(()=>{
   if(!db){setAuthReady(true);return}
-  db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});
-  const {data}=db.auth.onAuthStateChange((event,s)=>{
-   // Signed asset URLs carry access permissions: reset across identities.
-   if(event==='SIGNED_IN'||event==='SIGNED_OUT')signedAssetStore.clear();
+  db.auth.getSession().then(({data})=>{
+   const identity=data.session?.user?.id||null;
+   if(signedAssetIdentity.current!==identity){
+    if(signedAssetIdentity.current!==null)signedAssetStore.clear();
+    signedAssetIdentity.current=identity;
+   }
+   setSession(data.session);setAuthReady(true);
+  });
+  const {data}=db.auth.onAuthStateChange((_event,s)=>{
+   // Resuming the same signed-in account must not blank the token/map art.
+   const identity=s?.user?.id||null;
+   if(signedAssetIdentity.current!==identity){
+    signedAssetStore.clear();signedAssetIdentity.current=identity;
+   }
    setSession(s);
   });
   return()=>data.subscription.unsubscribe();
@@ -1023,6 +1034,30 @@ function App(){
   latestNpcsRefresh.current=refreshNpcs;
   latestMovementAccess.current={tokens,members,mapId:selectedMap,user};
  });
+ // Browsers may throttle or suspend background tabs. Keep the board mounted;
+ // reconcile only after a meaningful absence, without clearing image URLs.
+ useEffect(()=>{
+  if(!db||!activeId||!user)return;
+  let hiddenAt=document.visibilityState==='hidden'?Date.now():null;
+  let lastRefresh=0;
+  const resync=()=>{
+   if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
+   if(hiddenAt===null)return;
+   const elapsed=Date.now()-hiddenAt;
+   hiddenAt=null;
+   if(elapsed<1200||Date.now()-lastRefresh<1800)return;
+   lastRefresh=Date.now();
+   void latestTokenRefresh.current?.();
+   void latestMonitorRefresh.current?.();
+   void latestMapsRefresh.current?.();
+  };
+  document.addEventListener('visibilitychange',resync);
+  window.addEventListener('focus',resync);
+  return()=>{
+   document.removeEventListener('visibilitychange',resync);
+   window.removeEventListener('focus',resync);
+  };
+ },[db,activeId,user]);
  useEffect(()=>{
   if(!db||!user){setUrls({});return}
   setUrls(previous=>Object.fromEntries(maps.map(m=>[m.id,previous[m.id]||''])));
