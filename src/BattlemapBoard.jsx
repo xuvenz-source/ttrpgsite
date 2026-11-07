@@ -23,7 +23,7 @@ import {canControlMapToken,selectionRectangle,selectableTokenIds,
  selectableToolIds,groupToolFootprint,boundedGroupOffset} from './MapSelection.js';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 
-export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
+export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
  onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
@@ -630,7 +630,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   // hidden coordinates. Persist intermediate steps at a modest cadence instead:
   // Supabase RLS distributes only the movements each viewer may observe.
   const now=Date.now();
-  if(info.members.length&&shouldPersistFogDrag(
+  // A mixed group must commit atomically. Never partially persist its
+  // intermediate positions while the gesture is still in progress.
+  if(info.members.length===1&&!(info.tools||[]).length&&shouldPersistFogDrag(
    fogFrame?.enabled,info.lastFogWrite,now)){
    info.lastFogWrite=now;
    info.persistedDuringDrag=true;
@@ -669,10 +671,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     return next;
    });
   }
-  // Optimistic issue placement updates synchronously before repaint.
+  const atomicGroup=!cancel&&!!moveGroup&&
+   (info.members.length+(info.tools||[]).length)>1;
+  // Keep group tool sprites at the destination until the atomic RPC settles;
+  // otherwise a slow round-trip would flash their old positions.
   setToolPreview(old=>{
    const next={...old};
-   for(const tool of info.tools||[])delete next[tool.issue_id];
+   for(const tool of info.tools||[]){
+    if(atomicGroup)next[tool.issue_id]={
+     x:Number(tool.x)+info.dx,y:Number(tool.y)+info.dy};
+    else delete next[tool.issue_id];
+   }
    return next;
   });
   if(!cancel&&Math.hypot(e.clientX-info.startX,e.clientY-info.startY)>8&&
@@ -687,7 +696,34 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    for(const token of info.members)delete next[token.id];
    return next;
   });
-  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag)return;
+  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag){
+   setToolPreview(old=>{
+    const next={...old};
+    for(const tool of info.tools||[])delete next[tool.issue_id];
+    return next;
+   });
+   return;
+  }
+  if(atomicGroup){
+   for(const token of info.members)
+    onMovementPreview?.(token,Number(token.x)+info.dx,
+     Number(token.y)+info.dy,true);
+   for(const tool of info.tools||[])
+    onToolMovementPreview?.(tool,Number(tool.x)+info.dx,
+     Number(tool.y)+info.dy,true);
+   // The parent performs a single server transaction. The returned promise
+   // resolves only after refreshing tool projections or after a failure.
+   Promise.resolve(moveGroup({
+    tokens:info.members,tools:info.tools||[],dx:info.dx,dy:info.dy
+   })).catch(error=>console.warn('Group movement rejected',error)).finally(()=>{
+    setToolPreview(old=>{
+     const next={...old};
+     for(const tool of info.tools||[])delete next[tool.issue_id];
+     return next;
+    });
+   });
+   return;
+  }
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
