@@ -160,7 +160,7 @@ export default function TokenQuickEdit({db,token,template,allowedFields,initialV
     <button type="button" className="secondary" onClick={onClose}>✕</button>
    </div>
    {fields.length===0?
-    <p className="muted">No numeric quick-adjust fields configured. Status effects remain available below.</p>:
+    <p className="muted">No numeric quick-adjust fields configured. Status effects and held tools remain available below.</p>:
     <div className="quick-token-fields">{fields.map(f=>{
      const value=values[f.id]||{current:'',max:''};
      return <div className="quick-token-field" key={f.id}>

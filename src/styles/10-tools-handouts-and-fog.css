@@ -215,3 +215,10 @@
 .quick-token-held-tool span{flex:1;overflow-wrap:anywhere}
 .quick-token-held-tool button{min-width:28px;min-height:26px;
  color:#f9bfc3;font-weight:700}
+
+.map-setting-pin-selection{display:flex;flex-direction:column;gap:7px;
+ margin:9px 0;padding:9px;background:#1b2b3d;border:1px solid #6686a6;
+ border-radius:7px}
+.map-setting-pin-selection strong{font-size:12px;overflow-wrap:anywhere}
+.campaign-handout-read .map-handout-bubble-body{max-height:none;overflow:visible;
+ font-size:inherit;margin:0}

@@ -160,9 +160,16 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    if(!active||e.key!=='Delete'||e.defaultPrevented||e.repeat)return;
    const el=e.target;
    if(el instanceof Element && (el.closest('input,textarea,select,[contenteditable="true"],[role="textbox"]')||
-     (el.closest('button')&&!el.closest('.map-env-marker,.campaign-tool-map-token'))))return;
+     (el.closest('button')&&!el.closest('.map-env-marker,.campaign-tool-map-token,.map-handout-pin'))))return;
    if(document.querySelector('.modal-backdrop'))return;
    if(isDM&&environmentEditor?.enabled&&environmentEditor.layer==='light'){
+    const pin=handoutPins.find(item=>item.id===environmentEditor.selectedPinId);
+    if(!environmentEditor.lockLight&&pin){
+     e.preventDefault();e.stopPropagation();
+     if(window.confirm('Remove this pin from the map?'))
+      void Promise.resolve(onDeleteHandoutPin?.(pin)).catch(console.error);
+     return;
+    }
     const ids=(environmentEditor.selectedIds?.length?environmentEditor.selectedIds:
      environmentEditor.selectedId?[environmentEditor.selectedId]:[])
      .filter(id=>environment?.objects?.some(o=>o.id===id));
@@ -189,7 +196,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   document.addEventListener('keydown',handleDelete);
   return()=>document.removeEventListener('keydown',handleDelete);
  },[active,selectedId,selectedToolIds,isDM,user,tokens,toolIssued,
-   remove,onToolPickUp,environmentEditor,environment,onDeleteEnvironmentObject]);
+   remove,onToolPickUp,environmentEditor,environment,onDeleteEnvironmentObject,
+   handoutPins,onDeleteHandoutPin]);
  useEffect(()=>{
   const node=viewportRef.current;if(!node)return;
   const wheel=e=>{
@@ -619,7 +627,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    for(const tool of info.tools||[])delete next[tool.issue_id];
    return next;
   });
-  if(!cancel&&info.tools?.length===1&&info.members.length===0){
+  if(!cancel&&Math.hypot(e.clientX-info.startX,e.clientY-info.startY)>8&&
+    info.tools?.length===1&&info.members.length===0){
    const issue=toolIssued.find(t=>t.id===info.tools[0].issue_id);
    const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
    if(carrier){onToolHold?.(issue.id,carrier.id);return}

@@ -28,11 +28,12 @@ function Check({title,value,onChange}){
 }
 export default function MapSettingPanel({map,environment,editor,onEditorChange,
  onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],handouts=[],
- onPublishEnvironment,onDisablePublished,onResetExploration,publishedEnvironment}){
+ pins=[],onUpdatePin,onDeletePin,onPublishEnvironment,onDisablePublished,onResetExploration}){
  const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
  const selectedIds=(editor.selectedIds?.length?editor.selectedIds:
   editor.selectedId?[editor.selectedId]:[]).filter(id=>env.objects.some(o=>o.id===id));
  const selected=selectedIds.length===1?env.objects.find(o=>o.id===selectedIds[0]):null;
+ const selectedPin=pins.find(pin=>pin.id===editor.selectedPinId);
  const updateEditor=change=>onEditorChange({...editor,...change});
  const updateEnv=change=>onEnvironmentChange({...env,...change});
  const updateSelected=change=>selected&&onEnvironmentChange(patchObject(env,selected.id,change));
@@ -90,7 +91,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     onChange={v=>updateEditor({lockTokens:v})}/>
    <label>Map tool
     <select disabled={!canDraw} value={editor.tool||'select'}
-     onChange={e=>updateEditor({tool:e.target.value,selectedId:null,selectedIds:[]})}>
+     onChange={e=>updateEditor({tool:e.target.value,selectedId:null,selectedIds:[],selectedPinId:null})}>
      {drawTools.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
     </select>
    </label>
@@ -120,6 +121,20 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      onChange={v=>updateEditor({lightDim:v??0})}/>
    </>}
    <div className="map-setting-divider"/>
+   {selectedPin&&<div className="map-setting-pin-selection">
+    <strong>Selected pin · {handouts.find(h=>h.id===selectedPin.handout_id)?.title||selectedPin.kind}</strong>
+    <Check title="Visible to players" value={selectedPin.visible}
+     onChange={value=>onUpdatePin?.(selectedPin,{visible:value})}/>
+    <Check title="Can be picked up" value={selectedPin.collectable}
+     onChange={value=>onUpdatePin?.(selectedPin,{collectable:value})}/>
+    <button type="button" className="secondary map-setting-danger"
+     disabled={!canDraw} onClick={()=>{
+      if(window.confirm('Remove this pin from the map?')){
+       void onDeletePin?.(selectedPin);
+       updateEditor({selectedPinId:null});
+      }
+     }}>Delete selected pin</button>
+   </div>}
    {selectedIds.length>1&&<div className="map-setting-multi-selection">
     <strong>{selectedIds.length} map objects selected</strong>
     <button type="button" className="secondary map-setting-danger" disabled={!canDraw}

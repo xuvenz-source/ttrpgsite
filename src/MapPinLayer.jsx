@@ -1,20 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {PIN_ICONS,normalizePinPosition,pinVisibleTo} from './CampaignHandouts.js';
-
-/** Renders plain text and HTTPS Markdown images without interpreting handout HTML. */
-function PinHandoutBody({body}){
- const source=String(body||'');
- const image=/!\[([^\]\n]{0,120})\]\((https:\/\/[^\s)]+)\)/g;
- const nodes=[];let offset=0;let match;
- while((match=image.exec(source))!==null){
-  if(match.index>offset)nodes.push(<span key={'text'+offset}>{source.slice(offset,match.index)}</span>);
-  nodes.push(<img key={'image'+match.index} src={match[2]} alt={match[1]}
-   loading="lazy" referrerPolicy="no-referrer"/>);
-  offset=image.lastIndex;
- }
- if(offset<source.length)nodes.push(<span key={'text'+offset}>{source.slice(offset)}</span>);
- return <div className="map-handout-bubble-body">{nodes.length?nodes:'No text'}</div>;
-}
+import HandoutBody from './HandoutBody.jsx';
 /** Map pins are separate from DM lighting geometry. Players receive only RLS-allowed pins. */
 export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
  onCreate,onMove,onOpen,onRead,onCollect,onDelete,onSelect}){
@@ -171,7 +157,7 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
      onClick={()=>{setOpened(null);setNote(null)}}>×</button>
    </div>
    {error?<p role="alert" className="error small">{error}</p>:
-    note?<PinHandoutBody body={note.body}/>:<p className="muted small">Loading handout…</p>}
+    note?<HandoutBody body={note.body}/>:<p className="muted small">Loading handout…</p>}
    <div className="map-handout-bubble-actions">
     {isDM&&<>
      <button type="button" className="secondary" disabled={busy||!note}

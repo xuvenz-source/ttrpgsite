@@ -130,7 +130,7 @@ export default function TabletopApp(){
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
   lockLight:false,lockBackground:true,lockTokens:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
-  selectedId:null,selectedIds:[],pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
+  selectedId:null,selectedIds:[],selectedPinId:null,pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
@@ -596,9 +596,15 @@ export default function TabletopApp(){
  }
  async function deleteMapHandoutPin(pin){
   if(!isDM)throw Error('Only the DM may remove pins.');
-  await campaignHandouts.deletePin(pin);
-  setMapSettingEditor(old=>old.selectedPinId===pin.id?
-   {...old,selectedPinId:null}:old);
+  try{
+   await campaignHandouts.deletePin(pin);
+   setMapSettingEditor(old=>old.selectedPinId===pin.id?
+    {...old,selectedPinId:null}:old);
+  }catch(e){fail(e);throw e}
+ }
+ async function updateMapHandoutPin(pin,patch){
+  if(!isDM)throw Error('Only the DM can change pins.');
+  try{await campaignHandouts.updatePin(pin,patch)}catch(e){fail(e)}
  }
  async function moveMapHandoutPin(pin,point){
   if(!isDM)return;
@@ -2172,7 +2178,7 @@ export default function TabletopApp(){
      const incoming=Array.isArray(selection)?selection:selection?[selection]:[];
      const current=old.selectedIds||[];
      const selectedIds=options.additive?[...new Set([...current,...incoming])]:incoming;
-     return {...old,selectedId:selectedIds[0]||null,selectedIds};
+     return {...old,selectedPinId:null,selectedId:selectedIds[0]||null,selectedIds};
     })}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
@@ -2231,6 +2237,8 @@ export default function TabletopApp(){
  onDisablePublished={publishEnvironmentRules}
  onResetExploration={publishEnvironmentRules}
  publishedEnvironment={fog.published}
+ pinsForMap={campaignHandouts.pins}
+ onUpdateHandoutPin={updateMapHandoutPin} onDeleteHandoutPin={deleteMapHandoutPin}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
  handoutsForMap={campaignHandouts.handouts}
  mapSettingPopped={mapSettingPopped}
@@ -2318,7 +2326,8 @@ export default function TabletopApp(){
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
      template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
-     handouts={campaignHandouts.handouts}/>
+     handouts={campaignHandouts.handouts} pins={campaignHandouts.pins}
+     onUpdatePin={updateMapHandoutPin} onDeletePin={deleteMapHandoutPin}/>
    </div>
   </section>
  </FloatingWindow>}

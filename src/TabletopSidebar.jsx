@@ -222,7 +222,8 @@ export default function TabletopSidebar({
  activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,onOpenCharacterTab,
  campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,onOpenAccountSettings,hasCampaign,
  campaignTools,onOpenCampaignTool,onToolError,
- campaignHandouts,onOpenHandout,onPrepareHandoutPin,onHandoutError,handoutsForMap=[]
+ campaignHandouts,onOpenHandout,onPrepareHandoutPin,onHandoutError,handoutsForMap=[],
+ pinsForMap=[],onUpdateHandoutPin,onDeleteHandoutPin
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
  const {expanded:expandedMenus,toggle:onMenuToggle}=useSidebarMenus(db,user,activeCampaignId);
@@ -442,7 +443,8 @@ export default function TabletopSidebar({
        publishedEnvironment={publishedEnvironment}
        onMapCalibrationPreview={onMapCalibrationPreview}
        onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}
-       handouts={handoutsForMap}/>
+       handouts={handoutsForMap} pins={pinsForMap}
+       onUpdatePin={onUpdateHandoutPin} onDeletePin={onDeleteHandoutPin}/>
      </>}
     </SavedDetails>
     </>}
