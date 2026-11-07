@@ -224,6 +224,39 @@ function App(){
  const activeHandout=campaignHandouts.handouts.find(h=>h.id===openedHandout?.id)||
   openedHandout?.preview||null;
  const activeHandoutPin=campaignHandouts.pins.find(p=>p.id===openedHandout?.pinId)||null;
+ // Close content immediately when the DM revokes access or an RLS read fails.
+ useEffect(()=>{
+  if(!openedHandout||isDM||campaignHandouts.loading)return;
+  if(campaignHandouts.error){setOpenedHandout(null);return}
+  const inLibrary=campaignHandouts.handouts.some(h=>h.id===openedHandout.id);
+  const pinAllowed=campaignHandouts.pins.some(p=>p.id===openedHandout.pinId&&p.visible);
+  if(!inLibrary&&!pinAllowed)setOpenedHandout(null);
+ },[openedHandout,isDM,campaignHandouts.handouts,campaignHandouts.pins,
+  campaignHandouts.loading,campaignHandouts.error]);
+ useEffect(()=>{
+  setOpenedHandout(prev=>prev?.pinId?null:prev);
+ },[selectedMap]);
+ // An already open pin reader must refresh text using RLS after change ticks.
+ useEffect(()=>{
+  if(!openedHandout?.pinId||isDM||campaignHandouts.loading||campaignHandouts.error)return;
+  const pin=campaignHandouts.pins.find(p=>p.id===openedHandout.pinId);
+  if(!pin?.visible)return;
+  let live=true;
+  void campaignHandouts.readPinNote(pin).then(note=>{
+   if(!live)return;
+   if(!note){setOpenedHandout(null);return}
+   setOpenedHandout(old=>{
+    if(old?.pinId!==pin.id)return old;
+    const previous=old.preview;
+    return previous?.title===note.title&&previous?.body===note.body&&
+     previous?.revealed===note.revealed&&previous?.collected===note.collected?
+      old:{...old,preview:note};
+   });
+  }).catch(()=>{if(live)setOpenedHandout(null)});
+  return()=>{live=false};
+ },[openedHandout?.pinId,isDM,campaignHandouts.pins,
+  campaignHandouts.loading,campaignHandouts.error]);
+
  const campaignTools=useCampaignTools({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
  });
