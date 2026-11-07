@@ -367,7 +367,7 @@ export default function TabletopSidebar({
       onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
       saveStatus={mapEnvironmentStatus}
       onMapCalibrationPreview={onMapCalibrationPreview}
-      onSaveMapCalibration={onSaveMapCalibration} template={template}/>
+      onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}/>
     </SavedDetails>
     <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">
      <summary>Token settings & resources</summary>
