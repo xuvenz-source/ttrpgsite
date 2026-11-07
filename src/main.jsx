@@ -7,7 +7,7 @@ import './combat.css';
 import PersonalTokenLibrary from './PersonalTokenLibrary.jsx';
 import AccountSettings from './AccountSettings.jsx';
 import {validMeasurement,liveMeasurementPayload,pointOnBattlemap,
- measurementGeometry,addLineTurn,
+ measurementGeometry,addLineTurn,shouldBendLineOnRightPress,
  acceptMeasurementEvent,applyMeasurementEventToVisible} from './MapMeasurements.js';
 import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.jsx';
 import Artwork from './Artwork.jsx';
@@ -15,6 +15,12 @@ import Bestiary from './Bestiary.jsx';
 import NpcEditor from './NpcEditor.jsx';
 import CharacterEditor from './CharacterEditor.jsx';
 import TabletopSidebar from './TabletopSidebar.jsx';
+import useCampaignHandouts from './useCampaignHandouts.js';
+import CampaignHandoutWindow from './CampaignHandoutWindow.jsx';
+import MapPinLayer from './MapPinLayer.jsx';
+import useCampaignTools from './useCampaignTools.js';
+import CampaignToolSheet from './CampaignToolSheet.jsx';
+import CampaignToolMapLayer from './CampaignToolMapLayer.jsx';
 import CombatTurnOrder from './CombatTurnOrder.jsx';
 import useMapCombat from './useMapCombat.js';
 import MapSettingPanel from './MapSettingPanel.jsx';
@@ -108,6 +114,7 @@ function App(){
    {campaignId:p.get('campaign'),characterId:p.get('sheet')}:null;
  });
  const launchHandled=useRef(false);
+ const signedAssetIdentity=useRef(null);
  const[launchNpc]=useState(()=>{
   const params=new URLSearchParams(location.search);
   const campaignId=params.get('campaign'),id=params.get('npc');
@@ -131,6 +138,8 @@ function App(){
  const[artStudio,setArtStudio]=useState(false),[npcEditors,setNpcEditors]=useState([]),
   [characterEditor,setCharacterEditor]=useState(null);
  const[accountSettingsOpen,setAccountSettingsOpen]=useState(false);
+ const[openedHandout,setOpenedHandout]=useState(null);
+ const[selectedToolIssueId,setSelectedToolIssueId]=useState(null);
  const[newCharacterName,setNewCharacterName]=useState('');
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
@@ -143,7 +152,7 @@ function App(){
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
   lockLight:false,lockBackground:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
-  selectedId:null,lightBright:20,lightDim:20
+  selectedId:null,pinHandoutId:'',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
  const[monitorValues,setMonitorValues]=useState({});
@@ -209,6 +218,49 @@ function App(){
   ?{...activeMap,...mapCalibrationPreview}:activeMap;
  tokenContextRef.current={mapId:selectedMap,campaignId:activeId,userId:user};
  const selectedToken=tokens.find(x=>x.id===selectedTokenId)||null;
+ const campaignHandouts=useCampaignHandouts({
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
+ });
+ const activeHandout=campaignHandouts.handouts.find(h=>h.id===openedHandout?.id)||
+  openedHandout?.preview||null;
+ const activeHandoutPin=campaignHandouts.pins.find(p=>p.id===openedHandout?.pinId)||null;
+ // Close content immediately when the DM revokes access or an RLS read fails.
+ useEffect(()=>{
+  if(!openedHandout||isDM||campaignHandouts.loading)return;
+  if(campaignHandouts.error){setOpenedHandout(null);return}
+  const inLibrary=campaignHandouts.handouts.some(h=>h.id===openedHandout.id);
+  const pinAllowed=campaignHandouts.pins.some(p=>p.id===openedHandout.pinId&&p.visible);
+  if(!inLibrary&&!pinAllowed)setOpenedHandout(null);
+ },[openedHandout,isDM,campaignHandouts.handouts,campaignHandouts.pins,
+  campaignHandouts.loading,campaignHandouts.error]);
+ useEffect(()=>{
+  setOpenedHandout(prev=>prev?.pinId?null:prev);
+ },[selectedMap]);
+ // An already open pin reader must refresh text using RLS after change ticks.
+ useEffect(()=>{
+  if(!openedHandout?.pinId||isDM||campaignHandouts.loading||campaignHandouts.error)return;
+  const pin=campaignHandouts.pins.find(p=>p.id===openedHandout.pinId);
+  if(!pin?.visible)return;
+  let live=true;
+  void campaignHandouts.readPinNote(pin).then(note=>{
+   if(!live)return;
+   if(!note){setOpenedHandout(null);return}
+   setOpenedHandout(old=>{
+    if(old?.pinId!==pin.id)return old;
+    const previous=old.preview;
+    return previous?.title===note.title&&previous?.body===note.body&&
+     previous?.revealed===note.revealed&&previous?.collected===note.collected?
+      old:{...old,preview:note};
+   });
+  }).catch(()=>{if(live)setOpenedHandout(null)});
+  return()=>{live=false};
+ },[openedHandout?.pinId,isDM,campaignHandouts.pins,
+  campaignHandouts.loading,campaignHandouts.error]);
+
+ const campaignTools=useCampaignTools({
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
+ });
+ const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  const combatTracker=useMapCombat({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
@@ -398,7 +450,8 @@ function App(){
   const url=new URL(location.origin+location.pathname);
   url.searchParams.set('campaign',activeId);
   url.searchParams.set('sheet',characterId);
-  window.open(url.toString(),'_blank','noopener,noreferrer');
+  window.open(url.toString(),'_blank',
+   'popup=yes,width=920,height=760,resizable=yes,scrollbars=yes,noopener,noreferrer');
  }
  async function openOwnCharacter(characterId){
   const target=characters.find(ch=>ch.id===characterId&&ch.user_id===user);
@@ -457,6 +510,9 @@ function App(){
     npc_bars_public:draft.barsPublic
    }).eq('id',record.data.id));
    await refreshNpcs();
+   // Template edits can propagate unchanged defaults to existing NPC copies.
+   await refreshTokens();
+   await refreshMonitors();
   }else{
    await read(db.from('map_tokens').update({
     name:draft.name.trim(),npc_values:draft.values,image_path:draft.tokenPath,
@@ -475,9 +531,12 @@ function App(){
    }}:editor));
  }
  async function placeNpc(npcId,x=1,y=1){
-  const npc=npcs.find(n=>n.id===npcId);
-  if(!npc||!selectedMap||!isDM)return;
+  if(!npcId||!selectedMap||!isDM)return;
   try{
+   // Always start from the current bestiary sheet, not cached sidebar data.
+   const npc=await read(db.from('npc_templates')
+    .select('id,name,field_values,token_path,npc_bars_public')
+    .eq('id',npcId).eq('campaign_id',activeId).single());
    await read(db.from('map_tokens').insert({
     campaign_id:activeId,map_id:selectedMap,name:npc.name,
     npc_template_id:npc.id,npc_values:structuredClone(npc.field_values||{}),
@@ -505,6 +564,39 @@ function App(){
    await refreshMonitors();
    setSelectedTokenId(created.id);
   }catch(e){fail(e)}
+ }
+ async function placeIssuedToolOnMap(id,x,y){
+  const issued=campaignTools.issued.find(t=>t.id===id);
+  if(!issued||!selectedMap)return fail('Tool not available on this map.');
+  try{await campaignTools.place(issued,selectedMap,x,y)}
+  catch(e){fail(e)}
+ }
+ function prepareHandoutPin(handoutId){
+  if(!isDM||!selectedMap)return fail('Select a map first.');
+  if(!campaignHandouts.handouts.some(h=>h.id===handoutId))return fail('Handout not found.');
+  setTab('tabletop');setRightTab('dm');
+  setMapSettingEditor(old=>({...old,previewing:false,layer:'light',enabled:true,
+   lockLight:false,tool:'pin',pinHandoutId:handoutId,selectedId:null}));
+ }
+ async function createHandoutPin(handoutId,point){
+  if(!isDM||!selectedMap||!campaignHandouts.handouts.some(h=>h.id===handoutId))return;
+  try{
+   const pin=await campaignHandouts.createPin({handoutId,kind:'note',...point});
+   setMapSettingEditor(old=>({...old,tool:'select',pinHandoutId:''}));
+   setOpenedHandout({id:handoutId,pinId:pin.id,
+    preview:campaignHandouts.handouts.find(h=>h.id===handoutId)});
+  }catch(e){fail(e)}
+ }
+ async function openMapHandoutPin(pin){
+  try{
+   const note=await campaignHandouts.readPinNote(pin);
+   if(!note)throw Error('This pin is no longer available to you.');
+   setOpenedHandout({id:note.id,pinId:pin.id,preview:note});
+  }catch(e){fail(e)}
+ }
+ async function moveMapHandoutPin(pin,point){
+  if(!isDM)return;
+  try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e)}
  }
  async function dropExistingUnit(tokenId,x,y){
   const t=tokens.find(t=>t.id===tokenId);
@@ -538,7 +630,7 @@ function App(){
   }catch(error){console.warn('Sheet artwork saved, but map token image could not refresh',error)}
   void refreshMonitors();
  }
- // A sheet opened in a browser tab runs under its own Supabase session,
+ // A sheet pop-out runs under its own Supabase session,
  // with normal character RLS and account permissions.
  useEffect(()=>{
   if(!launchSheet||launchHandled.current||!camp||activeId!==launchSheet.campaignId)return;
@@ -665,10 +757,20 @@ function App(){
  }
  useEffect(()=>{
   if(!db){setAuthReady(true);return}
-  db.auth.getSession().then(({data})=>{setSession(data.session);setAuthReady(true)});
-  const {data}=db.auth.onAuthStateChange((event,s)=>{
-   // Signed asset URLs carry access permissions: reset across identities.
-   if(event==='SIGNED_IN'||event==='SIGNED_OUT')signedAssetStore.clear();
+  db.auth.getSession().then(({data})=>{
+   const identity=data.session?.user?.id||null;
+   if(signedAssetIdentity.current!==identity){
+    if(signedAssetIdentity.current!==null)signedAssetStore.clear();
+    signedAssetIdentity.current=identity;
+   }
+   setSession(data.session);setAuthReady(true);
+  });
+  const {data}=db.auth.onAuthStateChange((_event,s)=>{
+   // Resuming the same signed-in account must not blank the token/map art.
+   const identity=s?.user?.id||null;
+   if(signedAssetIdentity.current!==identity){
+    signedAssetStore.clear();signedAssetIdentity.current=identity;
+   }
    setSession(s);
   });
   return()=>data.subscription.unsubscribe();
@@ -676,6 +778,8 @@ function App(){
  useEffect(()=>{if(user)fetchCampaigns(launchSheet?.campaignId||launchNpc?.campaignId);else{setCampaigns([]);setActiveId('')}},[user]);
  useEffect(()=>{if(activeId&&user){setCamp(null);setTab('tabletop');setRightTab('chat');setMapSettingPopped(false);setSelectedTokenId(null);setQuickEditToken(null);setStatusEditToken(null);
   setPendingQuickTokens({});setStatusSavingTokens({});statusPatches.current.clear();
+  setSelectedToolIssueId(null);
+  setOpenedHandout(null);
   setMacroBuilderOpen(false);setMacros([]);
   quickWritePatches.current.clear();quickCache.current.clear();setTab('tabletop');
   ++monitorRequest.current;setMapCalibrationPreview(null);setFolder(null);setNpcEditors([]);setCharacterEditor(null);setError('');fetchCampaign(activeId)}else if(!activeId){setMapSettingPopped(false);setCamp(null);setCharacter(null);setMaps([]);setTokens([]);setMsgs([]);setMembers([])}},[activeId,user]);
@@ -841,10 +945,10 @@ function App(){
    seq:++liveMovementSeq.current,final
   }}).catch(e=>console.warn('Movement preview unavailable',e));
  }
- function sendLiveMeasurement(measure,phase='preview'){
+ function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
   const now=Date.now();
-  if(phase==='preview'&&now-lastMeasureSent.current<65)return;
+  if(phase==='preview'&&!force&&now-lastMeasureSent.current<65)return;
   // Revisions keep out-of-order network previews from reappearing after clear.
   measureSequence.current=Math.max(now*1000,measureSequence.current+1);
   const data=liveMeasurementPayload(measure,measure?.id,user,selectedMap,
@@ -1023,6 +1127,30 @@ function App(){
   latestNpcsRefresh.current=refreshNpcs;
   latestMovementAccess.current={tokens,members,mapId:selectedMap,user};
  });
+ // Browsers may throttle or suspend background tabs. Keep the board mounted;
+ // reconcile only after a meaningful absence, without clearing image URLs.
+ useEffect(()=>{
+  if(!db||!activeId||!user)return;
+  let hiddenAt=document.visibilityState==='hidden'?Date.now():null;
+  let lastRefresh=0;
+  const resync=()=>{
+   if(document.visibilityState==='hidden'){hiddenAt=Date.now();return}
+   if(hiddenAt===null)return;
+   const elapsed=Date.now()-hiddenAt;
+   hiddenAt=null;
+   if(elapsed<1200||Date.now()-lastRefresh<1800)return;
+   lastRefresh=Date.now();
+   void latestTokenRefresh.current?.();
+   void latestMonitorRefresh.current?.();
+   void latestMapsRefresh.current?.();
+  };
+  document.addEventListener('visibilitychange',resync);
+  window.addEventListener('focus',resync);
+  return()=>{
+   document.removeEventListener('visibilitychange',resync);
+   window.removeEventListener('focus',resync);
+  };
+ },[db,activeId,user]);
  useEffect(()=>{
   if(!db||!user){setUrls({});return}
   setUrls(previous=>Object.fromEntries(maps.map(m=>[m.id,previous[m.id]||''])));
@@ -1847,14 +1975,24 @@ function App(){
   onSignOut={()=>db.auth.signOut()}
   onOpenAccountSettings={()=>setAccountSettingsOpen(true)}
   error={error} onClearError={()=>setError('')}/>
-  {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
+  {openedHandout&&activeHandout&&<CampaignHandoutWindow
+  key={activeHandout.id} note={activeHandout} pin={activeHandoutPin}
+  isDM={isDM} folders={campaignHandouts.folders}
+  onClose={()=>setOpenedHandout(null)}
+  onSave={(note,patch)=>campaignHandouts.updateHandout(note,patch)}
+  onDelete={campaignHandouts.deleteHandout}
+  onUpdatePin={campaignHandouts.updatePin}
+  onDeletePin={campaignHandouts.deletePin}
+  onCollect={campaignHandouts.collectPin}/>} 
+ {accountSettingsOpen&&<AccountSettings db={db} user={session.user}
    onClose={()=>setAccountSettingsOpen(false)} onUpdated={accountUpdated}/>}
  </>;
  if(launchNpc&&!isDM&&camp)return <div className="center" role="alert">
   Only the campaign DM can open an NPC pop-out.
  </div>;
  if(!camp)return <div className="welcome-screen"><div className="welcome-shell"><h2>Opening campaign…</h2><p className="muted small">Loading your maps and character sheets.</p><button className="secondary" onClick={()=>setActiveId('')}>Back to main menu</button></div></div>;
- return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')} style={{'--ui-scale':uiScale}}>
+ return <div className={'app no-left-rail'+(launchNpc?' npc-popup-app':'')+
+  (launchSheet?' sheet-popup-app':'')} style={{'--ui-scale':uiScale}}>
  <main>
  {error&&<div className="error alert" onClick={()=>setError('')}>{error} ✕</div>}
  <div className="workarea"><div className="primary">
@@ -1867,7 +2005,7 @@ function App(){
   </div>
  </section>}
  {camp&&<>
- {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>setTab('tabletop')}>
+ {tab==='sheet'&&<FloatingWindow kind="sheet" onClose={()=>launchSheet?window.close():setTab('tabletop')}>
  <section className="panel page-panel floating-sheet-content"><div className="heading"><div className="character-heading">
  <Artwork db={db} path={character?.portrait_path} alt={character?.name||'Character'} className="character-portrait"/>
  <div><h2>{character?.name||'Character'}</h2><span className="muted small">{saveState}</span></div></div>
@@ -1879,11 +2017,11 @@ function App(){
    </select>
   </label>
   <button type="button" className="secondary" disabled={!character}
-   onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a browser tab">
-   ↗ New tab</button>
+   onClick={()=>openSheetBrowserTab(character.id)} title="Open this character sheet in a separate browser window">
+   ↗ Pop out</button>
   <button type="button" className="secondary" disabled={!character}
    onClick={()=>setArtStudio(true)}>My Token Library</button>
-  <button type="button" className="secondary return-to-game" onClick={()=>setTab('tabletop')}>← Return to Game</button>
+  <button type="button" className="secondary return-to-game" onClick={()=>launchSheet?window.close():setTab('tabletop')}>{launchSheet?'Close window':'← Return to Game'}</button>
 </div><div className="tabs">{camp.sheet_template.tabs.map(t=><button key={t.id} className={sheetTab===t.id?'selected':''} onClick={()=>setSheetTab(t.id)}>{t.name}</button>)}
  <button className={sheetTab===PERSONAL_RESOURCE_TAB?'selected':''}
   onClick={()=>setSheetTab(PERSONAL_RESOURCE_TAB)}>Resources</button></div>
@@ -1968,10 +2106,14 @@ function App(){
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
+   handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
+   onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
    onPatchEnvironmentObject={patchEnvironmentObject} characters={characters}
    template={camp?.sheet_template} onSelectEnvironmentObject={id=>setMapSettingEditor(old=>({...old,selectedId:id}))}
    user={user} isDM={isDM} move={moveToken} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
+   toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
+   onToolPlace={placeIssuedToolOnMap} onToolOpen={setSelectedToolIssueId}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
     onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
@@ -2005,6 +2147,10 @@ function App(){
  selectedToken={selectedToken} onSelectToken={setSelectedTokenId}
  onOpenToken={openTokenSheet} onResizeToken={resizeToken}
  onOpenStatus={openTokenStatuses}
+ campaignHandouts={campaignHandouts} onOpenHandout={id=>setOpenedHandout({id})}
+ onPrepareHandoutPin={prepareHandoutPin} onHandoutError={fail}
+ campaignTools={campaignTools} onOpenCampaignTool={setSelectedToolIssueId}
+ onToolError={fail}
  chat={chat} onChatChange={setChat} onSendChat={sendChat}
  npcs={npcs} npcFolders={npcFolders}
  onNewNpcFolder={makeNpcFolder} onNewNpc={makeNpc}
@@ -2014,6 +2160,7 @@ function App(){
  mapEnvironment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
  mapEnvironmentStatus={mapEnvironmentStatus}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
+ handoutsForMap={campaignHandouts.handouts}
  mapSettingPopped={mapSettingPopped}
  combat={combatTracker.combat} combatPrivateEntries={combatTracker.privateEntries}
  combatBusy={combatTracker.busy} combatStatus={combatTracker.status}
@@ -2064,11 +2211,13 @@ function App(){
  {combatTracker.combat?.active&&combatTracker.open&&
   <CombatTurnOrder combat={combatTracker.combat}
    privateEntries={combatTracker.privateEntries}
+    db={db}
    tokens={tokens} user={user} isDM={isDM} busy={combatTracker.busy}
    onClose={()=>combatTracker.setOpen(false)}
    onNext={()=>combatTracker.command('next')}
    onPrevious={()=>combatTracker.command('previous')}
    onSort={()=>combatTracker.command('sort')}
+    onRemoveEntry={entryId=>combatTracker.command('remove',entryId)}
    onOpenSettings={()=>{setRightTab('dm');setTab('tabletop')}}
    onRollEntry={combatTracker.roll} onRollNpc={combatTracker.rollNpc}
    onLocate={tokenId=>{if(tokens.some(t=>t.id===tokenId&&(isDM||t.visible!==false))){
@@ -2092,7 +2241,8 @@ function App(){
      onEnvironmentChange={saveMapEnvironment}
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
-     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}/>
+     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
+     handouts={campaignHandouts.handouts}/>
    </div>
   </section>
  </FloatingWindow>}
@@ -2109,7 +2259,7 @@ function App(){
  {characterEditor&&isDM&&<CharacterEditor
   db={db} campaignId={activeId} viewerId={user}
   record={characterEditor.data} template={camp?.sheet_template}
-  onSaved={afterPlayerSheetSaved} onClose={()=>setCharacterEditor(null)}
+  onSaved={afterPlayerSheetSaved} onClose={()=>launchSheet?window.close():setCharacterEditor(null)}
    onOpenBrowserTab={()=>openSheetBrowserTab(characterEditor.data.id)}
   onRoll={(expression,label)=>roll(expression,label,null)}
   onCastSpell={({collectionId,entryId,mode})=>castSpell({
@@ -2125,6 +2275,10 @@ function App(){
      canEdit={isDM||(statusEditToken.owner_id===user&&playerMapId===statusEditToken.map_id)}
      onClose={()=>setStatusEditToken(null)} onApply={applyTokenStatuses}/>
    </QuickEditBoundary>}
+ {selectedToolIssue&&<CampaignToolSheet key={selectedToolIssue.id}
+  tool={selectedToolIssue} userId={user} isDM={isDM}
+  onSave={(tool,newState)=>campaignTools.updateState(tool,newState)}
+  onClose={()=>setSelectedToolIssueId(null)}/>}
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
    allowedFields={camp.token_quick_fields||[]}
@@ -2399,10 +2553,12 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
  </>;
 }
 
-function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
+function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
+ toolPlacements=[],toolIssued=[],onToolPlace,onToolOpen,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
- onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null}){
+ onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
+ handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin}){
  const[preview,setPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[marquee,setMarquee]=useState(null);
@@ -2550,7 +2706,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  };
  const snapSize=(v)=>Math.max(.25,Math.min(12,Math.round(v*4)/4));
  function dropOnMap(e){
-  const kinds=['application/x-forge-character','application/x-forge-unit','application/x-forge-npc'];
+  const kinds=['application/x-forge-character','application/x-forge-unit',
+   'application/x-forge-npc','application/x-forge-tool'];
   const match=kinds.find(k=>e.dataTransfer.types.includes(k));
   if(!match)return;
   e.preventDefault();
@@ -2559,12 +2716,14 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   const p=pos(e);
   if(match==='application/x-forge-character')onCharacterDrop(id,p.x,p.y);
   else if(match==='application/x-forge-unit')onUnitDrop(id,p.x,p.y);
+  else if(match==='application/x-forge-tool')onToolPlace?.(id,p.x,p.y);
   else if(isDM)onNpcDrop(id,p.x,p.y);
  }
  function allowMapDrop(e){
   const types=e.dataTransfer.types;
   const allowed=types.includes('application/x-forge-character')||
     types.includes('application/x-forge-unit')||
+    types.includes('application/x-forge-tool')||
     (isDM&&types.includes('application/x-forge-npc'));
   if(allowed)e.preventDefault();
  }
@@ -2578,10 +2737,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
  const mapPointInCells=e=>pointOnBattlemap(e.clientX,e.clientY,
   boardRef.current?.getBoundingClientRect(),map.width,map.height,
   map.grid_size,zoomRef.current);
- function beginMeasurement(pointerId,tool,point,pinned=false){
+ function beginMeasurement(pointerId,tool,point,pinned=false,sourceButton=0){
   if(!point||measureDrag.current)return;
   const measure={id:crypto.randomUUID(),tool,start:point,end:point};
-  measureDrag.current={pointerId,measure,pinned};
+  measureDrag.current={pointerId,measure,pinned,sourceButton};
   setLocalMeasurements(existing=>[...existing,{...measure,isLocal:true}]);
   onMeasurementPreview?.(measure,'preview');
  }
@@ -2602,7 +2761,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!current||current.pointerId!==e.pointerId)return;
   // Releasing the secondary button while primary remains down must NOT
   // finish a multi-leg movement measurement.
-  if(e.button===2&&(e.buttons&1)!==0)return;
+  if(!cancel&&e.button===2&&current.sourceButton===0)return;
   measureDrag.current=null;
   const point=cancel?current.measure.end:
    mapPointInCells(e)||current.measure.end;
@@ -2628,7 +2787,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(e.button!==0&&e.button!==2)return;
   setActiveMeasureTool(tool);
   e.preventDefault();e.stopPropagation();
-  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2};
+  toolDrag.current={pointerId:e.pointerId,tool,pinned:e.button===2,sourceButton:e.button};
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
  }
  function onToolPointerMove(e){
@@ -2639,12 +2798,12 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!measureDrag.current){
    if(e.clientX<rect.left||e.clientX>rect.right||
       e.clientY<rect.top||e.clientY>rect.bottom)return;
-   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned);
+   beginMeasurement(e.pointerId,current.tool,mapPointInCells(e),current.pinned,current.sourceButton);
   }else updateMeasurement(e);
  }
  function onToolPointerUp(e,cancel=false){
   if(toolDrag.current?.pointerId!==e.pointerId)return;
-  if(e.button===2&&(e.buttons&1)!==0)return;
+  if(!cancel&&e.button===2&&measureDrag.current?.sourceButton===0)return;
   finishMeasurement(e,cancel);
   toolDrag.current=null;
   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
@@ -2655,7 +2814,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
    pan.current||measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   beginMeasurement(e.pointerId,activeMeasureTool,mapPointInCells(e),
-   e.button===2);
+   e.button===2,e.button);
   try{viewportRef.current?.setPointerCapture(e.pointerId)}catch{}
  }
  function pinCurrentMeasurementOnRightClick(e){
@@ -2665,13 +2824,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   if(!activeMeasureTool||e.button!==2||!measureDrag.current)return;
   e.preventDefault();e.stopPropagation();
   const current=measureDrag.current;
-  if(current.measure.tool==='line'&&!current.pinned&&(e.buttons&1)!==0){
+  if(shouldBendLineOnRightPress(current,e.button)){
    const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end);
    if(next!==current.measure){
     current.measure=next;
     setLocalMeasurements(existing=>existing.map(m=>m.id===next.id?
      {...next,isLocal:true}:m));
-    onMeasurementPreview?.(next,'preview');
+    onMeasurementPreview?.(next,'preview',true);
    }
    return;
   }
@@ -2691,8 +2850,29 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     e.clientY<rect.top||e.clientY>rect.bottom)return;
    pinCurrentMeasurementOnRightClick(e);
   }
+  // Some browsers delay pointerup until both mouse buttons are released.
+  // Native left mouseup always terminates a left-drag measurement promptly.
+  function onMouseUp(e){
+   const current=measureDrag.current;
+   if(e.button!==0||current?.sourceButton!==0)return;
+   finishMeasurement({pointerId:current.pointerId,button:0,
+    clientX:e.clientX,clientY:e.clientY});
+   if(toolDrag.current?.pointerId===current.pointerId)toolDrag.current=null;
+  }
+  // Continue tracking even when a second mouse button drops pointer capture.
+  function onMouseMove(e){
+   const current=measureDrag.current;
+   if(current?.sourceButton!==0)return;
+   updateMeasurement({pointerId:current.pointerId,clientX:e.clientX,clientY:e.clientY});
+  }
   window.addEventListener('mousedown',onMouseDown,true);
-  return()=>window.removeEventListener('mousedown',onMouseDown,true);
+  window.addEventListener('mousemove',onMouseMove,true);
+  window.addEventListener('mouseup',onMouseUp,true);
+  return()=>{
+   window.removeEventListener('mousedown',onMouseDown,true);
+   window.removeEventListener('mousemove',onMouseMove,true);
+   window.removeEventListener('mouseup',onMouseUp,true);
+  };
  },[active,activeMeasureTool]);
  function startPan(e){
   // Middle mouse pans even if it starts over a token. Touch keeps one-finger
@@ -2814,7 +2994,10 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
   <MeasurementToolBar tool={activeMeasureTool}
    onPointerDown={onToolPointerDown} onPointerMove={onToolPointerMove}
    onPointerUp={e=>onToolPointerUp(e)}
-   onPointerCancel={e=>onToolPointerUp(e,true)}
+   onPointerCancel={e=>{
+    if(measureDrag.current?.sourceButton===0)return;
+    onToolPointerUp(e,true);
+   }}
    onKeySelect={setActiveMeasureTool} onClearPins={clearMyPinnedMeasurements}/>
   <div className={'mapscroll map-pan-region'+(panning?' is-panning':'')+
     (marquee?' is-selecting':'')} ref={viewportRef}
@@ -2830,7 +3013,11 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onPointerMove={e=>{moveViewportPointer(e);updateMeasurement(e)}}
     onPointerUp={e=>{finishMeasurement(e);endViewportPointer(e)}}
     onPointerCancel={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}
-    onLostPointerCapture={e=>{finishMeasurement(e,true);endViewportPointer(e,true)}}>
+    onLostPointerCapture={e=>{
+     // Native mouseup, not lost capture, completes a held-left route.
+     if(measureDrag.current?.sourceButton===0)return;
+     finishMeasurement(e,true);endViewportPointer(e,true);
+    }}>
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
@@ -2839,6 +3026,13 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
     onDrop={dropOnMap}
     style={{width:map.width*scale,height:map.height*scale,backgroundImage:(isDM&&environmentEditor?.enabled&&environmentEditor.showBackground===false)?undefined:(url?'url('+JSON.stringify(url)+')':undefined),backgroundSize:'100% 100%'}}>
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
+    <MapPinLayer map={map} scale={scale} pins={handoutPins} isDM={isDM}
+     editor={environmentEditor} active={active}
+     onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}/>
+    <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
+     active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
+     placements={toolPlacements} issued={toolIssued}
+     onMove={(issueId,x,y)=>onToolPlace?.(issueId,x,y)} onOpen={onToolOpen}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
@@ -2856,7 +3050,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
-      (combatActiveTokenId===t.id?' token-current-turn':'')}
+      (combatActiveTokenId===t.id?' token-current-turn':'')+
+      (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
@@ -2880,6 +3075,8 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
       onPointerCancel={e=>finishTokenDrag(e,t,true)}>
       {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
+      {normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')&&
+       <span className="token-dead-overlay" aria-hidden="true"/>}
       <TokenStatusBadges effects={t.status_effects} catalog={statusCatalog}
        position={statusPosition}
        canEdit={isDM||t.owner_id===user} onOpen={()=>onTokenStatus(t)}/>

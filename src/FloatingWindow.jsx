@@ -9,6 +9,7 @@ const CONFIG={
  studio:{width:820,height:660},
  quick:{width:365,height:355},
  inventory:{width:430,height:520},
+ handout:{width:535,height:540},
  account:{width:445,height:565},
  status:{width:650,height:610},
  mapsetting:{width:365,height:560},

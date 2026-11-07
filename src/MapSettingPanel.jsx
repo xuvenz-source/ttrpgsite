@@ -8,7 +8,8 @@ const drawTools=[
  {id:'wall-pen',label:'Freehand pen'},
  {id:'door',label:'Place door'},
  {id:'window',label:'Place window'},
- {id:'light',label:'Place light'}
+ {id:'light',label:'Place light'},
+ {id:'pin',label:'Place handout pin'}
 ];
 const presets=[['solid','Solid wall'],['glass','Transparent wall'],
  ['invisible','Invisible barrier'],['one-way','One-way vision'],
@@ -25,7 +26,7 @@ function Check({title,value,onChange}){
   onChange={e=>onChange(e.target.checked)}/>{title}</label>;
 }
 export default function MapSettingPanel({map,environment,editor,onEditorChange,
- onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[]}){
+ onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],handouts=[]}){
  const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
  const selected=env.objects.find(o=>o.id===editor.selectedId);
  const updateEditor=change=>onEditorChange({...editor,...change});
@@ -38,10 +39,8 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
  const locked=activeLayer==='background'?editor.lockBackground:editor.lockLight;
  const canDraw=editor.enabled&&activeLayer==='light'&&!editor.lockLight;
  return <div className="side-form map-setting-panel">
-  <p className="muted tiny">All geometry is saved separately for this map. Layer outlines and drawing controls are DM-only.</p>
   <div className="map-setting-preview-controls">
-   <strong>Player perspective preview</strong>
-   <p className="muted tiny">Choose a token to simulate its current line of sight and nearby lighting. This is a DM-only visual check; player fog and collision still require server-side implementation.</p>
+   <strong>Player perspective</strong>
    <label>View from token<select aria-label="Preview token" disabled={editor.previewing||!previewTokens.length}
     value={previewTokenId} onChange={e=>updateEditor({previewTokenId:e.target.value})}>
     {previewTokens.length===0&&<option value="">Place a visible token first</option>}
@@ -69,10 +68,8 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     {lockLight:!editor.lockLight}:{lockBackground:!editor.lockBackground})}
     aria-pressed={locked}>{locked?'🔒 Locked':'🔓 Unlocked'}</button>
   </div>
-  <p className="muted tiny">Visibility and locking only affect the DM editor, not gameplay or players.</p>
   {activeLayer==='background'?<>
    <h4>Map / Background</h4>
-   <p className="muted tiny">Set image dimensions and grid alignment without touching environment objects.</p>
    {editor.lockBackground?<p className="muted small">Unlock this layer to edit background calibration.</p>:
     <MapCalibration key={map?.id||'no-map'} map={map}
       onPreview={onMapCalibrationPreview} onSave={onSaveMapCalibration}/>}
@@ -91,16 +88,19 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      {drawTools.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
     </select>
    </label>
-   <p className="muted tiny">Walls, doors and windows use precise free placement, not grid snapping. Select an existing door or window and drag either red endpoint to resize or rotate it.</p>
    {['wall-line','wall-pen'].includes(editor.tool)&&<>
     <label>New wall preset<select disabled={!canDraw} value={editor.preset||'solid'}
      onChange={e=>updateEditor({preset:e.target.value})}>
      {presets.map(([value,label])=><option key={value} value={value}>{label}</option>)}
     </select></label>
-    <p className="muted tiny">{editor.tool==='wall-line'?
-     'Left-click to place each connected point; right-click to finish the chain. Escape cancels.' :
-     'Hold and drag to draw an irregular wall. Release to save the stroke.'}</p>
    </>}
+   {editor.tool==='pin'&&<label>Handout
+    <select disabled={!canDraw||!handouts.length} value={editor.pinHandoutId||''}
+     onChange={e=>updateEditor({pinHandoutId:e.target.value})}>
+     <option value="">Select handout</option>
+     {handouts.map(h=><option value={h.id} key={h.id}>{h.title}</option>)}
+    </select>
+   </label>}
    {editor.tool==='light'&&<>
     <strong>New light defaults</strong>
     <NumberOption title="Bright radius (feet)" value={editor.lightBright??20}
@@ -109,8 +109,8 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
      onChange={v=>updateEditor({lightDim:v??0})}/>
    </>}
    <div className="map-setting-divider"/>
-   <h4>Selected object</h4>
-   {!selected?<p className="muted tiny">Choose Select / edit, then click a wall, door, window, or light marker on the map to inspect its settings.</p>:<>
+   {selected&&<h4>Selected object</h4>}
+   {!selected?null:<>
     <strong>{selected.type.charAt(0).toUpperCase()+selected.type.slice(1)}</strong>
     {selected.type==='light'?<>
      <Check title="Light enabled" value={selected.enabled!==false}
@@ -119,7 +119,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
       onChange={v=>updateSelected({bright:v??0})}/>
      <NumberOption title="Additional dim radius (feet)" value={selected.dim}
       onChange={v=>updateSelected({dim:v??0})}/>
-     <p className="muted tiny">Total illuminated distance: {lightRadii(selected).outer} ft</p>
+     <small className="muted tiny">Reach: {lightRadii(selected).outer} ft</small>
      <label>Light color<input type="color" value={selected.color||'#ffce7a'}
       onChange={e=>updateSelected({color:e.target.value})}/></label>
      <NumberOption title="Brightness / intensity (%)" value={selected.intensity??100}
@@ -169,7 +169,6 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
        onChange={v=>updateSelected({movementAt:v})}/>
       <NumberOption title="Can see across at elevation (feet)" value={selected.visionAt}
        onChange={v=>updateSelected({visionAt:v})}/>
-      <p className="muted tiny">Conditions are evaluated separately for each token against this sheet field.</p>
      </>}
     </>}
     <button type="button" className="secondary map-setting-danger"
@@ -192,10 +191,8 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
    </select></label>
    <NumberOption title="Effect intensity (%)" min={0} max={100} value={env.effects.intensity}
     onChange={v=>updateEnv({effects:{...env.effects,intensity:v??0}})}/>
-   <p className="muted tiny">{env.objects.length} environment objects on this map.</p>
   </>}
   </>}
   <p className="map-setting-save" role="status">{saveStatus||'Not loaded'}</p>
-  <p className="muted tiny">Editor geometry and preview controls are DM-only. Player collision, persistent fog and lighting enforcement remain separate server-side work.</p>
  </div>;
 }

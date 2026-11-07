@@ -50,7 +50,6 @@ export default function MapObjectQuickAdjust({object,map,scale,onPatch,onClose,t
      onChange={locked=>update({locked})}/>
     <Toggle label="Opened" checked={object.state==='open'}
      onChange={opened=>update({state:opened?'open':'closed'})}/>
-    <p className="muted tiny">Drag either red endpoint to resize or rotate the {object.type}.</p>
    </>}
    {object.type==='light'&&<>
     <Toggle label="Emitting light" checked={object.enabled!==false}
@@ -59,7 +58,7 @@ export default function MapObjectQuickAdjust({object,map,scale,onPatch,onClose,t
      onChange={bright=>update({bright:bright??0},false)}/>
     <Numeric label="Additional dim (ft)" value={object.dim}
      onChange={dim=>update({dim:dim??0},false)}/>
-    <p className="muted tiny">Total reach: {lightRadii(object).outer} ft</p>
+    <small className="muted tiny">Reach: {lightRadii(object).outer} ft</small>
     <label className="map-quick-color"><span>Colour</span>
      <input type="color" value={object.color||'#ffce7a'}
       onChange={e=>update({color:e.target.value},false)}/></label>

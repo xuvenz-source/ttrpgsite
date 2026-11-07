@@ -57,6 +57,21 @@ export default function NpcEditor({
   if(!onAddSpellToHotbar)throw Error('The hotbar is unavailable.');
   return onAddSpellToHotbar(details);
  }
+ async function restoreBestiaryDefaults(){
+  if(record.kind!=='token'||!record.data.npc_template_id)return;
+  if(!confirm('Replace this token\'s stats with the current Bestiary defaults? Other tokens will not change.'))return;
+  setError('');setNotice('');
+  try{
+   const {data,error:lookupError}=await db.from('npc_templates')
+    .select('field_values').eq('id',record.data.npc_template_id)
+    .eq('campaign_id',campaignId).maybeSingle();
+   if(lookupError)throw lookupError;
+   if(!data)throw Error('The original Bestiary sheet is no longer available.');
+   setDraft(old=>({...old,values:enrichSheetValues(template,
+    structuredClone(data.field_values||{}))}));
+   setNotice('Current Bestiary values loaded for this token. Save to apply.');
+  }catch(e){setError(e?.message||String(e))}
+ }
  async function saveToBestiary(){setSaving(true);setNotice('');setError('');
   try{await onSaveAsTemplate(draft);setNotice('Saved a reusable copy in your Bestiary.')}
   catch(e){setError(e?.message||String(e))}finally{setSaving(false)}
@@ -145,7 +160,11 @@ export default function NpcEditor({
  </div>
  {error&&<p className="error">{error}</p>}
  {notice&&<p className="good">{notice}</p>}
- <div className="actions">{record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button className="secondary" onClick={()=>void save(true)}
+ <div className="actions">
+ {record.kind==='token'&&record.data.npc_template_id&&
+  <button type="button" className="secondary" disabled={saving}
+   onClick={()=>void restoreBestiaryDefaults()}>Restore Bestiary defaults</button>}
+ {record.kind==='token'&&<button className="secondary" onClick={saveToBestiary} disabled={saving}>Save copy to Bestiary</button>}<button className="secondary" onClick={close}>Cancel</button><button className="secondary" onClick={()=>void save(true)}
   disabled={saving||!draft.name.trim()}>Save & keep open</button>
  <button onClick={()=>void save(false)} disabled={saving||!draft.name.trim()}>
   {saving?'Saving…':'Save & close'}</button></div>

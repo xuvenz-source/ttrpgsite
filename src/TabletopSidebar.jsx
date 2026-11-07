@@ -1,4 +1,4 @@
-import React,{useLayoutEffect,useMemo,useRef} from 'react';
+import React,{useLayoutEffect,useMemo,useRef,useState} from 'react';
 import useSidebarMenus from './useSidebarMenus.js';
 import {sidebarMenuOpen} from './SidebarMenuState.js';
 import Artwork from './Artwork.jsx';
@@ -13,6 +13,8 @@ import SpellChatCard from './SpellChatCard.jsx';
 import MacroChatCard from './MacroChatCard.jsx';
 import RollMathTooltip from './RollMathTooltip.jsx';
 import DmItemDistribution from './DmItemDistribution.jsx';
+import CampaignToolsPanel from './CampaignToolsPanel.jsx';
+import CampaignHandoutsPanel from './CampaignHandoutsPanel.jsx';
 
 const when=date=>new Date(date).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const tabs=[
@@ -106,7 +108,7 @@ function UnitGroups({db,tokens,characters,members,accountNames=[],onlineMembers=
         owner.user_id===user?onOpenOwnCharacter(ch.id):onOpenPlayerCharacter(ch.id)}>
         Sheet</button>
        <button type="button" className="secondary unit-character-sheet"
-        title="Open in separate browser tab" onClick={()=>onOpenCharacterTab(ch.id)}>↗</button>
+        title="Open character sheet in separate window" aria-label={"Pop out "+ch.name+" character sheet"} onClick={()=>onOpenCharacterTab(ch.id)}>↗</button>
       </div>
       {visible&&<div className="unit-character-contents">
        {activeMap&&<div draggable className="unit-character-drag"
@@ -217,10 +219,13 @@ export default function TabletopSidebar({
  macroCount=0,onOpenMacros,
  uiScale,onChangeUiScale,
  activeCharacterId,newCharacterName,onChangeNewCharacterName,onCreateCharacter,onOpenOwnCharacter,onOpenCharacterTab,
- campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,onOpenAccountSettings,hasCampaign
+ campaignName,campaignTokenDisplay,activeCampaignId,onReturnToMenu,onOpenAccountSettings,hasCampaign,
+ campaignTools,onOpenCampaignTool,onToolError,
+ campaignHandouts,onOpenHandout,onPrepareHandoutPin,onHandoutError,handoutsForMap=[]
 }){
  const validPanel=panel==='bestiary'?(isDM?'dm':'units'):(!isDM&&panel==='dm'?'units':panel);
  const {expanded:expandedMenus,toggle:onMenuToggle}=useSidebarMenus(db,user,activeCampaignId);
+ const [unitsSubsection,setUnitsSubsection]=useState('characters');
  const chatScrollRef=useRef(null);
  const followNewChatRef=useRef(true);
  // Scroll to latest when a chat view opens or the viewed map changes.
@@ -277,7 +282,16 @@ export default function TabletopSidebar({
     <button type="submit">Send</button>
    </form><p className="muted tiny right-chat-help">/roll 2d6+3 · /roll 2d20kh1 · /macro Attack</p>
   </>}
-  {validPanel==='units'&&<div className="right-body"><UnitGroups db={db} tokens={tokens}
+  {validPanel==='units'&&<div className="right-body">
+   <div className="units-subtabs" role="group" aria-label="Units section">
+    <button type="button" className={'secondary'+(unitsSubsection==='characters'?' selected':'')}
+     aria-pressed={unitsSubsection==='characters'} onClick={()=>setUnitsSubsection('characters')}>Characters</button>
+    <button type="button" className={'secondary'+(unitsSubsection==='tools'?' selected':'')}
+     aria-pressed={unitsSubsection==='tools'} onClick={()=>setUnitsSubsection('tools')}>Tools</button>
+    <button type="button" className={'secondary'+(unitsSubsection==='handouts'?' selected':'')}
+     aria-pressed={unitsSubsection==='handouts'} onClick={()=>setUnitsSubsection('handouts')}>Handouts</button>
+   </div>
+   {unitsSubsection==='characters'?<UnitGroups db={db} tokens={tokens}
    characters={characters} members={members} accountNames={accountNames}
    onlineMembers={onlineMembers} user={user} isDM={isDM} selectedToken={selectedToken}
    onSelect={onSelectToken} onOpen={onOpenToken} onStatus={onOpenStatus}
@@ -288,7 +302,14 @@ export default function TabletopSidebar({
    onChangeNewCharacterName={onChangeNewCharacterName}
    onAddToken={onAddToken} newToken={newToken} onChangeTokenName={onChangeTokenName}
    tokenOwner={tokenOwner} onChangeTokenOwner={onChangeTokenOwner} activeMap={activeMap}
-   expandedMenus={expandedMenus} onMenuToggle={onMenuToggle}/></div>}
+   expandedMenus={expandedMenus} onMenuToggle={onMenuToggle}/>:
+    unitsSubsection==='tools'?<CampaignToolsPanel tools={campaignTools} members={members}
+     accountNames={accountNames} userId={user} isDM={isDM} mapId={activeMap?.id}
+     onOpenTool={onOpenCampaignTool} onError={onToolError}/>:
+    <CampaignHandoutsPanel library={campaignHandouts} isDM={isDM}
+     onOpenHandout={onOpenHandout} onPreparePin={onPrepareHandoutPin}
+     onError={onHandoutError}/>}
+  </div>}
   {validPanel==='settings'&&<div className="right-body">
    <div className="side-form">
     <button type="button" className="secondary full-button" onClick={onOpenAccountSettings}>
@@ -396,7 +417,8 @@ export default function TabletopSidebar({
        onEditorChange={onMapSettingEditorChange} onEnvironmentChange={onMapEnvironmentChange}
        saveStatus={mapEnvironmentStatus}
        onMapCalibrationPreview={onMapCalibrationPreview}
-       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}/>
+       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}
+       handouts={handoutsForMap}/>
      </>}
     </SavedDetails>
     <SavedDetails menuKey={'dm/token'} expanded={expandedMenus} onMenuToggle={onMenuToggle} className="side-details">

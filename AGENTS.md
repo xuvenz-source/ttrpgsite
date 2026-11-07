@@ -16,6 +16,15 @@
 - Keep secrets in Vercel/Supabase protected environments, never Git or chat. Never make database migrations or deploy Edge Functions as side effects of frontend staging.
 - In an explicitly **ideas-only/log-only** conversation, document requested ideas but perform no changes.
 
+## Database testing policy — live environment
+
+- **There is no separate database testing platform.** Do not require a paid staging database, Supabase preview branch, cloned database, disposable test environment, or synthetic-data SQL test run as a prerequisite to an approved database release.
+- Stage and review schema/RLS/RPC changes as code first. Use non-invasive checks (static migration review, GitHub CI, query inspection) where feasible. They do **not** establish that a migration has passed live testing.
+- **When the designer authorizes a production release**, apply the compatible migration to the existing live Supabase project and test the behaviour directly there using the project's current test campaigns and accounts. Report results and repair observed errors in subsequent controlled fixes.
+- Before any potentially destructive change, identify affected data, prefer backward-compatible/transactional migrations, prepare a rollback or recovery path where feasible, and disclose any irreversible risk. Do not use an expensive service or silently expose private data to make testing easier.
+- This policy removes the requirement for a separate database testing platform; it does **not** authorize deploying without approval, skipping basic security review, falsely claiming tests passed, or treating live testing as proof that access controls are secure.
+- Where older staged PRs demand disposable database or role-switched staging environment tests, apply this live-testing policy instead. Validate permissions in live with authorized test accounts after release, and correct failures promptly.
+
 ## Guardrails
 
 If the daily Vercel deployment quota is exhausted, report the blockage and preserve live functionality. Do not retry deployments in a loop or upgrade billing without user authorization. For staged UI functionality, prefer automated tests and a single approved browser preview at a milestone.
