@@ -685,7 +685,11 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     info.tools?.length===1&&info.members.length===0){
    const issue=toolIssued.find(t=>t.id===info.tools[0].issue_id);
    const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
-   if(carrier){setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return}
+   if(carrier){
+    onToolMovementPreview?.(info.tools[0],
+     Number(info.tools[0].x),Number(info.tools[0].y),true,true);
+    setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return;
+   }
   }
   // Complete the local drag in the same React batch as the optimistic move.
   setPreview(old=>{
@@ -725,13 +729,13 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
-   onMovementPreview?.(t,next.x,next.y,true);
+   onMovementPreview?.(t,next.x,next.y,true,cancel);
    if(!cancel||info.persistedDuringDrag)move(t,next.x,next.y);
   }
   for(const tool of info.tools||[]){
    const next=cancel?{x:Number(tool.x),y:Number(tool.y)}:
     {x:Number(tool.x)+info.dx,y:Number(tool.y)+info.dy};
-   onToolMovementPreview?.(tool,next.x,next.y,true);
+   onToolMovementPreview?.(tool,next.x,next.y,true,cancel);
    if(!cancel)onToolPlace?.(tool.issue_id,next.x,next.y);
   }
  }
