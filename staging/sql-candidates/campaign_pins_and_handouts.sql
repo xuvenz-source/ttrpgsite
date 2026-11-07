@@ -195,8 +195,8 @@ create policy "dm or visible library folder" on public.campaign_handout_folders
  for select to authenticated using(
   public.is_campaign_dm(campaign_id) or (
    public.is_campaign_member(campaign_id) and exists(
-    select 1 from public.campaign_handouts h where h.folder_id=id
-     and h.campaign_id=campaign_id and h.revealed=true
+    select 1 from public.campaign_handouts h where h.folder_id=campaign_handout_folders.id
+     and h.campaign_id=campaign_handout_folders.campaign_id and h.revealed=true
    )
   )
  );
@@ -217,7 +217,7 @@ create policy "dm or revealed handout or exposed pin" on public.campaign_handout
    public.is_campaign_member(campaign_id) and
    (revealed or exists(
     select 1 from public.campaign_map_pins p
-    where p.handout_id=id and p.campaign_id=campaign_id
+    where p.handout_id=campaign_handouts.id and p.campaign_id=campaign_handouts.campaign_id
      and p.visible and public.can_view_campaign_map(p.campaign_id,p.map_id)
    ))
   )
