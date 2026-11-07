@@ -31,3 +31,18 @@ No database migration, schema change, deployment or change to player access poli
 - Confirm player accounts cannot see marker icons, quick adjust menus or raw environment tables.
 - Verify token drag, group drag, measurement, map panning, combat rolls and hotbar are unchanged outside edit/preview mode.
 - Run `npm test` and `npm run build`; validate connected DM/player multiplayer sessions before production release.
+
+## Second staging batch — detachable settings and persistent map
+
+6. **DM Map setting pop-out.** The Map setting section now offers **↗ Pop out Map setting**. This opens a compact (365 × 560 px default), draggable, resizable and non-modal window using the site's existing `FloatingWindow` framework. It stays available while the DM switches sidebar tabs, and **↙ Dock** returns the editor to the DM tab. Only one editor instance is rendered (sidebar or window), and both use the same authoritative current map setting state and queued saves. The pop-out closes when leaving the campaign.
+
+7. **Keep the battlemap mounted across workspace tab changes.** The Board now remains mounted while Map library or Sheet designer is open; it is hidden instead of torn down. Returning to the same map preserves DOM state, scrolling and decoded image where supported by the browser. A change to the actual map ID still triggers the expected map-specific reset/recenter. Document-level Delete and measurement Escape handling are disabled while the map is hidden to prevent accidental input on other tabs. Signed asset URLs were already centrally cached; this change prevents unnecessary component reinitialization, **not necessarily a separate network image download** (server-call savings are not claimed without browser profiling).
+
+### Additional verification
+
+- Pop out the Map setting panel, switch between Chat, Units, Settings and DM, edit a door and light, confirm values persist. Return it with Dock. Confirm only one editor is visible at a time.
+- Drag and resize the floating panel and test on a small viewport. Ensure other draggable windows remain functional.
+- Keep one map selected, pan/zoom it, switch to Map library and Sheet designer and back; ensure the viewport, existing token selection and map image remain stable.
+- Change to another map intentionally: confirm recalculation, per-map saving and expected recentering occur.
+- Press Delete while in an unrelated workspace tab: the previously selected map token must not be deleted. Check normal Delete in active tabletop still works.
+- Use browser Network tab to distinguish image cache hits, signed URL requests and unrelated roster/chat requests when switching tabs; do not infer server load from visual redraws alone.
