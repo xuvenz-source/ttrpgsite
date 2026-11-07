@@ -100,4 +100,8 @@ test('candidate SQL has protected DM templates, recipient ACL and sanitized map 
 
  assert.doesNotMatch(sql,/jsonb_object_length\(/);
  assert.match(sql,/light_enabled boolean not null default false/);
+ assert.match(sql,/p_config \?& array\['bright','dim','color','intensity'\]/);
+ assert.match(sql,/not \(p_config \?& array\['inventoryMode','columns','rows'\]\)/);
+ assert.match(sql,/not \(p_state \?& array\['items','attrs','lit'\]\)/);
+
 });
