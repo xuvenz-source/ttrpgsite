@@ -41,6 +41,15 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
  const columns=field.columns?.length?field.columns:['Item','Qty','Weight','Notes'];
  const [error,setError]=useState('');
  const [editing,setEditing]=useState(null);
+ const editingIndex=editing&&typeof editing==='object'?
+  items.findIndex(row=>row._inventoryId===editing.itemId):editing;
+ const releaseEditing=()=>{
+  if(collaboration&&editing&&typeof editing==='object')
+   void collaboration.release(editing.itemId);
+  else if(Number.isInteger(editing))release(editing);
+ };
+ const dragIndex=current=>current?.itemId?
+  items.findIndex(row=>row._inventoryId===current.itemId):current?.index;
  const [drag,setDragState]=useState(null);
  const dragRef=useRef(null),gridRef=useRef(null);
  const setDrag=next=>{dragRef.current=next;setDragState(next)};
@@ -49,7 +58,8 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   if(index!=='new'&&bound(index))return;
   setError('');
   if(Number.isInteger(index))claim(index);
-  setEditing(index);
+  setEditing(collaboration&&Number.isInteger(index)&&itemId(index)?
+   {itemId:itemId(index)}:index);
  };
  const saveItem=(draft,{keepOpen=false}={})=>{
   if(editing==='new'){
@@ -57,16 +67,15 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    const index=items.length;
    onChange([...items,updateInventoryItem(freshItem,draft)]);
    setEditing(keepOpen?index:null);
-  }else if(Number.isInteger(editing)&&items[editing]){
-   onChange(items.map((row,i)=>i===editing?updateInventoryItem(row,draft):row));
-   if(!keepOpen){setEditing(null);release(editing)}
+  }else if(Number.isInteger(editingIndex)&&editingIndex>=0&&items[editingIndex]){
+   onChange(items.map((row,i)=>i===editingIndex?updateInventoryItem(row,draft):row));
+   if(!keepOpen){releaseEditing();setEditing(null)}
   }else throw Error('This item is no longer available.');
   setError('');
  };
- const deleteItem=()=>{if(Number.isInteger(editing)){
-  const removed=editing;
-  onChange(items.filter((_,i)=>i!==editing));setEditing(null);setError('');
-  release(removed);
+ const deleteItem=()=>{if(Number.isInteger(editingIndex)&&editingIndex>=0){
+  onChange(items.filter((_,i)=>i!==editingIndex));
+  releaseEditing();setEditing(null);setError('');
  }};
  const remove=index=>onChange(items.filter((_,i)=>i!==index));
  function gridPosition(clientX,clientY,grabX,grabY){
@@ -84,7 +93,8 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{return}
   e.currentTarget.focus();
   setDrag({
-   index,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+   index,itemId:collaboration?itemId(index):null,
+   pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
    grabX:e.clientX-box.left,grabY:e.clientY-box.top,
    x,y,turns:0,moved:false
   });
@@ -106,16 +116,18 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   try{if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
   setDrag(null);
-  if(cancel){release(current.index);return}
-  if(!current.moved&&!current.turns){openItem(current.index);return}
-  const placed=moveInventoryItem(items,current.index,current.x,current.y,cols,height,current.turns);
+  const index=dragIndex(current);
+  const releaseDrag=()=>current.itemId?void collaboration?.release(current.itemId):release(current.index);
+  if(cancel||index<0){releaseDrag();return}
+  if(!current.moved&&!current.turns){openItem(index);return}
+  const placed=moveInventoryItem(items,index,current.x,current.y,cols,height,current.turns);
   if(!placed){
    setError('Not enough empty slots for that position or orientation. No items were moved.');
-   release(current.index);
+   releaseDrag();
    return;
   }
   onChange(placed);setError('');
-  release(current.index);
+  releaseDrag();
  }
  // Browser-native HTML dragging suppresses keydown events. Pointer capture
  // keeps the left button held while we listen for R to rotate the footprint.
@@ -128,20 +140,23 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
     e.preventDefault();e.stopPropagation();
     setDrag({...current,turns:(current.turns+1)%4});
    }else if(e.key==='Escape'){
-    e.preventDefault();e.stopPropagation();setDrag(null);
+    e.preventDefault();e.stopPropagation();
+    if(current.itemId)void collaboration?.release(current.itemId);
+    else release(current.index);
+    setDrag(null);
    }
   }
   window.addEventListener('keydown',key,true);
   return()=>window.removeEventListener('keydown',key,true);
  },[!!drag]);
- const active=drag&&items[drag.index];
+ const active=drag&&items[dragIndex(drag)];
  const activeSize=active?itemSize(active,cols,height):null;
  const previewW=activeSize&&(drag.turns%2?activeSize.h:activeSize.w);
  const previewH=activeSize&&(drag.turns%2?activeSize.w:activeSize.h);
  const previewVisible=drag&&(drag.moved||drag.turns>0)&&drag.x>=0&&drag.y>=0&&
   drag.x+previewW<=cols&&drag.y+previewH<=height;
  const canDrop=previewVisible&&canPlaceInventoryItem(
-  items,drag.index,drag.x,drag.y,cols,height,drag.turns);
+  items,dragIndex(drag),drag.x,drag.y,cols,height,drag.turns);
  return <>
   <section className={'inventory-panel inventory-'+mode}>
    <div className="inventory-summary"><strong>{items.length} items</strong>
@@ -150,8 +165,9 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
      onClick={()=>{
       setError('');
       if(collaboration){
-       onChange([...items,{...freshItem,Item:'New item',_inventoryId:crypto.randomUUID()}]);
-       setEditing(items.length);
+       const id=crypto.randomUUID();
+       onChange([...items,{...freshItem,Item:'New item',_inventoryId:id}]);
+       setEditing({itemId:id});
       }else setEditing('new');
      }}>+ Item</button>
    </div>
@@ -162,11 +178,11 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    {mode==='list'?<div className="inventory-list">
     <div className="invrow inventory-table-head">{columns.map(c=><b key={c}>{c}</b>)}</div>
     {items.map((row,i)=><div className={'invrow'+(bound(i)?' inventory-row-bound':'')}
-     key={row._inventoryId||i}>
+     key={row._inventoryId||i}
+     onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget))release(i)}}>
      {columns.map(c=><input key={c} aria-label={c} value={rowValue(row,c)??''}
       disabled={bound(i)}
       onFocus={()=>claim(i)}
-      onBlur={()=>release(i)}
       onChange={e=>edit(i,{[c]:e.target.value})}/>)}
      {bound(i)&&<span className="inventory-bound-indicator" title="Another player is using this item">In use</span>}
      {bound(i)&&collaboration?.isDM&&<button type="button" className="secondary"
@@ -194,8 +210,8 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
         style={{gridColumn:x+1,gridRow:y+1}}/>;
       })}
       {layout.placed.map(({index,row,x,y,w,h})=>
-       <button key={'item_'+index} type="button"
-        className={'inventory-grid-item'+(drag?.index===index?' inventory-grid-item-held':'')+
+       <button key={'item_'+(row._inventoryId||index)} type="button"
+        className={'inventory-grid-item'+(dragIndex(drag)===index?' inventory-grid-item-held':'')+
          (bound(index)?' inventory-grid-item-bound':'')}
         style={{...tileStyle(row),
          gridColumn:(x+1)+' / span '+w,gridRow:(y+1)+' / span '+h}}
@@ -215,7 +231,10 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
         {bound(index)&&collaboration?.isDM&&<span className="inventory-bound-take"
          role="button" tabIndex={0} title="DM: take control of this item"
          onPointerDown={e=>e.stopPropagation()}
-         onClick={e=>{e.stopPropagation();claim(index,true)}}>Take</span>}
+         onClick={e=>{e.stopPropagation();claim(index,true)}}
+         onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){
+          e.preventDefault();e.stopPropagation();claim(index,true);
+         }}}>Take</span>}
         {Number(rowValue(row,'Qty')??1)!==1&&
          <span className="inventory-tile-qty">×{rowValue(row,'Qty')}</span>}
        </button>)}
@@ -233,7 +252,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
      <p className="muted tiny">These items remain saved. Free enough space, then
       drag a tile into the grid.</p>
      <div className="inventory-grid-overflow-items">
-      {layout.unplaced.map(i=><button key={i} type="button"
+      {layout.unplaced.map(i=><button key={items[i]._inventoryId||i} type="button"
        className={'inventory-overflow-tile'+(bound(i)?' inventory-grid-item-bound':'')}
        style={tileStyle(items[i])}
        onPointerDown={e=>startDrag(e,i,-1,-1)}
@@ -249,9 +268,9 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    {error&&<p className="error tiny" role="alert">{error}</p>}
   </section>
   {editing!==null&&createPortal(<InventoryItemEditor
-   key={String(editing)}
-   item={editing==='new'?null:items[editing]} cols={cols} rows={height}
+   key={editing&&typeof editing==='object'?editing.itemId:String(editing)}
+   item={editing==='new'?null:items[editingIndex]} cols={cols} rows={height}
    onSave={saveItem} onDelete={deleteItem}
-   onClose={()=>{if(Number.isInteger(editing))release(editing);setEditing(null)}}/>,document.body)}
+   onClose={()=>{releaseEditing();setEditing(null)}}/>,document.body)}
  </>;
 }
