@@ -2,7 +2,7 @@
 
 **Branch:** `stage/initiative-turn-order-2026-11-07`  
 **Base dependency:** `stage/map-environment-interactions-2026-11-07` (draft PR #8).  
-**Status:** Not approved for production. **Do not apply** its new migration to the production Supabase database before manual multiplayer / RLS QA.
+**Status:** Database migration applied and verified on the existing free-tier Supabase project, with test changes rolled back. Frontend release still requires merge, deployment and browser QA.
 
 ## Implemented
 
@@ -28,9 +28,9 @@
 
 ### Database rollout
 
-**Pending migration:** `supabase/migrations/20261107150000_map_combat_initiative.sql`
+**Applied migration:** `supabase/migrations/20261107150000_map_combat_initiative.sql`
 
-This migration is versioned in GitHub **only**. It has not been applied to any production schema. The staging UI will show a database unavailable message until a dedicated staging database receives the migration. Do not share this preview as a ready multiplayer combat release until database/permission integration has been validated.
+Migration is installed on the existing live Supabase database using the corrected, versioned SQL. The frontend is not live until the tested release commit deploys; avoid claiming connected-client QA is complete.
 
 ## Explicitly not in v1
 
@@ -39,7 +39,7 @@ This migration is versioned in GitHub **only**. It has not been applied to any p
 
 ## QA gate (must pass before merge/release)
 
-1. Apply migration to an **isolated staging Supabase project**. Verify RLS using signed-in DM, two players, and an unrelated campaign member.
+1. **Complete:** Migration applied on the existing free-tier project; DM, player and synthetic outsider permissions were checked with transactional rolled-back test encounters. Additional real-browser multiplayer QA is still required.
 2. Begin combat with 2 player tokens, 2 NPC tokens, and one invisible NPC. Confirm all authorized users see a popup, but players do not receive hidden NPC names or token IDs, even by querying the database or listening to Realtime.
 3. Have each player roll their own character's initiative (and reject attempts to roll another player's or a hidden NPC's). Verify Chat roll card values match the tracker.
 4. Test individual NPC rolls, Roll All NPCs, manual score override, re-sort, next/previous navigation, round rollover and reverting from round 2 to round 1.
@@ -48,7 +48,7 @@ This migration is versioned in GitHub **only**. It has not been applied to any p
 7. Minimize/close the window for one player while others keep it open. Advance multiple turns; dismissed tracker stays closed until explicitly reopened.
 8. Reload and reconnect multiple clients, repeatedly advance turns, and verify no duplicate rolls, stale updates or incorrect round counts.
 9. Ensure mobile-width window controls, other draggable windows, dice chat, token dragging, Map setting and sidebar expansion are unchanged.
-10. Run `node --test tests/*.test.mjs`, `npm run build`, SQL integration checks and security advisors on **staging** before approval.
+10. Run `node --test tests/*.test.mjs` and `npm run build` in GitHub CI and verify database schema, SQL integration tests and security advisors on the existing free-tier Supabase project.
 
 
 ## No-cost live-database integration verification — 7 November 2026
@@ -84,10 +84,10 @@ This migration is versioned in GitHub **only**. It has not been applied to any p
 
 ### Final sign-off blockers before production
 
-1. **Isolated Supabase rehearsal:** Provision a dedicated temporary Supabase development branch/project (may incur charges), apply `20261107150000_map_combat_initiative.sql`, run SQL advisor and verify no migration errors, data types and triggers. **Do not apply the untested migration to production just to unblock a frontend release.**
+1. **Completed without paid infrastructure:** Corrected migration applied to the current free-tier Supabase project. Verified schema, policies, triggers, guards, grant/publication isolation and transient real-schema DM/player/outsider tests. No extra database project created.
 2. **Authorization audit with distinct accounts:** Confirm anonymous, unrelated-campaign, normal member and DM capabilities for SELECT and every combat RPC. Ensure hidden NPC token IDs/names never appear in public rows, Realtime or chat. Verify visibility change, map reassignment and deletion trigger paths.
 3. **Multiplayer smoke testing:** At least 1 DM + 2 players, token ownership and initiative, NPC bulk rolls, manual score, sorting, round boundaries, private maps, reconnection, closed pop-up persistence, encounter end/restart. Confirm dice-chat formatting.
-4. **Merge sequence:** After the isolated DB+browser checks pass, merge the clean Initiative pull request based on `main` (not old PR #10). Apply the approved SQL migration to production **before** deploying the combat frontend so RPCs and tables exist. Verify RLS and inspect advisors. Then release the tested Git SHA to Vercel production once its deployment quota allows.
+4. **Merge sequence:** Database migration is already applied and verified. Merge the clean Initiative pull request based on current `main` (not old PR #10), pass post-merge GitHub Actions, then release the tested Git SHA to Vercel production once its free-tier quota allows. Perform immediate browser/multiplayer smoke tests on the live site.
 5. **Rollback:** An application-only rollback does not remove the combat schema. Keep new tables/RPCs dormant if frontend rollback is needed; avoid dropping tables and discarding encounter data. Database changes should be additive and compatible with the existing application.
 
 **What CI guarantees:** Node regression tests and Vite/Deno build syntax. It cannot by itself guarantee runtime PostgreSQL migration success, connected-player permissions or production network performance.
