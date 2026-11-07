@@ -7,7 +7,13 @@ test('the next release is a consolidated staging branch, not a Vercel deployment
  assert.match(ledger.releaseBranch,/^stage\//);
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
- assert.ok(ledger.features.every(x=>['included','released'].includes(x.status)&&x.sources.every(s=>ledger.branches.some(b=>b.name===s&&['included','released'].includes(b.status)))));
+ const ready=ledger.features.filter(x=>['included','released'].includes(x.status));
+ assert.ok(ready.every(x=>x.sources.every(s=>ledger.branches.some(b=>
+  b.name===s&&['included','released'].includes(b.status)))));
+ // A new unready feature must be explicitly tracked, never silently shipped.
+ const pending=ledger.features.filter(x=>x.status==='in-progress');
+ assert.ok(pending.every(x=>x.releaseReady===false&&x.sources.every(s=>
+  ledger.branches.some(b=>b.name===s&&b.status==='in-progress'))));
  assert.equal(ledger.databaseDependencies[0].status,'applied-production');
  assert.equal(ledger.edgeFunctionDependencies[0].status,'deployed-production');
 });
