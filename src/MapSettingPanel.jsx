@@ -89,6 +89,9 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
    {editor.enabled&&editor.lockLight&&<p className="muted tiny">Unlock Light Layer to draw or edit.</p>}
    <Check title="Lock tokens while editing map" value={editor.lockTokens!==false}
     onChange={v=>updateEditor({lockTokens:v})}/>
+   <Check title="DM override: allow moving through walls" value={editor.ignoreCollision===true}
+    onChange={value=>updateEditor({ignoreCollision:value})}/>
+   {editor.ignoreCollision&&<p className="muted tiny">Only DM movement bypasses published wall collision; players remain blocked.</p>}
    <label>Map tool
     <select disabled={!canDraw} value={editor.tool||'select'}
      onChange={e=>updateEditor({tool:e.target.value,selectedId:null,selectedIds:[],selectedPinId:null})}>
