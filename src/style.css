@@ -2724,3 +2724,8 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 .inventory-bound-take{position:absolute;bottom:2px;right:2px;
  background:#314b6fee;border:1px solid #709ccc;border-radius:4px;
  padding:2px 5px;color:#f5f8ff;font-size:10px;cursor:pointer;z-index:2}
+
+/* Tool selection shares the same outline/preview affordance as token selection. */
+.campaign-tool-map-token.tool-selected{z-index:6;border-color:#8ad8ff;
+ box-shadow:0 0 0 2px #101e31,0 0 0 4px #7fd9ff,0 0 16px #57acfa80}
+.map-pan-region.is-panning .campaign-tool-map-token{cursor:grabbing!important}

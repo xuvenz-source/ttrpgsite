@@ -6,6 +6,8 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
  const [templates,setTemplates]=useState([]);
  const [issued,setIssued]=useState([]);
  const [placed,setPlaced]=useState([]);
+ const pendingMoves=useRef(new Map());
+ const [localMoves,setLocalMoves]=useState({});
  const [loading,setLoading]=useState(false),[error,setError]=useState('');
  const seq=useRef(0);
  const refresh=useCallback(async()=>{
@@ -29,13 +31,26 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
    if(seq.current!==request)return;
    setTemplates(templatesReply.data||[]);
    setIssued(issuesReply.data||[]);
-   setPlaced(placedReply.data||[]);
+   const server=placedReply.data||[];
+   setPlaced(server);
+   const settled=[];
+   for(const [id,pending] of pendingMoves.current){
+    const row=server.find(p=>p.issue_id===id);
+    if(pending.confirmed&&row&&Number(row.x)===pending.x&&
+       Number(row.y)===pending.y){
+     pendingMoves.current.delete(id);settled.push(id);
+    }
+   }
+   if(settled.length)setLocalMoves(old=>{
+    const next={...old};for(const id of settled)delete next[id];return next;
+   });
    setError('');
   }catch(e){
    if(seq.current===request)setError(e?.message||String(e));
   }finally{if(seq.current===request)setLoading(false)}
  },[db,campaignId,mapId,userId,isDM]);
  useEffect(()=>{void refresh();return()=>{++seq.current}},[refresh]);
+ useEffect(()=>{pendingMoves.current.clear();setLocalMoves({})},[campaignId,mapId,userId]);
  useEffect(()=>{
   if(!db||!campaignId||!userId)return;
   let hidden=false;
@@ -102,10 +117,61 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
    .eq('id',issue.id).eq('revision',issue.revision)
    .eq('campaign_id',campaignId).select('*').maybeSingle());
  });
+ /** Optimistic, per-tool serialized coordinate writes. The revision changes
+  * on every tool update, so movement never submits an old full state snapshot.
+  * Keep the local destination visible until the projection confirms it. */
+ function movePlaced(issueId,x,y){
+  const issue=issued.find(t=>t.id===issueId);
+  const position=placed.find(p=>p.issue_id===issueId);
+  if(!issue||!position||position.map_id!==mapId||
+     !toolCanControl(issue,userId,isDM))
+   return Promise.reject(Error('You cannot move this issued tool.'));
+  if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||y<0)
+   return Promise.reject(Error('Invalid tool position.'));
+  let pending=pendingMoves.current.get(issueId);
+  if(!pending||pending.mapId!==mapId||pending.campaignId!==campaignId){
+   pending={campaignId,mapId,x,y,confirmed:false,promise:null};
+   pendingMoves.current.set(issueId,pending);
+  }
+  pending.x=x;pending.y=y;pending.confirmed=false;
+  setLocalMoves(old=>({...old,[issueId]:{x,y,mapId}}));
+  if(pending.promise)return pending.promise;
+  const run=(async()=>{
+   try{
+    while(pendingMoves.current.get(issueId)===pending){
+     const nextX=pending.x,nextY=pending.y;
+     const {data,error:writeError}=await db.from('campaign_tool_issues')
+      .update({x:nextX,y:nextY})
+      .eq('id',issueId).eq('campaign_id',pending.campaignId)
+      .eq('map_id',pending.mapId).select('id,x,y').maybeSingle();
+     if(writeError)throw writeError;
+     if(!data)throw Error('Tool movement was rejected by the server.');
+     if(pending.x!==nextX||pending.y!==nextY)continue;
+     pending.confirmed=true;
+     await refresh();
+     break;
+    }
+   }catch(e){
+    if(pendingMoves.current.get(issueId)===pending){
+     pendingMoves.current.delete(issueId);
+     setLocalMoves(old=>{const next={...old};delete next[issueId];return next});
+     setError(e?.message||String(e));
+     void refresh();
+    }
+    throw e;
+   }finally{pending.promise=null}
+  })();
+  pending.promise=run;
+  return run;
+ }
  const pickUp=issue=>mutate(()=>one(
   db.from('campaign_tool_issues').update({map_id:null})
    .eq('id',issue.id).eq('revision',issue.revision)
    .eq('campaign_id',campaignId).select('*').maybeSingle()));
- return {templates,issued,placed,loading,error,refresh,createTemplate,updateTemplate,
-  deleteTemplate,issueTool,removeIssued,updateState,place,pickUp};
+ const displayedPlacements=placed.map(p=>{
+  const location=localMoves[p.issue_id];
+  return location?.mapId===mapId?{...p,x:location.x,y:location.y}:p;
+ });
+ return {templates,issued,placed:displayedPlacements,loading,error,refresh,createTemplate,updateTemplate,
+  deleteTemplate,issueTool,removeIssued,updateState,place,movePlaced,pickUp};
 }

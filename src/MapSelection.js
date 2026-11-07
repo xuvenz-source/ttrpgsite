@@ -1,3 +1,4 @@
+import {toolCanControl} from './CampaignTools.js';
 /** Pure battlemap selection and multi-token movement maths.
  * Rendering uses pixels at the current zoom, persistence uses grid coordinates.
  */
@@ -39,4 +40,34 @@ export function boundedGroupOffset(tokens,desiredX,desiredY,mapWidth,mapHeight,g
   dx:clamp(Math.round(finite(desiredX)),minDX,maxDX)||0,
   dy:clamp(Math.round(finite(desiredY)),minDY,maxDY)||0
  };
+}
+
+/** Tool footprints participate in the same canvas marquee as character tokens.
+ * Use issue IDs as a separate namespace: tool and token IDs must never collide.
+ */
+export function selectableToolIds(placements,issued,rectangle,cell,user,isDM,mapId){
+ if(!(cell>0)||!rectangle)return [];
+ const access=new Map((issued||[]).map(t=>[t.id,t]));
+ return (placements||[]).filter(p=>{
+  if(p.map_id!==mapId||!toolCanControl(access.get(p.issue_id),user,isDM))
+   return false;
+  const size=p.kind==='mount'?Math.max(1,finite(p.span,2)):1;
+  const x=finite(p.x)*cell,y=finite(p.y)*cell;
+  return x<rectangle.x+rectangle.width&&x+size*cell>rectangle.x&&
+   y<rectangle.y+rectangle.height&&y+size*cell>rectangle.y;
+ }).map(p=>p.issue_id);
+}
+/** All mixed drag members share one board-relative clamp and movement delta. */
+export function selectedMapMembers(tokenIds,toolIds,tokens,placements,issued,user,isDM,mapId){
+ const accessible=new Map((issued||[]).map(t=>[t.id,t]));
+ const tokenSet=new Set(tokenIds||[]),toolSet=new Set(toolIds||[]);
+ const tokenMembers=(tokens||[]).filter(t=>tokenSet.has(t.id)&&
+  canControlMapToken(t,user,isDM,mapId)).map(t=>({...t,source:'token'}));
+ const toolMembers=(placements||[]).filter(p=>toolSet.has(p.issue_id)&&
+  p.map_id===mapId&&toolCanControl(accessible.get(p.issue_id),user,isDM))
+  .map(p=>{
+   const span=p.kind==='mount'?Math.max(1,finite(p.span,2)):1;
+   return {id:p.issue_id,source:'tool',x:p.x,y:p.y,span_x:span,span_y:span};
+  });
+ return [...tokenMembers,...toolMembers];
 }

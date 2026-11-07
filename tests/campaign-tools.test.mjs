@@ -67,7 +67,9 @@ test('battlemap renders tool tokens and light effects, with drag/drop and sheet 
  assert.match(app,/onMove=\{\(issueId,x,y\)=>onToolPlace/);
  assert.match(layer,/lightOn=p\.kind==='torch'&&p\.light_enabled/);
  assert.match(layer,/onDoubleClick=\{e=>\{if\(own\)/);
- assert.match(layer,/Math\.round\(d\.x\+\(e\.clientX-d\.startX\)\/cell\)/);
+ assert.match(layer,/onPointerDown=\{e=>\{e\.stopPropagation\(\);onPointerDown/);
+ assert.match(layer,/remotePositions\[p\.issue_id\]/);
+ assert.match(layer,/selectedIds\.includes\(p\.issue_id\)/);
 });
 test('issued sheets reuse the existing grid/list inventory editor and mount stats',()=>{
  const sheet=source('src/CampaignToolSheet.jsx');
