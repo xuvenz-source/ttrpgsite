@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fogFrameDuringRefresh,fogCellState,FOG_EXPLORED} from '../src/MapFogModel.js';
-import {applyAuthoritativeTokenMotion} from '../src/LiveTokenMovement.js';
+import {applyAuthoritativeTokenMotion,shouldPersistFogDrag,
+ FOG_DRAG_PERSIST_INTERVAL_MS} from '../src/LiveTokenMovement.js';
 
 const map='00000000-0000-4000-8000-000000000001';
 const id='00000000-0000-4000-8000-000000000003';
@@ -44,4 +45,16 @@ test('SQL keeps fog-on invalidations and only skips movement-only fog-off ticks'
  assert.match(sql,/to_jsonb\(old\)-'x'-'y'-'updated_at'/);
  assert.match(sql,/r\.fog_enforced=true/);
  assert.match(sql,/if not pure_movement or exists/);
+});
+
+test('fog-enabled drags persist RLS-filtered positions at a capped rate',()=>{
+ assert.ok(FOG_DRAG_PERSIST_INTERVAL_MS>=150);
+ assert.ok(shouldPersistFogDrag(true,0,1000));
+ assert.ok(!shouldPersistFogDrag(false,0,1000));
+ assert.ok(!shouldPersistFogDrag(true,1000,1100));
+ assert.ok(shouldPersistFogDrag(true,1000,1000+FOG_DRAG_PERSIST_INTERVAL_MS));
+ const board=readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8');
+ assert.match(board,/fogFrame\?\.enabled,info\.lastFogWrite,now/);
+ assert.match(board,/info\.persistedDuringDrag=true/);
+ assert.match(board,/if\(!cancel\|\|info\.persistedDuringDrag\)move/);
 });
