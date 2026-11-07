@@ -53,12 +53,17 @@ begin
   select p.issue_id,p.map_id,p.kind,p.light_enabled,p.light_bright,
    p.light_dim,p.span,
    case when holder.id is null then p.x+0.5
-    else holder.x+holder.span_x/2.0 end as cx,
+    else coalesce(rate.last_x,holder.x)+holder.span_x/2.0 end as cx,
    case when holder.id is null then p.y+0.5
-    else holder.y+holder.span_y/2.0 end as cy
+    else coalesce(rate.last_y,holder.y)+holder.span_y/2.0 end as cy
   from public.campaign_tool_map_tokens p
   left join public.map_tokens holder on holder.id=p.held_by_token_id
    and holder.map_id=p_map and holder.visible
+  left join forge_visibility.movement_preview_rates rate
+   on rate.piece_id=holder.id and rate.actor_id=holder.owner_id
+    and rate.kind='token' and rate.map_id=p_map
+    and rate.base_x=holder.x and rate.base_y=holder.y
+    and rate.last_sent>statement_timestamp()-interval '2 seconds'
   where p.map_id=p_map and p.campaign_id=map_row.campaign_id
    and p.kind='torch' and p.light_enabled
    and (p.held_by_token_id is null or holder.id is not null)
