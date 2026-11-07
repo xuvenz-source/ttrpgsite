@@ -24,6 +24,14 @@ test('doors open in prepared state let sight through; closed doors block it',()=
  barrier.state='open';
  assert.equal(pointInPolygon({x:8,y:5},polygon({objects:[barrier]})),true);
 });
+test('window curtains toggle vision in the DM preview',()=>{
+ const window=createBarrier('window',[{x:5,y:0},{x:5,y:10}]);
+ assert.equal(pointInPolygon({x:8,y:5},polygon({objects:[window]})),true);
+ window.curtains=true;
+ assert.equal(pointInPolygon({x:8,y:5},polygon({objects:[window]})),false);
+ window.state='open';
+ assert.equal(pointInPolygon({x:8,y:5},polygon({objects:[window]})),true);
+});
 test('one-way wall side is calculated per viewer',()=>{
  const barrier=wall();
  barrier.vision='one-way';barrier.oneWay='a-to-b';
