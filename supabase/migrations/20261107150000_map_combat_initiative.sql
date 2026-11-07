@@ -339,7 +339,7 @@ grant execute on function public.command_map_combat(uuid,text,uuid,integer) to a
 -- Keep the public roster privacy-safe when a token is hidden, renamed
 -- or moved away from the encounter map. Republish in the SAME transaction.
 create or replace function public.combat_sync_token_change()
-returns trigger language plpgsql volatile security definer set search_path='' as $
+returns trigger language plpgsql volatile security definer set search_path='' as $$
 begin
  if new.map_id is distinct from old.map_id then
   delete from public.map_combat_entries e
@@ -356,7 +356,7 @@ begin
   end if;
  end if;
  return new;
-end $;
+end $$;
 revoke all on function public.combat_sync_token_change() from public,anon,authenticated;
 create trigger combat_sync_token_change
 after update of visible,name,map_id on public.map_tokens
@@ -365,7 +365,7 @@ for each row execute function public.combat_sync_token_change();
 -- On token deletion, FK cascade removes the private entry. Immediately
 -- refresh the public roster, including clearing a deleted current combatant.
 create or replace function public.combat_sync_deleted_entry()
-returns trigger language plpgsql volatile security definer set search_path='' as $
+returns trigger language plpgsql volatile security definer set search_path='' as $$
 begin
  if exists(select 1 from public.map_combats c
   where c.map_id=old.map_id and c.active) then
@@ -374,7 +374,7 @@ begin
   perform public.combat_publish(old.map_id);
  end if;
  return old;
-end $;
+end $$;
 revoke all on function public.combat_sync_deleted_entry() from public,anon,authenticated;
 create trigger combat_sync_deleted_entry
 after delete on public.map_combat_entries
