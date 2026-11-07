@@ -17,8 +17,11 @@ test('combined release records both approved drafts and compatible migration req
  assert.equal(ledger.lastRelease.databaseDependencies.length,0);
  assert.ok(ledger.lastRelease.edgeFunctionDependencies.some(item=>item.name==='username-register'&&item.version===7&&item.status==='deployed-production'));
  assert.ok(ledger.databaseDependencies.some(item=>item.name==='player_owned_token_artwork'&&item.status==='staged-not-applied'&&item.mustApplyBeforeFrontend));
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,1);
- assert.equal(ledger.upcomingRelease.outstandingBranches[0].name,ledger.releaseBranch);
+ const pending=ledger.upcomingRelease.outstandingBranches.map(item=>item.name);
+ assert.ok(pending.includes(ledger.releaseBranch),'previously staged release must remain included');
+ assert.ok(pending.includes('stage/seamless-multiplayer-token-movement-2026-11-08'),
+  'new staged movement must join previous release work');
+ assert.equal(new Set(pending).size,pending.length,'no staged branch should be duplicated');
  assert.ok(ledger.branches.filter(x=>x.name.startsWith('stage/live-qa-light-')||x.name.startsWith('stage/interactive-pins-')).every(x=>x.status==='released'));
  const ci=read('.github/workflows/verify-staged.yml');
  assert.doesNotMatch(ci,/supabase db push|supabase migration up|vercel deploy/);
