@@ -59,11 +59,17 @@ begin
     m.grid_size<=0 then return false;end if;
  party:=coalesce((scene->'fog'->>'partyShared')::boolean,false);
  for viewer in
-  select t.x,t.y,t.span_x,t.span_y,
+  select coalesce(rate.last_x,t.x) as x,
+   coalesce(rate.last_y,t.y) as y,t.span_x,t.span_y,
    coalesce(ch.field_values,t.npc_values,'{}'::jsonb) as sheet_values
   from public.map_tokens t
   left join public.characters ch on ch.id=t.character_id
    and ch.campaign_id=m.campaign_id
+  left join forge_visibility.movement_preview_rates rate
+   on rate.piece_id=t.id and rate.actor_id=t.owner_id
+    and rate.kind='token' and rate.map_id=p_map
+    and rate.base_x=t.x and rate.base_y=t.y
+    and rate.last_sent>statement_timestamp()-interval '2 seconds'
   where t.map_id=p_map and t.campaign_id=m.campaign_id and t.visible
    and (t.owner_id=p_recipient or
     (party and t.owner_id is not null and exists(
