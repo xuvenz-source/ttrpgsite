@@ -30,7 +30,7 @@ export function MeasurementToolBar({tool,onPointerDown,onPointerMove,onPointerUp
   {MEASUREMENT_TOOLS.map(id=><button key={id} type="button"
    className={'map-measure-tool'+(tool===id?' selected':'')}
    aria-label={names[id]} aria-pressed={tool===id}
-   title={names[id]+': left-drag to measure temporarily; right-drag to pin until cleared'}
+   title={names[id]+(id==='line'?': left-drag to measure; right-click while holding left to add a turn; right-drag to pin':': left-drag to measure temporarily; right-drag to pin until cleared')}
    onContextMenu={e=>e.preventDefault()}
    onPointerDown={e=>onPointerDown(e,id)}
    onPointerMove={onPointerMove}
@@ -79,8 +79,12 @@ export function MapMeasurementOverlay({measures=[],map,scale}){
    const origin=g.origin,end=g.end;
    return <g key={measure.id}
     className={measure.isLocal?'map-measure-local':'map-measure-remote'}>
-    {g.tool==='line'&&<line x1={origin.x} y1={origin.y}
-     x2={end.x} y2={end.y} strokeWidth={strokeWidth}/>}
+    {g.tool==='line'&&<polyline
+     points={g.path.map(p=>p.x+','+p.y).join(' ')}
+     strokeWidth={strokeWidth} fill="none" strokeLinejoin="round" strokeLinecap="round"/>}
+    {g.tool==='line'&&g.via.map((p,i)=><circle key={'turn-'+i}
+     className="map-measure-turn" cx={p.x} cy={p.y}
+     r={4/unit} strokeWidth={small}/>)}
     {g.tool==='circle'&&<circle cx={origin.x} cy={origin.y} r={g.radius}
      strokeWidth={strokeWidth} fillOpacity=".2"/>}
     {g.tool==='square'&&<rect {...g.square}
