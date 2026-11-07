@@ -553,6 +553,12 @@ export default function TabletopApp(){
   if(!issue)return;
   try{await campaignTools.pickUp(issue)}catch(e){fail(e)}
  }
+ async function holdIssuedToolOnToken(id,tokenId){
+  const issued=campaignTools.issued.find(item=>item.id===id);
+  const token=tokens.find(item=>item.id===tokenId);
+  if(!issued||!token||token.map_id!==selectedMap)return fail('Tool or token not available.');
+  try{await campaignTools.hold(issued,token)}catch(e){fail(e)}
+ }
  async function placeIssuedToolOnMap(id,x,y){
   const issued=campaignTools.issued.find(t=>t.id===id);
   if(!issued||!selectedMap)return fail('Tool not available on this map.');
@@ -2172,6 +2178,7 @@ export default function TabletopApp(){
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolPickUp={pickUpIssuedToolOnMap}
+   onToolHold={holdIssuedToolOnToken}
    onToolOpen={setSelectedToolIssueId} onToolMovementPreview={sendLiveToolMovement}
    remoteToolPositions={fog.frame?.enabled?{}:remoteToolPositions}
    onMovementPreview={sendLiveMovement} remotePositions={fog.frame?.enabled?{}:remoteTokenPositions}
@@ -2351,6 +2358,9 @@ export default function TabletopApp(){
  {quickEditToken&&camp&&<QuickEditBoundary key={quickEditToken.id} onClose={()=>setQuickEditToken(null)}>
   <TokenQuickEdit db={db} token={quickEditToken} template={camp.sheet_template}
    allowedFields={camp.token_quick_fields||[]}
+   heldTools={campaignTools.issued.filter(tool=>tool.held_by_token_id===quickEditToken.id)}
+   onDropHeldTool={issue=>campaignTools.dropHeld(issue,
+    tokens.find(token=>token.id===quickEditToken.id)||quickEditToken)}
    initialValues={getLocalQuickValues(quickEditToken)}
     statusCatalog={camp.token_status_catalog}
     canEditStatuses={isDM||(quickEditToken.owner_id===user&&quickEditToken.map_id===playerMapId)}

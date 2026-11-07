@@ -19,6 +19,11 @@ function ToolConfigFields({draft,onChange}){
     {Object.entries(TOOL_KINDS).map(([id,k])=><option key={id} value={id}>{k.label}</option>)}
    </select></label>
   </div>
+  <label className="campaign-tool-hold-option">
+   <input type="checkbox" checked={config.holdable===true}
+    onChange={e=>set('holdable',e.target.checked)}/>
+   Can be picked up or held by a token
+  </label>
   {kind==='torch'&&<>
    <div className="campaign-tool-inline">
     <label>Bright (ft)<input type="number" min="0" max="120" step="5" value={config.bright}
@@ -160,17 +165,17 @@ export default function CampaignToolsPanel({tools,members=[],accountNames=[],use
      <small>{item.party_shared?'Party':
       accountNames.find(a=>a.user_id===item.owner_id)?.account_name||
       (item.owner_id===userId?'You':'Assigned player')}
-      {item.map_id?' · On map':''}</small>
+      {item.held_by_token_id?' · Held by token':item.map_id?' · On map':''}</small>
     </span>
     <button type="button" className="secondary" onClick={()=>onOpenTool(item.id)}>Open</button>
-    {mapId&&toolCanControl(item,userId,isDM)&&<button
+    {mapId&&!item.held_by_token_id&&toolCanControl(item,userId,isDM)&&<button
      type="button" className="secondary campaign-tool-drag" draggable
      aria-label={'Drag '+item.name+' onto map'}
      onDragStart={e=>{
       e.dataTransfer.setData('application/x-forge-tool',item.id);
       e.dataTransfer.effectAllowed='move';
      }} title="Drag onto map">⠿</button>}
-    {item.map_id&&toolCanControl(item,userId,isDM)&&<button type="button"
+    {item.map_id&&!item.held_by_token_id&&toolCanControl(item,userId,isDM)&&<button type="button"
      className="secondary" disabled={busy} title="Pick up from map"
      aria-label={'Pick up '+item.name} onClick={()=>void run(()=>tools.pickUp(item))}>↩</button>}
     {isDM&&<button type="button" className="secondary" disabled={busy}

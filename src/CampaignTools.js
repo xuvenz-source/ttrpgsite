@@ -5,10 +5,10 @@ export const TOOL_KINDS={
  inventory:{label:'Shared inventory',icon:'🎒'}
 };
 export const DEFAULT_TOOL_CONFIG={
- torch:{bright:20,dim:20,color:'#ffce7a',intensity:85},
+ torch:{bright:20,dim:20,color:'#ffce7a',intensity:85,holdable:false},
  mount:{span:2,inventoryMode:'grid',columns:8,rows:5,
-  attributes:{hp:15,ac:10,speed:40,strength:16}},
- inventory:{inventoryMode:'list',columns:8,rows:5}
+  attributes:{hp:15,ac:10,speed:40,strength:16},holdable:false},
+ inventory:{inventoryMode:'list',columns:8,rows:5,holdable:false}
 };
 const clamp=(value,min,max,defaultValue)=>{
  const number=Number(value);
@@ -22,12 +22,14 @@ export function normaliseToolConfig(kind,raw={}){
   bright:Math.round(clamp(input.bright,0,120,defaults.bright)),
   dim:Math.round(clamp(input.dim,0,120,defaults.dim)),
   color:/^#[0-9a-f]{6}$/i.test(String(input.color||''))?input.color:defaults.color,
-  intensity:Math.round(clamp(input.intensity,0,100,defaults.intensity))
+  intensity:Math.round(clamp(input.intensity,0,100,defaults.intensity)),
+  holdable:input.holdable===true
  };
  const result={
   inventoryMode:input.inventoryMode==='grid'?'grid':'list',
   columns:Math.round(clamp(input.columns,2,20,defaults.columns)),
-  rows:Math.round(clamp(input.rows,2,20,defaults.rows))
+  rows:Math.round(clamp(input.rows,2,20,defaults.rows)),
+  holdable:input.holdable===true
  };
  if(key==='mount'){
   const attributes={};
@@ -46,6 +48,9 @@ export function toolInitialState(kind,config){
  return {items:[],attrs:kind==='mount'?{...normaliseToolConfig(kind,config).attributes}:{},
   lit:true};
 }
+export function toolCanBeHeld(tool){
+ return !!tool&&normaliseToolConfig(tool.kind,tool.config).holdable===true;
+}
 export function toolCanControl(tool,user,isDM){
  return !!tool&&(!!isDM||tool.owner_id===user||tool.party_shared===true);
 }
@@ -62,6 +67,7 @@ export function toolMapProjection(issue,mapId,x,y){
  const c=normaliseToolConfig(issue.kind,issue.config);
  return {issue_id:issue.id,campaign_id:issue.campaign_id,
   map_id:mapId,name:issue.name,icon:issue.icon,kind:issue.kind,x,y,
+  held_by_token_id:issue.held_by_token_id||null,
   span:issue.kind==='mount'?c.span:1,
   light_bright:issue.kind==='torch'?c.bright:0,
   light_dim:issue.kind==='torch'?c.dim:0,

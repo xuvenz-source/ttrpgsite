@@ -6,7 +6,7 @@ import {MeasurementToolBar,MapMeasurementOverlay} from './MapMeasurementTools.js
 import Artwork from './Artwork.jsx';
 import MapPinLayer from './MapPinLayer.jsx';
 import CampaignToolMapLayer from './CampaignToolMapLayer.jsx';
-import {toolCanControl} from './CampaignTools.js';
+import {toolCanControl,toolCanBeHeld} from './CampaignTools.js';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
@@ -20,7 +20,7 @@ import {canControlMapToken,selectionRectangle,selectableTokenIds,
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 
 export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
- toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,
+ toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
  onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
@@ -229,7 +229,11 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   const p=pos(e);
   if(match==='application/x-forge-character')onCharacterDrop(id,p.x,p.y);
   else if(match==='application/x-forge-unit')onUnitDrop(id,p.x,p.y);
-  else if(match==='application/x-forge-tool')onToolPlace?.(id,p.x,p.y);
+  else if(match==='application/x-forge-tool'){
+   const carrier=e.target.closest('.token')?.dataset.tokenId;
+   if(carrier)onToolHold?.(id,carrier);
+   else onToolPlace?.(id,p.x,p.y);
+  }
   else if(isDM)onNpcDrop(id,p.x,p.y);
  }
  function allowMapDrop(e){
@@ -579,6 +583,14 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   for(const tool of info.tools||[])
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
  }
+ function toolDropCarrier(event){
+  const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
+  if(!rect||!(cell>0))return null;
+  const x=(event.clientX-rect.left)/cell,y=(event.clientY-rect.top)/cell;
+  return tokens.find(token=>canControlMapToken(token,user,isDM,map.id)&&
+   x>=Number(token.x)&&x<Number(token.x)+Number(token.span_x??1)&&
+   y>=Number(token.y)&&y<Number(token.y)+Number(token.span_y??1));
+ }
  function finishTokenDrag(e,t,cancel=false){
   const simulated=previewDrag.current;
   if(simulated&&simulated.id===t.id&&simulated.pointerId===e.pointerId){
@@ -607,6 +619,11 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    for(const tool of info.tools||[])delete next[tool.issue_id];
    return next;
   });
+  if(!cancel&&info.tools?.length===1&&info.members.length===0){
+   const issue=toolIssued.find(t=>t.id===info.tools[0].issue_id);
+   const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
+   if(carrier){onToolHold?.(issue.id,carrier.id);return}
+  }
   if(info.dx===0&&info.dy===0&&!cancel)return;
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
@@ -668,6 +685,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
      onRead={onReadHandoutPin} onCollect={onCollectHandoutPin}
      onDelete={onDeleteHandoutPin} onSelect={onSelectHandoutPin}/>
     <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
+     tokens={visibleTokens} tokenPositions={{...remotePositions,...preview}}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
      placements={toolPlacements} issued={toolIssued}
      remotePositions={remoteToolPositions} preview={toolPreview}
@@ -695,7 +713,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
         !(isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false));
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
-     return <div key={t.id} className={'token '+(t.image_path?'token-image':'')+
+     return <div key={t.id} data-token-id={t.id} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
       (combatActiveTokenId===t.id?' token-current-turn':'')+
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
