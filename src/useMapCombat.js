@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState,useCallback} from 'react';
 import {normalizeCombat} from './CombatInitiative.js';
+import {createCoalescedRefresh} from './PerformanceScheduling.js';
 
 /** Isolated multiplayer initiative lifecycle. The public table is sanitized;
  * only DMs can read private combat entry -> token mappings. All writes run
@@ -14,10 +15,11 @@ export default function useMapCombat({db,campaignId,mapId,userId,isDM,onError,on
  const errorRef=useRef(onError),chatRef=useRef(onRefreshChat),beforeRollRef=useRef(beforeRoll);
  errorRef.current=onError;chatRef.current=onRefreshChat;beforeRollRef.current=beforeRoll;
  const request=useRef(0),refreshRef=useRef(null),busyRef=useRef(false);
- const lastEncounter=useRef(new Map());
+ const lastEncounter=useRef(new Map()),combatActive=useRef(false);
  useEffect(()=>{
   const key=++request.current;
   setCombat(null);setPrivateEntries([]);setOpen(false);setStatus('');
+  combatActive.current=false;
   refreshRef.current=null;
   if(!db||!userId||!mapId||!campaignId){lastEncounter.current.clear();return;}
   let active=true,sequence=0;
@@ -35,6 +37,7 @@ export default function useMapCombat({db,campaignId,mapId,userId,isDM,onError,on
     return;
    }
    const next=normalizeCombat(data);
+   combatActive.current=!!next?.active;
    setCombat(next);setPrivateEntries(secret.data||[]);setStatus('');
    if(next?.active){
     const encounterKey=mapId+':'+next.encounterId;
@@ -50,18 +53,20 @@ export default function useMapCombat({db,campaignId,mapId,userId,isDM,onError,on
    console.warn('Initiative refresh failed',e);
    setStatus('Could not refresh combat status.');
   }});
+  const changed=createCoalescedRefresh(()=>
+   void refresh().catch(e=>console.warn('Combat refresh failed',e)),100);
   const channel=db.channel('initiative-'+mapId+'-'+userId)
    .on('postgres_changes',{
     event:'*',schema:'public',table:'map_combats',filter:'map_id=eq.'+mapId
-   },()=>{void refresh().catch(e=>console.warn('Combat refresh failed',e))})
+   },()=>changed.request())
    .on('postgres_changes',{event:'*',schema:'public',
     table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},
-    ()=>{void refresh().catch(e=>console.warn('Visible combat refresh failed',e))})
-   .subscribe(state=>{if(state==='SUBSCRIBED'){
-    void refresh().catch(e=>console.warn('Combat reconnect failed',e));
-   }});
+    // Fog/position ticks are frequent. No initiative query is required
+    // unless a tracker is active and its visible roster may have changed.
+    ()=>{if(combatActive.current)changed.request()})
+   .subscribe(state=>{if(state==='SUBSCRIBED')changed.request()});
   return()=>{active=false;++request.current;refreshRef.current=null;
-   void db.removeChannel(channel);
+   combatActive.current=false;changed.cancel();void db.removeChannel(channel);
   };
  },[db,campaignId,mapId,userId,isDM]);
  const invoke=useCallback(async(name,args,rollEntry=null)=>{

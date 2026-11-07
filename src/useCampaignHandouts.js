@@ -1,4 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
+import {createCoalescedRefresh} from './PerformanceScheduling.js';
 
 /**
  * DM-only editing, RLS-scoped public library and visible-map-pin read access.
@@ -44,20 +45,21 @@ export default function useCampaignHandouts({db,campaignId,mapId,userId,isDM}){
  useEffect(()=>{
   if(!db||!campaignId||!userId)return;
   let hidden=false;
+  const changed=createCoalescedRefresh(()=>void refresh(),100);
   // Only publish a campaign-scoped revision tick. Never broadcast note text
   // or hidden pin coordinates in Realtime payloads.
   const channel=db.channel('forge-handouts-'+campaignId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
     table:'campaign_handout_events',filter:'campaign_id=eq.'+campaignId},
-    ()=>void refresh())
-   .subscribe();
+    ()=>changed.request())
+   .subscribe(status=>{if(status==='SUBSCRIBED')changed.request()});
   const resume=()=>{
    if(document.visibilityState==='hidden')hidden=true;
    else if(hidden){hidden=false;void refresh()}
   };
   document.addEventListener('visibilitychange',resume);
   return()=>{
-   document.removeEventListener('visibilitychange',resume);
+   changed.cancel();document.removeEventListener('visibilitychange',resume);
    void db.removeChannel(channel);
   };
  },[db,campaignId,userId,refresh]);
