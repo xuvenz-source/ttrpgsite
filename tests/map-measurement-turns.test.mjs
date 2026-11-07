@@ -73,7 +73,7 @@ test('ruler turn classification tracks the original left drag, independent of e.
  assert.equal(shouldBendLineOnRightPress(null,2),false);
 });
 test('board keeps right-drag pin but uses primary+secondary chord to bend line',()=>{
- const source=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const source=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const overlay=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
  assert.ok(source.includes("shouldBendLineOnRightPress(current,e.button)"));
  assert.ok(source.includes("const next=addLineTurn(current.measure,mapPointInCells(e)||current.measure.end)"));
@@ -97,7 +97,7 @@ test('R inserts another waypoint while a left-drag line is active',()=>{
  const first=addLineTurn(drag.measure,drag.measure.end);
  const bent={...first,end:point(2.5,4.5)};
  assert.equal(measurementGeometry(bent).feet,30);
- const app=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const app=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const toolbar=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
  assert.match(app,/shouldBendLineOnKeyPress\(current,e\.key,e\.repeat\)/);
  assert.match(app,/addLineTurn\(current\.measure,current\.measure\.end\)/);

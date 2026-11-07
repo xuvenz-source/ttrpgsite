@@ -6,7 +6,7 @@ import {
  liveMeasurementPayload,MEASUREMENT_TOOLS
 } from '../src/MapMeasurements.js';
 
-const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 const ui=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
 const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
 const uuid='2f5bc7db-af91-4dcb-9e14-faa34cf05f69';

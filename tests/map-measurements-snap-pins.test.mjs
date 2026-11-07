@@ -103,7 +103,7 @@ test('right-drag pin remains until the creator clears; never clears other users'
  assert.deepEqual(remote,{});
 });
 test('the board supports both right-drag and right-click while left-dragging',()=>{
- const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const bar=readFileSync(new URL('../src/MapMeasurementTools.jsx',import.meta.url),'utf8');
  assert.ok(main.includes('e.button!==0&&e.button!==2'));
  assert.ok(main.includes('pinned:e.button===2'));

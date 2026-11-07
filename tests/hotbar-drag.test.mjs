@@ -49,7 +49,7 @@ test('invalid drag indices and empty source do not change assignments',()=>{
 });
 test('hotbar slot drag supports outside drop, Escape cancel and external assignments',()=>{
  const ui=readFileSync(new URL('../src/TabletopControls.jsx',import.meta.url),'utf8');
- const main=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const main=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
  assert.ok(ui.includes('draggable={!!slot.command}'));
  assert.ok(ui.includes("setData('application/x-forge-hotbar-slot'"));
