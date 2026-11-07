@@ -187,7 +187,9 @@ export default function useCampaignSheetInventory({
    for(const item of changes)next[item.id]=item.row;
    return next;
   });
-  for(const item of changes)void mutate(item.id,item.row,item.row===null);
+  // The editor can only confirm a save once every affected server write
+  // acknowledges; optimistic updates remain visible while the RPCs run.
+  return Promise.all(changes.map(item=>mutate(item.id,item.row,item.row===null)));
  },[rows,ready,mutate]);
  return {rows,locks,ready,error,claim,release,changeItems,isDM,userId};
 }

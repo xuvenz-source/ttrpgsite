@@ -96,8 +96,9 @@ export default function CharacterEditor({
     <p className="muted small">DM editor · Edits are saved to this player's permanent campaign character.</p>
    </div>
    {onOpenBrowserTab&&<button type="button" className="secondary"
-    title="Pop this character sheet into a separate window" onClick={()=>{
-     if(changed){setError("Save your changes before popping out the sheet.");return}
+    title="Pop this character sheet into a separate window" onClick={async()=>{
+     // Pop out only after the server confirms the latest sheet edit.
+     try{await flush()}catch{return}
      if(onOpenBrowserTab()!==false)onClose();
     }}>↗ Pop out</button>}
    <button type="button" className="secondary" aria-label="Close character sheet" onClick={close}>✕</button></div>

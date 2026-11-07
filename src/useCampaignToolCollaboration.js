@@ -85,7 +85,6 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
    await (claimsInFlight.current.get(id)||Promise.resolve()).catch(()=>{});
    await (writes.current.get(id)||Promise.resolve()).catch(()=>{});
    if(!owned.current.has(id))return;
-   if(!owned.current.has(id))return;
    owned.current.delete(id);
    const {error:releaseError}=await db.rpc('release_campaign_tool_item',
     {p_issue:issueId,p_item:id});
@@ -158,7 +157,9 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
    for(const item of changes)next[item.id]=item.row;
    return next;
   });
-  for(const item of changes)void mutate(item.id,item.row,item.row===null);
+  // The editor can only confirm a save once every affected server write
+  // acknowledges; optimistic updates remain visible while the RPCs run.
+  return Promise.all(changes.map(item=>mutate(item.id,item.row,item.row===null)));
  },[rows,mutate]);
  const saveDetails=useCallback(async(lit=null,attrs=null)=>{
   setPending(true);setError('');
