@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint,translateEnvironmentObject} from './MapEnvironment.js';
+import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint,translateEnvironmentObject,selectEnvironmentObjectIds} from './MapEnvironment.js';
 import {FEET_PER_CELL} from './MapMeasurements.js';
 
 const pointText=points=>(points||[]).map(p=>p.x+','+p.y).join(' ');
@@ -138,13 +138,7 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
    const left=Math.min(origin.x,destination.x),right=Math.max(origin.x,destination.x);
    const top=Math.min(origin.y,destination.y),bottom=Math.max(origin.y,destination.y);
    if(Math.hypot(right-left,bottom-top)>Math.max(.07,4/cell)){
-    const ids=objects.filter(o=>{
-     if(o.type==='light')return o.x>=left&&o.x<=right&&o.y>=top&&o.y<=bottom;
-     const points=o.points||[];
-     return points.length>0&&
-      Math.min(...points.map(p=>p.x))<=right&&Math.max(...points.map(p=>p.x))>=left&&
-      Math.min(...points.map(p=>p.y))<=bottom&&Math.max(...points.map(p=>p.y))>=top;
-    }).map(o=>o.id);
+    const ids=selectEnvironmentObjectIds(objects,{left,right,top,bottom});
     onSelect(ids,{additive:e.shiftKey});
    }else if(!e.shiftKey)onSelect(null);
    try{if(e.currentTarget.hasPointerCapture(e.pointerId))
