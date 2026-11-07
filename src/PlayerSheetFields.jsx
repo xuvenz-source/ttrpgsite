@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React,{useEffect,useRef,useState} from 'react';
 import {enrichSheetValues,PERSONAL_RESOURCE_KEY,PERSONAL_RESOURCE_TAB} from './SheetDerived.js';
 import PersonalResources from './PersonalResources.jsx';
@@ -17,6 +18,7 @@ import {D} from './TabletopSheetDefaults.js';
 export default function PlayerSheetFields({db,campaignId,userId,isDM,character,template,tabId,
  onBatchChange,onRoll,onCastSpell,onEquipmentAttack,onAddSpellToHotbar,registerFlusher}){
  const characterId=character?.id;
+ const rollSource={sourceType:'character',sourceId:characterId};
  const [values,setValues]=useState(()=>character?.field_values||{});
  const pending=useRef(new Map()),unconfirmed=useRef(new Map());
  const timer=useRef(null),sendRef=useRef(onBatchChange),flushRef=useRef(null);
@@ -65,14 +67,16 @@ export default function PlayerSheetFields({db,campaignId,userId,isDM,character,t
   <PersonalResources value={values?.[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>update(PERSONAL_RESOURCE_KEY,v)}/>
  </div></div>:
- <div className="fields">{(template.tabs.find(t=>t.id===tabId)||template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button className="rollbtn" onClick={()=>rollSafe(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={campaignId}
+ <div className="fields">{(template.tabs.find(t=>t.id===tabId)||template.tabs[0])?.fields.map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>{f.type==='roll'?<button type="button" className="rollbtn"
+ {...rollDragProps({kind:'sheet',...rollSource,fieldId:f.id,label:f.label})}
+ onClick={()=>rollSafe(f.formula||'1d20',f.label)}>🎲 {f.label} <small>{f.formula}</small></button>:f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={campaignId}
        userId={userId} isDM={isDM} sourceType="character" sourceId={characterId}
        field={f} template={template} sheetValues={values}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f}
   value={values?.[f.id]||{}}
   sheetValues={values||{}}
   onChange={v=>update(f.id,v)}/>:
- f.type==='equipment'?<EquipmentManager field={f} template={template}
+ f.type==='equipment'?<EquipmentManager rollSource={rollSource} field={f} template={template}
   value={values?.[f.id]||{}} sheetValues={values||{}}
   onChange={v=>update(f.id,v)}
   onAttack={({fieldId,weaponId})=>attackSafe({
@@ -81,11 +85,11 @@ export default function PlayerSheetFields({db,campaignId,userId,isDM,character,t
  f.type==='progression'?<ProgressionPanel field={f}
   value={values?.[f.id]||{}} sheetValues={values||{}}
   onChange={v=>update(f.id,v)}/>:
- f.type==='proficiencies'?<ProficienciesPanel field={f}
+ f.type==='proficiencies'?<ProficienciesPanel rollSource={rollSource} field={f}
   value={values?.[f.id]||{}} sheetValues={values||{}}
   template={template} onChange={v=>update(f.id,v)}
   onRoll={(formula,label)=>rollSafe(formula,label)}/>:
- f.type==='collection'?<RepeatingCollection field={f}
+ f.type==='collection'?<RepeatingCollection rollSource={rollSource} field={f}
  value={values?.[f.id]||[]} sheetValues={values||{}}
  sourceType="character" sourceId={characterId}
  onChange={v=>update(f.id,v)} onRoll={(formula,label)=>rollSafe(formula,label)}
@@ -93,7 +97,7 @@ export default function PlayerSheetFields({db,campaignId,userId,isDM,character,t
   sourceType:'character',sourceId:characterId,collectionId,entryId,mode
  })}
  onAddSpellToHotbar={addSafe}/>:
- f.type==='attribute'?<AttributeField field={f}
+ f.type==='attribute'?<AttributeField rollSource={rollSource} field={f}
   value={values?.[f.id]} values={values||{}}
   template={template} onChange={v=>update(f.id,v)}
   onProficiencyChange={v=>update(f.id+'__save_prof',v)}

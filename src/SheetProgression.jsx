@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React from 'react';
 import {uid,num,safeList,numberFields} from './SheetMath.js';
 import {makeProgressionField,makeProficienciesField,derivedProgression,
@@ -191,7 +192,7 @@ export function ProficienciesDesigner({field,template,onChange}){
    the DM's level-based proficiency table. Every entry has a dice-roll button.</p>
  </div>;
 }
-export function ProficienciesPanel({field,value,onChange,sheetValues={},template,onRoll}){
+export function ProficienciesPanel({field,value,onChange,sheetValues={},template,onRoll,rollSource=null}){
  const v=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
  const ranks=v.ranks&&typeof v.ranks==='object'?v.ranks:{};
  const result=derivedProficiencies(field,v,sheetValues,template);
@@ -216,6 +217,8 @@ export function ProficienciesPanel({field,value,onChange,sheetValues={},template
      (e.autoRank?' (automatically proficient from class level)':'')}>
      {e.bonus>=0?'+':''}{e.bonus}{e.autoRank?'*':''}</output>
     <button type="button" className="secondary" disabled={!onRoll}
+     {...rollDragProps(rollSource?{kind:'proficiency',...rollSource,
+      fieldId:field.id,entryId:e.id,label:e.label+' check'}:null,!onRoll)}
      onClick={()=>onRoll('1d20'+(e.bonus>=0?'+':'')+e.bonus,e.label+' check')}>🎲</button>
    </div>)}
   </div>)}

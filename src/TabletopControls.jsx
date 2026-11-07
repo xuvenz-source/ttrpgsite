@@ -1,3 +1,4 @@
+import {ROLL_HOTBAR_MIME,isRollHotbarCommand} from './HotbarRollActions.js';
 import React,{useEffect,useMemo,useRef,useState} from 'react';
 import {normaliseHotbar} from './HotbarSlots.js';
 
@@ -107,7 +108,7 @@ export function HotbarSettings({slots,onSave,visible,onChangeVisible}){
  const valid=draft.every(s=>s.label.length<=40&&s.command.length<=300&&
   (!s.command||/^(\/roll\s+\S[\s\S]*|\/r\s+\S[\s\S]*|\/macro\s+\S[\s\S]*|\/em\s+\S[\s\S]*|\/say\s+\S[\s\S]*)$/i.test(s.command)||
    /^\/spell\s+(character|npc_token|npc_template)\s+[0-9a-f-]{36}\s+[a-zA-Z0-9_-]{1,100}\s+[a-zA-Z0-9-]{1,100}$/i.test(s.command)||
-   /^\/builder\s+[0-9a-f-]{36}$/i.test(s.command)));
+   /^\/builder\s+[0-9a-f-]{36}$/i.test(s.command)||isRollHotbarCommand(s.command)));
  const edit=(i,key,value)=>setDraft(old=>old.map((row,index)=>i===index?{...row,[key]:value}:row));
  async function save(){
   setError('');setNotice('');setSaving(true);
@@ -119,7 +120,7 @@ export function HotbarSettings({slots,onSave,visible,onChangeVisible}){
    Show hotbar over the bottom of the map
   </label>
   <p className="muted tiny">Eight slots, personal to you and this campaign. Assign dice expressions or existing sheet roll macros. Press the slot's bound key or click it.</p>
-  <p className="muted tiny">Commands: <code>/roll 1d20+5</code>, <code>/macro Attack</code>, <code>/em draws a sword</code>, <code>/say Ready!</code>, a spell dragged from your sheet, or a macro built in Macro Builder.</p>
+  <p className="muted tiny">Commands: <code>/roll 1d20+5</code>, <code>/macro Attack</code>, <code>/em draws a sword</code>, <code>/say Ready!</code>, any roll button dragged from your sheets or combat tools, a spell, or a macro built in Macro Builder.</p>
   <div className="hotbar-slot-editor">{draft.map((slot,i)=><div className="hotbar-slot-row" key={i}>
    <span className="hotbar-index">{i+1}</span>
    <input aria-label={'Hotbar '+(i+1)+' label'} maxLength={40} placeholder="Label" value={slot.label}
@@ -127,7 +128,7 @@ export function HotbarSettings({slots,onSave,visible,onChangeVisible}){
    <input aria-label={'Hotbar '+(i+1)+' command'} maxLength={300} placeholder="/roll 1d20+5"
     value={slot.command} onChange={e=>edit(i,'command',e.target.value)}/>
   </div>)}</div>
-  {!valid&&<p className="error small">Use /roll, /r, /macro, /em, /say a spell assigned from the sheet, or /builder followed by a macro ID.</p>}
+  {!valid&&<p className="error small">Use a supported dice, weapon, spell, sheet-roll, initiative, builder, emote or chat command.</p>}
   {error&&<p className="error small">{error}</p>}{notice&&<p className="good small">{notice}</p>}
   <div className="keybind-actions">
    <button type="button" className="secondary" disabled={!dirty||saving} onClick={()=>setDraft(normaliseHotbar(slots))}>Discard</button>
@@ -137,7 +138,7 @@ export function HotbarSettings({slots,onSave,visible,onChangeVisible}){
 }
 
 export function MacroHotbar({
- slots,bindings,onExecute,onConfigure,onAssignSpell,onAssignMacro,
+ slots,bindings,onExecute,onConfigure,onAssignSpell,onAssignMacro,onAssignRoll,
  onReorderSlot,onRemoveSlot
 }){
  const items=normaliseHotbar(slots);
@@ -205,7 +206,8 @@ export function MacroHotbar({
     if(types.includes('application/x-forge-hotbar-slot')){
      e.preventDefault();e.dataTransfer.dropEffect='move';setDragOver(i);return;
     }
-    if(!(onAssignSpell&&types.includes('application/x-forge-spell'))&&
+    if(!(onAssignRoll&&types.includes(ROLL_HOTBAR_MIME))&&
+       !(onAssignSpell&&types.includes('application/x-forge-spell'))&&
        !(onAssignMacro&&types.includes('application/x-forge-macro')))return;
     e.preventDefault();e.dataTransfer.dropEffect='copy';setDragOver(i);
    }}
@@ -222,17 +224,19 @@ export function MacroHotbar({
     }
     const spell=e.dataTransfer.getData('application/x-forge-spell');
     const macro=e.dataTransfer.getData('application/x-forge-macro');
+    const roll=e.dataTransfer.getData(ROLL_HOTBAR_MIME);
     setDragOver(-1);
-    if(!spell&&!macro)return;
+    if(!spell&&!macro&&!roll)return;
     e.preventDefault();e.stopPropagation();
     try{
-     if(macro&&onAssignMacro)onAssignMacro(i,JSON.parse(macro));
+     if(roll&&onAssignRoll)onAssignRoll(i,JSON.parse(roll));
+     else if(macro&&onAssignMacro)onAssignMacro(i,JSON.parse(macro));
      else if(spell&&onAssignSpell)onAssignSpell(i,JSON.parse(spell));
     }catch{}
    }}
    title={slot.command?slot.label+': '+slot.command+
     ' (drag to another slot to reorder, or outside the bar to remove)':
-    'Drag a spell or macro here, or configure slot '+(i+1)}>
+    'Drag any roll, weapon attack, spell or macro here, or configure slot '+(i+1)}>
    <span className="hotbar-key">{keyLabel(bindings['slot'+(i+1)]?.[0]||'')}</span>
    <span className="hotbar-slot-label">{slot.label|| (slot.command?'Macro':'Empty')}</span>
   </button>)}

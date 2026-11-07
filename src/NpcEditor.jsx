@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React,{useEffect,useMemo,useState} from 'react';
 import useSheetAutosave from './useSheetAutosave.js';
 import FloatingWindow from './FloatingWindow.jsx';
@@ -34,6 +35,7 @@ export default function NpcEditor({
   }
  });
  const[t,setT]=useState(template?.tabs?.[0]?.id||'main'),[studio,setStudio]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
+ const rollSource={sourceType:record.kind==='token'?'npc_token':'npc_template',sourceId:record.data.id};
  const current=template?.tabs?.find(x=>x.id===t)||template?.tabs?.[0];const title=record.kind==='template'?'Bestiary template':'NPC token sheet';
  function setField(id,v){setDraft(d=>({...d,name:id==='character_name'?String(v):d.name,
    values:enrichSheetValues(template,{...d.values,[id]:v})}))}
@@ -112,12 +114,13 @@ export default function NpcEditor({
   <PersonalResources value={draft.values[PERSONAL_RESOURCE_KEY]||[]}
    onChange={v=>setField(PERSONAL_RESOURCE_KEY,v)}/></div>:
  (current?.fields||[]).map(f=><div className={'field span'+(f.span||1)+(f.type==='inventory'&&f.inventoryPreset==='grid'?' inventory-grid-field':'')} key={f.id}><label>{f.label}</label>
- {f.type==='roll'?<button onClick={()=>doRoll(f)} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
+ {f.type==='roll'?<button type="button" onClick={()=>doRoll(f)}
+ {...rollDragProps({kind:'sheet',...rollSource,fieldId:f.id,label:f.label})} className="rollbtn">🎲 {f.label} <small>{f.formula||'1d20'}</small></button>:
  f.type==='inventory'?<SharedInventoryPanel db={db} campaignId={campaignId}
   userId={userId} isDM sourceType={record.kind==='template'?'npc_template':'npc_token'}
   sourceId={record.data.id} field={f} template={template}
   sheetValues={draft.values}/>:
- f.type==='attribute'?<AttributeField field={f} template={template}
+ f.type==='attribute'?<AttributeField rollSource={rollSource} field={f} template={template}
   value={draft.values[f.id]} values={draft.values}
   onChange={v=>setField(f.id,v)}
   onProficiencyChange={v=>setField(f.id+'__save_prof',v)}
@@ -127,15 +130,15 @@ export default function NpcEditor({
  f.type==='resource'?<ResourceField value={draft.values[f.id]} onChange={v=>setField(f.id,v)}/>:
  f.type==='magic_dashboard'?<MagicDashboard field={f} value={draft.values[f.id]||{}}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}/>:
- f.type==='equipment'?<EquipmentManager field={f} template={template}
+ f.type==='equipment'?<EquipmentManager rollSource={rollSource} field={f} template={template}
    value={draft.values[f.id]||{}} sheetValues={draft.values}
    onChange={v=>setField(f.id,v)} onAttack={attackFromEditor}/>:
  f.type==='progression'?<ProgressionPanel field={f} value={draft.values[f.id]||{}}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}/>:
- f.type==='proficiencies'?<ProficienciesPanel field={f} value={draft.values[f.id]||{}}
+ f.type==='proficiencies'?<ProficienciesPanel rollSource={rollSource} field={f} value={draft.values[f.id]||{}}
    sheetValues={draft.values} template={template} onChange={v=>setField(f.id,v)}
    onRoll={(formula,label)=>onRoll(formula,label)}/>:
- f.type==='collection'?<RepeatingCollection field={f} value={draft.values[f.id]||[]}
+ f.type==='collection'?<RepeatingCollection rollSource={rollSource} field={f} value={draft.values[f.id]||[]}
    sheetValues={draft.values} onChange={v=>setField(f.id,v)}
    sourceType={record.kind==='token'?'npc_token':'npc_template'} sourceId={record.data.id}
    onCastSpell={castFromEditor} onAddSpellToHotbar={addFromEditor}

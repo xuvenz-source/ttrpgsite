@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React,{useState} from 'react';
 import FloatingWindow from './FloatingWindow.jsx';
 import Artwork from './Artwork.jsx';
@@ -58,7 +59,9 @@ export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],db,u
        </div>
        <div className="combat-turn-score">{e.score===null?'—':e.score}</div>
        {canRoll&&<button type="button" className="secondary combat-entry-roll"
-        disabled={busy} title={'Roll initiative for '+e.name}
+        disabled={busy}
+        {...rollDragProps({kind:'initiative',entryId:e.id,label:e.name+' initiative'},busy)}
+        title={'Roll initiative for '+e.name}
         onClick={()=>onRollEntry(e.id)}>🎲</button>}
        {e.tokenId&&<button type="button" className="secondary combat-entry-find"
         title={'Find '+e.name+' on map'} aria-label={'Find '+e.name+' on map'}
@@ -75,6 +78,7 @@ export default function CombatTurnOrder({combat,privateEntries=[],tokens=[],db,u
     </p>}
     {isDM&&combat.entries.some(e=>e.score===null)&&
      <button type="button" className="secondary combat-roll-npcs"
+      {...rollDragProps({kind:'initiative-npcs',label:'Roll NPC initiative'},busy)}
       onClick={onRollNpc} disabled={busy}>🎲 Roll unrolled NPCs</button>}
     <div className="combat-turn-footer">
      <button type="button" className="secondary" title="Previous combatant"
