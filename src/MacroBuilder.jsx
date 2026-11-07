@@ -380,6 +380,14 @@ export function MacroManager({
     <button type="button" className="secondary" disabled={busy}
      onClick={()=>action('hotbar')}>+ Hotbar</button>
     <button type="button" className="secondary" disabled={busy}
+     draggable={!!editingSaved&&!dirty&&!busy}
+     onDragStart={e=>{
+      const saved=macros.find(row=>row.id===draft.id);
+      if(!editingSaved||dirty||busy||!saved){e.preventDefault();return}
+      dragMacro(e,saved);
+     }}
+     title={editingSaved&&!dirty?'Run or drag this saved macro onto the hotbar':
+      'Save the macro before dragging it to the hotbar'}
      onClick={()=>action('run')}>🎲 Run macro</button>
     <button type="button" disabled={busy||(!dirty&&editingSaved)}
      onClick={()=>action('save')}>{busy?'Saving…':'Save macro'}</button>

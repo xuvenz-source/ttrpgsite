@@ -1,3 +1,4 @@
+import {rollDragProps} from './HotbarRollActions.js';
 import React,{useEffect,useState} from 'react';
 import {initiativeFields,availableCombatTokens,combatEntryForUser,MAX_COMBATANTS} from './CombatInitiative.js';
 
@@ -76,7 +77,9 @@ export default function CombatSetupPanel({map,combat,tokens=[],template,privateE
    </div>
    <p className="muted tiny">Rolling uses the saved {fields.find(x=>x.id===combat.fieldId)?.label||'initiative'} attribute. Only the DM may edit or advance turns.</p>
    <div className="combat-setup-group">
-    <button type="button" className="secondary" disabled={busy} onClick={onRollNpc}>
+    <button type="button" className="secondary" disabled={busy}
+     {...rollDragProps({kind:'initiative-npcs',label:'Roll NPC initiative'},busy)}
+     onClick={onRollNpc}>
      Roll all unrolled NPCs
     </button>
     <button type="button" className="secondary" disabled={busy} onClick={()=>onCommand('sort')}>
@@ -92,6 +95,7 @@ export default function CombatSetupPanel({map,combat,tokens=[],template,privateE
      </div>
      <div className="combat-editor-entry-actions">
       {e.score===null&&<button type="button" className="secondary" disabled={busy}
+       {...rollDragProps({kind:'initiative',entryId:e.id,label:e.name+' initiative'},busy)}
        onClick={()=>onRollEntry(e.id)}>🎲 Roll</button>}
       <input type="number" min="-999" max="1999" aria-label={'Override initiative for '+e.name}
        placeholder="Score" value={manual[e.id]??''}
