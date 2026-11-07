@@ -1,4 +1,5 @@
 import React,{useEffect,useState} from 'react';
+import SignupCaptcha from './SignupCaptcha.jsx';
 
 const NAME=/^[a-z][a-z0-9_]{2,23}$/i;
 const RESERVED_DOMAIN='accounts.tabletopforge.example.com';
@@ -9,6 +10,8 @@ export function AuthGate({db}){
  const[mode,setMode]=useState('login');
  const[username,setUsername]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState('');
  const[legacyEmail,setLegacyEmail]=useState('');
+ const[captchaToken,setCaptchaToken]=useState(''),[captchaReset,setCaptchaReset]=useState(0);
+ const siteKey=import.meta.env.VITE_TURNSTILE_SITE_KEY||'';
  const[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const signup=mode==='register';
  const [oauthProviders,setOauthProviders]=useState({google:false,discord:false});
@@ -39,12 +42,14 @@ export function AuthGate({db}){
   if(signup&&!NAME.test(raw))return setError('Usernames need 3–24 characters: letters, numbers or underscores, starting with a letter.');
   if(signup&&password.length<10)return setError('Use a password of at least 10 characters.');
   if(signup&&password!==confirm)return setError('Passwords do not match.');
+  if(signup&&!siteKey)return setError('Registration is temporarily unavailable: CAPTCHA is not configured.');
+  if(signup&&!captchaToken)return setError('Complete the human verification challenge to create an account.');
   if(!signup&&!raw)return setError('Enter your username or existing account email.');
   setBusy(true);let created=false;
   try{
    if(signup){
     const {data,error:registrationError}=await db.functions.invoke('username-register',{
-     body:{username:raw,password}
+     body:{username:raw,password,captchaToken}
     });
     if(registrationError){
      let details=null;
@@ -61,13 +66,16 @@ export function AuthGate({db}){
    if(created){
     setMode('login');setError('Account created, but automatic sign-in failed. Sign in with the same username and password. '+errText(e));
    }else setError(errText(e));
-  }finally{setBusy(false)}
+  }finally{
+   if(signup){setCaptchaToken('');setCaptchaReset(n=>n+1)}
+   setBusy(false)
+  }
  }
  async function legacyLink(e){
   e.preventDefault();setError('');setNotice('');setBusy(true);
   try{
    const {error}=await db.auth.signInWithOtp({
-    email:legacyEmail.trim(),options:{emailRedirectTo:location.origin}
+    email:legacyEmail.trim(),options:{emailRedirectTo:location.origin,shouldCreateUser:false}
    });
    if(error)throw error;
    setNotice('Sign-in link sent. Check the mailbox for your existing account.');
@@ -115,9 +123,10 @@ export function AuthGate({db}){
       placeholder="Repeat password" value={confirm} onChange={e=>setConfirm(e.target.value)}/>
     </label>}
     {signup&&<p className="muted tiny">No email is needed for these accounts. You won't receive a verification link, but password recovery by email is unavailable. Keep your credentials secure.</p>}
+    {signup&&<SignupCaptcha siteKey={siteKey} onToken={setCaptchaToken} resetSignal={captchaReset}/>}
     {error&&<p className="error small" role="alert">{error}</p>}
     {notice&&<p className="good small" role="status">{notice}</p>}
-    <button type="submit" disabled={busy}>{busy?'Working…':signup?'Create account':'Sign in'}</button>
+    <button type="submit" disabled={busy||(signup&&(!siteKey||!captchaToken))}>{busy?'Working…':signup?'Create account':'Sign in'}</button>
    </form>
    <div className="welcome-social">
     <div className="welcome-or"><span>or continue with</span></div>
