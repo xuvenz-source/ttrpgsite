@@ -648,13 +648,28 @@ export default function TabletopApp(){
   setCharacters(old=>old.map(x=>x.id===changed.id?{
    ...x,portrait_path:changed.portrait_path,token_path:changed.token_path
   }:x));
-  // Keep any current visible map token in sync with the sheet artwork.
-  // RLS still limits edits to the player's own authorised tokens.
+  // Update the visible owned map token immediately; do not wait for the
+  // Supabase round trip before showing the character's newly equipped art.
+  // The server trigger still permits ONLY the character's approved token_path.
+  const affected=tokens.filter(t=>t.owner_id===user&&t.character_id===owner.id);
+  const before=new Map(affected.map(t=>[t.id,t.image_path]));
+  if(affected.length)setTokens(rows=>rows.map(t=>before.has(t.id)?
+   {...t,image_path:art.tokenPath}:t));
   try{
-   await read(db.from('map_tokens').update({image_path:art.tokenPath})
-    .eq('campaign_id',activeId).eq('character_id',owner.id).eq('owner_id',user));
+   const saved=await read(db.from('map_tokens').update({image_path:art.tokenPath})
+    .eq('campaign_id',activeId).eq('character_id',owner.id).eq('owner_id',user)
+    .select('id'));
+   if(affected.some(t=>!saved.some(row=>row.id===t.id)))
+    throw Error('A controlled token could not be updated in the current map.');
    void refreshTokens();
-  }catch(error){console.warn('Sheet artwork saved, but map token image could not refresh',error)}
+  }catch(error){
+   // The character sheet artwork remains saved; do not throw back to the
+   // library uploader, which would delete files the sheet now references.
+   setTokens(rows=>rows.map(t=>before.has(t.id)?
+    {...t,image_path:before.get(t.id)}:t));
+   fail('Character artwork saved, but a map token did not update: '+message(error));
+   void refreshTokens();
+  }
   void refreshMonitors();
  }
  // A sheet pop-out runs under its own Supabase session,
