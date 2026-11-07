@@ -58,7 +58,7 @@ test('map UI is DM-only and shows quick marker controls and preview not player t
  assert.ok(board.includes('MapPlayerPreviewOverlay'));
  assert.ok(board.includes('onPatchEnvironmentObject'));
  assert.ok(overlay.includes('resizeBarrierEndpoint'));
- assert.ok(overlay.includes('map-env-marker-window'));
+ assert.ok(overlay.includes("'map-env-marker map-env-marker-'+o.type"));
  assert.ok(settings.includes('Preview as player'));
  assert.ok(!settings.includes('Snap wall endpoints to the grid'));
  assert.ok(quick.includes('Curtains'));
