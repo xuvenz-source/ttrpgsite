@@ -232,6 +232,28 @@ function App(){
  useEffect(()=>{
   setOpenedHandout(prev=>prev?.pinId?null:prev);
  },[selectedMap]);
+ // A revealed map pin may change its note text while the player is reading.
+ // Re-fetch using RLS after revision ticks; never trust cached note contents.
+ useEffect(()=>{
+  if(!openedHandout?.pinId||isDM||campaignHandouts.loading||campaignHandouts.error)return;
+  const pin=campaignHandouts.pins.find(p=>p.id===openedHandout.pinId);
+  if(!pin?.visible)return;
+  let live=true;
+  void campaignHandouts.readPinNote(pin).then(note=>{
+   if(!live)return;
+   if(!note){setOpenedHandout(null);return}
+   setOpenedHandout(old=>{
+    if(old?.pinId!==pin.id)return old;
+    const previous=old.preview;
+    return previous?.title===note.title&&previous?.body===note.body&&
+     previous?.revealed===note.revealed&&previous?.collected===note.collected?
+      old:{...old,preview:note};
+   });
+  }).catch(()=>{if(live)setOpenedHandout(null)});
+  return()=>{live=false};
+ },[openedHandout?.pinId,isDM,campaignHandouts.pins,
+  campaignHandouts.loading,campaignHandouts.error]);
+
 
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  const combatTracker=useMapCombat({
