@@ -8,7 +8,7 @@ const ACCEPTED_ORIGINS=new Set([
 ]);
 const USERNAME=/^[a-z][a-z0-9_]{2,23}$/;
 const domain='accounts.tabletopforge.example.com';
-function respond(origin,status,payload){
+function respond(origin:string,status:number,payload:Record<string,unknown>){
  return new Response(JSON.stringify(payload),{
   status,headers:{
    'Content-Type':'application/json',
