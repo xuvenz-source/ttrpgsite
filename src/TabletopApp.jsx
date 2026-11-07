@@ -1059,7 +1059,15 @@ export default function TabletopApp(){
    void db.removeChannel(channel);
   };
  },[db,activeId,selectedMap,user]);
- function sendLiveMovement(token,x,y,final=false){
+ function sendLiveMovement(token,x,y,final=false,cancelled=false){
+  if(final&&cancelled){
+   void db.rpc('end_map_motion_previews',{
+    p_map:selectedMap,p_token_ids:[token.id],p_tool_issue_ids:[]
+   }).then(({error})=>{
+    if(error)console.warn('Movement preview cleanup failed',error.message);
+   });
+   return;
+  }
   // Final destination is committed separately; no speculative final broadcast.
   if(final||!fog.frame||fog.frame.mapId!==selectedMap)return;
   if(!canSendMovementPreview(token,user,selectedMap,isDM)||
@@ -1079,7 +1087,15 @@ export default function TabletopApp(){
     queuePreviewFogRefresh();
   }).catch(e=>console.warn('Secure movement preview unavailable',e));
  }
- function sendLiveToolMovement(placement,x,y,final=false){
+ function sendLiveToolMovement(placement,x,y,final=false,cancelled=false){
+  if(final&&cancelled){
+   void db.rpc('end_map_motion_previews',{
+    p_map:selectedMap,p_token_ids:[],p_tool_issue_ids:[placement.issue_id]
+   }).then(({error})=>{
+    if(error)console.warn('Tool movement preview cleanup failed',error.message);
+   });
+   return;
+  }
   if(final||!fog.frame||fog.frame.mapId!==selectedMap)return;
   const issue=campaignTools.issued.find(t=>t.id===placement?.issue_id);
   if(!canSendToolMovementPreview(issue,user,isDM,selectedMap)||
@@ -2257,11 +2273,19 @@ export default function TabletopApp(){
     if(movementPending.current.get(id)===item)movementPending.current.delete(id);
    ++tokenRefreshSeq.current;
    await Promise.all([refreshTokens(),campaignTools.refresh()]);
+   void db.rpc('end_map_motion_previews',{
+    p_map:mapId,p_token_ids:members.map(t=>t.id),
+    p_tool_issue_ids:tools.map(t=>t.issue_id)
+   }).catch(error=>console.warn('Movement preview cleanup failed',error));
    throw e;
   }
   // Refresh both the token and issued-tool projections before dropping the
   // local optimistic group. SQL commits all rows or no rows.
   await Promise.all([refreshTokens(),campaignTools.refresh()]);
+  void db.rpc('end_map_motion_previews',{
+   p_map:mapId,p_token_ids:members.map(t=>t.id),
+   p_tool_issue_ids:tools.map(t=>t.issue_id)
+  }).catch(error=>console.warn('Movement preview cleanup failed',error));
   for(const [id,item] of pending)
    if(movementPending.current.get(id)===item)movementPending.current.delete(id);
  }
