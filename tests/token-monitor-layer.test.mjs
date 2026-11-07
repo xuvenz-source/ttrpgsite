@@ -11,7 +11,7 @@ const css=readAppStyles();
 test('token monitors are rendered in one shared layer above all token artwork',()=>{
  assert.match(frames,/className="token-monitors-over-all"/);
  assert.match(frames,/className="token-monitor-frame"/);
- assert.match(main,/<TokenMonitorFrames tokens=\{visibleTokens\}/);
+ assert.match(main,/<TokenMonitorFrames motionRuntime=\\{motion.current\\} tokens=\\{visibleTokens\\}/);
  assert.ok(frames.includes('const TokenMonitorFrame=React.memo('));
  assert.match(css,/\.board>\.token-monitors-over-all\{[\s\S]*?z-index:30;pointer-events:none!important/);
  assert.equal((frames.match(/<TokenMonitors config=\{config\} normalized/g)||[]).length,1);
