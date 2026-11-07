@@ -56,9 +56,9 @@ revoke all on function forge_visibility.bump_tick(uuid) from public,anon,authent
 -- Geometry helpers use only published live documents. Never export these
 -- functions through the Supabase Data API or grant the private schema.
 create or replace function forge_visibility.cross2(ax double precision,ay double precision,
- bx double precision,by double precision)
+ bx double precision,b_y double precision)
 returns double precision language sql immutable set search_path='' as $$
- select ax*by-ay*bx
+ select ax*b_y-ay*bx
 $$;
 create or replace function forge_visibility.wall_passes(o jsonb,vals jsonb,
  mode text,side text default 'a')
@@ -92,7 +92,7 @@ create or replace function forge_visibility.ray_blocked(scene jsonb,
  mode text,vals jsonb default '{}'::jsonb)
 returns boolean language plpgsql stable set search_path='' as $$
 declare o jsonb; pts jsonb;a jsonb;b jsonb; i integer;
- ax double precision;ay double precision;bx double precision;by double precision;
+ ax double precision;ay double precision;bx double precision;b_y double precision;
  denominator double precision;param double precision;edgeparam double precision;
  side text;
 begin
@@ -106,13 +106,13 @@ begin
   for i in 1..jsonb_array_length(pts)-1 loop
    a:=pts->(i-1);b:=pts->i;
    ax:=(a->>'x')::double precision;ay:=(a->>'y')::double precision;
-   bx:=(b->>'x')::double precision;by:=(b->>'y')::double precision;
-   side:=case when forge_visibility.cross2(bx-ax,by-ay,sx-ax,sy-ay)>=0
+   bx:=(b->>'x')::double precision;b_y:=(b->>'y')::double precision;
+   side:=case when forge_visibility.cross2(bx-ax,b_y-ay,sx-ax,sy-ay)>=0
     then 'a' else 'b' end;
    if forge_visibility.wall_passes(o,vals,mode,side) then continue;end if;
-   denominator:=forge_visibility.cross2(tx-sx,ty-sy,bx-ax,by-ay);
+   denominator:=forge_visibility.cross2(tx-sx,ty-sy,bx-ax,b_y-ay);
    if abs(denominator)<0.0000001 then continue;end if;
-   param:=forge_visibility.cross2(ax-sx,ay-sy,bx-ax,by-ay)/denominator;
+   param:=forge_visibility.cross2(ax-sx,ay-sy,bx-ax,b_y-ay)/denominator;
    edgeparam:=forge_visibility.cross2(ax-sx,ay-sy,tx-sx,ty-sy)/denominator;
    if param>0.00001 and param<0.99999 and
       edgeparam>=-0.00001 and edgeparam<=1.00001 then return true;end if;
@@ -241,7 +241,7 @@ grant execute on function public.can_observe_map_position(uuid,double precision,
 create or replace function forge_visibility.swept_hits_segment(
  x0 double precision,y0 double precision,w double precision,h double precision,
  x1 double precision,y1 double precision,
- ax double precision,ay double precision,bx double precision,by double precision)
+ ax double precision,ay double precision,bx double precision,b_y double precision)
 returns boolean language plpgsql immutable set search_path='' as $$
 declare
  xs double precision[]:=array[x0,x0+w,x0+w,x0,x1,x1+w,x1+w,x1];
@@ -250,7 +250,7 @@ declare
   array[1.0::double precision,0.0::double precision],
   array[0.0::double precision,1.0::double precision],
   array[-(y1-y0),(x1-x0)],
-  array[-(by-ay),(bx-ax)]];
+  array[-(b_y-ay),(bx-ax)]];
  i int;j int;p double precision;q double precision;
  min1 double precision;max1 double precision;min2 double precision;max2 double precision;
 begin
@@ -262,7 +262,7 @@ begin
    min1:=least(min1,p);max1:=greatest(max1,p);
   end loop;
   p:=ax*axes[i][1]+ay*axes[i][2];
-  q:=bx*axes[i][1]+by*axes[i][2];
+  q:=bx*axes[i][1]+b_y*axes[i][2];
   min2:=least(p,q);max2:=greatest(p,q);
   if max1<=min2+0.000001 or max2<=min1+0.000001 then return false;end if;
  end loop;
