@@ -53,6 +53,7 @@ import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './S
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion} from './LiveTokenMovement.js';
+import {movementPathDeltas} from './MapMovementPath.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
  nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -2175,12 +2176,16 @@ export default function TabletopApp(){
    }
   }finally{pending.saving=false}
  }
- async function moveGroup({tokens:members=[],tools=[],dx,dy}){
+ async function moveGroup({tokens:members=[],tools=[],dx,dy,path=[]}){
   const mapId=selectedMap,campaignId=activeId;
   if(!mapId||!campaignId||!Number.isSafeInteger(dx)||
     !Number.isSafeInteger(dy))return;
   if(!members.length&&!tools.length)return;
   if(isDM&&mapSettingEditor.previewing)return;
+  const steps=movementPathDeltas(path?.length?path:[{dx,dy}]);
+  if(!steps?.length||steps.reduce((total,step)=>total+step.dx,0)!==dx||
+    steps.reduce((total,step)=>total+step.dy,0)!==dy)
+   throw Error('Invalid movement path; no units were moved.');
   const collisionOverride=isDM&&mapSettingEditor.ignoreCollision===true;
   // Do not race a pending single-token save with a relative group delta.
   if(members.some(t=>movementPending.current.has(t.id))){
@@ -2199,10 +2204,10 @@ export default function TabletopApp(){
    return item?{...t,x:item.x,y:item.y}:t;
   }));
   try{
-   const {data,error:moveError}=await db.rpc('move_map_group',{
+   const {data,error:moveError}=await db.rpc('commit_map_trajectory',{
     p_map:mapId,p_token_ids:members.map(t=>t.id),
     p_tool_issue_ids:tools.map(t=>t.issue_id),
-    p_dx:dx,p_dy:dy,p_ignore_collision:collisionOverride
+    p_steps:steps,p_ignore_collision:collisionOverride
    });
    if(moveError)throw moveError;
    if(!data||!Array.isArray(data.tokens)||!Array.isArray(data.tools)||
