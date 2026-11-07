@@ -219,6 +219,19 @@ function App(){
  const activeHandout=campaignHandouts.handouts.find(h=>h.id===openedHandout?.id)||
   openedHandout?.preview||null;
  const activeHandoutPin=campaignHandouts.pins.find(p=>p.id===openedHandout?.pinId)||null;
+ // A DM hide/revoke must close any document whose current read permission
+ // disappears. The cached pin preview is never a source of authorization.
+ useEffect(()=>{
+  if(!openedHandout||isDM||campaignHandouts.loading||campaignHandouts.error)return;
+  const inLibrary=campaignHandouts.handouts.some(h=>h.id===openedHandout.id);
+  const pinAllowed=campaignHandouts.pins.some(p=>p.id===openedHandout.pinId&&p.visible);
+  if(!inLibrary&&!pinAllowed)setOpenedHandout(null);
+ },[openedHandout,isDM,campaignHandouts.handouts,campaignHandouts.pins,
+  campaignHandouts.loading,campaignHandouts.error]);
+ useEffect(()=>{
+  setOpenedHandout(prev=>prev?.pinId?null:prev);
+ },[selectedMap]);
+
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  const combatTracker=useMapCombat({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
