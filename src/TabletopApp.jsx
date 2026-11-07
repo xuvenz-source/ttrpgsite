@@ -150,6 +150,7 @@ export default function TabletopApp(){
  const navigationChannel=useRef(null),navigationRequest=useRef(0);
  const latestMonitorRefresh=useRef(null),latestTokenRefresh=useRef(null),latestToolRefresh=useRef(null);
  const latestCampaignMetadataRefresh=useRef(null),latestMapsRefresh=useRef(null),latestNpcsRefresh=useRef(null);
+ const lastObservedFog=useRef(null);
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
  const[remoteToolPositions,setRemoteToolPositions]=useState({});
  const[remoteMeasurements,setRemoteMeasurements]=useState({});
@@ -1220,6 +1221,20 @@ export default function TabletopApp(){
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
   void refreshTokens();void refreshMonitors();void campaignTools.refresh();
  },[fog.frame?.revision,selectedMap]);
+ // Movement previews can revise authorized LOS without changing the saved
+ // visibility tick. Refresh newly observable RLS rows only when that mask
+ // actually changed, not for every pointer sample or every React render.
+ useEffect(()=>{
+  const current=fog.frame,previous=lastObservedFog.current;
+  lastObservedFog.current=current;
+  if(!current||!previous||current.mapId!==selectedMap||
+     previous.mapId!==current.mapId||!current.enabled||
+     current.revision!==previous.revision||
+     current.displayVisibleDuringRefresh)return;
+  const a=current.visible||[],b=previous.visible||[];
+  if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
+  void refreshTokens();void refreshMonitors();void campaignTools.refresh();
+ },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
   setMapEnvironment(null);mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
