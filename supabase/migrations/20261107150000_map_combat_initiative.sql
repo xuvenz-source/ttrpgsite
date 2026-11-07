@@ -37,7 +37,7 @@ create table if not exists public.map_combat_entries (
  token_id uuid not null references public.map_tokens(id) on delete cascade,
  sort_index integer not null default 0,
  score integer check(score between -999 and 1999),
- natural integer check(natural between 1 and 20),
+ die_roll integer check(die_roll between 1 and 20),
  modifier integer check(modifier between -500 and 500),
  unique(map_id,token_id)
 );
@@ -213,7 +213,7 @@ begin
  v_nat:=floor(random()*20)::integer+1;
  v_total:=v_nat+v_bonus;
  update public.map_combat_entries
- set natural=v_nat,modifier=v_bonus,score=v_total where entry_id=p_entry;
+ set die_roll=v_nat,modifier=v_bonus,score=v_total where entry_id=p_entry;
  -- Use the existing dice-chat presentation, not a client-selected number.
  v_result:=jsonb_build_object('expression','1d20'||case when v_bonus>=0 then '+' else '' end||v_bonus::text,
   'dice',jsonb_build_array(v_nat),'modifier',v_bonus,'total',v_total);
@@ -283,7 +283,7 @@ begin
  elsif p_action='score' then
   if p_score is null or p_score not between -999 and 1999 then
    raise exception 'Initiative score must be between -999 and 1999';end if;
-  update public.map_combat_entries set score=p_score,natural=null,modifier=null
+  update public.map_combat_entries set score=p_score,die_roll=null,modifier=null
    where map_id=p_map and entry_id=p_entry;
   if not found then raise exception 'Combatant is not in this encounter';end if;
  elsif p_action='remove' then
