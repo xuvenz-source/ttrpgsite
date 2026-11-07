@@ -7,7 +7,7 @@ function turnstileApi(){
  if(loadPromise)return loadPromise;
  loadPromise=new Promise((resolve,reject)=>{
   const script=document.createElement('script');
-  script.src=SCRIPT_URL;script.async=true;script.crossOrigin='anonymous';
+  script.src=SCRIPT_URL;script.async=true;
   script.onload=()=>window.turnstile?resolve(window.turnstile):reject(Error('CAPTCHA failed to initialize'));
   script.onerror=()=>reject(Error('CAPTCHA could not load. Check your connection or content blockers.'));
   document.head.appendChild(script);
@@ -27,7 +27,7 @@ export default function SignupCaptcha({siteKey,onToken,resetSignal}){
    if(!active||!host.current)return;
    apiRef.current=api;
    widget.current=api.render(host.current,{
-    sitekey:siteKey,action:'username-register',theme:'auto',
+    sitekey:siteKey,action:'username-register',theme:'auto',size:'flexible',
     callback:token=>{if(active){setError('');onToken(token)}},
     'expired-callback':()=>{if(active){onToken('');setError('Verification expired. Please try again.')}},
     'error-callback':()=>{if(active){onToken('');setError('CAPTCHA failed. Please retry the challenge.')}}
