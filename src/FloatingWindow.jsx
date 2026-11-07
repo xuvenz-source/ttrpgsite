@@ -10,7 +10,8 @@ const CONFIG={
  quick:{width:365,height:355},
  inventory:{width:430,height:520},
  account:{width:445,height:565},
- status:{width:650,height:610}
+ status:{width:650,height:610},
+ mapsetting:{width:365,height:560}
 };
 function initialPosition(kind){
  const preset=CONFIG[kind]||CONFIG.sheet;
@@ -22,7 +23,8 @@ function initialPosition(kind){
  // sheet at first appearance. All remain draggable and click-to-front.
  const delta=kind==='npc'?(++npcWindowIndex%7-3)*55:
   kind==='library'?-Math.min(225,width*.16):
-  kind==='studio'?Math.min(165,width*.12):0;
+  kind==='studio'?Math.min(165,width*.12):
+  kind==='mapsetting'?-Math.min(260,width*.20):0;
  return {x:Math.max(8,Math.min(width-90,Math.round(x+delta))),y};
 }
 /** A mouse-draggable, resizable window that doesn't dim or block the tabletop.
