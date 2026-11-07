@@ -27,6 +27,8 @@ import MapSettingPanel from './MapSettingPanel.jsx';
 import MapEnvironmentOverlay from './MapEnvironmentOverlay.jsx';
 import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
+import MapFogOverlay from './MapFogOverlay.jsx';
+import useAuthorizedMapFog from './useAuthorizedMapFog.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {normalizeEnvironment,withObject,patchObject} from './MapEnvironment.js';
 import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
@@ -261,6 +263,7 @@ function App(){
  const campaignTools=useCampaignTools({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
  });
+ const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user});
  const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=onlineMemberIds(members,memberPresenceHashes,onlinePresenceKeys);
  const combatTracker=useMapCombat({
@@ -930,6 +933,9 @@ function App(){
   };
  },[db,activeId,selectedMap,user]);
  function sendLiveMovement(token,x,y,final=false){
+  // Shared map broadcasts cannot restrict coordinates to current observers.
+  // Always fail closed before the visibility snapshot arrives.
+  if(!fog.frame||fog.frame.mapId!==selectedMap||fog.frame.enabled)return;
   if(!canSendMovementPreview(token,user,selectedMap,isDM)||
     !Number.isInteger(x)||!Number.isInteger(y)||!liveMapReady.current)return;
   const now=Date.now(),last=lastMovementPreview.current.get(token.id)||0;
@@ -1089,6 +1095,12 @@ function App(){
   ++tokenRefreshSeq.current;
  },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
+ // Newly observed rows were absent from the player's old RLS stream. A
+ // sanitized revision tick therefore re-queries the authoritative snapshots.
+ useEffect(()=>{
+  if(!fog.frame||fog.frame.mapId!==selectedMap)return;
+  void refreshTokens();void refreshMonitors();void campaignTools.refresh();
+ },[fog.frame?.revision,selectedMap]);
  useEffect(()=>{
   let live=true;
   setMapEnvironment(null);mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
@@ -1826,6 +1838,19 @@ function App(){
     notifyMapRouting({targetId:memberId});
   }catch(e){fail(e)}
  }
+ async function publishEnvironmentRules(action){
+  if(!isDM||!selectedMap||!activeId)return fail('DM map required.');
+  try{
+   // Never publish an older prepared document while autosave is pending.
+   await mapEnvironmentWriter.current.flush();
+   setMapEnvironmentStatus(action==='publish'?'Publishing map rules…':
+    action==='disable'?'Disabling published rules…':'Resetting exploration…');
+   await read(db.rpc('publish_map_environment',{p_map:selectedMap,p_action:action}));
+   await fog.refresh();
+   await Promise.all([refreshTokens(),refreshMonitors(),campaignTools.refresh()]);
+   setMapEnvironmentStatus(action==='publish'?'Published to players.':'Saved.');
+  }catch(e){fail(e);setMapEnvironmentStatus('Publication failed: '+message(e))}
+ }
  async function publishMap(id){try{
   await read(db.from('campaigns').update({active_map_id:id}).eq('id',activeId));
   setCamp(x=>({...x,active_map_id:id}));
@@ -2123,6 +2148,7 @@ function App(){
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolOpen={setSelectedToolIssueId}
     onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+    fogFrame={fog.frame}
     onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}
@@ -2167,6 +2193,10 @@ function App(){
  activeMap={activeMap} maps={maps} selectedMap={selectedMap} onSelectMap={id=>selectMap(id).catch(fail)}
  mapEnvironment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
  mapEnvironmentStatus={mapEnvironmentStatus}
+ onPublishEnvironment={publishEnvironmentRules}
+ onDisablePublished={publishEnvironmentRules}
+ onResetExploration={publishEnvironmentRules}
+ publishedEnvironment={fog.published}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
  handoutsForMap={campaignHandouts.handouts}
  mapSettingPopped={mapSettingPopped}
@@ -2247,6 +2277,10 @@ function App(){
      environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
      editor={mapSettingEditor} onEditorChange={setMapSettingEditor}
      onEnvironmentChange={saveMapEnvironment}
+     onPublishEnvironment={publishEnvironmentRules}
+     onDisablePublished={publishEnvironmentRules}
+     onResetExploration={publishEnvironmentRules}
+     publishedEnvironment={fog.published}
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
      template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
@@ -2563,7 +2597,7 @@ function Designer({template,tabId,changeTemplate,onLinkResource}){
 
 function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolOpen,onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
- onMeasurementPreview,remoteMeasurements={},hotbarInset=false,
+ onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
  handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin}){
@@ -3127,6 +3161,7 @@ function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onChara
        const r=selectionRectangle(marquee.start,marquee.end);
        return {left:r.x,top:r.y,width:r.width,height:r.height};
       })()}/>}
+    {!isDM&&<MapFogOverlay map={map} scale={scale} frame={fogFrame}/>}
     <MapMeasurementOverlay map={map} scale={scale} measures={measures}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
