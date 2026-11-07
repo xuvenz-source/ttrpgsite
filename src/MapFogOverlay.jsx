@@ -9,6 +9,14 @@ export default function MapFogOverlay({map,frame,scale=1}){
  const mapId=map?.id;
  const sanitized=useMemo(()=>normalizeAuthorizedFogFrame(frame,mapId),
   [frame,mapId]);
+ // Cosmetic continuity uses only prior visible cells from explored memory.
+ // Token authorization keeps the pending frame's actual visible set empty.
+ const displayVisible=useMemo(()=>{
+  if(!sanitized?.enabled||!Array.isArray(frame?.displayVisibleDuringRefresh))return null;
+  const explored=new Set(sanitized.explored);
+  return new Set(frame.displayVisibleDuringRefresh.filter(index=>
+   Number.isSafeInteger(index)&&explored.has(index)));
+ },[sanitized,frame]);
  const fallbackWidth=Math.ceil(Number(map?.width)/Number(map?.grid_size));
  const fallbackHeight=Math.ceil(Number(map?.height)/Number(map?.grid_size));
  const width=sanitized?.width||(
@@ -30,10 +38,11 @@ export default function MapFogOverlay({map,frame,scale=1}){
   for(let i=0;i<mask.length;i++){
    const state=mask[i];
    if(state!==FOG_UNEXPLORED&&state!==FOG_EXPLORED)continue;
+   if(state===FOG_EXPLORED&&displayVisible?.has(i))continue;
    context.fillStyle=state===FOG_UNEXPLORED?'#040914':'rgba(4,9,20,.74)';
    context.fillRect(i%width,Math.floor(i/width),1,1);
   }
- },[sanitized,width,height]);
+ },[sanitized,width,height,displayVisible]);
  if(!map)return null;
  return <canvas ref={canvas} className="map-fog-overlay"
   width={width} height={height}
