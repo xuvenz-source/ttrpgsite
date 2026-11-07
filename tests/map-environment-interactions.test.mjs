@@ -57,7 +57,7 @@ test('near-parallel rays and malformed polygon checks are safe',()=>{
  assert.equal(previewVisionPolygon({map,viewer:null,environment:{objects:[]}}).length,0);
 });
 test('map UI is DM-only and shows quick marker controls and preview not player tooling',()=>{
- const board=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+ const board=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
  const overlay=readFileSync(new URL('../src/MapEnvironmentOverlay.jsx',import.meta.url),'utf8');
  const settings=readFileSync(new URL('../src/MapSettingPanel.jsx',import.meta.url),'utf8');
  const quick=readFileSync(new URL('../src/MapObjectQuickAdjust.jsx',import.meta.url),'utf8');

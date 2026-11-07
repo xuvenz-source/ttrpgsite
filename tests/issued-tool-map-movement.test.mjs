@@ -63,7 +63,7 @@ test('movement preview must belong to known campaign members and authorized issu
  assert.equal(canSendToolMovementPreview(issue,dm,true,map),true);
 });
 test('tool Delete is pickup rather than issued record deletion; live updates use private channel',()=>{
- const app=source('src/main.jsx'),layer=source('src/CampaignToolMapLayer.jsx'),hook=source('src/useCampaignTools.js');
+ const app=(source('src/main.jsx')+source('src/TabletopApp.jsx')+source('src/BattlemapBoard.jsx')+source('src/SheetTemplateDesigner.jsx')),layer=source('src/CampaignToolMapLayer.jsx'),hook=source('src/useCampaignTools.js');
  assert.match(app,/onToolPickUp\?\.\(id\)/);
  assert.match(app,/onToolMovementPreview\?\.\(tool,/);
  assert.match(app,/event:'tool-preview'/);

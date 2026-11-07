@@ -53,7 +53,16 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
  const [drag,setDragState]=useState(null);
  const dragRef=useRef(null),gridRef=useRef(null);
  const setDrag=next=>{dragRef.current=next;setDragState(next)};
- const edit=(index,patch)=>onChange(items.map((row,i)=>i===index?{...row,...patch}:row));
+ // Surface server-side inventory write failures rather than treating an
+ // optimistic update as a successfully persisted item.
+ const applyItems=next=>{
+  try{
+   const operation=onChange(next);
+   if(operation?.then)void operation.catch(e=>setError(e?.message||String(e)));
+   return operation;
+  }catch(e){setError(e?.message||String(e));throw e}
+ };
+ const edit=(index,patch)=>applyItems(items.map((row,i)=>i===index?{...row,...patch}:row));
  const openItem=index=>{
   if(index!=='new'&&bound(index))return;
   setError('');
@@ -65,19 +74,21 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   if(editing==='new'){
    if(items.length>=250)throw Error('Inventory can hold up to 250 item records.');
    const index=items.length;
-   onChange([...items,updateInventoryItem(freshItem,draft)]);
+   const write=applyItems([...items,updateInventoryItem(freshItem,draft)]);
    setEditing(keepOpen?index:null);
+   return write;
   }else if(Number.isInteger(editingIndex)&&editingIndex>=0&&items[editingIndex]){
-   onChange(items.map((row,i)=>i===editingIndex?updateInventoryItem(row,draft):row));
+   const write=applyItems(items.map((row,i)=>i===editingIndex?updateInventoryItem(row,draft):row));
    if(!keepOpen){releaseEditing();setEditing(null)}
+   return write;
   }else throw Error('This item is no longer available.');
   setError('');
  };
  const deleteItem=()=>{if(Number.isInteger(editingIndex)&&editingIndex>=0){
-  onChange(items.filter((_,i)=>i!==editingIndex));
+  applyItems(items.filter((_,i)=>i!==editingIndex));
   releaseEditing();setEditing(null);setError('');
  }};
- const remove=index=>onChange(items.filter((_,i)=>i!==index));
+ const remove=index=>applyItems(items.filter((_,i)=>i!==index));
  function gridPosition(clientX,clientY,grabX,grabY){
   const rect=gridRef.current?.getBoundingClientRect();
   if(!rect)return {x:-1,y:-1};
@@ -126,7 +137,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    releaseDrag();
    return;
   }
-  onChange(placed);setError('');
+  applyItems(placed);setError('');
   releaseDrag();
  }
  // Browser-native HTML dragging suppresses keydown events. Pointer capture
@@ -166,7 +177,7 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
       setError('');
       if(collaboration){
        const id=crypto.randomUUID();
-       onChange([...items,{...freshItem,Item:'New item',_inventoryId:id}]);
+       applyItems([...items,{...freshItem,Item:'New item',_inventoryId:id}]);
        setEditing({itemId:id});
       }else setEditing('new');
      }}>+ Item</button>

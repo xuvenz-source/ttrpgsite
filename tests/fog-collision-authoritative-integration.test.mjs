@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const text=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const sql=text('staging/sql-candidates/fog_collision_authoritative_release.sql');
-const app=text('src/main.jsx'),panel=text('src/MapSettingPanel.jsx');
+const app=(text('src/main.jsx')+text('src/TabletopApp.jsx')+text('src/BattlemapBoard.jsx')+text('src/SheetTemplateDesigner.jsx')),panel=text('src/MapSettingPanel.jsx');
 test('server collision must cover token direct writes and issued tools',()=>{
  assert.match(sql,/create trigger forge_player_collision before update of x,y/);
  assert.match(sql,/create trigger forge_tool_collision before update of map_id,x,y/);

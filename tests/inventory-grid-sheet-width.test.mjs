@@ -1,13 +1,14 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gridLayout} from '../src/InventoryMath.js';
 
-const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+const css=readAppStyles();
 const panel=readFileSync(new URL('../src/InventoryPanel.jsx',import.meta.url),'utf8');
 const character=readFileSync(new URL('../src/CharacterEditor.jsx',import.meta.url),'utf8');
 const npc=readFileSync(new URL('../src/NpcEditor.jsx',import.meta.url),'utf8');
-const app=readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8');
+const app=(readFileSync(new URL('../src/main.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8')+readFileSync(new URL('../src/SheetTemplateDesigner.jsx',import.meta.url),'utf8'));
 
 test('grid inventory fields are identified in all three character and NPC sheet renderers',()=>{
  for(const [name,source] of [['DM player sheet',character],['NPC sheet',npc],['player sheet',app]]){

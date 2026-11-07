@@ -61,7 +61,7 @@ test('Units exposes tools and cards carry scoped drag payloads',()=>{
  assert.match(ui,/onOpenTool\(item\.id\)/);
 });
 test('battlemap renders tool tokens and light effects, with drag/drop and sheet opening',()=>{
- const app=source('src/main.jsx'),layer=source('src/CampaignToolMapLayer.jsx');
+ const app=(source('src/main.jsx')+source('src/TabletopApp.jsx')+source('src/BattlemapBoard.jsx')+source('src/SheetTemplateDesigner.jsx')),layer=source('src/CampaignToolMapLayer.jsx');
  assert.match(app,/toolPlacements=\{campaignTools\.placed\}/);
  assert.match(app,/types\.includes\('application\/x-forge-tool'\)/);
  assert.match(app,/<CampaignToolMapLayer/);

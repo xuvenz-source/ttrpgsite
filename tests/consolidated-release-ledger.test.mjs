@@ -15,7 +15,7 @@ test('pending ruler, tools, pin, map and account changes are all in the bundle',
  const ids=new Set(ledger.features.map(f=>f.id));
  for(const id of ['ruler-turns','mixed-selection','tool-pickup','character-sheet-popouts',
   'environment-delete','pin-icons','breached-password-check'])assert.ok(ids.has(id),id);
- const app=raw('src/main.jsx');
+ const app=(raw('src/main.jsx')+raw('src/TabletopApp.jsx')+raw('src/BattlemapBoard.jsx')+raw('src/SheetTemplateDesigner.jsx'));
  for(const name of ['shouldBendLineOnKeyPress','selectableToolIds','onToolPickUp',
   'onDeleteEnvironmentObject','onToolMovementPreview'])assert.ok(app.includes(name),name);
  assert.match(app,/if\(access\.fogEnabled\)return;/);

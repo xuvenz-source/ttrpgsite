@@ -1,0 +1,317 @@
+/* v1.6 — Non-modal, movable tabletop windows with compact default controls.
+   This intentionally does NOT zoom or transform the map, grid or token layers. */
+.floating-window{
+ position:fixed;box-sizing:border-box;z-index:700;
+ width:min(835px,calc(100vw - 28px));height:min(655px,calc(100dvh - 28px));
+ min-width:min(290px,calc(100vw - 12px));min-height:180px;
+ resize:both;overflow:hidden;isolation:isolate;
+ background:#192437;border-radius:11px;
+ border:1px solid #6b7a99;box-shadow:0 12px 40px #000b;
+ pointer-events:auto;
+}
+.floating-window.floating-quick{
+ width:min(355px,calc(100vw - 18px));
+ height:min(325px,calc(100dvh - 24px));
+ min-width:min(295px,calc(100vw - 12px));min-height:176px;
+}
+.floating-window.floating-status{
+ width:min(650px,calc(100vw - 22px));
+ height:min(570px,calc(100dvh - 24px));
+ min-height:260px;
+}
+.floating-window>.modal,
+.floating-window>.panel{
+ box-sizing:border-box;width:100%!important;height:100%!important;
+ max-height:none!important;min-height:0;overflow:auto;
+ border:none!important;border-radius:10px!important;
+ box-shadow:none!important;padding:12px 14px!important;
+}
+.floating-window>.modal .heading,.floating-window>.panel .heading{
+ position:relative;min-height:28px;cursor:grab;
+ user-select:none;-webkit-user-select:none;
+ touch-action:none;justify-content:space-between;
+ margin-bottom:9px!important;padding-bottom:7px;
+ border-bottom:1px solid #465773;
+}
+.floating-window>.modal .heading:active,.floating-window>.panel .heading:active{cursor:grabbing}
+.floating-window .heading button,.floating-window .heading input,
+.floating-window .heading select{cursor:pointer;touch-action:auto}
+.floating-window .heading h2{font-size:calc(17px * var(--ui-scale,.9))!important}
+.floating-window .heading .character-portrait{width:36px;height:36px;min-width:36px}
+.floating-window .heading .return-to-game{font-size:calc(11px * var(--ui-scale,.9))!important}
+.floating-window .modal .actions{margin-top:10px}
+.floating-window.floating-quick>.quick-token-modal{
+ display:flex;flex-direction:column;gap:6px!important;
+ width:100%!important;padding:10px!important;overflow:auto;
+}
+.floating-window .quick-token-modal .heading h2{font-size:calc(14px * var(--ui-scale,.9))!important}
+.floating-window .quick-token-fields{gap:6px;flex:1;min-height:0;overflow-y:auto}
+.floating-window .quick-token-field{padding:6px 8px;gap:5px;border-radius:6px}
+.floating-window .quick-token-field>strong{font-size:calc(12px * var(--ui-scale,.9))}
+.floating-window .quick-token-numbers{gap:5px;grid-template-columns:repeat(auto-fit,minmax(95px,1fr))}
+.floating-window .quick-token-numbers label{gap:2px}
+.floating-window .quick-token-numbers input{
+ font-size:calc(14px * var(--ui-scale,.9))!important;
+ padding:5px 6px;min-height:29px;
+}
+.floating-window .quick-token-adjustments{gap:3px}
+.floating-window .quick-token-adjustments button{
+ padding:3px 2px!important;min-height:25px;font-size:calc(11px * var(--ui-scale,.9))!important;
+}
+.floating-window .quick-token-modal>.actions{
+ flex:0 0 auto;margin-top:4px;gap:6px;
+}
+.floating-window .quick-token-modal>.actions button{padding:6px 9px}
+.floating-window .floating-sheet-content{padding:12px 15px!important}
+.floating-window .floating-sheet-content .fields{gap:10px;margin-top:9px}
+.floating-window .floating-sheet-content>.tabs{margin:8px 0}
+.floating-window .npc-fields{gap:10px}
+.floating-window>.token-status-modal{max-height:none!important;overflow:hidden!important}
+.floating-window>.token-status-modal .status-options{flex:1;overflow-y:auto;min-height:0}
+.floating-window>.token-status-modal .heading{flex-shrink:0}
+/* User-defined, account-persisted UI scale. Explicit pixel fonts in the
+   original stylesheet are overridden only in menus and floating windows. */
+.app .right-sidebar,.app .floating-window{
+ font-size:calc(13px * var(--ui-scale,.9));
+}
+.app .right-sidebar :is(button,input,textarea,select),
+.app .floating-window :is(button,input,textarea,select){
+ font-size:calc(12px * var(--ui-scale,.9));
+}
+.app .right-sidebar :is(label,p),
+.app .floating-window :is(label,p){
+ font-size:calc(12px * var(--ui-scale,.9));
+}
+.app .right-sidebar .side-heading h2{font-size:calc(16px * var(--ui-scale,.9))}
+.app .right-sidebar :is(h3,summary){font-size:calc(12px * var(--ui-scale,.9))}
+.app .right-sidebar .tab-glyph{font-size:calc(18px * var(--ui-scale,.9))}
+.app .floating-window :is(h3,h4){font-size:calc(14px * var(--ui-scale,.9))}
+.app .right-sidebar .tiny,.app .floating-window .tiny{font-size:calc(10px * var(--ui-scale,.9))}
+@media(max-width:650px){
+ .floating-window{min-width:min(275px,calc(100vw - 10px))}
+ .floating-window.floating-sheet{width:calc(100vw - 16px);height:min(70dvh,560px)}
+ .floating-window.floating-quick{width:min(330px,calc(100vw - 12px))}
+ .floating-window>.modal,.floating-window>.panel{padding:9px!important}
+ .floating-window .floating-sheet-content .fields{gap:8px}
+}
+
+/* UI scale also adjusts side panel and initial floating-window proportions,
+   while map pixel dimensions remain untouched. */
+@media(min-width:1051px){
+ .app.no-left-rail main .workarea{
+  grid-template-columns:minmax(0,1fr) calc(320px * var(--ui-scale,.9));
+ }
+}
+@media(min-width:751px) and (max-width:1050px){
+ .app.no-left-rail main .workarea{
+  grid-template-columns:minmax(0,1fr) calc(310px * var(--ui-scale,.9));
+ }
+}
+@media(min-width:751px){
+ .app .floating-window.floating-sheet{
+  width:min(calc(835px * var(--ui-scale,.9)),calc(100vw - 28px));
+ }
+ .app .floating-window.floating-quick{
+  width:min(calc(355px * var(--ui-scale,.9)),calc(100vw - 18px));
+ }
+ .app .floating-window.floating-status{
+  width:min(calc(650px * var(--ui-scale,.9)),calc(100vw - 22px));
+ }
+}
+
+
+/* v1.7 staged: lean sheet controls, configurable status placement, compact chat. */
+/* Use the page tab as the sidebar title. Floating-window title bars remain draggable. */
+.app .right-sidebar .right-body{padding-top:9px}
+.app .right-sidebar .right-section{gap:7px}
+.app .right-sidebar .side-description{font-size:calc(10px * var(--ui-scale,.9));line-height:1.35;margin:0 0 6px}
+.app .right-sidebar .side-form{gap:9px}
+.dm-bestiary-title{display:inline-flex;align-items:center;gap:7px}
+.dm-bestiary-title .bestiary-bear-icon{width:15px;height:15px}
+.dm-bestiary-details>.side-form{padding:9px 0 2px}
+.dm-bestiary-details .bestiary.compact{min-width:0}
+.dm-bestiary-details .bestiary-toolbar{display:flex;gap:6px}
+.dm-bestiary-details .bestiary-toolbar input{min-width:0}
+.dm-bestiary-details .bestiary-cards{min-width:0}
+
+/* A rolled message should be readable in one glance, not consume 1/4 of chat. */
+.right-messages{padding:3px 10px}
+.right-messages .msg{padding:5px 0 6px;border-bottom:1px solid #2b394c}
+.right-messages .msg> .muted{line-height:1.25;font-size:10px}
+.right-messages .msg>p{margin:3px 0 1px;line-height:1.35}
+.chat-roll{margin-top:3px;background:#212e42;border-left:2px solid #9879d9;
+ border-radius:4px;padding:4px 7px;min-width:0}
+.chat-roll-line{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.chat-roll-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:11px;font-weight:650}
+.chat-roll-result{font-size:17px;font-weight:800;line-height:1.05;color:#e7cbff;
+ flex:0 0 auto;font-variant-numeric:tabular-nums}
+.chat-roll-breakdown{font-size:10px;line-height:1.25;color:#aabbd3}
+.chat-roll-breakdown summary{cursor:pointer;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap;display:block;max-width:100%}
+.chat-roll-breakdown summary::-webkit-details-marker{display:none}
+.chat-roll-breakdown .chat-roll-expand{opacity:.75}
+.chat-roll-breakdown[open] .chat-roll-expand{display:none}
+.chat-roll-breakdown>div{margin-top:4px;overflow-wrap:anywhere;padding:4px 0 1px;
+ border-top:1px solid #3c506b;color:#d1dcf2}
+
+/* Compact sheet scaffolding: scroll field contents, not a fixed 52vh sliver. */
+.app .floating-window.floating-sheet>.npc-modal{
+ display:flex!important;flex-direction:column;overflow:hidden!important;
+ gap:0;min-height:0;
+}
+.app .floating-window.floating-sheet>.npc-modal>.heading{
+ flex:0 0 auto;min-height:26px;margin-bottom:3px!important;padding-bottom:5px;
+}
+.app .floating-window.floating-sheet>.npc-modal>.heading p{margin-top:1px;line-height:1.25}
+.app .floating-window.floating-sheet .npc-editor-top{
+ flex:0 0 auto;gap:9px;margin:4px 0 5px;min-height:0;
+}
+.app .floating-window.floating-sheet .npc-editor-portrait{
+ width:45px;height:45px;min-width:45px;
+}
+.app .floating-window.floating-sheet .npc-editor-top label{gap:3px;font-size:11px}
+.app .floating-window.floating-sheet .npc-editor-top input{padding:6px 8px;min-height:31px}
+.app .floating-window.floating-sheet .npc-editor-top button{padding:6px 9px;font-size:11px}
+.app .floating-window.floating-sheet>.npc-modal>.tabs{
+ flex:0 0 auto;padding:3px 0!important;margin:2px 0 5px!important;gap:4px;
+ min-height:0;
+}
+.app .floating-window.floating-sheet>.npc-modal>.tabs button{padding:6px 9px}
+.app .floating-window.floating-sheet>.npc-modal>.npc-monitor-public-toggle{
+ flex:0 0 auto;padding:6px 8px;margin:3px 0 5px;font-size:11px;
+}
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields{
+ flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;
+ margin:0;padding:3px 5px 4px 0;align-content:start;
+ gap:7px;
+}
+.app .floating-window.floating-sheet>.npc-modal>.actions{
+ flex:0 0 auto;margin-top:5px!important;padding:7px 0 2px;
+ border-top:1px solid #33455e;gap:5px;
+}
+.app .floating-window.floating-sheet>.npc-modal>.actions button{padding:6px 10px}
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields>.field{
+ gap:3px;align-self:start;
+}
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields>.field>label{
+ font-size:11px;line-height:1.2
+}
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields>.field>input,
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields>.field>select{
+ padding:6px 8px;min-height:30px;
+}
+.app .floating-window.floating-sheet>.npc-modal>.npc-fields>.field>textarea{
+ padding:7px 8px;min-height:68px;
+}
+.app .floating-window.floating-sheet .collection{
+ padding:7px;gap:7px;border-radius:7px;
+}
+.app .floating-window.floating-sheet .collection-toolbar{
+ display:flex;align-items:center;justify-content:space-between;gap:5px;
+ flex-wrap:wrap;
+}
+.app .floating-window.floating-sheet .collection-group-tabs{
+ display:flex;flex:1;flex-wrap:wrap;gap:3px;align-items:center;min-width:0;
+}
+.app .floating-window.floating-sheet .collection-group-tabs button{
+ min-height:25px;padding:4px 6px;border-radius:5px;font-size:10px;gap:3px;
+}
+.app .floating-window.floating-sheet .collection-group-tabs button small{
+ font-size:9px;padding:0 3px
+}
+.app .floating-window.floating-sheet .collection-heading{
+ display:flex;align-items:center;gap:5px;margin-left:auto;
+}
+.app .floating-window.floating-sheet .collection-heading button{
+ padding:5px 7px;font-size:10px
+}
+.app .floating-window.floating-sheet .collection-entry{
+ padding:8px;gap:7px;border-radius:6px;
+}
+.app .floating-window.floating-sheet .collection-entry-heading{
+ display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+}
+.app .floating-window.floating-sheet .collection-entry-title{
+ font-size:12px;flex:1;min-height:25px;padding:2px 0!important;
+}
+.app .floating-window.floating-sheet .collection-entry-title small{font-size:10px}
+.app .floating-window.floating-sheet .collection-group-select{
+ margin-left:auto;gap:5px;font-size:10px;flex-wrap:nowrap
+}
+.app .floating-window.floating-sheet .collection-group-select select{
+ min-width:100px;max-width:145px;padding:4px 6px;font-size:11px
+}
+.app .floating-window.floating-sheet .collection-entry-actions{gap:3px}
+.app .floating-window.floating-sheet .collection-entry-actions button{
+ padding:3px 6px;min-width:25px;min-height:24px
+}
+.app .floating-window.floating-sheet .collection-field-grid{gap:6px 7px}
+.app .floating-window.floating-sheet .collection-field-label{gap:3px;font-size:10px!important}
+.app .floating-window.floating-sheet .collection-field-label input,
+.app .floating-window.floating-sheet .collection-field-label select{
+ padding:6px 7px;min-height:30px;
+}
+.app .floating-window.floating-sheet .collection-field-label textarea{
+ padding:7px;min-height:65px;
+}
+.app .floating-window.floating-sheet .collection-checkbox{min-height:29px;gap:5px}
+.app .floating-window.floating-sheet .collection-checkbox input{
+ width:14px!important;height:14px!important;
+}
+.app .floating-window.floating-sheet .collection-action{
+ min-height:29px;padding:5px!important;font-size:10px;
+}
+.app .floating-window.floating-sheet .collection-section-tabs{
+ padding-top:5px;gap:4px
+}
+.app .floating-window.floating-sheet .collection-section-tabs button{
+ padding:5px 8px;font-size:10px
+}
+.app .floating-window.floating-sheet .collection-detail-section{
+ gap:5px;padding:8px;border-radius:6px
+}
+.app .floating-window.floating-sheet .collection-detail-section h4{
+ margin:0;font-size:11px;line-height:1.2
+}
+.app .floating-window.floating-sheet .collection-empty{padding:12px}
+
+/* Status strips are located outside the portrait by default; DMs can choose
+   a new anchor in the Token Display Designer without changing resource widgets. */
+.token-status-strip{
+ inset:auto;width:max-content;max-width:calc(100% + 12px);
+ max-height:none;gap:3px;align-items:center;justify-content:center;
+ overflow:visible;transform:none;
+}
+.token-status-strip.status-position-left,
+.token-status-strip.status-position-right{
+ top:50%;transform:translateY(-50%);width:22px;max-width:none;
+ flex-direction:column;flex-wrap:nowrap;
+}
+.token-status-strip.status-position-left{right:calc(100% + 8px);left:auto}
+.token-status-strip.status-position-right{left:calc(100% + 8px);right:auto}
+.token-status-strip.status-position-top,
+.token-status-strip.status-position-bottom{
+ left:50%;transform:translateX(-50%);width:max-content;
+ max-width:calc(100% + 80px);flex-direction:row;flex-wrap:wrap;
+}
+.token-status-strip.status-position-top{bottom:calc(100% + 27px);top:auto}
+.token-status-strip.status-position-bottom{top:calc(100% + 27px);bottom:auto}
+.token-status-strip.status-position-top-left,
+.token-status-strip.status-position-top-right,
+.token-status-strip.status-position-bottom-left,
+.token-status-strip.status-position-bottom-right{
+ width:46px;max-width:none;flex-direction:row;flex-wrap:wrap;
+}
+.token-status-strip.status-position-top-left{top:-12px;left:-18px}
+.token-status-strip.status-position-top-right{top:-12px;right:-18px}
+.token-status-strip.status-position-bottom-left{bottom:-12px;left:-18px}
+.token-status-strip.status-position-bottom-right{bottom:-12px;right:-18px}
+.token-status-pill,.token-status-overflow{flex:0 0 21px}
+@media(max-width:630px){
+ .app .floating-window.floating-sheet .npc-editor-portrait{width:35px;height:35px;min-width:35px}
+ .app .floating-window.floating-sheet .collection-group-select span{display:none}
+ .app .floating-window.floating-sheet .collection-group-select select{min-width:85px;max-width:110px}
+ .app .floating-window.floating-sheet .collection-heading{width:100%;justify-content:flex-end}
+}
+

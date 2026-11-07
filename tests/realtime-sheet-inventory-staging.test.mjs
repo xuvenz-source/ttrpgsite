@@ -1,12 +1,13 @@
+import {readAppStyles} from './readAppStyles.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {itemIdentity,removeItemIdentity} from '../src/useCampaignToolCollaboration.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
-const app=read('src/main.jsx'),editor=read('src/InventoryItemEditor.jsx'),
+const app=(read('src/main.jsx')+read('src/TabletopApp.jsx')+read('src/BattlemapBoard.jsx')+read('src/SheetTemplateDesigner.jsx')),editor=read('src/InventoryItemEditor.jsx'),
  panel=read('src/InventoryPanel.jsx'),dm=read('src/TabletopSidebar.jsx'),
- style=read('src/style.css'),char=read('src/CharacterEditor.jsx'),
+ style=readAppStyles(),char=read('src/CharacterEditor.jsx'),
  npc=read('src/NpcEditor.jsx'),tool=read('src/CampaignToolSheet.jsx');
 const sqlTool=read('staging/sql-candidates/campaign_tool_item_collaboration.sql'),
  sqlSheet=read('staging/sql-candidates/campaign_sheet_inventory_collaboration.sql');
