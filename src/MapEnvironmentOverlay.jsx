@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint} from './MapEnvironment.js';
+import {createBarrier,createLight,normalizePoint,resizeBarrierEndpoint,translateEnvironmentObject} from './MapEnvironment.js';
 import {FEET_PER_CELL} from './MapMeasurements.js';
 
 const pointText=points=>(points||[]).map(p=>p.x+','+p.y).join(' ');
@@ -70,10 +70,19 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
    if(barrier)onAdd(barrier);
   }
  }
+ function startMove(e,object){
+  if(!editing||tool!=='select'||e.button!==0)return;
+  const origin=point(e);if(!origin)return;
+  e.preventDefault();e.stopPropagation();
+  onSelect(object.id);
+  drag.current={kind:'translate',id:object.id,pointerId:e.pointerId,
+   origin,original:object,patch:null,moved:false};
+  try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+ }
  function startHandle(e,object,index){
   if(!editing||tool!=='select'||e.button!==0)return;
   e.preventDefault();e.stopPropagation();
-  drag.current={id:object.id,index,pointerId:e.pointerId,
+  drag.current={kind:'resize',id:object.id,index,pointerId:e.pointerId,
    points:object.points.map(p=>({...p}))};
   setDragPreview({id:object.id,points:object.points.map(p=>({...p}))});
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
@@ -82,10 +91,19 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
   if(drag.current&&drag.current.pointerId===e.pointerId){
    const p=point(e);if(!p)return;
    const current=drag.current;
-   const points=resizeBarrierEndpoint(current.points,current.index,p);
-   if(!points)return;
-   current.points=points;
-   setDragPreview({id:current.id,points});
+   if(current.kind==='translate'){
+    const patch=translateEnvironmentObject(current.original,{
+     x:p.x-current.origin.x,y:p.y-current.origin.y},{x:maxX,y:maxY});
+    if(!patch)return;
+    current.patch=patch;
+    current.moved=Math.hypot(p.x-current.origin.x,p.y-current.origin.y)>.015;
+    setDragPreview({id:current.id,patch});
+   }else{
+    const points=resizeBarrierEndpoint(current.points,current.index,p);
+    if(!points)return;
+    current.points=points;
+    setDragPreview({id:current.id,points});
+   }
    return;
   }
   if(!editing)return;
@@ -103,9 +121,11 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
  function pointerUp(e){
   if(drag.current&&drag.current.pointerId===e.pointerId){
    e.preventDefault();e.stopPropagation();
-   const {id,points}=drag.current;
+   const current=drag.current;
    drag.current=null;setDragPreview(null);
-   onPatch(id,{points},{immediate:true});
+   if(current.kind==='resize')onPatch(current.id,{points:current.points},{immediate:true});
+   else if(current.moved&&current.patch)onPatch(current.id,current.patch,{immediate:true});
+   try{e.currentTarget.releasePointerCapture(e.pointerId)}catch{}
    return;
   }
   if(tool!=='wall-pen'||!drawing.current)return;
@@ -134,9 +154,11 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
    onPointerCancel={()=>{drag.current=null;setDragPreview(null);drawing.current=false;setDraft([])}}>
    {objects.map(object=>{
     const selected=editor.selectedId===object.id;
+    const rendered=dragPreview?.id===object.id&&dragPreview.patch?
+     {...object,...dragPreview.patch}:object;
     if(object.type==='light'){
      if(!editing)return null;
-     const {x=0,y=0,bright=0,dim=0}=object;
+     const {x=0,y=0,bright=0,dim=0}=rendered;
      const inner=Number(bright)/FEET_PER_CELL,outer=(Number(bright)+Number(dim))/FEET_PER_CELL;
      return <g key={object.id}>
       {outer>0&&<circle cx={x} cy={y} r={outer} fill="none"
@@ -146,7 +168,8 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
       <circle cx={x} cy={y} r={selected ? .3 : .19} fill={object.color||'#f6be75'}/>
      </g>;
     }
-    const pts=dragPreview?.id===object.id?dragPreview.points:object.points||[];
+    const pts=dragPreview?.id===object.id&&dragPreview.points?
+     dragPreview.points:rendered.points||[];
     if(pts.length<2)return null;
     const isPortal=object.type==='door'||object.type==='window';
     return <g key={object.id}>
@@ -161,8 +184,8 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
       stroke="transparent" strokeWidth={15} vectorEffect="non-scaling-stroke"
       onPointerDown={e=>{
        if(tool!=='select')return;
-       e.preventDefault();e.stopPropagation();onSelect(object.id);
-      }}/>}
+       startMove(e,object);
+      }}/>} 
      {isPortal&&pts.slice(0,2).map((p,i)=><g key={i}>
       <circle cx={p.x} cy={p.y} r={radius} fill="#f43f51" stroke="#ffffff"
        strokeWidth={1.6} vectorEffect="non-scaling-stroke"
@@ -185,13 +208,17 @@ function MapEnvironmentOverlay({map,scale,objects=[],editor,onAdd,onSelect,onPat
   </svg>
   <div className="map-env-marker-layer" aria-label="DM map object markers">
    {objects.filter(o=>o.type==='door'||o.type==='window'||o.type==='light').map(o=>{
-    const p=center(o),selected=o.id===editor.selectedId;
+    const rendered=dragPreview?.id===o.id&&dragPreview.patch?
+     {...o,...dragPreview.patch}:o;
+    const p=center(rendered),selected=o.id===editor.selectedId;
     return <button type="button" key={o.id}
      className={'map-env-marker map-env-marker-'+o.type+(selected?' is-selected':'')}
      style={{left:p.x*cell,top:p.y*cell}}
      title={'Adjust '+o.type+(o.locked?' (locked)':'')}
      aria-label={'Adjust '+o.type+(o.locked?' (locked)':'')}
-     onPointerDown={e=>e.stopPropagation()}
+     onPointerDown={e=>{e.stopPropagation();startMove(e,o)}}
+     onPointerMove={pointerMove} onPointerUp={pointerUp}
+     onPointerCancel={()=>{drag.current=null;setDragPreview(null)}}
      onClick={e=>{e.preventDefault();e.stopPropagation();onSelect(o.id)}}>
      <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
       {o.type==='door'?<><rect x="6" y="3" width="12" height="18" rx="1.3" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="15" cy="13" r="1" fill="currentColor"/><path d="M8 5v14" stroke="currentColor" strokeWidth="1.2"/></>:
