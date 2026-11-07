@@ -97,9 +97,9 @@ test('initiative migration trigger functions use valid PostgreSQL dollar quoting
   const end=sql.indexOf('revoke all on function public.'+name+'()',start);
   assert.ok(start>=0&&end>start,'missing trigger function '+name);
   const body=sql.slice(start,end);
-  assert.ok(body.includes("as $\\nbegin"),'function body not quoted '+name);
-  assert.ok(body.includes("end $;"),'function end not quoted '+name);
-  assert.ok(!body.includes("as $\\nbegin"),'invalid single dollar '+name);
+  assert.ok(body.includes(' as $$'),'function body not quoted '+name);
+  assert.ok(body.includes('end $$;'),'function end not quoted '+name);
+  assert.ok(!body.includes(' as $\n'),'invalid single dollar '+name);
  }
 });
 test('SQL restricts score writes to server RPC and separates private token IDs',()=>{
