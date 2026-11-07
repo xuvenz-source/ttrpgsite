@@ -15,6 +15,7 @@ import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
 import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
+import {appendMovementWaypoint} from './MapMovementPath.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
@@ -570,7 +571,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
   e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
-   members,tools,dx:0,dy:0,lastFogWrite:0,persistedDuringDrag:false};
+   members,tools,dx:0,dy:0,path:[],lastFogWrite:0,persistedDuringDrag:false};
  }
  function startToolDrag(e,p,canMove){
   e.stopPropagation();
@@ -591,7 +592,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    startX:e.clientX,startY:e.clientY,
    members:tokens.filter(t=>selectedTokens.includes(t.id)),
    tools:toolPlacements.filter(row=>selectedTools.includes(row.issue_id)),
-   dx:0,dy:0};
+   dx:0,dy:0,path:[]};
  }
  function moveTokenDrag(e,t){
   const simulated=previewDrag.current;
@@ -612,6 +613,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
    map.width,map.height,map.grid_size);
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
+  const path=appendMovementWaypoint(info.path||[],delta.dx,delta.dy);
+  if(path===info.path)return; // Reached bounded path complexity.
+  info.path=path;
   info.dx=delta.dx;info.dy=delta.dy;
   // Hot pointer path: move affected sprites without a React commit.
   for(const token of info.members)
@@ -665,7 +669,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    });
   }
   const atomicGroup=!cancel&&!!moveGroup&&
-   (info.members.length+(info.tools||[]).length)>1;
+   (info.members.length+(info.tools||[]).length)>0;
   // Keep group tool sprites at the destination until the atomic RPC settles;
   // otherwise a slow round-trip would flash their old positions.
   setToolPreview(old=>{
@@ -707,7 +711,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    // The parent performs a single server transaction. The returned promise
    // resolves only after refreshing tool projections or after a failure.
    Promise.resolve(moveGroup({
-    tokens:info.members,tools:info.tools||[],dx:info.dx,dy:info.dy
+    tokens:info.members,tools:info.tools||[],dx:info.dx,dy:info.dy,
+    path:info.path||[]
    })).catch(error=>console.warn('Group movement rejected',error)).finally(()=>{
     setToolPreview(old=>{
      const next={...old};
