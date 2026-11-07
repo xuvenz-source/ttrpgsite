@@ -2528,7 +2528,16 @@ html,body,#root{height:100%;width:100%;overflow:hidden}
 
 /* Standalone character sheet pop-out: no duplicate tabletop/sidebar shell. */
 .app.sheet-popup-app{min-height:100dvh;background:#111a2a}
-.app.sheet-popup-app>main{display:none}
+/* The player's floating sheet lives inside main/primary. Keep that exact
+   window mounted while hiding the rest of the tabletop instead of main itself. */
+.app.sheet-popup-app>main,
+.app.sheet-popup-app>main>.workarea,
+.app.sheet-popup-app>main>.workarea>.primary{display:contents!important}
+.app.sheet-popup-app>main>:not(.workarea),
+.app.sheet-popup-app>main>.workarea>:not(.primary),
+.app.sheet-popup-app>main>.workarea>.primary>:not(.floating-window.floating-sheet){
+ display:none!important;
+}
 .app.sheet-popup-app .floating-window.floating-sheet{
  width:calc(100vw - 14px)!important;height:calc(100dvh - 14px)!important;
  left:7px!important;top:7px!important;max-width:none;max-height:none;
