@@ -25,7 +25,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
  environment,environmentEditor,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
- handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,onDeleteEnvironmentObject}){
+ handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
+ onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
+ onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
  const[toolPreview,setToolPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
@@ -662,7 +664,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     <div className="gridlines" style={{backgroundSize:(map.grid_size*scale)+'px '+(map.grid_size*scale)+'px'}}/>
     <MapPinLayer map={map} scale={scale} pins={handoutPins} isDM={isDM}
      editor={environmentEditor} active={active}
-     onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}/>
+     onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}
+     onRead={onReadHandoutPin} onCollect={onCollectHandoutPin}
+     onDelete={onDeleteHandoutPin} onSelect={onSelectHandoutPin}/>
     <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
      placements={toolPlacements} issued={toolIssued}

@@ -205,14 +205,7 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
     onChange={v=>updateEnv({fog:{...env.fog,partyShared:v}})}/>
    <Check title="Enforce wall and door collision" value={env.collision.enabled}
     onChange={v=>updateEnv({collision:{enabled:v}})}/>
-   <div className="map-setting-publication" aria-label="Published map rules">
-    <strong>Published map rules</strong>
-    <small className="muted tiny">These edits are drafts until published. Publishing applies fog and collision together.</small>
-    <small className="muted tiny" role="status">
-     {publishedEnvironment?'Live: fog '+(publishedEnvironment.fog?'on':'off')+
-      ', collision '+(publishedEnvironment.collision?'on':'off'):
-      'Checking published rules…'}
-    </small>
+   <div className="map-setting-publication" aria-label="Map rule actions">
     <div className="map-setting-layer-actions">
      <button type="button" disabled={!map||!environment||!onPublishEnvironment}
       onClick={()=>onPublishEnvironment?.('publish')}>Publish map rules</button>

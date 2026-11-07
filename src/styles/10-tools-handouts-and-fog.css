@@ -182,3 +182,23 @@
 .map-fog-overlay{position:absolute;inset:0;z-index:145;pointer-events:none;
  image-rendering:pixelated;max-width:none;max-height:none}
 
+
+
+/* Handout pins open a compact board-local preview instead of a full window. */
+.map-handout-pin.is-selected{outline:2px solid #77d1ff;outline-offset:2px;
+ box-shadow:0 0 0 3px #12253b,0 0 13px #68baff88}
+.map-handout-bubble{position:absolute;z-index:4;width:min(324px,calc(100% - 16px));
+ max-height:300px;overflow:auto;pointer-events:auto;
+ padding:10px;background:#1c2b41f5;border:1px solid #7396c0;
+ border-radius:10px;box-shadow:0 10px 28px #030712dc;color:#eef4fc}
+.map-handout-bubble-heading{display:flex;align-items:center;gap:8px}
+.map-handout-bubble-heading strong{flex:1;min-width:0;overflow-wrap:anywhere;
+ font-size:13px}
+.map-handout-bubble-heading button{padding:2px 7px;min-height:23px}
+.map-handout-bubble-body{white-space:pre-wrap;overflow-wrap:anywhere;
+ font-size:12px;line-height:1.5;margin:8px 0;max-height:194px;overflow:auto}
+.map-handout-bubble-body img{max-width:100%;height:auto;display:block;
+ margin:8px auto;border-radius:5px}
+.map-handout-bubble-actions{display:flex;flex-wrap:wrap;gap:5px}
+.map-handout-bubble-actions button{min-height:27px;font-size:11px;padding:5px 8px}
+.map-handout-delete{color:#fac0c4!important;border-color:#945765!important}

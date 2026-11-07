@@ -583,6 +583,17 @@ export default function TabletopApp(){
    setOpenedHandout({id:note.id,pinId:pin.id,preview:note});
   }catch(e){fail(e)}
  }
+ async function readMapHandoutPin(pin){
+  const note=await campaignHandouts.readPinNote(pin);
+  if(!note)throw Error('This pin is no longer available to you.');
+  return note;
+ }
+ async function deleteMapHandoutPin(pin){
+  if(!isDM)throw Error('Only the DM may remove pins.');
+  await campaignHandouts.deletePin(pin);
+  setMapSettingEditor(old=>old.selectedPinId===pin.id?
+   {...old,selectedPinId:null}:old);
+ }
  async function moveMapHandoutPin(pin,point){
   if(!isDM)return;
   try{await campaignHandouts.updatePin(pin,point)}catch(e){fail(e);throw e}
@@ -2136,6 +2147,11 @@ export default function TabletopApp(){
    environmentEditor={mapSettingEditor} onAddEnvironmentObject={addEnvironmentObject}
    handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
    onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
+   onReadHandoutPin={readMapHandoutPin} onCollectHandoutPin={campaignHandouts.collectPin}
+   onDeleteHandoutPin={deleteMapHandoutPin}
+   onSelectHandoutPin={pin=>setMapSettingEditor(old=>({
+    ...old,selectedPinId:pin.id,selectedId:null,selectedIds:[]
+   }))}
    onPatchEnvironmentObject={patchEnvironmentObject}
    onDeleteEnvironmentObject={selection=>{
     if(!isDM||!mapEnvironmentCurrent.current)return;
