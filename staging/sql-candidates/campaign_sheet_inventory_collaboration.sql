@@ -23,7 +23,8 @@ create policy "sheet owners and DMs see temporary item claims"
   public.is_campaign_dm(campaign_id) or
   (source_type='character' and exists(
    select 1 from public.characters c where c.id=source_id
-   and c.campaign_id=campaign_id and c.user_id=(select auth.uid())
+   and c.campaign_id=public.campaign_sheet_item_leases.campaign_id
+   and c.user_id=(select auth.uid())
   ))
  );
 
@@ -248,29 +249,29 @@ begin
  where c.id=p_campaign and f->>'type'='inventory';
  filtered:=p_values-inventory_fields;
  if p_source='character' then
-  update public.characters set
+  update public.characters as c set
    field_values=coalesce(field_values,'{}'::jsonb)||filtered,
    name=coalesce(p_meta->>'name',name),
    portrait_path=case when p_meta?'portrait_path' then p_meta->>'portrait_path' else portrait_path end,
    token_path=case when p_meta?'token_path' then p_meta->>'token_path' else token_path end
-  where campaign_id=p_campaign and id=p_source_id returning to_jsonb(characters.*) into updated;
+  where campaign_id=p_campaign and id=p_source_id returning to_jsonb(c) into updated;
  elsif p_source='npc_template' then
-  update public.npc_templates set
+  update public.npc_templates as n set
    field_values=coalesce(field_values,'{}'::jsonb)||filtered,
    name=coalesce(p_meta->>'name',name),
    portrait_path=case when p_meta?'portrait_path' then p_meta->>'portrait_path' else portrait_path end,
    token_path=case when p_meta?'token_path' then p_meta->>'token_path' else token_path end,
    npc_bars_public=case when p_meta?'bars_public'
     then (p_meta->>'bars_public')::boolean else npc_bars_public end
-  where campaign_id=p_campaign and id=p_source_id returning to_jsonb(npc_templates.*) into updated;
+  where campaign_id=p_campaign and id=p_source_id returning to_jsonb(n) into updated;
  else
-  update public.map_tokens set
+  update public.map_tokens as t set
    npc_values=coalesce(npc_values,'{}'::jsonb)||filtered,
    name=coalesce(p_meta->>'name',name),
    image_path=case when p_meta?'token_path' then p_meta->>'token_path' else image_path end,
    npc_bars_public=case when p_meta?'bars_public'
     then (p_meta->>'bars_public')::boolean else npc_bars_public end
-  where campaign_id=p_campaign and id=p_source_id returning to_jsonb(map_tokens.*) into updated;
+  where campaign_id=p_campaign and id=p_source_id returning to_jsonb(t) into updated;
  end if;
  if updated is null then raise exception 'Sheet no longer exists';end if;
  return updated;
@@ -298,5 +299,19 @@ do $publication$ begin
   where pubname='supabase_realtime' and schemaname='public'
    and tablename='campaign_sheet_item_leases') then
   alter publication supabase_realtime add table public.campaign_sheet_item_leases;
+ end if;
+ -- Existing RLS policies still apply; enable owner/DM sheet notifications
+ -- only when those tables are not already in the publication.
+ if exists(select 1 from pg_publication where pubname='supabase_realtime')
+ and not exists(select 1 from pg_publication_tables
+  where pubname='supabase_realtime' and schemaname='public'
+   and tablename='characters') then
+  alter publication supabase_realtime add table public.characters;
+ end if;
+ if exists(select 1 from pg_publication where pubname='supabase_realtime')
+ and not exists(select 1 from pg_publication_tables
+  where pubname='supabase_realtime' and schemaname='public'
+   and tablename='npc_templates') then
+  alter publication supabase_realtime add table public.npc_templates;
  end if;
 end $publication$;

@@ -147,7 +147,13 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    <div className="inventory-summary"><strong>{items.length} items</strong>
     <span>{inventoryWeight(items).toLocaleString()} {enc?.unit||'weight units'}</span>
     <button className="secondary" type="button" disabled={items.length>=250}
-     onClick={()=>{setError('');setEditing('new')}}>+ Item</button>
+     onClick={()=>{
+      setError('');
+      if(collaboration){
+       onChange([...items,{...freshItem,Item:'New item',_inventoryId:crypto.randomUUID()}]);
+       setEditing(items.length);
+      }else setEditing('new');
+     }}>+ Item</button>
    </div>
    {enc?.enabled&&<div className="inventory-carry-summary" role="status">
     Total carried: <strong>{enc.weight.toLocaleString()} / {enc.capacity.toLocaleString()} {enc.unit}</strong>
