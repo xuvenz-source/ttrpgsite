@@ -29,5 +29,5 @@ test('policy instructs next release to include all staged items with one main me
  assert.match(rules,/one merge to `main`/);
  assert.match(guide,/audit every staged branch/);
  assert.match(guide,/all outstanding, release-ready staged components/);
- assert.match(guide,/resolve all code\/permission\/database conflicts/);
+ assert.match(guide,/[Rr]esolve all code\/permission\/database conflicts/);
 });
