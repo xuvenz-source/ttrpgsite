@@ -45,3 +45,41 @@
 ## Next-release contract
 
 Keep PR #37 **draft**. Before the next requested live update, include this branch plus every other outstanding ready branch in a fresh consolidated release commit, resolve all code/permission/migration conflicts and use **one** production Vercel deployment. Do not silently omit prior staged functionality.
+
+## Second-stage architecture and fog optimization
+
+These additional improvements are **staged for the next release**, not deployed.
+
+### Main controller refactor
+- `src/main.jsx` is now a **14-line entrypoint** importing the UI/CSS in the prior order.
+- `src/TabletopApp.jsx` owns application session, campaign state and composition. The live battlemap and DM sheet designer have been isolated into `BattlemapBoard.jsx` and `SheetTemplateDesigner.jsx` (with independent components, React hooks and no import cycle).
+- `src/AppBoundaries.jsx` centralizes error recovery; `TabletopSheetDefaults.js` shares stored-sheet ID/default format helpers.
+- `src/useCampaignPresence.js` owns the pseudonymous Supabase channel and membership hashes, preserving roster updates and cleanup.
+- Existing source-scanning regression tests were updated to inspect the new module locations; `eslint no-undef` checks all extracted controllers.
+- **No database contract, REST/RPC signature, character sheet schema or battlemap pointer behavior was intentionally modified** during component extraction.
+
+### CSS consolidation
+- The formerly monolithic 151 KB stylesheet has been divided into **11 ordered feature CSS files** under `src/styles/`, imported through the existing `src/style.css` entrypoint.
+- The generated combined CSS has the **same original text and cascade order** as the pre-split audit branch (after its prior conservative duplicate-rule cleanup). A regression checksum test prevents inadvertent cascade changes.
+- All existing visual-structure tests now consume the ordered feature CSS source. The production `map-environment.css` and `combat.css` remain imported after the feature sheets, as before.
+- Responsive overrides remain in their original relative order. A real browser viewport review is still necessary before calling visual parity fully verified.
+
+### Server-authoritative fog: database migration candidate
+- `supabase/migrations/20261107124000_fog_visibility_batch_optimization.sql` replaces **only** the body of `public.get_authorized_map_fog(uuid)`, maintaining `SECURITY DEFINER`, empty `search_path`, membership/map authorization, fog-on validation, maximum 128-cell map dimension, and existing DM/no-fog early returns.
+- **Before:** for every candidate fog cell, `point_visible` re-queried map data, live scene and authorized viewer sources.
+- **After:** one materialized collection of at most eight authorized viewer tokens supplies the same centers, radius-12 range, character/NPC attributes, `ray_blocked` wall/door test and `is_lit` illumination test across candidate cells.
+- Exploration state now performs the same numeric JSONB union **only when** the new visible cells are not already contained in the stored explored array, reducing repeated writes and WAL traffic during movement in previously visited territory.
+- No client RLS bypass, visible NPC disclosure, private geometry exposure, new external service, scheduled job, or paid infrastructure is included.
+- **Rollback candidate:** `staging/sql-candidates/rollback_fog_visibility_batch_optimization.sql`, from the current deployed function. This must also never apply automatically.
+
+### Approval and QA requirements for backend change
+
+1. Do **not** run `supabase db push` against production: existing historical version drift is documented and bulk replay risks real test campaign data. At the explicitly approved release, apply the single vetted fog migration only.
+2. Before enabling the new function, capture comparable per-player visibility snapshots for a DM, a player owner, a second party member and an unrelated player, including hidden maps and inaccessible NPCs.
+3. Compare **all visible grid cells**, not merely token visibility, under: open/closed/secret doors, light-source on/off, darkness, walls/windows, multiple tokens, partyShared on/off, elevation, unexplored/previously explored cells, NPCs and map transitions.
+4. Run a two-player multiplayer test with token and tool movement, fog revision ticks and simultaneous combat. Confirm final positions are server-authoritative and no transient leaked cells or artwork.
+5. Compare fog RPC duration and `forge_visibility.exploration` update rate before and after on the same test map size and token count (10, 50, 100). No improvement percentages are claimed before measurement.
+6. If any discrepancy exists, restore the reviewed rollback function or disable the new candidate before further release. Preserve the prior security model in every scenario.
+
+### Current release scope
+This is a **code-first release**, but it still must include **every previously staged, release-ready component**. Validate the aggregate as one release and deploy with a single Vercel production update when explicitly requested.

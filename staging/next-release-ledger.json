@@ -194,9 +194,23 @@
           "static undefined-variable CI lint gate",
           "migration history non-destructive inventory",
           "shared movement packet validation deduplicated",
-          "safe CSS subtab and pan-cursor deduplication"
+          "safe CSS subtab and pan-cursor deduplication",
+          "full main.jsx bootstrap split into independent TabletopApp, BattlemapBoard and SheetTemplateDesigner modules",
+          "independent campaign-presence hook with pseudonymous member status",
+          "11 CSS feature files with exact cascade snapshot and updated regression tests",
+          "staged server-authoritative fog batch visibility and exploration write optimization"
         ],
-        "databaseDependencies": [],
+        "databaseDependencies": [
+          {
+            "version": "20261107124000",
+            "name": "fog_visibility_batch_optimization",
+            "file": "supabase/migrations/20261107124000_fog_visibility_batch_optimization.sql",
+            "status": "staged-not-applied",
+            "compatibility": "existing get_authorized_map_fog(uuid) RPC with unchanged signature and RLS",
+            "rollback": "staging/sql-candidates/rollback_fog_visibility_batch_optimization.sql",
+            "requiresApproval": true
+          }
+        ],
         "paidInfrastructure": false
       }
     ]

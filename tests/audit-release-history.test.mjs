@@ -15,7 +15,10 @@ test('audit release remains a draft staging branch with no paid or automatic SQL
  const staged=ledger.upcomingRelease.outstandingBranches.find(x=>x.pullRequest===37);
  assert.ok(staged);
  assert.equal(staged.status,'staging-verified-not-deployed');
- assert.deepEqual(staged.databaseDependencies,[]);
+ assert.equal(staged.databaseDependencies.length,1);
+ assert.equal(staged.databaseDependencies[0].status,'staged-not-applied');
+ assert.equal(staged.databaseDependencies[0].requiresApproval,true);
+ assert.match(staged.databaseDependencies[0].file,/fog_visibility_batch_optimization\.sql$/);
  const ci=read('.github/workflows/verify-staged.yml');
  assert.doesNotMatch(ci,/supabase db push|supabase migration up|vercel deploy/);
 });
