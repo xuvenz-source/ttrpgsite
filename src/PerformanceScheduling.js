@@ -58,3 +58,30 @@ export function createAdaptiveReconciler(refresh,{healthyMs,fallbackMs,
   dispose(){disposed=true;if(timer!==null)clearTimer(timer);timer=null}
  };
 }
+
+/** A trailing-only reconciliation is appropriate for high-rate motion deltas:
+ * local/remote sprites are already painted, and we want one authoritative
+ * snapshot after the user stops rather than a full roster fetch per waypoint.
+ * Non-motion edits still use the immediate coalesced channel above. */
+export function createTrailingRefresh(run,delay=420,{
+ setTimer=setTimeout,clearTimer=clearTimeout
+}={}){
+ let timer=null,disposed=false;
+ return {
+  request(){
+   if(disposed)return;
+   if(timer!==null)clearTimer(timer);
+   timer=setTimer(()=>{timer=null;if(!disposed)run()},delay);
+  },
+  flush(){
+   if(disposed)return;
+   if(timer!==null){clearTimer(timer);timer=null}
+   run();
+  },
+  cancel(){
+   disposed=true;
+   if(timer!==null)clearTimer(timer);
+   timer=null;
+  }
+ };
+}
