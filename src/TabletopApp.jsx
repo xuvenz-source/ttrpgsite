@@ -58,6 +58,7 @@ import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
+import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
  nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
@@ -265,6 +266,8 @@ export default function TabletopApp(){
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator});
+ const latestFogSnapshot=useRef(null);
+ latestFogSnapshot.current=fog.frame;
  const queuePreviewFogRefresh=()=>{
   const now=Date.now();
   if(now-lastPreviewFogRefresh.current<250)return;
@@ -1095,7 +1098,8 @@ export default function TabletopApp(){
    if(payload.action==='hide'){
     remoteMotion.current?.clearPreview(visualId);
     const markHidden=prior=>({...prior,[payload.id]:{
-     hidden:true,seq:payload.seq,actor:payload.actor
+     hidden:true,seq:payload.seq,actor:payload.actor,
+     fogRevision:latestFogSnapshot.current?.revision??-1
     }});
     if(isToken)setRemoteTokenPositions(markHidden);
     else setRemoteToolPositions(markHidden);
@@ -1360,6 +1364,7 @@ export default function TabletopApp(){
  // monitor visibility metadata) changed. A separate data edit still uses the
  // explicit monitors-changed channel / non-coordinate token event path.
  async function refreshFogAwareTokens(){
+  const proofFrame=latestFogSnapshot.current;
   const context={...tokenContextRef.current};
   const previous=latestMovementAccess.current.tokens||[];
   const authorized=await refreshTokens(true);
@@ -1367,6 +1372,11 @@ export default function TabletopApp(){
      tokenContextRef.current.mapId!==context.mapId||
      tokenContextRef.current.campaignId!==context.campaignId||
      tokenContextRef.current.userId!==context.userId)return;
+  // The roster request completed after the snapshot was granted. An older
+  // RPC or React token row is never sufficient to release an observer hide.
+  if(latestFogSnapshot.current===proofFrame)
+   setRemoteTokenPositions(hidden=>clearVerifiedHiddenTokens(
+    hidden,authorized,proofFrame,context.userId));
   if(authorizedTokenDerivedInputsChanged(previous,authorized,context.mapId))
    await refreshMonitors(true);
  }
@@ -1374,7 +1384,12 @@ export default function TabletopApp(){
  // sanitized revision tick therefore re-queries authoritative token access.
  useEffect(()=>{
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
-  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
+  void refreshFogAwareTokens();
+  const proofFrame=fog.frame;
+  void campaignTools.refresh(['placed'],true).then(result=>{
+   if(latestFogSnapshot.current===proofFrame&&Array.isArray(result?.placed))
+    setRemoteToolPositions(hidden=>clearVerifiedHiddenTools(hidden,result.placed,proofFrame));
+  });
  },[fog.frame?.revision,selectedMap]);
  // Movement previews can revise authorized LOS without changing the saved
  // visibility tick. Reconcile the RLS roster but don't refresh character
@@ -1388,7 +1403,11 @@ export default function TabletopApp(){
      current.displayVisibleDuringRefresh)return;
   const a=current.visible||[],b=previous.visible||[];
   if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
-  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
+  void refreshFogAwareTokens();
+  void campaignTools.refresh(['placed'],true).then(result=>{
+   if(latestFogSnapshot.current===current&&Array.isArray(result?.placed))
+    setRemoteToolPositions(hidden=>clearVerifiedHiddenTools(hidden,result.placed,current));
+  });
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
