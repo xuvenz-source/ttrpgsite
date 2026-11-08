@@ -115,10 +115,16 @@ begin
  where id=p_issue and campaign_id=p_campaign for update;
  if not found or tool_row.kind not in ('mount','inventory') then
   raise exception 'Shared inventory not found';end if;
- if not (public.is_campaign_dm(p_campaign) or
-  (coalesce(public.is_campaign_member(p_campaign),false) and
-   (coalesce(tool_row.party_shared,false) or coalesce(tool_row.owner_id=actor,false)))))
- then raise exception 'No access to destination inventory';end if;
+ if not (
+  coalesce(public.is_campaign_dm(p_campaign),false)
+  or (
+   coalesce(public.is_campaign_member(p_campaign),false)
+   and (
+    coalesce(tool_row.party_shared,false)
+    or coalesce(tool_row.owner_id=actor,false)
+   )
+  )
+ ) then raise exception 'No access to destination inventory';end if;
  if p_direction='to_sheet' and not exists(
   select 1 from public.campaign_tool_item_leases l
   where l.issue_id=p_issue and l.item_id=p_item
