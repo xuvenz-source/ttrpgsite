@@ -14,7 +14,9 @@ test('release ledger records previous releases and pending authorized migrations
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  assert.equal(ledger.releaseBranch,null);
  assert.equal(ledger.productionBaseSha,'26765915deac294e154d1aeac05b23496d76de32');
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,
+  ['stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08']);
+ assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='staged'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
   x.status==='released'));
@@ -50,7 +52,9 @@ test('release ledger records previous releases and pending authorized migrations
   /revoke all on function forge_visibility\.validate_piece_trajectory/);
  assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
   /^begin;|^commit;/m);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,
+  ['stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08']);
+ assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='staged'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
   x.status==='released'));
