@@ -28,6 +28,43 @@ export function createCoalescedRefresh(run,delay=80,{
  };
 }
 
+/** Run the first visibility revalidation immediately after a fresh server
+ * tick, rather than hiding all unowned sprites while an artificial debounce
+ * waits before the network request even starts. Bursty later ticks are still
+ * coalesced to at most one request per interval.
+ *
+ * Authorization is not cached or assumed here: callers must independently
+ * invalidate the previous viewer sight before requesting the new RPC. */
+export function createLeadingCoalescedRefresh(run,delay=60,{
+ setTimer=setTimeout,clearTimer=clearTimeout
+}={}){
+ let timer=null,dirty=false,disposed=false;
+ function arm(){
+  timer=setTimer(()=>{
+   timer=null;
+   if(disposed||!dirty)return;
+   dirty=false;run();arm();
+  },delay);
+ }
+ return {
+  request(){
+   if(disposed)return;
+   if(timer!==null){dirty=true;return}
+   run();arm();
+  },
+  flush(){
+   if(disposed)return;
+   if(timer!==null){clearTimer(timer);timer=null}
+   dirty=false;run();arm();
+  },
+  cancel(){
+   disposed=true;dirty=false;
+   if(timer!==null)clearTimer(timer);
+   timer=null;
+  }
+ };
+}
+
 export const CHAT_RECONCILE_MS={healthy:30000,fallback:4000};
 export const ROSTER_RECONCILE_MS={healthy:60000,fallback:8000};
 
