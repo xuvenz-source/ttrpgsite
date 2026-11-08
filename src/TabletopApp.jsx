@@ -290,13 +290,15 @@ export default function TabletopApp(){
    navigationAuthorizationKey(fog.frame),
    fog.frame.navigationEnvironmentRevision,fog.frame.collisionEnabled);
   for(const token of tokens)
-   if(token.map_id===selectedMap&&token.owner_id===user&&token.visible!==false)
-    navigationStore.warm(selectedMap,'token',token.id);
+   if(token.map_id===selectedMap&&token.owner_id===user&&
+     token.visible!==false&&!movementPending.current.has(token.id))
+    navigationStore.warm(selectedMap,'token',token.id,{x:token.x,y:token.y});
   for(const tool of campaignTools.placed){
    if(tool.map_id!==selectedMap)continue;
    const issued=campaignTools.issued.find(item=>item.id===tool.issue_id);
    if(issued&&(issued.owner_id===user||issued.party_shared))
-    navigationStore.warm(selectedMap,'tool',tool.issue_id);
+    navigationStore.warm(selectedMap,'tool',tool.issue_id,
+     {x:tool.x,y:tool.y});
   }
  },[navigationStore,selectedMap,user,isDM,playerMapId,
   fog.frame,tokens,campaignTools.placed,campaignTools.issued]);
@@ -2460,6 +2462,8 @@ export default function TabletopApp(){
    if(!committed)remoteMotion.current?.clearPreview(id);
    if(movementPending.current.get(id)===pending)
     movementPending.current.delete(id);
+   if(committed)navigationStore.warm(mapId,'token',id,
+    {x:wantedX,y:wantedY});
    clearMapMovementPreview(mapId,[id],[]);
   }
  }
