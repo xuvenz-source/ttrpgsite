@@ -79,18 +79,18 @@ begin
   from pg_catalog.generate_series(0,
     case when p_steps>12 then 0 else p_steps end) as step
  ), samples as (
-  select point.step,exists(
+  select waypoint.step,exists(
    select 1 from sources s
-   where (point.x-(s.x+s.span_x/2.0))^2+
-         (point.y-(s.y+s.span_y/2.0))^2<=144
+   where (waypoint.x-(s.x+s.span_x/2.0))^2+
+         (waypoint.y-(s.y+s.span_y/2.0))^2<=144
     and not forge_visibility.ray_blocked(scene,
-     s.x+s.span_x/2.0,s.y+s.span_y/2.0,point.x,point.y,
+     s.x+s.span_x/2.0,s.y+s.span_y/2.0,waypoint.x,waypoint.y,
      'vision',s.sheet_values)
     and forge_visibility.is_lit(p_map,scene,
-     s.x+s.span_x/2.0,s.y+s.span_y/2.0,point.x,point.y,m.grid_size)
-  ) as visible from points point
+     s.x+s.span_x/2.0,s.y+s.span_y/2.0,waypoint.x,waypoint.y,m.grid_size)
+  ) as visible from points waypoint
  )
- select coalesce(bool_or(visible) filter(where step=0),false),
+ select coalesce(bool_or(visible) filter (where step=0),false),
         coalesce(bool_and(visible),false)
  into old_visible,path_visible from samples;
  if not old_visible then return 0;end if;
