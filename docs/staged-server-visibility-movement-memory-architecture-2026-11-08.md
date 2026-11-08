@@ -49,3 +49,13 @@ Capture actual used RAM/cache/swap, PostgREST pool occupancy/high-water mark, tr
 - Rollback server helper by the exact restoration SQL candidate; rollback client behavior by reverting targeted fog/tool refresh commits, without touching movement/collision schema.
 
 **Release policy:** include every earlier staged component in one consolidated approved update; no silent omissions, automatic deploys, unapproved live migration, branch compute cost or preview deployments.
+
+
+## Superseding implementation update — v2 per-viewer protocol now STAGED (not live)
+
+The earlier section titled "Remaining server-authoritative visibility protocol work — DESIGN, NOT IMPLEMENTED" described the pre-v2 state. PR #52 now additionally includes:
+- An **unapplied** SQL candidate, \`staging/sql-candidates/per_viewer_visibility_v2.sql\`, with private own-user revisions, authorization-aware scoped movement invalidation, and a new \`get_authorized_map_fog_v2\` wrapper around the original full LOS RPC.
+- A client protocol negotiation/legacy fallback on \`useAuthorizedMapFog\`, RLS/permission regression tests, a rollback and a read-only post-migration verification script.
+- The old global map tick and older clients still work. Published environment/rules, light, character elevation and other non-motion changes force conservative invalidation.
+
+**Still NOT implemented:** a pixel-exact same-visibility proof for nearby/own-token movement, full browser-multiplayer and physical RAM/swap acceptance, and a reviewed server migration applied to live Supabase. Nearby moving sources can still trigger a temporary fail-closed mask. See \`docs/staged-per-viewer-server-visibility-v2-2026-11-08.md\` for precise rollout/rollback gates and limitations.
