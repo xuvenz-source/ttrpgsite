@@ -29,6 +29,8 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
     !validInt(raw.revision)||raw.revision<0||
     (raw.navigationEnvironmentRevision!==undefined&&
      (!validInt(raw.navigationEnvironmentRevision)||raw.navigationEnvironmentRevision<0))||
+    (raw.permissionGeneration!==undefined&&
+     (!validInt(raw.permissionGeneration)||raw.permissionGeneration<0))||
     typeof raw.enabled!=='boolean'||typeof raw.partyShared!=='boolean'||
     ['prepared','live','objects','environment','tokens','names','imagePaths']
      .some(key=>Object.hasOwn(raw,key)))return null;
@@ -51,6 +53,8 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
   ...(validInt(raw.navigationEnvironmentRevision)&&
      raw.navigationEnvironmentRevision>=0?{
    navigationEnvironmentRevision:raw.navigationEnvironmentRevision}:{}),
+  ...(validInt(raw.permissionGeneration)&&raw.permissionGeneration>=0?{
+   permissionGeneration:raw.permissionGeneration}:{}),
   visible,explored};
 }
 /** A revision revokes the old visible cells immediately. Retain only cells
