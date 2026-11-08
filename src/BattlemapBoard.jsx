@@ -141,8 +141,15 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  const [previewPosition,setPreviewPosition]=useState(null);
  const previewDrag=useRef(null),previewNudgeRef=useRef(null);
  // Reuse derived rendering data during drag, measurement and marquee updates.
- const sourcePreviewToken=isDM&&environmentEditor?.previewing?
-  tokens.find(t=>t.id===(environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id)):null;
+ const sourcePreviewToken=useMemo(()=>{
+  if(!isDM||!environmentEditor?.previewing)return null;
+  const token=tokens.find(t=>t.id===
+   (environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id));
+  if(!token?.character_id)return token||null;
+  const values=characters.find(c=>c.id===token.character_id)?.field_values;
+  return values?{...token,field_values:values}:token;
+ },[isDM,environmentEditor?.previewing,environmentEditor?.previewTokenId,
+  tokens,characters]);
  const previewToken=sourcePreviewToken&&previewPosition?.mapId===map.id&&
   previewPosition?.id===sourcePreviewToken.id?
   {...sourcePreviewToken,x:previewPosition.x,y:previewPosition.y}:sourcePreviewToken;
@@ -765,7 +772,19 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    (environmentEditor?.ignoreCollision!==true&&
     fogFrame?.collisionEnabled!==false&&collisionScene?
     traceSolidGroupOffset({
-     pieces:[...info.members,...(info.tools||[]).map(groupToolFootprint)],
+     // Conditional walls must use the same effective creature/tool values
+     // as the server. These private attributes are held by the DM only;
+     // players continue using opaque authorized edge masks.
+     pieces:[
+      ...info.members.map(token=>{
+       const values=characters.find(c=>c.id===token.character_id)?.field_values;
+       return values?{...token,field_values:values}:token;
+      }),
+      ...(info.tools||[]).map(tool=>({
+       ...groupToolFootprint(tool),
+       npc_values:toolIssued.find(t=>t.id===tool.issue_id)?.state?.attrs||{}
+      }))
+     ],
      map,environment:collisionScene,previous,desired:requested
     }):requested):
    traceAuthorizedGroupOffset({
