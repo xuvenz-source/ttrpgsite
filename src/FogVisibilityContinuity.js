@@ -27,6 +27,8 @@ export function retainFogSnapshot(previous,next){
   Object.hasOwn(previous,'displayVisibleDuringRefresh'))return next;
  return previous.revision===next.revision&&
   previous.protocolVersion===next.protocolVersion&&
+  previous.deltaProtocolVersion===next.deltaProtocolVersion&&
+  previous.epoch===next.epoch&&previous.sequence===next.sequence&&
   previous.enabled===next.enabled&&
   previous.partyShared===next.partyShared&&
   previous.width===next.width&&previous.height===next.height&&
