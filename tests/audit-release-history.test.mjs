@@ -12,9 +12,15 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,null);
- assert.equal(ledger.productionBaseSha,'92f982ce23dcda706032c3abb235a84233324578');
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.equal(ledger.releaseBranch,'stage/player-remote-reconciliation-2026-11-08');
+ assert.equal(ledger.productionBaseSha,'26765915deac294e154d1aeac05b23496d76de32');
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
+ assert.ok(ledger.branches.some(x=>
+  x.name==='stage/player-remote-reconciliation-2026-11-08'&&x.status==='staged'));
+ for(const id of ['player-authoritative-position-reconciliation',
+  'player-fog-visual-continuity-fast-reauthorization'])assert.ok(
+   ledger.features.some(x=>x.id===id&&x.status==='staged'&&
+    x.releaseReady===true&&x.databaseDependencies.length===0),id);
  assert.ok(ledger.features.some(feature=>feature.id==='movement-visual-handoff-and-observer-request-coalescing'
   &&feature.status==='released'&&feature.releaseReady===true));
  assert.ok(ledger.features.some(feature=>feature.id==='single-write-trajectory-server-redesign'
@@ -36,7 +42,7 @@ test('release ledger records previous releases and pending authorized migrations
   /revoke all on function forge_visibility\.validate_piece_trajectory/);
  assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
   /^begin;|^commit;/m);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
  assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
   feature.status==='released'&&feature.releaseReady===true));
  assert.ok(ledger.branches.some(item=>item.name==='stage/world-runtime-movement-collision-fog-2026-11-08'&&item.status==='released'));
