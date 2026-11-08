@@ -137,8 +137,12 @@ BEGIN
     OLD.config IS DISTINCT FROM NEW.config OR
     OLD.owner_id IS DISTINCT FROM NEW.owner_id OR
     OLD.party_shared IS DISTINCT FROM NEW.party_shared OR
-    OLD.held_by_token_id IS DISTINCT FROM NEW.held_by_token_id) THEN
+    OLD.held_by_token_id IS DISTINCT FROM NEW.held_by_token_id OR
+    OLD.map_id IS DISTINCT FROM NEW.map_id) THEN
   PERFORM forge_visibility.bump_navigation_permission_generation(NEW.map_id,true);
+  IF OLD.map_id IS DISTINCT FROM NEW.map_id THEN
+   PERFORM forge_visibility.bump_navigation_permission_generation(OLD.map_id,true);
+  END IF;
  END IF;
  RETURN NEW;
 END $tool$;
@@ -146,7 +150,7 @@ REVOKE ALL ON FUNCTION forge_visibility.tick_navigation_tool_permissions()
  FROM PUBLIC,anon,authenticated;
 DROP TRIGGER IF EXISTS forge_navigation_tool_permissions ON public.campaign_tool_issues;
 CREATE TRIGGER forge_navigation_tool_permissions
- AFTER UPDATE OF state,config,owner_id,party_shared,held_by_token_id
+ AFTER UPDATE OF state,config,owner_id,party_shared,held_by_token_id,map_id
  ON public.campaign_tool_issues FOR EACH ROW
  EXECUTE FUNCTION forge_visibility.tick_navigation_tool_permissions();
 
