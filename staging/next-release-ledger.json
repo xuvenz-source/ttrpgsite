@@ -161,7 +161,7 @@
       "name": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
       "status": "staged",
       "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
-      "note": "Staged pending fog tick dedupe + stress-test dependency-aware derived RPC refresh, no SQL, Edge/Vercel or paid services. Manual live QA and memory/connection verification remain before declaring a fix."
+      "note": "Consolidates fog pending-tick dedupe, dependent token/tool request reduction, hidden-tab backpressure and pending PRIVATE server observer path SQL candidate with rollback. No production SQL applied; compile, role grants, CI and multiplayer acceptance must pass before rollout."
     }
   ],
   "features": [
@@ -470,6 +470,30 @@
       "releaseReady": false,
       "databaseDependencies": [],
       "verification": "Existing player fog tests and integrated server-auth guard updated. No stale sight persists on hidden-tab tick or reconnect. Need live focus/visibility, RLS and 2/4/6–10 browser stress acceptance."
+    },
+    {
+      "id": "server-observer-single-snapshot-los",
+      "description": "Private server candidate materializes each recipient's RLS-derived sight source set once for all path waypoint visibility probes; retains existing observer auth, collision, private hide/move and preview rate bounds.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "observer_path_visibility_single_snapshot"
+      ],
+      "verification": "SQL candidate and exact rollback staged, no database apply. Node structural security tests, full CI and CodeQL required. Function compilation, private EXECUTE role grants, sampled read-only old/new observer comparison, multi-browser RLS/fog/collision acceptance required before any production rollout."
+    },
+    {
+      "id": "fog-placed-tools-only-refresh",
+      "description": "On new server-authorized fog frames, requery only RLS-dependent placed tool records; issued tool sheets and templates refresh on their own Realtime changes, writes and reconnects.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Live pg_policies confirms issue/template visibility isn't LOS-dependent while placed tool visibility is; static integration test adjusted. Verify light/torch carrying, fog-on/off, tool issuance, map switch and reconnect with active players."
     }
   ],
   "databaseDependencies": [
@@ -612,6 +636,16 @@
       "notes": "Applied as authorized production migration. Verified helper installed, EXECUTE restricted to postgres, authenticated RPC allowed, anon denied, public RPC SECURITY INVOKER, exactly one move_map_group call. Legal bent and blocked direct ray, role-scoped own-player/DM positive, unauthorized foreign-player and DM-only override negatives tested without persisting changes. Test-campaign multiplayer latency/collision QA still required.",
       "appliedVersion": "20261108055943",
       "appliedVia": "supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql"
+    },
+    {
+      "name": "observer_path_visibility_single_snapshot",
+      "status": "candidate-unapplied",
+      "migrationFile": null,
+      "candidateFile": "staging/sql-candidates/observer_path_visibility_single_snapshot.sql",
+      "rollbackFile": "staging/sql-candidates/rollback_observer_path_visibility_single_snapshot.sql",
+      "mustApplyBeforeFrontend": false,
+      "releaseApprovalRequired": true,
+      "note": "Private helper + internal dispatcher replacement only, existing public API unchanged. DO NOT apply without designer authorization. Compile against exact live source and validate old/new RLS visibility results on existing test campaigns. No paid database branch."
     }
   ],
   "edgeFunctionDependencies": [
@@ -642,7 +676,7 @@
     "outstandingBranches": [
       "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
     ],
-    "stagePolicy": "PR #52 consolidates pending fog-revision coalescing and dependency-aware derived-RPC workload reduction after 1.54 GB stress-test memory commitment. No deployment without designer approval; run combined checks and verify fresh RLS/permissions. Server-side LOS optimization and PostgREST pool sizing require separate measured review and are not claimed complete. Background-tab fog requests are now deferred after immediate fail-closed revocation, with authorized refresh on visibility return.",
+    "stagePolicy": "PR #52 bundles every unreleased optimization. Newly staged server-side observer-path SQL is a candidate, NOT an applied migration; no production deploy until designer approval, SQL compile/role/old-new visibility checks, and CI. Monitors, fog, tool-placements and hidden-tab frontend reductions remain bundled. Full per-viewer visibility-delta protocol, physical RAM/swap telemetry and managed pool adjustment are open architectural work, never implied complete.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
