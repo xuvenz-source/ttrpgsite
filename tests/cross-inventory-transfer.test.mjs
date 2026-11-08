@@ -76,6 +76,9 @@ test('destination picker filters unauthorized tools and characters in the client
 });
 test('server candidate requires source lease, both permissions and transactional writes',()=>{
  assert.match(sql,/can_edit_campaign_sheet_inventory/);
+ assert.match(sql,/p_direction is null/);
+ assert.match(sql,/coalesce\(tool_row\.owner_id=actor,false\)/);
+ assert.match(sql,/coalesce\(tool_row\.party_shared,false\)/);
  assert.match(sql,/campaign_tool_item_leases/);
  assert.match(sql,/campaign_sheet_item_leases/);
  assert.match(sql,/holder_id=actor and l.expires_at>now\(\)/);
@@ -89,6 +92,7 @@ test('server candidate requires source lease, both permissions and transactional
 test('both transfer gestures use one destination-aware path and surface errors',()=>{
  assert.match(panel,/inventoryAtPoint\(document,e.clientX,e.clientY,transferKey\)/);
  assert.match(panel,/transferInventoryItem\(\{db:transferContext.db/);
+ assert.match(panel,/loadInventoryTransferTargets\(\{\s*\.\.\.transferContext,context:transferContext/);
  assert.match(panel,/onRequestMoveTargets=/);
  assert.match(panel,/onMove=/);
  assert.match(editor,/Move item…/);
