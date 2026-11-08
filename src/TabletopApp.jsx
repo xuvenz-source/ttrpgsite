@@ -58,6 +58,7 @@ import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
+import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
@@ -170,7 +171,8 @@ export default function TabletopApp(){
  const remoteMotion=useRef(null),observerRevisions=useRef(new Map()),
   remotePositionSettler=useRef(null);
  const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null),
-  latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null);
+  latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null),
+  movementSessionTransport=useRef(null);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
@@ -1039,8 +1041,10 @@ export default function TabletopApp(){
  // Per-recipient authorization and broadcasts remain exclusively in Postgres.
  useEffect(()=>{
   if(!db||!selectedMap)return;
+  const transport=createAuthorizedMotionTransport({db});
+  movementSessionTransport.current=transport;
   const queue=createLatestOnlyPreviewQueue({
-   send:packet=>db.rpc('preview_map_motion',packet.params),
+   send:packet=>transport.send(packet),
    onResult:(packet,{data,error})=>{
     if(error)console.warn('Secure movement preview unavailable',error.message);
     else if(data===true&&packet.kind==='token')latestOwnFogRefresh.current?.();
@@ -1051,6 +1055,8 @@ export default function TabletopApp(){
   return()=>{
    if(movementPreviewQueue.current===queue)movementPreviewQueue.current=null;
    queue.dispose();
+   if(movementSessionTransport.current===transport)movementSessionTransport.current=null;
+   transport.dispose();
   };
  },[db,selectedMap]);
  // Short observer-quiet window before converging the preview toward a final
@@ -1166,10 +1172,8 @@ export default function TabletopApp(){
   // A preview RPC already in flight could otherwise finish AFTER cleanup
   // and resurrect the stale observer position / temporary fog sight.
   void Promise.all(keys.map(key=>queue?.cancel(key)))
-   .then(()=>db.rpc('end_map_motion_previews',{
-    p_map:mapId,p_token_ids:tokenIds,p_tool_issue_ids:issueIds
-   })).then(({error})=>{
-    if(error)console.warn('Movement preview cleanup failed',error.message);
+   .then(()=>movementSessionTransport.current?.end(mapId,tokenIds,issueIds))
+   .then(()=>{
    }).catch(error=>console.warn('Movement preview cleanup failed',error))
    .finally(()=>{
     if(fog.frame?.enabled===true&&fog.frame.mapId===mapId)
