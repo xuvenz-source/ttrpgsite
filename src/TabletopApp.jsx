@@ -292,7 +292,8 @@ export default function TabletopApp(){
       token.visible===false)continue;
    permitted.add(selectedMap+':token:'+token.id);
    if(!movementPending.current.has(token.id))
-    navigationStore.warm(selectedMap,'token',token.id,{x:token.x,y:token.y});
+    navigationStore.warm(selectedMap,'token',token.id,{x:token.x,y:token.y,
+     spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
   }
   for(const tool of campaignTools.placed){
    if(tool.map_id!==selectedMap)continue;
@@ -300,7 +301,8 @@ export default function TabletopApp(){
    if(!toolCanControl(issued,user,false))continue;
    permitted.add(selectedMap+':tool:'+tool.issue_id);
    navigationStore.warm(selectedMap,'tool',tool.issue_id,
-    {x:tool.x,y:tool.y});
+    {x:tool.x,y:tool.y,spanX:Number(tool.span??1),
+     spanY:Number(tool.span??1)});
   }
   navigationStore.retainPermitted(selectedMap,permitted);
  },[navigationStore,selectedMap,user,isDM,playerMapId,
@@ -2432,7 +2434,8 @@ export default function TabletopApp(){
   const end=path.at(-1);
   if(!end||baseX+end.dx!==wantedX||baseY+end.dy!==wantedY||
     !navigationStore.routeApproved(mapId,'token',id,{x:baseX,y:baseY},path)){
-   navigationStore.warm(mapId,'token',id,{x:baseX,y:baseY});
+   navigationStore.warm(mapId,'token',id,{x:baseX,y:baseY,
+    spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
    remoteMotion.current?.clearPreview(id);return;
   }
   const steps=movementPathDeltas(path);
@@ -2466,7 +2469,8 @@ export default function TabletopApp(){
    if(movementPending.current.get(id)===pending)
     movementPending.current.delete(id);
    if(committed)navigationStore.warm(mapId,'token',id,
-    {x:wantedX,y:wantedY});
+    {x:wantedX,y:wantedY,spanX:Number(token.span_x??1),
+     spanY:Number(token.span_y??1)});
    clearMapMovementPreview(mapId,[id],[]);
   }
  }
@@ -2556,8 +2560,12 @@ export default function TabletopApp(){
    if(pieces.some(piece=>
      !navigationStore.routeApproved(mapId,piece.kind,piece.id,
       {x:piece.x,y:piece.y},offsets))){
-    for(const piece of pieces)navigationStore.warm(mapId,piece.kind,piece.id,
-     {x:piece.x,y:piece.y});
+    for(const member of members)navigationStore.warm(mapId,'token',member.id,
+     {x:member.x,y:member.y,spanX:Number(member.span_x??1),
+      spanY:Number(member.span_y??1)});
+    for(const tool of tools)navigationStore.warm(mapId,'tool',tool.issue_id,
+     {x:tool.x,y:tool.y,spanX:Number(tool.span??1),
+      spanY:Number(tool.span??1)});
     for(const member of members)remoteMotion.current?.clearPreview(member.id);
     for(const tool of tools)remoteMotion.current?.clearPreview('tool:'+tool.issue_id);
     return;
