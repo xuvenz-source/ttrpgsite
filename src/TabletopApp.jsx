@@ -1116,7 +1116,9 @@ export default function TabletopApp(){
     remoteMotion.current?.clearPreview(visualId);
     const markHidden=prior=>({...prior,[payload.id]:{
      hidden:true,seq:payload.seq,actor:payload.actor,
-     fogRevision:latestFogSnapshot.current?.revision??-1
+     fogRevision:latestFogSnapshot.current?.revision??-1,
+     fogEpoch:latestFogSnapshot.current?.epoch??null,
+     fogSequence:latestFogSnapshot.current?.sequence??null
     }});
     if(isToken)setRemoteTokenPositions(markHidden);
     else setRemoteToolPositions(markHidden);
