@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-08",
   "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-  "releaseBranch": null,
+  "releaseBranch": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -616,7 +616,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
-    "releaseBranch": null,
+    "releaseBranch": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
     "outstandingBranches": [
       "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
     ],
