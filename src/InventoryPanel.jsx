@@ -3,6 +3,8 @@ import {createPortal} from 'react-dom';
 import {inventoryRows,inventoryWeight,gridLayout,moveInventoryItem,
  canPlaceInventoryItem,rowValue,itemSize,evaluateEncumbrance} from './InventoryMath.js';
 import InventoryItemEditor,{updateInventoryItem} from './InventoryItemEditor.jsx';
+import {inventoryScope,registerOpenInventory,inventoryAtPoint,requestedTransferPosition,
+ loadInventoryTransferTargets,transferInventoryItem,sameInventory} from './InventoryTransfers.js';
 
 const CELL_SIZE=48,GAP=2,GRID_PADDING=5;
 const freshItem={Item:'',Qty:'1',Weight:'0',Notes:'',gridW:1,gridH:1,
@@ -17,8 +19,14 @@ const tileStyle=row=>({
 
 /** Same saved rows are used by classic list and fixed-cell inventory grid. */
 export default function InventoryPanel({field,value,onChange,template,sheetValues,
- collaboration=null}){
+ collaboration=null,transferContext=null}){
  const items=inventoryRows(value),mode=field.inventoryPreset==='grid'?'grid':'list';
+ const transferKey=inventoryScope(transferContext);
+ // Register visible sheets as HTML pointer-drop destinations. Registration
+ // follows React mount/unmount rather than keeping stale closed windows.
+ useEffect(()=>registerOpenInventory(transferContext,{
+  context:transferContext,field,refresh:transferContext?.refresh
+ }),[transferContext,field]);
  const itemId=index=>items[index]?._inventoryId;
  const bound=index=>{
   const id=itemId(index),other=id&&collaboration?.locks?.[id];
@@ -89,6 +97,31 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   releaseEditing();setEditing(null);setError('');
  }};
  const remove=index=>applyItems(items.filter((_,i)=>i!==index));
+ async function executeTransfer(index,target,position=null){
+  const id=itemId(index);
+  if(!transferContext||!id||!collaboration||index<0||!target)
+   throw Error('Inventory transfer is not available for this item.');
+  if(sameInventory(transferContext,target))
+   throw Error('Choose a different inventory.');
+  if(bound(index))throw Error('This item is currently in use by someone else.');
+  await collaboration.claim(id);
+  try{
+   await transferInventoryItem({db:transferContext.db,
+    campaignId:transferContext.campaignId,source:transferContext,
+    target,itemId:id,position});
+   setEditing(null);
+   setError('');
+   // Realtime also refreshes both viewers; refresh locally without treating
+   // a post-commit network error as a failed transfer that should be retried.
+   await Promise.allSettled([transferContext.refresh?.(),target.refresh?.()]);
+  }finally{
+   await collaboration.release(id);
+  }
+ }
+ async function moveTargets(){
+  const options=await loadInventoryTransferTargets(transferContext);
+  return options.filter(option=>!sameInventory(option,transferContext));
+ }
  function gridPosition(clientX,clientY,grabX,grabY){
   const rect=gridRef.current?.getBoundingClientRect();
   if(!rect)return {x:-1,y:-1};
@@ -131,6 +164,14 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   const releaseDrag=()=>current.itemId?void collaboration?.release(current.itemId):release(current.index);
   if(cancel||index<0){releaseDrag();return}
   if(!current.moved&&!current.turns){openItem(index);return}
+  const destination=transferContext?
+   inventoryAtPoint(document,e.clientX,e.clientY,transferKey):null;
+  if(destination){
+   void executeTransfer(index,destination.context,
+    requestedTransferPosition(destination,e.clientX,e.clientY))
+    .catch(e=>setError(e?.message||String(e)));
+   return;
+  }
   const placed=moveInventoryItem(items,index,current.x,current.y,cols,height,current.turns);
   if(!placed){
    setError('Not enough empty slots for that position or orientation. No items were moved.');
@@ -169,7 +210,8 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
  const canDrop=previewVisible&&canPlaceInventoryItem(
   items,dragIndex(drag),drag.x,drag.y,cols,height,drag.turns);
  return <>
-  <section className={'inventory-panel inventory-'+mode}>
+  <section className={'inventory-panel inventory-'+mode}
+   data-inventory-key={transferKey||undefined}>
    <div className="inventory-summary"><strong>{items.length} items</strong>
     <span>{inventoryWeight(items).toLocaleString()} {enc?.unit||'weight units'}</span>
     <button className="secondary" type="button" disabled={items.length>=250||(!!collaboration&&!collaboration.ready)}
@@ -286,6 +328,11 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
    key={editing&&typeof editing==='object'?editing.itemId:String(editing)}
    item={editing==='new'?null:items[editingIndex]} cols={cols} rows={height}
    onSave={saveItem} onDelete={deleteItem}
+   onRequestMoveTargets={transferContext&&(transferContext.kind==='tool'||
+    transferContext.sourceType==='character')?moveTargets:null}
+   onMove={transferContext&&(transferContext.kind==='tool'||
+    transferContext.sourceType==='character')?
+    target=>executeTransfer(editingIndex,target):null}
    onClose={()=>{releaseEditing();setEditing(null)}}/>,document.body)}
  </>;
 }
