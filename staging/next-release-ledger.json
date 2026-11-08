@@ -326,8 +326,7 @@
       "id": "atomic-character-party-inventory-transfers",
       "description": "Fix misleading full-grid error and silent reverse transfer by destination-aware drag and click-to-Move; atomic authorized per-item character↔party/mount inventory migration with server-side footprint first-fit placement.",
       "sources": [
-        "stage/inventory-cross-transfer-2026-11-08",
-        "stage/next-release-inventory-token-continuity-2026-11-08"
+        "stage/inventory-cross-transfer-2026-11-08"
       ],
       "status": "included",
       "releaseReady": false,
