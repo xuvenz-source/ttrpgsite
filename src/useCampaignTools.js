@@ -25,6 +25,7 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refres
  const coordinator=refreshCoordinator||ownCoordinator.current;
  const pendingPositions=useRef(new Map()),writeChains=useRef(new Map());
  const moveSerial=useRef(0);
+ const fullRefreshes=useRef(0);
  useEffect(()=>{
   pendingPositions.current.clear();writeChains.current.clear();moveSerial.current=0;
  },[campaignId,mapId,userId]);
@@ -38,7 +39,7 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refres
   }
   const resources=Array.isArray(kinds)?kinds:['templates','issued','placed'];
   const complete=resources.length===3;
-  if(complete)setLoading(true);
+  if(complete){++fullRefreshes.current;setLoading(true);}
   const generations=Object.fromEntries(resources.map(kind=>{
    if(!Object.hasOwn(seq.current,kind))throw Error('Unknown tool resource '+kind);
    return [kind,++seq.current[kind]];
@@ -78,8 +79,10 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refres
    if(resources.some(kind=>seq.current[kind]===generations[kind]))
     setError(e?.message||String(e));
   }finally{
-   if(complete&&resources.every(kind=>seq.current[kind]===generations[kind]))
-    setLoading(false);
+   if(complete){
+    fullRefreshes.current=Math.max(0,fullRefreshes.current-1);
+    if(fullRefreshes.current===0)setLoading(false);
+   }
   }
  },[db,campaignId,mapId,userId,isDM,coordinator]);
  useEffect(()=>{
@@ -95,22 +98,25 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refres
  useEffect(()=>{
   if(!db||!campaignId||!userId)return;
   let hidden=false;
-  const issuesChanged=createCoalescedRefresh(
-   ()=>void latestRefresh.current(['issued','placed'],true),100);
-  const placementsChanged=createCoalescedRefresh(
-   ()=>void latestRefresh.current(['placed'],true),100);
-  const templatesChanged=createCoalescedRefresh(
-   ()=>{if(isDM)void latestRefresh.current(['templates'],true)},100);
+  const dirty=new Set();
+  const changed=createCoalescedRefresh(()=>{
+   const resources=[...dirty];dirty.clear();
+   if(resources.length)void latestRefresh.current(resources,true);
+  },100);
+  const queue=(...resources)=>{
+   for(const resource of resources)dirty.add(resource);
+   changed.request();
+  };
   const c=db.channel('forge-tools-'+campaignId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
     table:'campaign_tool_issues',filter:'campaign_id=eq.'+campaignId},
-    ()=>issuesChanged.request())
+    ()=>queue('issued','placed'))
    .on('postgres_changes',{event:'*',schema:'public',
     table:'campaign_tool_map_tokens',filter:'campaign_id=eq.'+campaignId},
-    ()=>placementsChanged.request())
+    ()=>queue('placed'))
    .on('postgres_changes',{event:'*',schema:'public',
     table:'campaign_tool_templates',filter:'campaign_id=eq.'+campaignId},
-    ()=>templatesChanged.request())
+    ()=>{if(isDM)queue('templates')})
    .subscribe(status=>{
     if(status==='SUBSCRIBED')
      void latestRefresh.current(['templates','issued','placed'],true);
@@ -124,7 +130,7 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refres
   };
   document.addEventListener('visibilitychange',onVisibility);
   return()=>{
-   issuesChanged.cancel();placementsChanged.cancel();templatesChanged.cancel();
+   changed.cancel();dirty.clear();
    document.removeEventListener('visibilitychange',onVisibility);
    void db.removeChannel(c);
   };
