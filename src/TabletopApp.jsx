@@ -268,7 +268,7 @@ export default function TabletopApp(){
   const now=Date.now();
   if(now-lastPreviewFogRefresh.current<250)return;
   lastPreviewFogRefresh.current=now;
-  void fog.refresh();
+  void fog.refresh(true);
  };
  latestPartyFogRefresh.current=()=>{
   if(fog.frame?.enabled===true&&fog.frame.partyShared)
@@ -1171,7 +1171,7 @@ export default function TabletopApp(){
    }).catch(error=>console.warn('Movement preview cleanup failed',error))
    .finally(()=>{
     if(fog.frame?.enabled===true&&fog.frame.mapId===mapId)
-     void fog.refresh();
+     void fog.refresh(true);
    });
  }
  function sendLiveMovement(token,x,y,final=false,cancelled=false){
@@ -2199,8 +2199,8 @@ export default function TabletopApp(){
     .eq('campaign_id',activeId).maybeSingle();
    if(publishedError)throw publishedError;
    setPublishedMapEnvironment(published?.live?normalizeEnvironment(published.live):null);
-   await fog.refresh();
-   await Promise.all([refreshTokens(),refreshMonitors(),campaignTools.refresh()]);
+   await fog.refresh(true);
+   await Promise.all([refreshTokens(true),refreshMonitors(true),campaignTools.refresh(undefined,true)]);
    setMapEnvironmentStatus(action==='publish'?'Published to players.':'Saved.');
   }catch(e){fail(e);setMapEnvironmentStatus('Publication failed: '+message(e))}
  }
