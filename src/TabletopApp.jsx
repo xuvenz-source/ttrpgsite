@@ -257,7 +257,7 @@ export default function TabletopApp(){
   campaignHandouts.loading,campaignHandouts.error]);
 
  const refreshCoordinator=useMemo(()=>createCampaignRefreshCoordinator(),
-  [activeId,selectedMap,user]);
+  [activeId,selectedMap,user,isDM]);
  const campaignTools=useCampaignTools({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator
@@ -1354,8 +1354,8 @@ export default function TabletopApp(){
   movementPending.current.clear();
   ++tokenRefreshSeq.current;
   ++monitorRequest.current;
- },[selectedMap,activeId,user]);
- useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
+ },[selectedMap,activeId,user,isDM]);
+ useEffect(()=>{refreshTokens(true);refreshMonitors(true);refreshChat()},[selectedMap,activeId,user,isDM]);
  // Newly observed rows were absent from the player's old RLS stream. A
  // sanitized revision tick therefore re-queries the authoritative snapshots.
  useEffect(()=>{
