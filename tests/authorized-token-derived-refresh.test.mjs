@@ -46,7 +46,8 @@ test('fog reconcilers always re-query RLS before deciding whether to refresh cos
  assert.match(app,/const authorized=await refreshTokens\(true\)/);
  assert.match(app,/if\(authorizedTokenDerivedInputsChanged\(previous,authorized,context\.mapId\)\)/);
  assert.match(app,/await refreshMonitors\(true\)/);
- assert.match(app,/void refreshFogAwareTokens\(\);void campaignTools\.refresh\(\['placed'\],true\)/);
+ assert.match(app,/void refreshFogAwareTokens\(\)/);
+ assert.match(app,/campaignTools\.refresh\(\['placed'\],true\)\.then/);
  assert.match(app,/if\(!Array\.isArray\(authorized\)\|\|/);
  assert.match(app,/tokenContextRef\.current\.userId!==context\.userId/);
  // Server-authoritative per-row patches and explicit sheet/resource invalidation survive.
