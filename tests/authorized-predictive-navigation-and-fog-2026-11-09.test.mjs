@@ -197,3 +197,27 @@ test('in-flight navigation responses cannot resurrect a revoked authorization',a
  assert.equal(store.size,0);
  store.dispose();
 });
+
+test('committed coordinate changes re-center the cached grant rather than strand movement at an old edge',async()=>{
+ let origin=0,calls=0;
+ const db={rpc:async()=>{calls++;return {data:{
+  ...grant(owner,[[0,0,1],[1,0,1],[2,0,0]]),origin:[origin,0]
+ },error:null}}};
+ const store=createAuthorizedNavigation({db});
+ store.setRevision(map,8,navigationAuthorizationKey({
+  mapId:map,protocolVersion:2,width:20,height:20,revision:8,
+  enabled:true,collisionEnabled:true,partyShared:false,
+  navigationEnvironmentRevision:5,visible:[0,1,2]
+ }),5,true);
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
+ assert.equal(calls,1);
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
+ assert.equal(calls,1);
+ origin=1;
+ assert.ok(await store.ensure(map,'token',owner,{x:1,y:0}));
+ assert.equal(calls,2,'new authoritative token origin must request a re-centered grant');
+ assert.equal(store.routeApproved(map,'token',owner,{x:0,y:0},[{dx:1,dy:0}]),false,
+  'old origin must never reuse the new graph');
+ assert.equal(store.routeApproved(map,'token',owner,{x:1,y:0},[{dx:1,dy:0}]),true);
+ store.dispose();
+});
