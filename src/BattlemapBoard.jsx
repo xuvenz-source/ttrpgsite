@@ -624,8 +624,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   const members=tokens.filter(token=>group.includes(token.id));
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
   if(!isDM){
-   for(const member of members)navigation?.warm(map.id,'token',member.id);
-   for(const tool of tools)navigation?.warm(map.id,'tool',tool.issue_id);
+   for(const member of members)navigation?.warm(map.id,'token',member.id,
+    {x:member.x,y:member.y});
+   for(const tool of tools)navigation?.warm(map.id,'tool',tool.issue_id,
+    {x:tool.x,y:tool.y});
   }
   e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
@@ -646,8 +648,14 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   viewportRef.current?.focus({preventScroll:true});
   if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
   if(!isDM){
-   for(const id of selectedTokens)navigation?.warm(map.id,'token',id);
-   for(const id of selectedTools)navigation?.warm(map.id,'tool',id);
+   for(const id of selectedTokens){
+    const token=tokens.find(t=>t.id===id);
+    if(token)navigation?.warm(map.id,'token',id,{x:token.x,y:token.y});
+   }
+   for(const id of selectedTools){
+    const tool=toolPlacements.find(p=>p.issue_id===id);
+    if(tool)navigation?.warm(map.id,'tool',id,{x:tool.x,y:tool.y});
+   }
   }
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
   drag.current={id:'tool:'+p.issue_id,pointerId:e.pointerId,
