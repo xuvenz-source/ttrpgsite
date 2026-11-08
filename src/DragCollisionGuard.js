@@ -48,13 +48,11 @@ export function sharedApprovedPath(members,grants){
  const approved=paths[0],common=[];
  const cursors=paths.map(()=>0);
  for(const point of approved){
-  const found=paths.every((path,i)=>{
-   const next=path.findIndex((p,j)=>j>=cursors[i]&&
-    p.dx===point.dx&&p.dy===point.dy);
-   if(next<0)return false;
-   cursors[i]=next+1;return true;
-  });
-  if(found)common.push(point);
+  const proposed=paths.map((path,i)=>path.findIndex((p,j)=>j>=cursors[i]&&
+   p.dx===point.dx&&p.dy===point.dy));
+  if(proposed.some(index=>index<0))continue;
+  for(let i=0;i<cursors.length;i++)cursors[i]=proposed[i]+1;
+  common.push(point);
  }
  return common.filter((p,i)=>i===0?
   p.dx!==0||p.dy!==0:
