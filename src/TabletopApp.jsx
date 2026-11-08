@@ -1042,9 +1042,14 @@ export default function TabletopApp(){
      if(isToken)setRemoteTokenPositions(unhide);
      else setRemoteToolPositions(unhide);
     }
-    remoteMotion.current?.clearPreview(visualId);
-    if(isToken)void latestTokenRefresh.current?.();
-    else void latestToolRefresh.current?.();
+    // Finish visual motion only after the latest authorized database read.
+    // Never remove the overlay first and expose a stale React left/top.
+    const refresh=isToken?latestTokenRefresh.current:latestToolRefresh.current;
+    void Promise.resolve(refresh?.()).catch(error=>
+     console.warn('Movement reconciliation failed',error)).finally(()=>{
+      if(observerRevisions.current.get(payload.kind+':'+payload.id)===payload.seq)
+       remoteMotion.current?.clearPreview(visualId);
+    });
    },OBSERVER_PREVIEW_EXPIRE_MS);
    expiry.set(payload.id,timer);
   }).subscribe(status=>{
@@ -1169,8 +1174,14 @@ export default function TabletopApp(){
      const id=event.new?.id;
      if(id){
       const painted=remoteMotion.current?.getPreview(id);
-      if(painted?.x===event.new.x&&painted?.y===event.new.y)
-       remoteMotion.current?.clearPreview(id);
+      if(painted?.remote&&painted.x===event.new.x&&painted.y===event.new.y){
+       // A network event can precede React's DOM commit. Handoff rather than
+       // clearing a still-visible transform and jumping to the previous cell.
+       remoteMotion.current?.handoffRemote(id);
+       const committed=latestMovementAccess.current.tokens?.find(t=>t.id===id);
+       if(committed?.x===event.new.x&&committed?.y===event.new.y)
+        remoteMotion.current?.reconcile(id,Number(committed.x),Number(committed.y));
+      }
      }
     }
     if(isMotionOnly)motionUpdates.request();
