@@ -42,7 +42,9 @@ test('release ledger records previous releases and pending authorized migrations
  assert.equal(ledger.lastRelease.productionCommit,'9c66bde70fcf021ea1499adb52cd52fe77712e33','the last release SHA must match the verified Vercel production commit');
  assert.ok(ledger.releaseHistory.some(x=>x.pullRequests?.includes(51)&&x.includedStagedPullRequests?.includes(50)));
  assert.deepEqual(ledger.lastRelease.databaseDependencies,['20261108091818']);
- assert.ok(ledger.features.some(x=>x.id==='movement-fog-phase1-rendering-and-visibility-parity'&&x.status==='in-progress'&&x.releaseReady===false));
+ assert.ok(ledger.features.some(x=>x.id==='movement-fog-phase1-rendering-and-visibility-parity'&&x.status==='included'&&x.releaseReady===true));
+ for(const id of ['movement-fog-phase2-authorized-sessions','movement-fog-phase3-viewer-visibility-deltas','movement-fog-phase4-supabase-query-memory'])
+  assert.ok(ledger.features.some(x=>x.id===id&&x.status==='included'&&x.releaseReady===true),id);
  assert.ok(ledger.databaseDependencies.some(x=>x.name==='viewer_light_masks_v2'&&x.status==='staged-not-applied'&&x.mustApplyBeforeFrontend===true));
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
  assert.ok(ledger.releaseHistory.some(x=>x.pullRequests?.includes(52)&&x.databaseDependencies?.includes('20261108091818')));
