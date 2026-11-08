@@ -748,7 +748,11 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    if(carrier){
     onToolMovementPreview?.(info.tools[0],
      Number(info.tools[0].x),Number(info.tools[0].y),true,true);
-    setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return;
+    setSelectedToolIds([]);
+    Promise.resolve(onToolHold?.(issue.id,carrier.id))
+     .catch(error=>console.warn('Tool hold failed',error))
+     .finally(()=>motion.current?.clearPreview('tool:'+issue.id));
+    return;
    }
   }
   // Complete the local drag in the same React batch as the optimistic move.
