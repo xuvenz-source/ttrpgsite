@@ -27,7 +27,8 @@ test('only a missing RPC may select the older already-authorized fog protocol',(
 
 test('the per-viewer Realtime table is read-only and independently RLS isolated',()=>{
  assert.match(sql,/create table if not exists public\.map_viewer_visibility_ticks/);
- assert.match(sql,/primary key\(map_id,user_id\)/);
+ assert.match(sql,/id uuid primary key default pg_catalog\.gen_random_uuid\(\)/);
+ assert.match(sql,/unique\(map_id,user_id\)/);
  assert.match(sql,/alter table public\.map_viewer_visibility_ticks enable row level security/);
  assert.match(sql,/revoke all on table public\.map_viewer_visibility_ticks from public,anon,authenticated/);
  assert.match(sql,/grant select on table public\.map_viewer_visibility_ticks to authenticated/);
