@@ -11,7 +11,7 @@ test('drag previews arrive on authorized private map channels',()=>{
 });
 test('fast movement never replaces canonical persisted movement',()=>{
  assert.ok(main.includes("void latestTokenRefresh.current?.()"));
- assert.ok(main.includes("move(t,next.x,next.y)"));
+ assert.ok(main.includes("move(t,next.x,next.y,info.path||[])"));
  assert.ok(main.includes("sendLiveMovement(token,x,y,true)"));
  assert.ok(main.includes(".update({x,y}).eq('id',id)"));
 });
