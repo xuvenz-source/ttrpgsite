@@ -103,17 +103,26 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
   const changed=createLeadingCoalescedRefresh(()=>void refresh(),60);
   const viewerScope=scope==='viewer';
   const channel=db.channel('forge-visibility-'+mapId+'-'+userId+
-    (viewerScope?'-viewer':''))
-   .on('postgres_changes',{event:'*',schema:'public',
-    table:viewerScope?'map_viewer_visibility_ticks':'map_visibility_ticks',
-    filter:viewerScope?'user_id=eq.'+userId:'map_id=eq.'+mapId},event=>{
-    if(viewerScope&&event?.new&&
-     (event.new.map_id!==mapId||event.new.user_id!==userId))return;
-    // Background tabs must revoke stale sight immediately, but should not
-    // compete with active players for expensive per-viewer fog RPCs.
-    // visibilitychange flushes a fresh authorized frame on return.
-    if(invalidate(event)&&document.visibilityState==='visible')changed.request();
-   }).subscribe(state=>{
+    (viewerScope?'-viewer':''));
+  const handleRevision=event=>{
+   if(viewerScope&&event?.new&&
+    (event.new.map_id!==mapId||event.new.user_id!==userId))return;
+   // Hidden tabs revoke stale sight immediately, reauthorize on return.
+   if(invalidate(event)&&document.visibilityState==='visible')changed.request();
+  };
+  if(viewerScope){
+   // Realtime DELETE bypasses row-level authorization. Never subscribe to
+   // DELETE on the private per-user revision table: INSERT and UPDATE alone
+   // cover all supported revision invalidations; focus/reconnect revalidates.
+   channel.on('postgres_changes',{event:'INSERT',schema:'public',
+    table:'map_viewer_visibility_ticks',filter:'user_id=eq.'+userId},handleRevision)
+    .on('postgres_changes',{event:'UPDATE',schema:'public',
+     table:'map_viewer_visibility_ticks',filter:'user_id=eq.'+userId},handleRevision);
+  }else{
+   channel.on('postgres_changes',{event:'*',schema:'public',
+    table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},handleRevision);
+  }
+  channel.subscribe(state=>{
     if(state==='SUBSCRIBED'){
      // The initial/reconnected subscription could have missed a sight
      // change while the previous query was running. Never inherit that query
