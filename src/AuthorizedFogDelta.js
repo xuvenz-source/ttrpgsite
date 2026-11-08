@@ -1,6 +1,6 @@
 import {normalizeAuthorizedFogFrame} from './MapFogModel.js';
 
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const validSeq=n=>Number.isSafeInteger(n)&&n>=0;
 function parseCells(values,total){
  if(!Array.isArray(values)||values.length>total)return null;
