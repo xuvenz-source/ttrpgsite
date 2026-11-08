@@ -262,8 +262,20 @@ BEGIN
     (4,1,1),(5,1,-1),(6,-1,1),(7,-1,-1)
    ) AS directions(bit,dx,dy) LOOP
     tx:=gx+dir.dx;ty:=gy+dir.dy;
+    -- Never return edges outside the finite origin-centred graph. Otherwise
+    -- its last row becomes a probing boundary into cells not in the grant.
+    IF pg_catalog.abs(tx-bx)>12 OR pg_catalog.abs(ty-by)>12
+    THEN CONTINUE;END IF;
     IF NOT forge_visibility.navigation_position_observed(
       tx,ty,span_w,span_h,map_w,map_h,visible_cells,fog_on)
+    THEN CONTINUE;END IF;
+    -- A diagonal must not cross a dark corner: demand both orthogonal
+    -- footprint positions are currently viewer-authorized as well.
+    IF fog_on AND dir.dx<>0 AND dir.dy<>0 AND
+     (NOT forge_visibility.navigation_position_observed(
+       gx+dir.dx,gy,span_w,span_h,map_w,map_h,visible_cells,true) OR
+      NOT forge_visibility.navigation_position_observed(
+       gx,gy+dir.dy,span_w,span_h,map_w,map_h,visible_cells,true))
     THEN CONTINUE;END IF;
     allowed:=true;
     IF collision_on AND segment_count>0 THEN
