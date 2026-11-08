@@ -5,6 +5,7 @@ import {applyAuthorizedFogEnvelope} from '../src/AuthorizedFogDelta.js';
 import {normalizeAuthorizedFogFrame} from '../src/MapFogModel.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from '../src/AuthorizedObserverVisibility.js';
 import {createAuthorizedMotionTransport} from '../src/AuthorizedMotionTransport.js';
+import {createMovementDiagnostics} from '../src/MovementDiagnostics.js';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const map='00000000-0000-4000-8000-000000000001';
@@ -132,4 +133,39 @@ test('server functions retain collision and private authorization while excludin
  assert.match(rollback,/drop table if exists forge_visibility\.movement_sessions/);
  assert.match(rollback,/drop table if exists forge_visibility\.viewer_fog_snapshots/);
  assert.doesNotMatch(rollback,/drop (?:function|table) if exists public\.map_tokens/);
+});
+
+test('server reuse of published LOS scene retains all recipient privacy rules',()=>{
+ const helper=read('staging/sql-candidates/observer_path_cached_scene.sql');
+ const advance=read('staging/sql-candidates/movement_sessions_and_visibility_delta.sql');
+ assert.match(helper,/function forge_visibility\.observer_path_status_cached\(/i);
+ assert.match(helper,/from public\.campaign_members cm/);
+ assert.match(helper,/coalesce\(assigned,active\)/);
+ assert.match(helper,/ray_blocked\(scene/);
+ assert.match(helper,/forge_visibility\.is_lit/);
+ assert.match(helper,/if not old_visible then return 0/);
+ assert.match(helper,/if p_steps>12 or not path_visible then return 2/);
+ assert.match(helper,/from public,anon,authenticated/);
+ assert.match(advance,/s\.scene/);
+ assert.match(advance,/current_grid is distinct from s\.grid_size/);
+ assert.match(advance,/forge_visibility\.observer_path_status_cached/);
+ const rollback=read('staging/sql-candidates/rollback_movement_sessions_and_visibility_delta.sql');
+ assert.match(rollback,/drop function if exists forge_visibility\.observer_path_status_cached/);
+});
+
+test('stress telemetry is bounded and contains timings only',()=>{
+ let time=0;
+ const metrics=createMovementDiagnostics({clock:()=>time,limit:3});
+ for(const span of [30,10,100,20]){
+  const stop=metrics.begin('movement-preview-rpc');
+  time+=span;
+  stop();
+ }
+ const snapshot=metrics.snapshot();
+ assert.deepEqual(snapshot['movement-preview-rpc'],{
+  samples:3,p50Ms:20,p95Ms:100,maxMs:100
+ });
+ assert.deepEqual(Object.keys(snapshot),['movement-preview-rpc']);
+ metrics.clear();
+ assert.deepEqual(metrics.snapshot(),{});
 });
