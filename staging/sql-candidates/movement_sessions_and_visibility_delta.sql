@@ -178,9 +178,9 @@ begin
  if rule_stamp is distinct from s.rules_updated_at or
     coalesce(collision_on,false)<>s.collision_enforced then return false;end if;
  if s.kind='token' then
-  select t.map_id,t.campaign_id,t.x,t.y,t.owner_id,t.visible,t.updated_at,
-   t.character_id,t.span_x,t.span_y into t
-   from public.map_tokens t where t.id=s.piece_id;
+  select mt.map_id,mt.campaign_id,mt.x,mt.y,mt.owner_id,mt.visible,mt.updated_at,
+   mt.character_id,mt.span_x,mt.span_y into t
+   from public.map_tokens mt where mt.id=s.piece_id;
   if not found or t.map_id is distinct from s.map_id or
    t.campaign_id is distinct from s.campaign_id or t.x<>s.base_x or
    t.y<>s.base_y or t.updated_at is distinct from s.base_updated_at or
@@ -194,9 +194,9 @@ begin
     and c.campaign_id=s.campaign_id) is distinct from s.character_updated_at
   then return false;end if;
  else
-  select t.map_id,t.campaign_id,t.x,t.y,t.owner_id,t.party_shared,
-    t.held_by_token_id,t.revision into u
-  from public.campaign_tool_issues t where t.id=s.piece_id;
+  select ti.map_id,ti.campaign_id,ti.x,ti.y,ti.owner_id,ti.party_shared,
+    ti.held_by_token_id,ti.revision into u
+  from public.campaign_tool_issues ti where ti.id=s.piece_id;
   if not found or u.map_id is distinct from s.map_id or
    u.campaign_id is distinct from s.campaign_id or
    u.x<>s.base_x or u.y<>s.base_y or
