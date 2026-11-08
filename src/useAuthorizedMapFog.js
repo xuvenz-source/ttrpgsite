@@ -70,10 +70,16 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    setFrame(null);setPublished(null);setError(cause?.message||String(cause));
   }
  },[db,campaignId,mapId,userId,isDM,key,coordinator]);
+ // Authorization identity changes must discard all previous sight and
+ // explored data. Switching global -> viewer notification streams is NOT an
+ // identity change: subscription revalidation below revokes *visible* cells,
+ // but should not remount the canvas or black out already explored terrain.
  useEffect(()=>{
   validated.current=null;pendingTick.current=null;
   setFrame(null);setPublished(null);setError('');
   void refresh();
+ },[db,campaignId,mapId,userId,isDM,refresh,key,coordinator]);
+ useEffect(()=>{
   if(!db||!campaignId||!mapId||!userId)return;
   // Invalidate in-flight RPCs before the 60ms batched refresh: a stale
   // pre-movement response must never reinstate old visibility permissions.
