@@ -2389,6 +2389,7 @@ export default function TabletopApp(){
   const pending={mapId,campaignId,x:Number(token.x),y:Number(token.y),
    baseX:Number(token.x),baseY:Number(token.y),saving:true,confirmed:false};
   movementPending.current.set(id,pending);
+  let committed=false;
   try{
    const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
    if(seq===null)throw Error('Invalid movement sequence');
@@ -2406,6 +2407,10 @@ export default function TabletopApp(){
    if(!approved.length)return;
    const tail=approved.at(-1);
    if(tail.x===pending.baseX&&tail.y===pending.baseY)return;
+   // An approved packet may arrive AFTER pointerup and supersede the
+   // board's initial handoff. Re-arm it now so canonical React coordinates
+   // can retire the transform without doubling the offset.
+   remoteMotion.current?.handoff(id);
    const steps=movementPathDeltas(approved.map(point=>({
     dx:point.x-pending.baseX,dy:point.y-pending.baseY
    })));
@@ -2420,6 +2425,7 @@ export default function TabletopApp(){
    if(!result||Number(result.x)!==tail.x||Number(result.y)!==tail.y)
     throw Error('Server trajectory and preview endpoints did not match');
    pending.x=Number(result.x);pending.y=Number(result.y);pending.confirmed=true;
+   committed=true;
    setTokens(rows=>rows.map(row=>row.id===id?
     {...row,x:pending.x,y:pending.y}:row));
    ++tokenRefreshSeq.current;
@@ -2429,6 +2435,7 @@ export default function TabletopApp(){
    ++tokenRefreshSeq.current;
    void refreshTokens(true);
   }finally{
+   if(!committed)remoteMotion.current?.clearPreview(id);
    if(movementPending.current.get(id)===pending)
     movementPending.current.delete(id);
    clearMapMovementPreview(mapId,[id],[]);
