@@ -12,12 +12,18 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/next-release-inventory-token-continuity-2026-11-08');
+ assert.equal(ledger.releaseBranch,'stage/movement-latency-rubberband-2026-11-08');
+ assert.equal(ledger.productionBaseSha,'92f982ce23dcda706032c3abb235a84233324578');
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(ledger.releaseBranch));
+ assert.ok(ledger.features.some(feature=>feature.id==='movement-visual-handoff-and-observer-request-coalescing'
+  &&feature.status==='staged'&&feature.releaseReady===true));
+ assert.ok(ledger.features.some(feature=>feature.id==='single-write-trajectory-server-redesign'
+  &&feature.status==='planned'&&feature.releaseReady===false));
  assert.deepEqual(ledger.lastRelease.approvedPullRequests,[48]);
  assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[47]);
  assert.equal(ledger.lastRelease.productionBaseSha,'a763b8d106e2362033c16ce44966e9b122d6a47b');
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
  assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
   feature.status==='released'&&feature.releaseReady===true));
  assert.ok(ledger.branches.some(item=>item.name==='stage/world-runtime-movement-collision-fog-2026-11-08'&&item.status==='released'));
