@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - stage/complete-predictive-navigation-and-fog-2026-11-09
   pull_request:
     branches:
       - main
