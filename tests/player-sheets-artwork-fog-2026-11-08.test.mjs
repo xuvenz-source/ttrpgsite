@@ -64,8 +64,10 @@ test('pending fog keeps dimmed exploration but drops old sight',()=>{
  assert.equal(pixels[3],FOG_UNEXPLORED);
  assert.equal(fogFrameDuringRefresh(null,'test'),null);
  assert.equal(fogFrameDuringRefresh(frame,'other'),null);
- assert.match(fog,/\+\+request\.current;\s*setFrame\(previous=>fogFrameDuringRefresh\(previous,mapId\)\)/);
- assert.match(fog,/invalidate\(\);changed\.request\(\)/);
+ assert.match(fog,/\+\+request\.current;/);
+ assert.match(fog,/previous:fogFrameDuringRefresh\(previous,mapId\)/);
+ assert.match(fog,/invalidate\(event\);changed\.request\(\)/);
+ assert.match(fog,/event\?\.new\?\.fog_enforced===false&&previous\?\.enabled===false/);
 });
 
 test('stale non-owner tokens cannot remain visible through refreshing dim fog',()=>{

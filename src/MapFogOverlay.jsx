@@ -1,16 +1,18 @@
 import React,{useEffect,useMemo,useRef} from 'react';
-import {normalizeAuthorizedFogFrame,FOG_UNEXPLORED,FOG_EXPLORED,
- fogMasks,MAX_FOG_AXIS} from './MapFogModel.js';
+import {normalizeAuthorizedFogFrame,MAX_FOG_AXIS} from './MapFogModel.js';
+import {fogPaintMask,changedFogCells,FOG_UNEXPLORED,FOG_EXPLORED} from './FogRenderDelta.js';
 
-/** Displays per-viewer fog. Server RLS independently filters token,
- * monitor, combat and artwork data; this is presentation only. */
+/** Per-viewer sanitized fog: presentation only, never permission. Keep the
+ * canvas mounted and paint only changed cells on authorized revisions.
+ */
 export default function MapFogOverlay({map,frame,scale=1}){
  const canvas=useRef(null);
+ const painted=useRef({mapId:null,width:0,height:0,mask:null});
  const mapId=map?.id;
  const sanitized=useMemo(()=>normalizeAuthorizedFogFrame(frame,mapId),
   [frame,mapId]);
- // Cosmetic continuity uses only prior visible cells from explored memory.
- // Token authorization keeps the pending frame's actual visible set empty.
+ // Cosmetic continuity is confined to explored memory. Current entity
+ // visibility remains server-authoritative and is not derived from this set.
  const displayVisible=useMemo(()=>{
   if(!sanitized?.enabled||!Array.isArray(frame?.displayVisibleDuringRefresh))return null;
   const explored=new Set(sanitized.explored);
@@ -27,22 +29,31 @@ export default function MapFogOverlay({map,frame,scale=1}){
   const context=canvas.current?.getContext('2d',{alpha:true});
   if(!context)return;
   context.imageSmoothingEnabled=false;
-  context.clearRect(0,0,width,height);
-  // An unavailable, unauthenticated or invalid frame must never reveal cells.
+  const old=painted.current;
+  const sameMap=old.mapId===mapId&&old.width===width&&old.height===height;
+  // Invalid/unavailable authorization always becomes opaque, even during a
+  // network interruption. Do not reuse stale visibility from another map.
   if(!sanitized){
-   context.fillStyle='#040914';
-   context.fillRect(0,0,width,height);
+   if(!sameMap||!old.mask||old.mask.some(v=>v!==FOG_UNEXPLORED)){
+    context.fillStyle='#040914';
+    context.fillRect(0,0,width,height);
+   }
+   painted.current={mapId,width,height,mask:new Uint8Array(width*height)};
    return;
   }
-  const mask=fogMasks(sanitized);
-  for(let i=0;i<mask.length;i++){
-   const state=mask[i];
-   if(state!==FOG_UNEXPLORED&&state!==FOG_EXPLORED)continue;
-   if(state===FOG_EXPLORED&&displayVisible?.has(i))continue;
-   context.fillStyle=state===FOG_UNEXPLORED?'#040914':'rgba(4,9,20,.74)';
-   context.fillRect(i%width,Math.floor(i/width),1,1);
+  const next=fogPaintMask(sanitized,displayVisible);
+  if(!next)return;
+  const dirty=changedFogCells(sameMap?old.mask:null,next);
+  for(const index of dirty){
+   const x=index%width,y=Math.floor(index/width),state=next[index];
+   context.clearRect(x,y,1,1);
+   if(state===FOG_UNEXPLORED||state===FOG_EXPLORED){
+    context.fillStyle=state===FOG_UNEXPLORED?'#040914':'rgba(4,9,20,.74)';
+    context.fillRect(x,y,1,1);
+   }
   }
- },[sanitized,width,height,displayVisible]);
+  painted.current={mapId,width,height,mask:next};
+ },[sanitized,width,height,displayVisible,mapId]);
  if(!map)return null;
  return <canvas ref={canvas} className="map-fog-overlay"
   width={width} height={height}

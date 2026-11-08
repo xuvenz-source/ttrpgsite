@@ -2,8 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fogFrameDuringRefresh,fogCellState,FOG_EXPLORED} from '../src/MapFogModel.js';
-import {applyAuthoritativeTokenMotion,shouldPersistFogDrag,
- FOG_DRAG_PERSIST_INTERVAL_MS} from '../src/LiveTokenMovement.js';
+import {applyAuthoritativeTokenMotion} from '../src/LiveTokenMovement.js';
 
 const map='00000000-0000-4000-8000-000000000001';
 const id='00000000-0000-4000-8000-000000000003';
@@ -38,7 +37,8 @@ test('fog refresh revokes sight but avoids repainting previously explored map ar
  assert.equal(fogFrameDuringRefresh(source,'wrong-map'),null);
  assert.deepEqual(fogFrameDuringRefresh({...source,enabled:false},map).displayVisibleDuringRefresh,[]);
  const ui=readFileSync(new URL('../src/MapFogOverlay.jsx',import.meta.url),'utf8');
- assert.match(ui,/state===FOG_EXPLORED&&displayVisible/);
+ assert.match(ui,/fogPaintMask\(sanitized,displayVisible\)/);
+ assert.match(ui,/changedFogCells\(sameMap\?old.mask:null,next\)/);
 });
 test('SQL keeps fog-on invalidations and only skips movement-only fog-off ticks',()=>{
  const sql=readFileSync(new URL('../supabase/migrations/20261108055000_nonfog_token_movement_tick_optimization.sql',import.meta.url),'utf8');
@@ -47,14 +47,12 @@ test('SQL keeps fog-on invalidations and only skips movement-only fog-off ticks'
  assert.match(sql,/if not pure_movement or exists/);
 });
 
-test('fog-enabled drags persist RLS-filtered positions at a capped rate',()=>{
- assert.ok(FOG_DRAG_PERSIST_INTERVAL_MS>=150);
- assert.ok(shouldPersistFogDrag(true,0,1000));
- assert.ok(!shouldPersistFogDrag(false,0,1000));
- assert.ok(!shouldPersistFogDrag(true,1000,1100));
- assert.ok(shouldPersistFogDrag(true,1000,1000+FOG_DRAG_PERSIST_INTERVAL_MS));
+test('fog-enabled drags send server-filtered previews without per-pointer token writes',()=>{
  const board=readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8');
- assert.match(board,/fogFrame\?\.enabled,info\.lastFogWrite,now/);
- assert.match(board,/info\.persistedDuringDrag=true/);
- assert.match(board,/if\(!cancel\|\|info\.persistedDuringDrag\)move/);
+ const app=readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8');
+ assert.doesNotMatch(board,/shouldPersistFogDrag\(\s*fogFrame/);
+ assert.doesNotMatch(board,/persistedDuringDrag=true/);
+ assert.match(app,/db\.rpc\('preview_map_motion'/);
+ assert.match(app,/observerMotionTopic\(mapId,user\)/);
+ assert.doesNotMatch(app,/event:'token-preview'/);
 });

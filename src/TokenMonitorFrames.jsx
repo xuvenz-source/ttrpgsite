@@ -6,10 +6,12 @@ import {TokenMonitors} from './TokenMonitors.jsx';
  * Frames stay in one shared stacking layer above all token artwork.
  */
 const TokenMonitorFrame=React.memo(function TokenMonitorFrame({
- token,remote,preview,config,fields,badge,cell,zoom
+ token,remote,preview,config,fields,badge,cell,zoom,motionRuntime
 }){
  const p={...token,...remote,...preview};
  return <div className="token-monitor-frame"
+  ref={node=>motionRuntime?.bind(token.id,'monitor',node,
+   {x:Number(p.x),y:Number(p.y),cell})}
   style={{
    left:Number(p.x)*cell,top:Number(p.y)*cell,
    width:cell*Number(p.span_x??1),height:cell*Number(p.span_y??1),
@@ -21,13 +23,13 @@ const TokenMonitorFrame=React.memo(function TokenMonitorFrame({
 });
 
 export default function TokenMonitorFrames({
- tokens,remotePositions,preview,config,monitorValues,encumbranceBadges,gridSize,scale
+ tokens,remotePositions,preview,config,monitorValues,encumbranceBadges,gridSize,scale,motionRuntime
 }){
  const cell=gridSize*scale;
  return <div className="token-monitors-over-all" aria-hidden="true">
   {tokens.map(token=><TokenMonitorFrame key={token.id}
    token={token} remote={remotePositions[token.id]} preview={preview[token.id]}
    config={config} fields={monitorValues[token.id]} badge={encumbranceBadges[token.id]}
-   cell={cell} zoom={scale}/>)}
+   cell={cell} zoom={scale} motionRuntime={motionRuntime}/>)}
  </div>;
 }

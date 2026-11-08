@@ -34,15 +34,20 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId}){
   // Invalidate in-flight RPCs before the 60ms batched refresh: a stale
   // pre-movement response must never reinstate old visibility permissions.
   // Keep previously explored cells dimmed instead of painting the map black.
-  const invalidate=()=>{
+  const invalidate=(event)=>{
    ++request.current;
-   setFrame(previous=>fogFrameDuringRefresh(previous,mapId));
+   // An authoritative fog-off revision never needs a temporary black mask.
+   // If fog was enabled before this event, remain fail-closed until RPC.
+   // Unknown/older revision payloads also fail closed.
+   setFrame(previous=>
+    event?.new?.fog_enforced===false&&previous?.enabled===false?
+     previous:fogFrameDuringRefresh(previous,mapId));
   };
   const changed=createCoalescedRefresh(()=>void refresh(),60);
   const channel=db.channel('forge-visibility-'+mapId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},()=>{
-    invalidate();changed.request();
+    table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},event=>{
+    invalidate(event);changed.request();
    }).subscribe(state=>{
     if(state==='SUBSCRIBED')changed.request();
    });

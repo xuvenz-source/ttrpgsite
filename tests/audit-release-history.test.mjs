@@ -12,12 +12,19 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('combined release records both approved drafts and compatible migration requirements',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/release-seamless-movement-hotbar-2026-11-08');
+ assert.equal(ledger.releaseBranch,'stage/world-runtime-movement-collision-fog-2026-11-08');
  assert.deepEqual(ledger.lastRelease.approvedPullRequests,[45]);
  assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[43,44]);
  assert.equal(ledger.lastRelease.productionBaseSha,'fba25209757d2c55d3303ea6b0582b8d61b6632c');
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(
+  'stage/world-runtime-movement-collision-fog-2026-11-08'));
+ assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
+  feature.status==='included'&&feature.releaseReady===true));
+ assert.ok(ledger.databaseDependencies.some(item=>
+  item.name==='world_runtime_private_observer_motion'&&
+  item.appliedVersion==='20261108031754'&&
+  item.status==='applied-production'));
  for(const name of ['player_owned_token_artwork','macro_quickcode_resolution',
   'nonfog_token_movement_tick_optimization'])assert.ok(
    ledger.databaseDependencies.some(item=>item.name===name&&

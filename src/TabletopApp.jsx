@@ -32,6 +32,7 @@ import MapObjectQuickAdjust from './MapObjectQuickAdjust.jsx';
 import MapPlayerPreviewOverlay from './MapPlayerPreviewOverlay.jsx';
 import MapFogOverlay from './MapFogOverlay.jsx';
 import useAuthorizedMapFog from './useAuthorizedMapFog.js';
+import useAuthorizedMapLights from './useAuthorizedMapLights.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {normalizeEnvironment,withObject,patchObject,removeObject} from './MapEnvironment.js';
 import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
@@ -51,8 +52,10 @@ import PersonalResources from './PersonalResources.jsx';
 import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
-import {movementTopic,allowedMovementPreview,canSendMovementPreview,
- applyAuthoritativeTokenMotion,MOVE_PREVIEW_INTERVAL_MS,MOVE_PREVIEW_EXPIRE_MS} from './LiveTokenMovement.js';
+import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion} from './LiveTokenMovement.js';
+import {movementPathDeltas} from './MapMovementPath.js';
+import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
+ nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
  selectableToolIds,groupToolFootprint,boundedGroupOffset} from './MapSelection.js';
 import {chatRowsForMap} from './CampaignRealtime.js';
@@ -124,6 +127,7 @@ export default function TabletopApp(){
  const[rightTab,setRightTab]=useState('chat'),[mapZoom,setMapZoom]=useState(.7),[selectedTokenId,setSelectedTokenId]=useState(null);
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[mapEnvironment,setMapEnvironment]=useState(null);
+ const[publishedMapEnvironment,setPublishedMapEnvironment]=useState(null);
  const mapEnvironmentCurrent=useRef(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
@@ -131,7 +135,7 @@ export default function TabletopApp(){
  const mapEnvironmentWriter=useRef(null);
  const[mapSettingEditor,setMapSettingEditor]=useState({
   enabled:false,layer:'light',tool:'wall-line',showLight:true,showBackground:true,
-  lockLight:false,lockBackground:true,lockTokens:true,snap:false,preset:'solid',previewing:false,previewTokenId:'',
+  lockLight:false,lockBackground:true,lockTokens:true,ignoreCollision:false,snap:false,preset:'solid',previewing:false,previewTokenId:'',
   selectedId:null,selectedIds:[],selectedPinId:null,pinHandoutId:'',pinKind:'pin',lightBright:20,lightDim:20
  });
  const[npcs,setNpcs]=useState([]),[npcFolders,setNpcFolders]=useState([]);
@@ -147,6 +151,7 @@ export default function TabletopApp(){
  const navigationChannel=useRef(null),navigationRequest=useRef(0);
  const latestMonitorRefresh=useRef(null),latestTokenRefresh=useRef(null),latestToolRefresh=useRef(null);
  const latestCampaignMetadataRefresh=useRef(null),latestMapsRefresh=useRef(null),latestNpcsRefresh=useRef(null);
+ const lastObservedFog=useRef(null);
  const[remoteTokenPositions,setRemoteTokenPositions]=useState({});
  const[remoteToolPositions,setRemoteToolPositions]=useState({});
  const[remoteMeasurements,setRemoteMeasurements]=useState({});
@@ -156,6 +161,9 @@ export default function TabletopApp(){
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),remoteToolExpiry=useRef(new Map()),latestMovementAccess=useRef({});
+ const remoteMotion=useRef(null),observerRevisions=useRef(new Map());
+ const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null);
+ const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
  const latestHotbar=useRef(normaliseHotbar([])),hotbarWriteQueue=useRef(Promise.resolve());
@@ -246,6 +254,22 @@ export default function TabletopApp(){
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user});
+ const queuePreviewFogRefresh=()=>{
+  const now=Date.now();
+  if(now-lastPreviewFogRefresh.current<250)return;
+  lastPreviewFogRefresh.current=now;
+  void fog.refresh();
+ };
+ latestPartyFogRefresh.current=()=>{
+  if(fog.frame?.enabled===true&&fog.frame.partyShared)
+   queuePreviewFogRefresh();
+ };
+ const authorizedLights=useAuthorizedMapLights({
+  db,mapId:selectedMap,userId:isDM?null:user,
+  revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision,
+  refreshNonce:fog.frame,
+  enabled:campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
+ });
  const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=useCampaignPresence({
   db,campaignId:activeId,userId:user,members,rosterRefreshRef:latestRosterRefresh
@@ -918,50 +942,6 @@ export default function TabletopApp(){
   if(!db||!activeId||!selectedMap||!user)return;
   const channel=db.channel(movementTopic(selectedMap),{
    config:{private:true,broadcast:{ack:false,self:false}}
-  }).on('broadcast',{event:'token-preview'},({payload})=>{
-   const access=latestMovementAccess.current;
-   if(access.fogEnabled)return;
-   if(!allowedMovementPreview(payload,selectedMap,
-    access.tokens||[],access.members||[],user))return;
-   const id=payload.id;
-   setRemoteTokenPositions(prev=>{
-    if(prev[id]?.actor===payload.actor&&prev[id].seq>=payload.seq)return prev;
-    return {...prev,[id]:{x:payload.x,y:payload.y,seq:payload.seq,actor:payload.actor,final:!!payload.final}};
-   });
-   const last=remoteMoveExpiry.current.get(id);
-   if(last)clearTimeout(last);
-   const seq=payload.seq;
-   const timer=setTimeout(()=>{
-    remoteMoveExpiry.current.delete(id);
-    setRemoteTokenPositions(prev=>{
-     if(prev[id]?.seq!==seq)return prev;
-     const copy={...prev};delete copy[id];return copy;
-    });
-    void latestTokenRefresh.current?.();
-   },payload.final?1800:MOVE_PREVIEW_EXPIRE_MS);
-   remoteMoveExpiry.current.set(id,timer);
-  }).on('broadcast',{event:'tool-preview'},({payload})=>{
-   const access=latestMovementAccess.current;
-   if(access.fogEnabled)return;
-   if(!allowedToolMovementPreview(payload,selectedMap,
-    access.toolPlacements||[],access.issued||[],access.members||[],user))return;
-   const id=payload.id;
-   setRemoteToolPositions(prev=>{
-    if(prev[id]?.actor===payload.actor&&prev[id].seq>=payload.seq)return prev;
-    return {...prev,[id]:{x:payload.x,y:payload.y,seq:payload.seq,actor:payload.actor}};
-   });
-   const last=remoteToolExpiry.current.get(id);
-   if(last)clearTimeout(last);
-   const seq=payload.seq;
-   const timer=setTimeout(()=>{
-    remoteToolExpiry.current.delete(id);
-    setRemoteToolPositions(prev=>{
-     if(prev[id]?.seq!==seq)return prev;
-     const next={...prev};delete next[id];return next;
-    });
-    void latestToolRefresh.current?.();
-   },payload.final?3000:MOVE_PREVIEW_EXPIRE_MS);
-   remoteToolExpiry.current.set(id,timer);
   }).on('broadcast',{event:'map-measure'},({payload})=>{
    if(!validMeasurement(payload,selectedMap)||payload.actor===user)return;
    if(!acceptMeasurementEvent(payload,measureRevisions.current,
@@ -1010,38 +990,137 @@ export default function TabletopApp(){
    void db.removeChannel(channel);
   };
  },[db,activeId,selectedMap,user]);
- function sendLiveMovement(token,x,y,final=false){
-  // Shared map broadcasts cannot restrict coordinates to current observers.
-  // Always fail closed before the visibility snapshot arrives.
-  if(!fog.frame||fog.frame.mapId!==selectedMap||fog.frame.enabled)return;
-  if(!canSendMovementPreview(token,user,selectedMap,isDM)||
-    !Number.isInteger(x)||!Number.isInteger(y)||!liveMapReady.current)return;
-  const now=Date.now(),last=lastMovementPreview.current.get(token.id)||0;
-  if(!final&&now-last<MOVE_PREVIEW_INTERVAL_MS)return;
-  lastMovementPreview.current.set(token.id,now);
-  const channel=liveMapChannel.current;
-  if(!channel)return;
-  void channel.send({type:'broadcast',event:'token-preview',payload:{
-   id:token.id,mapId:selectedMap,actor:user,x,y,
-   seq:++liveMovementSeq.current,final
-  }}).catch(e=>console.warn('Movement preview unavailable',e));
+ // A private observer topic receives only server-signed movement data that
+ // Postgres filtered for this specific player's map assignment and current LOS.
+ // Pointer packets paint token/tool transforms directly, not TabletopApp state.
+ useEffect(()=>{
+  observerRevisions.current.clear();
+  if(!db||!activeId||!selectedMap||!user)return;
+  const mapId=selectedMap;
+  const channel=db.channel(observerMotionTopic(mapId,user),{
+   config:{private:true,broadcast:{ack:false,self:false}}
+  }).on('broadcast',{event:'motion'},({payload})=>{
+   if(!validObserverMovementPacket(payload,mapId,user)||
+      !acceptObserverMovementPacket(payload,observerRevisions.current))return;
+   const access=latestMovementAccess.current;
+   const isToken=payload.kind==='token';
+   const known=isToken?(access.tokens||[]).some(t=>t.id===payload.id&&t.map_id===mapId):
+    (access.toolPlacements||[]).some(t=>t.issue_id===payload.id&&t.map_id===mapId);
+   // Never instantiate token artwork from a broadcast when RLS has not
+   // provided the corresponding authorized map row.
+   if(!known)return;
+   const visualId=isToken?payload.id:'tool:'+payload.id;
+   const expiry=isToken?remoteMoveExpiry.current:remoteToolExpiry.current;
+   const previous=expiry.get(payload.id);
+   if(previous)clearTimeout(previous);
+   if(payload.action==='hide'){
+    remoteMotion.current?.clearPreview(visualId);
+    const markHidden=prior=>({...prior,[payload.id]:{
+     hidden:true,seq:payload.seq,actor:payload.actor
+    }});
+    if(isToken)setRemoteTokenPositions(markHidden);
+    else setRemoteToolPositions(markHidden);
+   }else{
+    remoteMotion.current?.previewRemote(visualId,payload.x,payload.y);
+    if(isToken)latestPartyFogRefresh.current?.();
+    const clearHidden=prior=>{
+     if(!prior[payload.id]?.hidden)return prior;
+     const copy={...prior};delete copy[payload.id];return copy;
+    };
+    if(isToken)setRemoteTokenPositions(clearHidden);
+    else setRemoteToolPositions(clearHidden);
+   }
+   const timer=setTimeout(()=>{
+    expiry.delete(payload.id);
+    if(payload.action==='hide'){
+     const unhide=prior=>{
+      if(!prior[payload.id]?.hidden||prior[payload.id]?.seq!==payload.seq)
+       return prior;
+      const copy={...prior};delete copy[payload.id];return copy;
+     };
+     if(isToken)setRemoteTokenPositions(unhide);
+     else setRemoteToolPositions(unhide);
+    }
+    remoteMotion.current?.clearPreview(visualId);
+    if(isToken)void latestTokenRefresh.current?.();
+    else void latestToolRefresh.current?.();
+   },OBSERVER_PREVIEW_EXPIRE_MS);
+   expiry.set(payload.id,timer);
+  }).subscribe(status=>{
+   if(status==='CHANNEL_ERROR')
+    console.warn('Secure observer movement unavailable; authoritative updates remain active');
+  });
+  return()=>{
+   for(const timer of remoteMoveExpiry.current.values())clearTimeout(timer);
+   remoteMoveExpiry.current.clear();
+   for(const timer of remoteToolExpiry.current.values())clearTimeout(timer);
+   remoteToolExpiry.current.clear();
+   observerRevisions.current.clear();
+   remoteMotion.current?.clear();
+   void db.removeChannel(channel);
+  };
+ },[db,activeId,selectedMap,user]);
+ function clearMapMovementPreview(mapId,tokenIds=[],issueIds=[]){
+  if(!db||!mapId)return;
+  // db.rpc() is PromiseLike, not a Promise with a direct .catch().
+  // A final/cancelled gesture must revoke temporary fog sight even when
+  // nothing changed in persisted map_tokens (and thus no tick was emitted).
+  void db.rpc('end_map_motion_previews',{
+   p_map:mapId,p_token_ids:tokenIds,p_tool_issue_ids:issueIds
+  }).then(({error})=>{
+   if(error)console.warn('Movement preview cleanup failed',error.message);
+  }).catch(error=>console.warn('Movement preview cleanup failed',error))
+   .finally(()=>{
+    if(fog.frame?.enabled===true&&fog.frame.mapId===mapId)
+     void fog.refresh();
+   });
  }
- function sendLiveToolMovement(placement,x,y,final=false){
-  // The shared broadcast channel is not per-viewer. Never send tool
-  // coordinates while a map's visibility state is unknown or fog is on.
-  if(!fog.frame||fog.frame.mapId!==selectedMap||fog.frame.enabled)return;
+ function sendLiveMovement(token,x,y,final=false,cancelled=false){
+  if(final&&cancelled){
+   clearMapMovementPreview(selectedMap,[token.id],[]);
+   return;
+  }
+  // Final destination is committed separately; no speculative final broadcast.
+  if(final||!fog.frame||fog.frame.mapId!==selectedMap)return;
+  if(!canSendMovementPreview(token,user,selectedMap,isDM)||
+    !Number.isSafeInteger(x)||!Number.isSafeInteger(y))return;
+  const now=Date.now(),last=lastMovementPreview.current.get(token.id)||0;
+  if(now-last<OBSERVER_PREVIEW_INTERVAL_MS)return;
+  const seq=nextMotionSequence(now,liveMovementSeq.current);
+  if(seq===null)return;
+  liveMovementSeq.current=seq;
+  lastMovementPreview.current.set(token.id,now);
+  void db.rpc('preview_map_motion',{
+   p_map:selectedMap,p_kind:'token',p_piece:token.id,p_x:x,p_y:y,
+   p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
+  }).then(({data,error})=>{
+   if(error)console.warn('Secure movement preview unavailable',error.message);
+   else if(data===true&&fog.frame?.enabled===true)
+    queuePreviewFogRefresh();
+  }).catch(e=>console.warn('Secure movement preview unavailable',e));
+ }
+ function sendLiveToolMovement(placement,x,y,final=false,cancelled=false){
+  if(final&&cancelled){
+   clearMapMovementPreview(selectedMap,[],[placement.issue_id]);
+   return;
+  }
+  if(final||!fog.frame||fog.frame.mapId!==selectedMap)return;
   const issue=campaignTools.issued.find(t=>t.id===placement?.issue_id);
   if(!canSendToolMovementPreview(issue,user,isDM,selectedMap)||
-    !liveMapReady.current||!Number.isInteger(x)||!Number.isInteger(y))return;
-  const id=placement.issue_id,now=Date.now();
-  const key='tool:'+id,last=lastMovementPreview.current.get(key)||0;
-  if(!final&&now-last<MOVE_PREVIEW_INTERVAL_MS)return;
+    !Number.isSafeInteger(x)||!Number.isSafeInteger(y))return;
+  const id=placement.issue_id,now=Date.now(),key='tool:'+id;
+  const last=lastMovementPreview.current.get(key)||0;
+  if(now-last<OBSERVER_PREVIEW_INTERVAL_MS)return;
+  const seq=nextMotionSequence(now,liveMovementSeq.current);
+  if(seq===null)return;
+  liveMovementSeq.current=seq;
   lastMovementPreview.current.set(key,now);
-  const channel=liveMapChannel.current;
-  if(!channel)return;
-  void channel.send({type:'broadcast',event:'tool-preview',payload:{
-   id,mapId:selectedMap,actor:user,x,y,seq:++liveMovementSeq.current,final
-  }}).catch(e=>console.warn('Tool movement preview unavailable',e));
+  void db.rpc('preview_map_motion',{
+   p_map:selectedMap,p_kind:'tool',p_piece:id,p_x:x,p_y:y,
+   p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
+  }).then(({error})=>{
+   if(error)console.warn('Secure tool preview unavailable',error.message);
+  }).catch(e=>console.warn('Secure tool preview unavailable',e));
  }
  function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
@@ -1079,15 +1158,11 @@ export default function TabletopApp(){
      setTokens(previous=>applyAuthoritativeTokenMotion(
       previous,event,mapId,movementPending.current));
      const id=event.new?.id;
-     if(id)setRemoteTokenPositions(previous=>{
-      const packet=previous[id];
-      if(!packet?.final||packet.x!==event.new.x||packet.y!==event.new.y)
-       return previous;
-      const timer=remoteMoveExpiry.current.get(id);
-      if(timer)clearTimeout(timer);
-      remoteMoveExpiry.current.delete(id);
-      const next={...previous};delete next[id];return next;
-     });
+     if(id){
+      const painted=remoteMotion.current?.getPreview(id);
+      if(painted?.x===event.new.x&&painted?.y===event.new.y)
+       remoteMotion.current?.clearPreview(id);
+     }
     }
     tokenUpdates.request();
    })
@@ -1170,16 +1245,31 @@ export default function TabletopApp(){
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
   void refreshTokens();void refreshMonitors();void campaignTools.refresh();
  },[fog.frame?.revision,selectedMap]);
+ // Movement previews can revise authorized LOS without changing the saved
+ // visibility tick. Refresh newly observable RLS rows only when that mask
+ // actually changed, not for every pointer sample or every React render.
+ useEffect(()=>{
+  const current=fog.frame,previous=lastObservedFog.current;
+  lastObservedFog.current=current;
+  if(!current||!previous||current.mapId!==selectedMap||
+     previous.mapId!==current.mapId||!current.enabled||
+     current.revision!==previous.revision||
+     current.displayVisibleDuringRefresh)return;
+  const a=current.visible||[],b=previous.visible||[];
+  if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
+  void refreshTokens();void refreshMonitors();void campaignTools.refresh();
+ },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
-  setMapEnvironment(null);mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
-  setMapSettingEditor(old=>({...old,enabled:false,previewing:false,previewTokenId:'',selectedId:null}));
+  setMapEnvironment(null);setPublishedMapEnvironment(null);
+  mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
+  setMapSettingEditor(old=>({...old,enabled:false,previewing:false,ignoreCollision:false,previewTokenId:'',selectedId:null}));
   if(!db||!isDM||!activeId||!selectedMap){
    setMapEnvironmentStatus('Choose a map');return()=>{live=false};
   }
   setMapEnvironmentStatus('Loading map environment…');
   (async()=>{
-   const {data,error:loadError}=await db.from('map_environments').select('prepared')
+   const {data,error:loadError}=await db.from('map_environments').select('prepared,live')
     .eq('campaign_id',activeId).eq('map_id',selectedMap).maybeSingle();
    if(!live)return;
    if(loadError){
@@ -1188,6 +1278,7 @@ export default function TabletopApp(){
    }
    mapEnvironmentCurrent.current=normalizeEnvironment(data?.prepared);
    setMapEnvironment(mapEnvironmentCurrent.current);
+   setPublishedMapEnvironment(data?.live?normalizeEnvironment(data.live):null);
    setMapEnvironmentMapId(selectedMap);
    setMapEnvironmentStatus('Saved');
   })().catch(e=>{if(live){setMapEnvironmentStatus('Environment load failed');fail(e)}});
@@ -1985,6 +2076,12 @@ export default function TabletopApp(){
    setMapEnvironmentStatus(action==='publish'?'Publishing map rules…':
     action==='disable'?'Disabling published rules…':'Resetting exploration…');
    await read(db.rpc('publish_map_environment',{p_map:selectedMap,p_action:action}));
+   // Player preview must use published rules, not an unpublished DM draft.
+   const {data:published,error:publishedError}=await db.from('map_environments')
+    .select('live').eq('map_id',selectedMap)
+    .eq('campaign_id',activeId).maybeSingle();
+   if(publishedError)throw publishedError;
+   setPublishedMapEnvironment(published?.live?normalizeEnvironment(published.live):null);
    await fog.refresh();
    await Promise.all([refreshTokens(),refreshMonitors(),campaignTools.refresh()]);
    setMapEnvironmentStatus(action==='publish'?'Published to players.':'Saved.');
@@ -2086,7 +2183,8 @@ export default function TabletopApp(){
   let pending=movementPending.current.get(id);
   if(!pending||pending.mapId!==selectedMap||pending.campaignId!==activeId){
    pending={mapId:selectedMap,campaignId:activeId,
-    x:Number(token.x),y:Number(token.y),saving:false,confirmed:false};
+    x:Number(token.x),y:Number(token.y),baseX:Number(token.x),baseY:Number(token.y),
+    override:isDM&&mapSettingEditor.ignoreCollision===true,saving:false,confirmed:false};
    movementPending.current.set(id,pending);
   }
   if(pending.x===x&&pending.y===y)return;
@@ -2103,12 +2201,20 @@ export default function TabletopApp(){
    // saves, skip obsolete intermediary tiles and save the newest destination.
    while(movementPending.current.get(id)===pending){
     const {x,y}=pending;
-    const {data,error}=await db.from('map_tokens')
-     .update({x,y}).eq('id',id)
-     .eq('campaign_id',pending.campaignId).eq('map_id',pending.mapId)
-     .select('id,x,y').maybeSingle();
+    const response=pending.override?
+     await db.rpc('move_map_group',{
+      p_map:pending.mapId,p_token_ids:[id],p_tool_issue_ids:[],
+      p_dx:x-pending.baseX,p_dy:y-pending.baseY,p_ignore_collision:true
+     }):
+     await db.from('map_tokens')
+      .update({x,y}).eq('id',id)
+      .eq('campaign_id',pending.campaignId).eq('map_id',pending.mapId)
+      .select('id,x,y').maybeSingle();
+    const {data,error}=response;
+    const confirmed=pending.override?data?.tokens?.find(t=>t.id===id):data;
     if(error)throw error;
-    if(!data)throw Error('Movement was not permitted for this token.');
+    if(!confirmed)throw Error('Movement was not permitted for this token.');
+    pending.baseX=Number(confirmed.x);pending.baseY=Number(confirmed.y);
     if(pending.x!==x||pending.y!==y)continue;
     // Server acknowledged the destination; keep drawing it until a fresh
     // authoritative snapshot actually contains it (no post-ack rubberband).
@@ -2133,6 +2239,68 @@ export default function TabletopApp(){
    }
   }finally{pending.saving=false}
  }
+ async function moveGroup({tokens:members=[],tools=[],dx,dy,path=[]}){
+  const mapId=selectedMap,campaignId=activeId;
+  if(!mapId||!campaignId||!Number.isSafeInteger(dx)||
+    !Number.isSafeInteger(dy))return;
+  if(!members.length&&!tools.length)return;
+  if(isDM&&mapSettingEditor.previewing)return;
+  const steps=movementPathDeltas(path?.length?path:[{dx,dy}]);
+  if(!steps?.length||steps.reduce((total,step)=>total+step.dx,0)!==dx||
+    steps.reduce((total,step)=>total+step.dy,0)!==dy)
+   throw Error('Invalid movement path; no units were moved.');
+  const collisionOverride=isDM&&mapSettingEditor.ignoreCollision===true;
+  // Do not race a pending single-token save with a relative group delta.
+  if(members.some(t=>movementPending.current.has(t.id))){
+   fail(Error('Another movement is still being confirmed. Try again.'));
+   return;
+  }
+  const pending=new Map();
+  for(const member of members){
+   const item={mapId,campaignId,x:Number(member.x)+dx,
+    y:Number(member.y)+dy,saving:true,confirmed:false,group:true};
+   pending.set(member.id,item);
+   movementPending.current.set(member.id,item);
+  }
+  setTokens(rows=>rows.map(t=>{
+   const item=pending.get(t.id);
+   return item?{...t,x:item.x,y:item.y}:t;
+  }));
+  try{
+   const {data,error:moveError}=await db.rpc('commit_map_trajectory',{
+    p_map:mapId,p_token_ids:members.map(t=>t.id),
+    p_tool_issue_ids:tools.map(t=>t.issue_id),
+    p_steps:steps,p_ignore_collision:collisionOverride
+   });
+   if(moveError)throw moveError;
+   if(!data||!Array.isArray(data.tokens)||!Array.isArray(data.tools)||
+      data.tokens.length!==members.length||data.tools.length!==tools.length)
+    throw Error('The movement acknowledgement was incomplete.');
+   for(const [id,item] of pending){
+    if(movementPending.current.get(id)===item){
+     item.confirmed=true;
+     const row=data.tokens.find(t=>t.id===id);
+     if(row){item.x=Number(row.x);item.y=Number(row.y)}
+    }
+   }
+  }catch(e){
+   fail(e);
+   for(const [id,item] of pending)
+    if(movementPending.current.get(id)===item)movementPending.current.delete(id);
+   ++tokenRefreshSeq.current;
+   await Promise.all([refreshTokens(),campaignTools.refresh()]);
+   clearMapMovementPreview(mapId,members.map(t=>t.id),
+    tools.map(t=>t.issue_id));
+   throw e;
+  }
+  // Refresh both the token and issued-tool projections before dropping the
+  // local optimistic group. SQL commits all rows or no rows.
+  await Promise.all([refreshTokens(),campaignTools.refresh()]);
+  clearMapMovementPreview(mapId,members.map(t=>t.id),
+   tools.map(t=>t.issue_id));
+  for(const [id,item] of pending)
+   if(movementPending.current.get(id)===item)movementPending.current.delete(id);
+ }
  function moveSelectedByKey(dx,dy){
   if(isDM&&mapSettingEditor.previewing)return;
   const token=selectedToken;
@@ -2151,8 +2319,15 @@ export default function TabletopApp(){
  }
  async function resizeToken(t,spanX,spanY){
   if(!isDM)return;
-  try{await read(db.from('map_tokens').update({span_x:spanX,span_y:spanY}).eq('id',t.id))}
-  catch(e){fail(e)}finally{await refreshTokens()}
+  try{
+   if(mapSettingEditor.ignoreCollision){
+    await read(db.rpc('resize_map_token',{
+     p_token:t.id,p_span_x:spanX,p_span_y:spanY,p_ignore_collision:true
+    }));
+   }else{
+    await read(db.from('map_tokens').update({span_x:spanX,span_y:spanY}).eq('id',t.id));
+   }
+  }catch(e){fail(e)}finally{await refreshTokens()}
  }
  async function removeToken(t){
   if(!isDM)return;
@@ -2269,6 +2444,7 @@ export default function TabletopApp(){
   aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
   {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
+   publishedEnvironment={mapEnvironmentMapId===selectedMap?publishedMapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} registerPreviewStep={registerPreviewStep}
    onAddEnvironmentObject={addEnvironmentObject}
@@ -2295,15 +2471,17 @@ export default function TabletopApp(){
      const selectedIds=options.additive?[...new Set([...current,...incoming])]:incoming;
      return {...old,selectedPinId:null,selectedId:selectedIds[0]||null,selectedIds};
     })}
-   user={user} isDM={isDM} move={moveToken} remove={removeToken}
+   user={user} isDM={isDM} move={moveToken} moveGroup={moveGroup} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolPickUp={pickUpIssuedToolOnMap}
    onToolHold={holdIssuedToolOnToken}
    onToolOpen={setSelectedToolIssueId} onToolMovementPreview={sendLiveToolMovement}
-   remoteToolPositions={fog.frame?.enabled?{}:remoteToolPositions}
-   onMovementPreview={sendLiveMovement} remotePositions={fog.frame?.enabled?{}:remoteTokenPositions}
+   remoteToolPositions={remoteToolPositions}
+   onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+   registerRemoteMotion={registerRemoteMotion}
     fogFrame={fog.frame}
+    authorizedLightMasks={authorizedLights}
     onMeasurementPreview={sendLiveMeasurement} remoteMeasurements={remoteMeasurements}
    onUnitDrop={dropExistingUnit} onTokenEdit={openTokenSheet} onTokenQuick={openQuickToken}
    onTokenStatus={openTokenStatuses} statusCatalog={camp?.token_status_catalog}

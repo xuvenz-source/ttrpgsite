@@ -14,23 +14,33 @@ import MapFogOverlay from './MapFogOverlay.jsx';
 import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
-import {shouldPersistFogDrag} from './LiveTokenMovement.js';
+import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
+import {appendMovementWaypoint} from './MapMovementPath.js';
+import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
  selectableToolIds,groupToolFootprint,boundedGroupOffset} from './MapSelection.js';
 import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,statusTitle} from './TokenStatuses.jsx';
 
-export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,onNpcDrop,onCharacterDrop,
+export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
  onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
- onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,
- environment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
+ onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,authorizedLightMasks=null,
+ environment,publishedEnvironment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
- handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
+ registerRemoteMotion,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
  onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
  onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
+ const motion=useRef(null);
+ if(!motion.current)motion.current=createTokenMotionRuntime();
+ // Reusable through React dev effect remounts; clear without retiring runtime.
+ useEffect(()=>{const runtime=motion.current;return()=>runtime.clear()},[]);
+ useEffect(()=>{
+  registerRemoteMotion?.(motion.current);
+  return()=>registerRemoteMotion?.(null);
+ },[registerRemoteMotion]);
  const[toolPreview,setToolPreview]=useState({});
  const[selectedIds,setSelectedIds]=useState([]);
  const[selectedToolIds,setSelectedToolIds]=useState([]);
@@ -52,12 +62,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   previewPosition?.id===sourcePreviewToken.id?
   {...sourcePreviewToken,x:previewPosition.x,y:previewPosition.y}:sourcePreviewToken;
  const viewer=useMemo(()=>previewViewer(previewToken,characters),[previewToken,characters]);
- const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&environment);
+ const previewEnvironment=publishedEnvironment||environment;
+ const previewActive=!!(isDM&&environmentEditor?.previewing&&viewer&&previewEnvironment);
  function movePreviewToken(origin,destination){
-  if(!origin||!environment||!checkTokenMovement({
-   token:origin,destination,map,environment
-  }).allowed)return false;
-  setPreviewPosition({id:origin.id,mapId:map.id,...destination});
+  if(!origin||!previewEnvironment)return false;
+  const direct=checkTokenMovement({token:origin,destination,map,environment:previewEnvironment});
+  const legal=direct.allowed?destination:traceLegalTokenDestination({
+   token:origin,destination,map,environment:previewEnvironment
+  });
+  if(!direct.allowed&&legal.x===Number(origin.x)&&legal.y===Number(origin.y))
+   return false;
+  setPreviewPosition({id:origin.id,mapId:map.id,x:legal.x,y:legal.y});
   return true;
  }
  // Keyboard bindings and pointer dragging share one swept-wall test. All
@@ -75,20 +90,20 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   return()=>registerPreviewStep(null);
  },[registerPreviewStep]);
  const previewPolygon=useMemo(()=>previewActive?
-  previewVisionPolygon({map,environment,viewer,maxFeet:60}):[],
-  [previewActive,map,environment,viewer]);
+  previewVisionPolygon({map,environment:previewEnvironment,viewer,maxFeet:60}):[],
+  [previewActive,map,previewEnvironment,viewer]);
  const visibleTokens=useMemo(()=>{
   // Visibility ticks may arrive before the refreshed RLS token query. Never
   // leave an old NPC token faintly visible through previously explored fog.
   const allowed=isDM?tokens:tokens.filter(t=>t.visible&&
-   tokenObservedByFogFrame(t,fogFrame,user));
+   !remotePositions[t.id]?.hidden&&tokenObservedByFogFrame(t,fogFrame,user));
   if(!previewActive)return allowed;
   return allowed.filter(t=>t.visible!==false&&
    (t.id===previewToken?.id||pointInPolygon({
     x:Number(t.x)+Number(t.span_x??1)/2,
     y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)))
     .map(t=>t.id===previewToken?.id?previewToken:t);
- },[tokens,isDM,previewActive,previewToken,previewPolygon,fogFrame,user]);
+ },[tokens,isDM,previewActive,previewToken,previewPolygon,fogFrame,user,remotePositions]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
@@ -150,6 +165,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
  // A remote snapshot must not cancel the drag that is actively in progress.
  useEffect(()=>{if(!drag.current)setPreview({})},[tokens]);
  useEffect(()=>{
+  motion.current?.clear();
   primaryRef.current=null;setSelectedId(null);setSelectedIds([]);
   setMarquee(null);selection.current=null;drag.current=null;
   setSelectedToolIds([]);setToolPreview({});
@@ -556,7 +572,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
   e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
-   members,tools,dx:0,dy:0,lastFogWrite:0,persistedDuringDrag:false};
+   members,tools,dx:0,dy:0,path:[],lastFogWrite:0,persistedDuringDrag:false};
  }
  function startToolDrag(e,p,canMove){
   e.stopPropagation();
@@ -577,7 +593,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    startX:e.clientX,startY:e.clientY,
    members:tokens.filter(t=>selectedTokens.includes(t.id)),
    tools:toolPlacements.filter(row=>selectedTools.includes(row.issue_id)),
-   dx:0,dy:0};
+   dx:0,dy:0,path:[]};
  }
  function moveTokenDrag(e,t){
   const simulated=previewDrag.current;
@@ -598,14 +614,14 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
    map.width,map.height,map.grid_size);
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
+  const path=appendMovementWaypoint(info.path||[],delta.dx,delta.dy);
+  if(path===info.path)return; // Reached bounded path complexity.
+  info.path=path;
   info.dx=delta.dx;info.dy=delta.dy;
-  setPreview(old=>{
-   const next={...old};
-   for(const token of info.members)
-    next[token.id]={...old[token.id],
-     x:Number(token.x)+delta.dx,y:Number(token.y)+delta.dy};
-   return next;
-  });
+  // Hot pointer path: move affected sprites without a React commit.
+  for(const token of info.members)
+   motion.current?.preview(token.id,
+    Number(token.x)+delta.dx,Number(token.y)+delta.dy);
   for(const t of info.members){
    const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
    onMovementPreview?.(t,next.x,next.y,false);
@@ -618,17 +634,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   });
   for(const tool of info.tools||[])
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
-  // Fog prevents shared broadcast previews because spectators could receive
-  // hidden coordinates. Persist intermediate steps at a modest cadence instead:
-  // Supabase RLS distributes only the movements each viewer may observe.
-  const now=Date.now();
-  if(info.members.length&&shouldPersistFogDrag(
-   fogFrame?.enabled,info.lastFogWrite,now)){
-   info.lastFogWrite=now;
-   info.persistedDuringDrag=true;
-   for(const token of info.members)
-    move(token,Number(token.x)+delta.dx,Number(token.y)+delta.dy);
-  }
+  // Server-validated observer previews carry movement without writing
+  // token positions or invalidating fog on every pointer sample.
+  // Only the final release persists via authoritative movement writes.
  }
  function toolDropCarrier(event){
   const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
@@ -651,6 +659,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   drag.current=null;
+  for(const member of info.members)motion.current?.clearPreview(member.id);
   if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId);
   if(cancel){
@@ -660,17 +669,28 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     return next;
    });
   }
-  // Optimistic issue placement updates synchronously before repaint.
+  const atomicGroup=!cancel&&!!moveGroup&&
+   (info.members.length+(info.tools||[]).length)>0;
+  // Keep group tool sprites at the destination until the atomic RPC settles;
+  // otherwise a slow round-trip would flash their old positions.
   setToolPreview(old=>{
    const next={...old};
-   for(const tool of info.tools||[])delete next[tool.issue_id];
+   for(const tool of info.tools||[]){
+    if(atomicGroup)next[tool.issue_id]={
+     x:Number(tool.x)+info.dx,y:Number(tool.y)+info.dy};
+    else delete next[tool.issue_id];
+   }
    return next;
   });
   if(!cancel&&Math.hypot(e.clientX-info.startX,e.clientY-info.startY)>8&&
     info.tools?.length===1&&info.members.length===0){
    const issue=toolIssued.find(t=>t.id===info.tools[0].issue_id);
    const carrier=toolCanBeHeld(issue)?toolDropCarrier(e):null;
-   if(carrier){setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return}
+   if(carrier){
+    onToolMovementPreview?.(info.tools[0],
+     Number(info.tools[0].x),Number(info.tools[0].y),true,true);
+    setSelectedToolIds([]);onToolHold?.(issue.id,carrier.id);return;
+   }
   }
   // Complete the local drag in the same React batch as the optimistic move.
   setPreview(old=>{
@@ -678,17 +698,45 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
    for(const token of info.members)delete next[token.id];
    return next;
   });
-  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag)return;
+  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag){
+   setToolPreview(old=>{
+    const next={...old};
+    for(const tool of info.tools||[])delete next[tool.issue_id];
+    return next;
+   });
+   return;
+  }
+  if(atomicGroup){
+   for(const token of info.members)
+    onMovementPreview?.(token,Number(token.x)+info.dx,
+     Number(token.y)+info.dy,true);
+   for(const tool of info.tools||[])
+    onToolMovementPreview?.(tool,Number(tool.x)+info.dx,
+     Number(tool.y)+info.dy,true);
+   // The parent performs a single server transaction. The returned promise
+   // resolves only after refreshing tool projections or after a failure.
+   Promise.resolve(moveGroup({
+    tokens:info.members,tools:info.tools||[],dx:info.dx,dy:info.dy,
+    path:info.path||[]
+   })).catch(error=>console.warn('Group movement rejected',error)).finally(()=>{
+    setToolPreview(old=>{
+     const next={...old};
+     for(const tool of info.tools||[])delete next[tool.issue_id];
+     return next;
+    });
+   });
+   return;
+  }
   for(const t of info.members){
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
-   onMovementPreview?.(t,next.x,next.y,true);
+   onMovementPreview?.(t,next.x,next.y,true,cancel);
    if(!cancel||info.persistedDuringDrag)move(t,next.x,next.y);
   }
   for(const tool of info.tools||[]){
    const next=cancel?{x:Number(tool.x),y:Number(tool.y)}:
     {x:Number(tool.x)+info.dx,y:Number(tool.y)+info.dy};
-   onToolMovementPreview?.(tool,next.x,next.y,true);
+   onToolMovementPreview?.(tool,next.x,next.y,true,cancel);
    if(!cancel)onToolPlace?.(tool.issue_id,next.x,next.y);
   }
  }
@@ -738,7 +786,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
      onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin} onMove={onMoveHandoutPin}
      onRead={onReadHandoutPin} onCollect={onCollectHandoutPin}
      onDelete={onDeleteHandoutPin} onSelect={onSelectHandoutPin}/>
-    <CampaignToolMapLayer map={map} scale={scale} userId={user} isDM={isDM}
+    <CampaignToolMapLayer motionRuntime={motion.current} authorizedLightMasks={authorizedLightMasks}
+     map={map} scale={scale} userId={user} isDM={isDM}
      tokens={visibleTokens} tokenPositions={{...remotePositions,...preview}}
      active={active} editing={!!environmentEditor?.enabled} measuring={!!activeMeasureTool}
      placements={toolPlacements} issued={toolIssued}
@@ -748,7 +797,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
       onTokenPointerMove={(e,p)=>moveTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerUp={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id})}
       onTokenPointerCancel={(e,p)=>finishTokenDrag(e,{id:'tool:'+p.issue_id},true)}
-      onOpen={onToolOpen} environment={isDM?environment:null}/>
+      onOpen={onToolOpen} environment={isDM?(previewActive?previewEnvironment:environment):null}/>
     {isDM&&environment&&<MapEnvironmentOverlay map={map} scale={scale}
      objects={environment.objects} editor={environmentEditor}
      onAdd={handleEnvironmentAdd} onSelect={handleEnvironmentSelect}
@@ -767,7 +816,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
         !(isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false));
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
-     return <div key={t.id} data-token-id={t.id} className={'token '+(t.image_path?'token-image':'')+
+     return <div key={t.id} data-token-id={t.id}
+      ref={node=>motion.current?.bind(t.id,'sprite',node,
+       {x:Number(p.x),y:Number(p.y),cell})} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
       (combatActiveTokenId===t.id?' token-current-turn':'')+
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
@@ -848,10 +899,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,remove,resize,on
     <MapMeasurementOverlay map={map} scale={scale} measures={measures}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
-    <TokenMonitorFrames tokens={visibleTokens} remotePositions={remotePositions}
+    <TokenMonitorFrames motionRuntime={motion.current} tokens={visibleTokens} remotePositions={remotePositions}
      preview={preview} config={displaySettings} monitorValues={monitorValues}
      encumbranceBadges={encumbranceBadges} gridSize={map.grid_size} scale={scale}/>
-    {previewActive&&<MapPlayerPreviewOverlay map={map} environment={environment}
+    {previewActive&&<MapPlayerPreviewOverlay map={map} environment={previewEnvironment}
      polygon={previewPolygon} viewerName={previewToken?.name}/>}
    </div>
    </div>

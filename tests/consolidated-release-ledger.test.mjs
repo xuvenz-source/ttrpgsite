@@ -7,7 +7,13 @@ test('the next release is a consolidated staging branch, not a Vercel deployment
  assert.match(ledger.releaseBranch,/^stage\//);
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
- assert.ok(ledger.features.every(x=>['included','released'].includes(x.status)&&x.sources.every(s=>ledger.branches.some(b=>b.name===s&&['included','released'].includes(b.status)))));
+ const ready=ledger.features.filter(x=>['included','released'].includes(x.status));
+ assert.ok(ready.every(x=>x.sources.every(s=>ledger.branches.some(b=>
+  b.name===s&&['included','released'].includes(b.status)))));
+ // A new unready feature must be explicitly tracked, never silently shipped.
+ const pending=ledger.features.filter(x=>x.status==='in-progress');
+ assert.ok(pending.every(x=>x.releaseReady===false&&x.sources.every(s=>
+  ledger.branches.some(b=>b.name===s&&b.status==='in-progress'))));
  assert.equal(ledger.databaseDependencies[0].status,'applied-production');
  assert.equal(ledger.edgeFunctionDependencies[0].status,'deployed-production');
 });
@@ -18,8 +24,9 @@ test('pending ruler, tools, pin, map and account changes are all in the bundle',
  const app=(raw('src/main.jsx')+raw('src/TabletopApp.jsx')+raw('src/BattlemapBoard.jsx')+raw('src/SheetTemplateDesigner.jsx'));
  for(const name of ['shouldBendLineOnKeyPress','selectableToolIds','onToolPickUp',
   'onDeleteEnvironmentObject','onToolMovementPreview'])assert.ok(app.includes(name),name);
- assert.match(app,/if\(access\.fogEnabled\)return;/);
- assert.match(app,/if\(!fog\.frame\|\|fog\.frame\.mapId!==selectedMap\|\|fog\.frame\.enabled\)return;/);
+ assert.match(app,/db\.rpc\('preview_map_motion'/);
+ assert.match(raw('src/useAuthorizedMapLights.js'),/get_authorized_map_light_masks/);
+ assert.match(app,/observerMotionTopic\(mapId,user\)/);
  assert.match(raw('supabase/functions/username-register/index.ts'),/isCompromisedPassword/);
  assert.match(raw('src/MapPinLayer.jsx'),/pin/);
 });

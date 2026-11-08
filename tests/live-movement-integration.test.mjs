@@ -6,7 +6,7 @@ test('drag previews arrive on authorized private map channels',()=>{
  assert.ok(main.includes("db.channel(movementTopic(selectedMap)"));
  assert.ok(main.includes("config:{private:true,broadcast:{ack:false,self:false}}"));
  assert.ok(main.includes("onMovementPreview?.(t,next.x,next.y,false)"));
- assert.ok(main.includes("onMovementPreview?.(t,next.x,next.y,true)"));
+ assert.ok(main.includes("onMovementPreview?.(t,next.x,next.y,true,cancel)"));
  assert.ok(main.includes('...remotePositions[t.id],...preview[t.id]'));
 });
 test('fast movement never replaces canonical persisted movement',()=>{

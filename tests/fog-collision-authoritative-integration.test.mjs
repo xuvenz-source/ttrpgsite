@@ -58,7 +58,9 @@ test('sanitized revision tick replaces leaked private movement coordinates under
  assert.match(sql,/create trigger forge_visibility_tool_tick/);
  assert.match(sql,/create trigger forge_visibility_combat_tick/);
  assert.match(sql,/alter publication supabase_realtime add table public\.map_visibility_ticks/);
- assert.match(app,/if\(!fog\.frame\|\|fog\.frame\.mapId!==selectedMap\|\|fog\.frame\.enabled\)return;/);
+ assert.match(app,/db\.rpc\('preview_map_motion'/);
+ assert.match(app,/observerMotionTopic\(mapId,user\)/);
+ assert.doesNotMatch(app,/event:'token-preview'/);
  assert.match(app,/fog\.frame\?\.revision/);
  assert.match(text('src/useAuthorizedMapFog.js'),/table:'map_visibility_ticks'/);
 });
