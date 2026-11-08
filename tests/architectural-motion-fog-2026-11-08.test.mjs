@@ -62,7 +62,8 @@ test('observer hide cannot expire or be released by an old RLS snapshot',()=>{
  assert.equal(clearVerifiedHiddenTokens(hidden,rows,snapshot,viewer),hidden);
  assert.equal(clearVerifiedHiddenTokens(hidden,rows,{...snapshot,
   revision:5,displayVisibleDuringRefresh:[5,6]},viewer),hidden);
- assert.equal(clearVerifiedHiddenTokens(hidden,[],{...snapshot,revision:5},viewer),hidden);
+ assert.deepEqual(clearVerifiedHiddenTokens(hidden,[],{...snapshot,revision:5},viewer),{},
+  'newer RLS omission may retire an invisible stale marker without granting sight');
  assert.equal(clearVerifiedHiddenTokens(hidden,rows,{...snapshot,
   revision:5,visible:[]},viewer),hidden);
  assert.deepEqual(clearVerifiedHiddenTokens(hidden,rows,
