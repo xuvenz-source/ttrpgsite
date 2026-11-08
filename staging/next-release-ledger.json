@@ -165,9 +165,9 @@
     },
     {
       "name": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
-      "status": "in-progress",
+      "status": "included",
       "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
-      "note": "Unified four-phase movement, per-viewer fog/light and Supabase memory redesign. Verified architecture plan staged. Phase 1 viewer-light protocol + legacy-compatible SQL candidate and observer hide timeout hardening committed. SQL UNAPPLIED; Vercel UNDEPLOYED; multi-browser security/latency tests and phase 2-4 implementations pending. No paid infrastructure."
+      "note": "Single unified four-phase architectural fix ATTEMPT fully implemented on this staging branch: verified per-viewer fog/light protocol parity and safe hidden-entity recovery; client/server short-lived motion sessions with private collision-checked observer broadcasts; server-owned visibility epochs and deltas with authorized snapshot fallback; scene reuse, bounded performance counters and stress-metric tooling. Legacy RPCs preserved. New SQL candidates and rollback scripts staged, not applied; Vercel unchanged. Automated node/build/audit/Deno and CodeQL were green on 2026-11-08 after full integration; recheck latest SHA. Real SQL compilation, permissions, 2/4/6–10 browser stress and memory/RAM measurements remain post-approval live-test gates. No paid infrastructure."
     }
   ],
   "features": [
@@ -516,53 +516,57 @@
     },
     {
       "id": "movement-fog-phase1-rendering-and-visibility-parity",
-      "description": "Per-viewer lighting RPC compatibility, stable fog rendering, trusted-hide marker protection and later revision-confirmed reveal/reconnect state machine. v2 SQL and initial client fixes staged; remaining stationary-NPC reconciliation and board lifecycle work pending.",
+      "description": "FULL STAGED ATTEMPT: stable fog frame subscription transitions, per-viewer lighting revision parity, hidden NPC/tool markers preserved through timeouts and newer server-approved fog plus fresh RLS reveal, unchanged token artwork identity and authorization-safe fallback.",
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "in-progress",
-      "releaseReady": false,
+      "status": "included",
+      "releaseReady": true,
       "databaseDependencies": [
         "viewer_light_masks_v2"
       ],
-      "verification": "Run node unit tests, build, CodeQL and security SQL review. Do not release until newer-authorized stationary NPC reveal works and full fog/lighting DM/player regression passes."
+      "verification": "Static tests cover per-viewer protocol, no stale unhide, trusted RLS snapshot and lifecycle transitions. GitHub staged unit/build/audit/Deno and CodeQL previously passed. Live fog-on/off DM/player visual and permission acceptance still required AFTER authorized SQL/frontend release."
     },
     {
       "id": "movement-fog-phase2-authorized-sessions",
-      "description": "Short-lived server-owned movement sessions, collision/ownership validation, private observer distribution, sequence and group movement support. Design documented; implementation not begun.",
+      "description": "FULL STAGED ATTEMPT: client latest-only preview queue uses short-lived server-owned authenticated motion gesture sessions, cached published collision and observer scene, swept wall checks, private recipient broadcasts, current rights/grid/character-attribute invalidation and final RLS trajectory save. Cleanup covers token/tool/group success and cancellation.",
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "in-progress",
-      "releaseReady": false,
+      "status": "included",
+      "releaseReady": true,
       "databaseDependencies": [
-        "motion_session_rpc_tbd"
+        "observer_path_cached_scene",
+        "movement_sessions_and_visibility_delta"
       ],
-      "verification": "Blocked on Phase 1 and backend schema review. Verify wall/door/one-way/DM override, multi-token and packet reorder before release."
+      "verification": "Static transport/security/collision/sequence/cleanup tests; source audit preserves DM override, group final saved transaction and legacy RPC. New SQL is UNAPPLIED and has not been compiled; test player/DM roles, walls, doors, one-way, torches, multi-token and network faults after approved live release."
     },
     {
       "id": "movement-fog-phase3-viewer-visibility-deltas",
-      "description": "Authoritative per-viewer visibility epochs/deltas, light/tool/token reveals and revocations with snapshot fallback. Design documented; implementation not begun.",
+      "description": "FULL STAGED ATTEMPT: server-owned per-viewer snapshot cache with monotonic epoch/revision/sequence, newly visible/hidden and explored cell deltas, client gap/epoch validation and complete server-authorized snapshot fallback. Tokens/tools still use fresh RLS roster for entity reveal/revocation, and lighting uses viewer-aligned versioned RPC.",
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "in-progress",
-      "releaseReady": false,
+      "status": "included",
+      "releaseReady": true,
       "databaseDependencies": [
-        "viewer_visibility_deltas_tbd"
+        "movement_sessions_and_visibility_delta",
+        "viewer_light_masks_v2"
       ],
-      "verification": "Blocked on authoritative motion session transport. Validate dropped/out-of-order revisions and hidden entity RLS before release."
+      "verification": "Pure JS delta/gap/nonce/hidden-state tests, SQL static checks and GitHub CI. Dynamic entity access remains filtered by RLS rather than client-authorized. SQL grants/publication and hidden NPC/torch/reconnect/party-vision live verification not yet possible without authorized release."
     },
     {
       "id": "movement-fog-phase4-supabase-query-memory",
-      "description": "Query/connection/RAM/swap and Realtime profiling, dependency-aware RPC pruning and free-plan software overhead optimization. Initial live read-only connection snapshot and preview cost confirmed; profiling and implementation pending.",
+      "description": "FULL STAGED SOFTWARE OPTIMIZATION ATTEMPT: remove serial expensive legacy preview dispatch in new frontend, reuse server validated scene across motion observer recipients, avoid intermediate map_tokens persistence, reduce redundant fog notifications and full client scene fetch on delta paths, bound stale session/hidden-marker state and add non-sensitive movement/fog timing and read-only SQL profiling.",
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "in-progress",
-      "releaseReady": false,
-      "databaseDependencies": [],
-      "verification": "Track committed vs actual RAM/swap before tuning. Stress test 2/4/6–10 users with 10/50/100 tokens; no unexplained sustained memory growth."
+      "status": "included",
+      "releaseReady": true,
+      "databaseDependencies": [
+        "movement_sessions_and_visibility_delta"
+      ],
+      "verification": "Current free-tier Postgres statement baseline recorded (113 old preview RPCs mean 383.4 ms; 1408 old legacy fog calls mean 109.3 ms) and read-only stress SQL/tooling staged. Physical RAM, swap, memory commitment and comparative remote p95 REQUIRE approved live stress trial; no claim of demonstrated improvement or memory threshold reached."
     }
   ],
   "databaseDependencies": [
@@ -739,6 +743,26 @@
       "releaseApprovalRequired": true,
       "dependsOn": "20261108091818",
       "note": "Additive versioned light-mask wrapper. Legacy RPC untouched; needs live SQL apply only after designer approves coordinated rollout. Authenticated grant required; anon/PUBLIC denied."
+    },
+    {
+      "name": "observer_path_cached_scene",
+      "status": "staged-not-applied",
+      "candidateFile": "staging/sql-candidates/observer_path_cached_scene.sql",
+      "rollbackFile": "staging/sql-candidates/rollback_movement_sessions_and_visibility_delta.sql",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "20261108091818",
+      "note": "Private server-owned cached-scene observer path with current player assignment, LOS/light and recipient role revalidation. Apply BEFORE movement_sessions_and_visibility_delta, as it references this helper. Revoke EXECUTE from PUBLIC, anon, authenticated."
+    },
+    {
+      "name": "movement_sessions_and_visibility_delta",
+      "status": "staged-not-applied",
+      "candidateFile": "staging/sql-candidates/movement_sessions_and_visibility_delta.sql",
+      "rollbackFile": "staging/sql-candidates/rollback_movement_sessions_and_visibility_delta.sql",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "observer_path_cached_scene and 20261108091818",
+      "note": "Additive private RLS session and viewer-fog snapshot tables plus authenticated begin/advance/end and delta RPCs. Legacy movement/fog RPCs untouched. Requires live SQL compilation/permissions after explicit release approval; no paid Supabase branch."
     }
   ],
   "edgeFunctionDependencies": [
@@ -770,7 +794,7 @@
     "outstandingBranches": [
       "stage/movement-fog-realtime-memory-redesign-2026-11-08"
     ],
-    "stagePolicy": "In-progress redesign only; exclude from production until all authorized visibility, client/server compatibility, CI/CodeQL and manual multiplayer gates have passed; combine all release-ready work in one designer-approved main merge.",
+    "stagePolicy": "ALL FOUR PHASES IMPLEMENTED AS ONE STAGED FIX ATTEMPT. Do not deploy or apply production SQL without designer approval. Before one main release reconcile any other ready staging, validate new SQL/role grants and CI/CodeQL; complete live DM/player stress and memory measurements after authorized release. Do not claim performance targets achieved until observed.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
