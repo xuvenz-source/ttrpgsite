@@ -63,7 +63,7 @@ test('high-rate movement reconciles once after gestures settle',()=>{
  const trailing=createTrailingRefresh(()=>{invocations++},420,{setTimer,clearTimer});
  trailing.request();trailing.request();trailing.request();
  assert.equal(callbacks.size,1);
- const callback=[...callbacks.values()][0];callback();
+ const [timerId,callback]=[...callbacks.entries()][0];callbacks.delete(timerId);callback();
  assert.equal(invocations,1);
  trailing.request();trailing.cancel();
  assert.equal(callbacks.size,0);
