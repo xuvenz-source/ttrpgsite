@@ -27,7 +27,7 @@ import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,
 
 export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
- onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,remotePositions={},
+ onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,onGroupMovementPreview,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,authorizedLightMasks=null,
  environment,publishedEnvironment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
@@ -675,7 +675,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   if(isDM)for(const token of info.members)
    motion.current?.preview(token.id,
     Number(token.x)+delta.dx,Number(token.y)+delta.dy);
-  for(const t of info.members){
+  const playerGroup=!isDM&&
+   info.members.length+(info.tools||[]).length>1;
+  if(playerGroup)onGroupMovementPreview?.({
+   tokens:info.members,tools:info.tools||[],dx:delta.dx,dy:delta.dy
+  });
+  else for(const t of info.members){
    const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
    onMovementPreview?.(t,next.x,next.y,false);
   }
@@ -688,7 +693,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     next[tool.issue_id]={x:Number(tool.x)+delta.dx,y:Number(tool.y)+delta.dy};
    return next;
   });
-  for(const tool of info.tools||[])
+  if(!playerGroup)for(const tool of info.tools||[])
    onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
   // Server-validated observer previews carry movement without writing
   // token positions or invalidating fog on every pointer sample.
