@@ -211,6 +211,7 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
     this.revoke(mapId);return false;
    }
    const old=revisions.get(mapId);
+   if(old?.sourceFrame===frame)return true;
    if(old&&frame.revision<old.revision){
     this.revoke(mapId);return false;
    }
@@ -221,7 +222,7 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
     environmentRevision:frame.navigationEnvironmentRevision,
     collisionEnabled:frame.collisionEnabled,
     fogEnabled:frame.enabled,width:frame.width,height:frame.height,
-    visible:new Set(frame.visible)
+    visible:new Set(frame.visible),sourceFrame:frame
    });
    if(previousKey===hardKey){
     if(old.revision!==frame.revision)
