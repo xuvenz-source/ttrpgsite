@@ -28,7 +28,7 @@ test('release ledger records previous releases and pending authorized migrations
  assert.ok(ledger.features.some(feature=>
   feature.id==='stable-token-movement-visual-continuity'&&feature.releaseReady===true));
  assert.ok(ledger.databaseDependencies.some(item=>item.name==='campaign_cross_inventory_item_transfers'
-  &&item.status==='staged-unapplied'&&item.mustApplyBeforeFrontend===true));
+  &&item.status==='applied-production'&&item.appliedVersion==='20261108052335'&&item.mustApplyBeforeFrontend===true));
  assert.ok(ledger.databaseDependencies.some(item=>
   item.name==='world_runtime_private_observer_motion'&&
   item.appliedVersion==='20261108031754'&&
