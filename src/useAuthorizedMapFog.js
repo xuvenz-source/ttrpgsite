@@ -5,6 +5,7 @@ import {isFreshVisibilityTick,retainFogSnapshot} from './FogVisibilityContinuity
 import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
 import {canUseViewerFogProtocol,isMissingViewerFogRpc} from './ViewerFogProtocol.js';
 import {applyAuthorizedFogEnvelope} from './AuthorizedFogDelta.js';
+import {movementDiagnostics} from './MovementDiagnostics.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
  * leaves the player map obscured until a valid server snapshot arrives. */
@@ -26,6 +27,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    validated.current=null;pendingTick.current=null;setFrame(null);setPublished(null);return;
   }
   const seq=++request.current;
+  const finishTiming=movementDiagnostics.begin('authorized-fog-refresh');
   // Accepted observer previews and published scene changes can update sight
   // without a new visibility tick: they must bypass older in-flight frames.
   if(fresh===true)coordinator.invalidate(key);
@@ -96,7 +98,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    validated.current=null;
    pendingTick.current=null;
    setFrame(null);setPublished(null);setError(cause?.message||String(cause));
-  }
+  }finally{finishTiming()}
  },[db,campaignId,mapId,userId,isDM,key,coordinator]);
  // Authorization identity changes must discard all previous sight and
  // explored data. Switching global -> viewer notification streams is NOT an
