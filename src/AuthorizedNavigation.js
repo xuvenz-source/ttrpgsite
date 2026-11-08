@@ -292,12 +292,22 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
   allows(mapId,kind,id,from,to){
    return stepAllowed(validGrant(mapId,kind,id),revisions.get(mapId),from,to);
   },
+  /** Previously traversed segments were already authorized at paint time.
+   * Do not retroactively invalidate them when the player's sight moves and
+   * old cells become unseen. Each NEW step is still clipped via allows().
+   * The final endpoint must be currently authorized; the server independently
+   * revalidates the entire trajectory against current walls and permissions. */
   routeApproved(mapId,kind,id,origin,offsets){
    const grant=validGrant(mapId,kind,id);
-   return matchingOrigin(grant,origin)&&grant?.baseX===origin?.x&&
-    grant?.baseY===origin?.y&&
-    navigationRouteApproved(grant,origin,offsets,(from,to)=>
-     stepAllowed(grant,revisions.get(mapId),from,to));
+   if(!matchingOrigin(grant,origin)||grant?.baseX!==origin?.x||
+      grant?.baseY!==origin?.y||
+      !navigationRouteApproved(grant,origin,offsets))return false;
+   const end=offsets?.at(-1);
+   return withinSight(revisions.get(mapId),grant,{
+    x:origin.x+end.dx,y:origin.y+end.dy});
+  },
+  canOccupy(mapId,kind,id,position){
+   return withinSight(revisions.get(mapId),validGrant(mapId,kind,id),position);
   },
   hasGrant(mapId,kind,id){return !!validGrant(mapId,kind,id)},
   clear(){grants.clear();inFlight.clear();revisions.clear();origins.clear()},
