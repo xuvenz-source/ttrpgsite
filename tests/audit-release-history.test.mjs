@@ -10,17 +10,21 @@ test('audit migration manifest is documentary and keeps live records separate fr
  assert.equal(data.trackedFiles.length,data.counts.repositorySqlFiles);
  assert.match(data.warning,/Never run every repo migration/);
 });
-test('combined release records both approved drafts and compatible migration requirements',()=>{
+test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/world-runtime-movement-collision-fog-2026-11-08');
+ assert.equal(ledger.releaseBranch,'stage/inventory-cross-transfer-2026-11-08');
  assert.deepEqual(ledger.lastRelease.approvedPullRequests,[45]);
  assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[43,44]);
  assert.equal(ledger.lastRelease.productionBaseSha,'fba25209757d2c55d3303ea6b0582b8d61b6632c');
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
  assert.ok(ledger.upcomingRelease.outstandingBranches.includes(
-  'stage/world-runtime-movement-collision-fog-2026-11-08'));
+  'stage/inventory-cross-transfer-2026-11-08'));
  assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
-  feature.status==='included'&&feature.releaseReady===true));
+  feature.status==='released'&&feature.releaseReady===true));
+ assert.ok(ledger.branches.some(item=>item.name==='stage/world-runtime-movement-collision-fog-2026-11-08'&&item.status==='released'));
+ assert.ok(ledger.branches.some(item=>item.name==='stage/inventory-cross-transfer-2026-11-08'&&item.status==='staged'));
+ assert.ok(ledger.databaseDependencies.some(item=>item.name==='campaign_cross_inventory_item_transfers'
+  &&item.status==='staged-unapplied'&&item.mustApplyBeforeFrontend===true));
  assert.ok(ledger.databaseDependencies.some(item=>
   item.name==='world_runtime_private_observer_motion'&&
   item.appliedVersion==='20261108031754'&&
