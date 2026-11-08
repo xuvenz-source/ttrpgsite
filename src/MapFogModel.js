@@ -37,6 +37,7 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
  if(visible.some(cell=>!exploredSet.has(cell)))return null;
  return {mapId,width:raw.width,height:raw.height,
   revision:raw.revision,enabled:raw.enabled,partyShared:raw.partyShared,
+  ...(raw.protocolVersion===2?{protocolVersion:2}:{}),
   visible,explored};
 }
 /** A revision revokes the old visible cells immediately. Retain only cells
