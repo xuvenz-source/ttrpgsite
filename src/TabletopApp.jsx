@@ -60,6 +60,7 @@ import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
 import {createAuthorizedNavigation} from './AuthorizedNavigation.js';
+import {planAuthorizedGridRoute} from './AuthorizedMovementPlanner.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
@@ -192,7 +193,8 @@ export default function TabletopApp(){
  const[uiScale,setUiScale]=useState(.9);
  const quickCache=useRef(new Map());
  // Keep the most recent local destination authoritative until the server acknowledges it.
- const movementPending=useRef(new Map()),tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
+ const movementPending=useRef(new Map()),toolMovementPending=useRef(new Set()),
+  tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const previewStepHandler=useRef(null);
  const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
@@ -667,27 +669,42 @@ export default function TabletopApp(){
   const existing=campaignTools.placed.find(p=>p.issue_id===id&&p.map_id===mapId);
   try{
    if(!isDM&&existing){
-    const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
-    if(!queue||!transport)return;
-    const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
-    if(seq===null)return;
-    liveMovementSeq.current=seq;
-    queue.enqueue('tool:'+id,{kind:'tool',params:{
-     p_map:mapId,p_kind:'tool',p_piece:id,p_x:x,p_y:y,
-     p_seq:seq,p_ignore_collision:false
-    }});
-    await queue.drain('tool:'+id);
-    if(tokenContextRef.current.mapId!==mapId)return;
-    const path=transport.getApprovedPath(mapId,'tool',id);
-    const steps=movementPathDeltas(path.map(p=>({
-     dx:p.x-Number(existing.x),dy:p.y-Number(existing.y)
-    })));
-    if(!steps?.length)return;
-    await read(db.rpc('commit_map_trajectory',{
-     p_map:mapId,p_token_ids:[],p_tool_issue_ids:[id],
-     p_steps:steps,p_ignore_collision:false
-    }));
-    await campaignTools.refresh(['issued','placed'],true);
+    // Sidebar repositioning uses the same server-issued local edge graph as
+    // ordinary drag movement. No old per-pointer session RPC and no private
+    // wall geometry may authorize an arbitrary tool teleport.
+    if(toolMovementPending.current.has(id))return;
+    const origin={x:Number(existing.x),y:Number(existing.y)};
+    const destination={x:Number(x),y:Number(y)};
+    if(origin.x===destination.x&&origin.y===destination.y)return;
+    toolMovementPending.current.add(id);
+    try{
+     const span=Number(existing.span??1);
+     const current=await navigationStore.ensure(mapId,'tool',id,{
+      ...origin,spanX:span,spanY:span
+     });
+     if(tokenContextRef.current.mapId!==mapId)return;
+     if(!current)throw Error('Navigation is updating; try moving this tool again.');
+     const route=planAuthorizedGridRoute({
+      origin,destination,
+      canStep:(from,to)=>navigationStore.allows(mapId,'tool',id,from,to)
+     });
+     if(!route?.length||!navigationStore.routeApproved(
+      mapId,'tool',id,origin,route))
+      throw Error('This tool cannot reach that destination through authorized cells.');
+     const steps=movementPathDeltas(route);
+     if(!steps?.length)throw Error('The tool movement path is invalid.');
+     const {data,error:moveError}=await db.rpc('commit_map_trajectory',{
+      p_map:mapId,p_token_ids:[],p_tool_issue_ids:[id],
+      p_steps:steps,p_ignore_collision:false
+     });
+     if(moveError)throw moveError;
+     const saved=data?.tools?.find(item=>item.id===id);
+     if(Number(saved?.x)!==destination.x||Number(saved?.y)!==destination.y)
+      throw Error('The server did not confirm the tool destination.');
+     await campaignTools.refresh(['issued','placed'],true);
+    }finally{
+     toolMovementPending.current.delete(id);
+    }
    }else await campaignTools.place(issued,mapId,x,y);
   }catch(e){fail(e)}
   finally{clearMapMovementPreview(mapId,[],[id])}
@@ -2430,16 +2447,29 @@ export default function TabletopApp(){
      token.owner_id!==user||playerMapId!==mapId||
      movementPending.current.has(id))return;
   const baseX=Number(token.x),baseY=Number(token.y);
-  const path=route.length?route:[{dx:wantedX-baseX,dy:wantedY-baseY}];
-  const end=path.at(-1);
+  const start={x:baseX,y:baseY};
+  // Keyboard and side-panel drops have no pointer path. Find an authorized
+  // bounded path through opaque server edges rather than validating a single
+  // sweeping teleport that could cut through a solid wall.
+  const path=route.length?route:planAuthorizedGridRoute({
+   origin:start,destination:{x:wantedX,y:wantedY},
+   canStep:(from,to)=>navigationStore.allows(mapId,'token',id,from,to)
+  });
+  const end=path?.at(-1);
   if(!end||baseX+end.dx!==wantedX||baseY+end.dy!==wantedY||
     !navigationStore.routeApproved(mapId,'token',id,{x:baseX,y:baseY},path)){
    navigationStore.warm(mapId,'token',id,{x:baseX,y:baseY,
     spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
-   remoteMotion.current?.clearPreview(id);return;
+   remoteMotion.current?.clearPreview(id);
+   clearMapMovementPreview(mapId,[id],[]);
+   return;
   }
   const steps=movementPathDeltas(path);
-  if(!steps?.length){remoteMotion.current?.clearPreview(id);return}
+  if(!steps?.length){
+   remoteMotion.current?.clearPreview(id);
+   clearMapMovementPreview(mapId,[id],[]);
+   return;
+  }
   const pending={mapId,campaignId,x:wantedX,y:wantedY,
    baseX,baseY,saving:true,confirmed:false};
   movementPending.current.set(id,pending);
