@@ -1,6 +1,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {normaliseToolConfig,toolInitialState,toolCanControl,toolCanBeHeld,toolMapProjection} from './CampaignTools.js';
 import {createCoalescedRefresh} from './PerformanceScheduling.js';
+import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
 
 /** Keep in-flight local placement authoritative until the server responds.
  * This hides network latency from dragging without altering permission checks. */
@@ -13,70 +14,124 @@ export function overlayToolPlacements(rows,pending,mapId){
  return [...found.values()];
 }
 /** RLS protects private issued sheets; public map tokens are in a separate table. */
-export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
+export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refreshCoordinator}){
  const [templates,setTemplates]=useState([]);
  const [issued,setIssued]=useState([]);
  const [placed,setPlaced]=useState([]);
  const [loading,setLoading]=useState(false),[error,setError]=useState('');
- const seq=useRef(0);
+ const seq=useRef({templates:0,issued:0,placed:0});
+ const ownCoordinator=useRef(null);
+ if(!ownCoordinator.current)ownCoordinator.current=createCampaignRefreshCoordinator();
+ const coordinator=refreshCoordinator||ownCoordinator.current;
  const pendingPositions=useRef(new Map()),writeChains=useRef(new Map());
  const moveSerial=useRef(0);
  useEffect(()=>{
   pendingPositions.current.clear();writeChains.current.clear();moveSerial.current=0;
  },[campaignId,mapId,userId]);
- const refresh=useCallback(async()=>{
+ /** A tool move should not reload every issued sheet or template.
+  * Each resource has an independent sequence to avoid canceling an unrelated
+  * response when several different Realtime tables change together.
+  */
+ const refresh=useCallback(async(kinds=['templates','issued','placed'],fresh=false)=>{
   if(!db||!userId||!campaignId){
    setTemplates([]);setIssued([]);setPlaced([]);return;
   }
-  const request=++seq.current;setLoading(true);
+  const resources=Array.isArray(kinds)?kinds:['templates','issued','placed'];
+  const complete=resources.length===3;
+  if(complete)setLoading(true);
+  const generations=Object.fromEntries(resources.map(kind=>{
+   if(!Object.hasOwn(seq.current,kind))throw Error('Unknown tool resource '+kind);
+   return [kind,++seq.current[kind]];
+  }));
   try{
-   const [templatesReply,issuesReply,placedReply]=await Promise.all([
-    isDM?db.from('campaign_tool_templates').select('*').eq('campaign_id',campaignId)
-     .order('created_at',{ascending:true}):Promise.resolve({data:[],error:null}),
-    db.from('campaign_tool_issues').select('*').eq('campaign_id',campaignId)
-     .order('created_at',{ascending:true}),
-    mapId?db.from('campaign_tool_map_tokens').select('*')
-     .eq('campaign_id',campaignId).eq('map_id',mapId):
-     Promise.resolve({data:[],error:null})
-   ]);
-   if(templatesReply.error)throw templatesReply.error;
-   if(issuesReply.error)throw issuesReply.error;
-   if(placedReply.error)throw placedReply.error;
-   if(seq.current!==request)return;
-   setTemplates(templatesReply.data||[]);
-   setIssued(issuesReply.data||[]);
-   setPlaced(overlayToolPlacements(placedReply.data||[],pendingPositions.current,mapId));
-   setError('');
+   await Promise.all(resources.map(async kind=>{
+    const key=campaignResourceKey({campaignId,mapId,userId,
+     resource:'campaign-tools-'+kind,variant:isDM?'dm':'player'});
+    // Realtime changes, permission changes and completed writes must not
+    // inherit a query issued before the change was observed.
+    if(fresh)coordinator.invalidate(key);
+    const response=await coordinator.request(key,async()=>{
+     let reply;
+     if(kind==='templates'){
+      reply=isDM?await db.from('campaign_tool_templates').select('*')
+       .eq('campaign_id',campaignId).order('created_at',{ascending:true}):
+       {data:[],error:null};
+     }else if(kind==='issued'){
+      reply=await db.from('campaign_tool_issues').select('*')
+       .eq('campaign_id',campaignId).order('created_at',{ascending:true});
+     }else{
+      reply=mapId?await db.from('campaign_tool_map_tokens').select('*')
+       .eq('campaign_id',campaignId).eq('map_id',mapId):
+       {data:[],error:null};
+     }
+     if(reply.error)throw reply.error;
+     return reply.data||[];
+    });
+    if(!response.current||seq.current[kind]!==generations[kind])return;
+    if(kind==='templates')setTemplates(response.value);
+    else if(kind==='issued')setIssued(response.value);
+    else setPlaced(overlayToolPlacements(response.value,pendingPositions.current,mapId));
+   }));
+   if(resources.every(kind=>seq.current[kind]===generations[kind]))
+    setError('');
   }catch(e){
-   if(seq.current===request)setError(e?.message||String(e));
-  }finally{if(seq.current===request)setLoading(false)}
- },[db,campaignId,mapId,userId,isDM]);
- useEffect(()=>{void refresh();return()=>{++seq.current}},[refresh]);
+   if(resources.some(kind=>seq.current[kind]===generations[kind]))
+    setError(e?.message||String(e));
+  }finally{
+   if(complete&&resources.every(kind=>seq.current[kind]===generations[kind]))
+    setLoading(false);
+  }
+ },[db,campaignId,mapId,userId,isDM,coordinator]);
+ useEffect(()=>{
+  void refresh();
+  return()=>{
+   for(const key of Object.keys(seq.current))++seq.current[key];
+  };
+ },[refresh]);
+ // Subscribe once per campaign; changing map/viewer updates the callback,
+ // not the entire subscription. The backend continues applying RLS per user.
+ const latestRefresh=useRef(refresh);
+ latestRefresh.current=refresh;
  useEffect(()=>{
   if(!db||!campaignId||!userId)return;
   let hidden=false;
-  const changed=createCoalescedRefresh(()=>void refresh(),100);
+  const issuesChanged=createCoalescedRefresh(
+   ()=>void latestRefresh.current(['issued','placed'],true),100);
+  const placementsChanged=createCoalescedRefresh(
+   ()=>void latestRefresh.current(['placed'],true),100);
+  const templatesChanged=createCoalescedRefresh(
+   ()=>{if(isDM)void latestRefresh.current(['templates'],true)},100);
   const c=db.channel('forge-tools-'+campaignId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_tool_issues',filter:'campaign_id=eq.'+campaignId},()=>changed.request())
+    table:'campaign_tool_issues',filter:'campaign_id=eq.'+campaignId},
+    ()=>issuesChanged.request())
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_tool_map_tokens',filter:'campaign_id=eq.'+campaignId},()=>changed.request())
+    table:'campaign_tool_map_tokens',filter:'campaign_id=eq.'+campaignId},
+    ()=>placementsChanged.request())
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'campaign_tool_templates',filter:'campaign_id=eq.'+campaignId},()=>{if(isDM)changed.request()})
-   .subscribe(status=>{if(status==='SUBSCRIBED')changed.request()});
+    table:'campaign_tool_templates',filter:'campaign_id=eq.'+campaignId},
+    ()=>templatesChanged.request())
+   .subscribe(status=>{
+    if(status==='SUBSCRIBED')
+     void latestRefresh.current(['templates','issued','placed'],true);
+   });
   const onVisibility=()=>{
    if(document.visibilityState==='hidden')hidden=true;
-   else if(hidden){hidden=false;void refresh()}
+   else if(hidden){
+    hidden=false;
+    void latestRefresh.current(['templates','issued','placed'],true);
+   }
   };
   document.addEventListener('visibilitychange',onVisibility);
   return()=>{
-   changed.cancel();document.removeEventListener('visibilitychange',onVisibility);
+   issuesChanged.cancel();placementsChanged.cancel();templatesChanged.cancel();
+   document.removeEventListener('visibilitychange',onVisibility);
    void db.removeChannel(c);
   };
- },[db,campaignId,userId,isDM,refresh]);
+ },[db,campaignId,userId,isDM]);
  async function mutate(operation){
   if(!db||!campaignId||!userId)throw Error('Open a campaign first.');
-  try{const value=await operation();await refresh();return value}
+  try{const value=await operation();await refresh(undefined,true);return value}
   catch(e){setError(e?.message||String(e));throw e}
  }
  const one=async query=>{
@@ -145,13 +200,13 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM}){
    setIssued(old=>old.map(item=>item.id===updated.id?updated:item));
    if(pendingPositions.current.get(issue.id)?.stamp===stamp){
     pendingPositions.current.delete(issue.id);
-    await refresh();
+    await refresh(['issued','placed'],true);
    }
    return updated;
   }catch(e){
    if(pendingPositions.current.get(issue.id)?.stamp===stamp){
     pendingPositions.current.delete(issue.id);
-    await refresh();
+    await refresh(['issued','placed'],true);
    }
    setError(e?.message||String(e));throw e;
   }
