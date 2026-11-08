@@ -206,7 +206,10 @@ begin
     u.owner_id is distinct from actor and u.party_shared is distinct from true)
   then return false;end if;
  end if;
- if s.collision_enforced and not s.ignore_collision then
+ -- No-op samples cannot cross a wall: only a changed segment requires
+ -- swept collision. Real segments still fail closed on malformed geometry.
+ if s.collision_enforced and not s.ignore_collision and
+    (p_x<>s.last_x or p_y<>s.last_y) then
   if pg_catalog.jsonb_typeof(s.scene->'objects')<>'array' or
     pg_catalog.jsonb_array_length(s.scene->'objects')>120 then return false;end if;
   for obstacle in select value from pg_catalog.jsonb_array_elements(s.scene->'objects') loop
