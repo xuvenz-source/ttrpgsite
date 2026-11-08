@@ -2,13 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-test('tool and handout Realtime burst callbacks are coalesced and canceled on teardown',()=>{
- for(const file of ['src/useCampaignTools.js','src/useCampaignHandouts.js']){
-  const s=read(file);
-  assert.match(s,/createCoalescedRefresh\(\(\)=>void refresh\(\),100\)/);
-  assert.match(s,/changed\.request\(\)/);
-  assert.match(s,/changed\.cancel\(\)/);
- }
+test('tool and handout Realtime events are batched, targeted and canceled on teardown',()=>{
+ const tools=read('src/useCampaignTools.js');
+ assert.match(tools,/const dirty=new Set\(\)/);
+ assert.match(tools,/createCoalescedRefresh\(\(\)=>\{/);
+ assert.match(tools,/queue\('issued','placed'\)/);
+ assert.match(tools,/queue\('placed'\)/);
+ assert.match(tools,/queue\('templates'\)/);
+ assert.match(tools,/changed\.request\(\)/);
+ assert.match(tools,/changed\.cancel\(\)/);
+ const handouts=read('src/useCampaignHandouts.js');
+ assert.match(handouts,/createCoalescedRefresh\(\(\)=>void refresh\(\),100\)/);
+ assert.match(handouts,/changed\.request\(\)/);
+ assert.match(handouts,/changed\.cancel\(\)/);
 });
 test('combat refreshes on visibility ticks only when an encounter is active',()=>{
  const s=read('src/useMapCombat.js');
