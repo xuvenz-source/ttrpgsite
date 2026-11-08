@@ -5,18 +5,24 @@ import {normalizeAuthorizedLightMasks} from './AuthorizedLightMasks.js';
  * Any failed or stale RPC removes player light rather than showing unoccluded
  * radial gradients through walls. DM previews render from prepared geometry.
  */
-export default function useAuthorizedMapLights({db,mapId,userId,revision,refreshNonce,enabled=true}){
+export default function useAuthorizedMapLights({db,mapId,userId,revision,protocolVersion=1,refreshNonce,enabled=true}){
  const [result,setResult]=useState(null);
  useEffect(()=>{
   let cancelled=false;
   setResult(null);
   if(!enabled||!db||!mapId||!userId||!Number.isSafeInteger(revision))return;
-  void db.rpc('get_authorized_map_light_masks',{p_map:mapId})
+  // Per-player fog revisions must only be compared against per-player light
+  // revisions. Do not fall back from v2 on RPC errors: that could accept a
+  // stale global-revision result and draw unauthorized lighting.
+  const rpc=protocolVersion===2?
+   'get_authorized_map_light_masks_v2':'get_authorized_map_light_masks';
+  void db.rpc(rpc,{p_map:mapId})
    .then(({data,error})=>{
     if(error)throw error;
     const safe=normalizeAuthorizedLightMasks(data,mapId);
     if(cancelled)return;
-    setResult(safe?.revision===revision?safe:null);
+    setResult(safe?.revision===revision&&
+     (safe.protocolVersion===2?2:1)===protocolVersion?safe:null);
    }).catch(e=>{
     if(!cancelled){
      setResult(null);
@@ -24,6 +30,7 @@ export default function useAuthorizedMapLights({db,mapId,userId,revision,refresh
     }
    });
   return()=>{cancelled=true};
- },[db,mapId,userId,revision,refreshNonce,enabled]);
- return enabled&&result?.mapId===mapId&&result?.revision===revision?result:null;
+ },[db,mapId,userId,revision,protocolVersion,refreshNonce,enabled]);
+ return enabled&&result?.mapId===mapId&&result?.revision===revision&&
+  (result.protocolVersion===2?2:1)===protocolVersion?result:null;
 }

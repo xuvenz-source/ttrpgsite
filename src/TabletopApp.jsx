@@ -58,6 +58,9 @@ import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
+import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
+import {movementDiagnostics} from './MovementDiagnostics.js';
+import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
  nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
@@ -102,6 +105,12 @@ export default function TabletopApp(){
   return p.get('campaign')&&p.get('sheet')?
    {campaignId:p.get('campaign'),characterId:p.get('sheet')}:null;
  });
+ // Read-only local performance diagnostics for test-campaign stress testing.
+ // This records timings only, never token IDs, positions or private content.
+ useEffect(()=>{
+  window.__ttrpgMovementMetrics=()=>movementDiagnostics.snapshot();
+  return()=>{delete window.__ttrpgMovementMetrics};
+ },[]);
  const launchHandled=useRef(false);
  const signedAssetIdentity=useRef(null);
  const[launchNpc]=useState(()=>{
@@ -169,7 +178,8 @@ export default function TabletopApp(){
  const remoteMotion=useRef(null),observerRevisions=useRef(new Map()),
   remotePositionSettler=useRef(null);
  const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null),
-  latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null);
+  latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null),
+  movementSessionTransport=useRef(null);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
@@ -265,6 +275,8 @@ export default function TabletopApp(){
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator});
+ const latestFogSnapshot=useRef(null);
+ latestFogSnapshot.current=fog.frame;
  const queuePreviewFogRefresh=()=>{
   const now=Date.now();
   if(now-lastPreviewFogRefresh.current<250)return;
@@ -281,6 +293,7 @@ export default function TabletopApp(){
  const authorizedLights=useAuthorizedMapLights({
   db,mapId:selectedMap,userId:isDM?null:user,
   revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision,
+  protocolVersion:fog.frame?.protocolVersion===2?2:1,
   refreshNonce:fog.frame,
   enabled:campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
  });
@@ -605,7 +618,9 @@ export default function TabletopApp(){
  async function pickUpIssuedToolOnMap(id){
   const issue=campaignTools.issued.find(t=>t.id===id);
   if(!issue)return;
+  const mapId=selectedMap;
   try{await campaignTools.pickUp(issue)}catch(e){fail(e)}
+  finally{clearMapMovementPreview(mapId,[],[id])}
  }
  async function holdIssuedToolOnToken(id,tokenId){
   const issued=campaignTools.issued.find(item=>item.id===id);
@@ -616,8 +631,10 @@ export default function TabletopApp(){
  async function placeIssuedToolOnMap(id,x,y){
   const issued=campaignTools.issued.find(t=>t.id===id);
   if(!issued||!selectedMap)return fail('Tool not available on this map.');
-  try{await campaignTools.place(issued,selectedMap,x,y)}
+  const mapId=selectedMap;
+  try{await campaignTools.place(issued,mapId,x,y)}
   catch(e){fail(e)}
+  finally{clearMapMovementPreview(mapId,[],[id])}
  }
  function prepareHandoutPin(handoutId){
   if(!isDM||!selectedMap)return fail('Select a map first.');
@@ -1035,8 +1052,10 @@ export default function TabletopApp(){
  // Per-recipient authorization and broadcasts remain exclusively in Postgres.
  useEffect(()=>{
   if(!db||!selectedMap)return;
+  const transport=createAuthorizedMotionTransport({db});
+  movementSessionTransport.current=transport;
   const queue=createLatestOnlyPreviewQueue({
-   send:packet=>db.rpc('preview_map_motion',packet.params),
+   send:packet=>transport.send(packet),
    onResult:(packet,{data,error})=>{
     if(error)console.warn('Secure movement preview unavailable',error.message);
     else if(data===true&&packet.kind==='token')latestOwnFogRefresh.current?.();
@@ -1047,6 +1066,8 @@ export default function TabletopApp(){
   return()=>{
    if(movementPreviewQueue.current===queue)movementPreviewQueue.current=null;
    queue.dispose();
+   if(movementSessionTransport.current===transport)movementSessionTransport.current=null;
+   transport.dispose();
   };
  },[db,selectedMap]);
  // Short observer-quiet window before converging the preview toward a final
@@ -1094,7 +1115,10 @@ export default function TabletopApp(){
    if(payload.action==='hide'){
     remoteMotion.current?.clearPreview(visualId);
     const markHidden=prior=>({...prior,[payload.id]:{
-     hidden:true,seq:payload.seq,actor:payload.actor
+     hidden:true,seq:payload.seq,actor:payload.actor,
+     fogRevision:latestFogSnapshot.current?.revision??-1,
+     fogEpoch:latestFogSnapshot.current?.epoch??null,
+     fogSequence:latestFogSnapshot.current?.sequence??null
     }});
     if(isToken)setRemoteTokenPositions(markHidden);
     else setRemoteToolPositions(markHidden);
@@ -1110,15 +1134,11 @@ export default function TabletopApp(){
    }
    const timer=setTimeout(()=>{
     expiry.delete(payload.id);
-    if(payload.action==='hide'){
-     const unhide=prior=>{
-      if(!prior[payload.id]?.hidden||prior[payload.id]?.seq!==payload.seq)
-       return prior;
-      const copy={...prior};delete copy[payload.id];return copy;
-     };
-     if(isToken)setRemoteTokenPositions(unhide);
-     else setRemoteToolPositions(unhide);
-    }
+    // A private server-issued hide is an authorization denial, not a
+    // 1.35-second visual animation. Timeout may reconcile positions but must
+    // NEVER itself unhide a token or tool. Only a later accepted server-issued
+    // move packet may clear the hide marker. A separate verified fog/RLS
+    // reconciliation path for stationary reappearing NPCs is still required.
     // Finish visual motion only after the latest authorized database read.
     // Never remove the overlay first and expose a stale React left/top.
     const refresh=isToken?latestTokenRefresh.current:latestToolRefresh.current;
@@ -1165,10 +1185,8 @@ export default function TabletopApp(){
   // A preview RPC already in flight could otherwise finish AFTER cleanup
   // and resurrect the stale observer position / temporary fog sight.
   void Promise.all(keys.map(key=>queue?.cancel(key)))
-   .then(()=>db.rpc('end_map_motion_previews',{
-    p_map:mapId,p_token_ids:tokenIds,p_tool_issue_ids:issueIds
-   })).then(({error})=>{
-    if(error)console.warn('Movement preview cleanup failed',error.message);
+   .then(()=>movementSessionTransport.current?.end(mapId,tokenIds,issueIds))
+   .then(()=>{
    }).catch(error=>console.warn('Movement preview cleanup failed',error))
    .finally(()=>{
     if(fog.frame?.enabled===true&&fog.frame.mapId===mapId)
@@ -1363,6 +1381,7 @@ export default function TabletopApp(){
  // monitor visibility metadata) changed. A separate data edit still uses the
  // explicit monitors-changed channel / non-coordinate token event path.
  async function refreshFogAwareTokens(){
+  const proofFrame=latestFogSnapshot.current;
   const context={...tokenContextRef.current};
   const previous=latestMovementAccess.current.tokens||[];
   const authorized=await refreshTokens(true);
@@ -1370,6 +1389,11 @@ export default function TabletopApp(){
      tokenContextRef.current.mapId!==context.mapId||
      tokenContextRef.current.campaignId!==context.campaignId||
      tokenContextRef.current.userId!==context.userId)return;
+  // The roster request completed after the snapshot was granted. An older
+  // RPC or React token row is never sufficient to release an observer hide.
+  if(latestFogSnapshot.current===proofFrame)
+   setRemoteTokenPositions(hidden=>clearVerifiedHiddenTokens(
+    hidden,authorized,proofFrame,context.userId));
   if(authorizedTokenDerivedInputsChanged(previous,authorized,context.mapId))
    await refreshMonitors(true);
  }
@@ -1377,7 +1401,12 @@ export default function TabletopApp(){
  // sanitized revision tick therefore re-queries authoritative token access.
  useEffect(()=>{
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
-  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
+  void refreshFogAwareTokens();
+  const proofFrame=fog.frame;
+  void campaignTools.refresh(['placed'],true).then(result=>{
+   if(latestFogSnapshot.current===proofFrame&&Array.isArray(result?.placed))
+    setRemoteToolPositions(hidden=>clearVerifiedHiddenTools(hidden,result.placed,proofFrame));
+  });
  },[fog.frame?.revision,selectedMap]);
  // Movement previews can revise authorized LOS without changing the saved
  // visibility tick. Reconcile the RLS roster but don't refresh character
@@ -1391,7 +1420,11 @@ export default function TabletopApp(){
      current.displayVisibleDuringRefresh)return;
   const a=current.visible||[],b=previous.visible||[];
   if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
-  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
+  void refreshFogAwareTokens();
+  void campaignTools.refresh(['placed'],true).then(result=>{
+   if(latestFogSnapshot.current===current&&Array.isArray(result?.placed))
+    setRemoteToolPositions(hidden=>clearVerifiedHiddenTools(hidden,result.placed,current));
+  });
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
@@ -2371,7 +2404,12 @@ export default function TabletopApp(){
      void refreshTokens();
     }
    }
-  }finally{pending.saving=false}
+  }finally{
+   pending.saving=false;
+   // Always clear the trusted movement gesture after the final RLS write,
+   // including rejection. Old private preview sources must not linger.
+   clearMapMovementPreview(pending.mapId,[id],[]);
+  }
  }
  async function moveGroup({tokens:members=[],tools=[],dx,dy,path=[]}){
   const mapId=selectedMap,campaignId=activeId;

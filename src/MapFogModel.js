@@ -7,6 +7,7 @@ export const MAX_FOG_AXIS=256;
 export const MAX_FOG_CELLS=MAX_FOG_AXIS*MAX_FOG_AXIS;
 
 const validInt=n=>Number.isSafeInteger(n);
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function parseIndices(items,total){
  if(!Array.isArray(items)||items.length>total)return null;
  const values=new Set();
@@ -29,6 +30,8 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
     typeof raw.enabled!=='boolean'||typeof raw.partyShared!=='boolean'||
     ['prepared','live','objects','environment','tokens','names','imagePaths']
      .some(key=>Object.hasOwn(raw,key)))return null;
+ // Epoch metadata is not a sight grant: it is only retained for validated
+ // envelopes. AuthorizedFogDelta additionally validates every delta field.
  const total=raw.width*raw.height;
  const visible=parseIndices(raw.visible,total);
  const explored=parseIndices(raw.explored,total);
@@ -37,6 +40,12 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
  if(visible.some(cell=>!exploredSet.has(cell)))return null;
  return {mapId,width:raw.width,height:raw.height,
   revision:raw.revision,enabled:raw.enabled,partyShared:raw.partyShared,
+  ...(raw.protocolVersion===2?{protocolVersion:2}:{}),
+  ...(raw.deltaProtocolVersion===1&&UUID.test(String(raw.epoch||''))&&
+     validInt(raw.sequence)&&raw.sequence>=0?{
+   deltaProtocolVersion:1,epoch:raw.epoch,sequence:raw.sequence}:{}),
+  ...(typeof raw.collisionEnabled==='boolean'?{
+   collisionEnabled:raw.collisionEnabled}:{}),
   visible,explored};
 }
 /** A revision revokes the old visible cells immediately. Retain only cells

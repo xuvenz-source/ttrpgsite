@@ -33,7 +33,8 @@ test('token, monitor and tool reads are isolated by viewer and fresh sight chang
  assert.match(app,/refreshCoordinator\.invalidate\(key\)/);
  assert.match(app,/\[activeId,selectedMap,user,isDM\]\)/);
  assert.match(app,/refreshTokens\(true\);refreshMonitors\(true\);refreshChat\(\)/);
- assert.match(app,/void refreshFogAwareTokens\(\);void campaignTools\.refresh\(\['placed'\],true\)/);
+ assert.match(app,/void refreshFogAwareTokens\(\)/);
+ assert.match(app,/campaignTools\.refresh\(\['placed'\],true\)\.then/);
  assert.match(tools,/resource:'campaign-tools-'\+kind/);
  assert.match(tools,/variant:isDM\?'dm':'player'/);
  assert.match(tools,/if\(fresh\)coordinator\.invalidate\(key\)/);

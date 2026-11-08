@@ -4,6 +4,8 @@ import {createLeadingCoalescedRefresh} from './PerformanceScheduling.js';
 import {isFreshVisibilityTick,retainFogSnapshot} from './FogVisibilityContinuity.js';
 import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
 import {canUseViewerFogProtocol,isMissingViewerFogRpc} from './ViewerFogProtocol.js';
+import {applyAuthorizedFogEnvelope} from './AuthorizedFogDelta.js';
+import {movementDiagnostics} from './MovementDiagnostics.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
  * leaves the player map obscured until a valid server snapshot arrives. */
@@ -14,7 +16,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
  // A v2 RPC proves the server supports private per-viewer revisions.
  // Older deployments stay on the global subscription and original RPC.
  const [scope,setScope]=useState('global');
- const viewerRpcSupported=useRef(null);
+ const viewerRpcSupported=useRef(null),deltaRpcSupported=useRef(null);
  const ownCoordinator=useRef(null);
  if(!ownCoordinator.current)ownCoordinator.current=createCampaignRefreshCoordinator();
  const coordinator=refreshCoordinator||ownCoordinator.current;
@@ -25,12 +27,40 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    validated.current=null;pendingTick.current=null;setFrame(null);setPublished(null);return;
   }
   const seq=++request.current;
+  const finishTiming=movementDiagnostics.begin('authorized-fog-refresh');
   // Accepted observer previews and published scene changes can update sight
   // without a new visibility tick: they must bypass older in-flight frames.
   if(fresh===true)coordinator.invalidate(key);
   try{
    const response=await coordinator.request(key,async()=>{
     if(!isDM&&viewerRpcSupported.current!==false){
+     if(deltaRpcSupported.current!==false){
+      const base=validated.current?.deltaProtocolVersion===1?
+       validated.current:null;
+      const args={p_map:mapId,p_base_epoch:base?.epoch||null,
+       p_base_revision:base?.revision??null,
+       p_base_sequence:base?.sequence??null};
+      let {data,error:deltaError}=await db.rpc('get_authorized_map_fog_delta',args);
+      if(!deltaError){
+       let safe=applyAuthorizedFogEnvelope(base,data,mapId);
+       // A lost delta/epoch race is not a grant. Re-request a full current
+       // authorized frame, never merge against an untrusted local mask.
+       if(!safe){
+        const full=await db.rpc('get_authorized_map_fog_delta',{
+         p_map:mapId,p_base_epoch:null,p_base_revision:null,
+         p_base_sequence:null});
+        if(full.error)throw full.error;
+        data=full.data;
+        safe=applyAuthorizedFogEnvelope(null,data,mapId);
+       }
+       if(!safe)throw Error('Invalid authorized fog delta');
+       deltaRpcSupported.current=true;
+       return {data:safe,viewer:true};
+      }
+      // Only a genuinely absent endpoint permits the safe existing v2 RPC.
+      if(!isMissingViewerFogRpc(deltaError))throw deltaError;
+      deltaRpcSupported.current=false;
+     }
      const {data,error:viewerError}=await db.rpc('get_authorized_map_fog_v2',
       {p_map:mapId});
      if(!viewerError){
@@ -68,12 +98,18 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    validated.current=null;
    pendingTick.current=null;
    setFrame(null);setPublished(null);setError(cause?.message||String(cause));
-  }
+  }finally{finishTiming()}
  },[db,campaignId,mapId,userId,isDM,key,coordinator]);
+ // Authorization identity changes must discard all previous sight and
+ // explored data. Switching global -> viewer notification streams is NOT an
+ // identity change: subscription revalidation below revokes *visible* cells,
+ // but should not remount the canvas or black out already explored terrain.
  useEffect(()=>{
   validated.current=null;pendingTick.current=null;
   setFrame(null);setPublished(null);setError('');
   void refresh();
+ },[db,campaignId,mapId,userId,isDM,refresh,key,coordinator]);
+ useEffect(()=>{
   if(!db||!campaignId||!mapId||!userId)return;
   // Invalidate in-flight RPCs before the 60ms batched refresh: a stale
   // pre-movement response must never reinstate old visibility permissions.

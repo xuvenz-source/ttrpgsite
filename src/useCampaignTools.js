@@ -45,7 +45,7 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refres
    return [kind,++seq.current[kind]];
   }));
   try{
-   await Promise.all(resources.map(async kind=>{
+   const resolved=await Promise.all(resources.map(async kind=>{
     const key=campaignResourceKey({campaignId,mapId,userId,
      resource:'campaign-tools-'+kind,variant:isDM?'dm':'player'});
     // Realtime changes, permission changes and completed writes must not
@@ -68,13 +68,17 @@ export default function useCampaignTools({db,campaignId,mapId,userId,isDM,refres
      if(reply.error)throw reply.error;
      return reply.data||[];
     });
-    if(!response.current||seq.current[kind]!==generations[kind])return;
+    if(!response.current||seq.current[kind]!==generations[kind])return null;
     if(kind==='templates')setTemplates(response.value);
     else if(kind==='issued')setIssued(response.value);
     else setPlaced(overlayToolPlacements(response.value,pendingPositions.current,mapId));
+    return [kind,response.value];
    }));
-   if(resources.every(kind=>seq.current[kind]===generations[kind]))
+   if(resources.every(kind=>seq.current[kind]===generations[kind])){
     setError('');
+    return Object.fromEntries(resolved.filter(Boolean));
+   }
+   return null;
   }catch(e){
    if(resources.some(kind=>seq.current[kind]===generations[kind]))
     setError(e?.message||String(e));

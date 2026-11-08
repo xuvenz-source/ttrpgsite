@@ -52,7 +52,8 @@ test('fog-enabled drags send server-filtered previews without per-pointer token 
  const app=readFileSync(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8');
  assert.doesNotMatch(board,/shouldPersistFogDrag\(\s*fogFrame/);
  assert.doesNotMatch(board,/persistedDuringDrag=true/);
- assert.match(app,/db\.rpc\('preview_map_motion'/);
+ assert.match(app,/createAuthorizedMotionTransport/);
+ assert.match(app,/transport\.send\(packet\)/);
  assert.match(app,/observerMotionTopic\(mapId,user\)/);
  assert.doesNotMatch(app,/event:'token-preview'/);
 });
