@@ -57,7 +57,7 @@ create or replace function public.begin_map_motion_session(
  returns jsonb language plpgsql volatile security definer set search_path='' as $begin_motion$
 declare
  actor uuid:=auth.uid();m record;row_token record;row_tool record;
- dm boolean;fw double precision;fh double precision;bx integer;by integer;
+ dm boolean;fw double precision;fh double precision;bx integer;base_y_at_start integer;
  attrs jsonb:='{}'::jsonb;scene jsonb;environment_revision bigint:=0;
  rules_updated timestamptz;collision_on boolean:=false;shown boolean:=true;
  base_updated timestamptz;tool_rev bigint;new_id uuid;
@@ -79,7 +79,7 @@ begin
   if not found or (not dm and (row_token.owner_id is distinct from actor or
        row_token.visible is distinct from true))
   then raise exception 'Token unavailable';end if;
-  bx:=row_token.x;by:=row_token.y;fw:=row_token.span_x;fh:=row_token.span_y;
+  bx:=row_token.x;base_y_at_start:=row_token.y;fw:=row_token.span_x;fh:=row_token.span_y;
   shown:=row_token.visible;base_updated:=row_token.updated_at;
   attrs:=coalesce(row_token.npc_values,'{}'::jsonb);
   if row_token.character_id is not null then
@@ -97,7 +97,7 @@ begin
     (not dm and row_tool.owner_id is distinct from actor and
       row_tool.party_shared is distinct from true)
   then raise exception 'Tool unavailable';end if;
-  bx:=row_tool.x;by:=row_tool.y;tool_rev:=row_tool.revision;
+  bx:=row_tool.x;base_y_at_start:=row_tool.y;tool_rev:=row_tool.revision;
   fw:=case when row_tool.kind='mount' then
    coalesce((row_tool.config->>'span')::double precision,2) else 1 end;
   fh:=fw;attrs:=coalesce(row_tool.state->'attrs','{}'::jsonb);
@@ -124,7 +124,7 @@ begin
  map_width,map_height,grid_size,span_x,span_y,scene,attributes,environment_revision,
  rules_updated_at,collision_enforced,ignore_collision,token_visible,
  base_updated_at,base_tool_revision,character_id,character_updated_at,expires_at)
- values(actor,p_piece,p_kind,p_map,m.campaign_id,bx,by,bx,by,
+ values(actor,p_piece,p_kind,p_map,m.campaign_id,bx,base_y_at_start,bx,base_y_at_start,
  floor(m.width/m.grid_size),floor(m.height/m.grid_size),m.grid_size,
  fw,fh,scene,coalesce(attrs,'{}'::jsonb),environment_revision,
  rules_updated,collision_on,p_ignore_collision,shown,
