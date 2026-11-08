@@ -91,8 +91,10 @@ test('the client switches streams only after a confirmed server v2 frame and fai
  assert.match(hook,/db\.rpc\('get_authorized_map_fog'/);
  assert.match(hook,/validated\.current=safe/);
  assert.match(hook,/setScope\(previous=>/);
- assert.match(hook,/table:viewerScope\?'map_viewer_visibility_ticks':'map_visibility_ticks'/);
- assert.match(hook,/filter:viewerScope\?'user_id=eq\.'\+userId:'map_id=eq\.'\+mapId/);
+ assert.match(hook,/event:'INSERT',schema:'public',\s+table:'map_viewer_visibility_ticks',filter:'user_id=eq\.'\+userId/);
+ assert.match(hook,/event:'UPDATE',schema:'public',\s+table:'map_viewer_visibility_ticks',filter:'user_id=eq\.'\+userId/);
+ assert.match(hook,/table:'map_visibility_ticks',filter:'map_id=eq\.'\+mapId/);
+ assert.doesNotMatch(hook,/event:'(?:\*|DELETE)',schema:'public',\s+table:'map_viewer_visibility_ticks'/);
  assert.match(hook,/if\(invalidate\(event\)&&document\.visibilityState==='visible'\)changed\.request\(\)/);
  assert.match(hook,/setFrame\(previous=>previous\?fogFrameDuringRefresh\(previous,mapId\):previous\)/);
  assert.match(hook,/if\(state==='SUBSCRIBED'\)/);
