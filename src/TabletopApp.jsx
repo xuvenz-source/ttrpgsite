@@ -2410,77 +2410,61 @@ export default function TabletopApp(){
    throw Error('Unsupported hotbar command. Use /builder, /spell, /roll, /macro, /em or /say.');
   }catch(e){fail(e)}
  }
- // Player drags and keyboard moves use exactly the server-approved
- // waypoints. Never persist/paint a speculative destination through a wall.
- async function commitServerApprovedPlayerMove(token,wantedX,wantedY){
+ // Player and DM are equally responsive: a server-issued navigation
+ // graph checks the drag locally, while the final RPC independently checks
+ // every route leg, wall, footprint and authorization rule.
+ async function commitPredictedPlayerMove(token,wantedX,wantedY,route=[]){
   const mapId=selectedMap,campaignId=activeId,id=token?.id;
-  if(!id||!mapId||!campaignId||!user||
-     token.map_id!==mapId||token.owner_id!==user||
-     playerMapId!==mapId||movementPending.current.has(id))return;
-  const queue=movementPreviewQueue.current,
-   transport=movementSessionTransport.current;
-  if(!queue||!transport)return;
-  const pending={mapId,campaignId,x:Number(token.x),y:Number(token.y),
-   baseX:Number(token.x),baseY:Number(token.y),saving:true,confirmed:false};
+  if(!id||!mapId||!campaignId||!user||token.map_id!==mapId||
+     token.owner_id!==user||playerMapId!==mapId||
+     movementPending.current.has(id))return;
+  const baseX=Number(token.x),baseY=Number(token.y);
+  const path=route.length?route:[{dx:wantedX-baseX,dy:wantedY-baseY}];
+  const end=path.at(-1);
+  if(!end||baseX+end.dx!==wantedX||baseY+end.dy!==wantedY||
+    !navigationStore.routeApproved(mapId,'token',id,{x:baseX,y:baseY},path)){
+   navigationStore.warm(mapId,'token',id);
+   remoteMotion.current?.clearPreview(id);return;
+  }
+  const steps=movementPathDeltas(path);
+  if(!steps?.length){remoteMotion.current?.clearPreview(id);return}
+  const pending={mapId,campaignId,x:wantedX,y:wantedY,
+   baseX,baseY,saving:true,confirmed:false};
   movementPending.current.set(id,pending);
+  remoteMotion.current?.handoff(id);
+  setTokens(rows=>rows.map(row=>row.id===id?
+   {...row,x:wantedX,y:wantedY}:row));
   let committed=false;
+  const finishTiming=movementDiagnostics.begin('final-trajectory-commit');
   try{
-   const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
-   if(seq===null)throw Error('Invalid movement sequence');
-   liveMovementSeq.current=seq;
-   queue.enqueue(id,{kind:'token',params:{
-    p_map:mapId,p_kind:'token',p_piece:id,p_x:wantedX,p_y:wantedY,
-    p_seq:seq,p_ignore_collision:false
-   }});
-   await queue.drain(id);
-   if(tokenContextRef.current.mapId!==mapId||
-      tokenContextRef.current.campaignId!==campaignId||
-      tokenContextRef.current.userId!==user||
-      movementPending.current.get(id)!==pending)return;
-   const approved=transport.getApprovedPath(mapId,'token',id);
-   if(!approved.length)return;
-   const tail=approved.at(-1);
-   if(tail.x===pending.baseX&&tail.y===pending.baseY)return;
-   // An approved packet may arrive AFTER pointerup and supersede the
-   // board's initial handoff. Re-arm it now so canonical React coordinates
-   // can retire the transform without doubling the offset.
-   remoteMotion.current?.handoff(id);
-   const steps=movementPathDeltas(approved.map(point=>({
-    dx:point.x-pending.baseX,dy:point.y-pending.baseY
-   })));
-   if(!steps?.length)throw Error('No permitted movement trajectory');
-   // The trusted final transaction independently checks every swept wall.
    const {data,error}=await db.rpc('commit_map_trajectory',{
     p_map:mapId,p_token_ids:[id],p_tool_issue_ids:[],
     p_steps:steps,p_ignore_collision:false
    });
    if(error)throw error;
    const result=data?.tokens?.find(row=>row.id===id);
-   if(!result||Number(result.x)!==tail.x||Number(result.y)!==tail.y)
-    throw Error('Server trajectory and preview endpoints did not match');
-   pending.x=Number(result.x);pending.y=Number(result.y);pending.confirmed=true;
-   committed=true;
-   setTokens(rows=>rows.map(row=>row.id===id?
-    {...row,x:pending.x,y:pending.y}:row));
+   if(!result||Number(result.x)!==wantedX||Number(result.y)!==wantedY)
+    throw Error('Server trajectory differs from local predicted endpoint');
+   pending.confirmed=true;committed=true;
    ++tokenRefreshSeq.current;
    await refreshTokens(true);
   }catch(error){
-   fail(error);
-   ++tokenRefreshSeq.current;
+   fail(error);++tokenRefreshSeq.current;
    void refreshTokens(true);
   }finally{
+   finishTiming();
    if(!committed)remoteMotion.current?.clearPreview(id);
    if(movementPending.current.get(id)===pending)
     movementPending.current.delete(id);
    clearMapMovementPreview(mapId,[id],[]);
   }
  }
- function queueTokenMove(token,x,y){
+ function queueTokenMove(token,x,y,route=[]){
   // DM player-preview movement is simulated; never persist it even if another
   // caller attempts to use the normal movement queue while previewing.
   if(isDM&&mapSettingEditor.previewing)return;
   if(!token||!activeId||!selectedMap||token.map_id!==selectedMap)return;
-  if(!isDM){void commitServerApprovedPlayerMove(token,x,y);return}
+  if(!isDM){void commitPredictedPlayerMove(token,x,y,route);return}
   const id=token.id;
   let pending=movementPending.current.get(id);
   if(!pending||pending.mapId!==selectedMap||pending.campaignId!==activeId){
@@ -2553,41 +2537,20 @@ export default function TabletopApp(){
   if(!members.length&&!tools.length)return;
   if(isDM&&mapSettingEditor.previewing)return;
   if(!isDM){
-   // Retire pending group previews before the release transaction paints.
-   if(activeGroupPreview.current?.mapId===mapId)
-    activeGroupPreview.current={...activeGroupPreview.current,
-     generation:++groupPreviewGeneration.current};
-   // No group sprite or tool may be committed past a wall just because the
-   // pointer asked for that position. Every member independently receives a
-   // server grant and only a common approved route can move the whole group.
-   const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
-   if(!queue||!transport)return;
-   const pieces=[...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
-    ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))];
-   const keys=[];
-   for(const piece of pieces){
-    const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
-    if(seq===null)return;
-    liveMovementSeq.current=seq;
-    const key=piece.kind==='token'?piece.id:'tool:'+piece.id;
-    keys.push(key);
-    queue.enqueue(key,{kind:piece.kind,params:{
-     p_map:mapId,p_kind:piece.kind,p_piece:piece.id,
-     p_x:piece.x+dx,p_y:piece.y+dy,p_seq:seq,p_ignore_collision:false
-    }});
-   }
-   await Promise.all(keys.map(key=>queue.drain(key)));
-   if(tokenContextRef.current.mapId!==mapId||
-      tokenContextRef.current.campaignId!==campaignId)return;
-   const grants=pieces.map(piece=>transport.getApprovedPath(
-    mapId,piece.kind,piece.id));
-   const common=sharedApprovedPath(pieces,grants);
-   if(!common.length){
-    clearMapMovementPreview(mapId,members.map(t=>t.id),
-     tools.map(t=>t.issue_id));
+   const pieces=[
+    ...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
+    ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))
+   ];
+   const offsets=path?.length?path:[{dx,dy}];
+   if(pieces.some(piece=>
+     !navigationStore.routeApproved(mapId,piece.kind,piece.id,
+      {x:piece.x,y:piece.y},offsets))){
+    for(const piece of pieces)navigationStore.warm(mapId,piece.kind,piece.id);
+    for(const member of members)remoteMotion.current?.clearPreview(member.id);
+    for(const tool of tools)remoteMotion.current?.clearPreview('tool:'+tool.issue_id);
     return;
    }
-   dx=common.at(-1).dx;dy=common.at(-1).dy;path=common;
+   path=offsets;
   }
   const steps=movementPathDeltas(path?.length?path:[{dx,dy}]);
   if(!steps?.length||steps.reduce((total,step)=>total+step.dx,0)!==dx||
@@ -2658,8 +2621,8 @@ export default function TabletopApp(){
   const y=Math.max(0,Math.min(boundY,Math.round(last.y)+dy));
   queueTokenMove(token,x,y);
  }
- function moveToken(token,x,y){
-  queueTokenMove(token,x,y);
+ function moveToken(token,x,y,path=[]){
+  queueTokenMove(token,x,y,path);
  }
  async function resizeToken(t,spanX,spanY){
   if(!isDM)return;
@@ -2815,7 +2778,7 @@ export default function TabletopApp(){
      const selectedIds=options.additive?[...new Set([...current,...incoming])]:incoming;
      return {...old,selectedPinId:null,selectedId:selectedIds[0]||null,selectedIds};
     })}
-   user={user} isDM={isDM} move={moveToken} moveGroup={moveGroup} remove={removeToken}
+   user={user} isDM={isDM} move={moveToken} moveGroup={moveGroup} navigation={navigationStore} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolPickUp={pickUpIssuedToolOnMap}
