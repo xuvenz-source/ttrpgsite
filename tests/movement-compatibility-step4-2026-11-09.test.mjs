@@ -152,10 +152,11 @@ test('all player entry points share final authoritative trajectory commit',()=>{
  const app=source('src/TabletopApp.jsx');
  const map=source('src/BattlemapBoard.jsx');
  assert.match(app,/async function commitPredictedPlayerMove/);
- assert.match(app,/const path=route\.length\?route:planAuthorizedGridRoute/);
+ assert.match(app,/const path=concealed\?/);
+ assert.match(app,/const singleStep=concealed&&!verifiedGesture/);
  assert.match(app,/async function placeIssuedToolOnMap/);
- assert.match(app,/const route=planAuthorizedGridRoute\(/);
- assert.match(app,/navigationStore\.routeApproved\(\s*mapId,'tool',id,origin,route\)/);
+ assert.match(app,/const route=concealed\?\[/);
+ assert.match(app,/!concealed&&!navigationStore\.routeApproved/);
  assert.doesNotMatch(app,/transport\.getApprovedPath\(mapId,'tool',id\)/);
  assert.match(app,/toolMovementPending\.current\.add\(tool\.issue_id\)/);
  assert.match(app,/toolMovementPending\.current\.delete\(tool\.issue_id\)/);

@@ -48,7 +48,7 @@ test('DM preview drag and configured movement keys use the same wall check',()=>
 
 test('DM preview cannot persist movement or drop new units onto a live map',()=>{
  const app=source('src/TabletopApp.jsx'),board=source('src/BattlemapBoard.jsx');
- assert.match(app,/function queueTokenMove\(token,x,y,route=\[\]\)\{[\s\S]*?if\(isDM&&mapSettingEditor.previewing\)return/);
+ assert.match(app,/function queueTokenMove\(token,x,y,route=\[\],secureValidated=false\)\{[\s\S]*?if\(isDM&&mapSettingEditor.previewing\)return/);
  assert.match(app,/function moveSelectedByKey\(dx,dy\)\{\s*if\(isDM&&mapSettingEditor.previewing\)return/);
  assert.match(board,/function dropOnMap\(e\)\{\s*if\(previewActive\)return/);
  assert.match(board,/function allowMapDrop\(e\)\{\s*if\(previewActive\)return/);
