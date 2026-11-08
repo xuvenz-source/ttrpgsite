@@ -132,7 +132,7 @@ BEGIN
  END LOOP;
  RETURN pg_catalog.jsonb_build_object(
   'version',1,'mapId',p_map,'pieceId',p_piece,'kind',p_kind,
-  'origin',pg_catalog.jsonb_build_array(bx,by),
+  'origin',pg_catalog.jsonb_build_array(bx,by),'footprint',pg_catalog.jsonb_build_array(span_w,span_h),
   'gridWidth',map_w,'gridHeight',map_h,'visibilityRevision',
   (fog_frame->>'revision')::bigint,
   'environmentRevision',env_revision,'collisionEnabled',collision_on,
