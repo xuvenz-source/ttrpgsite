@@ -70,3 +70,15 @@ test('observer hide markers survive timer expiry until later trusted grant',()=>
  assert.doesNotMatch(app,/const unhide=prior/);
  assert.match(app,/Timeout may reconcile positions but must/);
 });
+
+test('switching fog notification streams cannot clear a confirmed map to black',()=>{
+ const source=read('src/useAuthorizedMapFog.js');
+ const start=source.indexOf('Authorization identity changes must discard');
+ const end=source.indexOf('// Invalidate in-flight RPCs',start);
+ assert.ok(start>=0&&end>start,'identity-only initialization must be isolated');
+ const identity=source.slice(start,end);
+ assert.match(identity,/setFrame\(null\);setPublished\(null\);setError\(''\)/);
+ assert.match(identity,/\[db,campaignId,mapId,userId,isDM,refresh,key,coordinator\]/);
+ assert.doesNotMatch(identity,/scope\]/);
+ assert.match(source,/if\(state==='SUBSCRIBED'\)\{[\s\S]*?fogFrameDuringRefresh\(previous,mapId\)/);
+});
