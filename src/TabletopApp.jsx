@@ -2681,7 +2681,9 @@ export default function TabletopApp(){
   if(isDM&&mapSettingEditor.previewing)return;
   const token=selectedToken;
   if(!token||!activeMap||!camp||!user)return;
-  if(!isDM&&(token.owner_id!==user||camp.active_map_id!==activeMap.id))return;
+  // Assigned player maps may differ from the DM's campaign-wide active map.
+  // Apply the same per-player map authorization used by pointer movement.
+  if(!isDM&&(token.owner_id!==user||playerMapId!==activeMap.id))return;
   const last=movementPending.current.get(token.id)||{x:Number(token.x),y:Number(token.y)};
   const grid=Number(activeMap.grid_size)||70;
   const boundX=Math.max(0,Math.min(1000,Math.floor(Number(activeMap.width)/grid-Number(token.span_x??1))));
