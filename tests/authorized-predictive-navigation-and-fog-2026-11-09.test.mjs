@@ -114,7 +114,7 @@ test('stage has no raw wall leak, no per-step local RPC gate, and prepared SQL o
  assert.doesNotMatch(navSql,/RETURN[^;]*scene/i);
  assert.match(visSql,/authorized_frame jsonb/);
  assert.match(visSql,/authorized_viewer_fog_frame/i);
- assert.match(visSql,/revoke all on function forge_visibility\.authorized_viewer_fog_frame/);
+ assert.match(visSql,/revoke all on function forge_visibility\.authorized_viewer_fog_frame/i);
  assert.match(fog,/adoptVerifiedViewerTick/);
 });
 
