@@ -59,7 +59,7 @@ import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
-import {createAuthorizedNavigation} from './AuthorizedNavigation.js';
+import {createAuthorizedNavigation,navigationAuthorizationKey} from './AuthorizedNavigation.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
@@ -282,9 +282,12 @@ export default function TabletopApp(){
  // Preauthorize bounded local movement before first drag; no private walls.
  useEffect(()=>navigationStore.clear(),[navigationStore,selectedMap,user]);
  useEffect(()=>{
-  if(!selectedMap||isDM||!user||playerMapId!==selectedMap||
-    fog.frame?.mapId!==selectedMap)return;
-  navigationStore.setRevision(selectedMap,fog.frame.revision);
+  if(!selectedMap||isDM||!user||playerMapId!==selectedMap)return;
+  if(fog.frame?.mapId!==selectedMap){
+   navigationStore.revoke(selectedMap);return;
+  }
+  navigationStore.setRevision(selectedMap,fog.frame.revision,
+   navigationAuthorizationKey(fog.frame));
   for(const token of tokens)
    if(token.map_id===selectedMap&&token.owner_id===user&&token.visible!==false)
     navigationStore.warm(selectedMap,'token',token.id);
@@ -295,7 +298,7 @@ export default function TabletopApp(){
     navigationStore.warm(selectedMap,'tool',tool.issue_id);
   }
  },[navigationStore,selectedMap,user,isDM,playerMapId,
-  fog.frame?.revision,tokens,campaignTools.placed,campaignTools.issued]);
+  fog.frame,tokens,campaignTools.placed,campaignTools.issued]);
  const latestFogSnapshot=useRef(null);
  latestFogSnapshot.current=fog.frame;
  const queuePreviewFogRefresh=()=>{
