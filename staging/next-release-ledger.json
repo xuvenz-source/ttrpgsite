@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
-  "releaseBranch": null,
+  "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
+  "releaseBranch": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -162,6 +162,12 @@
       "status": "released",
       "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
       "note": "Bundled in designer-approved PR #52, together with both SQL candidates applied atomically as migration 20261108091818. No paid infrastructure. Manual multi-browser release acceptance pending."
+    },
+    {
+      "name": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
+      "status": "in-progress",
+      "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
+      "note": "Unified four-phase movement, per-viewer fog/light and Supabase memory redesign. Verified architecture plan staged. Phase 1 viewer-light protocol + legacy-compatible SQL candidate and observer hide timeout hardening committed. SQL UNAPPLIED; Vercel UNDEPLOYED; multi-browser security/latency tests and phase 2-4 implementations pending. No paid infrastructure."
     }
   ],
   "features": [
@@ -507,6 +513,56 @@
         "per_viewer_visibility_v2"
       ],
       "verification": "SQL candidate unapplied. JS regression tests and CI/CodeQL required. Before release compile SQL and verify own-user RLS, Realtime publication and role grants, watcher/movement/lighting invalidation, safe rollback, and matched 2/4/6-10 browser stress. The per-viewer envelope is conservative and does not promise no flash on local source movement. Included in designer-approved PR #52. Automated CI/CodeQL passed; live manual QA and performance measurements remain open."
+    },
+    {
+      "id": "movement-fog-phase1-rendering-and-visibility-parity",
+      "description": "Per-viewer lighting RPC compatibility, stable fog rendering, trusted-hide marker protection and later revision-confirmed reveal/reconnect state machine. v2 SQL and initial client fixes staged; remaining stationary-NPC reconciliation and board lifecycle work pending.",
+      "sources": [
+        "stage/movement-fog-realtime-memory-redesign-2026-11-08"
+      ],
+      "status": "in-progress",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "viewer_light_masks_v2"
+      ],
+      "verification": "Run node unit tests, build, CodeQL and security SQL review. Do not release until newer-authorized stationary NPC reveal works and full fog/lighting DM/player regression passes."
+    },
+    {
+      "id": "movement-fog-phase2-authorized-sessions",
+      "description": "Short-lived server-owned movement sessions, collision/ownership validation, private observer distribution, sequence and group movement support. Design documented; implementation not begun.",
+      "sources": [
+        "stage/movement-fog-realtime-memory-redesign-2026-11-08"
+      ],
+      "status": "in-progress",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "motion_session_rpc_tbd"
+      ],
+      "verification": "Blocked on Phase 1 and backend schema review. Verify wall/door/one-way/DM override, multi-token and packet reorder before release."
+    },
+    {
+      "id": "movement-fog-phase3-viewer-visibility-deltas",
+      "description": "Authoritative per-viewer visibility epochs/deltas, light/tool/token reveals and revocations with snapshot fallback. Design documented; implementation not begun.",
+      "sources": [
+        "stage/movement-fog-realtime-memory-redesign-2026-11-08"
+      ],
+      "status": "in-progress",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "viewer_visibility_deltas_tbd"
+      ],
+      "verification": "Blocked on authoritative motion session transport. Validate dropped/out-of-order revisions and hidden entity RLS before release."
+    },
+    {
+      "id": "movement-fog-phase4-supabase-query-memory",
+      "description": "Query/connection/RAM/swap and Realtime profiling, dependency-aware RPC pruning and free-plan software overhead optimization. Initial live read-only connection snapshot and preview cost confirmed; profiling and implementation pending.",
+      "sources": [
+        "stage/movement-fog-realtime-memory-redesign-2026-11-08"
+      ],
+      "status": "in-progress",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Track committed vs actual RAM/swap before tuning. Stress test 2/4/6–10 users with 10/50/100 tokens; no unexplained sustained memory growth."
     }
   ],
   "databaseDependencies": [
@@ -673,6 +729,16 @@
       "note": "Approved and applied atomically before frontend PR #52. Live SQL grants, RLS, publication and server-function installation inspected; further DM/player stress acceptance remains.",
       "appliedVersion": "20261108091818",
       "appliedVia": "supabase/migrations/20261108091818_observer_and_per_viewer_visibility_release_20261108.sql"
+    },
+    {
+      "name": "viewer_light_masks_v2",
+      "status": "staged-not-applied",
+      "candidateFile": "staging/sql-candidates/viewer_light_masks_v2.sql",
+      "rollbackFile": "staging/sql-candidates/rollback_viewer_light_masks_v2.sql",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "20261108091818",
+      "note": "Additive versioned light-mask wrapper. Legacy RPC untouched; needs live SQL apply only after designer approves coordinated rollout. Authenticated grant required; anon/PUBLIC denied."
     }
   ],
   "edgeFunctionDependencies": [
@@ -699,10 +765,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": null,
-    "releaseBranch": null,
-    "outstandingBranches": [],
-    "stagePolicy": "No outstanding staged branches after approved PR #52 release. New work must be staged and audited for the following consolidated update.",
+    "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
+    "releaseBranch": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
+    "outstandingBranches": [
+      "stage/movement-fog-realtime-memory-redesign-2026-11-08"
+    ],
+    "stagePolicy": "In-progress redesign only; exclude from production until all authorized visibility, client/server compatibility, CI/CodeQL and manual multiplayer gates have passed; combine all release-ready work in one designer-approved main merge.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
@@ -713,7 +781,7 @@
     ],
     "includedStagedPullRequests": [],
     "status": "release-approved-for-production",
-    "productionCommit": null,
+    "productionCommit": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
     "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
     "sourceBranch": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
     "priorRelease": {
