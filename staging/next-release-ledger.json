@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+  "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
   "releaseBranch": null,
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
@@ -156,6 +156,12 @@
       "status": "released",
       "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
       "note": "Stacked onto player-remote-reconciliation staging PR #50. Authorization-scoped single-flight request coordinator, targeted tool refreshes, subscription cleanup, read-only Supabase performance audit. No production SQL/migrations, merges, preview or Vercel deployment. CI/browser stress gates pending. Included in designer-authorized combined PR #51 production release. Manual multiplayer performance acceptance remains outstanding."
+    },
+    {
+      "name": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
+      "status": "released",
+      "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
+      "note": "Bundled in designer-approved PR #52, together with both SQL candidates applied atomically as migration 20261108091818. No paid infrastructure. Manual multi-browser release acceptance pending."
     }
   ],
   "features": [
@@ -431,6 +437,76 @@
       "releaseReady": true,
       "databaseDependencies": [],
       "verification": "Source regression tests + full CI and live multiuser tool, mounts, item leases, RLS revocation, and reconnect acceptance pending. Included in PR #51 release with CI/security gates; live DM/player behavioral and p95 performance verification remains required."
+    },
+    {
+      "id": "pending-fog-tick-coalescing",
+      "description": "Avoid duplicate/older pending visibility ticks repeatedly revoking player sight and restarting the same authorization request; preserve fail-closed behavior on genuinely newer, malformed or map/mode-changing events.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "Pure regression tests and integration guards included; GitHub CI pending. Real player movement with fog on/off, hidden NPCs, map switch and reconnect must be verified in an approved release. This reduces one flash cause, not all legitimate sight revocations. Included in designer-approved PR #52. Automated CI/CodeQL passed; live manual QA and performance measurements remain open."
+    },
+    {
+      "id": "fog-visibility-dependency-derived-rpc-budget",
+      "description": "Only refetch expensive token monitor and encumbrance badge values when new server-RLS-authorized token membership or disclosure metadata changes, rather than on every fog revision or safe movement preview.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "Added regression cases for same token set with coordinate moves, roster additions/removals, metadata changes and unknown values. RLS snapshot always fetched first, stale-context responses discarded. CI verification + authorized DM/player stress and permission revocation regression required; no SQL changes or claimed measured memory savings. Included in designer-approved PR #52. Automated CI/CodeQL passed; live manual QA and performance measurements remain open."
+    },
+    {
+      "id": "hidden-browser-fog-rpc-backpressure",
+      "description": "When a player's tab is hidden, revoke changed fog authorization immediately but defer fresh expensive per-viewer fog RPC until the tab is visible; preserve live updates to active players.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "Existing player fog tests and integrated server-auth guard updated. No stale sight persists on hidden-tab tick or reconnect. Need live focus/visibility, RLS and 2/4/6–10 browser stress acceptance. Included in designer-approved PR #52. Automated CI/CodeQL passed; live manual QA and performance measurements remain open."
+    },
+    {
+      "id": "server-observer-single-snapshot-los",
+      "description": "Private server candidate materializes each recipient's RLS-derived sight source set once for all path waypoint visibility probes; retains existing observer auth, collision, private hide/move and preview rate bounds.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [
+        "observer_path_visibility_single_snapshot"
+      ],
+      "verification": "SQL candidate and exact rollback staged, no database apply. Node structural security tests, full CI and CodeQL required. Function compilation, private EXECUTE role grants, sampled read-only old/new observer comparison, multi-browser RLS/fog/collision acceptance required before any production rollout. Included in designer-approved PR #52. Automated CI/CodeQL passed; live manual QA and performance measurements remain open."
+    },
+    {
+      "id": "fog-placed-tools-only-refresh",
+      "description": "On new server-authorized fog frames, requery only RLS-dependent placed tool records; issued tool sheets and templates refresh on their own Realtime changes, writes and reconnects.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "Live pg_policies confirms issue/template visibility isn't LOS-dependent while placed tool visibility is; static integration test adjusted. Verify light/torch carrying, fog-on/off, tool issuance, map switch and reconnect with active players. Included in designer-approved PR #52. Automated CI/CodeQL passed; live manual QA and performance measurements remain open."
+    },
+    {
+      "id": "server-authorized-per-viewer-fog-v2",
+      "description": "Staged server-owned per-player fog revisions and conservative token-motion impact selection. Only players whose authorized sight or observed token/tool membership could change receive per-viewer revision invalidation; unknown/lighting/non-motion changes invalidate all. Client negotiates versioned RPC, reuses original authorized fog math, and falls back to global legacy protocol.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [
+        "per_viewer_visibility_v2"
+      ],
+      "verification": "SQL candidate unapplied. JS regression tests and CI/CodeQL required. Before release compile SQL and verify own-user RLS, Realtime publication and role grants, watcher/movement/lighting invalidation, safe rollback, and matched 2/4/6-10 browser stress. The per-viewer envelope is conservative and does not promise no flash on local source movement. Included in designer-approved PR #52. Automated CI/CodeQL passed; live manual QA and performance measurements remain open."
     }
   ],
   "databaseDependencies": [
@@ -573,6 +649,30 @@
       "notes": "Applied as authorized production migration. Verified helper installed, EXECUTE restricted to postgres, authenticated RPC allowed, anon denied, public RPC SECURITY INVOKER, exactly one move_map_group call. Legal bent and blocked direct ray, role-scoped own-player/DM positive, unauthorized foreign-player and DM-only override negatives tested without persisting changes. Test-campaign multiplayer latency/collision QA still required.",
       "appliedVersion": "20261108055943",
       "appliedVia": "supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql"
+    },
+    {
+      "name": "observer_path_visibility_single_snapshot",
+      "status": "applied-production",
+      "migrationFile": "supabase/migrations/20261108091818_observer_and_per_viewer_visibility_release_20261108.sql",
+      "candidateFile": "staging/sql-candidates/observer_path_visibility_single_snapshot.sql",
+      "rollbackFile": "staging/sql-candidates/rollback_observer_path_visibility_single_snapshot.sql",
+      "mustApplyBeforeFrontend": false,
+      "releaseApprovalRequired": true,
+      "note": "Approved and applied atomically before frontend PR #52. Live SQL grants, RLS, publication and server-function installation inspected; further DM/player stress acceptance remains.",
+      "appliedVersion": "20261108091818",
+      "appliedVia": "supabase/migrations/20261108091818_observer_and_per_viewer_visibility_release_20261108.sql"
+    },
+    {
+      "name": "per_viewer_visibility_v2",
+      "status": "applied-production",
+      "migrationFile": "supabase/migrations/20261108091818_observer_and_per_viewer_visibility_release_20261108.sql",
+      "candidateFile": "staging/sql-candidates/per_viewer_visibility_v2.sql",
+      "rollbackFile": "staging/sql-candidates/rollback_per_viewer_visibility_v2.sql",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "note": "Approved and applied atomically before frontend PR #52. Live SQL grants, RLS, publication and server-function installation inspected; further DM/player stress acceptance remains.",
+      "appliedVersion": "20261108091818",
+      "appliedVia": "supabase/migrations/20261108091818_observer_and_per_viewer_visibility_release_20261108.sql"
     }
   ],
   "edgeFunctionDependencies": [
@@ -595,38 +695,39 @@
     "World Runtime RPC grants checked: anon denied, authenticated authorized; forge_visibility remains private, preview rate table RLS enabled.",
     "Authenticated SQL smoke-tested valid owned token, unauthorized foreign token, denied DM bypass, and reversible DM trajectory; all tests in rollback transactions.",
     "Cross-inventory transfers: SQL candidate (not applied) separately authorizes owned character and shared/owned issued tool, requires active source-item lease and checks contiguous destination space. Staged frontend must not be released before its matching RPC.",
-    "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged."
+    "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged.",
+    "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+    "productionBaseSha": null,
     "releaseBranch": null,
     "outstandingBranches": [],
-    "stagePolicy": "PR #51 includes all approved outstanding staging from PR #50 and PR #51. No other release-ready items remain in the ledger. No paid infrastructure. Continue multi-player live acceptance on existing test campaigns; never assume zero fog flash or a measured latency benefit without field results.",
+    "stagePolicy": "No outstanding staged branches after approved PR #52 release. New work must be staged and audited for the following consolidated update.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
-    "name": "Player Movement Continuity and Multiplayer Request Coordination",
+    "name": "Server-Authorized Per-Player Visibility and Multiplayer Memory Optimization",
     "date": "2026-11-08",
     "approvedPullRequests": [
-      51
+      52
     ],
-    "includedStagedPullRequests": [
-      50
-    ],
+    "includedStagedPullRequests": [],
     "status": "release-approved-for-production",
     "productionCommit": null,
-    "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-    "sourceBranch": "stage/supabase-multiplayer-performance-2026-11-08",
+    "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
+    "sourceBranch": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
     "priorRelease": {
       "approvedPullRequests": [
-        49
+        51
       ],
-      "productionCommit": "26765915deac294e154d1aeac05b23496d76de32"
+      "productionCommit": "309e96c7b3ca6550e491392d9e32ba5189497175"
     },
-    "databaseDependencies": [],
+    "databaseDependencies": [
+      "20261108091818"
+    ],
     "edgeFunctionDependencies": [],
     "paidInfrastructure": false,
-    "notes": "One designer-approved main merge and one Vercel deployment. The merge commit is not knowable before GitHub merges; verify against Vercel after release. No new production SQL or Edge Function changes. Manual 2/4/6–10 player and 10/50/100 token stress tests are pending."
+    "notes": "One designer-approved main merge/one Vercel production deployment. Combined SQL release 20261108091818 applied before frontend. Roles/RLS, publication, installed RPC and observer path verified; real DM/player gameplay, memory and latency stress still to test."
   },
   "releaseHistory": [
     {
@@ -725,7 +826,22 @@
       "databaseDependencies": [],
       "paidInfrastructure": false,
       "notes": "Single main-merge release; source includes PR #50 and #51, zero new SQL migrations or Edge changes. Exact merge/deployment SHA verified separately. Browser and multiplayer acceptance not yet measured."
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Server-Authorized Per-Player Visibility and Multiplayer Memory Optimization",
+      "pullRequests": [
+        52
+      ],
+      "sourceBranch": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
+      "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
+      "productionCommit": null,
+      "databaseDependencies": [
+        "20261108091818"
+      ],
+      "paidInfrastructure": false,
+      "notes": "Single combined release: fog tick dedupe, monitor/badge and tool request suppression, hidden-tab backpressure, private observer optimization, per-viewer visibility v2. Migration applied and inspected; production commit to be verified after Vercel deploy. Manual QA outstanding."
     }
   ],
-  "databaseReleaseVersion": "20261108031754"
+  "databaseReleaseVersion": "20261108091818"
 }

@@ -39,6 +39,7 @@ import {eventAffectsMap,createCoalescedRefresh,createTrailingRefresh,createAdapt
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
 import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
+import {authorizedTokenDerivedInputsChanged} from './AuthorizedTokenDerivedRefresh.js';
 import {createDebouncedSerialWriter} from './QueuedWrites.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
@@ -262,7 +263,7 @@ export default function TabletopApp(){
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator
  });
- const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,
+ const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator});
  const queuePreviewFogRefresh=()=>{
   const now=Date.now();
@@ -1356,15 +1357,31 @@ export default function TabletopApp(){
   ++monitorRequest.current;
  },[selectedMap,activeId,user,isDM]);
  useEffect(()=>{refreshTokens(true);refreshMonitors(true);refreshChat()},[selectedMap,activeId,user,isDM]);
+ // Fog revisions always require a new RLS-authorized token snapshot, but
+ // coordinate-only moves do NOT invalidate expensive inventory/monitor values.
+ // Refresh those derived resources only if the server's authorized roster (or
+ // monitor visibility metadata) changed. A separate data edit still uses the
+ // explicit monitors-changed channel / non-coordinate token event path.
+ async function refreshFogAwareTokens(){
+  const context={...tokenContextRef.current};
+  const previous=latestMovementAccess.current.tokens||[];
+  const authorized=await refreshTokens(true);
+  if(!Array.isArray(authorized)||
+     tokenContextRef.current.mapId!==context.mapId||
+     tokenContextRef.current.campaignId!==context.campaignId||
+     tokenContextRef.current.userId!==context.userId)return;
+  if(authorizedTokenDerivedInputsChanged(previous,authorized,context.mapId))
+   await refreshMonitors(true);
+ }
  // Newly observed rows were absent from the player's old RLS stream. A
- // sanitized revision tick therefore re-queries the authoritative snapshots.
+ // sanitized revision tick therefore re-queries authoritative token access.
  useEffect(()=>{
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
-  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh(undefined,true);
+  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
  },[fog.frame?.revision,selectedMap]);
  // Movement previews can revise authorized LOS without changing the saved
- // visibility tick. Refresh newly observable RLS rows only when that mask
- // actually changed, not for every pointer sample or every React render.
+ // visibility tick. Reconcile the RLS roster but don't refresh character
+ // resources unless tokens have entered or left the authorized viewer set.
  useEffect(()=>{
   const current=fog.frame,previous=lastObservedFog.current;
   lastObservedFog.current=current;
@@ -1374,7 +1391,7 @@ export default function TabletopApp(){
      current.displayVisibleDuringRefresh)return;
   const a=current.visible||[],b=previous.visible||[];
   if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
-  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh(undefined,true);
+  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;

@@ -24,7 +24,7 @@ test('combat refreshes on visibility ticks only when an encounter is active',()=
 });
 test('fog tick revokes stale sight immediately and starts bounded RLS revalidation without delay',()=>{
  const s=read('src/useAuthorizedMapFog.js');
- assert.match(s,/if\(invalidate\(event\)\)changed\.request\(\)/);
+ assert.match(s,/if\(invalidate\(event\)&&document\.visibilityState==='visible'\)changed\.request\(\)/);
  assert.match(s,/fogFrameDuringRefresh\(previous,mapId\)/);
  assert.match(s,/\+\+request\.current/);
  assert.match(s,/createLeadingCoalescedRefresh\(\(\)=>void refresh\(\),60\)/);

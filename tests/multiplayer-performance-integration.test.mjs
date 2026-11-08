@@ -20,7 +20,7 @@ test('fog invalidation rejects in-flight authorization before a new fog RPC',()=
  assert.match(fog,/get_authorized_map_fog/);
  assert.match(fog,/if\(fresh===true\)coordinator\.invalidate\(key\)/);
  assert.match(source('TabletopApp.jsx'),/void fog\.refresh\(true\)/);
- assert.match(fog,/if\(invalidate\(event\)\)changed\.request\(\)/);
+ assert.match(fog,/if\(invalidate\(event\)&&document\.visibilityState==='visible'\)changed\.request\(\)/);
  assert.match(fog,/if\(state==='SUBSCRIBED'\)/);
  assert.match(fog,/coordinator\.invalidate\(key\);\s*setFrame\(previous=>previous\?fogFrameDuringRefresh/);
 });
@@ -33,7 +33,7 @@ test('token, monitor and tool reads are isolated by viewer and fresh sight chang
  assert.match(app,/refreshCoordinator\.invalidate\(key\)/);
  assert.match(app,/\[activeId,selectedMap,user,isDM\]\)/);
  assert.match(app,/refreshTokens\(true\);refreshMonitors\(true\);refreshChat\(\)/);
- assert.match(app,/void refreshTokens\(true\);void refreshMonitors\(true\);void campaignTools\.refresh\(undefined,true\)/);
+ assert.match(app,/void refreshFogAwareTokens\(\);void campaignTools\.refresh\(\['placed'\],true\)/);
  assert.match(tools,/resource:'campaign-tools-'\+kind/);
  assert.match(tools,/variant:isDM\?'dm':'player'/);
  assert.match(tools,/if\(fresh\)coordinator\.invalidate\(key\)/);

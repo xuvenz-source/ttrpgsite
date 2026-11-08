@@ -62,6 +62,7 @@ test('sanitized revision tick replaces leaked private movement coordinates under
  assert.match(app,/observerMotionTopic\(mapId,user\)/);
  assert.doesNotMatch(app,/event:'token-preview'/);
  assert.match(app,/fog\.frame\?\.revision/);
+ assert.match(text('src/useAuthorizedMapFog.js'),/table:'map_viewer_visibility_ticks'/);
  assert.match(text('src/useAuthorizedMapFog.js'),/table:'map_visibility_ticks'/);
 });
 test('DM publishes saved rules explicitly; player fog fails closed',()=>{

@@ -13,8 +13,9 @@ test('audit migration manifest is documentary and keeps live records separate fr
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  assert.equal(ledger.releaseBranch,null);
- assert.equal(ledger.productionBaseSha,'26765915deac294e154d1aeac05b23496d76de32');
+ assert.equal(ledger.productionBaseSha,'309e96c7b3ca6550e491392d9e32ba5189497175');
  assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
   x.status==='released'));
@@ -35,13 +36,20 @@ test('release ledger records previous releases and pending authorized migrations
   dep.status==='applied-production' && dep.appliedVersion==='20261108055943' &&
   dep.mustApplyBeforeFrontend===true &&
   dep.releaseApprovalRequired===true));
- assert.deepEqual(ledger.lastRelease.approvedPullRequests,[51]);
- assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[50]);
- assert.equal(ledger.lastRelease.productionBaseSha,'26765915deac294e154d1aeac05b23496d76de32');
+ assert.deepEqual(ledger.lastRelease.approvedPullRequests,[52]);
+ assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[]);
+ assert.equal(ledger.lastRelease.productionBaseSha,'309e96c7b3ca6550e491392d9e32ba5189497175');
  assert.equal(ledger.lastRelease.productionCommit,null,'the SHA is captured from the real merge/deployment rather than invented');
  assert.ok(ledger.releaseHistory.some(x=>x.pullRequests?.includes(51)&&x.includedStagedPullRequests?.includes(50)));
- assert.ok(ledger.lastRelease.databaseDependencies.length===0);
+ assert.deepEqual(ledger.lastRelease.databaseDependencies,['20261108091818']);
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
+ assert.ok(ledger.releaseHistory.some(x=>x.pullRequests?.includes(52)&&x.databaseDependencies?.includes('20261108091818')));
+ for(const name of ['observer_path_visibility_single_snapshot','per_viewer_visibility_v2']){
+  const dep=ledger.databaseDependencies.find(x=>x.name===name);
+  assert.equal(dep?.status,'applied-production');
+  assert.equal(dep?.appliedVersion,'20261108091818');
+ }
+ assert.match(read('supabase/migrations/20261108091818_observer_and_per_viewer_visibility_release_20261108.sql'),/function public\.get_authorized_map_fog_v2/);
  assert.ok(ledger.branches.some(item=>
   item.name==='stage/movement-latency-rubberband-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.releaseHistory.some(item=>item.pullRequests?.includes(49)&&
@@ -51,6 +59,7 @@ test('release ledger records previous releases and pending authorized migrations
  assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
   /^begin;|^commit;/m);
  assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
   x.status==='released'));
