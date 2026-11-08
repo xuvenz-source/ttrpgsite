@@ -196,6 +196,7 @@ BEGIN
     'enabled',current_frame->'enabled',
     'partyShared',current_frame->'partyShared',
     'collisionEnabled',current_frame->'collisionEnabled',
+    'navigationEnvironmentRevision',current_frame->'navigationEnvironmentRevision',
     'epoch',view_snapshot.epoch,'revision',revision_now,
     'sequence',new_sequence,
     'baseRevision',view_snapshot.revision,
