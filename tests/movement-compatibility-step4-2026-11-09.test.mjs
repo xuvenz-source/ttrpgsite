@@ -183,7 +183,9 @@ test('interrupted and out-back drags clear pending fog and their visual preview'
 test('DM movement/preview uses private attributes without returning them to players',()=>{
  const app=source('src/TabletopApp.jsx');
  const map=source('src/BattlemapBoard.jsx');
- assert.match(app,/isDM\?\s*projection\+',npc_values':projection/);
+ assert.match(app,/if\(!isDM\)return safeRows/);
+ assert.match(app,/db\.rpc\('get_dm_map_npc_values',\{p_map:mapId\}\)/);
+ assert.doesNotMatch(app,/projection\+',npc_values'/);
  assert.match(map,/sourcePreviewToken=useMemo/);
  assert.match(map,/field_values:values/);
  assert.match(map,/npc_values:toolIssued\.find/);
