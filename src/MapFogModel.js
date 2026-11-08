@@ -7,7 +7,7 @@ export const MAX_FOG_AXIS=256;
 export const MAX_FOG_CELLS=MAX_FOG_AXIS*MAX_FOG_AXIS;
 
 const validInt=n=>Number.isSafeInteger(n);
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function parseIndices(items,total){
  if(!Array.isArray(items)||items.length>total)return null;
  const values=new Set();
