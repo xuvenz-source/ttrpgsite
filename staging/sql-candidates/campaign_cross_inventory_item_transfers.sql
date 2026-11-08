@@ -93,9 +93,10 @@ declare
  target_cols int;target_rows int;placement jsonb;next_target jsonb;
 begin
  if actor is null or p_campaign is null or p_sheet is null or p_issue is null
-  or p_item is null or p_field is null or p_direction not in ('to_tool','to_sheet')
+  or p_item is null or p_field is null or p_direction is null
+  or p_direction not in ('to_tool','to_sheet')
   then raise exception 'Invalid inventory transfer';end if;
- if not public.can_edit_campaign_sheet_inventory(p_campaign,'character',p_sheet,p_field)
+ if not coalesce(public.can_edit_campaign_sheet_inventory(p_campaign,'character',p_sheet,p_field),false)
  then raise exception 'No access to character inventory';end if;
  -- Lock the source sheet lease before its row, matching sheet-item mutation's
  -- lock order and preventing a move racing with an in-progress sheet edit.
@@ -115,8 +116,8 @@ begin
  if not found or tool_row.kind not in ('mount','inventory') then
   raise exception 'Shared inventory not found';end if;
  if not (public.is_campaign_dm(p_campaign) or
-  (public.is_campaign_member(p_campaign) and
-   (tool_row.party_shared or tool_row.owner_id=actor)))
+  (coalesce(public.is_campaign_member(p_campaign),false) and
+   (coalesce(tool_row.party_shared,false) or coalesce(tool_row.owner_id=actor,false)))))
  then raise exception 'No access to destination inventory';end if;
  if p_direction='to_sheet' and not exists(
   select 1 from public.campaign_tool_item_leases l
