@@ -5,6 +5,7 @@ import {reconcileTokenSnapshot,isPositionOnlyTokenEvent} from '../src/LiveTokenM
 import {fogFrameDuringRefresh,tokenObservedByFogFrame} from '../src/MapFogModel.js';
 import {createSignedAssetStore} from '../src/SignedAssetUrls.js';
 import {createTrailingRefresh} from '../src/PerformanceScheduling.js';
+import {isFreshVisibilityTick,retainFogSnapshot} from '../src/FogVisibilityContinuity.js';
 
 const a={id:'a',map_id:'map',x:1,y:2,name:'Druid',
  visible:true,image_path:'actors/druid',status_effects:[{id:'blessed'}]};
@@ -76,4 +77,23 @@ test('board preserves local drop previews until new positions commit',()=>{
  assert.match(app,/reconcileTokenSnapshot\(previous,rows\.map\(token=>/);
  assert.match(app,/isPositionOnlyTokenEvent/);
  assert.match(artwork,/signedAssetStore\.peek\(db,bucket,path\)/);
+});
+
+test('already validated revision never causes an all-token visibility flash',()=>{
+ const frame={mapId:'map',width:3,height:3,revision:6,enabled:true,
+  partyShared:true,visible:[1,2],explored:[0,1,2]};
+ assert.equal(isFreshVisibilityTick(
+  {revision:6,fog_enforced:true},frame,'map'),false);
+ assert.equal(isFreshVisibilityTick(
+  {revision:5,fog_enforced:true},frame,'map'),false);
+ assert.equal(isFreshVisibilityTick(
+  {revision:7,fog_enforced:true},frame,'map'),true);
+ assert.equal(isFreshVisibilityTick(
+  {revision:6,fog_enforced:false},frame,'map'),true);
+ assert.equal(isFreshVisibilityTick(null,frame,'map'),true);
+ assert.equal(isFreshVisibilityTick({revision:6,fog_enforced:true},frame,'other'),true);
+ assert.equal(retainFogSnapshot(frame,{...frame,visible:[1,2],explored:[0,1,2]}),frame);
+ assert.notEqual(retainFogSnapshot(frame,{...frame,visible:[1]}),frame);
+ const pending=fogFrameDuringRefresh(frame,'map');
+ assert.notEqual(retainFogSnapshot(pending,frame),pending);
 });
