@@ -9,7 +9,7 @@ import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRe
 export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshCoordinator}){
  const [frame,setFrame]=useState(null),[error,setError]=useState(''),
   [published,setPublished]=useState(null);
- const request=useRef(0),validated=useRef(null);
+ const request=useRef(0),validated=useRef(null),pendingTick=useRef(null);
  const ownCoordinator=useRef(null);
  if(!ownCoordinator.current)ownCoordinator.current=createCampaignRefreshCoordinator();
  const coordinator=refreshCoordinator||ownCoordinator.current;
@@ -17,7 +17,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
   resource:'authorized-fog'}):null;
  const refresh=useCallback(async(fresh=false)=>{
   if(!db||!campaignId||!mapId||!userId){
-   validated.current=null;setFrame(null);setPublished(null);return;
+   validated.current=null;pendingTick.current=null;setFrame(null);setPublished(null);return;
   }
   const seq=++request.current;
   // Accepted observer previews and published scene changes can update sight
@@ -36,6 +36,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
    if(!safe)throw Error('Invalid map visibility response.');
    if(seq!==request.current)return;
    validated.current=safe;
+   pendingTick.current=null;
    setFrame(previous=>retainFogSnapshot(previous,safe));
    setPublished(previous=>previous?.fog===!!data.enabled&&
     previous?.collision===!!data.collisionEnabled?
@@ -44,11 +45,12 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
   }catch(cause){
    if(seq!==request.current)return;
    validated.current=null;
+   pendingTick.current=null;
    setFrame(null);setPublished(null);setError(cause?.message||String(cause));
   }
  },[db,campaignId,mapId,userId,key,coordinator]);
  useEffect(()=>{
-  validated.current=null;
+  validated.current=null;pendingTick.current=null;
   setFrame(null);setPublished(null);setError('');
   void refresh();
   if(!db||!campaignId||!mapId||!userId)return;
@@ -58,7 +60,13 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
   const invalidate=(event)=>{
    // A preview or newer RPC may already have fetched this exact revision.
    // Do not revoke and repaint all visible tokens for an older tick.
-   if(!isFreshVisibilityTick(event?.new,validated.current,mapId))return false;
+   const tick=event?.new;
+   if(!isFreshVisibilityTick(tick,validated.current,mapId,
+     pendingTick.current))return false;
+   const revision=Number(tick?.revision);
+   pendingTick.current=Number.isSafeInteger(revision)&&revision>=0&&
+    typeof tick?.fog_enforced==='boolean'?
+     {mapId,revision,fogEnforced:tick.fog_enforced}:null;
    ++request.current;
    coordinator.invalidate(key);
    // An authoritative fog-off revision never needs a temporary black mask.
@@ -92,7 +100,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
   };
   document.addEventListener('visibilitychange',onVisibility);
   return()=>{
-   ++request.current;coordinator.invalidate(key);changed.cancel();
+   ++request.current;pendingTick.current=null;coordinator.invalidate(key);changed.cancel();
    document.removeEventListener('visibilitychange',onVisibility);
    void db.removeChannel(channel);
   };
