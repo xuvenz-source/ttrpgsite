@@ -119,7 +119,9 @@ export default function InventoryPanel({field,value,onChange,template,sheetValue
   }
  }
  async function moveTargets(){
-  const options=await loadInventoryTransferTargets(transferContext);
+  const options=await loadInventoryTransferTargets({
+   ...transferContext,context:transferContext
+  });
   return options.filter(option=>!sameInventory(option,transferContext));
  }
  function gridPosition(clientX,clientY,grabX,grabY){
