@@ -161,7 +161,7 @@
       "name": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
       "status": "staged",
       "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
-      "note": "Consolidates fog pending-tick dedupe, dependent token/tool request reduction, hidden-tab backpressure and pending PRIVATE server observer path SQL candidate with rollback. No production SQL applied; compile, role grants, CI and multiplayer acceptance must pass before rollout."
+      "note": "Consolidated PR #52: fog tick coalescing, monitor/badge and tool-placement request reduction, hidden-tab backpressure, observer visibility SQL candidate with rollback, and now per-viewer v2 visibility SQL+frontend fallback. Neither SQL candidate applied; no paid branch or Vercel deployment."
     }
   ],
   "features": [
@@ -494,6 +494,19 @@
       "releaseReady": false,
       "databaseDependencies": [],
       "verification": "Live pg_policies confirms issue/template visibility isn't LOS-dependent while placed tool visibility is; static integration test adjusted. Verify light/torch carrying, fog-on/off, tool issuance, map switch and reconnect with active players."
+    },
+    {
+      "id": "server-authorized-per-viewer-fog-v2",
+      "description": "Staged server-owned per-player fog revisions and conservative token-motion impact selection. Only players whose authorized sight or observed token/tool membership could change receive per-viewer revision invalidation; unknown/lighting/non-motion changes invalidate all. Client negotiates versioned RPC, reuses original authorized fog math, and falls back to global legacy protocol.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "per_viewer_visibility_v2"
+      ],
+      "verification": "SQL candidate unapplied. JS regression tests and CI/CodeQL required. Before release compile SQL and verify own-user RLS, Realtime publication and role grants, watcher/movement/lighting invalidation, safe rollback, and matched 2/4/6-10 browser stress. The per-viewer envelope is conservative and does not promise no flash on local source movement."
     }
   ],
   "databaseDependencies": [
@@ -646,6 +659,16 @@
       "mustApplyBeforeFrontend": false,
       "releaseApprovalRequired": true,
       "note": "Private helper + internal dispatcher replacement only, existing public API unchanged. DO NOT apply without designer authorization. Compile against exact live source and validate old/new RLS visibility results on existing test campaigns. No paid database branch."
+    },
+    {
+      "name": "per_viewer_visibility_v2",
+      "status": "candidate-unapplied",
+      "migrationFile": null,
+      "candidateFile": "staging/sql-candidates/per_viewer_visibility_v2.sql",
+      "rollbackFile": "staging/sql-candidates/rollback_per_viewer_visibility_v2.sql",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "note": "Server-side per-player RLS visibility revision row + v2 authorized fog RPC. Keep original map_visibility_ticks and v1 RPC for DM/legacy compatibility. SQL compile and RLS JWT checks against existing free test database required only after explicit designer approval. No paid infrastructure."
     }
   ],
   "edgeFunctionDependencies": [
@@ -676,7 +699,7 @@
     "outstandingBranches": [
       "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
     ],
-    "stagePolicy": "PR #52 bundles every unreleased optimization. Newly staged server-side observer-path SQL is a candidate, NOT an applied migration; no production deploy until designer approval, SQL compile/role/old-new visibility checks, and CI. Monitors, fog, tool-placements and hidden-tab frontend reductions remain bundled. Full per-viewer visibility-delta protocol, physical RAM/swap telemetry and managed pool adjustment are open architectural work, never implied complete.",
+    "stagePolicy": "Consolidate PR #52 including all previous staging and two UNAPPLIED SQL candidates (observer_path_visibility_single_snapshot and per_viewer_visibility_v2) into one future designer-approved production release. Apply reviewed versioned SQL once before corresponding frontend merge/deploy, verify RLS grants and old/new visibility, preserve legacy clients. No paid infra. Per-viewer rev targeted filtering is staged but full pixel-exact mask equality, physical RAM/swap/pool tuning and browser stress acceptance remain outstanding.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
