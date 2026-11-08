@@ -27,7 +27,7 @@ import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,
 
 export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
- onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,onGroupMovementPreview,remotePositions={},
+ onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,onGroupMovementPreview,onMovementCancel,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,authorizedLightMasks=null,
  environment,publishedEnvironment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
@@ -73,6 +73,59 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
+ const movementCancelHandler=useRef(onMovementCancel);
+ movementCancelHandler.current=onMovementCancel;
+ // Layout-phase revocation occurs before the next browser paint. Verified
+ // sight shifts retain valid predictions; authorization/scene loss or a revoked
+ // current endpoint clears the gesture and its server preview immediately.
+ useLayoutEffect(()=>{
+  if(isDM||!navigation)return;
+  navigation.adoptFrame(map.id,fogFrame);
+  const gesture=drag.current;
+  if(!gesture)return;
+  const authority=navigation.authority(map.id);
+  const pieces=[
+   ...gesture.members.map(piece=>({
+    kind:'token',id:piece.id,x:Number(piece.x),y:Number(piece.y)
+   })),
+   ...(gesture.tools||[]).map(piece=>({
+    kind:'tool',id:piece.issue_id,x:Number(piece.x),y:Number(piece.y)
+   }))
+  ];
+  const permitted=pieces.every(piece=>piece.kind==='token'?
+    tokens.some(t=>t.id===piece.id&&
+      canControlMapToken(t,user,false,map.id)):
+    toolPlacements.some(p=>p.issue_id===piece.id&&p.map_id===map.id&&
+      toolCanControl(toolIssued.find(t=>t.id===piece.id),user,false)));
+  const legal=authority===gesture.navigationAuthority&&permitted&&
+   pieces.every(piece=>{
+    const end={x:piece.x+gesture.dx,y:piece.y+gesture.dy};
+    return gesture.path?.length?
+     navigation.routeApproved(map.id,piece.kind,piece.id,
+      {x:piece.x,y:piece.y},gesture.path):
+     navigation.canOccupy(map.id,piece.kind,piece.id,end);
+   });
+  if(legal)return;
+  drag.current=null;
+  for(const piece of gesture.members)motion.current?.clearPreview(piece.id);
+  for(const piece of gesture.tools||[])
+   motion.current?.clearPreview('tool:'+piece.issue_id);
+  const target=gesture.pointerTarget;
+  try{
+   if(target?.hasPointerCapture?.(gesture.pointerId))
+    target.releasePointerCapture(gesture.pointerId);
+  }catch{}
+  setToolPreview(old=>{
+   if(!(gesture.tools||[]).some(t=>Object.hasOwn(old,t.issue_id)))return old;
+   const next={...old};
+   for(const item of gesture.tools||[])delete next[item.issue_id];
+   return next;
+  });
+  movementCancelHandler.current?.({
+   mapId:map.id,tokenIds:gesture.members.map(t=>t.id),
+   toolIssueIds:(gesture.tools||[]).map(t=>t.issue_id)
+  });
+ },[isDM,navigation,map.id,fogFrame,tokens,toolPlacements,toolIssued,user]);
  const [panning,setPanning]=useState(false);
  const [previewPosition,setPreviewPosition]=useState(null);
  const previewDrag=useRef(null),previewNudgeRef=useRef(null);
@@ -630,7 +683,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     {x:tool.x,y:tool.y});
   }
   e.currentTarget.setPointerCapture(e.pointerId);
-  drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+  drag.current={id:t.id,pointerId:e.pointerId,pointerTarget:e.currentTarget,
+   navigationAuthority:isDM?null:navigation?.authority(map.id),
+   startX:e.clientX,startY:e.clientY,
    members,tools,dx:0,dy:0,path:[],lastFogWrite:0,persistedDuringDrag:false};
  }
  function startToolDrag(e,p,canMove){
@@ -659,6 +714,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   }
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
   drag.current={id:'tool:'+p.issue_id,pointerId:e.pointerId,
+   pointerTarget:e.currentTarget,
+   navigationAuthority:isDM?null:navigation?.authority(map.id),
    startX:e.clientX,startY:e.clientY,
    members:tokens.filter(t=>selectedTokens.includes(t.id)),
    tools:toolPlacements.filter(row=>selectedTools.includes(row.issue_id)),
