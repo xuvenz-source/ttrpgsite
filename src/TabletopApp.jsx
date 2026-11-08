@@ -90,6 +90,7 @@ import Board from './BattlemapBoard.jsx';
 import Designer from './SheetTemplateDesigner.jsx';
 import {QuickEditBoundary} from './AppBoundaries.jsx';
 import {uid,D} from './TabletopSheetDefaults.js';
+import {MAP_TOKEN_SAFE_PROJECTION,mergeDmNpcValues} from './MapTokenPrivateProjection.js';
 
 const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const db=url&&key?createClient(url,key):null;
@@ -835,7 +836,7 @@ export default function TabletopApp(){
     if(!row)throw Error('This NPC template is no longer available.');
     openNpcEditor({kind:'template',data:row});
    }else{
-    const row=await read(db.from('map_tokens').select('*')
+    const row=await read(db.from('map_tokens').select(MAP_TOKEN_SAFE_PROJECTION)
      .eq('campaign_id',activeId).eq('id',launchNpc.id).maybeSingle());
     if(!row||row.character_id||row.owner_id)
      throw Error('Only NPC tokens can open in an NPC pop-out.');
@@ -931,12 +932,16 @@ export default function TabletopApp(){
    // A sight revision must never reuse a request begun before authorization
    // changed. No completed snapshot is cached between refresh calls.
    if(fresh===true)refreshCoordinator.invalidate(key);
-   // The DM's local swept-collision simulation needs the same NPC attributes
-   // the SQL validator reads. Never request these private fields for players.
-   const projection='id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects';
-   const response=await refreshCoordinator.request(key,
-    ()=>read(db.from('map_tokens').select(isDM?
-     projection+',npc_values':projection).eq('map_id',mapId)));
+   // All viewers read the column-limited RLS projection. A DM obtains the
+   // private NPC attributes for local collision through a DM-authorized RPC.
+   // Never grant table-level SELECT or expose npc_values to player queries.
+   const response=await refreshCoordinator.request(key,async()=>{
+    const safeRows=await read(db.from('map_tokens')
+     .select(MAP_TOKEN_SAFE_PROJECTION).eq('map_id',mapId));
+    if(!isDM)return safeRows;
+    const privateRows=await read(db.rpc('get_dm_map_npc_values',{p_map:mapId}));
+    return mergeDmNpcValues(safeRows,privateRows);
+   });
    if(!response.current)return;
    const rows=response.value;
    // Ignore older requests, including requests started before switching maps.
@@ -1803,11 +1808,13 @@ export default function TabletopApp(){
    values=data.field_values||{};
   }else if(sourceType==='npc_token'&&isDM){
    const {data,error:loadError}=await db.from('map_tokens')
-    .select('npc_values,npc_template_id').eq('campaign_id',activeId)
+    .select('npc_template_id').eq('campaign_id',activeId)
     .eq('id',sourceId).maybeSingle();
    if(loadError)throw loadError;
    if(!data)throw Error('That NPC token no longer exists.');
-   values=data.npc_values||{};
+   const privateValues=await read(db.rpc('get_npc_token_values',{p_token:sourceId}));
+   if(privateValues===null)throw Error('That NPC token is no longer accessible.');
+   values=privateValues||{};
    if(data.npc_template_id){
     const {data:base,error:baseError}=await db.from('npc_templates')
      .select('field_values').eq('campaign_id',activeId)
