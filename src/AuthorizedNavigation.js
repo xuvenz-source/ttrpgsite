@@ -188,7 +188,11 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    const current=revisions.get(mapId);
    if(!disposed&&current&&
     current.authorizationKey===expectedRevision.authorizationKey&&
-    current.revision===grant.revision&&
+    // A verified visibility tick may arrive during the RPC. The graph is
+    // still server-issued for the SAME scene, but its edges are clipped
+    // against current sight before any local paint. Future revisions reject.
+    (current.revision===grant.revision||
+     (current.sourceFrame&&grant.revision<=current.revision))&&
     (current.environmentRevision===undefined||
       grant.environmentRevision===current.environmentRevision)&&
     (current.collisionEnabled===undefined||
