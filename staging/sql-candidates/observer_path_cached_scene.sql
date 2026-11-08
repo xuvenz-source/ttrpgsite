@@ -21,13 +21,13 @@ begin
     p_map_width<=0 or p_map_height<=0 or p_scene is null
  then return 0;end if;
  select cm.role into member_role from public.campaign_members cm
- where cp_campaign=p_campaign and cm.user_id=p_recipient;
+ where cm.campaign_id=p_campaign and cm.user_id=p_recipient;
  if member_role is null then return 0;end if;
  -- Exactly as observer_can_see: the DM sees regardless of map assignment.
  if member_role='dm' then return case when p_steps<=12 then 1 else 2 end;end if;
  select c.active_map_id into active from public.campaigns c where c.id=p_campaign;
  select pm.map_id into assigned from public.campaign_player_maps pm
- where pp_campaign=p_campaign and pm.user_id=p_recipient;
+ where pm.campaign_id=p_campaign and pm.user_id=p_recipient;
  if p_map is distinct from coalesce(assigned,active) then return 0;end if;
  -- Fog-disabled players can see any path on their authorized map.
  if not exists(select 1 from forge_visibility.map_rules r
@@ -61,7 +61,7 @@ begin
    and (t.owner_id=p_recipient or
     (party and t.owner_id is not null and exists(
       select 1 from public.campaign_members cm
-      where cp_campaign=p_campaign and cm.user_id=t.owner_id
+      where cm.campaign_id=p_campaign and cm.user_id=t.owner_id
        and cm.role='player')))
   order by t.id limit 8
  ), points as (
