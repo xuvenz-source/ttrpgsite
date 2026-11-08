@@ -89,3 +89,18 @@ test('DM footprint override is explicit and cannot be called by players',()=>{
  assert.match(source('src/MapSettingPanel.jsx'),/DM override: allow moving through walls/);
  assert.match(source('src/TabletopApp.jsx'),/db\.rpc\('resize_map_token'/);
 });
+
+test('every staged SQL procedure has matching PostgreSQL dollar delimiters',()=>{
+ for(const part of [
+  'collision_and_group_move','dm_footprint_override','atomic_trajectory',
+  'private_observer_motion','preview_visibility','authorized_light_masks',
+  'visibility_tick_metadata']){
+  const body=sql(part);
+  assert.equal((body.match(/\bas \$\$/g)||[]).length,
+   (body.match(/end \$\$;/g)||[]).length,part+' $$ delimiters');
+  assert.equal((body.match(/\bas \$function\$/gi)||[]).length,
+   (body.match(/end \$function\$;/gi)||[]).length,part+' named delimiters');
+  assert.doesNotMatch(body,/\bas \$(?:\r?\n)/,part+' bare opener');
+  assert.doesNotMatch(body,/end \$;/,part+' bare closer');
+ }
+});
