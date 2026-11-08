@@ -19,6 +19,7 @@ export function navigationAuthorizationKey(frame){
   frame.protocolVersion!==2||
   !integer(frame.navigationEnvironmentRevision)||
   frame.navigationEnvironmentRevision<0||
+  !integer(frame.permissionGeneration)||frame.permissionGeneration<0||
   typeof frame.enabled!=='boolean'||
   typeof frame.collisionEnabled!=='boolean'||
   typeof frame.partyShared!=='boolean'||
@@ -30,8 +31,8 @@ export function navigationAuthorizationKey(frame){
   frame.visible.some(v=>!integer(v)||v<0||v>=frame.width*frame.height)||
   (frame.deltaProtocolVersion===1&&!UUID.test(String(frame.epoch||''))))return null;
  return JSON.stringify([frame.epoch||null,frame.width,frame.height,
-  frame.navigationEnvironmentRevision,frame.collisionEnabled,
-  frame.enabled,frame.partyShared,frame.visible]);
+  frame.navigationEnvironmentRevision,frame.permissionGeneration,
+  frame.collisionEnabled,frame.enabled,frame.partyShared,frame.visible]);
 }
 
 
@@ -44,6 +45,7 @@ export function normalizeAuthorizedNavigation(raw,mapId,kind,id,receivedAt=Date.
   !integer(raw.gridWidth)||!integer(raw.gridHeight)||
   raw.gridWidth<1||raw.gridHeight<1||raw.gridWidth>1000||raw.gridHeight>1000||
   !integer(raw.environmentRevision)||raw.environmentRevision<0||
+  !integer(raw.permissionGeneration)||raw.permissionGeneration<0||
   typeof raw.collisionEnabled!=='boolean'||
   !Array.isArray(raw.footprint)||raw.footprint.length!==2||
   !raw.footprint.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>0&&n<=12)||
@@ -57,11 +59,15 @@ export function normalizeAuthorizedNavigation(raw,mapId,kind,id,receivedAt=Date.
    mask<0||mask>255||nodes.has(x+':'+y))return null;
   nodes.set(x+':'+y,mask);
  }
- // No geometry, character values or hidden map metadata may be smuggled in.
- if(['objects','scene','walls','doors','prepared','live','tokens','imagePaths']
-  .some(key=>Object.hasOwn(raw,key)))return null;
+ // A strict response allowlist ensures no raw geometry, hidden identifiers
+ // or private attributes can accidentally escape through a future RPC field.
+ const allowedKeys=new Set(['version','mapId','pieceId','kind','origin',
+  'footprint','gridWidth','gridHeight','visibilityRevision',
+  'environmentRevision','permissionGeneration','collisionEnabled','nodes']);
+ if(Object.keys(raw).some(key=>!allowedKeys.has(key)))return null;
  return {mapId,kind,id,baseX:raw.origin[0],baseY:raw.origin[1],
   revision:raw.visibilityRevision,environmentRevision:raw.environmentRevision,
+  permissionGeneration:raw.permissionGeneration,
   collisionEnabled:raw.collisionEnabled,
   footprintWidth:raw.footprint[0],footprintHeight:raw.footprint[1],
   nodes,expiresAt:receivedAt+12000};
@@ -113,8 +119,9 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    (origin.spanX===undefined||grant.footprintWidth===origin.spanX)&&
    (origin.spanY===undefined||grant.footprintHeight===origin.spanY));
  const frameKey=frame=>JSON.stringify([frame.mapId,frame.epoch||null,
-  frame.navigationEnvironmentRevision,frame.enabled,
-  frame.collisionEnabled,frame.partyShared,frame.width,frame.height]);
+  frame.navigationEnvironmentRevision,frame.permissionGeneration,
+  frame.enabled,frame.collisionEnabled,frame.partyShared,
+  frame.width,frame.height]);
  function withinSight(auth,grant,point){
   if(!auth||!grant)return false;
   if(!auth.fogEnabled)return true;
@@ -195,6 +202,8 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
      (current.sourceFrame&&grant.revision<=current.revision))&&
     (current.environmentRevision===undefined||
       grant.environmentRevision===current.environmentRevision)&&
+    (current.permissionGeneration===undefined||
+      grant.permissionGeneration===current.permissionGeneration)&&
     (current.collisionEnabled===undefined||
       grant.collisionEnabled===current.collisionEnabled)&&
     matchingOrigin(grant,expectedOrigin)&&
@@ -236,6 +245,7 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    revisions.set(mapId,{
     revision:frame.revision,authorizationKey:hardKey,
     environmentRevision:frame.navigationEnvironmentRevision,
+    permissionGeneration:frame.permissionGeneration,
     collisionEnabled:frame.collisionEnabled,
     fogEnabled:frame.enabled,width:frame.width,height:frame.height,
     visible:new Set(frame.visible),sourceFrame:frame
