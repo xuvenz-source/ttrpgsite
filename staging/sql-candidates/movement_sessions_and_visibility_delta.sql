@@ -14,6 +14,7 @@ create table if not exists forge_visibility.movement_sessions (
  last_x integer not null, last_y integer not null,
  last_seq bigint not null default 0,
  map_width integer not null, map_height integer not null,
+ grid_size integer not null,
  span_x double precision not null, span_y double precision not null,
  scene jsonb not null,
  attributes jsonb not null default '{}'::jsonb,
@@ -114,11 +115,11 @@ begin
  where r.actor_id=actor and r.piece_id=p_piece;
  insert into forge_visibility.movement_sessions(
  actor_id,piece_id,kind,map_id,campaign_id,base_x,base_y,last_x,last_y,
- map_width,map_height,span_x,span_y,scene,attributes,environment_revision,
+ map_width,map_height,grid_size,span_x,span_y,scene,attributes,environment_revision,
  rules_updated_at,collision_enforced,ignore_collision,token_visible,
  base_updated_at,base_tool_revision,expires_at)
  values(actor,p_piece,p_kind,p_map,m.campaign_id,bx,by,bx,by,
- floor(m.width/m.grid_size),floor(m.height/m.grid_size),
+ floor(m.width/m.grid_size),floor(m.height/m.grid_size),m.grid_size,
  fw,fh,scene,coalesce(attrs,'{}'::jsonb),environment_revision,
  rules_updated,collision_on,p_ignore_collision,shown,
  base_updated,tool_rev,clock_timestamp()+interval '6 seconds')
@@ -232,7 +233,7 @@ begin
   -- No direct client send or public map topic can bypass this gate.
   probe:=forge_visibility.observer_path_status_cached(
    s.map_id,recipient.user_id,s.campaign_id,s.scene,
-   (select b.grid_size from public.battle_maps b where b.id=s.map_id),
+   s.grid_size,
    s.map_width,s.map_height,
    s.last_x+s.span_x/2,s.last_y+s.span_y/2,
    p_x+s.span_x/2,p_y+s.span_y/2,steps);
