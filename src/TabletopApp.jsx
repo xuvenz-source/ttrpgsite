@@ -281,6 +281,7 @@ export default function TabletopApp(){
  const authorizedLights=useAuthorizedMapLights({
   db,mapId:selectedMap,userId:isDM?null:user,
   revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision,
+  protocolVersion:fog.frame?.protocolVersion===2?2:1,
   refreshNonce:fog.frame,
   enabled:campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
  });
