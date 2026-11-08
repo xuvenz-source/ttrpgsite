@@ -10,13 +10,15 @@
 -- owned. Unknown/unsafe movement conditions invalidate ALL authorized viewers.
 
 create table if not exists public.map_viewer_visibility_ticks (
+ -- Opaque replica identity: even a DELETE event carries no map/user IDs.
+ id uuid primary key default pg_catalog.gen_random_uuid(),
  map_id uuid not null references public.battle_maps(id) on delete cascade,
  campaign_id uuid not null references public.campaigns(id) on delete cascade,
  user_id uuid not null references auth.users(id) on delete cascade,
  revision bigint not null default 0 check (revision>=0),
  fog_enforced boolean not null default false,
  updated_at timestamptz not null default now(),
- primary key(map_id,user_id)
+ unique(map_id,user_id)
 );
 create index if not exists map_viewer_visibility_ticks_user_map_idx
  on public.map_viewer_visibility_ticks(user_id,map_id);
