@@ -27,12 +27,14 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
     raw.width<1||raw.height<1||
     raw.width>MAX_FOG_AXIS||raw.height>MAX_FOG_AXIS||
     !validInt(raw.revision)||raw.revision<0||
-    (raw.deltaProtocolVersion!==undefined&&
-     (raw.deltaProtocolVersion!==1||!UUID.test(String(raw.epoch||''))||
-      !validInt(raw.sequence)||raw.sequence<0))||
     typeof raw.enabled!=='boolean'||typeof raw.partyShared!=='boolean'||
     ['prepared','live','objects','environment','tokens','names','imagePaths']
      .some(key=>Object.hasOwn(raw,key)))return null;
+ // Epoch/sequence metadata is validated separately so a malformed delta
+ // never gains permission merely by satisfying the ordinary frame shape.
+ if(raw.deltaProtocolVersion!==undefined&&
+    (raw.deltaProtocolVersion!==1||!UUID.test(String(raw.epoch||''))||
+     !validInt(raw.sequence)||raw.sequence<0))return null;
  const total=raw.width*raw.height;
  const visible=parseIndices(raw.visible,total);
  const explored=parseIndices(raw.explored,total);
