@@ -76,6 +76,15 @@ export function createTokenMotionRuntime({
    if(!preview||preview.remote)return;
    previews.set(id,{...preview,handoff:true});
   },
+  // A server position matching a private observer packet must not clear the
+  // preview until the corresponding React left/top is committed. Otherwise
+  // the sprite briefly paints its old canonical coordinates and rubber-bands.
+  handoffRemote(id){
+   const preview=previews.get(id);
+   if(!preview?.remote)return false;
+   previews.set(id,{...preview,handoff:true});
+   return true;
+  },
   reconcile(id,x,y){
    const preview=previews.get(id);
    if(!preview?.handoff||!number(x)||!number(y)||
