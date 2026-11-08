@@ -31,6 +31,7 @@ export default [{
   // Consolidated movement/fog redesign: validate every new security-critical
   // module for undeclared runtime identifiers, not only JSX entrypoints.
   'src/AuthorizedNavigation.js',
+  'src/ConcealedMovementGate.js',
   'src/AuthorizedMovementPlanner.js',
   'src/AuthorizedViewerTick.js',
   'src/AuthorizedFogDelta.js',

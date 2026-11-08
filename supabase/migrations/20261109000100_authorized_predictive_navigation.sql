@@ -279,6 +279,21 @@ BEGIN
  fog_on:=coalesce((fog_frame->>'enabled')::boolean,true);
  SELECT pg_catalog.array_agg(value::integer) INTO visible_cells
  FROM pg_catalog.jsonb_array_elements_text(fog_frame->'visible') value;
+ -- A bounded graph of blocked edges is itself an oracle for invisible
+ -- walls and secret doors. For collision-enabled maps never return ANY edge
+ -- topology, regardless of whether a barrier actually exists. Players use
+ -- short-lived, adjacent, server-validated gesture checks instead.
+ -- This response is identical for a map with zero or many hidden barriers.
+ IF collision_on THEN
+  RETURN pg_catalog.jsonb_build_object(
+   'version',1,'mapId',p_map,'pieceId',p_piece,'kind',p_kind,
+   'origin',pg_catalog.jsonb_build_array(bx,by),
+   'footprint',pg_catalog.jsonb_build_array(span_w,span_h),
+   'gridWidth',map_w,'gridHeight',map_h,
+   'visibilityRevision',(fog_frame->>'revision')::bigint,
+   'environmentRevision',env_revision,'collisionEnabled',true,
+   'permissionGeneration',permission_generation,'nodes','[]'::jsonb);
+ END IF;
  -- Do not call validate_piece_trajectory for every possible edge: that
  -- function reparses up to 120 walls for each of ~5,000 candidate transitions.
  -- Precompute exactly the barriers that the existing movement rule would
