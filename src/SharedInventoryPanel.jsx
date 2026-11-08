@@ -15,7 +15,10 @@ export default function SharedInventoryPanel({db,campaignId,userId,isDM=false,
     Opening collaborative inventory…</p>:<>
    <InventoryPanel field={field} value={live.rows} template={template}
     sheetValues={{...sheetValues,[field.id]:live.rows}}
-    onChange={live.changeItems} collaboration={live}/>
+    onChange={live.changeItems} collaboration={live}
+    transferContext={{db,campaignId,userId,isDM,kind:'sheet',
+     sourceType,sourceId,fieldId:field.id,label:field.label||'Inventory',
+     refresh:live.refresh}}/>
    <p className="muted tiny" role="status">
     Changes save automatically · Items grey out while someone else edits
    </p>

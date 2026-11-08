@@ -177,5 +177,6 @@ export default function useCampaignSheetInventory({
   // acknowledges; optimistic updates remain visible while the RPCs run.
   return Promise.all(changes.map(item=>mutate(item.id,item.row,item.row===null)));
  },[rows,ready,mutate]);
- return {rows,locks,ready,error,claim,release,changeItems,isDM,userId};
+ return {rows,locks,ready,error,claim,release,changeItems,isDM,userId,
+  refresh:()=>refreshRows(false)};
 }

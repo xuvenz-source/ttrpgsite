@@ -1,16 +1,17 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {normalizeAuthorizedFogFrame,fogFrameDuringRefresh} from './MapFogModel.js';
 import {createCoalescedRefresh} from './PerformanceScheduling.js';
+import {isFreshVisibilityTick,retainFogSnapshot} from './FogVisibilityContinuity.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
  * leaves the player map obscured until a valid server snapshot arrives. */
 export default function useAuthorizedMapFog({db,campaignId,mapId,userId}){
  const [frame,setFrame]=useState(null),[error,setError]=useState(''),
   [published,setPublished]=useState(null);
- const request=useRef(0);
+ const request=useRef(0),validated=useRef(null);
  const refresh=useCallback(async()=>{
   if(!db||!campaignId||!mapId||!userId){
-   setFrame(null);setPublished(null);return;
+   validated.current=null;setFrame(null);setPublished(null);return;
   }
   const seq=++request.current;
   try{
@@ -19,15 +20,20 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId}){
    const safe=normalizeAuthorizedFogFrame(data,mapId);
    if(!safe)throw Error('Invalid map visibility response.');
    if(seq!==request.current)return;
-   setFrame(safe);
-   setPublished({fog:!!data.enabled,collision:!!data.collisionEnabled});
+   validated.current=safe;
+   setFrame(previous=>retainFogSnapshot(previous,safe));
+   setPublished(previous=>previous?.fog===!!data.enabled&&
+    previous?.collision===!!data.collisionEnabled?
+     previous:{fog:!!data.enabled,collision:!!data.collisionEnabled});
    setError('');
   }catch(cause){
    if(seq!==request.current)return;
+   validated.current=null;
    setFrame(null);setPublished(null);setError(cause?.message||String(cause));
   }
  },[db,campaignId,mapId,userId]);
  useEffect(()=>{
+  validated.current=null;
   setFrame(null);setPublished(null);setError('');
   void refresh();
   if(!db||!campaignId||!mapId||!userId)return;
@@ -35,6 +41,9 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId}){
   // pre-movement response must never reinstate old visibility permissions.
   // Keep previously explored cells dimmed instead of painting the map black.
   const invalidate=(event)=>{
+   // A preview or newer RPC may already have fetched this exact revision.
+   // Do not revoke and repaint all visible tokens for an older tick.
+   if(!isFreshVisibilityTick(event?.new,validated.current,mapId))return false;
    ++request.current;
    // An authoritative fog-off revision never needs a temporary black mask.
    // If fog was enabled before this event, remain fail-closed until RPC.
@@ -42,12 +51,13 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId}){
    setFrame(previous=>
     event?.new?.fog_enforced===false&&previous?.enabled===false?
      previous:fogFrameDuringRefresh(previous,mapId));
+   return true;
   };
   const changed=createCoalescedRefresh(()=>void refresh(),60);
   const channel=db.channel('forge-visibility-'+mapId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
     table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},event=>{
-    invalidate(event);changed.request();
+    if(invalidate(event))changed.request();
    }).subscribe(state=>{
     if(state==='SUBSCRIBED')changed.request();
    });

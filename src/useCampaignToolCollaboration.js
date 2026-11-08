@@ -151,5 +151,5 @@ export default function useCampaignToolCollaboration({db,tool,userId,refresh}){
   finally{setPending(false)}
  },[db,issueId,refresh]);
  return {rows,locks,ready,error,pending,claim,release,changeItems,saveDetails,
-  owned:owned.current,refreshClaims};
+  owned:owned.current,refreshClaims,refresh};
 }

@@ -39,11 +39,37 @@ export function updateInventoryItem(item,draft){
  return next;
 }
 
-export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onClose}){
+export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onClose,
+ onMove=null,onRequestMoveTargets=null}){
  const initial=useMemo(()=>inventoryItemDraft(item,cols,rows),[item,cols,rows]);
  const [draft,setDraft]=useState(initial);
  const [error,setError]=useState('');
  const [saving,setSaving]=useState(false);
+ const [moving,setMoving]=useState(false);
+ const [moveOpen,setMoveOpen]=useState(false);
+ const [moveTargets,setMoveTargets]=useState([]);
+ const [moveSelection,setMoveSelection]=useState('');
+ const [loadingDestinations,setLoadingDestinations]=useState(false);
+ async function showMoveTargets(){
+  if(moveOpen){setMoveOpen(false);return}
+  setMoveOpen(true);setLoadingDestinations(true);setError('');
+  try{
+   const available=await onRequestMoveTargets();
+   setMoveTargets(available);setMoveSelection('');
+  }catch(e){setError(e?.message||String(e))}
+  finally{setLoadingDestinations(false)}
+ }
+ async function moveSelected(){
+  const target=moveTargets[Number(moveSelection)];
+  if(!target||moveSelection==='')return;
+  setMoving(true);setError('');
+  try{
+   // Save any unsent edits before atomically moving the authoritative item.
+   if(!await persist())return;
+   await onMove(target);
+  }catch(e){setError(e?.message||String(e))}
+  finally{setMoving(false)}
+ }
  const saved=useRef(JSON.stringify(initial));
  const writing=useRef(Promise.resolve());
  const update=(key,value)=>{setDraft(s=>({...s,[key]:value}));setError('')};
@@ -172,6 +198,30 @@ export default function InventoryItemEditor({item,cols,rows,onSave,onDelete,onCl
     </div>
     {error&&<p className="error small" role="alert">{error}</p>}
     <div className="inventory-item-editor-actions">
+     {item&&onMove&&onRequestMoveTargets&&<div className="inventory-item-transfer">
+      <button type="button" className="secondary" disabled={moving||saving}
+       onClick={()=>void showMoveTargets()}>
+       {moveOpen?'Cancel move':'Move item…'}
+      </button>
+      {moveOpen&&<div className="inventory-item-transfer-controls">
+       {loadingDestinations?<span className="muted tiny">Loading destinations…</span>:
+        moveTargets.length===0?<span className="muted tiny">
+         No accessible character/shared inventories found.</span>:<>
+        <label>Move to
+         <select value={moveSelection} onChange={e=>setMoveSelection(e.target.value)}
+          aria-label="Destination inventory">
+          <option value="">Choose an inventory</option>
+          {moveTargets.map((target,index)=><option key={index} value={String(index)}>
+           {target.label}</option>)}
+         </select>
+        </label>
+        <button type="button" disabled={!moveSelection||moving||saving}
+         onClick={()=>void moveSelected()}>
+         {moving?'Moving…':'Move'}
+        </button>
+       </>}
+      </div>}
+     </div>}
      {item&&<button type="button" className="secondary inventory-item-delete"
       onClick={()=>{
        if(window.confirm('Permanently remove '+(draft.Item||'this item')+' from this inventory?'))

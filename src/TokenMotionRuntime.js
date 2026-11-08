@@ -24,7 +24,7 @@ export function createTokenMotionRuntime({
    // Remote samples interpolate between server-approved destinations;
    // local dragging remains immediate with no interpolation latency.
    mount.node.style.transition=preview?.remote?
-    'translate 115ms linear':mount.baseTransition;
+    'translate 95ms linear':mount.baseTransition;
    // CSS translate is independent from other token CSS transform effects.
    mount.node.style.translate=number(dx)&&number(dy)&&
     (Math.abs(dx)>.01||Math.abs(dy)>.01)?
@@ -67,6 +67,22 @@ export function createTokenMotionRuntime({
   previewRemote(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
    previews.set(id,{x,y,remote:true});schedule(id);
+  },
+  // Keep the local drop transform active until React has committed its new
+  // optimistic left/top. Clearing on pointerup first paints the old position
+  // for a frame, then jumps forward when the DB/client state settles.
+  handoff(id){
+   const preview=previews.get(id);
+   if(!preview||preview.remote)return;
+   previews.set(id,{...preview,handoff:true});
+  },
+  reconcile(id,x,y){
+   const preview=previews.get(id);
+   if(!preview?.handoff||!number(x)||!number(y)||
+    preview.x!==x||preview.y!==y)return false;
+   previews.delete(id);
+   schedule(id);
+   return true;
   },
   clearPreview(id){
    if(!previews.delete(id))return;

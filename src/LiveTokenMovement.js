@@ -41,3 +41,43 @@ export function canSendMovementPreview(token,actor,mapId,isDM){
  return Boolean(token&&token.map_id===mapId&&
   (isDM||token.owner_id===actor));
 }
+
+/** Realtime snapshots normally allocate new JS rows for every unchanged
+ * token. Retain their object identities so a movement tick cannot force every
+ * token monitor/art surface to rerender. Do not hide newly observed rows or
+ * retain rows omitted by the current RLS-filtered query. */
+export function reconcileTokenSnapshot(previous,incoming){
+ const existing=new Map((previous||[]).map(token=>[token.id,token]));
+ let changed=(previous||[]).length!==incoming.length;
+ const next=incoming.map((token,index)=>{
+  const before=existing.get(token.id);
+  if(!before){changed=true;return token}
+  const keys=Object.keys(token);
+  const stable=keys.length===Object.keys(before).length&&keys.every(key=>{
+   const a=before[key],b=token[key];
+   return a===b||(a&&b&&typeof a==='object'&&typeof b==='object'&&
+    JSON.stringify(a)===JSON.stringify(b));
+  });
+  const item=stable?before:token;
+  if(item!==previous[index])changed=true;
+  return item;
+ });
+ return changed?next:previous;
+}
+/** Only a known, already-rendered token's coordinate-only update may skip
+ * the immediate whole-map background fetch. All other updates reconcile.
+ * The whitelist excludes transient DB columns such as updated_at. */
+export function isPositionOnlyTokenEvent(event,rows,mapId){
+ if(event?.eventType!=='UPDATE'||event.new?.map_id!==mapId||
+   !Number.isSafeInteger(event.new.x)||!Number.isSafeInteger(event.new.y))return false;
+ const current=rows.find(t=>t.id===event.new.id);
+ if(!current||current.map_id!==mapId)return false;
+ if(current.x===event.new.x&&current.y===event.new.y)return false;
+ for(const [key,value] of Object.entries(current)){
+  if(['x','y','updated_at'].includes(key))continue;
+  if(!Object.hasOwn(event.new,key))return false;
+  const next=event.new[key];
+  if(value!==next&&JSON.stringify(value)!==JSON.stringify(next))return false;
+ }
+ return true;
+}

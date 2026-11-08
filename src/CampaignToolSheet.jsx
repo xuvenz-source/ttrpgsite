@@ -94,7 +94,9 @@ export default function CampaignToolSheet({db,tool,userId,isDM,onRefresh,onClose
    {hasInventory&&<div className="campaign-tool-sheet-inventory">
     <h3>Inventory</h3>
     {canEdit?<InventoryPanel field={inventory} value={collab.rows}
-      onChange={collab.changeItems} collaboration={{...collab,userId,isDM}}/>:
+      onChange={collab.changeItems} collaboration={{...collab,userId,isDM}}
+      transferContext={{db,campaignId:tool.campaign_id,userId,isDM,
+       kind:'tool',issueId:tool.id,label:tool.name,refresh:collab.refresh}}/>:
      <p className="muted">This tool is not assigned to you.</p>}
    </div>}
    {(collab.error||metaError)&&<p className="error small" role="alert">{collab.error||metaError}</p>}

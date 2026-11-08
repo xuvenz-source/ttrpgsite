@@ -99,7 +99,16 @@ export function createSignedAssetStore({
   }
   schedule();
  }
- return {subscribe,clear,get:(db,bucket,path)=>!db||!path?
+ return {subscribe,clear,
+  // Reuse a still-valid signed image synchronously across temporary token
+  // unmount/remount cycles (e.g. visibility revisions). Never cache beyond
+  // its expiry or across auth identity changes.
+  peek:(db,bucket,path)=>{
+   if(!db||!path)return '';
+   const cached=entries.get(keyFor(bucket,path));
+   return cached&&cached.url&&cached.expires>now()+15000?cached.url:'';
+  },
+  get:(db,bucket,path)=>!db||!path?
   Promise.resolve(''):load(entry(db,bucket,path)),
   stats:()=>({entries:entries.size,subscribers:[...entries.values()].reduce((n,e)=>n+e.listeners.size,0)})};
 }

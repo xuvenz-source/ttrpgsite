@@ -4,9 +4,9 @@ import {signedAssetStore} from './SignedAssetUrls.js';
 // A shared cache and refresh timer keeps dozens of mounted tokens from
 // creating separate intervals and duplicate signed-URL requests.
 function Artwork({db,path,bucket='tabletop-artwork',alt='',className='',style={}}){
- const [src,setSrc]=useState('');
+ const [src,setSrc]=useState(()=>signedAssetStore.peek(db,bucket,path));
  useEffect(()=>{
-  setSrc('');
+  setSrc(signedAssetStore.peek(db,bucket,path));
   return signedAssetStore.subscribe(db,bucket,path,setSrc);
  },[db,path,bucket]);
  return src?<img alt={alt} className={className} style={style}

@@ -60,7 +60,7 @@ test('remote samples ease between network ticks and local dragging stays instant
  motion.bind('a','sprite',token,{x:1,y:1,cell:70});
  motion.bind('a','monitor',monitor,{x:1,y:1,cell:70});
  motion.previewRemote('a',3,1);flush();
- assert.equal(token.style.transition,'translate 115ms linear');
+ assert.equal(token.style.transition,'translate 95ms linear');
  assert.equal(monitor.style.translate,'140px 0px');
  motion.preview('a',4,1);flush();
  assert.equal(token.style.transition,'');
@@ -68,5 +68,26 @@ test('remote samples ease between network ticks and local dragging stays instant
  motion.clearPreview('a');flush();
  assert.equal(token.style.transition,'');
  assert.equal(monitor.style.translate,'');
+ motion.dispose();
+});
+
+test('handoff keeps the dragged sprite at the drop point until React commits',()=>{
+ const {motion,flush}=runtime();
+ const token={style:{}},monitor={style:{}};
+ motion.bind('a','sprite',token,{x:1,y:1,cell:48});
+ motion.bind('a','monitor',monitor,{x:1,y:1,cell:48});
+ motion.preview('a',4,2);flush();
+ motion.handoff('a');
+ assert.equal(motion.getPreview('a').handoff,true);
+ assert.equal(motion.reconcile('a',1,1),false);
+ flush();
+ assert.equal(token.style.translate,'144px 48px');
+ motion.bind('a','sprite',token,{x:4,y:2,cell:48});
+ motion.bind('a','monitor',monitor,{x:4,y:2,cell:48});
+ assert.equal(motion.reconcile('a',4,2),true);
+ flush();
+ assert.equal(token.style.translate,'');
+ assert.equal(monitor.style.translate,'');
+ assert.equal(motion.getPreview('a'),null);
  motion.dispose();
 });

@@ -10,17 +10,24 @@ test('audit migration manifest is documentary and keeps live records separate fr
  assert.equal(data.trackedFiles.length,data.counts.repositorySqlFiles);
  assert.match(data.warning,/Never run every repo migration/);
 });
-test('combined release records both approved drafts and compatible migration requirements',()=>{
+test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/world-runtime-movement-collision-fog-2026-11-08');
- assert.deepEqual(ledger.lastRelease.approvedPullRequests,[45]);
- assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[43,44]);
- assert.equal(ledger.lastRelease.productionBaseSha,'fba25209757d2c55d3303ea6b0582b8d61b6632c');
+ assert.equal(ledger.releaseBranch,'stage/next-release-inventory-token-continuity-2026-11-08');
+ assert.deepEqual(ledger.lastRelease.approvedPullRequests,[48]);
+ assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[47]);
+ assert.equal(ledger.lastRelease.productionBaseSha,'a763b8d106e2362033c16ce44966e9b122d6a47b');
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
- assert.ok(ledger.upcomingRelease.outstandingBranches.includes(
-  'stage/world-runtime-movement-collision-fog-2026-11-08'));
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
  assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
-  feature.status==='included'&&feature.releaseReady===true));
+  feature.status==='released'&&feature.releaseReady===true));
+ assert.ok(ledger.branches.some(item=>item.name==='stage/world-runtime-movement-collision-fog-2026-11-08'&&item.status==='released'));
+ assert.ok(ledger.branches.some(item=>item.name==='stage/inventory-cross-transfer-2026-11-08'&&item.status==='released'));
+ assert.ok(ledger.branches.some(item=>
+  item.name==='stage/next-release-inventory-token-continuity-2026-11-08'&&item.status==='released'));
+ assert.ok(ledger.features.some(feature=>
+  feature.id==='stable-token-movement-visual-continuity'&&feature.releaseReady===true&&feature.status==='released'));
+ assert.ok(ledger.databaseDependencies.some(item=>item.name==='campaign_cross_inventory_item_transfers'
+  &&item.status==='applied-production'&&item.appliedVersion==='20261108052335'&&item.mustApplyBeforeFrontend===true));
  assert.ok(ledger.databaseDependencies.some(item=>
   item.name==='world_runtime_private_observer_motion'&&
   item.appliedVersion==='20261108031754'&&
