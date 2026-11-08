@@ -34,10 +34,10 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
       - name: Validate Vite production build (no Vercel deployment)
         run: npm run build
-      - name: Prepare Deno to type-check the staged account endpoint
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
+      - name: Prepare pinned Deno from npm for Edge Function type checks
+        run: |
+          npm install --global --no-audit --no-fund deno@2.9.6
+          deno --version
       - name: Type-check signup Turnstile Supabase Edge Function
         run: deno check supabase/functions/username-register/index.ts
       - name: Type-check username-update Supabase Edge Function
