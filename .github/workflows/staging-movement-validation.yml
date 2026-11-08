@@ -12,6 +12,7 @@ on:
       - 'supabase/migrations/20261109*.sql'
       - 'eslint.config.mjs'
       - 'package.json'
+      - '.github/workflows/codeql.yml'
       - '.github/workflows/staging-movement-validation.yml'
   workflow_dispatch:
 
@@ -29,12 +30,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
+          package-manager-cache: false
       # No package-lock exists in the repository. Use the already pinned
       # top-level dependencies; a reproducible lockfile remains a release gate.
       - run: npm install --no-audit --no-fund
