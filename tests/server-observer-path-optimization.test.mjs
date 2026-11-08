@@ -12,7 +12,7 @@ test('staged observer optimization cannot deploy itself or silently change the p
  assert.match(sql,/STAGING CANDIDATE ONLY.*DO NOT APPLY/);
  assert.doesNotMatch(sql,/alter table|create policy|grant execute.*authenticated/i);
  assert.match(dispatch,/security definer\s+set search_path TO ''/i);
- assert.match(dispatch,/returns boolean/);
+ assert.match(dispatch,/returns boolean/i);
  assert.match(dispatch,/p_map uuid, p_kind text, p_piece uuid, p_x integer, p_y integer, p_seq bigint, p_ignore_collision boolean/);
  assert.match(sql,/revoke all on function forge_visibility\.observer_path_status/);
  assert.match(sql,/from public,anon,authenticated/);
