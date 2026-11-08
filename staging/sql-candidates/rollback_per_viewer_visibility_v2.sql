@@ -23,7 +23,7 @@ begin
   revision=public.map_visibility_ticks.revision+1,
   updated_at=now(),
   fog_enforced=excluded.fog_enforced;
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION forge_visibility.tick_tokens()
@@ -63,7 +63,7 @@ begin
   end if;
  end if;
  return new;
-end $function$
+end $function$;
 
 
 drop function if exists public.get_authorized_map_fog_v2(uuid);
