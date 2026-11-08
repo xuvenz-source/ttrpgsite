@@ -126,7 +126,11 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    const current=revisions.get(mapId);
    if(!disposed&&current&&
     current.authorizationKey===expectedRevision.authorizationKey&&
-    current.revision===grant.revision){
+    current.revision===grant.revision&&
+    (current.environmentRevision===undefined||
+      grant.environmentRevision===current.environmentRevision)&&
+    (current.collisionEnabled===undefined||
+      grant.collisionEnabled===current.collisionEnabled)){
     const stored={...grant,authorizationKey:current.authorizationKey};
     grants.set(key,stored);return stored;
    }
@@ -141,7 +145,8 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
   // Passing a stable key from navigationAuthorizationKey() keeps an existing
   // grant across harmless visibility revision increments. Two-argument calls
   // remain strict for older consumers and tests.
-  setRevision(mapId,revision,key=undefined){
+  setRevision(mapId,revision,key=undefined,environmentRevision=undefined,
+    collisionEnabled=undefined){
    if(!UUID.test(String(mapId)))return;
    const revoke=()=>{
     revisions.delete(mapId);
@@ -149,12 +154,17 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
      if(grant.mapId===mapId)grants.delete(id);
     for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
    };
-   if(!integer(revision)||revision<0||key===null){revoke();return;}
+   if(!integer(revision)||revision<0||key===null||
+      (key!==undefined&&(!integer(environmentRevision)||
+        environmentRevision<0||typeof collisionEnabled!=='boolean'))){
+    revoke();return;
+   }
    const authorizationKey=key===undefined?'revision:'+revision:key;
    if(typeof authorizationKey!=='string'||!authorizationKey){revoke();return;}
    const previous=revisions.get(mapId);
    if(previous&&revision<previous.revision){revoke();return;}
-   revisions.set(mapId,{revision,authorizationKey});
+   revisions.set(mapId,{revision,authorizationKey,
+    environmentRevision,collisionEnabled});
    if(previous?.authorizationKey===authorizationKey)return;
    for(const [id,grant] of grants)
     if(grant.mapId===mapId)grants.delete(id);
