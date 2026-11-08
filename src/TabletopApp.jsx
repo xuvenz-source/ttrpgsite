@@ -633,8 +633,32 @@ export default function TabletopApp(){
   const issued=campaignTools.issued.find(t=>t.id===id);
   if(!issued||!selectedMap)return fail('Tool not available on this map.');
   const mapId=selectedMap;
-  try{await campaignTools.place(issued,mapId,x,y)}
-  catch(e){fail(e)}
+  const existing=campaignTools.placed.find(p=>p.issue_id===id&&p.map_id===mapId);
+  try{
+   if(!isDM&&existing){
+    const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
+    if(!queue||!transport)return;
+    const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
+    if(seq===null)return;
+    liveMovementSeq.current=seq;
+    queue.enqueue('tool:'+id,{kind:'tool',params:{
+     p_map:mapId,p_kind:'tool',p_piece:id,p_x:x,p_y:y,
+     p_seq:seq,p_ignore_collision:false
+    }});
+    await queue.drain('tool:'+id);
+    if(tokenContextRef.current.mapId!==mapId)return;
+    const path=transport.getApprovedPath(mapId,'tool',id);
+    const steps=movementPathDeltas(path.map(p=>({
+     dx:p.x-Number(existing.x),dy:p.y-Number(existing.y)
+    })));
+    if(!steps?.length)return;
+    await read(db.rpc('commit_map_trajectory',{
+     p_map:mapId,p_token_ids:[],p_tool_issue_ids:[id],
+     p_steps:steps,p_ignore_collision:false
+    }));
+    await campaignTools.refresh(['issued','placed'],true);
+   }else await campaignTools.place(issued,mapId,x,y);
+  }catch(e){fail(e)}
   finally{clearMapMovementPreview(mapId,[],[id])}
  }
  function prepareHandoutPin(handoutId){
@@ -2487,6 +2511,39 @@ export default function TabletopApp(){
     !Number.isSafeInteger(dy))return;
   if(!members.length&&!tools.length)return;
   if(isDM&&mapSettingEditor.previewing)return;
+  if(!isDM){
+   // No group sprite or tool may be committed past a wall just because the
+   // pointer asked for that position. Every member independently receives a
+   // server grant and only a common approved route can move the whole group.
+   const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
+   if(!queue||!transport)return;
+   const pieces=[...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
+    ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))];
+   const keys=[];
+   for(const piece of pieces){
+    const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
+    if(seq===null)return;
+    liveMovementSeq.current=seq;
+    const key=piece.kind==='token'?piece.id:'tool:'+piece.id;
+    keys.push(key);
+    queue.enqueue(key,{kind:piece.kind,params:{
+     p_map:mapId,p_kind:piece.kind,p_piece:piece.id,
+     p_x:piece.x+dx,p_y:piece.y+dy,p_seq:seq,p_ignore_collision:false
+    }});
+   }
+   await Promise.all(keys.map(key=>queue.drain(key)));
+   if(tokenContextRef.current.mapId!==mapId||
+      tokenContextRef.current.campaignId!==campaignId)return;
+   const grants=pieces.map(piece=>transport.getApprovedPath(
+    mapId,piece.kind,piece.id));
+   const common=sharedApprovedPath(pieces,grants);
+   if(!common.length){
+    clearMapMovementPreview(mapId,members.map(t=>t.id),
+     tools.map(t=>t.issue_id));
+    return;
+   }
+   dx=common.at(-1).dx;dy=common.at(-1).dy;path=common;
+  }
   const steps=movementPathDeltas(path?.length?path:[{dx,dy}]);
   if(!steps?.length||steps.reduce((total,step)=>total+step.dx,0)!==dx||
     steps.reduce((total,step)=>total+step.dy,0)!==dy)
