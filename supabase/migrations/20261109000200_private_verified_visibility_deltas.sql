@@ -169,7 +169,9 @@ BEGIN
   revision_now:=coalesce(old_revision,0)+1;
   current_frame:=forge_visibility.authorized_viewer_fog_frame(
    p_map,recipient.user_id) ||
-   pg_catalog.jsonb_build_object('protocolVersion',2,'revision',revision_now);
+   pg_catalog.jsonb_build_object('protocolVersion',2,'revision',revision_now,
+    'navigationEnvironmentRevision',coalesce((SELECT e.revision
+     FROM public.map_environments e WHERE e.map_id=p_map),0));
   INSERT INTO forge_visibility.viewer_fog_snapshots(map_id,user_id)
    VALUES(p_map,recipient.user_id)
    ON CONFLICT(map_id,user_id) DO NOTHING;
