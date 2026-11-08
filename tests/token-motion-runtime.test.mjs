@@ -91,3 +91,24 @@ test('handoff keeps the dragged sprite at the drop point until React commits',()
  assert.equal(motion.getPreview('a'),null);
  motion.dispose();
 });
+
+test('matching server coordinates hand off remote sprite and monitor after paint',()=>{
+ const {motion,flush}=runtime();
+ const token={style:{}},monitor={style:{}};
+ motion.bind('a','sprite',token,{x:1,y:1,cell:50});
+ motion.bind('a','monitor',monitor,{x:1,y:1,cell:50});
+ motion.previewRemote('a',4,2);flush();
+ assert.equal(token.style.translate,'150px 50px');
+ assert.equal(motion.handoffRemote('a'),true);
+ assert.equal(motion.reconcile('a',1,1),false);
+ flush();
+ assert.equal(token.style.translate,'150px 50px');
+ motion.bind('a','sprite',token,{x:4,y:2,cell:50});
+ motion.bind('a','monitor',monitor,{x:4,y:2,cell:50});
+ assert.equal(motion.reconcile('a',4,2),true);
+ flush();
+ assert.equal(token.style.translate,'');
+ assert.equal(monitor.style.translate,'');
+ assert.equal(motion.getPreview('a'),null);
+ motion.dispose();
+});
