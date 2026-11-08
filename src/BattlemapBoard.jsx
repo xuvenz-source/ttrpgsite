@@ -93,10 +93,21 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    }))
   ];
   const permitted=pieces.every(piece=>piece.kind==='token'?
-    tokens.some(t=>t.id===piece.id&&
-      canControlMapToken(t,user,false,map.id)):
-    toolPlacements.some(p=>p.issue_id===piece.id&&p.map_id===map.id&&
-      toolCanControl(toolIssued.find(t=>t.id===piece.id),user,false)));
+    tokens.some(t=>{
+     const initial=gesture.members.find(m=>m.id===piece.id);
+     return t.id===piece.id&&canControlMapToken(t,user,false,map.id)&&
+      Number(t.x)===piece.x&&Number(t.y)===piece.y&&
+      Number(t.span_x??1)===Number(initial?.span_x??1)&&
+      Number(t.span_y??1)===Number(initial?.span_y??1)&&
+      t.character_id===initial?.character_id;
+    }):
+    toolPlacements.some(p=>{
+     const initial=(gesture.tools||[]).find(t=>t.issue_id===piece.id);
+     return p.issue_id===piece.id&&p.map_id===map.id&&
+      toolCanControl(toolIssued.find(t=>t.id===piece.id),user,false)&&
+      Number(p.x)===piece.x&&Number(p.y)===piece.y&&
+      Number(p.span??1)===Number(initial?.span??1);
+    }));
   const legal=authority===gesture.navigationAuthority&&permitted&&
    pieces.every(piece=>{
     const end={x:piece.x+gesture.dx,y:piece.y+gesture.dy};
