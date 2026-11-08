@@ -118,7 +118,7 @@ create or replace function forge_visibility.dispatch_movement_preview(
 ) returns boolean language plpgsql volatile security definer set search_path='' as $$
 declare
  actor uuid:=auth.uid(); camp uuid; m record; dm boolean;
- bx double precision; by double precision; footprint double precision;
+ bx double precision; start_y double precision; footprint double precision;
  fw double precision;fh double precision;attrs jsonb:='{}'::jsonb;
  token public.map_tokens%rowtype; tool public.campaign_tool_issues%rowtype;
  scene jsonb; obstacle jsonb;pts jsonb;a jsonb;b jsonb;i integer;
@@ -143,7 +143,7 @@ begin
    and t.campaign_id=camp and t.map_id=p_map;
   if not found or (not dm and (token.owner_id is distinct from actor
    or not token.visible)) then return false;end if;
-  bx:=token.x;by:=token.y;fw:=token.span_x;fh:=token.span_y;
+  bx:=token.x;start_y:=token.y;fw:=token.span_x;fh:=token.span_y;
   token_visible:=token.visible;
   attrs:=coalesce(token.npc_values,'{}'::jsonb);
   if token.character_id is not null then
@@ -157,13 +157,13 @@ begin
   if not found or tool.held_by_token_id is not null or
     (not dm and tool.owner_id is distinct from actor and not tool.party_shared)
    then return false;end if;
-  bx:=tool.x;by:=tool.y;
+  bx:=tool.x;start_y:=tool.y;
   footprint:=case when tool.kind='mount' then
    coalesce((tool.config->>'span')::double precision,2) else 1.0 end;
   fw:=footprint;fh:=footprint;
   attrs:=coalesce(tool.state->'attrs','{}'::jsonb);
  end if;
- canonical_x:=bx;canonical_y:=by;
+ canonical_x:=bx;canonical_y:=start_y;
  -- The last accepted waypoint is trusted only while the persisted origin
  -- is unchanged and the preview is recent. A resumed drag never reuses an
  -- arbitrary stale user-supplied starting coordinate.
@@ -173,7 +173,7 @@ begin
   history.base_x=canonical_x and history.base_y=canonical_y and
   history.last_sent>clock_timestamp()-interval '3 seconds' and
   history.last_seq<p_seq then
-   bx:=history.last_x;by:=history.last_y;
+   bx:=history.last_x;start_y:=history.last_y;
  end if;
  if fw<=0 or fh<=0 or fw>12 or fh>12 or
     p_x<0 or p_y<0 or p_x+fw>floor(m.width/m.grid_size) or
@@ -196,7 +196,7 @@ begin
    for i in 1..jsonb_array_length(pts)-1 loop
     a:=pts->(i-1);b:=pts->i;
     if forge_visibility.swept_hits_segment(
-      bx,by,fw,fh,p_x,p_y,
+      bx,start_y,fw,fh,p_x,p_y,
       (a->>'x')::double precision,(a->>'y')::double precision,
       (b->>'x')::double precision,(b->>'y')::double precision)
     then return false;end if;
@@ -229,19 +229,19 @@ begin
   if p_kind='token' and not token_visible and recipient.role<>'dm'
    then continue;end if;
   saw_old:=forge_visibility.observer_can_see(
-   p_map,recipient.user_id,bx+fw/2,by+fh/2);
+   p_map,recipient.user_id,bx+fw/2,start_y+fh/2);
   if not saw_old then continue;end if;
   saw_new:=forge_visibility.observer_can_see(
    p_map,recipient.user_id,p_x+fw/2,p_y+fh/2);
   if saw_new then
    -- The endpoints may both be visible even when the path between them is
    -- hidden. Never animate a private corridor into an observer's map.
-   route_steps:=ceil(greatest(abs(p_x-bx),abs(p_y-by)))::int;
+   route_steps:=ceil(greatest(abs(p_x-bx),abs(p_y-start_y)))::int;
    if route_steps>12 then saw_new:=false;end if;
    if saw_new and route_steps>1 then
     for probe in 1..route_steps-1 loop
      probe_x:=bx+(p_x-bx)*probe::double precision/route_steps+fw/2;
-     probe_y:=by+(p_y-by)*probe::double precision/route_steps+fh/2;
+     probe_y:=start_y+(p_y-start_y)*probe::double precision/route_steps+fh/2;
      if not forge_visibility.observer_can_see(
        p_map,recipient.user_id,probe_x,probe_y)then
       saw_new:=false;exit;
