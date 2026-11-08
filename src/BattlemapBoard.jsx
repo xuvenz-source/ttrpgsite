@@ -15,7 +15,7 @@ import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
 import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
-import {traceSolidGroupOffset} from './DragCollisionGuard.js';
+import {traceSolidGroupOffset,traceAuthorizedGroupOffset} from './DragCollisionGuard.js';
 import {stableTokenPresentation} from './StableTokenPresentation.js';
 import {appendMovementWaypoint} from './MapMovementPath.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
@@ -31,7 +31,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,authorizedLightMasks=null,
  environment,publishedEnvironment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
- registerRemoteMotion,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
+ registerRemoteMotion,navigation,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
  onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
  onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
@@ -623,6 +623,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
   const members=tokens.filter(token=>group.includes(token.id));
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
+  if(!isDM){
+   for(const member of members)navigation?.warm(map.id,'token',member.id);
+   for(const tool of tools)navigation?.warm(map.id,'tool',tool.issue_id);
+  }
   e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
    members,tools,dx:0,dy:0,path:[],lastFogWrite:0,persistedDuringDrag:false};
@@ -641,6 +645,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   selectTokens(selectedTokens,selectedTools);
   viewportRef.current?.focus({preventScroll:true});
   if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  if(!isDM){
+   for(const id of selectedTokens)navigation?.warm(map.id,'token',id);
+   for(const id of selectedTools)navigation?.warm(map.id,'tool',id);
+  }
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
   drag.current={id:'tool:'+p.issue_id,pointerId:e.pointerId,
    startX:e.clientX,startY:e.clientY,
@@ -667,23 +675,45 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
    map.width,map.height,map.grid_size);
   const collisionScene=publishedEnvironment||environment;
-  const delta=isDM&&environmentEditor?.ignoreCollision!==true&&
-   fogFrame?.collisionEnabled!==false&&collisionScene?
-   traceSolidGroupOffset({
-    pieces:[...info.members,...(info.tools||[]).map(groupToolFootprint)],
-    map,environment:collisionScene,previous:{dx:info.dx,dy:info.dy},
-    desired:requested
-   }):requested;
+  const previous={dx:info.dx,dy:info.dy};
+  const pieces=[...info.members.map(piece=>({
+   kind:'token',id:piece.id,x:Number(piece.x),y:Number(piece.y)
+  })),...(info.tools||[]).map(tool=>({
+   kind:'tool',id:tool.issue_id,x:Number(tool.x),y:Number(tool.y)
+  }))];
+  const delta=isDM?
+   (environmentEditor?.ignoreCollision!==true&&
+    fogFrame?.collisionEnabled!==false&&collisionScene?
+    traceSolidGroupOffset({
+     pieces:[...info.members,...(info.tools||[]).map(groupToolFootprint)],
+     map,environment:collisionScene,previous,desired:requested
+    }):requested):
+   traceAuthorizedGroupOffset({
+    pieces,previous,desired:requested,
+    canStep:(piece,from,to)=>
+     navigation?.allows(map.id,piece.kind,piece.id,from,to)===true
+   });
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
-  const path=appendMovementWaypoint(info.path||[],delta.dx,delta.dy);
-  if(path===info.path)return; // Reached bounded path complexity.
+  // Preserve every legal intermediate turn, including wall sliding,
+  // so the final server trajectory validates the same physical route.
+  let path=info.path||[];
+  for(const point of (delta.path||[{dx:delta.dx,dy:delta.dy}])){
+   const next=appendMovementWaypoint(path,point.dx,point.dy);
+   if(next===path&&
+    (!path.length||path.at(-1).dx!==point.dx||path.at(-1).dy!==point.dy))
+    return; // Bounded gesture: never paint a path we cannot commit.
+   path=next;
+  }
   info.path=path;
   info.dx=delta.dx;info.dy=delta.dy;
-  // DM has locally authorized wall geometry for immediate, solid dragging.
-  // Players cannot preview through secret walls before the server approves.
-  if(isDM)for(const token of info.members)
+  // Both players and DM paint a server-preauthorized legal destination
+  // immediately using an imperative transform: no React board rerender.
+  for(const token of info.members)
    motion.current?.preview(token.id,
     Number(token.x)+delta.dx,Number(token.y)+delta.dy);
+  for(const tool of info.tools||[])
+   motion.current?.preview('tool:'+tool.issue_id,
+    Number(tool.x)+delta.dx,Number(tool.y)+delta.dy);
   const playerGroup=!isDM&&
    info.members.length+(info.tools||[]).length>1;
   if(playerGroup)onGroupMovementPreview?.({
@@ -811,7 +841,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
    onMovementPreview?.(t,next.x,next.y,true,cancel);
-   if(!cancel||info.persistedDuringDrag)move(t,next.x,next.y);
+   if(!cancel||info.persistedDuringDrag)move(t,next.x,next.y,info.path||[]);
   }
   for(const tool of info.tools||[]){
    const next=cancel?{x:Number(tool.x),y:Number(tool.y)}:
