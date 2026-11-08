@@ -780,6 +780,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     path:info.path||[]
    })).catch(error=>console.warn('Group movement rejected',error)).finally(()=>{
     for(const member of info.members)motion.current?.clearPreview(member.id);
+    for(const tool of info.tools||[])motion.current?.clearPreview('tool:'+tool.issue_id);
     setToolPreview(old=>{
      const next={...old};
      for(const tool of info.tools||[])delete next[tool.issue_id];
@@ -798,7 +799,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    const next=cancel?{x:Number(tool.x),y:Number(tool.y)}:
     {x:Number(tool.x)+info.dx,y:Number(tool.y)+info.dy};
    onToolMovementPreview?.(tool,next.x,next.y,true,cancel);
-   if(!cancel)onToolPlace?.(tool.issue_id,next.x,next.y);
+   if(!cancel)Promise.resolve(onToolPlace?.(tool.issue_id,next.x,next.y))
+    .catch(error=>console.warn('Tool placement failed',error))
+    .finally(()=>motion.current?.clearPreview('tool:'+tool.issue_id));
   }
  }
  return <>
