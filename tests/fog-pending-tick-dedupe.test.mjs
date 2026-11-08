@@ -42,7 +42,7 @@ test('pending revisions are isolated by map and confirmed RPCs still dedupe old 
 
 test('the hook stores pending ticks and clears them after a confirmed response or cleanup',()=>{
  const source=readFileSync(new URL('../src/useAuthorizedMapFog.js',import.meta.url),'utf8');
- assert.match(source,/pendingTick\.current=\{/u);
+ assert.match(source,/pendingTick\.current=Number\.isSafeInteger/u);
  // The ternary writes a structured pending revision when notifications are valid.
  assert.match(source,/\{mapId,revision,fogEnforced:tick\.fog_enforced\}/u);
  assert.match(source,/pendingTick\.current=null;\s*setFrame\(previous=>retainFogSnapshot/u);
