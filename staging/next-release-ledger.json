@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-08",
   "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-  "releaseBranch": "stage/supabase-multiplayer-performance-2026-11-08",
+  "releaseBranch": null,
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -147,15 +147,15 @@
     },
     {
       "name": "stage/player-remote-reconciliation-2026-11-08",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-      "note": "Player-side token continuity: timestamp-aware RLS/Realtimes, settled remote final positions, stable token/monitor refs, immediate first fog authorized fetch, eager token artwork. No database migration or production deploy."
+      "note": "Player-side token continuity: timestamp-aware RLS/Realtimes, settled remote final positions, stable token/monitor refs, immediate first fog authorized fetch, eager token artwork. No database migration or production deploy. Included in designer-authorized combined PR #51 production release. Manual multiplayer performance acceptance remains outstanding."
     },
     {
       "name": "stage/supabase-multiplayer-performance-2026-11-08",
-      "status": "in-progress",
+      "status": "released",
       "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-      "note": "Stacked onto player-remote-reconciliation staging PR #50. Authorization-scoped single-flight request coordinator, targeted tool refreshes, subscription cleanup, read-only Supabase performance audit. No production SQL/migrations, merges, preview or Vercel deployment. CI/browser stress gates pending."
+      "note": "Stacked onto player-remote-reconciliation staging PR #50. Authorization-scoped single-flight request coordinator, targeted tool refreshes, subscription cleanup, read-only Supabase performance audit. No production SQL/migrations, merges, preview or Vercel deployment. CI/browser stress gates pending. Included in designer-authorized combined PR #51 production release. Manual multiplayer performance acceptance remains outstanding."
     }
   ],
   "features": [
@@ -394,10 +394,10 @@
       "sources": [
         "stage/player-remote-reconciliation-2026-11-08"
       ],
-      "status": "staged",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [],
-      "verification": "Regression tests for stale authorized snapshot timestamps, current/old RLS motion, canceled quiet timers, smooth final retarget, newer observer packet preemption and expiry. GitHub Actions CI/build, CodeQL and two-browser DM/player real-world testing still required."
+      "verification": "Regression tests for stale authorized snapshot timestamps, current/old RLS motion, canceled quiet timers, smooth final retarget, newer observer packet preemption and expiry. GitHub Actions CI/build, CodeQL and two-browser DM/player real-world testing still required. Included in PR #51 release with CI/security gates; live DM/player behavioral and p95 performance verification remains required."
     },
     {
       "id": "player-fog-visual-continuity-fast-reauthorization",
@@ -405,10 +405,10 @@
       "sources": [
         "stage/player-remote-reconciliation-2026-11-08"
       ],
-      "status": "staged",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [],
-      "verification": "No server trust, RLS or collision change. Pending fog token revocation remains fail-closed and may still temporarily hide NPCs during genuine new visibility revisions. Tests cover immediate fog scheduler and stable sprite/monitor bindings; CodeQL and actual player-side testing required."
+      "verification": "No server trust, RLS or collision change. Pending fog token revocation remains fail-closed and may still temporarily hide NPCs during genuine new visibility revisions. Tests cover immediate fog scheduler and stable sprite/monitor bindings; CodeQL and actual player-side testing required. Included in PR #51 release with CI/security gates; live DM/player behavioral and p95 performance verification remains required."
     },
     {
       "id": "viewer-scoped-campaign-refresh-coordinator",
@@ -416,10 +416,10 @@
       "sources": [
         "stage/supabase-multiplayer-performance-2026-11-08"
       ],
-      "status": "in-progress",
-      "releaseReady": false,
+      "status": "released",
+      "releaseReady": true,
       "databaseDependencies": [],
-      "verification": "Unit tests for same-flight sharing, cross-user/map isolation, invalidation and out-of-order responses. Existing fog/movement/collision regression suite, GitHub CI, CodeQL, DM/player fog-on/off and 2/4/6-10 client stress matrix still required."
+      "verification": "Unit tests for same-flight sharing, cross-user/map isolation, invalidation and out-of-order responses. Existing fog/movement/collision regression suite, GitHub CI, CodeQL, DM/player fog-on/off and 2/4/6-10 client stress matrix still required. Included in PR #51 release with CI/security gates; live DM/player behavioral and p95 performance verification remains required."
     },
     {
       "id": "targeted-campaign-tool-realtime-refresh",
@@ -427,10 +427,10 @@
       "sources": [
         "stage/supabase-multiplayer-performance-2026-11-08"
       ],
-      "status": "in-progress",
-      "releaseReady": false,
+      "status": "released",
+      "releaseReady": true,
       "databaseDependencies": [],
-      "verification": "Source regression tests + full CI and live multiuser tool, mounts, item leases, RLS revocation, and reconnect acceptance pending."
+      "verification": "Source regression tests + full CI and live multiuser tool, mounts, item leases, RLS revocation, and reconnect acceptance pending. Included in PR #51 release with CI/security gates; live DM/player behavioral and p95 performance verification remains required."
     }
   ],
   "databaseDependencies": [
@@ -599,41 +599,34 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-    "releaseBranch": "stage/supabase-multiplayer-performance-2026-11-08",
-    "outstandingBranches": [
-      "stage/player-remote-reconciliation-2026-11-08",
-      "stage/supabase-multiplayer-performance-2026-11-08"
-    ],
-    "stagePolicy": "Staging only. PR #50 must be preserved and this performance branch integrated in a single designer-authorized coordinated release. No production changes, SQL application, paid database branches or Vercel preview. Full CI/CodeQL and fog/collision/RLS multi-client stress test required.",
+    "releaseBranch": null,
+    "outstandingBranches": [],
+    "stagePolicy": "PR #51 includes all approved outstanding staging from PR #50 and PR #51. No other release-ready items remain in the ledger. No paid infrastructure. Continue multi-player live acceptance on existing test campaigns; never assume zero fog flash or a measured latency benefit without field results.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
-    "name": "Movement Rubber-Banding and Single-Write Trajectory",
+    "name": "Player Movement Continuity and Multiplayer Request Coordination",
     "date": "2026-11-08",
     "approvedPullRequests": [
-      49
+      51
     ],
-    "includedStagedPullRequests": [],
-    "status": "released-production",
-    "productionCommit": "26765915deac294e154d1aeac05b23496d76de32",
-    "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
-    "sourceBranch": "stage/movement-latency-rubberband-2026-11-08",
+    "includedStagedPullRequests": [
+      50
+    ],
+    "status": "release-approved-for-production",
+    "productionCommit": null,
+    "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+    "sourceBranch": "stage/supabase-multiplayer-performance-2026-11-08",
     "priorRelease": {
       "approvedPullRequests": [
-        48
+        49
       ],
-      "productionCommit": "92f982ce23dcda706032c3abb235a84233324578"
+      "productionCommit": "26765915deac294e154d1aeac05b23496d76de32"
     },
-    "frontendSourceSha": "b5ce349b0a7413b711c5db377ac7c03fab1a83c9",
-    "databaseDependencies": [
-      {
-        "name": "world_runtime_single_write_trajectory",
-        "appliedVersion": "20261108055943",
-        "status": "applied-production"
-      }
-    ],
+    "databaseDependencies": [],
     "edgeFunctionDependencies": [],
-    "paidInfrastructure": false
+    "paidInfrastructure": false,
+    "notes": "One designer-approved main merge and one Vercel deployment. The merge commit is not knowable before GitHub merges; verify against Vercel after release. No new production SQL or Edge Function changes. Manual 2/4/6–10 player and 10/50/100 token stress tests are pending."
   },
   "releaseHistory": [
     {
@@ -716,6 +709,22 @@
       ],
       "paidInfrastructure": false,
       "notes": "Designer-approved one main merge; database migration verified before frontend deploy. Manual DM/player browser stress testing outstanding."
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Player Movement Continuity and Multiplayer Request Coordination",
+      "pullRequests": [
+        51
+      ],
+      "includedStagedPullRequests": [
+        50
+      ],
+      "sourceBranch": "stage/supabase-multiplayer-performance-2026-11-08",
+      "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+      "productionCommit": null,
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Single main-merge release; source includes PR #50 and #51, zero new SQL migrations or Edge changes. Exact merge/deployment SHA verified separately. Browser and multiplayer acceptance not yet measured."
     }
   ],
   "databaseReleaseVersion": "20261108031754"
