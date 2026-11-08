@@ -13,6 +13,7 @@ on:
       - 'eslint.config.mjs'
       - 'package.json'
       - '.github/workflows/codeql.yml'
+      - 'docs/github-ci-codeql-build-validation-step6-2026-11-09.md'
       - '.github/workflows/staging-movement-validation.yml'
   workflow_dispatch:
 
