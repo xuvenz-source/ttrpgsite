@@ -15,7 +15,7 @@ const epoch='00000000-0000-4000-8000-000000000004';
 const grant=(piece=owner,nodes=[[0,0,5],[1,0,4],[0,1,1],[1,1,0]])=>({
  version:1,mapId:map,pieceId:piece,kind:'token',origin:[0,0],
  gridWidth:20,gridHeight:20,visibilityRevision:8,environmentRevision:5,
- collisionEnabled:true,nodes
+ collisionEnabled:true,footprint:[1,1],nodes
 });
 
 test('opaque navigation validates only direction bits, never hidden geometry',()=>{
@@ -220,4 +220,96 @@ test('committed coordinate changes re-center the cached grant rather than strand
   'old origin must never reuse the new graph');
  assert.equal(store.routeApproved(map,'token',owner,{x:1,y:0},[{dx:1,dy:0}]),true);
  store.dispose();
+});
+
+test('confirmed sight changes clip revoked edges without invalidating valid active movement',async()=>{
+ let calls=0,serverRev=8;
+ const db={rpc:async()=>{calls++;return {data:{
+  ...grant(),visibilityRevision:serverRev
+ },error:null}}};
+ const store=createAuthorizedNavigation({db});
+ const frame=(revision,visible=[0,1,20,21],environmentRevision=5)=>({
+  mapId:map,protocolVersion:2,deltaProtocolVersion:1,epoch,sequence:revision,
+  revision,width:20,height:20,enabled:true,partyShared:false,
+  collisionEnabled:true,navigationEnvironmentRevision:environmentRevision,
+  visible,explored:[0,1,2,20,21]
+ });
+ assert.equal(store.adoptFrame(map,frame(8)),true);
+ const authority=store.authority(map);
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:1,y:0}),true);
+ serverRev=9;
+ assert.equal(store.adoptFrame(map,frame(9,[0,1,2,20,21])),true);
+ assert.equal(store.authority(map),authority);
+ assert.equal(store.routeApproved(map,'token',owner,{x:0,y:0},[{dx:1,dy:0}]),true);
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:1,y:0}),true);
+ assert.equal(calls,1,'sight expansion alone must not issue new navigation RPC');
+ serverRev=10;
+ assert.equal(store.adoptFrame(map,frame(10,[0,20,21])),true);
+ assert.equal(store.authority(map),authority);
+ assert.equal(store.hasGrant(map,'token',owner),true,'preserve approved graph as a clipped subset');
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:1,y:0}),false);
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:0,y:1}),true);
+ assert.equal(store.routeApproved(map,'token',owner,{x:0,y:0},
+  [{dx:1,dy:0}]),false,'revoked endpoint cannot be committed');
+ assert.equal(store.routeApproved(map,'token',owner,{x:0,y:0},
+  [{dx:1,dy:0},{dx:1,dy:1}]),true,
+  'already authorized past legs may drop out of sight as a viewer moves');
+ store.dispose();
+});
+
+test('doors, scene versions and pending fog revoke an active movement grant',async()=>{
+ const db={rpc:async()=>({data:grant(),error:null})};
+ const store=createAuthorizedNavigation({db});
+ const frame=(revision,sceneRevision,collision=true)=>({
+  mapId:map,protocolVersion:2,epoch,revision,
+  width:20,height:20,enabled:true,partyShared:false,
+  collisionEnabled:collision,navigationEnvironmentRevision:sceneRevision,
+  visible:[0,1,20,21],explored:[0,1,20,21]
+ });
+ assert.equal(store.adoptFrame(map,frame(8,5)),true);
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
+ const before=store.authority(map);
+ assert.equal(store.adoptFrame(map,frame(9,6)),true);
+ assert.notEqual(store.authority(map),before,
+  'published door or wall edit changes the authoritative scene version');
+ assert.equal(store.hasGrant(map,'token',owner),false);
+ assert.equal(store.adoptFrame(map,frame(10,6,false)),true);
+ assert.equal(store.hasGrant(map,'token',owner),false);
+ assert.equal(store.adoptFrame(map,{
+  ...frame(11,6,false),visible:[],displayVisibleDuringRefresh:[0,1]
+ }),false,'pending fog cannot mint or keep movement permission');
+ assert.equal(store.authority(map),null);
+ assert.equal(await store.ensure(map,'token',owner),null);
+ store.dispose();
+});
+
+test('player role loss or RLS token removal evicts just that piece',async()=>{
+ const mapFrame={mapId:map,protocolVersion:2,epoch,revision:8,
+  width:20,height:20,enabled:true,partyShared:false,
+  collisionEnabled:true,navigationEnvironmentRevision:5,
+  visible:[0,1,20,21]};
+ const db={rpc:async(_fn,args)=>({data:grant(args.p_piece),error:null})};
+ const store=createAuthorizedNavigation({db});
+ store.adoptFrame(map,mapFrame);
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
+ assert.ok(await store.ensure(map,'token',peer,{x:0,y:0}));
+ assert.equal(store.size,2);
+ store.retainPermitted(map,new Set([map+':token:'+owner]));
+ assert.equal(store.hasGrant(map,'token',peer),false);
+ assert.equal(store.hasGrant(map,'token',owner),true);
+ store.dispose();
+});
+
+test('board cancels revoked live gestures and clears server previews without saving',()=>{
+ const board=source('src/BattlemapBoard.jsx');
+ const app=source('src/TabletopApp.jsx');
+ assert.match(board,/useLayoutEffect\(\(\)=>\{[\s\S]*?navigation\.adoptFrame\(map\.id,fogFrame\)/);
+ assert.match(board,/authority===gesture\.navigationAuthority/);
+ assert.match(board,/navigation\.routeApproved/);
+ assert.match(board,/navigation\.canOccupy/);
+ assert.match(board,/drag\.current=null/);
+ assert.match(board,/movementCancelHandler\.current\?\.\(/);
+ assert.match(app,/onMovementCancel=\{\(\{mapId,tokenIds,toolIssueIds\}\)=>/);
+ assert.match(app,/navigationStore\.retainPermitted/);
 });
