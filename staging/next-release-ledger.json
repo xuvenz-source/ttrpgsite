@@ -143,7 +143,7 @@
       "name": "stage/movement-latency-rubberband-2026-11-08",
       "status": "staged",
       "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
-      "note": "First latency/rubber-band mitigation: remote handoff, no unnecessary React state during token drag, and one queued secure observer RPC per piece. Backend single-write route refactor requires a separately reviewed SQL candidate; no DB or production change."
+      "note": "Consolidated draft PR #49 includes remote observer handoff, bounded secure preview RPC queue, no unnecessary token-drag React state, and an UNAPPLIED full route collision single-write SQL candidate. Merge only with approved Supabase migration and combined green CI."
     }
   ],
   "features": [
@@ -365,14 +365,16 @@
     },
     {
       "id": "single-write-trajectory-server-redesign",
-      "description": "Candidate next-stage backend refactor: validate all path waypoints, actor permissions, footprint sweeps and fog/observer rules without multiple intermediate UPDATE/Realtimes; persist one final authorized position per piece in a single transaction.",
+      "description": "Server-validated full bent-path collision for tokens and tools with one final atomic group UPDATE rather than one DB write per waypoint; same SECURITY INVOKER/RLS RPC and DM-only override, private trigger-level validator, no player-visible wall data.",
       "sources": [
         "stage/movement-latency-rubberband-2026-11-08"
       ],
-      "status": "planned",
-      "releaseReady": false,
-      "databaseDependencies": [],
-      "verification": "Not implemented. Must preserve existing SECURITY INVOKER/RLS and collision guarantees, produce a separately reviewed SQL candidate and receive release approval before any Supabase change."
+      "status": "staged",
+      "releaseReady": true,
+      "databaseDependencies": [
+        "world_runtime_single_write_trajectory"
+      ],
+      "verification": "Staged SQL candidate and static regression tests, with GitHub build/audit/Edge/CodeQL required. SQL is UNAPPLIED and not compiled against PostgreSQL; coordinated live Supabase migration, installed-trigger/grant audit and multi-browser DM/player collision/fog testing are mandatory before claiming release success."
     }
   ],
   "databaseDependencies": [
@@ -504,6 +506,15 @@
       "dependsOn": "campaign_sheet_inventory_collaboration + campaign_tool_item_collaboration",
       "notes": "Approved production migration applied atomically and verified installed RPC + scoped grants + grid first-fit. Frontend PR remains unmerged until full CI/security checks and one Vercel release.",
       "appliedVersion": "20261108052335"
+    },
+    {
+      "name": "world_runtime_single_write_trajectory",
+      "file": "staging/sql-candidates/world_runtime_single_write_trajectory.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "world_runtime_collision_and_group_move + world_runtime_atomic_trajectory (applied 20261108031754)",
+      "notes": "Single route RPC replaces per-waypoint UPDATEs, preserving RLS via existing move_map_group; two existing trigger functions validate every bent leg with a private revoked-execute helper. Must be converted to versioned migration and applied ONLY with designer-approved production release. If SQL compile or validation fails, BLOCK entire combined release rather than silently omit."
     }
   ],
   "edgeFunctionDependencies": [
@@ -534,7 +545,7 @@
     "outstandingBranches": [
       "stage/movement-latency-rubberband-2026-11-08"
     ],
-    "stagePolicy": "Staging only. Ship completed movement visual handoff + bounded preview RPC queue only when designer explicitly approves a production release; complete combined CI/CodeQL and audit any other outstanding staging. Server one-write route redesign remains planned and must not be silently treated as complete.",
+    "stagePolicy": "Staging only. Include BOTH movement visual-handoff/preview coalescing and server one-write trajectory redesign in the next designer-approved single production release, after consolidated CI/CodeQL, approved existing Supabase migration before frontend, and no paid preview. BLOCK if SQL cannot compile/permissions fail; never silently omit either staged feature.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
