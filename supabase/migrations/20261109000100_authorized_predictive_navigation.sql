@@ -66,7 +66,8 @@ BEGIN
  FOR affected IN
   SELECT DISTINCT t.map_id FROM public.map_tokens t
   JOIN forge_visibility.map_rules r ON r.map_id=t.map_id
-  WHERE t.character_id=NEW.id AND (r.collision_enforced OR r.fog_enforced)
+  WHERE t.character_id=NEW.id AND t.owner_id IS NOT NULL
+   AND (r.collision_enforced OR r.fog_enforced)
  LOOP
   PERFORM forge_visibility.bump_navigation_permission_generation(affected.map_id,true);
  END LOOP;
@@ -83,13 +84,14 @@ CREATE OR REPLACE FUNCTION forge_visibility.tick_navigation_token_permissions()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $token$
 BEGIN
- IF OLD.npc_values IS DISTINCT FROM NEW.npc_values OR
+ IF (OLD.owner_id IS NOT NULL OR NEW.owner_id IS NOT NULL) AND
+    (OLD.npc_values IS DISTINCT FROM NEW.npc_values OR
     OLD.owner_id IS DISTINCT FROM NEW.owner_id OR
     OLD.character_id IS DISTINCT FROM NEW.character_id OR
     OLD.visible IS DISTINCT FROM NEW.visible OR
     OLD.span_x IS DISTINCT FROM NEW.span_x OR
     OLD.span_y IS DISTINCT FROM NEW.span_y OR
-    OLD.map_id IS DISTINCT FROM NEW.map_id THEN
+    OLD.map_id IS DISTINCT FROM NEW.map_id) THEN
   PERFORM forge_visibility.bump_navigation_permission_generation(NEW.map_id,false);
   IF OLD.map_id IS DISTINCT FROM NEW.map_id THEN
    PERFORM forge_visibility.bump_navigation_permission_generation(OLD.map_id,false);
@@ -111,11 +113,13 @@ CREATE OR REPLACE FUNCTION forge_visibility.tick_navigation_tool_permissions()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $tool$
 BEGIN
- IF OLD.state IS DISTINCT FROM NEW.state OR
+ IF (OLD.owner_id IS NOT NULL OR NEW.owner_id IS NOT NULL OR
+     OLD.party_shared=true OR NEW.party_shared=true) AND
+    (OLD.state IS DISTINCT FROM NEW.state OR
     OLD.config IS DISTINCT FROM NEW.config OR
     OLD.owner_id IS DISTINCT FROM NEW.owner_id OR
     OLD.party_shared IS DISTINCT FROM NEW.party_shared OR
-    OLD.held_by_token_id IS DISTINCT FROM NEW.held_by_token_id THEN
+    OLD.held_by_token_id IS DISTINCT FROM NEW.held_by_token_id) THEN
   PERFORM forge_visibility.bump_navigation_permission_generation(NEW.map_id,true);
  END IF;
  RETURN NEW;
