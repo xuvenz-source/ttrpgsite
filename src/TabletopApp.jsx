@@ -57,6 +57,7 @@ import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
+import {sharedApprovedPath} from './DragCollisionGuard.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
@@ -1057,8 +1058,19 @@ export default function TabletopApp(){
   const queue=createLatestOnlyPreviewQueue({
    send:packet=>transport.send(packet),
    onResult:(packet,{data,error})=>{
-    if(error)console.warn('Secure movement preview unavailable',error.message);
-    else if(data===true&&packet.kind==='token')latestOwnFogRefresh.current?.();
+    if(error){console.warn('Secure movement preview unavailable',error.message);return}
+    if(data!==true)return;
+    // A player's own token/tool may move visually only to a server grant.
+    if(!isDM&&packet.params?.p_map===selectedMap){
+     const {p_piece,p_x,p_y}=packet.params;
+     if(packet.kind==='token'&&latestMovementAccess.current.tokens?.some(t=>
+      t.id===p_piece&&t.map_id===selectedMap&&t.owner_id===user))
+      remoteMotion.current?.preview(p_piece,p_x,p_y);
+     if(packet.kind==='tool'&&latestMovementAccess.current.toolPlacements?.some(t=>
+      t.issue_id===p_piece&&t.map_id===selectedMap))
+      remoteMotion.current?.preview('tool:'+p_piece,p_x,p_y);
+    }
+    if(packet.kind==='token')latestOwnFogRefresh.current?.();
    },
    onError:(_,error)=>console.warn('Secure movement preview unavailable',error)
   });
@@ -1069,7 +1081,7 @@ export default function TabletopApp(){
    if(movementSessionTransport.current===transport)movementSessionTransport.current=null;
    transport.dispose();
   };
- },[db,selectedMap]);
+ },[db,selectedMap,isDM,user]);
  // Short observer-quiet window before converging the preview toward a final
  // authorized coordinate. This prevents a previous commit from rewinding
  // another player's currently active drag.
@@ -2340,12 +2352,70 @@ export default function TabletopApp(){
    throw Error('Unsupported hotbar command. Use /builder, /spell, /roll, /macro, /em or /say.');
   }catch(e){fail(e)}
  }
+ // Player drags and keyboard moves use exactly the server-approved
+ // waypoints. Never persist/paint a speculative destination through a wall.
+ async function commitServerApprovedPlayerMove(token,wantedX,wantedY){
+  const mapId=selectedMap,campaignId=activeId,id=token?.id;
+  if(!id||!mapId||!campaignId||!user||
+     token.map_id!==mapId||token.owner_id!==user||
+     playerMapId!==mapId||movementPending.current.has(id))return;
+  const queue=movementPreviewQueue.current,
+   transport=movementSessionTransport.current;
+  if(!queue||!transport)return;
+  const pending={mapId,campaignId,x:Number(token.x),y:Number(token.y),
+   baseX:Number(token.x),baseY:Number(token.y),saving:true,confirmed:false};
+  movementPending.current.set(id,pending);
+  try{
+   const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
+   if(seq===null)throw Error('Invalid movement sequence');
+   liveMovementSeq.current=seq;
+   queue.enqueue(id,{kind:'token',params:{
+    p_map:mapId,p_kind:'token',p_piece:id,p_x:wantedX,p_y:wantedY,
+    p_seq:seq,p_ignore_collision:false
+   }});
+   await queue.drain(id);
+   if(tokenContextRef.current.mapId!==mapId||
+      tokenContextRef.current.campaignId!==campaignId||
+      tokenContextRef.current.userId!==user||
+      movementPending.current.get(id)!==pending)return;
+   const approved=transport.getApprovedPath(mapId,'token',id);
+   if(!approved.length)return;
+   const tail=approved.at(-1);
+   if(tail.x===pending.baseX&&tail.y===pending.baseY)return;
+   const steps=movementPathDeltas(approved.map(point=>({
+    dx:point.x-pending.baseX,dy:point.y-pending.baseY
+   })));
+   if(!steps?.length)throw Error('No permitted movement trajectory');
+   // The trusted final transaction independently checks every swept wall.
+   const {data,error}=await db.rpc('commit_map_trajectory',{
+    p_map:mapId,p_token_ids:[id],p_tool_issue_ids:[],
+    p_steps:steps,p_ignore_collision:false
+   });
+   if(error)throw error;
+   const result=data?.tokens?.find(row=>row.id===id);
+   if(!result||Number(result.x)!==tail.x||Number(result.y)!==tail.y)
+    throw Error('Server trajectory and preview endpoints did not match');
+   pending.x=Number(result.x);pending.y=Number(result.y);pending.confirmed=true;
+   setTokens(rows=>rows.map(row=>row.id===id?
+    {...row,x:pending.x,y:pending.y}:row));
+   ++tokenRefreshSeq.current;
+   await refreshTokens(true);
+  }catch(error){
+   fail(error);
+   ++tokenRefreshSeq.current;
+   void refreshTokens(true);
+  }finally{
+   if(movementPending.current.get(id)===pending)
+    movementPending.current.delete(id);
+   clearMapMovementPreview(mapId,[id],[]);
+  }
+ }
  function queueTokenMove(token,x,y){
   // DM player-preview movement is simulated; never persist it even if another
   // caller attempts to use the normal movement queue while previewing.
   if(isDM&&mapSettingEditor.previewing)return;
   if(!token||!activeId||!selectedMap||token.map_id!==selectedMap)return;
-  if(!isDM&&(token.owner_id!==user||playerMapId!==selectedMap))return;
+  if(!isDM){void commitServerApprovedPlayerMove(token,x,y);return}
   const id=token.id;
   let pending=movementPending.current.get(id);
   if(!pending||pending.mapId!==selectedMap||pending.campaignId!==activeId){
