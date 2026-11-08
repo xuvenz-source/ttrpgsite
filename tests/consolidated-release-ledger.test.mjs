@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const raw=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ledger=JSON.parse(raw('staging/next-release-ledger.json'));
-test('the next release is a consolidated staging branch, not a Vercel deployment',()=>{
- assert.match(ledger.releaseBranch,/^stage\//);
+test('the release ledger only names a staging branch when unreleased work remains',()=>{
+ if(ledger.upcomingRelease.outstandingBranches.length)
+  assert.match(ledger.releaseBranch,/^stage\//);
+ else assert.equal(ledger.releaseBranch,null);
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
  const ready=ledger.features.filter(x=>['included','released'].includes(x.status));
