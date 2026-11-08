@@ -10,6 +10,26 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const integer=Number.isSafeInteger;
 const keyOf=(mapId,kind,id)=>mapId+':'+kind+':'+id;
 
+/** Stable only while the SAME server-authorized visible cells, scene and
+ * protocol epoch remain in force. Revisions with identical permission data
+ * must not trigger another expensive 625-node navigation grant. */
+export function navigationAuthorizationKey(frame){
+ if(!frame||!UUID.test(String(frame.mapId||''))||
+  frame.protocolVersion!==2||
+  !integer(frame.navigationEnvironmentRevision)||
+  frame.navigationEnvironmentRevision<0||
+  typeof frame.enabled!=='boolean'||
+  typeof frame.collisionEnabled!=='boolean'||
+  typeof frame.partyShared!=='boolean'||
+  !integer(frame.width)||!integer(frame.height)||
+  !Array.isArray(frame.visible)||
+  (frame.deltaProtocolVersion===1&&!UUID.test(String(frame.epoch||''))))return null;
+ return JSON.stringify([frame.epoch||null,frame.width,frame.height,
+  frame.navigationEnvironmentRevision,frame.collisionEnabled,
+  frame.enabled,frame.partyShared,frame.visible]);
+}
+
+
 export function normalizeAuthorizedNavigation(raw,mapId,kind,id,receivedAt=Date.now()){
  if(!raw||raw.version!==1||raw.mapId!==mapId||raw.kind!==kind||
   raw.pieceId!==id||!UUID.test(String(mapId))||!UUID.test(String(id))||
@@ -74,15 +94,16 @@ export function navigationRouteApproved(grant,origin,offsets){
  return count>0;
 }
 
-/** Caches only validated grants for the current viewer revision. Concurrent
- * requests collapse; map/revision changes revoke old grants immediately. */
+/** Caches validated grants by the viewer's effective authorization footprint,
+ * not by noisy per-viewer movement revision ticks. */
 export function createAuthorizedNavigation({db,clock=Date.now}){
  const grants=new Map(),inFlight=new Map(),revisions=new Map();
  let disposed=false;
  function validGrant(mapId,kind,id){
   const key=keyOf(mapId,kind,id),grant=grants.get(key);
-  if(!grant||grant.expiresAt<=clock()||
-   (revisions.has(mapId)&&grant.revision!==revisions.get(mapId))){
+  const revision=revisions.get(mapId);
+  if(!revision||!grant||grant.expiresAt<=clock()||
+   grant.authorizationKey!==revision.authorizationKey){
    grants.delete(key);return null;
   }
   return grant;
@@ -95,15 +116,19 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
   const key=keyOf(mapId,kind,id);
   if(inFlight.has(key))return inFlight.get(key);
   const expectedRevision=revisions.get(mapId);
+  if(!expectedRevision)return null; // Never use unversioned visibility as a grant.
   const task=(async()=>{
    const {data,error}=await db.rpc('get_authorized_map_navigation',{
     p_map:mapId,p_kind:kind,p_piece:id});
    if(error)throw error;
    const grant=normalizeAuthorizedNavigation(data,mapId,kind,id,clock());
    if(!grant)throw Error('Invalid authorized navigation grant');
-   if(!disposed&&revisions.get(mapId)===expectedRevision&&
-    (expectedRevision===undefined||grant.revision===expectedRevision)){
-    grants.set(key,grant);return grant;
+   const current=revisions.get(mapId);
+   if(!disposed&&current&&
+    current.authorizationKey===expectedRevision.authorizationKey&&
+    current.revision===grant.revision){
+    const stored={...grant,authorizationKey:current.authorizationKey};
+    grants.set(key,stored);return stored;
    }
    return null;
   })().finally(()=>{if(inFlight.get(key)===task)inFlight.delete(key)});
@@ -113,12 +138,34 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
  return {
   ensure,
   warm(mapId,kind,id){void ensure(mapId,kind,id).catch(()=>{})},
-  setRevision(mapId,revision){
-   if(!UUID.test(String(mapId))||!integer(revision)||revision<0)return;
-   if(revisions.get(mapId)===revision)return;
-   revisions.set(mapId,revision);
-   for(const [key,grant] of grants)
-    if(grant.mapId===mapId)grants.delete(key);
+  // Passing a stable key from navigationAuthorizationKey() keeps an existing
+  // grant across harmless visibility revision increments. Two-argument calls
+  // remain strict for older consumers and tests.
+  setRevision(mapId,revision,key=undefined){
+   if(!UUID.test(String(mapId)))return;
+   const revoke=()=>{
+    revisions.delete(mapId);
+    for(const [id,grant] of grants)
+     if(grant.mapId===mapId)grants.delete(id);
+    for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
+   };
+   if(!integer(revision)||revision<0||key===null){revoke();return;}
+   const authorizationKey=key===undefined?'revision:'+revision:key;
+   if(typeof authorizationKey!=='string'||!authorizationKey){revoke();return;}
+   const previous=revisions.get(mapId);
+   if(previous&&revision<previous.revision){revoke();return;}
+   revisions.set(mapId,{revision,authorizationKey});
+   if(previous?.authorizationKey===authorizationKey)return;
+   for(const [id,grant] of grants)
+    if(grant.mapId===mapId)grants.delete(id);
+   for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
+  },
+  revoke(mapId){
+   if(!UUID.test(String(mapId)))return;
+   revisions.delete(mapId);
+   for(const [id,grant] of grants)
+    if(grant.mapId===mapId)grants.delete(id);
+   for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
   },
   allows(mapId,kind,id,from,to){
    return navigationAllows(validGrant(mapId,kind,id),from,to);
