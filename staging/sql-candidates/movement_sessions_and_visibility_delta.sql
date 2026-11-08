@@ -25,6 +25,8 @@ create table if not exists forge_visibility.movement_sessions (
  token_visible boolean not null default true,
  base_updated_at timestamptz,
  base_tool_revision bigint,
+ character_id uuid,
+ character_updated_at timestamptz,
  last_sent timestamptz,
  expires_at timestamptz not null,
  unique (actor_id,piece_id)
@@ -59,6 +61,7 @@ declare
  attrs jsonb:='{}'::jsonb;scene jsonb;environment_revision bigint:=0;
  rules_updated timestamptz;collision_on boolean:=false;shown boolean:=true;
  base_updated timestamptz;tool_rev bigint;new_id uuid;
+ character_id uuid;character_updated timestamptz;
 begin
  if actor is null or p_map is null or p_piece is null or
     p_kind not in ('token','tool') or p_ignore_collision is null
@@ -80,9 +83,12 @@ begin
   shown:=row_token.visible;base_updated:=row_token.updated_at;
   attrs:=coalesce(row_token.npc_values,'{}'::jsonb);
   if row_token.character_id is not null then
-   select coalesce(c.field_values,'{}'::jsonb) into attrs
+   character_id:=row_token.character_id;
+   select coalesce(c.field_values,'{}'::jsonb),c.updated_at
+    into attrs,character_updated
    from public.characters c where c.id=row_token.character_id
     and c.campaign_id=m.campaign_id;
+   if not found then raise exception 'Character unavailable';end if;
   end if;
  else
   select t.* into row_tool from public.campaign_tool_issues t
@@ -117,12 +123,13 @@ begin
  actor_id,piece_id,kind,map_id,campaign_id,base_x,base_y,last_x,last_y,
  map_width,map_height,grid_size,span_x,span_y,scene,attributes,environment_revision,
  rules_updated_at,collision_enforced,ignore_collision,token_visible,
- base_updated_at,base_tool_revision,expires_at)
+ base_updated_at,base_tool_revision,character_id,character_updated_at,expires_at)
  values(actor,p_piece,p_kind,p_map,m.campaign_id,bx,by,bx,by,
  floor(m.width/m.grid_size),floor(m.height/m.grid_size),m.grid_size,
  fw,fh,scene,coalesce(attrs,'{}'::jsonb),environment_revision,
  rules_updated,collision_on,p_ignore_collision,shown,
- base_updated,tool_rev,clock_timestamp()+interval '6 seconds')
+ base_updated,tool_rev,character_id,character_updated,
+ clock_timestamp()+interval '6 seconds')
  returning id into new_id;
  return pg_catalog.jsonb_build_object('sessionId',new_id,'mapId',p_map,
   'kind',p_kind,'pieceId',p_piece);
@@ -171,13 +178,20 @@ begin
  if rule_stamp is distinct from s.rules_updated_at or
     coalesce(collision_on,false)<>s.collision_enforced then return false;end if;
  if s.kind='token' then
-  select t.map_id,t.campaign_id,t.x,t.y,t.owner_id,t.visible,t.updated_at
-   into t from public.map_tokens t where t.id=s.piece_id;
+  select t.map_id,t.campaign_id,t.x,t.y,t.owner_id,t.visible,t.updated_at,
+   t.character_id,t.span_x,t.span_y into t
+   from public.map_tokens t where t.id=s.piece_id;
   if not found or t.map_id is distinct from s.map_id or
    t.campaign_id is distinct from s.campaign_id or t.x<>s.base_x or
    t.y<>s.base_y or t.updated_at is distinct from s.base_updated_at or
+   t.character_id is distinct from s.character_id or
+   t.span_x is distinct from s.span_x or t.span_y is distinct from s.span_y or
    (not public.is_campaign_dm(s.campaign_id) and
     (t.owner_id is distinct from actor or t.visible is distinct from true))
+  then return false;end if;
+  if s.character_id is not null and
+   (select c.updated_at from public.characters c where c.id=s.character_id
+    and c.campaign_id=s.campaign_id) is distinct from s.character_updated_at
   then return false;end if;
  else
   select t.map_id,t.campaign_id,t.x,t.y,t.owner_id,t.party_shared,
