@@ -263,3 +263,11 @@
    board's initial scroll offset is centred without changing pan or zoom. */
 .mapscroll>.board-scroll-content{margin-inline:auto}
 
+
+/* An item's non-drag Move option remains usable in compact floating sheets. */
+.inventory-item-transfer{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.inventory-item-transfer-controls{display:flex;flex-wrap:wrap;align-items:end;gap:7px;
+ max-width:100%;min-width:0}
+.inventory-item-transfer-controls label{display:flex;flex-direction:column;gap:4px;
+ min-width:155px;max-width:100%;font-size:12px}
+.inventory-item-transfer-controls select{max-width:100%;min-width:155px}
