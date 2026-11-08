@@ -1,6 +1,7 @@
 // Trusted motion protocol v2: only the server validates and broadcasts
 // coordinates; this adapter never sends player-authored position broadcasts.
 // One session is cached per map piece and no per-waypoint scene data enters JS.
+import {movementDiagnostics} from './MovementDiagnostics.js';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function createAuthorizedMotionTransport({db}){
@@ -11,6 +12,7 @@ export function createAuthorizedMotionTransport({db}){
   if(disposed||!params||!['token','tool'].includes(params.p_kind)||
     !UUID.test(String(params.p_map||''))||
     !UUID.test(String(params.p_piece||'')))return {data:false,error:null};
+  const done=movementDiagnostics.begin('movement-preview-rpc');
   const key=keyOf(params);
   let state=sessions.get(key);
   if(!state||state.mapId!==params.p_map){
@@ -46,7 +48,7 @@ export function createAuthorizedMotionTransport({db}){
   }catch(error){
    if(sessions.get(key)===state)sessions.delete(key);
    return {data:false,error};
-  }
+  }finally{done()}
  }
  async function end(mapId,tokenIds=[],toolIssueIds=[]){
   for(const id of tokenIds)sessions.delete('token:'+id);
