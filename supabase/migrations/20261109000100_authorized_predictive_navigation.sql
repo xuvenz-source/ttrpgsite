@@ -276,10 +276,10 @@ BEGIN
  END IF;
  -- The full 60 ft radius is preauthorized once, NOT checked per pointer step.
  -- Do not expose a remote lookup origin parameter (would permit map probing).
- FOR gx IN pg_catalog.greatest(0,bx-12)..
-  pg_catalog.least(map_w-1,bx+12) LOOP
-  FOR gy IN pg_catalog.greatest(0,by-12)..
-   pg_catalog.least(map_h-1,by+12) LOOP
+ FOR gx IN GREATEST(0,bx-12)..
+  LEAST(map_w-1,bx+12) LOOP
+  FOR gy IN GREATEST(0,by-12)..
+   LEAST(map_h-1,by+12) LOOP
    IF NOT forge_visibility.navigation_position_observed(
     gx,gy,span_w,span_h,map_w,map_h,visible_cells,fog_on) THEN CONTINUE;END IF;
    mask:=0;
@@ -311,14 +311,14 @@ BEGIN
       -- Conservative broad-phase: only call the existing exact swept
       -- collision helper for segments intersecting the swept AABB.
       -- An epsilon-expansion prevents false negatives at shared boundaries.
-      IF pg_catalog.greatest(ax,ex)<
-           pg_catalog.least(gx,tx)-0.000001 OR
-         pg_catalog.least(ax,ex)>
-           pg_catalog.greatest(gx,tx)+span_w+0.000001 OR
-         pg_catalog.greatest(ay,ey)<
-           pg_catalog.least(gy,ty)-0.000001 OR
-         pg_catalog.least(ay,ey)>
-           pg_catalog.greatest(gy,ty)+span_h+0.000001
+      IF GREATEST(ax,ex)<
+           LEAST(gx,tx)-0.000001 OR
+         LEAST(ax,ex)>
+           GREATEST(gx,tx)+span_w+0.000001 OR
+         GREATEST(ay,ey)<
+           LEAST(gy,ty)-0.000001 OR
+         LEAST(ay,ey)>
+           GREATEST(gy,ty)+span_h+0.000001
       THEN CONTINUE;END IF;
       IF forge_visibility.swept_hits_segment(
            gx,gy,span_w,span_h,tx,ty,ax,ay,ex,ey) OR
