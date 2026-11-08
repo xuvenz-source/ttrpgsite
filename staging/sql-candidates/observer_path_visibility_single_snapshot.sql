@@ -119,10 +119,10 @@ declare
  fw double precision;fh double precision;attrs jsonb:='{}'::jsonb;
  token public.map_tokens%rowtype; tool public.campaign_tool_issues%rowtype;
  scene jsonb; obstacle jsonb;pts jsonb;a jsonb;b jsonb;i integer;
- recipient record; saw_old boolean;saw_new boolean; packet jsonb;
+ recipient record; packet jsonb;
  token_visible boolean:=true; accepted bigint;
  canonical_x integer;canonical_y integer;history record;
- route_steps integer;probe integer;probe_x double precision;probe_y double precision;
+ route_steps integer;probe integer;
 begin
  if actor is null or p_kind not in ('token','tool') or p_piece is null or
     p_seq is null or p_seq<=0 or p_seq>9000000000000000 or
