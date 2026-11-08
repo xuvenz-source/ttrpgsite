@@ -12,9 +12,14 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/player-remote-reconciliation-2026-11-08');
+ assert.equal(ledger.releaseBranch,'stage/supabase-multiplayer-performance-2026-11-08');
  assert.equal(ledger.productionBaseSha,'26765915deac294e154d1aeac05b23496d76de32');
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[
+  'stage/player-remote-reconciliation-2026-11-08',
+  ledger.releaseBranch
+ ]);
+ assert.ok(ledger.branches.some(x=>x.name===ledger.releaseBranch&&
+  x.status==='in-progress'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/player-remote-reconciliation-2026-11-08'&&x.status==='staged'));
  for(const id of ['player-authoritative-position-reconciliation',
@@ -42,7 +47,12 @@ test('release ledger records previous releases and pending authorized migrations
   /revoke all on function forge_visibility\.validate_piece_trajectory/);
  assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
   /^begin;|^commit;/m);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[
+  'stage/player-remote-reconciliation-2026-11-08',
+  ledger.releaseBranch
+ ]);
+ assert.ok(ledger.branches.some(x=>x.name===ledger.releaseBranch&&
+  x.status==='in-progress'));
  assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
   feature.status==='released'&&feature.releaseReady===true));
  assert.ok(ledger.branches.some(item=>item.name==='stage/world-runtime-movement-collision-fog-2026-11-08'&&item.status==='released'));
