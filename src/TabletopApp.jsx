@@ -287,7 +287,8 @@ export default function TabletopApp(){
    navigationStore.revoke(selectedMap);return;
   }
   navigationStore.setRevision(selectedMap,fog.frame.revision,
-   navigationAuthorizationKey(fog.frame));
+   navigationAuthorizationKey(fog.frame),
+   fog.frame.navigationEnvironmentRevision,fog.frame.collisionEnabled);
   for(const token of tokens)
    if(token.map_id===selectedMap&&token.owner_id===user&&token.visible!==false)
     navigationStore.warm(selectedMap,'token',token.id);
