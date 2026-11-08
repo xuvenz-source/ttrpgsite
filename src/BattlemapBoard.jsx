@@ -845,14 +845,33 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   }
   if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId);
+  const cancelServerPreview=()=>{
+   // An out-and-back drag can end at (0,0), but an earlier server preview
+   // still exists and may otherwise hold temporary fog sight for its TTL.
+   // A mere click must not create an unnecessary Supabase cleanup request.
+   if(!info.path?.length&&!info.persistedDuringDrag)return;
+   onMovementCancel?.({
+    mapId:map.id,tokenIds:info.members.map(t=>t.id),
+    toolIssueIds:(info.tools||[]).map(t=>t.issue_id)
+   });
+  };
   if(cancel){
+   for(const tool of info.tools||[])
+    motion.current?.clearPreview('tool:'+tool.issue_id);
    setPreview(old=>{
     const next={...old};
     for(const member of info.members)delete next[member.id];
     return next;
    });
+   setToolPreview(old=>{
+    const next={...old};
+    for(const tool of info.tools||[])delete next[tool.issue_id];
+    return next;
+   });
+   cancelServerPreview();
+   return;
   }
-  const atomicGroup=!cancel&&!!moveGroup&&
+  const atomicGroup=!!moveGroup&&
    (info.members.length+(info.tools||[]).length)>0;
   // Keep group tool sprites at the destination until the atomic RPC settles;
   // otherwise a slow round-trip would flash their old positions.
@@ -885,13 +904,16 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    for(const token of info.members)delete next[token.id];
    return next;
   });
-  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag){
+  if(info.dx===0&&info.dy===0&&!info.persistedDuringDrag){
    for(const member of info.members)motion.current?.clearPreview(member.id);
+   for(const tool of info.tools||[])
+    motion.current?.clearPreview('tool:'+tool.issue_id);
    setToolPreview(old=>{
     const next={...old};
     for(const tool of info.tools||[])delete next[tool.issue_id];
     return next;
    });
+   cancelServerPreview();
    return;
   }
   if(atomicGroup){
