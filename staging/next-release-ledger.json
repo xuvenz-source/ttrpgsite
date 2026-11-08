@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-08",
   "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-  "releaseBranch": "stage/player-remote-reconciliation-2026-11-08",
+  "releaseBranch": "stage/supabase-multiplayer-performance-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -150,6 +150,12 @@
       "status": "staged",
       "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
       "note": "Player-side token continuity: timestamp-aware RLS/Realtimes, settled remote final positions, stable token/monitor refs, immediate first fog authorized fetch, eager token artwork. No database migration or production deploy."
+    },
+    {
+      "name": "stage/supabase-multiplayer-performance-2026-11-08",
+      "status": "in-progress",
+      "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+      "note": "Stacked onto player-remote-reconciliation staging PR #50. Authorization-scoped single-flight request coordinator, targeted tool refreshes, subscription cleanup, read-only Supabase performance audit. No production SQL/migrations, merges, preview or Vercel deployment. CI/browser stress gates pending."
     }
   ],
   "features": [
@@ -403,6 +409,28 @@
       "releaseReady": true,
       "databaseDependencies": [],
       "verification": "No server trust, RLS or collision change. Pending fog token revocation remains fail-closed and may still temporarily hide NPCs during genuine new visibility revisions. Tests cover immediate fog scheduler and stable sprite/monitor bindings; CodeQL and actual player-side testing required."
+    },
+    {
+      "id": "viewer-scoped-campaign-refresh-coordinator",
+      "description": "Reduce duplicate in-flight token, monitor, encumbrance and fog RPC reads without caching completed authorized data; invalidate on revised sight and account/map changes, retain local immediate movement and stale-request protections.",
+      "sources": [
+        "stage/supabase-multiplayer-performance-2026-11-08"
+      ],
+      "status": "in-progress",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Unit tests for same-flight sharing, cross-user/map isolation, invalidation and out-of-order responses. Existing fog/movement/collision regression suite, GitHub CI, CodeQL, DM/player fog-on/off and 2/4/6-10 client stress matrix still required."
+    },
+    {
+      "id": "targeted-campaign-tool-realtime-refresh",
+      "description": "Selectively refresh issued tools/map placements/templates by changed Realtime table, coalesce overlapping event bursts, preserve optimistic tool movement and stable campaign-scoped subscriptions.",
+      "sources": [
+        "stage/supabase-multiplayer-performance-2026-11-08"
+      ],
+      "status": "in-progress",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Source regression tests + full CI and live multiuser tool, mounts, item leases, RLS revocation, and reconnect acceptance pending."
     }
   ],
   "databaseDependencies": [
@@ -571,11 +599,12 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
-    "releaseBranch": "stage/player-remote-reconciliation-2026-11-08",
+    "releaseBranch": "stage/supabase-multiplayer-performance-2026-11-08",
     "outstandingBranches": [
-      "stage/player-remote-reconciliation-2026-11-08"
+      "stage/player-remote-reconciliation-2026-11-08",
+      "stage/supabase-multiplayer-performance-2026-11-08"
     ],
-    "stagePolicy": "Stage only. Before a designer-approved next production release audit all pending PRs/branches and include all release-ready staged work in one main merge/one Vercel deployment. No new SQL, Edge Function, paid Supabase staging or preview. Confirm CI/CodeQL and real multiplayer fog-on/off tests.",
+    "stagePolicy": "Staging only. PR #50 must be preserved and this performance branch integrated in a single designer-authorized coordinated release. No production changes, SQL application, paid database branches or Vercel preview. Full CI/CodeQL and fog/collision/RLS multi-client stress test required.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
