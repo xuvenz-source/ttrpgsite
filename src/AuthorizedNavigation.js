@@ -1,3 +1,4 @@
+import {movementDiagnostics} from './MovementDiagnostics.js';
 /**
  * Server-issued, bounded navigation graph. It contains permitted edges, NEVER
  * source wall geometry or authorization to persist a final position.
@@ -102,6 +103,7 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
  function validGrant(mapId,kind,id){
   const key=keyOf(mapId,kind,id),grant=grants.get(key);
   const revision=revisions.get(mapId);
+  if(grant&&grant.expiresAt<=clock())movementDiagnostics.count('navigationGrantExpired');
   if(!revision||!grant||grant.expiresAt<=clock()||
    grant.authorizationKey!==revision.authorizationKey){
    grants.delete(key);return null;
@@ -112,14 +114,23 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
   if(disposed||!UUID.test(String(mapId))||!UUID.test(String(id))||
    !['token','tool'].includes(kind))return null;
   const exists=validGrant(mapId,kind,id);
-  if(exists)return exists;
+  if(exists){movementDiagnostics.count('navigationGrantCacheHit');return exists;}
   const key=keyOf(mapId,kind,id);
-  if(inFlight.has(key))return inFlight.get(key);
+  if(inFlight.has(key)){
+   movementDiagnostics.count('navigationGrantCoalesced');
+   return inFlight.get(key);
+  }
   const expectedRevision=revisions.get(mapId);
   if(!expectedRevision)return null; // Never use unversioned visibility as a grant.
+  movementDiagnostics.count('navigationGrantRequested');
   const task=(async()=>{
-   const {data,error}=await db.rpc('get_authorized_map_navigation',{
-    p_map:mapId,p_kind:kind,p_piece:id});
+   const finish=movementDiagnostics.begin('navigation-grant-rpc');
+   let response;
+   try{
+    response=await db.rpc('get_authorized_map_navigation',{
+     p_map:mapId,p_kind:kind,p_piece:id});
+   }finally{finish()}
+   const {data,error}=response;
    if(error)throw error;
    const grant=normalizeAuthorizedNavigation(data,mapId,kind,id,clock());
    if(!grant)throw Error('Invalid authorized navigation grant');
@@ -165,7 +176,12 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    if(previous&&revision<previous.revision){revoke();return;}
    revisions.set(mapId,{revision,authorizationKey,
     environmentRevision,collisionEnabled});
-   if(previous?.authorizationKey===authorizationKey)return;
+   if(previous?.authorizationKey===authorizationKey){
+    if(previous.revision!==revision)
+     movementDiagnostics.count('navigationRevisionReused');
+    return;
+   }
+   movementDiagnostics.count('navigationAuthorizationChanged');
    for(const [id,grant] of grants)
     if(grant.mapId===mapId)grants.delete(id);
    for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
