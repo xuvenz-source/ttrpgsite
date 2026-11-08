@@ -41,6 +41,14 @@ export function createLatestOnlyPreviewQueue({send,onResult=()=>{},onError=()=>{
    pump(key,entry);
    return true;
   },
+  // Drain all already enqueued server checks before a final token/group
+  // commit. Unlike cancel(), this retains accepted responses and lets the
+  // release use only coordinates actually validated by the server.
+  drain(key){
+   const entry=entries.get(key);
+   if(!entry||(!entry.busy&&!entry.latest))return Promise.resolve();
+   return new Promise(resolve=>entry.waiters.push(resolve));
+  },
   cancel(key){
    const entry=entries.get(key);
    if(!entry)return Promise.resolve();

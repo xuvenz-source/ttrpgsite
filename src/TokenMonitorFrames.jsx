@@ -6,7 +6,7 @@ import {TokenMonitors} from './TokenMonitors.jsx';
  * Frames stay in one shared stacking layer above all token artwork.
  */
 const TokenMonitorFrame=React.memo(function TokenMonitorFrame({
- token,remote,preview,config,fields,badge,cell,zoom,motionRuntime
+ token,remote,preview,config,fields,badge,cell,zoom,motionRuntime,concealed=false
 }){
  const p={...token,...remote,...preview};
  const nodeRef=useRef(null);
@@ -26,6 +26,7 @@ const TokenMonitorFrame=React.memo(function TokenMonitorFrame({
   style={{
    left:Number(p.x)*cell,top:Number(p.y)*cell,
    width:cell*Number(p.span_x??1),height:cell*Number(p.span_y??1),
+   visibility:concealed?'hidden':'visible',
    opacity:token.visible?1:.55
   }}>
   <TokenMonitors config={config} normalized fields={fields} zoom={zoom}/>
@@ -34,12 +35,13 @@ const TokenMonitorFrame=React.memo(function TokenMonitorFrame({
 });
 
 export default function TokenMonitorFrames({
- tokens,remotePositions,preview,config,monitorValues,encumbranceBadges,gridSize,scale,motionRuntime
+ tokens,remotePositions,preview,config,monitorValues,encumbranceBadges,gridSize,scale,motionRuntime,concealedIds
 }){
  const cell=gridSize*scale;
  return <div className="token-monitors-over-all" aria-hidden="true">
   {tokens.map(token=><TokenMonitorFrame key={token.id}
-   token={token} remote={remotePositions[token.id]} preview={preview[token.id]}
+   token={token} concealed={!!concealedIds?.has(token.id)}
+   remote={remotePositions[token.id]} preview={preview[token.id]}
    config={config} fields={monitorValues[token.id]} badge={encumbranceBadges[token.id]}
    cell={cell} zoom={scale} motionRuntime={motionRuntime}/>)}
  </div>;

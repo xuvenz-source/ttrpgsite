@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
-  "releaseBranch": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
+  "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
+  "releaseBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -165,9 +165,17 @@
     },
     {
       "name": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
-      "status": "included",
+      "status": "released",
       "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
-      "note": "Full four-phase architectural fix attempt staged for one release. All four actual code phases included. Supabase Free production migrations 20261108111759, 20261108112135, 20261108112252, 20261108112544 applied (runtime fix tested). CI/CodeQL passed at prior SHA; rerun on final release branch. No Vercel merge/deploy yet; post-deploy DM/player stress and memory measurements remain."
+      "note": "Published in designer-approved PR #53, production commit 55d5d704c47c60f04100ce13fb81a5d4357b999e (Vercel READY). Supabase four additive migration versions 20261108111759, 20261108112135, 20261108112252, 20261108112544 applied and permission/authorized movement smoke-tested. Live reports then identified hard-wall presentation and player sprite flashing defects. New fix staged separately in PR #54.",
+      "productionCommit": "55d5d704c47c60f04100ce13fb81a5d4357b999e"
+    },
+    {
+      "name": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
+      "status": "included",
+      "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
+      "linkedPullRequest": 54,
+      "note": "Complete combined staging fix attempt for player visual wall penetration and all-token fog flash. DM local swept wall checks, server-confirmed player previews/final token/group/tool trajectories, RLS-aware sprite and monitor mount retention, bounded motion paths and stale callback cleanup. No production SQL, no deployment, no paid services. Unit/build/CodeQL and later live multiplayer verification required."
     }
   ],
   "features": [
@@ -520,7 +528,7 @@
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [
         "viewer_light_masks_v2"
@@ -533,7 +541,7 @@
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [
         "observer_path_cached_scene",
@@ -547,7 +555,7 @@
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [
         "movement_sessions_and_visibility_delta",
@@ -561,12 +569,34 @@
       "sources": [
         "stage/movement-fog-realtime-memory-redesign-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [
         "movement_sessions_and_visibility_delta"
       ],
       "verification": "Current free-tier Postgres statement baseline recorded (113 old preview RPCs mean 383.4 ms; 1408 old legacy fog calls mean 109.3 ms) and read-only stress SQL/tooling staged. Physical RAM, swap, memory commitment and comparative remote p95 REQUIRE approved live stress trial; no claim of demonstrated improvement or memory threshold reached."
+    },
+    {
+      "id": "solid-wall-input-and-final-movement-gating",
+      "description": "Fix solid walls visually and in persisted movement: DM locally traces published walls per footprint, players paint only server-approved motion samples without exposing private wall geometry; final keyboard, token, tool and synchronized multi-token group actions drain authorization and use authoritative trajectory transactions.",
+      "sources": [
+        "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08"
+      ],
+      "status": "included",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "Tests cover fast pointer jumps, wall sliding, common group grants, untrusted rejections and final approved path; GitHub tests/build/CodeQL required. Live manual DMs/players must test walls/doors, collisions, grouping, fast pointer release, network delay and DM overrides."
+    },
+    {
+      "id": "no-flash-player-token-sprite-lifecycle",
+      "description": "Prevent every player token image from flashing when fog visibility invalidates by retaining only previously authorized sprite and monitor mounts, concealing during reauthorization, dropping RLS-omitted and never-visible NPCs, and bounding stale sprite callback refs.",
+      "sources": [
+        "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08"
+      ],
+      "status": "included",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "Tests cover stable IDs on fog revoke, hidden + RLS removed entities and monitor concealment. Manual two-player simultaneous movement and token artwork network inspection remain live acceptance."
     }
   ],
   "databaseDependencies": [
@@ -808,42 +838,41 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
-    "releaseBranch": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
+    "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
+    "releaseBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
     "outstandingBranches": [
-      "stage/movement-fog-realtime-memory-redesign-2026-11-08"
+      "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08"
     ],
-    "stagePolicy": "Designer approved live-testing deployment 2026-11-08. All four staged phases bundled; Supabase production SQL applied and verified, including runtime hotfixes. Gate merge on latest CI/CodeQL and verify Vercel production SHA. Live multi-browser performance and physical RAM/swap remain post-deployment acceptance tests; preserve rollback.",
-    "databaseReleaseVersion": "20261108111759",
-    "additionalDatabaseReleaseVersions": [
-      "20261108112135",
-      "20261108112252",
-      "20261108112544"
-    ]
+    "stagePolicy": "Consolidated full fix attempt only. Do not apply SQL or deploy without explicit designer authorization. All outstanding staged changes must be conflict reconciled into one release and verified by GitHub tests/build/CodeQL. No paid Supabase branches. Live two-player collision/fog stress after approved rollout.",
+    "databaseReleaseVersion": null,
+    "additionalDatabaseReleaseVersions": []
   },
   "lastRelease": {
-    "name": "Server-Authorized Per-Player Visibility and Multiplayer Memory Optimization",
+    "name": "Unified Movement, Fog, Realtime and Memory Architecture",
     "date": "2026-11-08",
     "approvedPullRequests": [
-      52
+      53
     ],
     "includedStagedPullRequests": [],
     "status": "release-approved-for-production",
-    "productionCommit": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
-    "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
-    "sourceBranch": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
+    "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
+    "productionCommit": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
+    "sourceBranch": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
     "priorRelease": {
       "approvedPullRequests": [
-        51
+        52
       ],
-      "productionCommit": "309e96c7b3ca6550e491392d9e32ba5189497175"
+      "productionCommit": "9c66bde70fcf021ea1499adb52cd52fe77712e33"
     },
     "databaseDependencies": [
-      "20261108091818"
+      "20261108111759",
+      "20261108112135",
+      "20261108112252",
+      "20261108112544"
     ],
     "edgeFunctionDependencies": [],
     "paidInfrastructure": false,
-    "notes": "One designer-approved main merge/one Vercel production deployment. Combined SQL release 20261108091818 applied before frontend. Roles/RLS, publication, installed RPC and observer path verified; real DM/player gameplay, memory and latency stress still to test."
+    "notes": "Vercel deployment dpl_95iB877cDBNXt2zs6K73oNms7LGz READY, production HTTP 200, CodeQL/staged build pass. DM/player post-deploy movement and fog defects reported. PR #54 is next combined staging attempt."
   },
   "releaseHistory": [
     {
@@ -951,12 +980,31 @@
       ],
       "sourceBranch": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
       "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
-      "productionCommit": null,
+      "productionCommit": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
       "databaseDependencies": [
         "20261108091818"
       ],
       "paidInfrastructure": false,
       "notes": "Single combined release: fog tick dedupe, monitor/badge and tool request suppression, hidden-tab backpressure, private observer optimization, per-viewer visibility v2. Migration applied and inspected; production commit to be verified after Vercel deploy. Manual QA outstanding."
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Unified Movement, Fog, Realtime and Memory Architecture",
+      "pullRequests": [
+        53
+      ],
+      "includedStagedPullRequests": [],
+      "sourceBranch": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
+      "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
+      "productionCommit": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
+      "databaseDependencies": [
+        "20261108111759",
+        "20261108112135",
+        "20261108112252",
+        "20261108112544"
+      ],
+      "paidInfrastructure": false,
+      "notes": "Designer-approved single merge and Vercel production deploy VERIFIED READY. Supabase runtime corrected and grants/RLS inspected. Follow-up player QA revealed visual wall knockback and sprite remounts, staged in PR #54."
     }
   ],
   "databaseReleaseVersion": "20261108091818"
