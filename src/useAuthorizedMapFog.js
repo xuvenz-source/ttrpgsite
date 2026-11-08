@@ -83,7 +83,10 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
   const channel=db.channel('forge-visibility-'+mapId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
     table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},event=>{
-    if(invalidate(event))changed.request();
+    // Background tabs must revoke stale sight immediately, but should not
+    // compete with active players for expensive per-viewer fog RPCs.
+    // visibilitychange flushes a fresh authorized frame on return.
+    if(invalidate(event)&&document.visibilityState==='visible')changed.request();
    }).subscribe(state=>{
     if(state==='SUBSCRIBED'){
      // The initial/reconnected subscription could have missed a sight
@@ -92,7 +95,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
      ++request.current;
      coordinator.invalidate(key);
      setFrame(previous=>previous?fogFrameDuringRefresh(previous,mapId):previous);
-     changed.request();
+     if(document.visibilityState==='visible')changed.request();
     }
    });
   const onVisibility=()=>{
