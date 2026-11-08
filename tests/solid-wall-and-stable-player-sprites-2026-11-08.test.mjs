@@ -121,3 +121,16 @@ test('board never paints a raw player coordinate and never tears down artwork on
  assert.match(app,/if\(data!==true\)return/);
  assert.match(app,/remoteMotion\.current\?\.preview\(p_piece,p_x,p_y\)/);
 });
+
+test('group movement paints a synchronized grant instead of independent partially blocked sprites',()=>{
+ const board=src('src/BattlemapBoard.jsx');
+ const app=src('src/TabletopApp.jsx');
+ assert.match(board,/if\(playerGroup\)onGroupMovementPreview\?\.\(/);
+ assert.match(board,/if\(!playerGroup\)for\(const tool of info\.tools/);
+ assert.match(app,/const belongsToActiveGroup=group\?\.mapId===selectedMap&&group\.keys\.has\(pieceKey\)/);
+ assert.match(app,/if\(!isDM&&!belongsToActiveGroup&&packet\.params\?\.p_map===selectedMap\)/);
+ assert.match(app,/function sendLiveGroupMovement/);
+ assert.match(app,/sharedApprovedPath\(pieces,pieces\.map\(piece=>/);
+ assert.match(app,/groupPreviewGeneration\.current/);
+ assert.match(app,/onGroupMovementPreview=\{sendLiveGroupMovement\}/);
+});
