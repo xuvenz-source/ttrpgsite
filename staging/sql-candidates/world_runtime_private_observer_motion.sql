@@ -288,7 +288,7 @@ grant execute on function public.preview_map_motion(
 create or replace function public.end_map_motion_previews(
  p_map uuid,p_token_ids uuid[],p_tool_issue_ids uuid[]
 )returns integer language plpgsql volatile security definer
-set search_path='' as $
+set search_path='' as $$
 declare deleted integer;
 begin
  if auth.uid() is null or p_map is null or
@@ -301,7 +301,7 @@ begin
     (r.kind='tool' and r.piece_id=any(p_tool_issue_ids)));
  get diagnostics deleted=row_count;
  return deleted;
-end $;
+end $$;
 revoke all on function public.end_map_motion_previews(uuid,uuid[],uuid[])
  from public,anon;
 grant execute on function public.end_map_motion_previews(uuid,uuid[],uuid[])
