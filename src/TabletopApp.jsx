@@ -1360,7 +1360,7 @@ export default function TabletopApp(){
  // sanitized revision tick therefore re-queries the authoritative snapshots.
  useEffect(()=>{
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
-  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh();
+  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh(undefined,true);
  },[fog.frame?.revision,selectedMap]);
  // Movement previews can revise authorized LOS without changing the saved
  // visibility tick. Refresh newly observable RLS rows only when that mask
@@ -1374,7 +1374,7 @@ export default function TabletopApp(){
      current.displayVisibleDuringRefresh)return;
   const a=current.visible||[],b=previous.visible||[];
   if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
-  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh();
+  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh(undefined,true);
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
