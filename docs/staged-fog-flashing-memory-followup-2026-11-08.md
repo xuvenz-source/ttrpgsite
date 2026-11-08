@@ -65,3 +65,8 @@ See also [Supabase memory commitment reporting](https://supabase.com/docs/guides
 - On a hidden-tab Realtime reconnect the same fail-closed policy applies. When focus/visibility resumes the existing `changed.flush()` path forces a new server-authorized fog response.
 - No DM or active-player live fog/movement update is delayed. This is particularly relevant when developers simulate many connected users through background tabs, but is not evidence that all prior stress-test tabs were hidden.
 - The UI integration guards now explicitly assert visibility-state gating. Browser wake/reconnect and map-switch behavior still require live acceptance.
+
+
+## Later staged v2 status (supersedes earlier incomplete-design wording)
+
+PR #52 now stages a **per-viewer visibility revision protocol** in \`staging/sql-candidates/per_viewer_visibility_v2.sql\`, with client auto-negotiation/legacy fallback. It reduces invalidations for server-proven unrelated pure movement but does NOT do pixel-exact sight-frame equality or fix all legitimate source-movement flashes. Neither this candidate nor the observer-path SQL candidate has been applied. Full details: \`docs/staged-per-viewer-server-visibility-v2-2026-11-08.md\`.
