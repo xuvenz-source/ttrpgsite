@@ -102,6 +102,17 @@ CREATE OR REPLACE FUNCTION forge_visibility.tick_navigation_token_permissions()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $token$
 BEGIN
+ IF TG_OP='INSERT' THEN
+  IF NEW.owner_id IS NOT NULL THEN
+   PERFORM forge_visibility.bump_navigation_permission_generation(NEW.map_id,false);
+  END IF;
+  RETURN NEW;
+ ELSIF TG_OP='DELETE' THEN
+  IF OLD.owner_id IS NOT NULL THEN
+   PERFORM forge_visibility.bump_navigation_permission_generation(OLD.map_id,false);
+  END IF;
+  RETURN OLD;
+ END IF;
  IF (OLD.owner_id IS NOT NULL OR NEW.owner_id IS NOT NULL) AND
     (OLD.npc_values IS DISTINCT FROM NEW.npc_values OR
     OLD.owner_id IS DISTINCT FROM NEW.owner_id OR
@@ -121,7 +132,8 @@ REVOKE ALL ON FUNCTION forge_visibility.tick_navigation_token_permissions()
  FROM PUBLIC,anon,authenticated;
 DROP TRIGGER IF EXISTS forge_navigation_token_permissions ON public.map_tokens;
 CREATE TRIGGER forge_navigation_token_permissions
- AFTER UPDATE OF npc_values,owner_id,character_id,visible,span_x,span_y,map_id
+ AFTER INSERT OR DELETE OR
+ UPDATE OF npc_values,owner_id,character_id,visible,span_x,span_y,map_id
  ON public.map_tokens FOR EACH ROW
  EXECUTE FUNCTION forge_visibility.tick_navigation_token_permissions();
 
@@ -131,6 +143,17 @@ CREATE OR REPLACE FUNCTION forge_visibility.tick_navigation_tool_permissions()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $tool$
 BEGIN
+ IF TG_OP='INSERT' THEN
+  IF NEW.owner_id IS NOT NULL OR NEW.party_shared=true THEN
+   PERFORM forge_visibility.bump_navigation_permission_generation(NEW.map_id,true);
+  END IF;
+  RETURN NEW;
+ ELSIF TG_OP='DELETE' THEN
+  IF OLD.owner_id IS NOT NULL OR OLD.party_shared=true THEN
+   PERFORM forge_visibility.bump_navigation_permission_generation(OLD.map_id,true);
+  END IF;
+  RETURN OLD;
+ END IF;
  IF (OLD.owner_id IS NOT NULL OR NEW.owner_id IS NOT NULL OR
      OLD.party_shared=true OR NEW.party_shared=true) AND
     (OLD.state IS DISTINCT FROM NEW.state OR
@@ -150,7 +173,8 @@ REVOKE ALL ON FUNCTION forge_visibility.tick_navigation_tool_permissions()
  FROM PUBLIC,anon,authenticated;
 DROP TRIGGER IF EXISTS forge_navigation_tool_permissions ON public.campaign_tool_issues;
 CREATE TRIGGER forge_navigation_tool_permissions
- AFTER UPDATE OF state,config,owner_id,party_shared,held_by_token_id,map_id
+ AFTER INSERT OR DELETE OR
+ UPDATE OF state,config,owner_id,party_shared,held_by_token_id,map_id
  ON public.campaign_tool_issues FOR EACH ROW
  EXECUTE FUNCTION forge_visibility.tick_navigation_tool_permissions();
 
