@@ -12,7 +12,7 @@ The staged design introduces **server-authored per-viewer invalidation**. A play
 
 `staging/sql-candidates/per_viewer_visibility_v2.sql`:
 
-- `public.map_viewer_visibility_ticks`: `(map_id,user_id)` primary key, campaign ID, monotonic revision, fog enforcement flag and update time. **No token IDs, geometry, revealed cells or private fields.** Browser roles can SELECT only their own authorized map revision via RLS; no INSERT/UPDATE/DELETE. Authenticated SELECT is the only browser table grant. Added to `supabase_realtime` publication with RLS.
+- `public.map_viewer_visibility_ticks`: opaque random UUID primary key and unique `(map_id,user_id)` scope, campaign ID, monotonic revision, fog enforcement flag and update time. **No token IDs, geometry, revealed cells or private fields.** Browser roles can SELECT only their own authorized map revision via RLS; no INSERT/UPDATE/DELETE. Authenticated SELECT is the only browser table grant. Added to `supabase_realtime` publication with RLS.
 - `forge_visibility.bump_viewer_ticks`: updates eligible players assigned to the relevant map. NULL recipient list is a conservative all-player invalidation; an empty list means no affected player.
 - `forge_visibility.bump_tick`: retains global `map_visibility_ticks` for old clients and DMs, but also updates all active per-viewer ticks on global changes. Doors/walls, published map rules, light changes, exploration reset, ownership/vision metadata and existing character visibility-attribute triggers remain fail-closed.
 - `forge_visibility.viewers_affected_by_token_move`: **only** the actual OLD/NEW database rows from a pure coordinate update; server checks campaign role, map assignment, own sight-source token, shared-party sight, nearby eligible source positions (both canonical and recent server-verified preview origins), and any attached lit torch. A conservative 16-cell plus footprint envelope over-approximates the actual 12-cell vision radius. Unknown scene, invalid inputs, carried light, or calculation error => NULL => all players. A source/observer that might see the old OR new token receives a tick and must refresh.
@@ -21,6 +21,9 @@ The staged design introduces **server-authored per-viewer invalidation**. A play
 - Internal SECURITY DEFINER functions retain `search_path=''`, expose no public EXECUTE, and are never callable by the browser. Only the v2 authenticated RPC is exposed, with the same user/map authorization as the existing RPC.
 
 **No SQL from this candidate has been executed.** A green JavaScript build is not PostgreSQL compilation or RLS role acceptance. Before release the SQL must be converted into the approved versioned migration, compiled against the live schema and checked for privileges, privacy, performance and rollback. Keep compatibility with the previously staged `observer_path_visibility_single_snapshot.sql` candidate; the two are independent database changes and belong to the same consolidated approval.
+
+
+**Realtime DELETE safety:** Supabase does not enforce the ordinary RLS read policy on DELETE events. Therefore the v2 browser subscribes only to `INSERT` and `UPDATE`, and the table's default replica identity is an opaque random UUID rather than the user/map composite. Even if a deletion is emitted by Realtime, the replica key does not disclose its user/map IDs; legitimate access removal still fails closed on subsequent RLS authorization, reconnect or focus. No deletion event is needed to construct a sight frame.
 
 ## Frontend selection and fallback
 
