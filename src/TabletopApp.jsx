@@ -1111,15 +1111,11 @@ export default function TabletopApp(){
    }
    const timer=setTimeout(()=>{
     expiry.delete(payload.id);
-    if(payload.action==='hide'){
-     const unhide=prior=>{
-      if(!prior[payload.id]?.hidden||prior[payload.id]?.seq!==payload.seq)
-       return prior;
-      const copy={...prior};delete copy[payload.id];return copy;
-     };
-     if(isToken)setRemoteTokenPositions(unhide);
-     else setRemoteToolPositions(unhide);
-    }
+    // A private server-issued hide is an authorization denial, not a
+    // 1.35-second visual animation. Timeout may reconcile positions but must
+    // NEVER itself unhide a token or tool. Only a later accepted server-issued
+    // move packet may clear the hide marker. A separate verified fog/RLS
+    // reconciliation path for stationary reappearing NPCs is still required.
     // Finish visual motion only after the latest authorized database read.
     // Never remove the overlay first and expose a stale React left/top.
     const refresh=isToken?latestTokenRefresh.current:latestToolRefresh.current;
