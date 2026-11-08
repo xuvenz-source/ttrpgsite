@@ -887,7 +887,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
       onPointerMove={e=>moveTokenDrag(e,t)}
       onPointerUp={e=>finishTokenDrag(e,t)}
       onPointerCancel={e=>finishTokenDrag(e,t,true)}>
-      {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
+      {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art" loading="eager"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       {normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')&&
        <span className="token-dead-overlay" aria-hidden="true"/>}
