@@ -678,9 +678,11 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
   if(!isDM){
    for(const member of members)navigation?.warm(map.id,'token',member.id,
-    {x:member.x,y:member.y});
+    {x:member.x,y:member.y,spanX:Number(member.span_x??1),
+     spanY:Number(member.span_y??1)});
    for(const tool of tools)navigation?.warm(map.id,'tool',tool.issue_id,
-    {x:tool.x,y:tool.y});
+    {x:tool.x,y:tool.y,spanX:Number(tool.span??1),
+     spanY:Number(tool.span??1)});
   }
   e.currentTarget.setPointerCapture(e.pointerId);
   drag.current={id:t.id,pointerId:e.pointerId,pointerTarget:e.currentTarget,
@@ -705,11 +707,13 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   if(!isDM){
    for(const id of selectedTokens){
     const token=tokens.find(t=>t.id===id);
-    if(token)navigation?.warm(map.id,'token',id,{x:token.x,y:token.y});
+    if(token)navigation?.warm(map.id,'token',id,{x:token.x,y:token.y,
+     spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
    }
    for(const id of selectedTools){
     const tool=toolPlacements.find(p=>p.issue_id===id);
-    if(tool)navigation?.warm(map.id,'tool',id,{x:tool.x,y:tool.y});
+    if(tool)navigation?.warm(map.id,'tool',id,{x:tool.x,y:tool.y,
+     spanX:Number(tool.span??1),spanY:Number(tool.span??1)});
    }
   }
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
