@@ -247,7 +247,7 @@ begin
 exception when others then
  -- An unavailable broadcast is not authorization to weaken privacy.
  return false;
-end $function$
+end $function$;
 
 
 -- Only the preexisting privileged dispatcher may invoke this private helper.
