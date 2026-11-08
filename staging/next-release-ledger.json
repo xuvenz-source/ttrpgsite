@@ -129,15 +129,15 @@
     },
     {
       "name": "stage/inventory-cross-transfer-2026-11-08",
-      "status": "included",
+      "status": "released",
       "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-      "note": "Implementation from draft PR #47 preserved in consolidated next-release movement-and-inventory branch, with SQL not yet applied."
+      "note": "Bundled as part of single approved production release PR #48; do not redeploy separately."
     },
     {
       "name": "stage/next-release-inventory-token-continuity-2026-11-08",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-      "note": "Next release combined: previously staged inventory moves plus token continuity optimizations; no main merge or production deployment."
+      "note": "Bundled as part of single approved production release PR #48; do not redeploy separately."
     }
   ],
   "features": [
@@ -328,12 +328,12 @@
       "sources": [
         "stage/inventory-cross-transfer-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [
         "campaign_cross_inventory_item_transfers"
       ],
-      "verification": "Migration 20261108052335 applied to existing Supabase; installed functions, RPC role grants and deterministic grid fallback confirmed. GitHub CI, build and CodeQL, plus live DM/player browser acceptance, required for final release."
+      "verification": "Migration 20261108052335 applied to existing Supabase; installed functions, RPC role grants and deterministic grid fallback confirmed. GitHub CI, build and CodeQL, plus live DM/player browser acceptance, required for final release. Bundled in approved PR #48; post-publish player/DM browser acceptance remains outstanding."
     },
     {
       "id": "stable-token-movement-visual-continuity",
@@ -341,10 +341,10 @@
       "sources": [
         "stage/next-release-inventory-token-continuity-2026-11-08"
       ],
-      "status": "staged",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [],
-      "verification": "GitHub CI tests/build; needs live multi-browser DM/player fog/collision UX acceptance after designer-approved release. No movement migration."
+      "verification": "GitHub CI tests/build; needs live multi-browser DM/player fog/collision UX acceptance after designer-approved release. No movement migration. Bundled in approved PR #48; post-publish player/DM browser acceptance remains outstanding."
     }
   ],
   "databaseDependencies": [
@@ -502,38 +502,35 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-    "releaseBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
-    "outstandingBranches": [
-      "stage/next-release-inventory-token-continuity-2026-11-08"
-    ],
-    "stagePolicy": "Designer authorized production release. Inventory migration 20261108052335 applied and verified. Ship inventory + movement in one main merge after consolidated CI/security checks; no paid DB or extra preview deployments.",
-    "databaseReleaseVersion": "20261108052335"
+    "releaseBranch": null,
+    "outstandingBranches": [],
+    "stagePolicy": "Both ready features are bundled in approved PR #48 and database version 20261108052335 is already applied. Next release must start from new production main and audit any new staged work; keep Vercel preview disabled.",
+    "databaseReleaseVersion": null
   },
   "lastRelease": {
-    "name": "Seamless Multiplayer Movement and Universal Roll Hotbar",
+    "name": "Inventory Transfers and Smoother Token Movement",
     "date": "2026-11-08",
     "approvedPullRequests": [
-      45
+      48
     ],
     "includedStagedPullRequests": [
-      43,
-      44
+      47
     ],
     "status": "released-production",
     "productionCommit": null,
-    "productionBaseSha": "fba25209757d2c55d3303ea6b0582b8d61b6632c",
-    "sourceBranch": "stage/release-seamless-movement-hotbar-2026-11-08",
+    "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
+    "sourceBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
     "priorRelease": {
       "approvedPullRequests": [
-        42
+        46
       ],
-      "productionCommit": "fba25209757d2c55d3303ea6b0582b8d61b6632c"
+      "productionCommit": "a763b8d106e2362033c16ce44966e9b122d6a47b"
     },
-    "frontendSourceSha": "cc1ae0e532d88e5adb35dca3ff334c4a8900d699",
+    "frontendSourceSha": null,
     "databaseDependencies": [
       {
-        "name": "nonfog_token_movement_tick_optimization",
-        "appliedVersion": "20261107173054",
+        "name": "campaign_cross_inventory_item_transfers",
+        "appliedVersion": "20261108052335",
         "status": "applied-production"
       }
     ],
@@ -591,6 +588,22 @@
       ],
       "description": "Consolidated and approved one-main-merge release of RLS-authorized smooth real-time token movement and all current roll-button hotbar assignments. Both source staging branches combined; migration applied and verified before merge.",
       "paidInfrastructure": false
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Inventory Transfers and Smoother Token Movement",
+      "pullRequests": [
+        48
+      ],
+      "includedStagedPullRequests": [
+        47
+      ],
+      "productionCommit": null,
+      "sourceBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
+      "databaseDependencies": [
+        "20261108052335"
+      ],
+      "notes": "Single approved production merge; Vercel READY/SHA verification is required and reported separately."
     }
   ],
   "databaseReleaseVersion": "20261108031754"
