@@ -26,6 +26,7 @@ export function retainFogSnapshot(previous,next){
  if(!previous||!next||previous.mapId!==next.mapId||
   Object.hasOwn(previous,'displayVisibleDuringRefresh'))return next;
  return previous.revision===next.revision&&
+  previous.protocolVersion===next.protocolVersion&&
   previous.enabled===next.enabled&&
   previous.partyShared===next.partyShared&&
   previous.width===next.width&&previous.height===next.height&&
