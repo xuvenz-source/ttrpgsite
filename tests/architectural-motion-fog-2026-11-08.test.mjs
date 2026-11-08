@@ -140,6 +140,9 @@ test('server reuse of published LOS scene retains all recipient privacy rules',(
  const advance=read('staging/sql-candidates/movement_sessions_and_visibility_delta.sql');
  assert.match(helper,/function forge_visibility\.observer_path_status_cached\(/i);
  assert.match(helper,/from public\.campaign_members cm/);
+ assert.match(helper,/cm\.campaign_id=p_campaign/);
+ assert.match(helper,/pm\.campaign_id=p_campaign/);
+ assert.doesNotMatch(helper,/cp_campaign|pp_campaign/);
  assert.match(helper,/coalesce\(assigned,active\)/);
  assert.match(helper,/ray_blocked\(scene/);
  assert.match(helper,/forge_visibility\.is_lit/);
