@@ -53,9 +53,10 @@ import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './S
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
- reconcileTokenSnapshot,isPositionOnlyTokenEvent} from './LiveTokenMovement.js';
+ reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
+import {createRemotePositionSettler} from './RemotePositionSettler.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
  nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -163,7 +164,8 @@ export default function TabletopApp(){
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),remoteToolExpiry=useRef(new Map()),latestMovementAccess=useRef({});
- const remoteMotion=useRef(null),observerRevisions=useRef(new Map());
+ const remoteMotion=useRef(null),observerRevisions=useRef(new Map()),
+  remotePositionSettler=useRef(null);
  const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null),
   latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
@@ -831,8 +833,11 @@ export default function TabletopApp(){
     }
     return projected;
    })));
+   // Return exactly the RLS-approved projection for expiry reconciliation.
+   return rows;
   }catch(e){
    if(request===tokenRefreshSeq.current)fail(e);
+   return null;
   }
  }
  useEffect(()=>{
@@ -1015,6 +1020,24 @@ export default function TabletopApp(){
    queue.dispose();
   };
  },[db,selectedMap]);
+ // Short observer-quiet window before converging the preview toward a final
+ // authorized coordinate. This prevents a previous commit from rewinding
+ // another player's currently active drag.
+ useEffect(()=>{
+  if(!selectedMap)return;
+  const manager=createRemotePositionSettler({
+   settle:(id,x,y)=>{
+    const preview=remoteMotion.current?.getPreview(id);
+    if(preview?.remote&&(preview.x!==x||preview.y!==y))
+     remoteMotion.current?.settleRemote(id,x,y);
+   }
+  });
+  remotePositionSettler.current=manager;
+  return()=>{
+   manager.dispose();
+   if(remotePositionSettler.current===manager)remotePositionSettler.current=null;
+  };
+ },[selectedMap]);
  // A private observer topic receives only server-signed movement data that
  // Postgres filtered for this specific player's map assignment and current LOS.
  // Pointer packets paint token/tool transforms directly, not TabletopApp state.
@@ -1027,6 +1050,7 @@ export default function TabletopApp(){
   }).on('broadcast',{event:'motion'},({payload})=>{
    if(!validObserverMovementPacket(payload,mapId,user)||
       !acceptObserverMovementPacket(payload,observerRevisions.current))return;
+   if(payload.kind==='token')remotePositionSettler.current?.notePreview(payload.id);
    const access=latestMovementAccess.current;
    const isToken=payload.kind==='token';
    const known=isToken?(access.tokens||[]).some(t=>t.id===payload.id&&t.map_id===mapId):
@@ -1069,10 +1093,22 @@ export default function TabletopApp(){
     // Finish visual motion only after the latest authorized database read.
     // Never remove the overlay first and expose a stale React left/top.
     const refresh=isToken?latestTokenRefresh.current:latestToolRefresh.current;
-    void Promise.resolve(refresh?.()).catch(error=>
-     console.warn('Movement reconciliation failed',error)).finally(()=>{
-      if(observerRevisions.current.get(payload.kind+':'+payload.id)===payload.seq)
-       remoteMotion.current?.clearPreview(visualId);
+    void Promise.resolve(refresh?.()).then(rows=>{
+     if(observerRevisions.current.get(payload.kind+':'+payload.id)!==payload.seq)return;
+     if(isToken&&Array.isArray(rows)){
+      const row=rows.find(token=>token.id===payload.id);
+      const current=latestMovementAccess.current.tokens?.find(token=>
+       token.id===payload.id);
+      // Prefer a newer already-received RLS row over a delayed full snapshot.
+      const target=row&&current&&isOlderTokenSnapshot(row,current)?current:row;
+      if(target)remoteMotion.current?.settleRemote(
+       visualId,Number(target.x),Number(target.y));
+      else remoteMotion.current?.clearPreview(visualId);
+     }else remoteMotion.current?.clearPreview(visualId);
+    }).catch(error=>{
+     console.warn('Movement reconciliation failed',error);
+     if(observerRevisions.current.get(payload.kind+':'+payload.id)===payload.seq)
+      remoteMotion.current?.clearPreview(visualId);
     });
    },OBSERVER_PREVIEW_EXPIRE_MS);
    expiry.set(payload.id,timer);
@@ -1192,6 +1228,9 @@ export default function TabletopApp(){
     const isMotionOnly=isPositionOnlyTokenEvent(
      event,latestMovementAccess.current.tokens||[],mapId);
     if(event.eventType==='UPDATE'){
+     const previous=latestMovementAccess.current.tokens?.find(token=>
+      token.id===event.new?.id);
+     if(previous&&isOlderTokenSnapshot(event.new,previous))return;
      setTokens(previous=>applyAuthoritativeTokenMotion(
       previous,event,mapId,movementPending.current));
      const id=event.new?.id;
@@ -1204,6 +1243,11 @@ export default function TabletopApp(){
        const committed=latestMovementAccess.current.tokens?.find(t=>t.id===id);
        if(committed?.x===event.new.x&&committed?.y===event.new.y)
         remoteMotion.current?.reconcile(id,Number(committed.x),Number(committed.y));
+      }else if(painted?.remote){
+       // Last throttled preview and final saved cell differ. A new private
+       // packet cancels this scheduled convergence if motion is still active.
+       remotePositionSettler.current?.noteCanonical(
+        id,Number(event.new.x),Number(event.new.y));
       }
      }
     }
