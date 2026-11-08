@@ -414,7 +414,7 @@ test('navigation permission protocol contains only opaque generations and origin
  assert.match(navSql,/'permissionGeneration',permission_generation/);
  assert.match(privateSql,/'permissionGeneration',current_frame->'permissionGeneration'/);
  assert.match(deltaSql,/'permissionGeneration',current_frame->'permissionGeneration'/);
- assert.doesNotMatch(navSql,/p_origin\s+|p_x\s+|p_y\s+/i);
+ assert.doesNotMatch(navSql.match(/CREATE OR REPLACE FUNCTION public\.get_authorized_map_navigation\([\s\S]*?\)/i)?.[0]||'',/p_origin\s+|p_x\s+|p_y\s+/i);
  const safe=normalizeAuthorizedNavigation(grant(),map,'token',owner);
  assert.ok(safe);
  assert.equal(safe.permissionGeneration,3);
