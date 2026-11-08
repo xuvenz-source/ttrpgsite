@@ -67,7 +67,8 @@ test('tool Delete is pickup rather than issued record deletion; live updates use
  assert.match(app,/onToolPickUp\?\.\(id\)/);
  assert.match(app,/onToolMovementPreview\?\.\(tool,/);
  assert.match(app,/p_kind:'tool'/);
- assert.match(app,/db\.rpc\('preview_map_motion'/);
+ assert.match(app,/createAuthorizedMotionTransport/);
+ assert.match(app,/transport\.send\(packet\)/);
  assert.match(app,/remoteToolPositions=\{remoteToolPositions\}/);
  assert.match(app,/observerMotionTopic\(mapId,user\)/);
  assert.match(app,/selectableToolIds\(toolPlacements,toolIssued/);
