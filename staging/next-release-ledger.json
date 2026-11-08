@@ -167,7 +167,7 @@
       "name": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
       "status": "included",
       "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
-      "note": "Single unified four-phase architectural fix ATTEMPT fully implemented on this staging branch: verified per-viewer fog/light protocol parity and safe hidden-entity recovery; client/server short-lived motion sessions with private collision-checked observer broadcasts; server-owned visibility epochs and deltas with authorized snapshot fallback; scene reuse, bounded performance counters and stress-metric tooling. Legacy RPCs preserved. New SQL candidates and rollback scripts staged, not applied; Vercel unchanged. Automated node/build/audit/Deno and CodeQL were green on 2026-11-08 after full integration; recheck latest SHA. Real SQL compilation, permissions, 2/4/6–10 browser stress and memory/RAM measurements remain post-approval live-test gates. No paid infrastructure."
+      "note": "Full four-phase architectural fix attempt staged for one release. All four actual code phases included. Supabase Free production migrations 20261108111759, 20261108112135, 20261108112252, 20261108112544 applied (runtime fix tested). CI/CodeQL passed at prior SHA; rerun on final release branch. No Vercel merge/deploy yet; post-deploy DM/player stress and memory measurements remain."
     }
   ],
   "features": [
@@ -736,33 +736,52 @@
     },
     {
       "name": "viewer_light_masks_v2",
-      "status": "staged-not-applied",
+      "status": "applied-production",
       "candidateFile": "staging/sql-candidates/viewer_light_masks_v2.sql",
       "rollbackFile": "staging/sql-candidates/rollback_viewer_light_masks_v2.sql",
       "mustApplyBeforeFrontend": true,
       "releaseApprovalRequired": true,
       "dependsOn": "20261108091818",
-      "note": "Additive versioned light-mask wrapper. Legacy RPC untouched; needs live SQL apply only after designer approves coordinated rollout. Authenticated grant required; anon/PUBLIC denied."
+      "note": "Designer-approved production SQL applied and verified. New RPCs granted only authenticated; private helpers and tables deny anon/authenticated; two new tables have RLS. Full-movement runtime corrected in versioned hotfixes before frontend merge.",
+      "appliedVersion": "20261108111759",
+      "appliedVia": "Supabase apply_migration (single consolidated SQL transaction)",
+      "migrationFile": "supabase/migrations/20261108111759_unified_movement_fog_realtime_memory_20261108.sql"
     },
     {
       "name": "observer_path_cached_scene",
-      "status": "staged-not-applied",
+      "status": "applied-production",
       "candidateFile": "staging/sql-candidates/observer_path_cached_scene.sql",
       "rollbackFile": "staging/sql-candidates/rollback_movement_sessions_and_visibility_delta.sql",
       "mustApplyBeforeFrontend": true,
       "releaseApprovalRequired": true,
       "dependsOn": "20261108091818",
-      "note": "Private server-owned cached-scene observer path with current player assignment, LOS/light and recipient role revalidation. Apply BEFORE movement_sessions_and_visibility_delta, as it references this helper. Revoke EXECUTE from PUBLIC, anon, authenticated."
+      "note": "Designer-approved production SQL applied and verified. New RPCs granted only authenticated; private helpers and tables deny anon/authenticated; two new tables have RLS. Full-movement runtime corrected in versioned hotfixes before frontend merge.",
+      "appliedVersion": "20261108111759",
+      "appliedVia": "Supabase apply_migration (single consolidated SQL transaction)",
+      "migrationFile": "supabase/migrations/20261108111759_unified_movement_fog_realtime_memory_20261108.sql"
     },
     {
       "name": "movement_sessions_and_visibility_delta",
-      "status": "staged-not-applied",
+      "status": "applied-production",
       "candidateFile": "staging/sql-candidates/movement_sessions_and_visibility_delta.sql",
       "rollbackFile": "staging/sql-candidates/rollback_movement_sessions_and_visibility_delta.sql",
       "mustApplyBeforeFrontend": true,
       "releaseApprovalRequired": true,
       "dependsOn": "observer_path_cached_scene and 20261108091818",
-      "note": "Additive private RLS session and viewer-fog snapshot tables plus authenticated begin/advance/end and delta RPCs. Legacy movement/fog RPCs untouched. Requires live SQL compilation/permissions after explicit release approval; no paid Supabase branch."
+      "note": "Designer-approved production SQL applied and verified. New RPCs granted only authenticated; private helpers and tables deny anon/authenticated; two new tables have RLS. Full-movement runtime corrected in versioned hotfixes before frontend merge.",
+      "appliedVersion": "20261108111759",
+      "appliedVia": "Supabase apply_migration (single consolidated SQL transaction)",
+      "migrationFile": "supabase/migrations/20261108111759_unified_movement_fog_realtime_memory_20261108.sql",
+      "patchVersions": [
+        "20261108112135",
+        "20261108112252",
+        "20261108112544"
+      ],
+      "patchMigrationFiles": [
+        "supabase/migrations/20261108112135_fix_motion_session_record_alias_20261108.sql",
+        "supabase/migrations/20261108112252_guard_stationary_motion_collision_20261108.sql",
+        "supabase/migrations/20261108112544_fix_motion_step_count_builtin_20261108.sql"
+      ]
     }
   ],
   "edgeFunctionDependencies": [
@@ -794,8 +813,13 @@
     "outstandingBranches": [
       "stage/movement-fog-realtime-memory-redesign-2026-11-08"
     ],
-    "stagePolicy": "ALL FOUR PHASES IMPLEMENTED AS ONE STAGED FIX ATTEMPT. Do not deploy or apply production SQL without designer approval. Before one main release reconcile any other ready staging, validate new SQL/role grants and CI/CodeQL; complete live DM/player stress and memory measurements after authorized release. Do not claim performance targets achieved until observed.",
-    "databaseReleaseVersion": null
+    "stagePolicy": "Designer approved live-testing deployment 2026-11-08. All four staged phases bundled; Supabase production SQL applied and verified, including runtime hotfixes. Gate merge on latest CI/CodeQL and verify Vercel production SHA. Live multi-browser performance and physical RAM/swap remain post-deployment acceptance tests; preserve rollback.",
+    "databaseReleaseVersion": "20261108111759",
+    "additionalDatabaseReleaseVersions": [
+      "20261108112135",
+      "20261108112252",
+      "20261108112544"
+    ]
   },
   "lastRelease": {
     "name": "Server-Authorized Per-Player Visibility and Multiplayer Memory Optimization",
