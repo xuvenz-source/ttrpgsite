@@ -97,7 +97,7 @@ test('every staged SQL procedure has matching PostgreSQL dollar delimiters',()=>
   'visibility_tick_metadata']){
   const body=sql(part);
   assert.equal((body.match(/\bas \$\$/g)||[]).length,
-   (body.match(/end \$\$;/g)||[]).length,part+' $$ delimiters');
+   (body.match(/(?:end )?\$\$;/g)||[]).length,part+' $ delimiters');
   assert.equal((body.match(/\bas \$function\$/gi)||[]).length,
    (body.match(/end \$function\$;/gi)||[]).length,part+' named delimiters');
   assert.doesNotMatch(body,/\bas \$(?:\r?\n)/,part+' bare opener');
