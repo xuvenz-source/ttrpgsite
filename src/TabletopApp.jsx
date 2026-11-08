@@ -180,7 +180,8 @@ export default function TabletopApp(){
   remotePositionSettler=useRef(null);
  const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null),
   latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null),
-  movementSessionTransport=useRef(null);
+  movementSessionTransport=useRef(null),activeGroupPreview=useRef(null),
+  groupPreviewGeneration=useRef(0);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
@@ -1084,8 +1085,12 @@ export default function TabletopApp(){
    onResult:(packet,{data,error})=>{
     if(error){console.warn('Secure movement preview unavailable',error.message);return}
     if(data!==true)return;
+    const pieceKey=packet.kind==='token'?packet.params?.p_piece:
+     'tool:'+packet.params?.p_piece;
+    const group=activeGroupPreview.current;
+    const belongsToActiveGroup=group?.mapId===selectedMap&&group.keys.has(pieceKey);
     // A player's own token/tool may move visually only to a server grant.
-    if(!isDM&&packet.params?.p_map===selectedMap){
+    if(!isDM&&!belongsToActiveGroup&&packet.params?.p_map===selectedMap){
      const {p_piece,p_x,p_y}=packet.params;
      if(packet.kind==='token'&&latestMovementAccess.current.tokens?.some(t=>
       t.id===p_piece&&t.map_id===selectedMap&&t.owner_id===user))
@@ -1270,7 +1275,42 @@ export default function TabletopApp(){
    p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
   }});
  }
- function sendLiveMeasurement(measure,phase='preview',force=false){
+ // Group members must never diverge in the user's view when one piece
+ // collides with a wall. All server checks complete before a synchronized
+ // paint of the last common authorized step.
+ function sendLiveGroupMovement({tokens:members=[],tools=[],dx,dy}){
+  if(isDM||!selectedMap||!movementPreviewQueue.current||
+     !movementSessionTransport.current)return;
+  const mapId=selectedMap;
+  const pieces=[...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
+   ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))];
+  if(pieces.length<2)return;
+  const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
+  const keys=new Set(pieces.map(p=>p.kind==='token'?p.id:'tool:'+p.id));
+  const generation=++groupPreviewGeneration.current;
+  activeGroupPreview.current={mapId,keys,generation};
+  for(const p of pieces){
+   const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
+   if(seq===null)return;
+   liveMovementSeq.current=seq;
+   queue.enqueue(p.kind==='token'?p.id:'tool:'+p.id,{
+    kind:p.kind,params:{p_map:mapId,p_kind:p.kind,p_piece:p.id,
+     p_x:p.x+dx,p_y:p.y+dy,p_seq:seq,p_ignore_collision:false}
+   });
+  }
+  void Promise.all([...keys].map(key=>queue.drain(key))).then(()=>{
+   if(activeGroupPreview.current?.generation!==generation||
+      tokenContextRef.current.mapId!==mapId)return;
+   const common=sharedApprovedPath(pieces,pieces.map(piece=>
+    transport.getApprovedPath(mapId,piece.kind,piece.id)));
+   const endpoint=common.at(-1);
+   if(!endpoint)return;
+   for(const p of pieces)remoteMotion.current?.preview(
+    p.kind==='token'?p.id:'tool:'+p.id,
+    p.x+endpoint.dx,p.y+endpoint.dy);
+  }).catch(error=>console.warn('Grouped motion validation unavailable',error));
+ }
+  function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
   const now=Date.now();
   if(phase==='preview'&&!force&&now-lastMeasureSent.current<65)return;
@@ -2519,6 +2559,10 @@ export default function TabletopApp(){
   if(!members.length&&!tools.length)return;
   if(isDM&&mapSettingEditor.previewing)return;
   if(!isDM){
+   // Retire pending group previews before the release transaction paints.
+   if(activeGroupPreview.current?.mapId===mapId)
+    activeGroupPreview.current={...activeGroupPreview.current,
+     generation:++groupPreviewGeneration.current};
    // No group sprite or tool may be committed past a wall just because the
    // pointer asked for that position. Every member independently receives a
    // server grant and only a common approved route can move the whole group.
@@ -2784,7 +2828,8 @@ export default function TabletopApp(){
    onToolHold={holdIssuedToolOnToken}
    onToolOpen={setSelectedToolIssueId} onToolMovementPreview={sendLiveToolMovement}
    remoteToolPositions={remoteToolPositions}
-   onMovementPreview={sendLiveMovement} remotePositions={remoteTokenPositions}
+   onMovementPreview={sendLiveMovement} onGroupMovementPreview={sendLiveGroupMovement}
+    remotePositions={remoteTokenPositions}
    registerRemoteMotion={registerRemoteMotion}
     fogFrame={fog.frame}
     authorizedLightMasks={authorizedLights}
