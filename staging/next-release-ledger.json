@@ -156,6 +156,12 @@
       "status": "released",
       "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
       "note": "Stacked onto player-remote-reconciliation staging PR #50. Authorization-scoped single-flight request coordinator, targeted tool refreshes, subscription cleanup, read-only Supabase performance audit. No production SQL/migrations, merges, preview or Vercel deployment. CI/browser stress gates pending. Included in designer-authorized combined PR #51 production release. Manual multiplayer performance acceptance remains outstanding."
+    },
+    {
+      "name": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
+      "status": "staged",
+      "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
+      "note": "Pending fog revision coalescing for player token flashing plus read-only Supabase memory investigation. Staging only, no SQL/Edge/Vercel changes, pending CI and live multiplayer acceptance."
     }
   ],
   "features": [
@@ -431,6 +437,17 @@
       "releaseReady": true,
       "databaseDependencies": [],
       "verification": "Source regression tests + full CI and live multiuser tool, mounts, item leases, RLS revocation, and reconnect acceptance pending. Included in PR #51 release with CI/security gates; live DM/player behavioral and p95 performance verification remains required."
+    },
+    {
+      "id": "pending-fog-tick-coalescing",
+      "description": "Avoid duplicate/older pending visibility ticks repeatedly revoking player sight and restarting the same authorization request; preserve fail-closed behavior on genuinely newer, malformed or map/mode-changing events.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Pure regression tests and integration guards included; GitHub CI pending. Real player movement with fog on/off, hidden NPCs, map switch and reconnect must be verified in an approved release. This reduces one flash cause, not all legitimate sight revocations."
     }
   ],
   "databaseDependencies": [
@@ -598,10 +615,12 @@
     "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+    "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
     "releaseBranch": null,
-    "outstandingBranches": [],
-    "stagePolicy": "PR #51 includes all approved outstanding staging from PR #50 and PR #51. No other release-ready items remain in the ledger. No paid infrastructure. Continue multi-player live acceptance on existing test campaigns; never assume zero fog flash or a measured latency benefit without field results.",
+    "outstandingBranches": [
+      "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+    ],
+    "stagePolicy": "One new staged follow-up to PR #51: pending fog visibility revision coalescing; do not deploy until designer approval and combined green verification. Deep server-attested per-viewer visibility delta redesign and memory physical RAM/swap measurement remain separate outstanding investigation, not falsely declared fixed.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
