@@ -16,4 +16,5 @@ drop function if exists public.advance_map_motion_session(uuid,integer,integer,b
 drop function if exists public.begin_map_motion_session(uuid,text,uuid,boolean);
 drop table if exists forge_visibility.movement_sessions;
 drop table if exists forge_visibility.viewer_fog_snapshots;
+drop function if exists forge_visibility.observer_path_status_cached(uuid,uuid,uuid,jsonb,integer,integer,integer,double precision,double precision,double precision,double precision,integer);
 -- Do not remove the private movement_preview_rates or public visibility ticks.
