@@ -19,6 +19,8 @@ test('fog invalidation rejects in-flight authorization before a new fog RPC',()=
  assert.match(fog,/fogFrameDuringRefresh\(previous,mapId\)/);
  assert.match(fog,/get_authorized_map_fog/);
  assert.match(fog,/if\(invalidate\(event\)\)changed\.request\(\)/);
+ assert.match(fog,/if\(state==='SUBSCRIBED'\)/);
+ assert.match(fog,/coordinator\.invalidate\(key\);\s*setFrame\(previous=>previous\?fogFrameDuringRefresh/);
 });
 
 test('token, monitor and tool reads are isolated by viewer and fresh sight changes',()=>{
