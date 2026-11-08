@@ -1,0 +1,47 @@
+# Movement continuity, one-write trajectory and production verification — 8 November 2026
+
+**Scope:** designer approved both backend and frontend production release. Supabase migration `20261108055943_world_runtime_single_write_trajectory` was applied and verified on the existing database before the planned GitHub PR #49 merge. The frontend is not live until its Vercel production SHA is verified. Previous production base: `92f982ce23dcda706032c3abb235a84233324578`. No paid infrastructure or new database.
+
+## Reported live symptoms
+
+- Player-side sprite flashing after token movement is fixed by PR #48 and must remain fixed.
+- DM and player still experience visual rubber-banding and objectionable remote motion latency.
+- Supabase dashboard screenshots (reported 8 Nov, screenshots' chosen ranges vary) show 39 slow queries, 28/60 peak connections, 17% disk usage, 58% memory usage, 4% CPU, a **SEVERE** memory-commitment risk, 9.5% database errors, and 3.1% Realtime warnings. These are snapshot/dashboard indicators, *not* proven movement-RPC timings or memory exhaustion. A memory-commitment warning is not the same as OOM.
+- Read-only Supabase inspection: project ACTIVE_HEALTHY, no health advisor notices, performance advisor reports missing covering indexes on 33 foreign keys (not all are necessarily involved in movement), and server metrics are not a controlled multiplayer performance trace. Do not add blanket indexes based solely on an advisor count.
+
+## Code-level root causes and first staged fixes
+
+1. **Premature remote overlay removal:** `TabletopApp` previously called `remoteMotion.clearPreview` immediately after scheduling a `map_tokens` position state update. React had not yet painted the new base left/top; the token and monitor could move back for a frame. Now matching authoritative events mark **remote handoff**, and `BattlemapBoard`'s existing `useLayoutEffect` retires the overlay after committed coordinates match. Out-of-sync intermediate trajectory events do not erase a newer private observer preview.
+2. **Expiry painted stale coordinates before reconcile:** private observer motion timer now requests a fresh authorized token/tool projection **before** clearing the overlay. Sequence guards prevent an old completion from clearing a newer packet's motion.
+3. **Unnecessary React state churn:** the hot token-pointer path updated `toolPreview` even for a movement containing no tools; it now skips this React update entirely. Sprite/monitor motion stays on the existing animation-frame presentation layer.
+4. **Excess server preview backlog:** fast pointer samples used to create overlapping `preview_map_motion` database RPCs, which can be expensive (per-recipient lighting, LOS, collision). `ObserverPreviewQueue` permits at most **one in-flight RPC per token/tool**; it replaces any unsent coordinates with the latest sample and cancels/drains the queued/in-flight operation before `end_map_motion_previews` cleanup. Server-side RLS, collision and observer visibility authorization are unchanged. Existing 115 ms client throttle and 100 ms DB throttle are **not reduced**, so this stage attempts load relief without increasing their maximum request rate.
+
+## Second stage — server-side single-write trajectory migration applied
+
+The **previously deployed** `public.commit_map_trajectory` called `public.move_map_group` **once per waypoint**, writing intermediate map token/tool locations and triggering Realtime repeatedly. This can let older intermediate updates conflict with newer visual previews.
+
+The approved **applied migration** `supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql` (original source candidate: `staging/sql-candidates/world_runtime_single_write_trajectory.sql`) replaces that behavior. It:
+- Retains the same `public.commit_map_trajectory(p_map, p_token_ids, p_tool_issue_ids, p_steps, p_ignore_collision)` signature, so the current UI RPC call remains compatible.
+- Makes one call to the **existing, SECURITY INVOKER** `public.move_map_group` with the accumulated final delta, preserving authenticated campaign/map access, per-piece RLS, DM-only override, a maximum of 48 mixed pieces, locks in a stable order, and all-or-nothing writes.
+- Uses transaction-local, map/actor-scoped route metadata to route the existing token and tool collision triggers through a new **private** `forge_visibility.validate_piece_trajectory`. Both triggers still run as before and enforce all intermediate swept-footprint wall/door/window collision checks, conditional attribute passage, map bounds and final route endpoint matching. Direct movement without the route metadata keeps the original straight-line collision behavior.
+- Revokes `PUBLIC`, `anon`, and `authenticated` execution on the internal validator; only the existing privileged collision-trigger path can call it. It grants no new table, fog, tool or authorization permissions.
+- Reduces persisted movement to **one final UPDATE per token/tool**, not one per waypoint. An atomic mixed-group request still updates multiple rows, so group movement can still produce more than one *final* fog tick; do not promise zero server load.
+- Does not change any fog, lighting, spectator, vision, Realtime broadcast or collision bypass policy. The earlier queued trusted preview RPC fix remains part of this PR.
+
+**Database verification:** migration `20261108055943` installed successfully. The internal validator is callable only by `postgres` (not `authenticated` or `anon`), the authenticated movement RPC is callable by players but not anonymous users, the public RPC retains SECURITY INVOKER, and installed SQL makes one final `move_map_group` call. No new Supabase advisor issues mentioning the validator were reported. Rollback-only existing-test-campaign checks passed for authorized player movement, DM bent-path override, denial of foreign-token movement and player collision override; isolated non-writing geometry probes accepted a legal bent path and rejected a direct blocked route. Browser latency and combat stress behavior are NOT verified by these checks.
+
+**Remaining coordinated release and browser acceptance gates:**
+
+- Installation, trigger-definition comparisons, EXECUTE grants, RLS/SECURITY INVOKER checks and direct database role checks completed on migration `20261108055943`.
+- Keep direct single-token movement collision-checked and DM override explicit; do not replace the validator with unguarded trigger suppression.
+- A movement transaction should either commit every requested token/tool at the validated final coordinates or roll back completely on a single wall or authorization failure. No mid-path positions should be persisted.
+- Designer approved the migration, which is already applied. Complete combined final commit CI/CodeQL, merge PR #49 to production once and verify Vercel READY/commit; then test using existing test campaigns. No paid Supabase branch or services.
+
+## Verification and acceptance before production
+
+- GitHub Actions: `npm test`, production dependency audit, Vite production build, strict Deno checks, CodeQL on final consolidated SHA.
+- New focused tests cover remote sprite+monitor handoff, latest-only queue under delayed replies, cancellation/drain and no-tool drag path.
+- Human two-browser DM/player checks on fog-on and fog-off maps: drag 1–6 cells rapidly with turns, stop/restart drag, remote follow latency, position after release, wall/door collision and no unauthorized NPC reveal, 2+ token groups, mounts and held lights.
+- To prove a sub-100 ms target or identify the remaining database delay, instrument local-paint, RPC submit/ack, private-broadcast receive, authorized snapshot commit and paint events in a dedicated browser test; compare median/p95 and correlate with backend `preview_map_motion`, `commit_map_trajectory` and `get_authorized_map_fog` request durations. Do not claim a measured improvement from unit tests or screenshots alone.
+
+**Release status:** database migration `20261108055943` applied/permissions verified; combined client changes and the exact versioned migration recorded in PR #49 awaiting green final CI and the single production merge. Live multiplayer stress/latency verification remains outstanding.

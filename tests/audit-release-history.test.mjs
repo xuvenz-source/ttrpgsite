@@ -12,11 +12,30 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/next-release-inventory-token-continuity-2026-11-08');
- assert.deepEqual(ledger.lastRelease.approvedPullRequests,[48]);
- assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[47]);
- assert.equal(ledger.lastRelease.productionBaseSha,'a763b8d106e2362033c16ce44966e9b122d6a47b');
+ assert.equal(ledger.releaseBranch,null);
+ assert.equal(ledger.productionBaseSha,'92f982ce23dcda706032c3abb235a84233324578');
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
+ assert.ok(ledger.features.some(feature=>feature.id==='movement-visual-handoff-and-observer-request-coalescing'
+  &&feature.status==='released'&&feature.releaseReady===true));
+ assert.ok(ledger.features.some(feature=>feature.id==='single-write-trajectory-server-redesign'
+  &&feature.status==='released'&&feature.releaseReady===true));
+ assert.ok(ledger.databaseDependencies.some(dep=>
+  dep.name==='world_runtime_single_write_trajectory' &&
+  dep.status==='applied-production' && dep.appliedVersion==='20261108055943' &&
+  dep.mustApplyBeforeFrontend===true &&
+  dep.releaseApprovalRequired===true));
+ assert.deepEqual(ledger.lastRelease.approvedPullRequests,[49]);
+ assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[]);
+ assert.equal(ledger.lastRelease.productionBaseSha,'92f982ce23dcda706032c3abb235a84233324578');
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
+ assert.ok(ledger.branches.some(item=>
+  item.name==='stage/movement-latency-rubberband-2026-11-08'&&item.status==='released'));
+ assert.ok(ledger.releaseHistory.some(item=>item.pullRequests?.includes(49)&&
+  item.databaseDependencies?.includes('20261108055943')));
+ assert.match(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
+  /revoke all on function forge_visibility\.validate_piece_trajectory/);
+ assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
+  /^begin;|^commit;/m);
  assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[]);
  assert.ok(ledger.features.some(feature=>feature.id==='unified-world-runtime-redesign'&&
   feature.status==='released'&&feature.releaseReady===true));

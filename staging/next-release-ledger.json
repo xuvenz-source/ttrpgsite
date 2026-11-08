@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-  "releaseBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
+  "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
+  "releaseBranch": null,
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -138,6 +138,12 @@
       "status": "released",
       "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
       "note": "Bundled as part of single approved production release PR #48; do not redeploy separately."
+    },
+    {
+      "name": "stage/movement-latency-rubberband-2026-11-08",
+      "status": "released",
+      "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
+      "note": "Both movement features included in approved PR #49 release, database version 20261108055943 applied and authorized. Live multi-browser stress testing remains outstanding."
     }
   ],
   "features": [
@@ -345,6 +351,30 @@
       "releaseReady": true,
       "databaseDependencies": [],
       "verification": "GitHub CI tests/build; needs live multi-browser DM/player fog/collision UX acceptance after designer-approved release. No movement migration. Bundled in approved PR #48; post-publish player/DM browser acceptance remains outstanding."
+    },
+    {
+      "id": "movement-visual-handoff-and-observer-request-coalescing",
+      "description": "Retain remote token and monitor previews until React has committed matching authoritative coordinates; avoid token-only drag React state churn and drop redundant pending secure observer preview requests; cancel and drain per-piece previews before server cleanup.",
+      "sources": [
+        "stage/movement-latency-rubberband-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "GitHub CI npm tests, build, audit and strict Edge checks required; CodeQL and multiplayer fog-on/off owner/DM acceptance before release. Existing server collision/RLS/fog authority unchanged. Approved and bundled in PR #49; database migration 20261108055943 applied successfully. Role grants, authorized player trajectory, DM override trajectory, denied player foreign token/override, legal bend and blocked-wall checks verified using transaction-rollback/no-write probes. Actual DM/player browser load testing remains outstanding."
+    },
+    {
+      "id": "single-write-trajectory-server-redesign",
+      "description": "Server-validated full bent-path collision for tokens and tools with one final atomic group UPDATE rather than one DB write per waypoint; same SECURITY INVOKER/RLS RPC and DM-only override, private trigger-level validator, no player-visible wall data.",
+      "sources": [
+        "stage/movement-latency-rubberband-2026-11-08"
+      ],
+      "status": "released",
+      "releaseReady": true,
+      "databaseDependencies": [
+        "world_runtime_single_write_trajectory"
+      ],
+      "verification": "Staged SQL candidate and static regression tests, with GitHub build/audit/Edge/CodeQL required. SQL is UNAPPLIED and not compiled against PostgreSQL; coordinated live Supabase migration, installed-trigger/grant audit and multi-browser DM/player collision/fog testing are mandatory before claiming release success. Approved and bundled in PR #49; database migration 20261108055943 applied successfully. Role grants, authorized player trajectory, DM override trajectory, denied player foreign token/override, legal bend and blocked-wall checks verified using transaction-rollback/no-write probes. Actual DM/player browser load testing remains outstanding."
     }
   ],
   "databaseDependencies": [
@@ -476,6 +506,17 @@
       "dependsOn": "campaign_sheet_inventory_collaboration + campaign_tool_item_collaboration",
       "notes": "Approved production migration applied atomically and verified installed RPC + scoped grants + grid first-fit. Frontend PR remains unmerged until full CI/security checks and one Vercel release.",
       "appliedVersion": "20261108052335"
+    },
+    {
+      "name": "world_runtime_single_write_trajectory",
+      "file": "supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql",
+      "status": "applied-production",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "world_runtime_collision_and_group_move + world_runtime_atomic_trajectory (applied 20261108031754)",
+      "notes": "Applied as authorized production migration. Verified helper installed, EXECUTE restricted to postgres, authenticated RPC allowed, anon denied, public RPC SECURITY INVOKER, exactly one move_map_group call. Legal bent and blocked direct ray, role-scoped own-player/DM positive, unauthorized foreign-player and DM-only override negatives tested without persisting changes. Test-campaign multiplayer latency/collision QA still required.",
+      "appliedVersion": "20261108055943",
+      "appliedVia": "supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql"
     }
   ],
   "edgeFunctionDependencies": [
@@ -501,36 +542,34 @@
     "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
+    "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
     "releaseBranch": null,
     "outstandingBranches": [],
-    "stagePolicy": "Both ready features are bundled in approved PR #48 and database version 20261108052335 is already applied. Next release must start from new production main and audit any new staged work; keep Vercel preview disabled.",
+    "stagePolicy": "PR #49 approved and scheduled for one production merge with migration 20261108055943 already applied. After deployment, future work starts from verified new main. Audit subsequent staged work, keep preview disabled, no paid test database.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
-    "name": "Inventory Transfers and Smoother Token Movement",
+    "name": "Movement Rubber-Banding and Single-Write Trajectory",
     "date": "2026-11-08",
     "approvedPullRequests": [
-      48
+      49
     ],
-    "includedStagedPullRequests": [
-      47
-    ],
+    "includedStagedPullRequests": [],
     "status": "released-production",
     "productionCommit": null,
-    "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-    "sourceBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
+    "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
+    "sourceBranch": "stage/movement-latency-rubberband-2026-11-08",
     "priorRelease": {
       "approvedPullRequests": [
-        46
+        48
       ],
-      "productionCommit": "a763b8d106e2362033c16ce44966e9b122d6a47b"
+      "productionCommit": "92f982ce23dcda706032c3abb235a84233324578"
     },
     "frontendSourceSha": null,
     "databaseDependencies": [
       {
-        "name": "campaign_cross_inventory_item_transfers",
-        "appliedVersion": "20261108052335",
+        "name": "world_runtime_single_write_trajectory",
+        "appliedVersion": "20261108055943",
         "status": "applied-production"
       }
     ],
@@ -598,12 +637,26 @@
       "includedStagedPullRequests": [
         47
       ],
-      "productionCommit": null,
+      "productionCommit": "92f982ce23dcda706032c3abb235a84233324578",
       "sourceBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
       "databaseDependencies": [
         "20261108052335"
       ],
       "notes": "Single approved production merge; Vercel READY/SHA verification is required and reported separately."
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Movement Rubber-Banding and Single-Write Trajectory",
+      "pullRequests": [
+        49
+      ],
+      "productionCommit": null,
+      "sourceBranch": "stage/movement-latency-rubberband-2026-11-08",
+      "databaseDependencies": [
+        "20261108055943"
+      ],
+      "paidInfrastructure": false,
+      "notes": "Designer-approved one main merge; database migration verified before frontend deploy. Manual DM/player browser stress testing outstanding."
     }
   ],
   "databaseReleaseVersion": "20261108031754"

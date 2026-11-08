@@ -632,9 +632,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
    onMovementPreview?.(t,next.x,next.y,false);
   }
-  setToolPreview(old=>{
+  // An ordinary token-only drag has no tool positions to change.
+  // Avoid allocating a new React state object and rerendering the board on
+  // every grid step just to keep an empty tool preview unchanged.
+  if(info.tools?.length)setToolPreview(old=>{
    const next={...old};
-   for(const tool of info.tools||[])
+   for(const tool of info.tools)
     next[tool.issue_id]={x:Number(tool.x)+delta.dx,y:Number(tool.y)+delta.dy};
    return next;
   });
