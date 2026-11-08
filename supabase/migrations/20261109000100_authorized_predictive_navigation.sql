@@ -36,6 +36,11 @@ DECLARE
  env_revision bigint:=0;visible_cells integer[];nodes jsonb:='[]'::jsonb;
  gx integer;gy integer;tx integer;ty integer;mask integer;
  dir record;allowed boolean;dm boolean;
+ -- Parse collidable walls only once per grant. The final transaction still
+ -- executes validate_piece_trajectory independently on the committed path.
+ barrier jsonb;points jsonb;segment_idx integer;scan_idx integer;
+ segment_count integer:=0;blockers double precision[]:=ARRAY[]::double precision[];
+ ax double precision;ay double precision;ex double precision;ey double precision;
 BEGIN
  IF actor IS NULL OR p_map IS NULL OR p_piece IS NULL OR
   p_kind NOT IN ('token','tool') THEN RAISE EXCEPTION 'Navigation unavailable';END IF;
@@ -95,6 +100,32 @@ BEGIN
  fog_on:=coalesce((fog_frame->>'enabled')::boolean,true);
  SELECT pg_catalog.array_agg(value::integer) INTO visible_cells
  FROM pg_catalog.jsonb_array_elements_text(fog_frame->'visible') value;
+ -- Do not call validate_piece_trajectory for every possible edge: that
+ -- function reparses up to 120 walls for each of ~5,000 candidate transitions.
+ -- Precompute exactly the barriers that the existing movement rule would
+ -- block, retaining its state/attribute handling and swept footprint tests.
+ IF collision_on THEN
+  FOR barrier IN SELECT value FROM pg_catalog.jsonb_array_elements(scene->'objects') LOOP
+   IF barrier->>'type' NOT IN ('wall','door','window') THEN CONTINUE;END IF;
+   IF barrier->>'type' IN ('door','window') AND barrier->>'state'='broken'
+   THEN CONTINUE;END IF;
+   IF forge_visibility.wall_passes(barrier,attrs,'movement') THEN CONTINUE;END IF;
+   points:=barrier->'points';
+   IF pg_catalog.jsonb_typeof(points)<>'array' OR
+      pg_catalog.jsonb_array_length(points) NOT BETWEEN 2 AND 80
+   THEN RAISE EXCEPTION 'Navigation wall geometry unavailable';END IF;
+   FOR segment_idx IN 1..pg_catalog.jsonb_array_length(points)-1 LOOP
+    -- The native float-array contains no geometry in the RPC response.
+    blockers:=blockers||ARRAY[
+      (points->(segment_idx-1)->>'x')::double precision,
+      (points->(segment_idx-1)->>'y')::double precision,
+      (points->segment_idx->>'x')::double precision,
+      (points->segment_idx->>'y')::double precision
+    ];
+    segment_count:=segment_count+1;
+   END LOOP;
+  END LOOP;
+ END IF;
  -- The full 60 ft radius is preauthorized once, NOT checked per pointer step.
  -- Do not expose a remote lookup origin parameter (would permit map probing).
  FOR gx IN pg_catalog.greatest(0,bx-12)..
@@ -113,16 +144,28 @@ BEGIN
       tx,ty,span_w,span_h,map_w,map_h,visible_cells,fog_on)
     THEN CONTINUE;END IF;
     allowed:=true;
-    IF collision_on THEN
-     BEGIN
-      PERFORM forge_visibility.validate_piece_trajectory(
-       scene,attrs,gx::double precision,gy::double precision,span_w,span_h,
-       map_w::double precision,map_h::double precision,
-       pg_catalog.jsonb_build_array(pg_catalog.jsonb_build_object(
-        'dx',dir.dx,'dy',dir.dy)));
-     EXCEPTION WHEN others THEN
-      allowed:=false;
-     END;
+    IF collision_on AND segment_count>0 THEN
+     FOR scan_idx IN 1..segment_count LOOP
+      ax:=blockers[4*scan_idx-3];ay:=blockers[4*scan_idx-2];
+      ex:=blockers[4*scan_idx-1];ey:=blockers[4*scan_idx];
+      -- Conservative broad-phase: only call the existing exact swept
+      -- collision helper for segments intersecting the swept AABB.
+      -- An epsilon-expansion prevents false negatives at shared boundaries.
+      IF pg_catalog.greatest(ax,ex)<
+           pg_catalog.least(gx,tx)-0.000001 OR
+         pg_catalog.least(ax,ex)>
+           pg_catalog.greatest(gx,tx)+span_w+0.000001 OR
+         pg_catalog.greatest(ay,ey)<
+           pg_catalog.least(gy,ty)-0.000001 OR
+         pg_catalog.least(ay,ey)>
+           pg_catalog.greatest(gy,ty)+span_h+0.000001
+      THEN CONTINUE;END IF;
+      IF forge_visibility.swept_hits_segment(
+           gx,gy,span_w,span_h,tx,ty,ax,ay,ex,ey) OR
+         forge_visibility.swept_hits_segment(
+           tx,ty,span_w,span_h,tx,ty,ax,ay,ex,ey)
+      THEN allowed:=false;EXIT;END IF;
+     END LOOP;
     END IF;
     IF allowed THEN mask:=mask|(1<<dir.bit);END IF;
    END LOOP;
