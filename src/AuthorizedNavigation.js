@@ -98,24 +98,37 @@ export function navigationRouteApproved(grant,origin,offsets){
 /** Caches validated grants by the viewer's effective authorization footprint,
  * not by noisy per-viewer movement revision ticks. */
 export function createAuthorizedNavigation({db,clock=Date.now}){
- const grants=new Map(),inFlight=new Map(),revisions=new Map();
+ const grants=new Map(),inFlight=new Map(),revisions=new Map(),origins=new Map();
+ const matchingOrigin=(grant,origin)=>!origin||
+  (grant?.baseX===origin.x&&grant?.baseY===origin.y);
  let disposed=false;
  function validGrant(mapId,kind,id){
   const key=keyOf(mapId,kind,id),grant=grants.get(key);
-  const revision=revisions.get(mapId);
+  const revision=revisions.get(mapId),origin=origins.get(key);
   if(grant&&grant.expiresAt<=clock())movementDiagnostics.count('navigationGrantExpired');
   if(!revision||!grant||grant.expiresAt<=clock()||
-   grant.authorizationKey!==revision.authorizationKey){
+   grant.authorizationKey!==revision.authorizationKey||
+   !matchingOrigin(grant,origin)){
    grants.delete(key);return null;
   }
   return grant;
  }
- async function ensure(mapId,kind,id){
+ async function ensure(mapId,kind,id,origin=undefined){
   if(disposed||!UUID.test(String(mapId))||!UUID.test(String(id))||
    !['token','tool'].includes(kind))return null;
+  const key=keyOf(mapId,kind,id);
+  if(origin!==undefined){
+   if(!integer(origin?.x)||!integer(origin?.y))return null;
+   const previous=origins.get(key);
+   if(!previous||previous.x!==origin.x||previous.y!==origin.y){
+    origins.set(key,{x:origin.x,y:origin.y});
+    grants.delete(key);inFlight.delete(key);
+    if(previous)movementDiagnostics.count('navigationOriginChanged');
+   }
+  }
+  const expectedOrigin=origins.get(key);
   const exists=validGrant(mapId,kind,id);
   if(exists){movementDiagnostics.count('navigationGrantCacheHit');return exists;}
-  const key=keyOf(mapId,kind,id);
   if(inFlight.has(key)){
    movementDiagnostics.count('navigationGrantCoalesced');
    return inFlight.get(key);
@@ -141,7 +154,11 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
     (current.environmentRevision===undefined||
       grant.environmentRevision===current.environmentRevision)&&
     (current.collisionEnabled===undefined||
-      grant.collisionEnabled===current.collisionEnabled)){
+      grant.collisionEnabled===current.collisionEnabled)&&
+    matchingOrigin(grant,expectedOrigin)&&
+    (!expectedOrigin||
+      (origins.get(key)?.x===expectedOrigin.x&&
+       origins.get(key)?.y===expectedOrigin.y))){
     const stored={...grant,authorizationKey:current.authorizationKey};
     grants.set(key,stored);return stored;
    }
@@ -152,7 +169,9 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
  }
  return {
   ensure,
-  warm(mapId,kind,id){void ensure(mapId,kind,id).catch(()=>{})},
+  warm(mapId,kind,id,origin=undefined){
+   void ensure(mapId,kind,id,origin).catch(()=>{});
+  },
   // Passing a stable key from navigationAuthorizationKey() keeps an existing
   // grant across harmless visibility revision increments. Two-argument calls
   // remain strict for older consumers and tests.
@@ -164,6 +183,7 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
     for(const [id,grant] of grants)
      if(grant.mapId===mapId)grants.delete(id);
     for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
+    for(const id of origins.keys())if(id.startsWith(mapId+':'))origins.delete(id);
    };
    if(!integer(revision)||revision<0||key===null||
       (key!==undefined&&(!integer(environmentRevision)||
@@ -192,16 +212,20 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    for(const [id,grant] of grants)
     if(grant.mapId===mapId)grants.delete(id);
    for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
+   for(const id of origins.keys())if(id.startsWith(mapId+':'))origins.delete(id);
   },
   allows(mapId,kind,id,from,to){
    return navigationAllows(validGrant(mapId,kind,id),from,to);
   },
   routeApproved(mapId,kind,id,origin,offsets){
-   return navigationRouteApproved(validGrant(mapId,kind,id),origin,offsets);
+   const grant=validGrant(mapId,kind,id);
+   return matchingOrigin(grant,origin)&&grant?.baseX===origin?.x&&
+    grant?.baseY===origin?.y&&
+    navigationRouteApproved(grant,origin,offsets);
   },
   hasGrant(mapId,kind,id){return !!validGrant(mapId,kind,id)},
-  clear(){grants.clear();inFlight.clear();revisions.clear()},
-  dispose(){disposed=true;grants.clear();inFlight.clear();revisions.clear()},
+  clear(){grants.clear();inFlight.clear();revisions.clear();origins.clear()},
+  dispose(){disposed=true;grants.clear();inFlight.clear();revisions.clear();origins.clear()},
   get size(){return grants.size}
  };
 }
