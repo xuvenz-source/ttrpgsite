@@ -75,6 +75,7 @@ test('authorized v2 RPC reuses the original RLS-protected fog and rejects racing
  assert.match(sql,/function public\.get_authorized_map_fog_v2\(p_map uuid\)/);
  assert.match(sql,/actor uuid:=auth\.uid\(\)/);
  assert.match(sql,/result:=public\.get_authorized_map_fog\(p_map\)/);
+ assert.match(sql,/raise exception 'Viewer visibility publication unavailable'/);
  assert.match(sql,/before_rev is distinct from after_rev then\s+raise exception/);
  assert.match(sql,/'protocolVersion',2,'revision',after_rev/);
  assert.match(sql,/revoke all on function public\.get_authorized_map_fog_v2\(uuid\)\s+from public,anon/);
