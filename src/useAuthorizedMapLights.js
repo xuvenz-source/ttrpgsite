@@ -21,7 +21,8 @@ export default function useAuthorizedMapLights({db,mapId,userId,revision,protoco
     if(error)throw error;
     const safe=normalizeAuthorizedLightMasks(data,mapId);
     if(cancelled)return;
-    setResult(safe?.revision===revision?safe:null);
+    setResult(safe?.revision===revision&&
+     (safe.protocolVersion===2?2:1)===protocolVersion?safe:null);
    }).catch(e=>{
     if(!cancelled){
      setResult(null);
@@ -30,5 +31,6 @@ export default function useAuthorizedMapLights({db,mapId,userId,revision,protoco
    });
   return()=>{cancelled=true};
  },[db,mapId,userId,revision,protocolVersion,refreshNonce,enabled]);
- return enabled&&result?.mapId===mapId&&result?.revision===revision?result:null;
+ return enabled&&result?.mapId===mapId&&result?.revision===revision&&
+  (result.protocolVersion===2?2:1)===protocolVersion?result:null;
 }
