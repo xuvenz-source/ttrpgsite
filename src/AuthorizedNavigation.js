@@ -235,6 +235,18 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    return true;
   },
   authority(mapId){return revisions.get(mapId)?.authorizationKey||null;},
+  /** Revoke grants for pieces whose authoritative RLS projection no longer
+   * permits movement by this viewer, independently of fog-cell changes. */
+  retainPermitted(mapId,permitted){
+   if(!UUID.test(String(mapId))||!(permitted instanceof Set))return;
+   for(const id of grants.keys())
+    if(id.startsWith(mapId+':')&&!permitted.has(id))grants.delete(id);
+   for(const id of inFlight.keys())
+    if(id.startsWith(mapId+':')&&!permitted.has(id))inFlight.delete(id);
+   for(const id of origins.keys())
+    if(id.startsWith(mapId+':')&&!permitted.has(id))origins.delete(id);
+  },
+
   // Passing a stable key from navigationAuthorizationKey() keeps an existing
   // grant across harmless visibility revision increments. Two-argument calls
   // remain strict for older consumers and tests.
