@@ -1060,13 +1060,24 @@ export default function TabletopApp(){
    void db.removeChannel(channel);
   };
  },[db,activeId,selectedMap,user]);
+ function clearMapMovementPreview(mapId,tokenIds=[],issueIds=[]){
+  if(!db||!mapId)return;
+  // db.rpc() is PromiseLike, not a Promise with a direct .catch().
+  // A final/cancelled gesture must revoke temporary fog sight even when
+  // nothing changed in persisted map_tokens (and thus no tick was emitted).
+  void db.rpc('end_map_motion_previews',{
+   p_map:mapId,p_token_ids:tokenIds,p_tool_issue_ids:issueIds
+  }).then(({error})=>{
+   if(error)console.warn('Movement preview cleanup failed',error.message);
+  }).catch(error=>console.warn('Movement preview cleanup failed',error))
+   .finally(()=>{
+    if(fog.frame?.enabled===true&&fog.frame.mapId===mapId)
+     void fog.refresh();
+   });
+ }
  function sendLiveMovement(token,x,y,final=false,cancelled=false){
   if(final&&cancelled){
-   void db.rpc('end_map_motion_previews',{
-    p_map:selectedMap,p_token_ids:[token.id],p_tool_issue_ids:[]
-   }).then(({error})=>{
-    if(error)console.warn('Movement preview cleanup failed',error.message);
-   });
+   clearMapMovementPreview(selectedMap,[token.id],[]);
    return;
   }
   // Final destination is committed separately; no speculative final broadcast.
@@ -1090,11 +1101,7 @@ export default function TabletopApp(){
  }
  function sendLiveToolMovement(placement,x,y,final=false,cancelled=false){
   if(final&&cancelled){
-   void db.rpc('end_map_motion_previews',{
-    p_map:selectedMap,p_token_ids:[],p_tool_issue_ids:[placement.issue_id]
-   }).then(({error})=>{
-    if(error)console.warn('Tool movement preview cleanup failed',error.message);
-   });
+   clearMapMovementPreview(selectedMap,[],[placement.issue_id]);
    return;
   }
   if(final||!fog.frame||fog.frame.mapId!==selectedMap)return;
@@ -1256,7 +1263,7 @@ export default function TabletopApp(){
   let live=true;
   setMapEnvironment(null);setPublishedMapEnvironment(null);
   mapEnvironmentCurrent.current=null;setMapEnvironmentMapId('');
-  setMapSettingEditor(old=>({...old,enabled:false,previewing:false,previewTokenId:'',selectedId:null}));
+  setMapSettingEditor(old=>({...old,enabled:false,previewing:false,ignoreCollision:false,previewTokenId:'',selectedId:null}));
   if(!db||!isDM||!activeId||!selectedMap){
    setMapEnvironmentStatus('Choose a map');return()=>{live=false};
   }
@@ -2282,19 +2289,15 @@ export default function TabletopApp(){
     if(movementPending.current.get(id)===item)movementPending.current.delete(id);
    ++tokenRefreshSeq.current;
    await Promise.all([refreshTokens(),campaignTools.refresh()]);
-   void db.rpc('end_map_motion_previews',{
-    p_map:mapId,p_token_ids:members.map(t=>t.id),
-    p_tool_issue_ids:tools.map(t=>t.issue_id)
-   }).catch(error=>console.warn('Movement preview cleanup failed',error));
+   clearMapMovementPreview(mapId,members.map(t=>t.id),
+    tools.map(t=>t.issue_id));
    throw e;
   }
   // Refresh both the token and issued-tool projections before dropping the
   // local optimistic group. SQL commits all rows or no rows.
   await Promise.all([refreshTokens(),campaignTools.refresh()]);
-  void db.rpc('end_map_motion_previews',{
-   p_map:mapId,p_token_ids:members.map(t=>t.id),
-   p_tool_issue_ids:tools.map(t=>t.issue_id)
-  }).catch(error=>console.warn('Movement preview cleanup failed',error));
+  clearMapMovementPreview(mapId,members.map(t=>t.id),
+   tools.map(t=>t.issue_id));
   for(const [id,item] of pending)
    if(movementPending.current.get(id)===item)movementPending.current.delete(id);
  }
