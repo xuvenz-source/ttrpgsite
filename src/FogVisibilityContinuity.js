@@ -1,0 +1,27 @@
+/** Pure helpers for rendering only confirmed per-viewer fog revisions.
+ * These checks never grant visibility or trust a client-authored sight frame. */
+export function isFreshVisibilityTick(tick,confirmed,mapId){
+ // Unknown/unversioned events fail closed just as before.
+ if(!confirmed||confirmed.mapId!==mapId||
+  !tick||!Number.isSafeInteger(Number(tick.revision))||
+  Number(tick.revision)<0||typeof tick.fog_enforced!=='boolean')return true;
+ // A matching or older tick already covered by a confirmed authorized RPC
+ // cannot revoke sight again. A fog mode toggle always requires refresh.
+ return tick.fog_enforced!==confirmed.enabled||
+  Number(tick.revision)>confirmed.revision;
+}
+const sameIndices=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&
+ a.length===b.length&&a.every((id,index)=>id===b[index]);
+/** Avoid rebinding token art and fog canvases when a periodic RPC proves
+ * exactly the same visibility. Pending frames must still be replaced by the
+ * fresh server snapshot, even if their revision number matches. */
+export function retainFogSnapshot(previous,next){
+ if(!previous||!next||previous.mapId!==next.mapId||
+  Object.hasOwn(previous,'displayVisibleDuringRefresh'))return next;
+ return previous.revision===next.revision&&
+  previous.enabled===next.enabled&&
+  previous.partyShared===next.partyShared&&
+  previous.width===next.width&&previous.height===next.height&&
+  sameIndices(previous.visible,next.visible)&&
+  sameIndices(previous.explored,next.explored)?previous:next;
+}
