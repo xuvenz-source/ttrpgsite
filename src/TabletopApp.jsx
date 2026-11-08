@@ -59,7 +59,7 @@ import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
-import {createAuthorizedNavigation,navigationAuthorizationKey} from './AuthorizedNavigation.js';
+import {createAuthorizedNavigation} from './AuthorizedNavigation.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
@@ -283,23 +283,26 @@ export default function TabletopApp(){
  useEffect(()=>navigationStore.clear(),[navigationStore,selectedMap,user]);
  useEffect(()=>{
   if(!selectedMap||isDM||!user||playerMapId!==selectedMap)return;
-  if(fog.frame?.mapId!==selectedMap){
-   navigationStore.revoke(selectedMap);return;
-  }
-  navigationStore.setRevision(selectedMap,fog.frame.revision,
-   navigationAuthorizationKey(fog.frame),
-   fog.frame.navigationEnvironmentRevision,fog.frame.collisionEnabled);
-  for(const token of tokens)
-   if(token.map_id===selectedMap&&token.owner_id===user&&
-     token.visible!==false&&!movementPending.current.has(token.id))
+  // A pending or invalid sight frame MUST revoke navigation, even when the
+  // old frame's last visible cells are retained solely as cosmetic terrain.
+  if(!navigationStore.adoptFrame(selectedMap,fog.frame))return;
+  const permitted=new Set();
+  for(const token of tokens){
+   if(token.map_id!==selectedMap||token.owner_id!==user||
+      token.visible===false)continue;
+   permitted.add(selectedMap+':token:'+token.id);
+   if(!movementPending.current.has(token.id))
     navigationStore.warm(selectedMap,'token',token.id,{x:token.x,y:token.y});
+  }
   for(const tool of campaignTools.placed){
    if(tool.map_id!==selectedMap)continue;
    const issued=campaignTools.issued.find(item=>item.id===tool.issue_id);
-   if(issued&&(issued.owner_id===user||issued.party_shared))
-    navigationStore.warm(selectedMap,'tool',tool.issue_id,
-     {x:tool.x,y:tool.y});
+   if(!toolCanControl(issued,user,false))continue;
+   permitted.add(selectedMap+':tool:'+tool.issue_id);
+   navigationStore.warm(selectedMap,'tool',tool.issue_id,
+    {x:tool.x,y:tool.y});
   }
+  navigationStore.retainPermitted(selectedMap,permitted);
  },[navigationStore,selectedMap,user,isDM,playerMapId,
   fog.frame,tokens,campaignTools.placed,campaignTools.issued]);
  const latestFogSnapshot=useRef(null);
@@ -2429,7 +2432,7 @@ export default function TabletopApp(){
   const end=path.at(-1);
   if(!end||baseX+end.dx!==wantedX||baseY+end.dy!==wantedY||
     !navigationStore.routeApproved(mapId,'token',id,{x:baseX,y:baseY},path)){
-   navigationStore.warm(mapId,'token',id);
+   navigationStore.warm(mapId,'token',id,{x:baseX,y:baseY});
    remoteMotion.current?.clearPreview(id);return;
   }
   const steps=movementPathDeltas(path);
@@ -2553,7 +2556,8 @@ export default function TabletopApp(){
    if(pieces.some(piece=>
      !navigationStore.routeApproved(mapId,piece.kind,piece.id,
       {x:piece.x,y:piece.y},offsets))){
-    for(const piece of pieces)navigationStore.warm(mapId,piece.kind,piece.id);
+    for(const piece of pieces)navigationStore.warm(mapId,piece.kind,piece.id,
+     {x:piece.x,y:piece.y});
     for(const member of members)remoteMotion.current?.clearPreview(member.id);
     for(const tool of tools)remoteMotion.current?.clearPreview('tool:'+tool.issue_id);
     return;
@@ -2794,6 +2798,8 @@ export default function TabletopApp(){
    onToolOpen={setSelectedToolIssueId} onToolMovementPreview={sendLiveToolMovement}
    remoteToolPositions={remoteToolPositions}
    onMovementPreview={sendLiveMovement} onGroupMovementPreview={sendLiveGroupMovement}
+   onMovementCancel={({mapId,tokenIds,toolIssueIds})=>
+    clearMapMovementPreview(mapId,tokenIds,toolIssueIds)}
     remotePositions={remoteTokenPositions}
    registerRemoteMotion={registerRemoteMotion}
     fogFrame={fog.frame}
