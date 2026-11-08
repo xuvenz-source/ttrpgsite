@@ -8,10 +8,47 @@
  */
 export function createTokenMotionRuntime({
  requestFrame=callback=>requestAnimationFrame(callback),
- cancelFrame=handle=>cancelAnimationFrame(handle)
+ cancelFrame=handle=>cancelAnimationFrame(handle),
+ setTimer=(callback,delay)=>setTimeout(callback,delay),
+ clearTimer=handle=>clearTimeout(handle)
 }={}){
  const mounted=new Map(),previews=new Map(),dirty=new Set();
+ const settleTimers=new Map();
  let scheduled=null,disposed=false;
+ function cancelSettle(id){
+  const timer=settleTimers.get(id);
+  if(timer!==undefined)clearTimer(timer);
+  settleTimers.delete(id);
+ }
+ function finishSettling(id,x,y,attempts=0){
+  if(disposed)return;
+  const current=previews.get(id);
+  if(!current?.settling||current.x!==x||current.y!==y)return;
+  const nodes=mounted.get(id);
+  const mount=nodes?.get('sprite')||nodes?.values().next().value;
+  // React can render after the network acknowledgement. Never remove a
+  // transform while its underlying left/top still targets the old cell.
+  if(mount&&(mount.x!==x||mount.y!==y)&&attempts<5){
+   settleTimers.set(id,setTimer(()=>finishSettling(id,x,y,attempts+1),60));
+   return;
+  }
+  settleTimers.delete(id);
+  // At this point canonical coordinates have either matched or the
+  // reconciliation grace period elapsed. Rebase to the current canonical
+  // position, which is already RLS-authorized, before removing the overlay.
+  if(mount&&(mount.x!==x||mount.y!==y)){
+   previews.set(id,{x:mount.x,y:mount.y,remote:true,settling:true});
+   schedule(id);
+   settleTimers.set(id,setTimer(()=>{
+    settleTimers.delete(id);
+    if(previews.get(id)?.settling){
+     previews.delete(id);schedule(id);
+    }
+   },125));
+   return;
+  }
+  previews.delete(id);schedule(id);
+ }
  const number=value=>typeof value==='number'&&Number.isFinite(value);
  function paint(id){
   const positions=mounted.get(id);
@@ -62,11 +99,25 @@ export function createTokenMotionRuntime({
   },
   preview(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
+   cancelSettle(id);
    previews.set(id,{x,y,remote:false});schedule(id);
   },
   previewRemote(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
+   cancelSettle(id);
    previews.set(id,{x,y,remote:true});schedule(id);
+  },
+  // An authoritative final position may differ from the last throttled
+  // preview packet. Ease to that final cell, then drop the overlay only
+  // after its 95ms CSS interpolation and React position commit are complete.
+  settleRemote(id,x,y){
+   const preview=previews.get(id);
+   if(!preview?.remote||!number(x)||!number(y))return false;
+   cancelSettle(id);
+   previews.set(id,{x,y,remote:true,settling:true});
+   schedule(id);
+   settleTimers.set(id,setTimer(()=>finishSettling(id,x,y),125));
+   return true;
   },
   // Keep the local drop transform active until React has committed its new
   // optimistic left/top. Clearing on pointerup first paints the old position
@@ -82,7 +133,8 @@ export function createTokenMotionRuntime({
   handoffRemote(id){
    const preview=previews.get(id);
    if(!preview?.remote)return false;
-   previews.set(id,{...preview,handoff:true});
+   cancelSettle(id);
+   previews.set(id,{...preview,handoff:true,settling:false});
    return true;
   },
   reconcile(id,x,y){
@@ -94,16 +146,19 @@ export function createTokenMotionRuntime({
    return true;
   },
   clearPreview(id){
+   cancelSettle(id);
    if(!previews.delete(id))return;
    schedule(id);
   },
   clear(){
+   for(const id of settleTimers.keys())cancelSettle(id);
    previews.clear();
    if(scheduled!==null){cancelFrame(scheduled);scheduled=null}
    dirty.clear();
    for(const id of mounted.keys())paint(id);
   },
   dispose(){
+   for(const id of settleTimers.keys())cancelSettle(id);
    if(scheduled!==null)cancelFrame(scheduled);
    scheduled=null;disposed=true;dirty.clear();previews.clear();mounted.clear();
   },

@@ -38,6 +38,7 @@ import {normalizeEnvironment,withObject,patchObject,removeObject} from './MapEnv
 import {eventAffectsMap,createCoalescedRefresh,createTrailingRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
+import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
 import {createDebouncedSerialWriter} from './QueuedWrites.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
@@ -53,9 +54,10 @@ import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './S
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
- reconcileTokenSnapshot,isPositionOnlyTokenEvent} from './LiveTokenMovement.js';
+ reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
+import {createRemotePositionSettler} from './RemotePositionSettler.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
  nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -163,7 +165,8 @@ export default function TabletopApp(){
  const liveMapChannel=useRef(null),liveMapReady=useRef(false);
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),remoteToolExpiry=useRef(new Map()),latestMovementAccess=useRef({});
- const remoteMotion=useRef(null),observerRevisions=useRef(new Map());
+ const remoteMotion=useRef(null),observerRevisions=useRef(new Map()),
+  remotePositionSettler=useRef(null);
  const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null),
   latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
@@ -253,15 +256,19 @@ export default function TabletopApp(){
  },[openedHandout?.pinId,isDM,campaignHandouts.pins,
   campaignHandouts.loading,campaignHandouts.error]);
 
+ const refreshCoordinator=useMemo(()=>createCampaignRefreshCoordinator(),
+  [activeId,selectedMap,user,isDM]);
  const campaignTools=useCampaignTools({
-  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
+  refreshCoordinator:refreshCoordinator
  });
- const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user});
+ const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,
+  refreshCoordinator:refreshCoordinator});
  const queuePreviewFogRefresh=()=>{
   const now=Date.now();
   if(now-lastPreviewFogRefresh.current<250)return;
   lastPreviewFogRefresh.current=now;
-  void fog.refresh();
+  void fog.refresh(true);
  };
  latestPartyFogRefresh.current=()=>{
   if(fog.frame?.enabled===true&&fog.frame.partyShared)
@@ -776,17 +783,33 @@ export default function TabletopApp(){
     console.warn('Could not refresh campaign roster',e);
   }
  }
- async function refreshMonitors(){
+ async function refreshMonitors(fresh=false){
   const request=++monitorRequest.current;
-  if(!selectedMap||!activeId){setMonitorValues({});setEncumbranceBadges({});return}
+  if(!selectedMap||!activeId||!user){
+   setMonitorValues({});setEncumbranceBadges({});return;
+  }
+  // These are two independent server-derived resources. Concurrent callers
+  // share only in-flight reads for the same authorized campaign/map/viewer.
+  const valuesKey=campaignResourceKey({campaignId:activeId,mapId:selectedMap,
+   userId:user,resource:'token-monitor-values'});
+  const badgesKey=campaignResourceKey({campaignId:activeId,mapId:selectedMap,
+   userId:user,resource:'token-encumbrance-badges'});
+  if(fresh===true){
+   refreshCoordinator.invalidate(valuesKey);
+   refreshCoordinator.invalidate(badgesKey);
+  }
   try{
-   const [rows,badges]=await Promise.all([
-    read(db.rpc('get_token_monitor_values',{p_map:selectedMap})),
-    read(db.rpc('get_token_encumbrance_badges',{p_map:selectedMap}))
+   const [valuesReply,badgesReply]=await Promise.all([
+    refreshCoordinator.request(valuesKey,
+     ()=>read(db.rpc('get_token_monitor_values',{p_map:selectedMap}))),
+    refreshCoordinator.request(badgesKey,
+     ()=>read(db.rpc('get_token_encumbrance_badges',{p_map:selectedMap})))
    ]);
+   if(!valuesReply.current||!badgesReply.current)return;
+   const rows=valuesReply.value,badges=badgesReply.value;
    if(request===monitorRequest.current){
     const latest=Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}]));
-    // Server reads can finish before a background edit. Keep local writes visible.
+    // Preserve optimistic patches while a remote read is pending.
     for(const pending of quickWritePatches.current.values()){
      for(const id of pending.affected){
       if(latest[id])latest[id]={...latest[id],...pending.patch};
@@ -799,14 +822,21 @@ export default function TabletopApp(){
    }
   }catch(e){if(request===monitorRequest.current)console.error('Could not refresh token monitors',e)}
  }
- async function refreshTokens(){
+ async function refreshTokens(fresh=false){
   const request=++tokenRefreshSeq.current;
   const mapId=selectedMap,campaignId=activeId;
   if(!mapId){setTokens([]);return}
   try{
-   const rows=await read(db.from('map_tokens').select(
-    'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
-   ).eq('map_id',mapId));
+   const key=campaignResourceKey({campaignId,mapId,userId:user,resource:'map-tokens'});
+   // A sight revision must never reuse a request begun before authorization
+   // changed. No completed snapshot is cached between refresh calls.
+   if(fresh===true)refreshCoordinator.invalidate(key);
+   const response=await refreshCoordinator.request(key,
+    ()=>read(db.from('map_tokens').select(
+     'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
+    ).eq('map_id',mapId)));
+   if(!response.current)return;
+   const rows=response.value;
    // Ignore older requests, including requests started before switching maps.
    if(request!==tokenRefreshSeq.current||
       tokenContextRef.current.mapId!==mapId||
@@ -831,8 +861,11 @@ export default function TabletopApp(){
     }
     return projected;
    })));
+   // Return exactly the RLS-approved projection for expiry reconciliation.
+   return rows;
   }catch(e){
    if(request===tokenRefreshSeq.current)fail(e);
+   return null;
   }
  }
  useEffect(()=>{
@@ -1015,6 +1048,24 @@ export default function TabletopApp(){
    queue.dispose();
   };
  },[db,selectedMap]);
+ // Short observer-quiet window before converging the preview toward a final
+ // authorized coordinate. This prevents a previous commit from rewinding
+ // another player's currently active drag.
+ useEffect(()=>{
+  if(!selectedMap)return;
+  const manager=createRemotePositionSettler({
+   settle:(id,x,y)=>{
+    const preview=remoteMotion.current?.getPreview(id);
+    if(preview?.remote&&(preview.x!==x||preview.y!==y))
+     remoteMotion.current?.settleRemote(id,x,y);
+   }
+  });
+  remotePositionSettler.current=manager;
+  return()=>{
+   manager.dispose();
+   if(remotePositionSettler.current===manager)remotePositionSettler.current=null;
+  };
+ },[selectedMap]);
  // A private observer topic receives only server-signed movement data that
  // Postgres filtered for this specific player's map assignment and current LOS.
  // Pointer packets paint token/tool transforms directly, not TabletopApp state.
@@ -1027,6 +1078,7 @@ export default function TabletopApp(){
   }).on('broadcast',{event:'motion'},({payload})=>{
    if(!validObserverMovementPacket(payload,mapId,user)||
       !acceptObserverMovementPacket(payload,observerRevisions.current))return;
+   if(payload.kind==='token')remotePositionSettler.current?.notePreview(payload.id);
    const access=latestMovementAccess.current;
    const isToken=payload.kind==='token';
    const known=isToken?(access.tokens||[]).some(t=>t.id===payload.id&&t.map_id===mapId):
@@ -1069,10 +1121,22 @@ export default function TabletopApp(){
     // Finish visual motion only after the latest authorized database read.
     // Never remove the overlay first and expose a stale React left/top.
     const refresh=isToken?latestTokenRefresh.current:latestToolRefresh.current;
-    void Promise.resolve(refresh?.()).catch(error=>
-     console.warn('Movement reconciliation failed',error)).finally(()=>{
-      if(observerRevisions.current.get(payload.kind+':'+payload.id)===payload.seq)
-       remoteMotion.current?.clearPreview(visualId);
+    void Promise.resolve(refresh?.()).then(rows=>{
+     if(observerRevisions.current.get(payload.kind+':'+payload.id)!==payload.seq)return;
+     if(isToken&&Array.isArray(rows)){
+      const row=rows.find(token=>token.id===payload.id);
+      const current=latestMovementAccess.current.tokens?.find(token=>
+       token.id===payload.id);
+      // Prefer a newer already-received RLS row over a delayed full snapshot.
+      const target=row&&current&&isOlderTokenSnapshot(row,current)?current:row;
+      if(target)remoteMotion.current?.settleRemote(
+       visualId,Number(target.x),Number(target.y));
+      else remoteMotion.current?.clearPreview(visualId);
+     }else remoteMotion.current?.clearPreview(visualId);
+    }).catch(error=>{
+     console.warn('Movement reconciliation failed',error);
+     if(observerRevisions.current.get(payload.kind+':'+payload.id)===payload.seq)
+      remoteMotion.current?.clearPreview(visualId);
     });
    },OBSERVER_PREVIEW_EXPIRE_MS);
    expiry.set(payload.id,timer);
@@ -1107,7 +1171,7 @@ export default function TabletopApp(){
    }).catch(error=>console.warn('Movement preview cleanup failed',error))
    .finally(()=>{
     if(fog.frame?.enabled===true&&fog.frame.mapId===mapId)
-     void fog.refresh();
+     void fog.refresh(true);
    });
  }
  function sendLiveMovement(token,x,y,final=false,cancelled=false){
@@ -1192,6 +1256,9 @@ export default function TabletopApp(){
     const isMotionOnly=isPositionOnlyTokenEvent(
      event,latestMovementAccess.current.tokens||[],mapId);
     if(event.eventType==='UPDATE'){
+     const previous=latestMovementAccess.current.tokens?.find(token=>
+      token.id===event.new?.id);
+     if(previous&&isOlderTokenSnapshot(event.new,previous))return;
      setTokens(previous=>applyAuthoritativeTokenMotion(
       previous,event,mapId,movementPending.current));
      const id=event.new?.id;
@@ -1204,6 +1271,11 @@ export default function TabletopApp(){
        const committed=latestMovementAccess.current.tokens?.find(t=>t.id===id);
        if(committed?.x===event.new.x&&committed?.y===event.new.y)
         remoteMotion.current?.reconcile(id,Number(committed.x),Number(committed.y));
+      }else if(painted?.remote){
+       // Last throttled preview and final saved cell differ. A new private
+       // packet cancels this scheduled convergence if motion is still active.
+       remotePositionSettler.current?.noteCanonical(
+        id,Number(event.new.x),Number(event.new.y));
       }
      }
     }
@@ -1281,13 +1353,14 @@ export default function TabletopApp(){
  useEffect(()=>{
   movementPending.current.clear();
   ++tokenRefreshSeq.current;
- },[selectedMap,activeId,user]);
- useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
+  ++monitorRequest.current;
+ },[selectedMap,activeId,user,isDM]);
+ useEffect(()=>{refreshTokens(true);refreshMonitors(true);refreshChat()},[selectedMap,activeId,user,isDM]);
  // Newly observed rows were absent from the player's old RLS stream. A
  // sanitized revision tick therefore re-queries the authoritative snapshots.
  useEffect(()=>{
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
-  void refreshTokens();void refreshMonitors();void campaignTools.refresh();
+  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh(undefined,true);
  },[fog.frame?.revision,selectedMap]);
  // Movement previews can revise authorized LOS without changing the saved
  // visibility tick. Refresh newly observable RLS rows only when that mask
@@ -1301,7 +1374,7 @@ export default function TabletopApp(){
      current.displayVisibleDuringRefresh)return;
   const a=current.visible||[],b=previous.visible||[];
   if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
-  void refreshTokens();void refreshMonitors();void campaignTools.refresh();
+  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh(undefined,true);
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
@@ -2126,8 +2199,8 @@ export default function TabletopApp(){
     .eq('campaign_id',activeId).maybeSingle();
    if(publishedError)throw publishedError;
    setPublishedMapEnvironment(published?.live?normalizeEnvironment(published.live):null);
-   await fog.refresh();
-   await Promise.all([refreshTokens(),refreshMonitors(),campaignTools.refresh()]);
+   await fog.refresh(true);
+   await Promise.all([refreshTokens(true),refreshMonitors(true),campaignTools.refresh(undefined,true)]);
    setMapEnvironmentStatus(action==='publish'?'Published to players.':'Saved.');
   }catch(e){fail(e);setMapEnvironmentStatus('Publication failed: '+message(e))}
  }

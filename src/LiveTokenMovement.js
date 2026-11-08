@@ -11,6 +11,15 @@ export function shouldPersistFogDrag(fogEnabled,lastSent,now){
 }
 export const MOVE_PREVIEW_EXPIRE_MS=1200;
 export const movementTopic=mapId=>'forge-map:'+mapId;
+/** A delayed RLS snapshot may have been queried BEFORE the newer Realtime
+ * coordinate event. Compare database-issued update times, not client clocks;
+ * only retain an existing row when that same row remains authorized in the
+ * freshly returned snapshot (missing RLS rows must still disappear). */
+export function isOlderTokenSnapshot(incoming,current){
+ if(!incoming||!current||incoming.id!==current.id)return false;
+ const old=Date.parse(incoming.updated_at),now=Date.parse(current.updated_at);
+ return Number.isFinite(old)&&Number.isFinite(now)&&old<now;
+}
 /** Apply RLS-authorized Realtime coordinates immediately without remounting
  * the entire board. Never override an in-flight optimistic local move.
  */
@@ -23,8 +32,10 @@ export function applyAuthoritativeTokenMotion(rows,event,mapId,pending=new Map()
  let changed=false;
  const next=rows.map(row=>{
   if(row.id!==token.id||row.map_id!==mapId||
-   (row.x===token.x&&row.y===token.y))return row;
-  changed=true;return {...row,x:token.x,y:token.y};
+   isOlderTokenSnapshot(token,row))return row;
+  const updatedAt=token.updated_at||row.updated_at;
+  if(row.x===token.x&&row.y===token.y&&row.updated_at===updatedAt)return row;
+  changed=true;return {...row,x:token.x,y:token.y,updated_at:updatedAt};
  });
  return changed?next:rows;
 }
@@ -52,6 +63,13 @@ export function reconcileTokenSnapshot(previous,incoming){
  const next=incoming.map((token,index)=>{
   const before=existing.get(token.id);
   if(!before){changed=true;return token}
+  // A slow RLS fetch may finish after a newer movement event has already
+  // painted this SAME still-authorized token. Keep the newer row instead of
+  // sending its sprite backwards (but do not retain omitted RLS rows).
+  if(isOlderTokenSnapshot(token,before)){
+   if(before!==previous[index])changed=true;
+   return before;
+  }
   const keys=Object.keys(token);
   const stable=keys.length===Object.keys(before).length&&keys.every(key=>{
    const a=before[key],b=token[key];

@@ -35,6 +35,24 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  const[preview,setPreview]=useState({});
  const motion=useRef(null);
  if(!motion.current)motion.current=createTokenMotionRuntime();
+ const spriteNodes=useRef(new Map()),spriteRefs=useRef(new Map());
+ // Stable React ref identities: a fog, roster or monitor rerender must not
+ // detach/rebind every sprite and capture an in-flight CSS transition as
+ // the element's permanent base transition.
+ function spriteRef(id){
+  let callback=spriteRefs.current.get(id);
+  if(!callback){
+   callback=node=>{
+    if(node)spriteNodes.current.set(id,node);
+    else{
+     spriteNodes.current.delete(id);
+     motion.current?.bind(id,'sprite',null);
+    }
+   };
+   spriteRefs.current.set(id,callback);
+  }
+  return callback;
+ }
  // Reusable through React dev effect remounts; clear without retiring runtime.
  useEffect(()=>{const runtime=motion.current;return()=>runtime.clear()},[]);
  useEffect(()=>{
@@ -107,9 +125,16 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  // Retire a local drop preview only after React has committed the matching
  // optimistic left/top (and its separate monitor frame) before the next paint.
  useLayoutEffect(()=>{
-  for(const token of visibleTokens)
+  const cell=map.grid_size*scale;
+  for(const token of visibleTokens){
+   const p={...token,...remotePositions[token.id],...preview[token.id]};
+   const node=spriteNodes.current.get(token.id);
+   if(node)motion.current?.bind(token.id,'sprite',node,{
+    x:Number(p.x),y:Number(p.y),cell
+   });
    motion.current?.reconcile(token.id,Number(token.x),Number(token.y));
- },[visibleTokens]);
+  }
+ },[visibleTokens,remotePositions,preview,map.grid_size,scale]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
@@ -831,8 +856,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
      const effectTitles=normalizedEffects(t.status_effects).map(x=>statusTitle(x,statusCatalog));
      const cell=map.grid_size*scale,spanX=Number(p.span_x??1),spanY=Number(p.span_y??1);
      return <div key={t.id} data-token-id={t.id}
-      ref={node=>motion.current?.bind(t.id,'sprite',node,
-       {x:Number(p.x),y:Number(p.y),cell})} className={'token '+(t.image_path?'token-image':'')+
+      ref={spriteRef(t.id)} className={'token '+(t.image_path?'token-image':'')+
       (!previewActive&&selectedIds.includes(t.id)?' token-selected':'')+
       (combatActiveTokenId===t.id?' token-current-turn':'')+
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
@@ -863,7 +887,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
       onPointerMove={e=>moveTokenDrag(e,t)}
       onPointerUp={e=>finishTokenDrag(e,t)}
       onPointerCancel={e=>finishTokenDrag(e,t,true)}>
-      {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art"/>:
+      {t.image_path?<Artwork db={db} path={t.image_path} alt={t.name} className="token-art" loading="eager"/>:
        <span className="token-placeholder">{t.name.slice(0,2).toUpperCase()}</span>}
       {normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')&&
        <span className="token-dead-overlay" aria-hidden="true"/>}
