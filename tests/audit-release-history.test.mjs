@@ -18,7 +18,12 @@ test('release ledger records previous releases and pending authorized migrations
  assert.ok(ledger.features.some(feature=>feature.id==='movement-visual-handoff-and-observer-request-coalescing'
   &&feature.status==='staged'&&feature.releaseReady===true));
  assert.ok(ledger.features.some(feature=>feature.id==='single-write-trajectory-server-redesign'
-  &&feature.status==='planned'&&feature.releaseReady===false));
+  &&feature.status==='staged'&&feature.releaseReady===true));
+ assert.ok(ledger.databaseDependencies.some(dep=>
+  dep.name==='world_runtime_single_write_trajectory' &&
+  dep.status==='staged-unapplied' &&
+  dep.mustApplyBeforeFrontend===true &&
+  dep.releaseApprovalRequired===true));
  assert.deepEqual(ledger.lastRelease.approvedPullRequests,[48]);
  assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[47]);
  assert.equal(ledger.lastRelease.productionBaseSha,'a763b8d106e2362033c16ce44966e9b122d6a47b');
