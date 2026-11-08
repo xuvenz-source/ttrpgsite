@@ -114,7 +114,8 @@ test('server functions retain collision and private authorization while excludin
  assert.match(sql,/public\.can_view_campaign_map\(s\.campaign_id,s\.map_id\)/);
  assert.match(sql,/not public\.is_campaign_dm\(s\.campaign_id\)/);
  assert.match(sql,/forge_visibility\.swept_hits_segment/);
- assert.match(sql,/forge_visibility\.observer_path_status/);
+ assert.match(sql,/forge_visibility\.observer_path_status_cached/);
+ assert.match(read('staging/sql-candidates/observer_path_cached_scene.sql'),/create or replace function forge_visibility\.observer_path_status_cached/i);
  assert.match(sql,/realtime\.send\(packet,'motion'/);
  assert.match(sql,/p_seq<=s\.last_seq/);
  assert.match(sql,/t\.updated_at is distinct from s\.base_updated_at/);
