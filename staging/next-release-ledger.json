@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
-  "releaseBranch": null,
+  "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+  "releaseBranch": "stage/player-remote-reconciliation-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -144,6 +144,12 @@
       "status": "released",
       "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
       "note": "Both movement features included in approved PR #49 release, database version 20261108055943 applied and authorized. Live multi-browser stress testing remains outstanding."
+    },
+    {
+      "name": "stage/player-remote-reconciliation-2026-11-08",
+      "status": "staged",
+      "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+      "note": "Player-side token continuity: timestamp-aware RLS/Realtimes, settled remote final positions, stable token/monitor refs, immediate first fog authorized fetch, eager token artwork. No database migration or production deploy."
     }
   ],
   "features": [
@@ -375,6 +381,28 @@
         "world_runtime_single_write_trajectory"
       ],
       "verification": "Staged SQL candidate and static regression tests, with GitHub build/audit/Edge/CodeQL required. SQL is UNAPPLIED and not compiled against PostgreSQL; coordinated live Supabase migration, installed-trigger/grant audit and multi-browser DM/player collision/fog testing are mandatory before claiming release success. Approved and bundled in PR #49; database migration 20261108055943 applied successfully. Role grants, authorized player trajectory, DM override trajectory, denied player foreign token/override, legal bend and blocked-wall checks verified using transaction-rollback/no-write probes. Actual DM/player browser load testing remains outstanding."
+    },
+    {
+      "id": "player-authoritative-position-reconciliation",
+      "description": "Prevent player-visible token rubber-banding from late RLS token snapshots and out-of-order Realtime position updates; settle final server coordinates after server-signed observer preview quiet time, ease expired previews onto the authorized last saved position, and retain overlays through React layout.",
+      "sources": [
+        "stage/player-remote-reconciliation-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "Regression tests for stale authorized snapshot timestamps, current/old RLS motion, canceled quiet timers, smooth final retarget, newer observer packet preemption and expiry. GitHub Actions CI/build, CodeQL and two-browser DM/player real-world testing still required."
+    },
+    {
+      "id": "player-fog-visual-continuity-fast-reauthorization",
+      "description": "Start RLS-authorized fog revalidation immediately upon first new revision instead of waiting an artificial 60ms; batch subsequent ticks; keep token/monitor DOM ref callbacks stable through React rerenders; eagerly load authorized token art from signed cache.",
+      "sources": [
+        "stage/player-remote-reconciliation-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "No server trust, RLS or collision change. Pending fog token revocation remains fail-closed and may still temporarily hide NPCs during genuine new visibility revisions. Tests cover immediate fog scheduler and stable sprite/monitor bindings; CodeQL and actual player-side testing required."
     }
   ],
   "databaseDependencies": [
@@ -542,10 +570,12 @@
     "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
-    "releaseBranch": null,
-    "outstandingBranches": [],
-    "stagePolicy": "PR #49 approved and scheduled for one production merge with migration 20261108055943 already applied. After deployment, future work starts from verified new main. Audit subsequent staged work, keep preview disabled, no paid test database.",
+    "productionBaseSha": "26765915deac294e154d1aeac05b23496d76de32",
+    "releaseBranch": "stage/player-remote-reconciliation-2026-11-08",
+    "outstandingBranches": [
+      "stage/player-remote-reconciliation-2026-11-08"
+    ],
+    "stagePolicy": "Stage only. Before a designer-approved next production release audit all pending PRs/branches and include all release-ready staged work in one main merge/one Vercel deployment. No new SQL, Edge Function, paid Supabase staging or preview. Confirm CI/CodeQL and real multiplayer fog-on/off tests.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
@@ -556,7 +586,7 @@
     ],
     "includedStagedPullRequests": [],
     "status": "released-production",
-    "productionCommit": null,
+    "productionCommit": "26765915deac294e154d1aeac05b23496d76de32",
     "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
     "sourceBranch": "stage/movement-latency-rubberband-2026-11-08",
     "priorRelease": {
@@ -565,7 +595,7 @@
       ],
       "productionCommit": "92f982ce23dcda706032c3abb235a84233324578"
     },
-    "frontendSourceSha": null,
+    "frontendSourceSha": "b5ce349b0a7413b711c5db377ac7c03fab1a83c9",
     "databaseDependencies": [
       {
         "name": "world_runtime_single_write_trajectory",
@@ -650,7 +680,7 @@
       "pullRequests": [
         49
       ],
-      "productionCommit": null,
+      "productionCommit": "26765915deac294e154d1aeac05b23496d76de32",
       "sourceBranch": "stage/movement-latency-rubberband-2026-11-08",
       "databaseDependencies": [
         "20261108055943"
