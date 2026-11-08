@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {planAuthorizedGridRoute} from '../src/AuthorizedMovementPlanner.js';
-import {NAV_DIRECTIONS,createAuthorizedNavigation} from '../src/AuthorizedNavigation.js';
+import {NAV_DIRECTIONS,createAuthorizedNavigation,navigationAllows} from '../src/AuthorizedNavigation.js';
 import {appendMovementWaypoint,movementPathDeltas,MAX_MOTION_WAYPOINTS}
  from '../src/MapMovementPath.js';
 import {checkTokenMovement} from '../src/MapCollision.js';
@@ -188,4 +188,22 @@ test('DM movement/preview uses private attributes without returning them to play
  assert.match(map,/npc_values:toolIssued\.find/);
  assert.match(map,/environment:collisionScene,previous,desired:requested/);
  assert.match(app,/if\(isDM&&mapSettingEditor\.previewing\)return/);
+});
+
+test('a graph fringe never grants movement into an omitted or disconnected cell',()=>{
+ const grant={nodes:new Map([
+  ['0:0',1],['1:0',0]
+ ])};
+ // The target cell 2:0 is absent, even if a server response contains
+ // an outgoing edge bit on 1:0 by mistake.
+ grant.nodes.set('1:0',1);
+ assert.equal(NAV_DIRECTIONS.length,8);
+ assert.equal(navigationAllows(grant,{x:1,y:0},{x:2,y:0}),false);
+ assert.equal(navigationAllows(grant,{x:0,y:0},{x:1,y:0}),true);
+});
+
+test('keyboard authorization uses the assigned player map rather than campaign active map',()=>{
+ const app=source('src/TabletopApp.jsx');
+ assert.match(app,/token\.owner_id!==user\|\|playerMapId!==activeMap\.id/);
+ assert.doesNotMatch(app,/token\.owner_id!==user\|\|camp\.active_map_id!==activeMap\.id/);
 });
