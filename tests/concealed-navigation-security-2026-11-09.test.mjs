@@ -7,6 +7,8 @@ import {nextConcealedStep,needsConcealedStep,createConcealedMovementGate}
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const navigation=source('supabase/migrations/20261109000100_authorized_predictive_navigation.sql');
 const gestures=source('supabase/migrations/20261109000400_concealed_navigation_gestures.sql');
+const visibilitySql=source('supabase/migrations/20261109000200_private_verified_visibility_deltas.sql');
+const revisionSql=source('supabase/migrations/20261109000300_navigation_scene_revisions.sql');
 const board=source('src/BattlemapBoard.jsx');
 const app=source('src/TabletopApp.jsx');
 const map='10000000-0000-4000-8000-000000000001';
@@ -91,4 +93,10 @@ test('pointer, keyboard, group and tool routes respect the separate authorizatio
  assert.match(app,/concealed&&Math\.max\(Math\.abs\(deltaX\),Math\.abs\(deltaY\)\)!==1/);
  assert.match(app,/if\(!\(concealed&&secureValidated===true\)&&pieces\.some/);
  assert.match(app,/commit_map_trajectory/);
+});
+
+test('staged security functions terminate before successive SQL statements',()=>{
+ for(const sql of [navigation,visibilitySql,revisionSql,gestures]){
+  assert.doesNotMatch(sql,/\bend \$function\$(?!;)/i);
+ }
 });

@@ -135,7 +135,7 @@ begin
   'revision',rev,'enabled',true,'collisionEnabled',collision_on,'partyShared',shared,
   'permissionGeneration',permission_generation,
   'visible',seen,'explored',coalesce(memory,'[]'::jsonb));
-end $function$
+end $function$;
 
 
 REVOKE ALL ON FUNCTION forge_visibility.authorized_viewer_fog_frame(uuid,uuid)

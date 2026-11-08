@@ -40,7 +40,7 @@ begin
   'permissionGeneration',coalesce((select g.generation
     from forge_visibility.navigation_permission_generations g
     where g.map_id=p_map),0));
-end $function$
+end $function$;
 
 CREATE OR REPLACE FUNCTION public.get_authorized_map_fog_delta(p_map uuid, p_base_epoch uuid DEFAULT NULL::uuid, p_base_revision bigint DEFAULT NULL::bigint, p_base_sequence bigint DEFAULT NULL::bigint)
  RETURNS jsonb
@@ -104,7 +104,7 @@ begin
  return current_frame||pg_catalog.jsonb_build_object(
   'mode','snapshot','deltaProtocolVersion',1,
   'epoch',old.epoch,'sequence',next_seq,'entitiesChanged',true);
-end $function$
+end $function$;
 
 REVOKE ALL ON FUNCTION public.get_authorized_map_fog_v2(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.get_authorized_map_fog_v2(uuid) TO authenticated,service_role;
