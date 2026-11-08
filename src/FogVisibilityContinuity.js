@@ -1,14 +1,21 @@
 /** Pure helpers for rendering only confirmed per-viewer fog revisions.
  * These checks never grant visibility or trust a client-authored sight frame. */
-export function isFreshVisibilityTick(tick,confirmed,mapId){
+export function isFreshVisibilityTick(tick,confirmed,mapId,pending=null){
+ // A repeated or older tick already queued for reauthorization must not
+ // cancel that same in-flight request. A higher revision or fog-mode change
+ // still fails closed immediately.
+ const revision=Number(tick?.revision);
+ const wellFormed=Number.isSafeInteger(revision)&&revision>=0&&
+  typeof tick?.fog_enforced==='boolean';
+ if(wellFormed&&pending?.mapId===mapId&&
+    pending.fogEnforced===tick.fog_enforced&&
+    revision<=pending.revision)return false;
  // Unknown/unversioned events fail closed just as before.
- if(!confirmed||confirmed.mapId!==mapId||
-  !tick||!Number.isSafeInteger(Number(tick.revision))||
-  Number(tick.revision)<0||typeof tick.fog_enforced!=='boolean')return true;
+ if(!confirmed||confirmed.mapId!==mapId||!wellFormed)return true;
  // A matching or older tick already covered by a confirmed authorized RPC
  // cannot revoke sight again. A fog mode toggle always requires refresh.
  return tick.fog_enforced!==confirmed.enabled||
-  Number(tick.revision)>confirmed.revision;
+  revision>confirmed.revision;
 }
 const sameIndices=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&
  a.length===b.length&&a.every((id,index)=>id===b[index]);
