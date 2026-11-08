@@ -74,7 +74,15 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
     table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},event=>{
     if(invalidate(event))changed.request();
    }).subscribe(state=>{
-    if(state==='SUBSCRIBED')changed.request();
+    if(state==='SUBSCRIBED'){
+     // The initial/reconnected subscription could have missed a sight
+     // change while the previous query was running. Never inherit that query
+     // or trust an old permission frame during reconnect.
+     ++request.current;
+     coordinator.invalidate(key);
+     setFrame(previous=>previous?fogFrameDuringRefresh(previous,mapId):previous);
+     changed.request();
+    }
    });
   const onVisibility=()=>{
    if(document.visibilityState==='visible'){invalidate();changed.flush()}
