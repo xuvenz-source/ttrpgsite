@@ -6,6 +6,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function createAuthorizedMotionTransport({db}){
  const sessions=new Map();
+ const grants=new Map();
  let disposed=false;
  const keyOf=params=>params.p_kind+':'+params.p_piece;
  async function send({params}){
@@ -19,6 +20,7 @@ export function createAuthorizedMotionTransport({db}){
    state={mapId:params.p_map,kind:params.p_kind,pieceId:params.p_piece,
     sessionId:null,initializing:null,consecutiveRejections:0};
    sessions.set(key,state);
+   grants.delete(key);
    state.initializing=db.rpc('begin_map_motion_session',{
     p_map:params.p_map,p_kind:params.p_kind,p_piece:params.p_piece,
     p_ignore_collision:params.p_ignore_collision===true
@@ -38,11 +40,23 @@ export function createAuthorizedMotionTransport({db}){
     p_session:sessionId,p_x:params.p_x,p_y:params.p_y,p_seq:params.p_seq
    });
    if(reply.error)throw reply.error;
-   if(reply.data===true)state.consecutiveRejections=0;
-   else if(++state.consecutiveRejections>=3) {
-    // A stale/invalid session may not recover after a geometry/owner change.
-    // Never treat it as permission; the next packet must obtain a NEW grant.
-    sessions.delete(key);
+   if(reply.data===true){
+    state.consecutiveRejections=0;
+    const grant=grants.get(key)||{mapId:params.p_map,sessionId,path:[]};
+    if(grant.sessionId!==sessionId){grant.sessionId=sessionId;grant.path=[]}
+    const previous=grant.path.at(-1);
+    if(!previous||previous.x!==params.p_x||previous.y!==params.p_y){
+     grant.path.push({x:params.p_x,y:params.p_y,seq:params.p_seq});
+     // Bounded gesture data, even for long-running drag sessions.
+     if(grant.path.length>64)grant.path.splice(0,grant.path.length-64);
+    }
+    grants.set(key,grant);
+   }
+   else if(++state.consecutiveRejections>=3){
+    // A rejected wall sample is NOT a stale session; retain the previous
+    // grant so a user can slide along the barrier. Session expiry and final
+    // writes remain server-authoritative.
+    state.consecutiveRejections=3;
    }
    return reply;
   }catch(error){
@@ -51,8 +65,8 @@ export function createAuthorizedMotionTransport({db}){
   }finally{done()}
  }
  async function end(mapId,tokenIds=[],toolIssueIds=[]){
-  for(const id of tokenIds)sessions.delete('token:'+id);
-  for(const id of toolIssueIds)sessions.delete('tool:'+id);
+  for(const id of tokenIds){sessions.delete('token:'+id);grants.delete('token:'+id)}
+  for(const id of toolIssueIds){sessions.delete('tool:'+id);grants.delete('tool:'+id)}
   if(!db||!mapId)return;
   const {error}=await db.rpc('end_map_motion_sessions',{
    p_map:mapId,p_token_ids:tokenIds,p_tool_issue_ids:toolIssueIds
@@ -61,7 +75,15 @@ export function createAuthorizedMotionTransport({db}){
  }
  return {
   send,end,
-  dispose(){disposed=true;sessions.clear()},
+  getApproved(mapId,kind,pieceId){
+   const grant=grants.get(kind+':'+pieceId);
+   return grant?.mapId===mapId?grant.path.at(-1)||null:null;
+  },
+  getApprovedPath(mapId,kind,pieceId){
+   const grant=grants.get(kind+':'+pieceId);
+   return grant?.mapId===mapId?[...grant.path]:[];
+  },
+  dispose(){disposed=true;sessions.clear();grants.clear()},
   get sessionCount(){return sessions.size}
  };
 }
