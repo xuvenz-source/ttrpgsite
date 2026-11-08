@@ -138,6 +138,7 @@ create or replace function public.advance_map_motion_session(
 declare
  actor uuid:=auth.uid();s forge_visibility.movement_sessions%rowtype;
  t record;u record;env_rev bigint;rule_stamp timestamptz;collision_on boolean;
+ current_width integer;current_height integer;current_grid integer;
  obstacle jsonb;pts jsonb;a jsonb;b jsonb;i integer;accepted bigint;
  recipient record;probe integer;steps integer;packet jsonb;now_at timestamptz;
 begin
@@ -154,6 +155,14 @@ begin
  if not public.can_view_campaign_map(s.campaign_id,s.map_id)
  or (s.ignore_collision and not public.is_campaign_dm(s.campaign_id))
  then return false;end if;
+ -- Grid resizing must invalidate the gesture even when no wall was edited.
+ select floor(b.width/b.grid_size),floor(b.height/b.grid_size),b.grid_size
+ into current_width,current_height,current_grid
+ from public.battle_maps b where b.id=s.map_id and b.campaign_id=s.campaign_id
+  and b.grid_size>0;
+ if current_width is distinct from s.map_width or
+    current_height is distinct from s.map_height or
+    current_grid is distinct from s.grid_size then return false;end if;
  select coalesce(e.revision,0) into env_rev from public.map_environments e
  where e.map_id=s.map_id;
  if coalesce(env_rev,0)<>s.environment_revision then return false;end if;
