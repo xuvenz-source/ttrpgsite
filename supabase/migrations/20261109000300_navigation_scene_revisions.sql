@@ -36,7 +36,10 @@ begin
   'protocolVersion',2,'revision',after_rev,
   'navigationEnvironmentRevision',
    coalesce((select e.revision from public.map_environments e
-    where e.map_id=p_map),0));
+    where e.map_id=p_map),0),
+  'permissionGeneration',coalesce((select g.generation
+    from forge_visibility.navigation_permission_generations g
+    where g.map_id=p_map),0));
 end $function$
 
 CREATE OR REPLACE FUNCTION public.get_authorized_map_fog_delta(p_map uuid, p_base_epoch uuid DEFAULT NULL::uuid, p_base_revision bigint DEFAULT NULL::bigint, p_base_sequence bigint DEFAULT NULL::bigint)
@@ -91,6 +94,7 @@ begin
    'enabled',current_frame->'enabled','partyShared',current_frame->'partyShared',
    'collisionEnabled',current_frame->'collisionEnabled',
    'navigationEnvironmentRevision',current_frame->'navigationEnvironmentRevision',
+   'permissionGeneration',current_frame->'permissionGeneration',
    'epoch',old.epoch,'revision',now_rev,'sequence',next_seq,
    'baseRevision',old.revision,'baseSequence',old.sequence,
    'visibleAdd',v->'add','visibleRemove',v->'remove',
