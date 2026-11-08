@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-  "releaseBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
+  "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
+  "releaseBranch": "stage/movement-latency-rubberband-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -138,6 +138,12 @@
       "status": "released",
       "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
       "note": "Bundled as part of single approved production release PR #48; do not redeploy separately."
+    },
+    {
+      "name": "stage/movement-latency-rubberband-2026-11-08",
+      "status": "staged",
+      "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
+      "note": "First latency/rubber-band mitigation: remote handoff, no unnecessary React state during token drag, and one queued secure observer RPC per piece. Backend single-write route refactor requires a separately reviewed SQL candidate; no DB or production change."
     }
   ],
   "features": [
@@ -345,6 +351,28 @@
       "releaseReady": true,
       "databaseDependencies": [],
       "verification": "GitHub CI tests/build; needs live multi-browser DM/player fog/collision UX acceptance after designer-approved release. No movement migration. Bundled in approved PR #48; post-publish player/DM browser acceptance remains outstanding."
+    },
+    {
+      "id": "movement-visual-handoff-and-observer-request-coalescing",
+      "description": "Retain remote token and monitor previews until React has committed matching authoritative coordinates; avoid token-only drag React state churn and drop redundant pending secure observer preview requests; cancel and drain per-piece previews before server cleanup.",
+      "sources": [
+        "stage/movement-latency-rubberband-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "GitHub CI npm tests, build, audit and strict Edge checks required; CodeQL and multiplayer fog-on/off owner/DM acceptance before release. Existing server collision/RLS/fog authority unchanged."
+    },
+    {
+      "id": "single-write-trajectory-server-redesign",
+      "description": "Candidate next-stage backend refactor: validate all path waypoints, actor permissions, footprint sweeps and fog/observer rules without multiple intermediate UPDATE/Realtimes; persist one final authorized position per piece in a single transaction.",
+      "sources": [
+        "stage/movement-latency-rubberband-2026-11-08"
+      ],
+      "status": "planned",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Not implemented. Must preserve existing SECURITY INVOKER/RLS and collision guarantees, produce a separately reviewed SQL candidate and receive release approval before any Supabase change."
     }
   ],
   "databaseDependencies": [
@@ -501,10 +529,12 @@
     "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-    "releaseBranch": null,
-    "outstandingBranches": [],
-    "stagePolicy": "Both ready features are bundled in approved PR #48 and database version 20261108052335 is already applied. Next release must start from new production main and audit any new staged work; keep Vercel preview disabled.",
+    "productionBaseSha": "92f982ce23dcda706032c3abb235a84233324578",
+    "releaseBranch": "stage/movement-latency-rubberband-2026-11-08",
+    "outstandingBranches": [
+      "stage/movement-latency-rubberband-2026-11-08"
+    ],
+    "stagePolicy": "Staging only. Ship completed movement visual handoff + bounded preview RPC queue only when designer explicitly approves a production release; complete combined CI/CodeQL and audit any other outstanding staging. Server one-write route redesign remains planned and must not be silently treated as complete.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
@@ -517,7 +547,7 @@
       47
     ],
     "status": "released-production",
-    "productionCommit": null,
+    "productionCommit": "92f982ce23dcda706032c3abb235a84233324578",
     "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
     "sourceBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
     "priorRelease": {
@@ -526,7 +556,7 @@
       ],
       "productionCommit": "a763b8d106e2362033c16ce44966e9b122d6a47b"
     },
-    "frontendSourceSha": null,
+    "frontendSourceSha": "d47315c49476fd657f45e35e56fc053729520a4f",
     "databaseDependencies": [
       {
         "name": "campaign_cross_inventory_item_transfers",
@@ -598,7 +628,7 @@
       "includedStagedPullRequests": [
         47
       ],
-      "productionCommit": null,
+      "productionCommit": "92f982ce23dcda706032c3abb235a84233324578",
       "sourceBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
       "databaseDependencies": [
         "20261108052335"
