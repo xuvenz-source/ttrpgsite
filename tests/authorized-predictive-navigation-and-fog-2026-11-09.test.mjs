@@ -313,3 +313,42 @@ test('board cancels revoked live gestures and clears server previews without sav
  assert.match(app,/onMovementCancel=\{\(\{mapId,tokenIds,toolIssueIds\}\)=>/);
  assert.match(app,/navigationStore\.retainPermitted/);
 });
+
+test('harmless sight tick during a navigation RPC cannot starve a smooth drag',async()=>{
+ let deliver,calls=0;
+ const db={rpc:()=>{calls++;return new Promise(resolve=>{deliver=resolve})}};
+ const frame=(revision,visible)=>({mapId:map,protocolVersion:2,epoch,
+  revision,width:20,height:20,enabled:true,partyShared:false,
+  collisionEnabled:true,navigationEnvironmentRevision:5,visible});
+ const store=createAuthorizedNavigation({db});
+ store.adoptFrame(map,frame(8,[0,1,20,21]));
+ const pending=store.ensure(map,'token',owner,{x:0,y:0,spanX:1,spanY:1});
+ store.adoptFrame(map,frame(9,[0,20,21]));
+ deliver({data:grant(),error:null});
+ assert.ok(await pending,'old server-issued graph may survive same-scene revision');
+ assert.equal(calls,1);
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:1,y:0}),false,
+  'current sight still revokes the now forbidden edge');
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:0,y:1}),true);
+ store.dispose();
+});
+
+test('changed creature footprint invalidates previously issued navigation',async()=>{
+ let span=1,calls=0;
+ const db={rpc:async()=>{calls++;return {data:{
+  ...grant(),footprint:[span,span]
+ },error:null}}};
+ const store=createAuthorizedNavigation({db});
+ const frame={mapId:map,protocolVersion:2,epoch,revision:8,
+  width:20,height:20,enabled:true,partyShared:false,
+  collisionEnabled:true,navigationEnvironmentRevision:5,
+  visible:[0,1,20,21]};
+ store.adoptFrame(map,frame);
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0,spanX:1,spanY:1}));
+ span=2;
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0,spanX:2,spanY:2}));
+ assert.equal(calls,2,'footprint changed without scene revision');
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:1,y:0}),false,
+  'larger creature cannot enter a cell when any part of its footprint is unseen');
+ store.dispose();
+});
