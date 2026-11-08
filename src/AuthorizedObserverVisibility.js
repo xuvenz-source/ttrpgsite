@@ -16,7 +16,10 @@ export function clearVerifiedHiddenTokens(hidden,rows,frame,viewerId){
   if(!Number.isSafeInteger(marker.fogRevision)||
      frame.revision<=marker.fogRevision)continue;
   const token=byId.get(id);
-  if(!token||token.map_id!==frame.mapId||token.visible!==true||
+  // A later fresh RLS roster omitting this entity proves there is no sprite
+  // to uncover. Retire the marker so large maps don't retain dead hide state.
+  if(!token){delete next[id];changed=true;continue}
+  if(token.map_id!==frame.mapId||token.visible!==true||
      !tokenObservedByFogFrame(token,frame,viewerId))continue;
   delete next[id];changed=true;
  }
@@ -34,7 +37,9 @@ export function clearVerifiedHiddenTools(hidden,rows,frame){
  const next={...hidden};
  for(const [id,marker] of Object.entries(hidden||{})){
   if(!marker?.hidden||!Number.isSafeInteger(marker.fogRevision)||
-     frame.revision<=marker.fogRevision||!ids.has(id))continue;
+     frame.revision<=marker.fogRevision)continue;
+  // Missing from a post-revision RLS result is safe to forget; available
+  // tools only become visible when the newly returned row authorizes them.
   delete next[id];changed=true;
  }
  return changed?next:hidden;
