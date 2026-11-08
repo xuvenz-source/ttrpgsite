@@ -618,7 +618,9 @@ export default function TabletopApp(){
  async function pickUpIssuedToolOnMap(id){
   const issue=campaignTools.issued.find(t=>t.id===id);
   if(!issue)return;
+  const mapId=selectedMap;
   try{await campaignTools.pickUp(issue)}catch(e){fail(e)}
+  finally{clearMapMovementPreview(mapId,[],[id])}
  }
  async function holdIssuedToolOnToken(id,tokenId){
   const issued=campaignTools.issued.find(item=>item.id===id);
@@ -629,8 +631,10 @@ export default function TabletopApp(){
  async function placeIssuedToolOnMap(id,x,y){
   const issued=campaignTools.issued.find(t=>t.id===id);
   if(!issued||!selectedMap)return fail('Tool not available on this map.');
-  try{await campaignTools.place(issued,selectedMap,x,y)}
+  const mapId=selectedMap;
+  try{await campaignTools.place(issued,mapId,x,y)}
   catch(e){fail(e)}
+  finally{clearMapMovementPreview(mapId,[],[id])}
  }
  function prepareHandoutPin(handoutId){
   if(!isDM||!selectedMap)return fail('Select a map first.');
@@ -2398,7 +2402,12 @@ export default function TabletopApp(){
      void refreshTokens();
     }
    }
-  }finally{pending.saving=false}
+  }finally{
+   pending.saving=false;
+   // Always clear the trusted movement gesture after the final RLS write,
+   // including rejection. Old private preview sources must not linger.
+   clearMapMovementPreview(pending.mapId,[id],[]);
+  }
  }
  async function moveGroup({tokens:members=[],tools=[],dx,dy,path=[]}){
   const mapId=selectedMap,campaignId=activeId;
