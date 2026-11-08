@@ -461,7 +461,7 @@ test('security release SQL does not expose disconnected nodes or unrestricted ge
  assert.match(sql,/IF \(candidate_masks \? neighbour_key\) AND NOT \(reachable \? neighbour_key\)/);
  assert.match(sql,/IF reachable \? \(\(node->>0\)/);
  assert.match(sql,/pg_catalog\.abs\(tx-bx\)>12/);
- assert.match(sql,/pg_catalog\.abs\(ty-by\)>12/);
+ assert.match(sql,/pg_catalog\.abs\(ty-base_y\)>12/);
  assert.match(sql,/IF fog_on AND dir\.dx<>0 AND dir\.dy<>0/);
  assert.match(sql,/pg_catalog\.pg_try_advisory_xact_lock/);
  assert.match(sql,/CREATE TRIGGER forge_navigation_token_permissions/);
