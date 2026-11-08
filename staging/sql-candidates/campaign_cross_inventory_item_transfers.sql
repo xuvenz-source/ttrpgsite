@@ -1,4 +1,5 @@
--- Staging candidate only: do not apply until the designer approves a coordinated release.
+-- Applied to the existing Supabase project as migration 20261108052335.
+-- This source is maintained for the approved two-feature production release.
 -- Moves one whole item between a character Inventory field and an issued
 -- shared/mount inventory, atomically. No background jobs or paid infrastructure.
 -- The source must have a current lease held by the caller. Target access is
