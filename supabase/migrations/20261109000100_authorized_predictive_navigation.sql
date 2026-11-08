@@ -156,6 +156,13 @@ DECLARE
 BEGIN
  IF actor IS NULL OR p_map IS NULL OR p_piece IS NULL OR
   p_kind NOT IN ('token','tool') THEN RAISE EXCEPTION 'Navigation unavailable';END IF;
+ -- Collapse parallel requests from multiple browser tabs for the SAME
+ -- authorized piece. Never let concurrent callers trigger duplicate, costly
+ -- graph builds or use request timing as a high-frequency collision oracle.
+ IF NOT pg_catalog.pg_try_advisory_xact_lock(
+  pg_catalog.hashtextextended(
+   actor::text||':'||p_map::text||':'||p_kind||':'||p_piece::text,1793))
+ THEN RAISE EXCEPTION 'Navigation temporarily unavailable';END IF;
  SELECT b.campaign_id,b.width,b.height,b.grid_size INTO m
  FROM public.battle_maps b WHERE b.id=p_map;
  IF NOT FOUND OR m.grid_size<=0 OR
@@ -312,7 +319,7 @@ BEGIN
     IF (mask & (1<<dir.bit))=0 THEN CONTINUE;END IF;
     tx:=qx+dir.dx;ty:=qy+dir.dy;
     neighbour_key:=tx::text||':'||ty::text;
-    IF candidate_masks ? neighbour_key AND NOT reachable ? neighbour_key THEN
+    IF (candidate_masks ? neighbour_key) AND NOT (reachable ? neighbour_key) THEN
      reachable:=reachable||pg_catalog.jsonb_build_object(neighbour_key,true);
      pending_cells:=pending_cells||ARRAY[tx,ty];
     END IF;
