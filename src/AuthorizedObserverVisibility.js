@@ -1,0 +1,41 @@
+import {tokenObservedByFogFrame} from './MapFogModel.js';
+
+/** Private observer hide markers are authorization revocations, never timers.
+ * A newer server-authorized fog snapshot and a newly fetched RLS roster must
+ * BOTH grant the entity before a stationary token may return.
+ */
+export function clearVerifiedHiddenTokens(hidden,rows,frame,viewerId){
+ if(!frame||frame.displayVisibleDuringRefresh||!Number.isSafeInteger(frame.revision)||
+    !Array.isArray(rows))return hidden;
+ const byId=new Map(rows.map(row=>[row.id,row]));
+ let changed=false;
+ const next={...hidden};
+ for(const [id,marker] of Object.entries(hidden||{})){
+  if(!marker?.hidden||marker.kind==='tool')continue;
+  // A response that predates the hide cannot be used to reverse it.
+  if(!Number.isSafeInteger(marker.fogRevision)||
+     frame.revision<=marker.fogRevision)continue;
+  const token=byId.get(id);
+  if(!token||token.map_id!==frame.mapId||token.visible!==true||
+     !tokenObservedByFogFrame(token,frame,viewerId))continue;
+  delete next[id];changed=true;
+ }
+ return changed?next:hidden;
+}
+
+/** Placed tools use their independently RLS-filtered read. A new revision
+ * cannot be inferred from a local timeout or an old React state snapshot. */
+export function clearVerifiedHiddenTools(hidden,rows,frame){
+ if(!frame||frame.displayVisibleDuringRefresh||!Number.isSafeInteger(frame.revision)||
+    !Array.isArray(rows))return hidden;
+ const ids=new Set(rows.filter(row=>row?.map_id===frame.mapId)
+  .map(row=>row.issue_id));
+ let changed=false;
+ const next={...hidden};
+ for(const [id,marker] of Object.entries(hidden||{})){
+  if(!marker?.hidden||!Number.isSafeInteger(marker.fogRevision)||
+     frame.revision<=marker.fogRevision||!ids.has(id))continue;
+  delete next[id];changed=true;
+ }
+ return changed?next:hidden;
+}
