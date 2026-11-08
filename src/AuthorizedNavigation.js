@@ -109,7 +109,9 @@ export function navigationRouteApproved(grant,origin,offsets,permitStep=()=>true
 export function createAuthorizedNavigation({db,clock=Date.now}){
  const grants=new Map(),inFlight=new Map(),revisions=new Map(),origins=new Map();
  const matchingOrigin=(grant,origin)=>!origin||
-  (grant?.baseX===origin.x&&grant?.baseY===origin.y);
+  (grant?.baseX===origin.x&&grant?.baseY===origin.y&&
+   (origin.spanX===undefined||grant.footprintWidth===origin.spanX)&&
+   (origin.spanY===undefined||grant.footprintHeight===origin.spanY));
  const frameKey=frame=>JSON.stringify([frame.mapId,frame.epoch||null,
   frame.navigationEnvironmentRevision,frame.enabled,
   frame.collisionEnabled,frame.partyShared,frame.width,frame.height]);
@@ -146,10 +148,18 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    !['token','tool'].includes(kind))return null;
   const key=keyOf(mapId,kind,id);
   if(origin!==undefined){
-   if(!integer(origin?.x)||!integer(origin?.y))return null;
+   if(!integer(origin?.x)||!integer(origin?.y)||
+      (origin.spanX!==undefined&&
+       !(typeof origin.spanX==='number'&&Number.isFinite(origin.spanX)&&
+         origin.spanX>0&&origin.spanX<=12))||
+      (origin.spanY!==undefined&&
+       !(typeof origin.spanY==='number'&&Number.isFinite(origin.spanY)&&
+         origin.spanY>0&&origin.spanY<=12)))return null;
    const previous=origins.get(key);
-   if(!previous||previous.x!==origin.x||previous.y!==origin.y){
-    origins.set(key,{x:origin.x,y:origin.y});
+   if(!previous||previous.x!==origin.x||previous.y!==origin.y||
+      previous.spanX!==origin.spanX||previous.spanY!==origin.spanY){
+    origins.set(key,{x:origin.x,y:origin.y,
+     spanX:origin.spanX,spanY:origin.spanY});
     grants.delete(key);inFlight.delete(key);
     if(previous)movementDiagnostics.count('navigationOriginChanged');
    }
@@ -186,7 +196,9 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
     matchingOrigin(grant,expectedOrigin)&&
     (!expectedOrigin||
       (origins.get(key)?.x===expectedOrigin.x&&
-       origins.get(key)?.y===expectedOrigin.y))){
+       origins.get(key)?.y===expectedOrigin.y&&
+       origins.get(key)?.spanX===expectedOrigin.spanX&&
+       origins.get(key)?.spanY===expectedOrigin.spanY))){
     const stored={...grant,authorizationKey:current.authorizationKey};
     grants.set(key,stored);return stored;
    }
