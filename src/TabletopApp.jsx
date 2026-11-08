@@ -55,6 +55,7 @@ import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
+import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
  nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -163,7 +164,8 @@ export default function TabletopApp(){
  const liveMovementSeq=useRef(0),lastMovementPreview=useRef(new Map());
  const remoteMoveExpiry=useRef(new Map()),remoteToolExpiry=useRef(new Map()),latestMovementAccess=useRef({});
  const remoteMotion=useRef(null),observerRevisions=useRef(new Map());
- const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null);
+ const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null),
+  latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
  const[bindings,setBindings]=useState(()=>normalizeBindings(DEFAULT_BINDINGS));
  const[hotbarSlots,setHotbarSlots]=useState(()=>normaliseHotbar([]));
@@ -264,6 +266,9 @@ export default function TabletopApp(){
  latestPartyFogRefresh.current=()=>{
   if(fog.frame?.enabled===true&&fog.frame.partyShared)
    queuePreviewFogRefresh();
+ };
+ latestOwnFogRefresh.current=()=>{
+  if(fog.frame?.enabled===true)queuePreviewFogRefresh();
  };
  const authorizedLights=useAuthorizedMapLights({
   db,mapId:selectedMap,userId:isDM?null:user,
@@ -991,6 +996,25 @@ export default function TabletopApp(){
    void db.removeChannel(channel);
   };
  },[db,activeId,selectedMap,user]);
+ // Serialize each token's expensive LOS/collision previews and discard stale
+ // unsent positions if the server round trip exceeds the pointer interval.
+ // Per-recipient authorization and broadcasts remain exclusively in Postgres.
+ useEffect(()=>{
+  if(!db||!selectedMap)return;
+  const queue=createLatestOnlyPreviewQueue({
+   send:packet=>db.rpc('preview_map_motion',packet.params),
+   onResult:(packet,{data,error})=>{
+    if(error)console.warn('Secure movement preview unavailable',error.message);
+    else if(data===true&&packet.kind==='token')latestOwnFogRefresh.current?.();
+   },
+   onError:(_,error)=>console.warn('Secure movement preview unavailable',error)
+  });
+  movementPreviewQueue.current=queue;
+  return()=>{
+   if(movementPreviewQueue.current===queue)movementPreviewQueue.current=null;
+   queue.dispose();
+  };
+ },[db,selectedMap]);
  // A private observer topic receives only server-signed movement data that
  // Postgres filtered for this specific player's map assignment and current LOS.
  // Pointer packets paint token/tool transforms directly, not TabletopApp state.
@@ -1071,11 +1095,16 @@ export default function TabletopApp(){
   // db.rpc() is PromiseLike, not a Promise with a direct .catch().
   // A final/cancelled gesture must revoke temporary fog sight even when
   // nothing changed in persisted map_tokens (and thus no tick was emitted).
-  void db.rpc('end_map_motion_previews',{
-   p_map:mapId,p_token_ids:tokenIds,p_tool_issue_ids:issueIds
-  }).then(({error})=>{
-   if(error)console.warn('Movement preview cleanup failed',error.message);
-  }).catch(error=>console.warn('Movement preview cleanup failed',error))
+  const queue=movementPreviewQueue.current;
+  const keys=[...tokenIds,...issueIds.map(id=>'tool:'+id)];
+  // A preview RPC already in flight could otherwise finish AFTER cleanup
+  // and resurrect the stale observer position / temporary fog sight.
+  void Promise.all(keys.map(key=>queue?.cancel(key)))
+   .then(()=>db.rpc('end_map_motion_previews',{
+    p_map:mapId,p_token_ids:tokenIds,p_tool_issue_ids:issueIds
+   })).then(({error})=>{
+    if(error)console.warn('Movement preview cleanup failed',error.message);
+   }).catch(error=>console.warn('Movement preview cleanup failed',error))
    .finally(()=>{
     if(fog.frame?.enabled===true&&fog.frame.mapId===mapId)
      void fog.refresh();
@@ -1096,14 +1125,10 @@ export default function TabletopApp(){
   if(seq===null)return;
   liveMovementSeq.current=seq;
   lastMovementPreview.current.set(token.id,now);
-  void db.rpc('preview_map_motion',{
+  movementPreviewQueue.current?.enqueue(token.id,{kind:'token',params:{
    p_map:selectedMap,p_kind:'token',p_piece:token.id,p_x:x,p_y:y,
    p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
-  }).then(({data,error})=>{
-   if(error)console.warn('Secure movement preview unavailable',error.message);
-   else if(data===true&&fog.frame?.enabled===true)
-    queuePreviewFogRefresh();
-  }).catch(e=>console.warn('Secure movement preview unavailable',e));
+  }});
  }
  function sendLiveToolMovement(placement,x,y,final=false,cancelled=false){
   if(final&&cancelled){
@@ -1121,12 +1146,10 @@ export default function TabletopApp(){
   if(seq===null)return;
   liveMovementSeq.current=seq;
   lastMovementPreview.current.set(key,now);
-  void db.rpc('preview_map_motion',{
+  movementPreviewQueue.current?.enqueue(key,{kind:'tool',params:{
    p_map:selectedMap,p_kind:'tool',p_piece:id,p_x:x,p_y:y,
    p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
-  }).then(({error})=>{
-   if(error)console.warn('Secure tool preview unavailable',error.message);
-  }).catch(e=>console.warn('Secure tool preview unavailable',e));
+  }});
  }
  function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
