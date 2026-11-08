@@ -246,7 +246,7 @@ begin
  update forge_visibility.movement_sessions
  set last_x=p_x,last_y=p_y,last_seq=p_seq,last_sent=now_at,
  expires_at=now_at+interval '6 seconds' where id=s.id;
- steps:=pg_catalog.ceil(pg_catalog.greatest(
+ steps:=pg_catalog.ceil(greatest(
   pg_catalog.abs(p_x-s.last_x),pg_catalog.abs(p_y-s.last_y)))::int;
  for recipient in
   select cm.user_id,cm.role from public.campaign_members cm
