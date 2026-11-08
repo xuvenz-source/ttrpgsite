@@ -271,6 +271,13 @@ declare
  result jsonb;
 begin
  if actor is null then raise exception 'Sign in first';end if;
+ -- A missing publication would silently strand v2 watchers. Never advertise
+ -- a protocol that cannot deliver server-owned revocation notifications.
+ if not exists(select 1 from pg_publication_tables where
+  pubname='supabase_realtime' and schemaname='public' and
+  tablename='map_viewer_visibility_ticks') then
+  raise exception 'Viewer visibility publication unavailable';
+ end if;
  select coalesce(revision,0) into before_rev
  from public.map_viewer_visibility_ticks
  where map_id=p_map and user_id=actor;
