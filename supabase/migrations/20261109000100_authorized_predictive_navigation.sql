@@ -186,7 +186,7 @@ AS $fn$
 DECLARE
  actor uuid:=auth.uid();
  m record;t record;u record;scene jsonb;attrs jsonb:='{}'::jsonb;
- bx integer;by integer;map_w integer;map_h integer;span_w double precision;
+ bx integer;base_y integer;map_w integer;map_h integer;span_w double precision;
  span_h double precision;fog_frame jsonb;fog_on boolean;collision_on boolean;
  env_revision bigint:=0;permission_generation bigint:=0;
  visible_cells integer[];nodes jsonb:='[]'::jsonb;
@@ -229,7 +229,7 @@ BEGIN
   IF NOT FOUND OR (NOT dm AND
     (t.owner_id IS DISTINCT FROM actor OR t.visible IS DISTINCT FROM true))
   THEN RAISE EXCEPTION 'Navigation piece unavailable';END IF;
-  bx:=t.x;by:=t.y;span_w:=t.span_x;span_h:=t.span_y;
+  bx:=t.x;base_y:=t.y;span_w:=t.span_x;span_h:=t.span_y;
   attrs:=coalesce(t.npc_values,'{}'::jsonb);
   IF t.character_id IS NOT NULL THEN
    SELECT coalesce(c.field_values,'{}'::jsonb) INTO attrs FROM public.characters c
@@ -243,12 +243,12 @@ BEGIN
   IF NOT FOUND OR u.held_by_token_id IS NOT NULL OR
    (NOT dm AND u.owner_id IS DISTINCT FROM actor AND u.party_shared IS DISTINCT FROM true)
   THEN RAISE EXCEPTION 'Navigation tool unavailable';END IF;
-  bx:=u.x;by:=u.y;
+  bx:=u.x;base_y:=u.y;
   span_w:=CASE WHEN u.kind='mount' THEN
    coalesce((u.config->>'span')::double precision,2) ELSE 1 END;
   span_h:=span_w;attrs:=coalesce(u.state->'attrs','{}'::jsonb);
  END IF;
- IF bx IS NULL OR by IS NULL OR span_w IS NULL OR span_h IS NULL OR
+ IF bx IS NULL OR base_y IS NULL OR span_w IS NULL OR span_h IS NULL OR
   span_w<=0 OR span_h<=0 OR span_w>12 OR span_h>12
  THEN RAISE EXCEPTION 'Invalid navigation footprint';END IF;
  SELECT coalesce(e.live,'{}'::jsonb),coalesce(e.revision,0)
@@ -287,7 +287,7 @@ BEGIN
  IF collision_on THEN
   RETURN pg_catalog.jsonb_build_object(
    'version',1,'mapId',p_map,'pieceId',p_piece,'kind',p_kind,
-   'origin',pg_catalog.jsonb_build_array(bx,by),
+   'origin',pg_catalog.jsonb_build_array(bx,base_y),
    'footprint',pg_catalog.jsonb_build_array(span_w,span_h),
    'gridWidth',map_w,'gridHeight',map_h,
    'visibilityRevision',(fog_frame->>'revision')::bigint,
@@ -324,8 +324,8 @@ BEGIN
  -- Do not expose a remote lookup origin parameter (would permit map probing).
  FOR gx IN GREATEST(0,bx-12)..
   LEAST(map_w-1,bx+12) LOOP
-  FOR gy IN GREATEST(0,by-12)..
-   LEAST(map_h-1,by+12) LOOP
+  FOR gy IN GREATEST(0,base_y-12)..
+   LEAST(map_h-1,base_y+12) LOOP
    IF NOT forge_visibility.navigation_position_observed(
     gx,gy,span_w,span_h,map_w,map_h,visible_cells,fog_on) THEN CONTINUE;END IF;
    mask:=0;
@@ -336,7 +336,7 @@ BEGIN
     tx:=gx+dir.dx;ty:=gy+dir.dy;
     -- Never return edges outside the finite origin-centred graph. Otherwise
     -- its last row becomes a probing boundary into cells not in the grant.
-    IF pg_catalog.abs(tx-bx)>12 OR pg_catalog.abs(ty-by)>12
+    IF pg_catalog.abs(tx-bx)>12 OR pg_catalog.abs(ty-base_y)>12
     THEN CONTINUE;END IF;
     IF NOT forge_visibility.navigation_position_observed(
       tx,ty,span_w,span_h,map_w,map_h,visible_cells,fog_on)
@@ -388,10 +388,10 @@ BEGIN
    (node->>0)||':'||(node->>1),(node->>2)::integer);
  END LOOP;
  nodes:='[]'::jsonb;
- origin_key:=bx::text||':'||by::text;
+ origin_key:=bx::text||':'||base_y::text;
  IF candidate_masks ? origin_key THEN
   reachable:=pg_catalog.jsonb_build_object(origin_key,true);
-  pending_cells:=ARRAY[bx,by]::integer[];
+  pending_cells:=ARRAY[bx,base_y]::integer[];
   WHILE queue_index<=coalesce(pg_catalog.array_length(pending_cells,1),0) LOOP
    qx:=pending_cells[queue_index];qy:=pending_cells[queue_index+1];
    queue_index:=queue_index+2;
@@ -425,7 +425,7 @@ BEGIN
  THEN RAISE EXCEPTION 'Navigation permissions changed during authorization';END IF;
  RETURN pg_catalog.jsonb_build_object(
   'version',1,'mapId',p_map,'pieceId',p_piece,'kind',p_kind,
-  'origin',pg_catalog.jsonb_build_array(bx,by),'footprint',pg_catalog.jsonb_build_array(span_w,span_h),
+  'origin',pg_catalog.jsonb_build_array(bx,base_y),'footprint',pg_catalog.jsonb_build_array(span_w,span_h),
   'gridWidth',map_w,'gridHeight',map_h,'visibilityRevision',
   (fog_frame->>'revision')::bigint,
   'environmentRevision',env_revision,'collisionEnabled',collision_on,
