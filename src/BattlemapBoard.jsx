@@ -104,6 +104,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)))
     .map(t=>t.id===previewToken?.id?previewToken:t);
  },[tokens,isDM,previewActive,previewToken,previewPolygon,fogFrame,user,remotePositions]);
+ // Retire a local drop preview only after React has committed the matching
+ // optimistic left/top (and its separate monitor frame) before the next paint.
+ useLayoutEffect(()=>{
+  for(const token of visibleTokens)
+   motion.current?.reconcile(token.id,Number(token.x),Number(token.y));
+ },[visibleTokens]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
@@ -659,7 +665,10 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   drag.current=null;
-  for(const member of info.members)motion.current?.clearPreview(member.id);
+  for(const member of info.members){
+   if(cancel)motion.current?.clearPreview(member.id);
+   else motion.current?.handoff(member.id);
+  }
   if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId);
   if(cancel){
@@ -699,6 +708,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    return next;
   });
   if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag){
+   for(const member of info.members)motion.current?.clearPreview(member.id);
    setToolPreview(old=>{
     const next={...old};
     for(const tool of info.tools||[])delete next[tool.issue_id];
@@ -719,6 +729,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     tokens:info.members,tools:info.tools||[],dx:info.dx,dy:info.dy,
     path:info.path||[]
    })).catch(error=>console.warn('Group movement rejected',error)).finally(()=>{
+    for(const member of info.members)motion.current?.clearPreview(member.id);
     setToolPreview(old=>{
      const next={...old};
      for(const tool of info.tools||[])delete next[tool.issue_id];
