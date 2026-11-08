@@ -59,6 +59,7 @@ import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
+import {movementDiagnostics} from './MovementDiagnostics.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
@@ -104,6 +105,12 @@ export default function TabletopApp(){
   return p.get('campaign')&&p.get('sheet')?
    {campaignId:p.get('campaign'),characterId:p.get('sheet')}:null;
  });
+ // Read-only local performance diagnostics for test-campaign stress testing.
+ // This records timings only, never token IDs, positions or private content.
+ useEffect(()=>{
+  window.__ttrpgMovementMetrics=()=>movementDiagnostics.snapshot();
+  return()=>{delete window.__ttrpgMovementMetrics};
+ },[]);
  const launchHandled=useRef(false);
  const signedAssetIdentity=useRef(null);
  const[launchNpc]=useState(()=>{
