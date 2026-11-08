@@ -23,7 +23,11 @@ export function navigationAuthorizationKey(frame){
   typeof frame.collisionEnabled!=='boolean'||
   typeof frame.partyShared!=='boolean'||
   !integer(frame.width)||!integer(frame.height)||
+  frame.width<1||frame.height<1||
+  Object.hasOwn(frame,'displayVisibleDuringRefresh')||
   !Array.isArray(frame.visible)||
+  frame.visible.length>frame.width*frame.height||
+  frame.visible.some(v=>!integer(v)||v<0||v>=frame.width*frame.height)||
   (frame.deltaProtocolVersion===1&&!UUID.test(String(frame.epoch||''))))return null;
  return JSON.stringify([frame.epoch||null,frame.width,frame.height,
   frame.navigationEnvironmentRevision,frame.collisionEnabled,
@@ -40,7 +44,10 @@ export function normalizeAuthorizedNavigation(raw,mapId,kind,id,receivedAt=Date.
   !integer(raw.gridWidth)||!integer(raw.gridHeight)||
   raw.gridWidth<1||raw.gridHeight<1||raw.gridWidth>1000||raw.gridHeight>1000||
   !integer(raw.environmentRevision)||raw.environmentRevision<0||
-  typeof raw.collisionEnabled!=='boolean'||!Array.isArray(raw.nodes)||
+  typeof raw.collisionEnabled!=='boolean'||
+  !Array.isArray(raw.footprint)||raw.footprint.length!==2||
+  !raw.footprint.every(n=>typeof n==='number'&&Number.isFinite(n)&&n>0&&n<=12)||
+  !Array.isArray(raw.nodes)||
   raw.nodes.length>NAV_MAX_NODES)return null;
  const nodes=new Map();
  for(const tuple of raw.nodes){
@@ -55,7 +62,9 @@ export function normalizeAuthorizedNavigation(raw,mapId,kind,id,receivedAt=Date.
   .some(key=>Object.hasOwn(raw,key)))return null;
  return {mapId,kind,id,baseX:raw.origin[0],baseY:raw.origin[1],
   revision:raw.visibilityRevision,environmentRevision:raw.environmentRevision,
-  collisionEnabled:raw.collisionEnabled,nodes,expiresAt:receivedAt+12000};
+  collisionEnabled:raw.collisionEnabled,
+  footprintWidth:raw.footprint[0],footprintHeight:raw.footprint[1],
+  nodes,expiresAt:receivedAt+12000};
 }
 
 export function navigationAllows(grant,from,to){
@@ -68,7 +77,7 @@ export function navigationAllows(grant,from,to){
 
 /** Expand compressed bends before checking each transition; no straight-line
  * shortcut can falsely justify a multi-corner movement. */
-export function navigationRouteApproved(grant,origin,offsets){
+export function navigationRouteApproved(grant,origin,offsets,permitStep=()=>true){
  if(!grant||!Array.isArray(offsets)||!offsets.length||offsets.length>64||
   !integer(origin?.x)||!integer(origin?.y))return false;
  let at={x:origin.x,y:origin.y},last={dx:0,dy:0},count=0;
@@ -84,7 +93,7 @@ export function navigationRouteApproved(grant,origin,offsets){
    const next={x:origin.x+Math.round(last.dx+sx*i/steps),
     y:origin.y+Math.round(last.dy+sy*i/steps)};
    if(next.x===at.x&&next.y===at.y)continue;
-   if(!navigationAllows(grant,at,next))return false;
+   if(!navigationAllows(grant,at,next)||!permitStep(at,next))return false;
    at=next;
    if(++count>1024)return false;
   }
@@ -101,6 +110,25 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
  const grants=new Map(),inFlight=new Map(),revisions=new Map(),origins=new Map();
  const matchingOrigin=(grant,origin)=>!origin||
   (grant?.baseX===origin.x&&grant?.baseY===origin.y);
+ const frameKey=frame=>JSON.stringify([frame.mapId,frame.epoch||null,
+  frame.navigationEnvironmentRevision,frame.enabled,
+  frame.collisionEnabled,frame.partyShared,frame.width,frame.height]);
+ function withinSight(auth,grant,point){
+  if(!auth||!grant)return false;
+  if(!auth.fogEnabled)return true;
+  if(!auth.visible)return false;
+  const x=Number(point?.x),y=Number(point?.y);
+  if(!integer(x)||!integer(y))return false;
+  for(let cx=x;cx<Math.ceil(x+grant.footprintWidth);cx++)
+   for(let cy=y;cy<Math.ceil(y+grant.footprintHeight);cy++)
+    if(cx<0||cy<0||cx>=auth.width||cy>=auth.height||
+     !auth.visible.has(cx+cy*auth.width))return false;
+  return true;
+ }
+ function stepAllowed(grant,auth,from,to){
+  return navigationAllows(grant,from,to)&&
+   withinSight(auth,grant,from)&&withinSight(auth,grant,to);
+ }
  let disposed=false;
  function validGrant(mapId,kind,id){
   const key=keyOf(mapId,kind,id),grant=grants.get(key);
@@ -172,6 +200,41 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
   warm(mapId,kind,id,origin=undefined){
    void ensure(mapId,kind,id,origin).catch(()=>{});
   },
+  /** Adopt only a currently CONFIRMED server fog frame. A newer sight set
+   * clips all previously granted edges, but does not discard walls/grants
+   * merely because the player has moved and the fog mask has shifted.
+   * A scene or identity change invalidates the whole graph immediately. */
+  adoptFrame(mapId,frame){
+   if(!UUID.test(String(mapId)))return false;
+   if(!frame||frame.mapId!==mapId||
+      navigationAuthorizationKey(frame)===null){
+    this.revoke(mapId);return false;
+   }
+   const old=revisions.get(mapId);
+   if(old&&frame.revision<old.revision){
+    this.revoke(mapId);return false;
+   }
+   const hardKey=frameKey(frame);
+   const previousKey=old?.authorizationKey;
+   revisions.set(mapId,{
+    revision:frame.revision,authorizationKey:hardKey,
+    environmentRevision:frame.navigationEnvironmentRevision,
+    collisionEnabled:frame.collisionEnabled,
+    fogEnabled:frame.enabled,width:frame.width,height:frame.height,
+    visible:new Set(frame.visible)
+   });
+   if(previousKey===hardKey){
+    if(old.revision!==frame.revision)
+     movementDiagnostics.count('navigationRevisionReused');
+    return true;
+   }
+   movementDiagnostics.count('navigationAuthorizationChanged');
+   for(const [id,grant] of grants)
+    if(grant.mapId===mapId)grants.delete(id);
+   for(const id of inFlight.keys())if(id.startsWith(mapId+':'))inFlight.delete(id);
+   return true;
+  },
+  authority(mapId){return revisions.get(mapId)?.authorizationKey||null;},
   // Passing a stable key from navigationAuthorizationKey() keeps an existing
   // grant across harmless visibility revision increments. Two-argument calls
   // remain strict for older consumers and tests.
@@ -215,13 +278,14 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
    for(const id of origins.keys())if(id.startsWith(mapId+':'))origins.delete(id);
   },
   allows(mapId,kind,id,from,to){
-   return navigationAllows(validGrant(mapId,kind,id),from,to);
+   return stepAllowed(validGrant(mapId,kind,id),revisions.get(mapId),from,to);
   },
   routeApproved(mapId,kind,id,origin,offsets){
    const grant=validGrant(mapId,kind,id);
    return matchingOrigin(grant,origin)&&grant?.baseX===origin?.x&&
     grant?.baseY===origin?.y&&
-    navigationRouteApproved(grant,origin,offsets);
+    navigationRouteApproved(grant,origin,offsets,(from,to)=>
+     stepAllowed(grant,revisions.get(mapId),from,to));
   },
   hasGrant(mapId,kind,id){return !!validGrant(mapId,kind,id)},
   clear(){grants.clear();inFlight.clear();revisions.clear();origins.clear()},
