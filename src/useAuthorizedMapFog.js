@@ -15,11 +15,14 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
  const coordinator=refreshCoordinator||ownCoordinator.current;
  const key=campaignId&&mapId&&userId?campaignResourceKey({campaignId,mapId,userId,
   resource:'authorized-fog'}):null;
- const refresh=useCallback(async()=>{
+ const refresh=useCallback(async(fresh=false)=>{
   if(!db||!campaignId||!mapId||!userId){
    validated.current=null;setFrame(null);setPublished(null);return;
   }
   const seq=++request.current;
+  // Accepted observer previews and published scene changes can update sight
+  // without a new visibility tick: they must bypass older in-flight frames.
+  if(fresh===true)coordinator.invalidate(key);
   try{
    const response=await coordinator.request(key,async()=>{
     const {data,error:rpcError}=await db.rpc('get_authorized_map_fog',{p_map:mapId});
