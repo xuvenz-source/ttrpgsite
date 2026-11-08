@@ -15,7 +15,7 @@ const epoch='00000000-0000-4000-8000-000000000004';
 const grant=(piece=owner,nodes=[[0,0,5],[1,0,4],[0,1,1],[1,1,0]])=>({
  version:1,mapId:map,pieceId:piece,kind:'token',origin:[0,0],
  gridWidth:20,gridHeight:20,visibilityRevision:8,environmentRevision:5,
- collisionEnabled:true,footprint:[1,1],nodes
+ permissionGeneration:3,collisionEnabled:true,footprint:[1,1],nodes
 });
 
 test('opaque navigation validates only direction bits, never hidden geometry',()=>{
@@ -128,7 +128,7 @@ test('navigation cache keeps grants across harmless fog ticks, but not changing 
  const frame=(rev,env,visible=[0,1])=>({
   mapId:map,protocolVersion:2,epoch,width:20,height:20,revision:rev,
   enabled:true,collisionEnabled:true,partyShared:false,
-  navigationEnvironmentRevision:env,visible
+  permissionGeneration:3,navigationEnvironmentRevision:env,visible
  });
  const authorize=(rev,env,visible)=>store.setRevision(map,rev,
   navigationAuthorizationKey(frame(rev,env,visible)),env,true);
@@ -164,13 +164,13 @@ test('navigation cache keeps grants across harmless fog ticks, but not changing 
 test('new collision snapshot metadata reaches the client and rejects old scene grants',async()=>{
  const raw={
   mapId:map,width:4,height:4,revision:20,enabled:true,partyShared:false,
-  collisionEnabled:true,navigationEnvironmentRevision:7,
+  collisionEnabled:true,permissionGeneration:3,navigationEnvironmentRevision:7,
   protocolVersion:2,visible:[0],explored:[0]
  };
  assert.equal(normalizeAuthorizedFogFrame(raw,map).navigationEnvironmentRevision,7);
- assert.equal(normalizeAuthorizedFogFrame({...raw,navigationEnvironmentRevision:-1},map),null);
+ assert.equal(normalizeAuthorizedFogFrame({...raw,permissionGeneration:3,navigationEnvironmentRevision:-1},map),null);
  assert.equal(navigationAuthorizationKey(raw)!==null,true);
- assert.equal(navigationAuthorizationKey({...raw,navigationEnvironmentRevision:undefined}),null);
+ assert.equal(navigationAuthorizationKey({...raw,permissionGeneration:3,navigationEnvironmentRevision:undefined}),null);
  const db={rpc:async()=>({data:{...grant(),visibilityRevision:20,
   environmentRevision:6},error:null})};
  const store=createAuthorizedNavigation({db});
@@ -187,7 +187,7 @@ test('in-flight navigation responses cannot resurrect a revoked authorization',a
  const key=(rev,visible)=>navigationAuthorizationKey({
   mapId:map,protocolVersion:2,width:20,height:20,revision:rev,
   enabled:true,collisionEnabled:true,partyShared:false,
-  navigationEnvironmentRevision:5,visible
+  permissionGeneration:3,navigationEnvironmentRevision:5,visible
  });
  store.setRevision(map,8,key(8,[0,1]),5,true);
  const pending=store.ensure(map,'token',owner);
@@ -207,7 +207,7 @@ test('committed coordinate changes re-center the cached grant rather than strand
  store.setRevision(map,8,navigationAuthorizationKey({
   mapId:map,protocolVersion:2,width:20,height:20,revision:8,
   enabled:true,collisionEnabled:true,partyShared:false,
-  navigationEnvironmentRevision:5,visible:[0,1,2]
+  permissionGeneration:3,navigationEnvironmentRevision:5,visible:[0,1,2]
  }),5,true);
  assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
  assert.equal(calls,1);
@@ -231,7 +231,7 @@ test('confirmed sight changes clip revoked edges without invalidating valid acti
  const frame=(revision,visible=[0,1,20,21],environmentRevision=5)=>({
   mapId:map,protocolVersion:2,deltaProtocolVersion:1,epoch,sequence:revision,
   revision,width:20,height:20,enabled:true,partyShared:false,
-  collisionEnabled:true,navigationEnvironmentRevision:environmentRevision,
+  collisionEnabled:true,permissionGeneration:3,navigationEnvironmentRevision:environmentRevision,
   visible,explored:[0,1,2,20,21]
  });
  assert.equal(store.adoptFrame(map,frame(8)),true);
@@ -264,7 +264,7 @@ test('doors, scene versions and pending fog revoke an active movement grant',asy
  const frame=(revision,sceneRevision,collision=true)=>({
   mapId:map,protocolVersion:2,epoch,revision,
   width:20,height:20,enabled:true,partyShared:false,
-  collisionEnabled:collision,navigationEnvironmentRevision:sceneRevision,
+  collisionEnabled:collision,permissionGeneration:3,navigationEnvironmentRevision:sceneRevision,
   visible:[0,1,20,21],explored:[0,1,20,21]
  });
  assert.equal(store.adoptFrame(map,frame(8,5)),true);
@@ -287,7 +287,7 @@ test('doors, scene versions and pending fog revoke an active movement grant',asy
 test('player role loss or RLS token removal evicts just that piece',async()=>{
  const mapFrame={mapId:map,protocolVersion:2,epoch,revision:8,
   width:20,height:20,enabled:true,partyShared:false,
-  collisionEnabled:true,navigationEnvironmentRevision:5,
+  collisionEnabled:true,permissionGeneration:3,navigationEnvironmentRevision:5,
   visible:[0,1,20,21]};
  const db={rpc:async(_fn,args)=>({data:grant(args.p_piece),error:null})};
  const store=createAuthorizedNavigation({db});
@@ -319,7 +319,7 @@ test('harmless sight tick during a navigation RPC cannot starve a smooth drag',a
  const db={rpc:()=>{calls++;return new Promise(resolve=>{deliver=resolve})}};
  const frame=(revision,visible)=>({mapId:map,protocolVersion:2,epoch,
   revision,width:20,height:20,enabled:true,partyShared:false,
-  collisionEnabled:true,navigationEnvironmentRevision:5,visible});
+  collisionEnabled:true,permissionGeneration:3,navigationEnvironmentRevision:5,visible});
  const store=createAuthorizedNavigation({db});
  store.adoptFrame(map,frame(8,[0,1,20,21]));
  const pending=store.ensure(map,'token',owner,{x:0,y:0,spanX:1,spanY:1});
@@ -341,7 +341,7 @@ test('changed creature footprint invalidates previously issued navigation',async
  const store=createAuthorizedNavigation({db});
  const frame={mapId:map,protocolVersion:2,epoch,revision:8,
   width:20,height:20,enabled:true,partyShared:false,
-  collisionEnabled:true,navigationEnvironmentRevision:5,
+  collisionEnabled:true,permissionGeneration:3,navigationEnvironmentRevision:5,
   visible:[0,1,20,21]};
  store.adoptFrame(map,frame);
  assert.ok(await store.ensure(map,'token',owner,{x:0,y:0,spanX:1,spanY:1}));
@@ -351,4 +351,80 @@ test('changed creature footprint invalidates previously issued navigation',async
  assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:1,y:0}),false,
   'larger creature cannot enter a cell when any part of its footprint is unseen');
  store.dispose();
+});
+
+test('a server-issued generation change revokes navigation despite identical fog and scene',async()=>{
+ let rev=8,generation=3,calls=0;
+ const db={rpc:async()=>{calls++;return {data:{
+  ...grant(),visibilityRevision:rev,permissionGeneration:generation
+ },error:null}}};
+ const store=createAuthorizedNavigation({db});
+ const frame=(revision,permissionGeneration)=>({
+  mapId:map,protocolVersion:2,epoch,revision,width:20,height:20,
+  enabled:true,collisionEnabled:true,partyShared:false,
+  navigationEnvironmentRevision:5,permissionGeneration,
+  visible:[0,1,20,21]
+ });
+ assert.ok(store.adoptFrame(map,frame(8,3)));
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
+ assert.equal(store.hasGrant(map,'token',owner),true);
+ const before=store.authority(map);
+ rev=9;generation=4;
+ assert.ok(store.adoptFrame(map,frame(9,4)));
+ assert.notEqual(store.authority(map),before);
+ assert.equal(store.hasGrant(map,'token',owner),false,
+  'character value or tool attribute changes must revoke every cached edge');
+ assert.equal(store.allows(map,'token',owner,{x:0,y:0},{x:1,y:0}),false);
+ assert.ok(await store.ensure(map,'token',owner,{x:0,y:0}));
+ assert.equal(calls,2,'only one replacement grant was fetched');
+ store.dispose();
+});
+
+test('an in-flight graph from a prior permission generation cannot resurrect',async()=>{
+ let deliver;
+ const db={rpc:()=>new Promise(done=>{deliver=done})};
+ const store=createAuthorizedNavigation({db});
+ const frame=(revision,permissionGeneration)=>({
+  mapId:map,protocolVersion:2,epoch,revision,width:20,height:20,
+  enabled:true,collisionEnabled:true,partyShared:false,
+  navigationEnvironmentRevision:5,permissionGeneration,
+  visible:[0,1,20,21]
+ });
+ store.adoptFrame(map,frame(8,3));
+ const pending=store.ensure(map,'token',owner,{x:0,y:0});
+ store.adoptFrame(map,frame(9,4));
+ deliver({data:grant(),error:null});
+ assert.equal(await pending,null);
+ assert.equal(store.size,0);
+ store.dispose();
+});
+
+test('navigation permission protocol contains only opaque generations and origin-connected edges',()=>{
+ const navSql=source('supabase/migrations/20261109000100_authorized_predictive_navigation.sql');
+ const privateSql=source('supabase/migrations/20261109000200_private_verified_visibility_deltas.sql');
+ const deltaSql=source('supabase/migrations/20261109000300_navigation_scene_revisions.sql');
+ assert.match(navSql,/CREATE TABLE IF NOT EXISTS forge_visibility\.navigation_permission_generations/);
+ assert.match(navSql,/REVOKE ALL ON TABLE forge_visibility\.navigation_permission_generations/i);
+ assert.match(navSql,/tick_character_elevation/);
+ assert.match(navSql,/tick_navigation_token_permissions/);
+ assert.match(navSql,/tick_navigation_tool_permissions/);
+ assert.match(navSql,/candidate_masks\s*\?\s*origin_key/);
+ assert.match(navSql,/reachable\s*\?\s*neighbour_key/);
+ assert.match(navSql,/IF reachable\s*\?\s*\(\(node->>0\)/);
+ assert.match(navSql,/'permissionGeneration',permission_generation/);
+ assert.match(privateSql,/'permissionGeneration',current_frame->'permissionGeneration'/);
+ assert.match(deltaSql,/'permissionGeneration',current_frame->'permissionGeneration'/);
+ assert.doesNotMatch(navSql,/p_origin\s+|p_x\s+|p_y\s+/i);
+ const safe=normalizeAuthorizedNavigation(grant(),map,'token',owner);
+ assert.ok(safe);
+ assert.equal(safe.permissionGeneration,3);
+ assert.equal(normalizeAuthorizedNavigation({
+  ...grant(),secretRoomLocation:'hidden'
+ },map,'token',owner),null);
+ assert.equal(normalizeAuthorizedNavigation({
+  ...grant(),permissionGeneration:'3'
+ },map,'token',owner),null);
+ const noGeneration={...grant()};
+ delete noGeneration.permissionGeneration;
+ assert.equal(normalizeAuthorizedNavigation(noGeneration,map,'token',owner),null);
 });
