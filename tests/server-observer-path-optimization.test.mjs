@@ -4,7 +4,9 @@ import {readFileSync} from 'node:fs';
 
 const sql=readFileSync(new URL('../staging/sql-candidates/observer_path_visibility_single_snapshot.sql',import.meta.url),'utf8');
 const rollback=readFileSync(new URL('../staging/sql-candidates/rollback_observer_path_visibility_single_snapshot.sql',import.meta.url),'utf8');
-const dispatch=sql.slice(sql.indexOf('create or replace function forge_visibility.dispatch_movement_preview('));
+const dispatchStart=sql.search(/create or replace function forge_visibility\.dispatch_movement_preview\(/i);
+assert.ok(dispatchStart>=0,'Staged SQL must contain the complete server dispatcher');
+const dispatch=sql.slice(dispatchStart);
 
 test('staged observer optimization cannot deploy itself or silently change the public movement API',()=>{
  assert.match(sql,/STAGING CANDIDATE ONLY.*DO NOT APPLY/);
