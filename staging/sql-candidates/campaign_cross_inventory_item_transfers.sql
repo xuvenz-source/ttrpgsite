@@ -59,14 +59,15 @@ begin
  if item_w>p_cols or item_h>p_rows then
   raise exception 'Item is larger than the destination grid';end if;
  if (p_x is null)<>(p_y is null) then raise exception 'Incomplete grid position';end if;
- if p_x is not null then
-  if p_x<0 or p_y<0 or p_x+item_w>p_cols or p_y+item_h>p_rows then
-   raise exception 'Drop position is outside destination grid';end if;
+ -- Prefer the cell the user selected; if it is occupied, find another
+ -- contiguous rectangle rather than incorrectly reporting no empty slots.
+ if p_x is not null and p_x>=0 and p_y>=0
+  and p_x+item_w<=p_cols and p_y+item_h<=p_rows then
+  good:=true;
   for dy in 0..item_h-1 loop for dx in 0..item_w-1 loop
-   if (p_y+dy)*p_cols+p_x+dx=any(occupied) then
-    raise exception 'Destination slots are occupied; item was not moved';end if;
+   if (p_y+dy)*p_cols+p_x+dx=any(occupied) then good:=false;end if;
   end loop;end loop;
-  return jsonb_build_object('x',p_x,'y',p_y);
+  if good then return jsonb_build_object('x',p_x,'y',p_y);end if;
  end if;
  <<new_first_fit>>
  for py in 0..p_rows-item_h loop
