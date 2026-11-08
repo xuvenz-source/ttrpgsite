@@ -58,3 +58,10 @@ The stage introduces `authorizedTokenDerivedInputsChanged` and `refreshFogAwareT
 - **Acceptance:** compare matched 2/4/6–10 connected clients and 10/50/100 tokens; track DB RPC call delta by family, fresh vs repeated fog ticks, sampled connection high-water mark, kernel memory commitment, *physical* used RAM and swap, PostgREST pool occupancy, and 95th percentile movement / fog latency. Verify no accidental exposure of hidden NPC values or bars. Memory should fall with workload/connection stabilization; if it does not, investigate backend process retention separately rather than asserting this code fix solved it.
 
 See also [Supabase memory commitment reporting](https://supabase.com/docs/guides/observability/reports) and [connection management](https://supabase.com/docs/guides/database/connection-management).
+
+
+### Additional browser-background backpressure in this stage
+- When a server visibility tick arrives while `document.visibilityState` is hidden, the hook **immediately revokes the stale authorized frame** and invalidates any in-flight request but does **not** start another expensive `get_authorized_map_fog` query until the tab becomes visible.
+- On a hidden-tab Realtime reconnect the same fail-closed policy applies. When focus/visibility resumes the existing `changed.flush()` path forces a new server-authorized fog response.
+- No DM or active-player live fog/movement update is delayed. This is particularly relevant when developers simulate many connected users through background tabs, but is not evidence that all prior stress-test tabs were hidden.
+- The UI integration guards now explicitly assert visibility-state gating. Browser wake/reconnect and map-switch behavior still require live acceptance.
