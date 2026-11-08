@@ -1,6 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {normalizeAuthorizedFogFrame,fogFrameDuringRefresh} from './MapFogModel.js';
-import {createCoalescedRefresh} from './PerformanceScheduling.js';
+import {createLeadingCoalescedRefresh} from './PerformanceScheduling.js';
 import {isFreshVisibilityTick,retainFogSnapshot} from './FogVisibilityContinuity.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
@@ -53,7 +53,9 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId}){
      previous:fogFrameDuringRefresh(previous,mapId));
    return true;
   };
-  const changed=createCoalescedRefresh(()=>void refresh(),60);
+  // Sight is already revoked by invalidate(). Do not add 60ms of avoidable
+  // blank-token time before the first authorization request is sent.
+  const changed=createLeadingCoalescedRefresh(()=>void refresh(),60);
   const channel=db.channel('forge-visibility-'+mapId+'-'+userId)
    .on('postgres_changes',{event:'*',schema:'public',
     table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},event=>{
