@@ -78,7 +78,10 @@ export function navigationAllows(grant,from,to){
   !integer(to?.x)||!integer(to?.y))return false;
  const dx=to.x-from.x,dy=to.y-from.y;
  const index=NAV_DIRECTIONS.findIndex(([x,y])=>x===dx&&y===dy);
- return index>=0&&Boolean((grant.nodes.get(from.x+':'+from.y)||0)&(1<<index));
+ // Both sides must be in the server-issued connected component. A bit on
+ // a fringe node is never permission to leave the bounded grant.
+ return index>=0&&grant.nodes.has(to.x+':'+to.y)&&
+  Boolean((grant.nodes.get(from.x+':'+from.y)||0)&(1<<index));
 }
 
 /** Expand compressed bends before checking each transition; no straight-line
@@ -334,7 +337,9 @@ export function createAuthorizedNavigation({db,clock=Date.now}){
     x:origin.x+end.dx,y:origin.y+end.dy});
   },
   canOccupy(mapId,kind,id,position){
-   return withinSight(revisions.get(mapId),validGrant(mapId,kind,id),position);
+   const grant=validGrant(mapId,kind,id);
+   return !!grant&&grant.nodes.has(position?.x+':'+position?.y)&&
+    withinSight(revisions.get(mapId),grant,position);
   },
   hasGrant(mapId,kind,id){return !!validGrant(mapId,kind,id)},
   clear(){grants.clear();inFlight.clear();revisions.clear();origins.clear()},
