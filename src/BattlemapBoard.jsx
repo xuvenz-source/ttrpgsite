@@ -136,6 +136,14 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  mountedSight.current.seen=presentation.seen;
  const presentedTokens=isDM?visibleTokens:presentation.displayed;
  const concealedIds=isDM?new Set():presentation.concealed;
+ // The board stays mounted across maps. Retire stale sprite callbacks after
+ // RLS/map omissions so the no-flash cache cannot grow without bound.
+ useEffect(()=>{
+  const current=new Set(presentedTokens.map(t=>t.id));
+  for(const id of spriteRefs.current.keys())
+   if(!current.has(id)&&!spriteNodes.current.has(id))
+    spriteRefs.current.delete(id);
+ },[presentedTokens]);
  // Retire a local drop preview only after React has committed the matching
  // optimistic left/top (and its separate monitor frame) before the next paint.
  useLayoutEffect(()=>{
@@ -659,7 +667,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
    map.width,map.height,map.grid_size);
   const collisionScene=publishedEnvironment||environment;
-  const delta=isDM&&environmentEditor?.ignoreCollision!==true&&collisionScene?
+  const delta=isDM&&environmentEditor?.ignoreCollision!==true&&
+   fogFrame?.collisionEnabled!==false&&collisionScene?
    traceSolidGroupOffset({
     pieces:[...info.members,...(info.tools||[]).map(groupToolFootprint)],
     map,environment:collisionScene,previous:{dx:info.dx,dy:info.dy},
