@@ -18,7 +18,7 @@ export function createLatestOnlyPreviewQueue({send,onResult=()=>{},onError=()=>{
   const payload=entry.latest;
   entry.latest=null;entry.busy=true;
   // A Supabase PostgREST builder is thenable; normalize to a real promise.
-  void Promise.resolve().then(()=>send(payload)).then(
+  void Promise.resolve().then(()=>entry.cancelled||disposed?null:send(payload)).then(
    value=>{if(!disposed&&!entry.cancelled)onResult(payload,value)},
    error=>{if(!disposed&&!entry.cancelled)onError(payload,error)}
   ).catch(error=>{
