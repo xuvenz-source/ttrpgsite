@@ -2581,6 +2581,12 @@ export default function TabletopApp(){
     !Number.isSafeInteger(dy))return;
   if(!members.length&&!tools.length)return;
   if(isDM&&mapSettingEditor.previewing)return;
+  const tokenIds=members.map(t=>t.id),toolIds=tools.map(t=>t.issue_id);
+  const clearDenied=()=>{
+   for(const member of members)remoteMotion.current?.clearPreview(member.id);
+   for(const tool of tools)remoteMotion.current?.clearPreview('tool:'+tool.issue_id);
+   clearMapMovementPreview(mapId,tokenIds,toolIds);
+  };
   if(!isDM){
    const pieces=[
     ...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
@@ -2596,23 +2602,29 @@ export default function TabletopApp(){
     for(const tool of tools)navigationStore.warm(mapId,'tool',tool.issue_id,
      {x:tool.x,y:tool.y,spanX:Number(tool.span??1),
       spanY:Number(tool.span??1)});
-    for(const member of members)remoteMotion.current?.clearPreview(member.id);
-    for(const tool of tools)remoteMotion.current?.clearPreview('tool:'+tool.issue_id);
+    clearDenied();
     return;
    }
    path=offsets;
   }
   const steps=movementPathDeltas(path?.length?path:[{dx,dy}]);
   if(!steps?.length||steps.reduce((total,step)=>total+step.dx,0)!==dx||
-    steps.reduce((total,step)=>total+step.dy,0)!==dy)
+    steps.reduce((total,step)=>total+step.dy,0)!==dy){
+   clearDenied();
    throw Error('Invalid movement path; no units were moved.');
+  }
   const collisionOverride=isDM&&mapSettingEditor.ignoreCollision===true;
-  // Do not race a pending single-token save with a relative group delta.
-  if(members.some(t=>movementPending.current.has(t.id))){
+  // Token AND tool movements are exclusive until the authoritative group
+  // write settles. In particular, two fast tool-only drags must not race the
+  // same origin or commit a stale relative offset.
+  if(members.some(t=>movementPending.current.has(t.id))||
+    tools.some(t=>toolMovementPending.current.has(t.issue_id))){
+   clearDenied();
    fail(Error('Another movement is still being confirmed. Try again.'));
    return;
   }
   const pending=new Map();
+  for(const tool of tools)toolMovementPending.current.add(tool.issue_id);
   for(const member of members){
    const item={mapId,campaignId,x:Number(member.x)+dx,
     y:Number(member.y)+dy,saving:true,confirmed:false,group:true};
@@ -2625,38 +2637,43 @@ export default function TabletopApp(){
   }));
   try{
    const {data,error:moveError}=await db.rpc('commit_map_trajectory',{
-    p_map:mapId,p_token_ids:members.map(t=>t.id),
-    p_tool_issue_ids:tools.map(t=>t.issue_id),
+    p_map:mapId,p_token_ids:tokenIds,
+    p_tool_issue_ids:toolIds,
     p_steps:steps,p_ignore_collision:collisionOverride
    });
    if(moveError)throw moveError;
    if(!data||!Array.isArray(data.tokens)||!Array.isArray(data.tools)||
       data.tokens.length!==members.length||data.tools.length!==tools.length)
     throw Error('The movement acknowledgement was incomplete.');
-   for(const [id,item] of pending){
-    if(movementPending.current.get(id)===item){
-     item.confirmed=true;
-     const row=data.tokens.find(t=>t.id===id);
-     if(row){item.x=Number(row.x);item.y=Number(row.y)}
-    }
+   for(const member of members){
+    const row=data.tokens.find(t=>t.id===member.id);
+    if(!row||Number(row.x)!==Number(member.x)+dx||
+       Number(row.y)!==Number(member.y)+dy)
+     throw Error('The server did not confirm every token destination.');
    }
+   for(const tool of tools){
+    const row=data.tools.find(t=>t.id===tool.issue_id);
+    if(!row||Number(row.x)!==Number(tool.x)+dx||
+       Number(row.y)!==Number(tool.y)+dy)
+     throw Error('The server did not confirm every tool destination.');
+   }
+   for(const [id,item] of pending){
+    if(movementPending.current.get(id)===item)item.confirmed=true;
+   }
+   // A group (including tool-only groups) remains visually handed off until
+   // BOTH server projections are reconciled. Commit is one SQL transaction.
+   await Promise.all([refreshTokens(),campaignTools.refresh()]);
   }catch(e){
    fail(e);
+   ++tokenRefreshSeq.current;
+   await Promise.allSettled([refreshTokens(true),campaignTools.refresh()]);
+   throw e;
+  }finally{
+   for(const tool of tools)toolMovementPending.current.delete(tool.issue_id);
    for(const [id,item] of pending)
     if(movementPending.current.get(id)===item)movementPending.current.delete(id);
-   ++tokenRefreshSeq.current;
-   await Promise.all([refreshTokens(),campaignTools.refresh()]);
-   clearMapMovementPreview(mapId,members.map(t=>t.id),
-    tools.map(t=>t.issue_id));
-   throw e;
+   clearMapMovementPreview(mapId,tokenIds,toolIds);
   }
-  // Refresh both the token and issued-tool projections before dropping the
-  // local optimistic group. SQL commits all rows or no rows.
-  await Promise.all([refreshTokens(),campaignTools.refresh()]);
-  clearMapMovementPreview(mapId,members.map(t=>t.id),
-   tools.map(t=>t.issue_id));
-  for(const [id,item] of pending)
-   if(movementPending.current.get(id)===item)movementPending.current.delete(id);
  }
  function moveSelectedByKey(dx,dy){
   if(isDM&&mapSettingEditor.previewing)return;
