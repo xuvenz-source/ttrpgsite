@@ -1080,6 +1080,7 @@ export default function TabletopApp(){
   if(!db||!selectedMap)return;
   const transport=createAuthorizedMotionTransport({db});
   movementSessionTransport.current=transport;
+  activeGroupPreview.current=null;
   const queue=createLatestOnlyPreviewQueue({
    send:packet=>transport.send(packet),
    onResult:(packet,{data,error})=>{
@@ -1223,6 +1224,9 @@ export default function TabletopApp(){
   // nothing changed in persisted map_tokens (and thus no tick was emitted).
   const queue=movementPreviewQueue.current;
   const keys=[...tokenIds,...issueIds.map(id=>'tool:'+id)];
+  const group=activeGroupPreview.current;
+  if(group?.mapId===mapId&&keys.some(key=>group.keys.has(key)))
+   activeGroupPreview.current=null;
   // A preview RPC already in flight could otherwise finish AFTER cleanup
   // and resurrect the stale observer position / temporary fog sight.
   void Promise.all(keys.map(key=>queue?.cancel(key)))
