@@ -3,13 +3,18 @@ import {normalizeAuthorizedFogFrame,fogFrameDuringRefresh} from './MapFogModel.j
 import {createLeadingCoalescedRefresh} from './PerformanceScheduling.js';
 import {isFreshVisibilityTick,retainFogSnapshot} from './FogVisibilityContinuity.js';
 import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
+import {canUseViewerFogProtocol,isMissingViewerFogRpc} from './ViewerFogProtocol.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
  * leaves the player map obscured until a valid server snapshot arrives. */
-export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshCoordinator}){
+export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=false,refreshCoordinator}){
  const [frame,setFrame]=useState(null),[error,setError]=useState(''),
   [published,setPublished]=useState(null);
  const request=useRef(0),validated=useRef(null),pendingTick=useRef(null);
+ // A v2 RPC proves the server supports private per-viewer revisions.
+ // Older deployments stay on the global subscription and original RPC.
+ const [scope,setScope]=useState('global');
+ const viewerRpcSupported=useRef(null);
  const ownCoordinator=useRef(null);
  if(!ownCoordinator.current)ownCoordinator.current=createCampaignRefreshCoordinator();
  const coordinator=refreshCoordinator||ownCoordinator.current;
@@ -25,16 +30,32 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
   if(fresh===true)coordinator.invalidate(key);
   try{
    const response=await coordinator.request(key,async()=>{
+    if(!isDM&&viewerRpcSupported.current!==false){
+     const {data,error:viewerError}=await db.rpc('get_authorized_map_fog_v2',
+      {p_map:mapId});
+     if(!viewerError){
+      // Never silently accept an unversioned result in the new protocol.
+      if(!canUseViewerFogProtocol(data))throw Error('Invalid viewer fog protocol');
+      return {data,viewer:true};
+     }
+     // Only an actually missing RPC may use the original safe protocol.
+     // Unauthorized/failed v2 RPCs still fail closed.
+     if(!isMissingViewerFogRpc(viewerError))throw viewerError;
+     viewerRpcSupported.current=false;
+    }
     const {data,error:rpcError}=await db.rpc('get_authorized_map_fog',{p_map:mapId});
     if(rpcError)throw rpcError;
-    return data;
+    return {data,viewer:false};
    });
    // Visibility may have been revoked while this request was in flight.
    if(!response.current)return;
-   const data=response.value;
+   const {data,viewer}=response.value;
    const safe=normalizeAuthorizedFogFrame(data,mapId);
    if(!safe)throw Error('Invalid map visibility response.');
    if(seq!==request.current)return;
+   if(viewer)viewerRpcSupported.current=true;
+   setScope(previous=>previous===(viewer?'viewer':'global')?
+    previous:viewer?'viewer':'global');
    validated.current=safe;
    pendingTick.current=null;
    setFrame(previous=>retainFogSnapshot(previous,safe));
@@ -48,7 +69,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
    pendingTick.current=null;
    setFrame(null);setPublished(null);setError(cause?.message||String(cause));
   }
- },[db,campaignId,mapId,userId,key,coordinator]);
+ },[db,campaignId,mapId,userId,isDM,key,coordinator]);
  useEffect(()=>{
   validated.current=null;pendingTick.current=null;
   setFrame(null);setPublished(null);setError('');
@@ -80,9 +101,14 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
   // Sight is already revoked by invalidate(). Do not add 60ms of avoidable
   // blank-token time before the first authorization request is sent.
   const changed=createLeadingCoalescedRefresh(()=>void refresh(),60);
-  const channel=db.channel('forge-visibility-'+mapId+'-'+userId)
+  const viewerScope=scope==='viewer';
+  const channel=db.channel('forge-visibility-'+mapId+'-'+userId+
+    (viewerScope?'-viewer':''))
    .on('postgres_changes',{event:'*',schema:'public',
-    table:'map_visibility_ticks',filter:'map_id=eq.'+mapId},event=>{
+    table:viewerScope?'map_viewer_visibility_ticks':'map_visibility_ticks',
+    filter:viewerScope?'user_id=eq.'+userId:'map_id=eq.'+mapId},event=>{
+    if(viewerScope&&event?.new&&
+     (event.new.map_id!==mapId||event.new.user_id!==userId))return;
     // Background tabs must revoke stale sight immediately, but should not
     // compete with active players for expensive per-viewer fog RPCs.
     // visibilitychange flushes a fresh authorized frame on return.
@@ -96,6 +122,15 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
      coordinator.invalidate(key);
      setFrame(previous=>previous?fogFrameDuringRefresh(previous,mapId):previous);
      if(document.visibilityState==='visible')changed.request();
+    }else if(viewerScope&&
+     (state==='CHANNEL_ERROR'||state==='TIMED_OUT')){
+     // Safe downgrade if the new publication is absent or a reconnect fails.
+     // This never reuses stale sight; legacy global events remain authoritative.
+     ++request.current;
+     coordinator.invalidate(key);
+     setFrame(previous=>previous?fogFrameDuringRefresh(previous,mapId):previous);
+     viewerRpcSupported.current=false;
+     setScope('global');
     }
    });
   const onVisibility=()=>{
@@ -107,6 +142,6 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,refreshC
    document.removeEventListener('visibilitychange',onVisibility);
    void db.removeChannel(channel);
   };
- },[db,campaignId,mapId,userId,refresh,key,coordinator]);
+ },[db,campaignId,mapId,userId,refresh,key,coordinator,scope]);
  return {frame,error,published,refresh};
 }
