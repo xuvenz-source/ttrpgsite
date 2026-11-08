@@ -2,9 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {NAV_DIRECTIONS,normalizeAuthorizedNavigation,navigationAllows,
- navigationRouteApproved,createAuthorizedNavigation} from '../src/AuthorizedNavigation.js';
+ navigationRouteApproved,createAuthorizedNavigation,navigationAuthorizationKey} from '../src/AuthorizedNavigation.js';
 import {traceAuthorizedGroupOffset} from '../src/DragCollisionGuard.js';
 import {adoptVerifiedViewerTick} from '../src/AuthorizedViewerTick.js';
+import {normalizeAuthorizedFogFrame} from '../src/MapFogModel.js';
+import {movementDiagnostics} from '../src/MovementDiagnostics.js';
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const map='00000000-0000-4000-8000-000000000001';
 const owner='00000000-0000-4000-8000-000000000002';
@@ -105,10 +107,93 @@ test('stage has no raw wall leak, no per-step local RPC gate, and prepared SQL o
  assert.match(board,/motion\.current\?\.preview\(token\.id/);
  assert.match(navSql,/get_authorized_map_navigation/);
  assert.match(navSql,/get_authorized_map_fog_v2\(p_map\)/);
- assert.match(navSql,/validate_piece_trajectory/);
+ assert.match(navSql,/forge_visibility\.swept_hits_segment/);
+ assert.match(navSql,/blockers:=blockers\|\|ARRAY\[/);
+ assert.match(navSql,/forge_visibility\.wall_passes/);
+ assert.doesNotMatch(navSql,/PERFORM\s+forge_visibility\.validate_piece_trajectory/);
  assert.doesNotMatch(navSql,/RETURN[^;]*scene/i);
  assert.match(visSql,/authorized_frame jsonb/);
  assert.match(visSql,/authorized_viewer_fog_frame/i);
  assert.match(visSql,/revoke all on function forge_visibility\.authorized_viewer_fog_frame/);
  assert.match(fog,/adoptVerifiedViewerTick/);
+});
+
+test('navigation cache keeps grants across harmless fog ticks, but not changing sight or walls',async()=>{
+ movementDiagnostics.clear();
+ let revision=8,environmentRevision=5,calls=0,tick=500;
+ const db={rpc:async()=>{calls++;return {data:{
+  ...grant(),visibilityRevision:revision,environmentRevision
+ },error:null}}};
+ const store=createAuthorizedNavigation({db,clock:()=>tick});
+ const frame=(rev,env,visible=[0,1])=>({
+  mapId:map,protocolVersion:2,epoch,width:20,height:20,revision:rev,
+  enabled:true,collisionEnabled:true,partyShared:false,
+  navigationEnvironmentRevision:env,visible
+ });
+ const authorize=(rev,env,visible)=>store.setRevision(map,rev,
+  navigationAuthorizationKey(frame(rev,env,visible)),env,true);
+ assert.equal(navigationAuthorizationKey(frame(8,5)),navigationAuthorizationKey(frame(9,5)));
+ authorize(8,5);
+ assert.ok(await store.ensure(map,'token',owner));
+ assert.equal(calls,1);
+ revision=9;authorize(9,5);
+ assert.equal(store.hasGrant(map,'token',owner),true);
+ assert.ok(await store.ensure(map,'token',owner));
+ assert.equal(calls,1,'unchanged authorized cells do not re-fetch the expensive grant');
+ environmentRevision=6;revision=10;authorize(10,6);
+ assert.equal(store.hasGrant(map,'token',owner),false,'new scene revision revokes cached edges');
+ assert.ok(await store.ensure(map,'token',owner));
+ assert.equal(calls,2);
+ revision=11;authorize(11,6,[0]);
+ assert.equal(store.hasGrant(map,'token',owner),false,'sight changes revoke even without geometry changes');
+ assert.ok(await store.ensure(map,'token',owner));
+ assert.equal(calls,3);
+ revision=12;authorize(12,6,[0]);tick+=12001;
+ assert.equal(store.hasGrant(map,'token',owner),false,'TTL still expires');
+ assert.ok(await store.ensure(map,'token',owner));
+ assert.equal(calls,4);
+ const counts=movementDiagnostics.snapshot().counts;
+ assert.equal(counts.navigationGrantRequested,4);
+ assert.ok(counts.navigationGrantCacheHit>=1);
+ assert.ok(counts.navigationRevisionReused>=1);
+ store.setRevision(map,13,null,6,true);
+ assert.equal(store.hasGrant(map,'token',owner),false,'unverified frame revokes every grant');
+ store.dispose();movementDiagnostics.clear();
+});
+
+test('new collision snapshot metadata reaches the client and rejects old scene grants',async()=>{
+ const raw={
+  mapId:map,width:4,height:4,revision:20,enabled:true,partyShared:false,
+  collisionEnabled:true,navigationEnvironmentRevision:7,
+  protocolVersion:2,visible:[0],explored:[0]
+ };
+ assert.equal(normalizeAuthorizedFogFrame(raw,map).navigationEnvironmentRevision,7);
+ assert.equal(normalizeAuthorizedFogFrame({...raw,navigationEnvironmentRevision:-1},map),null);
+ assert.equal(navigationAuthorizationKey(raw)!==null,true);
+ assert.equal(navigationAuthorizationKey({...raw,navigationEnvironmentRevision:undefined}),null);
+ const db={rpc:async()=>({data:{...grant(),visibilityRevision:20,
+  environmentRevision:6},error:null})};
+ const store=createAuthorizedNavigation({db});
+ store.setRevision(map,20,navigationAuthorizationKey(raw),7,true);
+ assert.equal(await store.ensure(map,'token',owner),null,'reject stale server scene even with current viewer rev');
+ assert.equal(store.hasGrant(map,'token',owner),false);
+ store.dispose();
+});
+
+test('in-flight navigation responses cannot resurrect a revoked authorization',async()=>{
+ let resolve;
+ const db={rpc:()=>new Promise(done=>{resolve=done})};
+ const store=createAuthorizedNavigation({db});
+ const key=(rev,visible)=>navigationAuthorizationKey({
+  mapId:map,protocolVersion:2,width:20,height:20,revision:rev,
+  enabled:true,collisionEnabled:true,partyShared:false,
+  navigationEnvironmentRevision:5,visible
+ });
+ store.setRevision(map,8,key(8,[0,1]),5,true);
+ const pending=store.ensure(map,'token',owner);
+ store.setRevision(map,9,key(9,[0]),5,true);
+ resolve({data:grant(),error:null});
+ assert.equal(await pending,null);
+ assert.equal(store.size,0);
+ store.dispose();
 });
