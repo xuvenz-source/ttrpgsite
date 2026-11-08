@@ -77,7 +77,7 @@ test('accepted previews extend fog only through server-authorized sources',()=>{
  assert.match(s,/forge_visibility\.is_lit/);
  const app=source('src/TabletopApp.jsx');
  assert.match(app,/queuePreviewFogRefresh\(\)/);
- assert.match(app,/db\.rpc\('end_map_motion_previews'/);
+ assert.match(app,/movementSessionTransport\.current\?\.end\(mapId,tokenIds,issueIds\)/);
  assert.match(app,/lastObservedFog\.current/);
  assert.match(app,/current\.revision!==previous\.revision/);
 });
@@ -108,7 +108,7 @@ test('every staged SQL procedure has matching PostgreSQL dollar delimiters',()=>
 test('temporary movement visibility is revoked on cancel, success and failure',()=>{
  const app=source('src/TabletopApp.jsx');
  assert.match(app,/function clearMapMovementPreview\(mapId,tokenIds=\[\],issueIds=\[\]\)/);
- assert.equal((app.match(/db\.rpc\('end_map_motion_previews'/g)||[]).length,1);
+ assert.equal((app.match(/movementSessionTransport\.current\?\.end\(mapId,tokenIds,issueIds\)/g)||[]).length,1);
  assert.match(app,/if\(fog\.frame\?\.enabled===true&&fog\.frame\.mapId===mapId\)\s*void fog\.refresh\(true\)/);
  assert.match(app,/clearMapMovementPreview\(selectedMap,\[token\.id\],\[\]\)/);
  assert.match(app,/clearMapMovementPreview\(selectedMap,\[\],\[placement\.issue_id\]\)/);
