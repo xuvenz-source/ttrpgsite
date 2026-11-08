@@ -30,12 +30,25 @@ function applyCells(initial,added,removed,total){
  * A client is NOT allowed to infer/recalculate sight from movement or walls.
  * Invalid or skipped revisions require a full current server snapshot.
  */
+// Only these fields are presentation data. Reject any unexpected privileged
+// geometry and exclude envelope-only metadata from the fog frame normalizer.
+function normalizeEnvelopeFrame(raw,mapId,visible,explored){
+ if(['prepared','live','objects','environment','tokens','names','imagePaths']
+    .some(key=>Object.hasOwn(raw,key)))return null;
+ return normalizeAuthorizedFogFrame({
+  mapId:raw.mapId,width:raw.width,height:raw.height,
+  revision:raw.revision,enabled:raw.enabled,partyShared:raw.partyShared,
+  protocolVersion:raw.protocolVersion,deltaProtocolVersion:raw.deltaProtocolVersion,
+  epoch:raw.epoch,sequence:raw.sequence,collisionEnabled:raw.collisionEnabled,
+  visible,explored
+ },mapId);
+}
 export function applyAuthorizedFogEnvelope(previous,raw,mapId){
  if(!raw||raw.mapId!==mapId||raw.protocolVersion!==2||
     raw.deltaProtocolVersion!==1||!UUID.test(String(raw.epoch||''))||
     !validSeq(raw.sequence)||!validSeq(raw.revision))return null;
  if(raw.mode==='snapshot'){
-  const safe=normalizeAuthorizedFogFrame(raw,mapId);
+  const safe=normalizeEnvelopeFrame(raw,mapId,raw.visible,raw.explored);
   return safe?.epoch===raw.epoch&&safe?.sequence===raw.sequence?safe:null;
  }
  if(!previous||previous.mapId!==mapId||
@@ -56,5 +69,5 @@ export function applyAuthorizedFogEnvelope(previous,raw,mapId){
  const visible=applyCells(previous.visible,raw.visibleAdd,raw.visibleRemove,total);
  const explored=applyCells(previous.explored,raw.exploredAdd,raw.exploredRemove,total);
  if(!visible||!explored)return null;
- return normalizeAuthorizedFogFrame({...raw,visible,explored},mapId);
+ return normalizeEnvelopeFrame(raw,mapId,visible,explored);
 }
