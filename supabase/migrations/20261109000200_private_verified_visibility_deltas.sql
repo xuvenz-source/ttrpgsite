@@ -15,6 +15,7 @@ AS $function$
 declare
  m record;scene jsonb;is_dm boolean;actor uuid:=p_viewer;
  fog_on boolean;collision_on boolean;shared boolean;rev bigint;w int;h int;
+ permission_generation bigint:=0;
  seen jsonb:='[]'::jsonb;memory jsonb:='[]'::jsonb;
 begin
  if actor is null then raise exception 'Sign in first';end if;
@@ -38,6 +39,9 @@ begin
  if not fog_on then w:=greatest(1,least(128,w));h:=greatest(1,least(128,h));end if;
  select coalesce(t.revision,0) into rev from public.map_visibility_ticks t where t.map_id=p_map;
  rev:=coalesce(rev,0);
+ select coalesce(g.generation,0) into permission_generation
+ from forge_visibility.navigation_permission_generations g where g.map_id=p_map;
+ permission_generation:=coalesce(permission_generation,0);
  select live into scene from public.map_environments where map_id=p_map;
  shared:=coalesce((scene->'fog'->>'partyShared')::boolean,false);
  is_dm:=exists(select 1 from public.campaign_members cm where
@@ -47,6 +51,7 @@ begin
  if not fog_on or is_dm then
   return jsonb_build_object('mapId',p_map,'width',w,'height',h,
    'revision',rev,'enabled',fog_on,'collisionEnabled',collision_on,'partyShared',shared,
+   'permissionGeneration',permission_generation,
    'visible',seen,'explored',memory);
  end if;
  -- Materialize only the eight permitted viewers once per snapshot. The
@@ -128,6 +133,7 @@ begin
  end if;
  return jsonb_build_object('mapId',p_map,'width',w,'height',h,
   'revision',rev,'enabled',true,'collisionEnabled',collision_on,'partyShared',shared,
+  'permissionGeneration',permission_generation,
   'visible',seen,'explored',coalesce(memory,'[]'::jsonb));
 end $function$
 
@@ -197,6 +203,7 @@ BEGIN
     'partyShared',current_frame->'partyShared',
     'collisionEnabled',current_frame->'collisionEnabled',
     'navigationEnvironmentRevision',current_frame->'navigationEnvironmentRevision',
+    'permissionGeneration',current_frame->'permissionGeneration',
     'epoch',view_snapshot.epoch,'revision',revision_now,
     'sequence',new_sequence,
     'baseRevision',view_snapshot.revision,
