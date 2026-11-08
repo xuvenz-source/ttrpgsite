@@ -41,6 +41,7 @@ function normalizeEnvelopeFrame(raw,mapId,visible,explored){
   protocolVersion:raw.protocolVersion,deltaProtocolVersion:raw.deltaProtocolVersion,
   epoch:raw.epoch,sequence:raw.sequence,collisionEnabled:raw.collisionEnabled,
   navigationEnvironmentRevision:raw.navigationEnvironmentRevision,
+  permissionGeneration:raw.permissionGeneration,
   visible,explored
  },mapId);
 }
