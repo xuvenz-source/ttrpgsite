@@ -155,7 +155,7 @@ begin
 exception when others then
  -- An unavailable broadcast is not authorization to weaken privacy.
  return false;
-end $function$
+end $function$;
 
 drop function if exists forge_visibility.observer_path_status(
  uuid,uuid,double precision,double precision,double precision,double precision,integer
