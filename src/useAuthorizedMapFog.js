@@ -5,6 +5,7 @@ import {isFreshVisibilityTick,retainFogSnapshot} from './FogVisibilityContinuity
 import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
 import {canUseViewerFogProtocol,isMissingViewerFogRpc} from './ViewerFogProtocol.js';
 import {applyAuthorizedFogEnvelope} from './AuthorizedFogDelta.js';
+import {adoptVerifiedViewerTick} from './AuthorizedViewerTick.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
@@ -143,7 +144,28 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
   const handleRevision=event=>{
    if(viewerScope&&event?.new&&
     (event.new.map_id!==mapId||event.new.user_id!==userId))return;
-   // Hidden tabs revoke stale sight immediately, reauthorize on return.
+   const tick=event?.new;
+   if(viewerScope){
+    // The server computes the new, EXACT authorized cell set inside the
+    // same transaction that creates this RLS-protected per-viewer event.
+    // No stale sight is retained and unchanged sprites stay visible.
+    const safe=adoptVerifiedViewerTick(validated.current,tick,mapId,userId);
+    if(safe){
+     if(!isFreshVisibilityTick(tick,validated.current,mapId,
+       pendingTick.current))return;
+     ++request.current;coordinator.invalidate(key);
+     validated.current=safe;pendingTick.current=null;
+     setFrame(previous=>retainFogSnapshot(previous,safe));
+     setPublished(previous=>previous?.fog===safe.enabled&&
+      previous?.collision===safe.collisionEnabled?previous:{
+       fog:safe.enabled,collision:safe.collisionEnabled===true
+      });
+     setError('');
+     return;
+    }
+   }
+   // A missing/corrupted packet, a revoked identity, or old server release
+   // MUST fail closed. Do not keep visibility just to hide a UI flash.
    if(invalidate(event)&&document.visibilityState==='visible')changed.request();
   };
   if(viewerScope){
