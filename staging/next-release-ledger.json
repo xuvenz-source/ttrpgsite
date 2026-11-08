@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-08",
   "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-  "releaseBranch": "stage/inventory-cross-transfer-2026-11-08",
+  "releaseBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -129,9 +129,15 @@
     },
     {
       "name": "stage/inventory-cross-transfer-2026-11-08",
+      "status": "included",
+      "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
+      "note": "Implementation from draft PR #47 preserved in consolidated next-release movement-and-inventory branch, with SQL not yet applied."
+    },
+    {
+      "name": "stage/next-release-inventory-token-continuity-2026-11-08",
       "status": "staged",
       "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-      "note": "Character inventory ↔ shared/issued-tool atomic transfers, click Move menu and cross-windowed-inventory pointer drops; SQL candidate unapplied; no deployment."
+      "note": "Next release combined: previously staged inventory moves plus token continuity optimizations; no main merge or production deployment."
     }
   ],
   "features": [
@@ -320,14 +326,26 @@
       "id": "atomic-character-party-inventory-transfers",
       "description": "Fix misleading full-grid error and silent reverse transfer by destination-aware drag and click-to-Move; atomic authorized per-item character↔party/mount inventory migration with server-side footprint first-fit placement.",
       "sources": [
-        "stage/inventory-cross-transfer-2026-11-08"
+        "stage/inventory-cross-transfer-2026-11-08",
+        "stage/next-release-inventory-token-continuity-2026-11-08"
       ],
-      "status": "staged",
+      "status": "included",
       "releaseReady": false,
       "databaseDependencies": [
         "campaign_cross_inventory_item_transfers"
       ],
       "verification": "New regression tests and GitHub CI (npm test, audit, build, Edge checks); requires authorized SQL migration and live player/DM browser validation."
+    },
+    {
+      "id": "stable-token-movement-visual-continuity",
+      "description": "Prevent needless player token artwork flashes and DM drop snapback using signed-image cache reuse, no-op fog revision dedupe, stable token identities, deferred full requery on coordinate-only Realtime, and transform handoff on React commit.",
+      "sources": [
+        "stage/next-release-inventory-token-continuity-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": true,
+      "databaseDependencies": [],
+      "verification": "GitHub CI tests/build; needs live multi-browser DM/player fog/collision UX acceptance after designer-approved release. No movement migration."
     }
   ],
   "databaseDependencies": [
@@ -479,15 +497,16 @@
     "Consolidated approved release #45 is based on production #42; Supabase migration 20261107173054 was successfully applied and post-verified before the GitHub merge. No paid infrastructure.",
     "World Runtime RPC grants checked: anon denied, authenticated authorized; forge_visibility remains private, preview rate table RLS enabled.",
     "Authenticated SQL smoke-tested valid owned token, unauthorized foreign token, denied DM bypass, and reversible DM trajectory; all tests in rollback transactions.",
-    "Cross-inventory transfers: SQL candidate (not applied) separately authorizes owned character and shared/owned issued tool, requires active source-item lease and checks contiguous destination space. Staged frontend must not be released before its matching RPC."
+    "Cross-inventory transfers: SQL candidate (not applied) separately authorizes owned character and shared/owned issued tool, requires active source-item lease and checks contiguous destination space. Staged frontend must not be released before its matching RPC.",
+    "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged."
   ],
   "upcomingRelease": {
     "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
-    "stagePolicy": "Staging only. Candidate SQL must be reviewed and applied to the existing live Supabase Free project after explicit designer approval, before one consolidated frontend main merge. Retain other unreleased staged work as discovered during release audit. No previews or paid infrastructure.",
+    "releaseBranch": "stage/next-release-inventory-token-continuity-2026-11-08",
     "outstandingBranches": [
-      "stage/inventory-cross-transfer-2026-11-08"
+      "stage/next-release-inventory-token-continuity-2026-11-08"
     ],
-    "releaseBranch": "stage/inventory-cross-transfer-2026-11-08",
+    "stagePolicy": "Combined draft staging includes inventory SQL candidate (unapplied) and token continuity improvements (frontend only). Review SQL and apply only after authorization before one consolidated production release. No Vercel deployment, paid test DB, or preview triggered.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
