@@ -35,7 +35,7 @@ import useAuthorizedMapFog from './useAuthorizedMapFog.js';
 import useAuthorizedMapLights from './useAuthorizedMapLights.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {normalizeEnvironment,withObject,patchObject,removeObject} from './MapEnvironment.js';
-import {eventAffectsMap,createCoalescedRefresh,createAdaptiveReconciler,
+import {eventAffectsMap,createCoalescedRefresh,createTrailingRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
 import {createDebouncedSerialWriter} from './QueuedWrites.js';
@@ -52,7 +52,8 @@ import PersonalResources from './PersonalResources.jsx';
 import {makeMagicDashboardField,MagicDashboardDesigner,MagicDashboard} from './SheetMagic.jsx';
 import {makeEquipmentField,makeEquipmentTab,EquipmentDesigner,EquipmentManager,calculateArmor} from './SheetEquipment.jsx';
 import FloatingWindow from './FloatingWindow.jsx';
-import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion} from './LiveTokenMovement.js';
+import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
+ reconcileTokenSnapshot,isPositionOnlyTokenEvent} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
 import {observerMotionTopic,validObserverMovementPacket,acceptObserverMovementPacket,
  nextMotionSequence,OBSERVER_PREVIEW_INTERVAL_MS,OBSERVER_PREVIEW_EXPIRE_MS} from './ObserverMovement.js';
@@ -807,7 +808,7 @@ export default function TabletopApp(){
       tokenContextRef.current.campaignId!==campaignId)return;
    // Realtime snapshots may lag behind the newest keyboard or drag destination.
    // Merge the latest local destination until its database write is confirmed.
-   setTokens(rows.map(token=>{
+   setTokens(previous=>reconcileTokenSnapshot(previous,rows.map(token=>{
     const pending=movementPending.current.get(token.id);
     let projected=token;
     if(pending&&pending.mapId===mapId&&pending.campaignId===campaignId){
@@ -824,7 +825,7 @@ export default function TabletopApp(){
      }else projected={...projected,status_effects:status.effects};
     }
     return projected;
-   }));
+   })));
   }catch(e){
    if(request===tokenRefreshSeq.current)fail(e);
   }
@@ -1143,6 +1144,12 @@ export default function TabletopApp(){
    void latestTokenRefresh.current?.();
    void latestMonitorRefresh.current?.();
   },100);
+  // A coordinate-only event updates one token immediately. A single slower
+  // authoritative read after the final waypoint catches missed deltas without
+  // rebuilding every sprite's props on every incoming network packet.
+  const motionUpdates=createTrailingRefresh(()=>{
+   void latestTokenRefresh.current?.();
+  },420);
   const campaignUpdates=createCoalescedRefresh(()=>{
    void latestCampaignMetadataRefresh.current?.();
    void latestMonitorRefresh.current?.();
@@ -1154,6 +1161,8 @@ export default function TabletopApp(){
     if(!eventAffectsMap(event,mapId))return;
     // The database has already applied this viewer's RLS on the row event.
     // Patch observed coordinates now, then run background reconciliation.
+    const isMotionOnly=isPositionOnlyTokenEvent(
+     event,latestMovementAccess.current.tokens||[],mapId);
     if(event.eventType==='UPDATE'){
      setTokens(previous=>applyAuthoritativeTokenMotion(
       previous,event,mapId,movementPending.current));
@@ -1164,7 +1173,8 @@ export default function TabletopApp(){
        remoteMotion.current?.clearPreview(id);
      }
     }
-    tokenUpdates.request();
+    if(isMotionOnly)motionUpdates.request();
+    else tokenUpdates.request();
    })
    .on('postgres_changes',{event:'*',schema:'public',table:'campaigns',
     filter:'id=eq.'+activeId},()=>campaignUpdates.request())
@@ -1174,7 +1184,7 @@ export default function TabletopApp(){
     filter:'campaign_id=eq.'+activeId},()=>void latestMapsRefresh.current?.())
    .subscribe();
   return()=>{
-   tokenUpdates.cancel();campaignUpdates.cancel();
+   tokenUpdates.cancel();motionUpdates.cancel();campaignUpdates.cancel();
    void db.removeChannel(c);
   };
  },[db,activeId,user]);
