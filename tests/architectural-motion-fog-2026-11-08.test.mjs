@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {applyAuthorizedFogEnvelope} from '../src/AuthorizedFogDelta.js';
 import {normalizeAuthorizedFogFrame} from '../src/MapFogModel.js';
-import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from '../src/AuthorizedObserverVisibility.js';
+import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools,newerAuthorizedSight} from '../src/AuthorizedObserverVisibility.js';
 import {createAuthorizedMotionTransport} from '../src/AuthorizedMotionTransport.js';
 import {createMovementDiagnostics} from '../src/MovementDiagnostics.js';
 
@@ -71,6 +71,24 @@ test('observer hide cannot expire or be released by an old RLS snapshot',()=>{
   {...snapshot,revision:5},viewer),{});
  assert.deepEqual(clearVerifiedHiddenTools(hidden,[{issue_id:tokenId,map_id:map}],
   {...snapshot,revision:5}),{});
+});
+test('stationary NPC can reappear only after a newer server-owned frame with a fresh RLS roster',()=>{
+ const hidden={[tokenId]:{hidden:true,seq:20,fogRevision:4,
+  fogEpoch:sessionId,fogSequence:1}};
+ const rows=[{id:tokenId,map_id:map,owner_id:null,
+  x:1,y:1,span_x:1,span_y:1,visible:true}];
+ assert.equal(clearVerifiedHiddenTokens(hidden,rows,snapshot,viewer),hidden);
+ assert.equal(clearVerifiedHiddenTokens(hidden,rows,{
+  ...snapshot,sequence:2,visible:[]},viewer),hidden);
+ assert.deepEqual(clearVerifiedHiddenTokens(hidden,rows,{
+  ...snapshot,sequence:2},viewer),{});
+ assert.equal(newerAuthorizedSight({...snapshot,epoch:viewer,sequence:4},
+  hidden[tokenId]),false,'foreign epoch cannot revoke concealment');
+ assert.equal(newerAuthorizedSight({...snapshot,sequence:0},hidden[tokenId]),false);
+ assert.equal(newerAuthorizedSight({...snapshot,revision:3,sequence:3},
+  hidden[tokenId]),false);
+ assert.deepEqual(clearVerifiedHiddenTools(hidden,[{issue_id:tokenId,map_id:map}],
+  {...snapshot,sequence:2}),{});
 });
 test('motion uses only authenticated begin/advance/end RPCs and never broadcasts',async()=>{
  const calls=[];
