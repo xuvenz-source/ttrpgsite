@@ -47,6 +47,10 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
 export function fogFrameDuringRefresh(frame,mapId){
  const safe=normalizeAuthorizedFogFrame(frame,mapId);
  if(!safe)return null;
+ // Repeated ticks while an RPC is pending must not construct a fresh
+ // equivalent frame and trigger every token/image component to rerender.
+ if(frame.enabled===true&&frame.visible.length===0&&
+   Array.isArray(frame.displayVisibleDuringRefresh))return frame;
  // Sight permission is revoked immediately. Only previously visible cells
  // already in explored memory may stay bright *visually* during the RPC.
  const explored=new Set(safe.explored);
@@ -60,6 +64,7 @@ export function fogFrameDuringRefresh(frame,mapId){
  * sight, stale RLS token snapshots must not remain visible through dim fog.
  * Server RLS remains the actual authorization boundary.
  */
+const visibleCellsCache=new WeakMap();
 export function tokenObservedByFogFrame(token,frame,userId){
  if(!token||!frame||typeof frame.enabled!=='boolean')return false;
  if(!frame.enabled)return true;
@@ -67,7 +72,8 @@ export function tokenObservedByFogFrame(token,frame,userId){
  const x=Number(token.x),y=Number(token.y);
  const w=Number(token.span_x??1),h=Number(token.span_y??1);
  if(![x,y,w,h].every(Number.isFinite)||w<=0||h<=0||w>12||h>12)return false;
- const visible=new Set(frame.visible||[]);
+ let visible=visibleCellsCache.get(frame);
+ if(!visible){visible=new Set(frame.visible||[]);visibleCellsCache.set(frame,visible)}
  for(let cy=Math.max(0,Math.floor(y));cy<Math.min(frame.height,Math.ceil(y+h));cy++)
   for(let cx=Math.max(0,Math.floor(x));cx<Math.min(frame.width,Math.ceil(x+w));cx++)
    if(visible.has(cy*frame.width+cx))return true;
