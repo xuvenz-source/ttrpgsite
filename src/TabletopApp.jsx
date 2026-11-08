@@ -263,7 +263,7 @@ export default function TabletopApp(){
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator
  });
- const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,
+ const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator});
  const queuePreviewFogRefresh=()=>{
   const now=Date.now();
