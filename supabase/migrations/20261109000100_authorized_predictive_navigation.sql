@@ -64,12 +64,30 @@ DECLARE affected record;
 BEGIN
  IF NEW.field_values IS NOT DISTINCT FROM OLD.field_values THEN RETURN NEW;END IF;
  FOR affected IN
-  SELECT DISTINCT t.map_id FROM public.map_tokens t
+  SELECT DISTINCT t.map_id,r.collision_enforced FROM public.map_tokens t
   JOIN forge_visibility.map_rules r ON r.map_id=t.map_id
   WHERE t.character_id=NEW.id AND t.owner_id IS NOT NULL
    AND (r.collision_enforced OR r.fog_enforced)
  LOOP
-  PERFORM forge_visibility.bump_navigation_permission_generation(affected.map_id,true);
+  IF affected.collision_enforced THEN
+   -- ANY change may alter an undisclosed movement attribute requirement.
+   -- Publishing generations only for selected fields would itself reveal
+   -- the existence of secret, movement-gated barriers.
+   PERFORM forge_visibility.bump_navigation_permission_generation(affected.map_id,true);
+  ELSIF EXISTS (
+   -- Preserve the prior selective vision tick on maps without collision;
+   -- updating an unrelated item/HP field must not recalculate the whole fog.
+   SELECT 1 FROM public.map_environments e
+   CROSS JOIN LATERAL pg_catalog.jsonb_array_elements(
+    CASE WHEN pg_catalog.jsonb_typeof(e.live->'objects')='array'
+     THEN e.live->'objects' ELSE '[]'::jsonb END) barrier
+   WHERE e.map_id=affected.map_id AND
+    coalesce(barrier->>'attributeField','')<>'' AND
+    NEW.field_values->(barrier->>'attributeField')
+     IS DISTINCT FROM OLD.field_values->(barrier->>'attributeField')
+  ) THEN
+   PERFORM forge_visibility.bump_tick(affected.map_id);
+  END IF;
  END LOOP;
  RETURN NEW;
 END $character$;
