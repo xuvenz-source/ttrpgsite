@@ -103,9 +103,6 @@ export default function TabletopApp(){
  });
  const launchHandled=useRef(false);
  const signedAssetIdentity=useRef(null);
- const refreshCoordinator=useRef(null);
- if(!refreshCoordinator.current)
-  refreshCoordinator.current=createCampaignRefreshCoordinator();
  const[launchNpc]=useState(()=>{
   const params=new URLSearchParams(location.search);
   const campaignId=params.get('campaign'),id=params.get('npc');
@@ -259,12 +256,14 @@ export default function TabletopApp(){
  },[openedHandout?.pinId,isDM,campaignHandouts.pins,
   campaignHandouts.loading,campaignHandouts.error]);
 
+ const refreshCoordinator=useMemo(()=>createCampaignRefreshCoordinator(),
+  [activeId,selectedMap,user]);
  const campaignTools=useCampaignTools({
   db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
-  refreshCoordinator:refreshCoordinator.current
+  refreshCoordinator:refreshCoordinator
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,
-  refreshCoordinator:refreshCoordinator.current});
+  refreshCoordinator:refreshCoordinator});
  const queuePreviewFogRefresh=()=>{
   const now=Date.now();
   if(now-lastPreviewFogRefresh.current<250)return;
@@ -796,14 +795,14 @@ export default function TabletopApp(){
   const badgesKey=campaignResourceKey({campaignId:activeId,mapId:selectedMap,
    userId:user,resource:'token-encumbrance-badges'});
   if(fresh===true){
-   refreshCoordinator.current.invalidate(valuesKey);
-   refreshCoordinator.current.invalidate(badgesKey);
+   refreshCoordinator.invalidate(valuesKey);
+   refreshCoordinator.invalidate(badgesKey);
   }
   try{
    const [valuesReply,badgesReply]=await Promise.all([
-    refreshCoordinator.current.request(valuesKey,
+    refreshCoordinator.request(valuesKey,
      ()=>read(db.rpc('get_token_monitor_values',{p_map:selectedMap}))),
-    refreshCoordinator.current.request(badgesKey,
+    refreshCoordinator.request(badgesKey,
      ()=>read(db.rpc('get_token_encumbrance_badges',{p_map:selectedMap})))
    ]);
    if(!valuesReply.current||!badgesReply.current)return;
@@ -831,8 +830,8 @@ export default function TabletopApp(){
    const key=campaignResourceKey({campaignId,mapId,userId:user,resource:'map-tokens'});
    // A sight revision must never reuse a request begun before authorization
    // changed. No completed snapshot is cached between refresh calls.
-   if(fresh===true)refreshCoordinator.current.invalidate(key);
-   const response=await refreshCoordinator.current.request(key,
+   if(fresh===true)refreshCoordinator.invalidate(key);
+   const response=await refreshCoordinator.request(key,
     ()=>read(db.from('map_tokens').select(
      'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
     ).eq('map_id',mapId)));
@@ -1353,7 +1352,6 @@ export default function TabletopApp(){
  },[db,activeId,user]);
  useEffect(()=>{
   movementPending.current.clear();
-  refreshCoordinator.current.invalidateAll();
   ++tokenRefreshSeq.current;
   ++monitorRequest.current;
  },[selectedMap,activeId,user]);
