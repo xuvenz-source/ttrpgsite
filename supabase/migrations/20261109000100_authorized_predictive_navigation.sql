@@ -209,7 +209,8 @@ BEGIN
   attrs:=coalesce(t.npc_values,'{}'::jsonb);
   IF t.character_id IS NOT NULL THEN
    SELECT coalesce(c.field_values,'{}'::jsonb) INTO attrs FROM public.characters c
-    WHERE c.id=t.character_id AND c.campaign_id=m.campaign_id;
+    WHERE c.id=t.character_id AND c.campaign_id=m.campaign_id
+     AND (dm OR c.user_id=actor);
    IF NOT FOUND THEN RAISE EXCEPTION 'Character unavailable';END IF;
   END IF;
  ELSE
@@ -243,8 +244,14 @@ BEGIN
  -- signed-in user; its result contains no raw scene, NPC or wall metadata.
  fog_frame:=public.get_authorized_map_fog_v2(p_map);
  IF fog_frame->>'mapId' IS DISTINCT FROM p_map::text OR
-  fog_frame->>'protocolVersion' IS DISTINCT FROM '2'
- THEN RAISE EXCEPTION 'Visibility authorization unavailable';END IF;
+  fog_frame->>'protocolVersion' IS DISTINCT FROM '2' OR
+  coalesce((fog_frame->>'navigationEnvironmentRevision')::bigint,-1)
+    IS DISTINCT FROM env_revision OR
+  coalesce((fog_frame->>'permissionGeneration')::bigint,-1)
+    IS DISTINCT FROM permission_generation OR
+  coalesce((fog_frame->>'collisionEnabled')::boolean,false)
+    IS DISTINCT FROM collision_on
+ THEN RAISE EXCEPTION 'Navigation scene or permission revision changed';END IF;
  fog_on:=coalesce((fog_frame->>'enabled')::boolean,true);
  SELECT pg_catalog.array_agg(value::integer) INTO visible_cells
  FROM pg_catalog.jsonb_array_elements_text(fog_frame->'visible') value;
@@ -369,6 +376,14 @@ BEGIN
    END IF;
   END LOOP;
  END IF;
+ -- A published wall update or character attribute edit during graph
+ -- construction must not cause an old graph to be issued as current.
+ IF EXISTS(SELECT 1 FROM public.map_environments e WHERE e.map_id=p_map
+  AND e.revision IS DISTINCT FROM env_revision) OR
+  coalesce((SELECT g.generation FROM
+   forge_visibility.navigation_permission_generations g WHERE g.map_id=p_map),0)
+   IS DISTINCT FROM permission_generation
+ THEN RAISE EXCEPTION 'Navigation permissions changed during authorization';END IF;
  RETURN pg_catalog.jsonb_build_object(
   'version',1,'mapId',p_map,'pieceId',p_piece,'kind',p_kind,
   'origin',pg_catalog.jsonb_build_array(bx,by),'footprint',pg_catalog.jsonb_build_array(span_w,span_h),
