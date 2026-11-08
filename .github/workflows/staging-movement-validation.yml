@@ -1,0 +1,42 @@
+name: Staged movement architecture validation
+
+# Only checks the isolated feature branch. No Vercel action, database
+# credentials, production migration or publishing job is involved.
+on:
+  push:
+    branches:
+      - stage/complete-predictive-navigation-and-fog-2026-11-09
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'supabase/migrations/20261109*.sql'
+      - 'eslint.config.mjs'
+      - 'package.json'
+      - '.github/workflows/staging-movement-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-movement-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Unit tests, lint, and production bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # No package-lock exists in the repository. Use the already pinned
+      # top-level dependencies; a reproducible lockfile remains a release gate.
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run lint:critical
+      - run: npm run build
