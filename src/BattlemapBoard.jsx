@@ -15,6 +15,8 @@ import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
 import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
+import {traceSolidGroupOffset} from './DragCollisionGuard.js';
+import {stableTokenPresentation} from './StableTokenPresentation.js';
 import {appendMovementWaypoint} from './MapMovementPath.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
@@ -36,6 +38,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  const motion=useRef(null);
  if(!motion.current)motion.current=createTokenMotionRuntime();
  const spriteNodes=useRef(new Map()),spriteRefs=useRef(new Map());
+ const mountedSight=useRef({key:null,seen:new Set()});
  // Stable React ref identities: a fog, roster or monitor rerender must not
  // detach/rebind every sprite and capture an in-flight CSS transition as
  // the element's permanent base transition.
@@ -122,11 +125,22 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     y:Number(t.y)+Number(t.span_y??1)/2},previewPolygon)))
     .map(t=>t.id===previewToken?.id?previewToken:t);
  },[tokens,isDM,previewActive,previewToken,previewPolygon,fogFrame,user,remotePositions]);
+ // Preserve sprites already authorized at least once. Sight can be revoked
+ // temporarily on an incoming viewer tick without destroying every artwork
+ // element. Fresh RLS omissions and never-seen NPCs are still unmounted.
+ const sightKey=map.id+':'+user;
+ if(mountedSight.current.key!==sightKey)
+  mountedSight.current={key:sightKey,seen:new Set()};
+ const presentation=stableTokenPresentation(tokens,visibleTokens,
+  mountedSight.current.seen,map.id);
+ mountedSight.current.seen=presentation.seen;
+ const presentedTokens=isDM?visibleTokens:presentation.displayed;
+ const concealedIds=isDM?new Set():presentation.concealed;
  // Retire a local drop preview only after React has committed the matching
  // optimistic left/top (and its separate monitor frame) before the next paint.
  useLayoutEffect(()=>{
   const cell=map.grid_size*scale;
-  for(const token of visibleTokens){
+  for(const token of presentedTokens){
    const p={...token,...remotePositions[token.id],...preview[token.id]};
    const node=spriteNodes.current.get(token.id);
    if(node)motion.current?.bind(token.id,'sprite',node,{
@@ -134,7 +148,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    });
    motion.current?.reconcile(token.id,Number(token.x),Number(token.y));
   }
- },[visibleTokens,remotePositions,preview,map.grid_size,scale]);
+ },[presentedTokens,remotePositions,preview,map.grid_size,scale]);
  const displaySettings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const statusPosition=displaySettings.statusPosition;
  const measures=useMemo(()=>[...Object.values(remoteMeasurements),...localMeasurements],[remoteMeasurements,localMeasurements]);
@@ -641,16 +655,24 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
   const cell=map.grid_size*zoomRef.current;
-  const delta=boundedGroupOffset([...info.members,...(info.tools||[]).map(groupToolFootprint)],
+  const requested=boundedGroupOffset([...info.members,...(info.tools||[]).map(groupToolFootprint)],
    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
    map.width,map.height,map.grid_size);
+  const collisionScene=publishedEnvironment||environment;
+  const delta=isDM&&environmentEditor?.ignoreCollision!==true&&collisionScene?
+   traceSolidGroupOffset({
+    pieces:[...info.members,...(info.tools||[]).map(groupToolFootprint)],
+    map,environment:collisionScene,previous:{dx:info.dx,dy:info.dy},
+    desired:requested
+   }):requested;
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
   const path=appendMovementWaypoint(info.path||[],delta.dx,delta.dy);
   if(path===info.path)return; // Reached bounded path complexity.
   info.path=path;
   info.dx=delta.dx;info.dy=delta.dy;
-  // Hot pointer path: move affected sprites without a React commit.
-  for(const token of info.members)
+  // DM has locally authorized wall geometry for immediate, solid dragging.
+  // Players cannot preview through secret walls before the server approves.
+  if(isDM)for(const token of info.members)
    motion.current?.preview(token.id,
     Number(token.x)+delta.dx,Number(token.y)+delta.dy);
   for(const t of info.members){
@@ -660,7 +682,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   // An ordinary token-only drag has no tool positions to change.
   // Avoid allocating a new React state object and rerendering the board on
   // every grid step just to keep an empty tool preview unchanged.
-  if(info.tools?.length)setToolPreview(old=>{
+  if(isDM&&info.tools?.length)setToolPreview(old=>{
    const next={...old};
    for(const tool of info.tools)
     next[tool.issue_id]={x:Number(tool.x)+delta.dx,y:Number(tool.y)+delta.dy};
@@ -713,7 +735,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   setToolPreview(old=>{
    const next={...old};
    for(const tool of info.tools||[]){
-    if(atomicGroup)next[tool.issue_id]={
+    if(atomicGroup&&isDM)next[tool.issue_id]={
      x:Number(tool.x)+info.dx,y:Number(tool.y)+info.dy};
     else delete next[tool.issue_id];
    }
@@ -848,8 +870,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
       object={environment.objects.find(o=>o.id===environmentEditor.selectedId)}
       template={template} onPatch={handleEnvironmentPatch}
       onClose={()=>handleEnvironmentSelect(null)}/>}
-    {visibleTokens.map(t=>{
+    {presentedTokens.map(t=>{
      const p={...t,...remotePositions[t.id],...preview[t.id]},
+      concealed=concealedIds.has(t.id),
       canMove=(previewActive&&t.id===previewToken?.id)||
        (!previewActive&&canControlMapToken(t,user,isDM,map.id)&&
         !(isDM&&environmentEditor?.enabled&&environmentEditor.lockTokens!==false));
@@ -862,6 +885,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
       (normalizedEffects(t.status_effects).some(effect=>effect.id==='dead')?' token-dead':'')}
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
+       visibility:concealed?'hidden':'visible',pointerEvents:concealed?'none':undefined,
        opacity:t.visible?1:.55,cursor:canMove?'grab':'default',
         transition:remotePositions[t.id]&&!preview[t.id]?
          'left 50ms linear, top 50ms linear':undefined
@@ -937,7 +961,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     <MapMeasurementOverlay map={map} scale={scale} measures={measures}/>
     {/* Resource widgets must be siblings of all tokens: a child inside one
         token's stacking context cannot rise above an overlapping token. */}
-    <TokenMonitorFrames motionRuntime={motion.current} tokens={visibleTokens} remotePositions={remotePositions}
+    <TokenMonitorFrames motionRuntime={motion.current} tokens={presentedTokens} concealedIds={concealedIds} remotePositions={remotePositions}
      preview={preview} config={displaySettings} monitorValues={monitorValues}
      encumbranceBadges={encumbranceBadges} gridSize={map.grid_size} scale={scale}/>
     {previewActive&&<MapPlayerPreviewOverlay map={map} environment={previewEnvironment}
