@@ -57,9 +57,9 @@ import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
-import {sharedApprovedPath} from './DragCollisionGuard.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
+import {createAuthorizedNavigation} from './AuthorizedNavigation.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
@@ -277,6 +277,25 @@ export default function TabletopApp(){
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator});
+ const navigationStore=useMemo(()=>createAuthorizedNavigation({db}),[]);
+ useEffect(()=>()=>navigationStore.dispose(),[navigationStore]);
+ // Preauthorize bounded local movement before first drag; no private walls.
+ useEffect(()=>navigationStore.clear(),[navigationStore,selectedMap,user]);
+ useEffect(()=>{
+  if(!selectedMap||isDM||!user||playerMapId!==selectedMap||
+    fog.frame?.mapId!==selectedMap)return;
+  navigationStore.setRevision(selectedMap,fog.frame.revision);
+  for(const token of tokens)
+   if(token.map_id===selectedMap&&token.owner_id===user&&token.visible!==false)
+    navigationStore.warm(selectedMap,'token',token.id);
+  for(const tool of campaignTools.placed){
+   if(tool.map_id!==selectedMap)continue;
+   const issued=campaignTools.issued.find(item=>item.id===tool.issue_id);
+   if(issued&&(issued.owner_id===user||issued.party_shared))
+    navigationStore.warm(selectedMap,'tool',tool.issue_id);
+  }
+ },[navigationStore,selectedMap,user,isDM,playerMapId,
+  fog.frame?.revision,tokens,campaignTools.placed,campaignTools.issued]);
  const latestFogSnapshot=useRef(null);
  latestFogSnapshot.current=fog.frame;
  const queuePreviewFogRefresh=()=>{
@@ -1084,22 +1103,10 @@ export default function TabletopApp(){
   const queue=createLatestOnlyPreviewQueue({
    send:packet=>transport.send(packet),
    onResult:(packet,{data,error})=>{
-    if(error){console.warn('Secure movement preview unavailable',error.message);return}
+    if(error){console.warn('Secure observer preview unavailable',error.message);return}
     if(data!==true)return;
-    const pieceKey=packet.kind==='token'?packet.params?.p_piece:
-     'tool:'+packet.params?.p_piece;
-    const group=activeGroupPreview.current;
-    const belongsToActiveGroup=group?.mapId===selectedMap&&group.keys.has(pieceKey);
-    // A player's own token/tool may move visually only to a server grant.
-    if(!isDM&&!belongsToActiveGroup&&packet.params?.p_map===selectedMap){
-     const {p_piece,p_x,p_y}=packet.params;
-     if(packet.kind==='token'&&latestMovementAccess.current.tokens?.some(t=>
-      t.id===p_piece&&t.map_id===selectedMap&&t.owner_id===user))
-      remoteMotion.current?.preview(p_piece,p_x,p_y);
-     if(packet.kind==='tool'&&latestMovementAccess.current.toolPlacements?.some(t=>
-      t.issue_id===p_piece&&t.map_id===selectedMap))
-      remoteMotion.current?.preview('tool:'+p_piece,p_x,p_y);
-    }
+    // Only the private server observer broadcast waits for this RPC.
+    // The mover's local predicted sprite was painted on pointer input.
     if(packet.kind==='token')latestOwnFogRefresh.current?.();
    },
    onError:(_,error)=>console.warn('Secure movement preview unavailable',error)
@@ -1279,40 +1286,23 @@ export default function TabletopApp(){
    p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
   }});
  }
- // Group members must never diverge in the user's view when one piece
- // collides with a wall. All server checks complete before a synchronized
- // paint of the last common authorized step.
+ // A group is already painted atomically through the navigation graph.
+ // The cosmetic observer packets may lag, but they never gate local paint.
  function sendLiveGroupMovement({tokens:members=[],tools=[],dx,dy}){
-  if(isDM||!selectedMap||!movementPreviewQueue.current||
-     !movementSessionTransport.current)return;
-  const mapId=selectedMap;
+  if(isDM||!selectedMap||!movementPreviewQueue.current)return;
   const pieces=[...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
    ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))];
-  if(pieces.length<2)return;
-  const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
-  const keys=new Set(pieces.map(p=>p.kind==='token'?p.id:'tool:'+p.id));
-  const generation=++groupPreviewGeneration.current;
-  activeGroupPreview.current={mapId,keys,generation};
-  for(const p of pieces){
-   const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
+  for(const piece of pieces){
+   const now=Date.now(),key=piece.kind==='token'?piece.id:'tool:'+piece.id;
+   if(now-(lastMovementPreview.current.get(key)||0)<OBSERVER_PREVIEW_INTERVAL_MS)continue;
+   const seq=nextMotionSequence(now,liveMovementSeq.current);
    if(seq===null)return;
-   liveMovementSeq.current=seq;
-   queue.enqueue(p.kind==='token'?p.id:'tool:'+p.id,{
-    kind:p.kind,params:{p_map:mapId,p_kind:p.kind,p_piece:p.id,
-     p_x:p.x+dx,p_y:p.y+dy,p_seq:seq,p_ignore_collision:false}
-   });
+   liveMovementSeq.current=seq;lastMovementPreview.current.set(key,now);
+   movementPreviewQueue.current.enqueue(key,{kind:piece.kind,params:{
+    p_map:selectedMap,p_kind:piece.kind,p_piece:piece.id,
+    p_x:piece.x+dx,p_y:piece.y+dy,p_seq:seq,p_ignore_collision:false
+   }});
   }
-  void Promise.all([...keys].map(key=>queue.drain(key))).then(()=>{
-   if(activeGroupPreview.current?.generation!==generation||
-      tokenContextRef.current.mapId!==mapId)return;
-   const common=sharedApprovedPath(pieces,pieces.map(piece=>
-    transport.getApprovedPath(mapId,piece.kind,piece.id)));
-   const endpoint=common.at(-1);
-   if(!endpoint)return;
-   for(const p of pieces)remoteMotion.current?.preview(
-    p.kind==='token'?p.id:'tool:'+p.id,
-    p.x+endpoint.dx,p.y+endpoint.dy);
-  }).catch(error=>console.warn('Grouped motion validation unavailable',error));
  }
   function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
