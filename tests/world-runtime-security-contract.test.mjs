@@ -109,7 +109,7 @@ test('temporary movement visibility is revoked on cancel, success and failure',(
  const app=source('src/TabletopApp.jsx');
  assert.match(app,/function clearMapMovementPreview\(mapId,tokenIds=\[\],issueIds=\[\]\)/);
  assert.equal((app.match(/db\.rpc\('end_map_motion_previews'/g)||[]).length,1);
- assert.match(app,/if\(fog\.frame\?\.enabled===true&&fog\.frame\.mapId===mapId\)\s*void fog\.refresh\(\)/);
+ assert.match(app,/if\(fog\.frame\?\.enabled===true&&fog\.frame\.mapId===mapId\)\s*void fog\.refresh\(true\)/);
  assert.match(app,/clearMapMovementPreview\(selectedMap,\[token\.id\],\[\]\)/);
  assert.match(app,/clearMapMovementPreview\(selectedMap,\[\],\[placement\.issue_id\]\)/);
  assert.match(app,/previewing:false,ignoreCollision:false,previewTokenId/);
