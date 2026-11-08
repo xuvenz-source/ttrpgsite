@@ -20,7 +20,7 @@ test('fog invalidation rejects in-flight authorization before a new fog RPC',()=
  assert.match(fog,/get_authorized_map_fog/);
  assert.match(fog,/if\(fresh===true\)coordinator\.invalidate\(key\)/);
  assert.match(source('TabletopApp.jsx'),/void fog\.refresh\(true\)/);
- assert.match(fog,/if\(invalidate\(event\)\)changed\.request\(\)/);
+ assert.match(fog,/if\(invalidate\(event\)&&document\.visibilityState==='visible'\)changed\.request\(\)/);
  assert.match(fog,/if\(state==='SUBSCRIBED'\)/);
  assert.match(fog,/coordinator\.invalidate\(key\);\s*setFrame\(previous=>previous\?fogFrameDuringRefresh/);
 });
