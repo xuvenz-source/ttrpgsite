@@ -161,7 +161,7 @@
       "name": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
       "status": "staged",
       "productionBaseSha": "309e96c7b3ca6550e491392d9e32ba5189497175",
-      "note": "Pending fog revision coalescing for player token flashing plus read-only Supabase memory investigation. Staging only, no SQL/Edge/Vercel changes, pending CI and live multiplayer acceptance."
+      "note": "Staged pending fog tick dedupe + stress-test dependency-aware derived RPC refresh, no SQL, Edge/Vercel or paid services. Manual live QA and memory/connection verification remain before declaring a fix."
     }
   ],
   "features": [
@@ -448,6 +448,17 @@
       "releaseReady": false,
       "databaseDependencies": [],
       "verification": "Pure regression tests and integration guards included; GitHub CI pending. Real player movement with fog on/off, hidden NPCs, map switch and reconnect must be verified in an approved release. This reduces one flash cause, not all legitimate sight revocations."
+    },
+    {
+      "id": "fog-visibility-dependency-derived-rpc-budget",
+      "description": "Only refetch expensive token monitor and encumbrance badge values when new server-RLS-authorized token membership or disclosure metadata changes, rather than on every fog revision or safe movement preview.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Added regression cases for same token set with coordinate moves, roster additions/removals, metadata changes and unknown values. RLS snapshot always fetched first, stale-context responses discarded. CI verification + authorized DM/player stress and permission revocation regression required; no SQL changes or claimed measured memory savings."
     }
   ],
   "databaseDependencies": [
@@ -620,7 +631,7 @@
     "outstandingBranches": [
       "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
     ],
-    "stagePolicy": "One new staged follow-up to PR #51: pending fog visibility revision coalescing; do not deploy until designer approval and combined green verification. Deep server-attested per-viewer visibility delta redesign and memory physical RAM/swap measurement remain separate outstanding investigation, not falsely declared fixed.",
+    "stagePolicy": "PR #52 consolidates pending fog-revision coalescing and dependency-aware derived-RPC workload reduction after 1.54 GB stress-test memory commitment. No deployment without designer approval; run combined checks and verify fresh RLS/permissions. Server-side LOS optimization and PostgREST pool sizing require separate measured review and are not claimed complete.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
