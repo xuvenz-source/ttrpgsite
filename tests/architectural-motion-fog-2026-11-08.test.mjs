@@ -193,14 +193,14 @@ test('stress telemetry is bounded and contains timings only',()=>{
 
 test('released movement SQL has runtime-valid aliases, step-count expression and matching hotfix migrations',()=>{
  const sql=read('staging/sql-candidates/movement_sessions_and_visibility_delta.sql');
- assert.match(sql,/from public\\.map_tokens mt where mt\\.id=s\\.piece_id/);
- assert.match(sql,/from public\\.campaign_tool_issues ti where ti\\.id=s\\.piece_id/);
- assert.match(sql,/steps:=pg_catalog\\.ceil\\(greatest\\(/);
- assert.doesNotMatch(sql,/pg_catalog\\.greatest\\(/);
- assert.match(sql,/p_x<>s\\.last_x or p_y<>s\\.last_y/);
+ assert.match(sql,/from public\.map_tokens mt where mt\.id=s\.piece_id/);
+ assert.match(sql,/from public\.campaign_tool_issues ti where ti\.id=s\.piece_id/);
+ assert.match(sql,/steps:=pg_catalog\.ceil\(greatest\(/);
+ assert.doesNotMatch(sql,/pg_catalog\.greatest\(/);
+ assert.match(sql,/p_x<>s\.last_x or p_y<>s\.last_y/);
  for(const path of [
   'supabase/migrations/20261108112135_fix_motion_session_record_alias_20261108.sql',
   'supabase/migrations/20261108112252_guard_stationary_motion_collision_20261108.sql',
   'supabase/migrations/20261108112544_fix_motion_step_count_builtin_20261108.sql'])
-  assert.match(read(path),/function public\\.advance_map_motion_session/);
+  assert.match(read(path),/function public\.advance_map_motion_session/);
 });
