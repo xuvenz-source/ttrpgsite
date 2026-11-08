@@ -66,7 +66,7 @@ test('pending fog keeps dimmed exploration but drops old sight',()=>{
  assert.equal(fogFrameDuringRefresh(frame,'other'),null);
  assert.match(fog,/\+\+request\.current;/);
  assert.match(fog,/previous:fogFrameDuringRefresh\(previous,mapId\)/);
- assert.match(fog,/invalidate\(event\);changed\.request\(\)/);
+ assert.match(fog,/if\(invalidate\(event\)\)changed\.request\(\)/);
  assert.match(fog,/event\?\.new\?\.fog_enforced===false&&previous\?\.enabled===false/);
 });
 
