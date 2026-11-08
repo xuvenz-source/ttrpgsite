@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {applyAuthorizedFogEnvelope} from '../src/AuthorizedFogDelta.js';
+import {normalizeAuthorizedFogFrame} from '../src/MapFogModel.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from '../src/AuthorizedObserverVisibility.js';
 import {createAuthorizedMotionTransport} from '../src/AuthorizedMotionTransport.js';
 
@@ -16,7 +17,7 @@ const initial={mapId:map,revision:4,protocolVersion:2,deltaProtocolVersion:1,
 const snapshot=applyAuthorizedFogEnvelope(null,initial,map);
 
 test('authoritative fog delta grants and revokes only explicit server cell indices',()=>{
- assert.ok(snapshot);
+ assert.ok(snapshot,JSON.stringify({normalized:normalizeAuthorizedFogFrame(initial,map),initial}));
  assert.equal(snapshot.epoch,sessionId);
  assert.equal(snapshot.sequence,1);
  assert.deepEqual(snapshot.visible,[5,6]);
