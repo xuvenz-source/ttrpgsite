@@ -30,11 +30,8 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
     typeof raw.enabled!=='boolean'||typeof raw.partyShared!=='boolean'||
     ['prepared','live','objects','environment','tokens','names','imagePaths']
      .some(key=>Object.hasOwn(raw,key)))return null;
- // Epoch/sequence metadata is validated separately so a malformed delta
- // never gains permission merely by satisfying the ordinary frame shape.
- if(raw.deltaProtocolVersion!==undefined&&
-    (raw.deltaProtocolVersion!==1||!UUID.test(String(raw.epoch||''))||
-     !validInt(raw.sequence)||raw.sequence<0))return null;
+ // Epoch metadata is not a sight grant: it is only retained for validated
+ // envelopes. AuthorizedFogDelta additionally validates every delta field.
  const total=raw.width*raw.height;
  const visible=parseIndices(raw.visible,total);
  const explored=parseIndices(raw.explored,total);
@@ -44,7 +41,8 @@ export function normalizeAuthorizedFogFrame(raw,mapId){
  return {mapId,width:raw.width,height:raw.height,
   revision:raw.revision,enabled:raw.enabled,partyShared:raw.partyShared,
   ...(raw.protocolVersion===2?{protocolVersion:2}:{}),
-  ...(raw.deltaProtocolVersion===1?{
+  ...(raw.deltaProtocolVersion===1&&UUID.test(String(raw.epoch||''))&&
+     validInt(raw.sequence)&&raw.sequence>=0?{
    deltaProtocolVersion:1,epoch:raw.epoch,sequence:raw.sequence}:{}),
   ...(typeof raw.collisionEnabled==='boolean'?{
    collisionEnabled:raw.collisionEnabled}:{}),
