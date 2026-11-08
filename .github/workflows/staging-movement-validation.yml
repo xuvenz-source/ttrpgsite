@@ -1,0 +1,62 @@
+name: Staged movement architecture validation
+
+# Only checks the isolated feature branch. No Vercel action, database
+# credentials, production migration or publishing job is involved.
+on:
+  push:
+    branches:
+      - stage/complete-predictive-navigation-and-fog-2026-11-09
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'supabase/migrations/20261109*.sql'
+      - 'eslint.config.mjs'
+      - 'package.json'
+      - '.github/workflows/codeql.yml'
+      - 'docs/github-ci-codeql-build-validation-step6-2026-11-09.md'
+      - '.github/workflows/staging-movement-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: staging-movement-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Unit tests, lint, and production bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      # No package-lock exists in the repository. Use the already pinned
+      # top-level dependencies; a reproducible lockfile remains a release gate.
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run lint:critical
+      - run: npm run build
+
+      # GitHub's classic statuses endpoint is available through the connected
+      # repository tooling even when push-only workflow run detail is not.
+      # Publish a machine-readable outcome; NEVER report green on failure.
+      - name: Publish staging CI result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_RESULT: ${{ job.status }}
+        run: |
+          if [ "$CI_RESULT" = "success" ]; then state=success; else state=failure; fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f "state=$state" \
+            -f "context=ttrpg/staging-unit-lint-build" \
+            -f "description=Staged unit tests, critical lint and Vite bundle" \
+            -f "target_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

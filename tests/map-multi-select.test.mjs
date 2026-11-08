@@ -66,7 +66,7 @@ test('battlemap switches mouse gestures and retains old token shortcuts',()=>{
  assert.ok(m.includes('if(e.shiftKey&&!e.ctrlKey&&!e.altKey)'));
  assert.ok(m.includes('if(e.ctrlKey&&!e.altKey&&canMove)'));
  assert.ok(m.includes('onMovementPreview?.(t,next.x,next.y,true,cancel)'));
- assert.ok(m.includes('move(t,next.x,next.y)'));
+ assert.ok(m.includes('move(t,next.x,next.y,info.path||[],info.secureMode===true)'));
  assert.ok(m.includes('selectedIds.length===1&&<div className="token-resize-handle"'));
  assert.ok(css.includes('.map-selection-marquee{position:absolute'));
 });

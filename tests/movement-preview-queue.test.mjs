@@ -90,6 +90,6 @@ test('board keeps single-token pointer motion off React state and server events 
  assert.match(app,/movementPreviewQueue\.current\?\.enqueue\(token\.id/);
  assert.match(app,/Promise\.all\(keys\.map\(key=>queue\?\.cancel\(key\)\)\)/);
  assert.match(board,/if\(isDM&&info\.tools\?\.length\)setToolPreview/);
- assert.match(board,/if\(isDM\)for\(const token of info\.members\)/);
- assert.match(app,/await queue\.drain\(id\)/);
+ assert.match(board,/for\(const token of info\.members\)\s*motion\.current\?\.preview/);
+ assert.doesNotMatch(app,/await queue\.drain\(id\)/);
 });

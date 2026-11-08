@@ -15,9 +15,11 @@ import {tokenObservedByFogFrame} from './MapFogModel.js';
 import {previewViewer,previewVisionPolygon,pointInPolygon} from './MapVisionPreview.js';
 import {checkTokenMovement} from './MapCollision.js';
 import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
-import {traceSolidGroupOffset} from './DragCollisionGuard.js';
+import {traceSolidGroupOffset,traceAuthorizedGroupOffset} from './DragCollisionGuard.js';
 import {stableTokenPresentation} from './StableTokenPresentation.js';
 import {appendMovementWaypoint} from './MapMovementPath.js';
+import {createConcealedMovementGate,needsConcealedStep,nextConcealedStep}
+ from './ConcealedMovementGate.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
@@ -27,16 +29,18 @@ import {TokenStatusBadges,TokenStatusPicker,normalizedEffects,normalizedCatalog,
 
 export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove,resize,onNpcDrop,onCharacterDrop,
  toolPlacements=[],toolIssued=[],onToolPlace,onToolPickUp,onToolOpen,onToolHold,
- onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,onGroupMovementPreview,remotePositions={},
+ onToolMovementPreview,remoteToolPositions={},onUnitDrop,onTokenEdit,onTokenQuick,onTokenStatus,statusCatalog,scale,setScale,selectedId,setSelectedId,displayConfig,monitorValues,encumbranceBadges={},onMovementPreview,onGroupMovementPreview,onMovementCancel,remotePositions={},
  onMeasurementPreview,remoteMeasurements={},hotbarInset=false,fogFrame=null,authorizedLightMasks=null,
  environment,publishedEnvironment,environmentEditor,registerPreviewStep,onAddEnvironmentObject,onSelectEnvironmentObject,
  onPatchEnvironmentObject,characters=[],template,active=true,combatActiveTokenId=null,
- registerRemoteMotion,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
+ registerRemoteMotion,navigation,handoutPins=[],onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,
  onReadHandoutPin,onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
  onDeleteEnvironmentObject}){
  const[preview,setPreview]=useState({});
  const motion=useRef(null);
  if(!motion.current)motion.current=createTokenMotionRuntime();
+ const concealedGate=useMemo(()=>createConcealedMovementGate({db}),[db]);
+ useEffect(()=>()=>concealedGate.dispose(),[concealedGate]);
  const spriteNodes=useRef(new Map()),spriteRefs=useRef(new Map());
  const mountedSight=useRef({key:null,seen:new Set()});
  // Stable React ref identities: a fog, roster or monitor rerender must not
@@ -73,12 +77,104 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
  const boardRef=useRef(null),viewportRef=useRef(null),
   drag=useRef(null),resizeDrag=useRef(null),pan=useRef(null),
   selection=useRef(null),primaryRef=useRef(null),zoomRef=useRef(scale);
+ const movementCancelHandler=useRef(onMovementCancel);
+ movementCancelHandler.current=onMovementCancel;
+ function beginConcealedDrag(info){
+  if(!needsConcealedStep(fogFrame,isDM))return;
+  info.secureMode=true;
+  info.secureSeq=0;
+  info.secureDesired={dx:0,dy:0};
+  info.secureBlockedTarget=null;
+  info.secureReleased=false;
+ }
+ function endConcealedDrag(info){
+  if(!info?.secureMode)return;
+  info.secureReleased=true;
+  if(info.secureStart)void info.secureStart.then(sessionId=>
+   sessionId&&concealedGate.end(sessionId)
+  ).catch(error=>console.warn('Secure gesture cleanup failed',error));
+ }
+ // Layout-phase revocation occurs before the next browser paint. Verified
+ // sight shifts retain valid predictions; authorization/scene loss or a revoked
+ // current endpoint clears the gesture and its server preview immediately.
+ useLayoutEffect(()=>{
+  if(isDM||!navigation)return;
+  navigation.adoptFrame(map.id,fogFrame);
+  const gesture=drag.current;
+  if(!gesture)return;
+  const authority=navigation.authority(map.id);
+  const pieces=[
+   ...gesture.members.map(piece=>({
+    kind:'token',id:piece.id,x:Number(piece.x),y:Number(piece.y)
+   })),
+   ...(gesture.tools||[]).map(piece=>({
+    kind:'tool',id:piece.issue_id,x:Number(piece.x),y:Number(piece.y)
+   }))
+  ];
+  const permitted=pieces.every(piece=>piece.kind==='token'?
+    tokens.some(t=>{
+     const initial=gesture.members.find(m=>m.id===piece.id);
+     return t.id===piece.id&&canControlMapToken(t,user,false,map.id)&&
+      Number(t.x)===piece.x&&Number(t.y)===piece.y&&
+      Number(t.span_x??1)===Number(initial?.span_x??1)&&
+      Number(t.span_y??1)===Number(initial?.span_y??1)&&
+      t.character_id===initial?.character_id;
+    }):
+    toolPlacements.some(p=>{
+     const initial=(gesture.tools||[]).find(t=>t.issue_id===piece.id);
+     return p.issue_id===piece.id&&p.map_id===map.id&&
+      toolCanControl(toolIssued.find(t=>t.id===piece.id),user,false)&&
+      Number(p.x)===piece.x&&Number(p.y)===piece.y&&
+      Number(p.span??1)===Number(initial?.span??1);
+    }));
+  const legal=!!authority&&authority===gesture.navigationAuthority&&permitted&&
+   (gesture.secureMode?
+     fogFrame?.collisionEnabled===true&&
+      (!gesture.path?.length||
+       (gesture.path.at(-1).dx===gesture.dx&&
+        gesture.path.at(-1).dy===gesture.dy)):
+    pieces.every(piece=>{
+     const end={x:piece.x+gesture.dx,y:piece.y+gesture.dy};
+     return gesture.path?.length?
+      navigation.routeApproved(map.id,piece.kind,piece.id,
+       {x:piece.x,y:piece.y},gesture.path):
+      navigation.canOccupy(map.id,piece.kind,piece.id,end);
+    }));
+  if(legal)return;
+  drag.current=null;
+  endConcealedDrag(gesture);
+  for(const piece of gesture.members)motion.current?.clearPreview(piece.id);
+  for(const piece of gesture.tools||[])
+   motion.current?.clearPreview('tool:'+piece.issue_id);
+  const target=gesture.pointerTarget;
+  try{
+   if(target?.hasPointerCapture?.(gesture.pointerId))
+    target.releasePointerCapture(gesture.pointerId);
+  }catch{}
+  setToolPreview(old=>{
+   if(!(gesture.tools||[]).some(t=>Object.hasOwn(old,t.issue_id)))return old;
+   const next={...old};
+   for(const item of gesture.tools||[])delete next[item.issue_id];
+   return next;
+  });
+  movementCancelHandler.current?.({
+   mapId:map.id,tokenIds:gesture.members.map(t=>t.id),
+   toolIssueIds:(gesture.tools||[]).map(t=>t.issue_id)
+  });
+ },[isDM,navigation,map.id,fogFrame,tokens,toolPlacements,toolIssued,user]);
  const [panning,setPanning]=useState(false);
  const [previewPosition,setPreviewPosition]=useState(null);
  const previewDrag=useRef(null),previewNudgeRef=useRef(null);
  // Reuse derived rendering data during drag, measurement and marquee updates.
- const sourcePreviewToken=isDM&&environmentEditor?.previewing?
-  tokens.find(t=>t.id===(environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id)):null;
+ const sourcePreviewToken=useMemo(()=>{
+  if(!isDM||!environmentEditor?.previewing)return null;
+  const token=tokens.find(t=>t.id===
+   (environmentEditor.previewTokenId||tokens.find(x=>x.visible!==false)?.id));
+  if(!token?.character_id)return token||null;
+  const values=characters.find(c=>c.id===token.character_id)?.field_values;
+  return values?{...token,field_values:values}:token;
+ },[isDM,environmentEditor?.previewing,environmentEditor?.previewTokenId,
+  tokens,characters]);
  const previewToken=sourcePreviewToken&&previewPosition?.mapId===map.id&&
   previewPosition?.id===sourcePreviewToken.id?
   {...sourcePreviewToken,x:previewPosition.x,y:previewPosition.y}:sourcePreviewToken;
@@ -623,9 +719,20 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   if(!canMove||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
   const members=tokens.filter(token=>group.includes(token.id));
   const tools=toolPlacements.filter(p=>toolGroup.includes(p.issue_id));
+  if(!isDM&&!needsConcealedStep(fogFrame,isDM)){
+   for(const member of members)navigation?.warm(map.id,'token',member.id,
+    {x:member.x,y:member.y,spanX:Number(member.span_x??1),
+     spanY:Number(member.span_y??1)});
+   for(const tool of tools)navigation?.warm(map.id,'tool',tool.issue_id,
+    {x:tool.x,y:tool.y,spanX:Number(tool.span??1),
+     spanY:Number(tool.span??1)});
+  }
   e.currentTarget.setPointerCapture(e.pointerId);
-  drag.current={id:t.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,
+  drag.current={id:t.id,pointerId:e.pointerId,pointerTarget:e.currentTarget,
+   navigationAuthority:isDM?null:navigation?.authority(map.id),
+   startX:e.clientX,startY:e.clientY,
    members,tools,dx:0,dy:0,path:[],lastFogWrite:0,persistedDuringDrag:false};
+  beginConcealedDrag(drag.current);
  }
  function startToolDrag(e,p,canMove){
   e.stopPropagation();
@@ -641,12 +748,27 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   selectTokens(selectedTokens,selectedTools);
   viewportRef.current?.focus({preventScroll:true});
   if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  if(!isDM&&!needsConcealedStep(fogFrame,isDM)){
+   for(const id of selectedTokens){
+    const token=tokens.find(t=>t.id===id);
+    if(token)navigation?.warm(map.id,'token',id,{x:token.x,y:token.y,
+     spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
+   }
+   for(const id of selectedTools){
+    const tool=toolPlacements.find(p=>p.issue_id===id);
+    if(tool)navigation?.warm(map.id,'tool',id,{x:tool.x,y:tool.y,
+     spanX:Number(tool.span??1),spanY:Number(tool.span??1)});
+   }
+  }
   try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
   drag.current={id:'tool:'+p.issue_id,pointerId:e.pointerId,
+   pointerTarget:e.currentTarget,
+   navigationAuthority:isDM?null:navigation?.authority(map.id),
    startX:e.clientX,startY:e.clientY,
    members:tokens.filter(t=>selectedTokens.includes(t.id)),
    tools:toolPlacements.filter(row=>selectedTools.includes(row.issue_id)),
    dx:0,dy:0,path:[]};
+  beginConcealedDrag(drag.current);
  }
  function moveTokenDrag(e,t){
   const simulated=previewDrag.current;
@@ -666,24 +788,65 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   const requested=boundedGroupOffset([...info.members,...(info.tools||[]).map(groupToolFootprint)],
    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
    map.width,map.height,map.grid_size);
+  if(info.secureMode){
+   requestConcealedOffset(info,requested);
+   return;
+  }
   const collisionScene=publishedEnvironment||environment;
-  const delta=isDM&&environmentEditor?.ignoreCollision!==true&&
-   fogFrame?.collisionEnabled!==false&&collisionScene?
-   traceSolidGroupOffset({
-    pieces:[...info.members,...(info.tools||[]).map(groupToolFootprint)],
-    map,environment:collisionScene,previous:{dx:info.dx,dy:info.dy},
-    desired:requested
-   }):requested;
+  const previous={dx:info.dx,dy:info.dy};
+  const pieces=[...info.members.map(piece=>({
+   kind:'token',id:piece.id,x:Number(piece.x),y:Number(piece.y)
+  })),...(info.tools||[]).map(tool=>({
+   kind:'tool',id:tool.issue_id,x:Number(tool.x),y:Number(tool.y)
+  }))];
+  const delta=isDM?
+   (environmentEditor?.ignoreCollision!==true&&
+    fogFrame?.collisionEnabled!==false&&collisionScene?
+    traceSolidGroupOffset({
+     // Conditional walls must use the same effective creature/tool values
+     // as the server. These private attributes are held by the DM only;
+     // players continue using opaque authorized edge masks.
+     pieces:[
+      ...info.members.map(token=>{
+       const values=characters.find(c=>c.id===token.character_id)?.field_values;
+       return values?{...token,field_values:values}:token;
+      }),
+      ...(info.tools||[]).map(tool=>({
+       ...groupToolFootprint(tool),
+       npc_values:toolIssued.find(t=>t.id===tool.issue_id)?.state?.attrs||{}
+      }))
+     ],
+     map,environment:collisionScene,previous,desired:requested
+    }):requested):
+   traceAuthorizedGroupOffset({
+    pieces,previous,desired:requested,
+    canStep:(piece,from,to)=>
+     navigation?.allows(map.id,piece.kind,piece.id,from,to)===true
+   });
+  paintAcceptedOffset(info,delta);
+ }
+ function paintAcceptedOffset(info,delta){
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
-  const path=appendMovementWaypoint(info.path||[],delta.dx,delta.dy);
-  if(path===info.path)return; // Reached bounded path complexity.
+  // Preserve every legal intermediate turn, including wall sliding,
+  // so the final server trajectory validates the same physical route.
+  let path=info.path||[];
+  for(const point of (delta.path||[{dx:delta.dx,dy:delta.dy}])){
+   const next=appendMovementWaypoint(path,point.dx,point.dy);
+   if(next===path&&
+    (!path.length||path.at(-1).dx!==point.dx||path.at(-1).dy!==point.dy))
+    return; // Bounded gesture: never paint a path we cannot commit.
+   path=next;
+  }
   info.path=path;
   info.dx=delta.dx;info.dy=delta.dy;
-  // DM has locally authorized wall geometry for immediate, solid dragging.
-  // Players cannot preview through secret walls before the server approves.
-  if(isDM)for(const token of info.members)
+  // Both players and DM paint a server-preauthorized legal destination
+  // immediately using an imperative transform: no React board rerender.
+  for(const token of info.members)
    motion.current?.preview(token.id,
     Number(token.x)+delta.dx,Number(token.y)+delta.dy);
+  for(const tool of info.tools||[])
+   motion.current?.preview('tool:'+tool.issue_id,
+    Number(tool.x)+delta.dx,Number(tool.y)+delta.dy);
   const playerGroup=!isDM&&
    info.members.length+(info.tools||[]).length>1;
   if(playerGroup)onGroupMovementPreview?.({
@@ -708,6 +871,45 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   // token positions or invalidating fog on every pointer sample.
   // Only the final release persists via authoritative movement writes.
  }
+ function requestConcealedOffset(info,requested){
+  if(!info?.secureMode||info.secureReleased||drag.current!==info)return;
+  info.secureDesired=requested;
+  const goalKey=requested.dx+':'+requested.dy;
+  if(info.secureBlockedTarget===goalKey||info.secureTask)return;
+  info.secureBlockedTarget=null;
+  if(!info.secureStart){
+   info.secureStart=concealedGate.begin(map.id,
+    info.members.map(t=>t.id),(info.tools||[]).map(t=>t.issue_id))
+    .catch(error=>{
+     console.warn('Concealed navigation unavailable',error);
+     return null;
+    });
+  }
+  info.secureTask=(async()=>{
+   const sessionId=await info.secureStart;
+   if(!sessionId)return;
+   while(drag.current===info&&!info.secureReleased&&
+    info.navigationAuthority===navigation?.authority(map.id)){
+    const target=info.secureDesired;
+    const next=nextConcealedStep({dx:info.dx,dy:info.dy},target);
+    if(!next)break;
+    const proposed=appendMovementWaypoint(info.path||[],next.dx,next.dy);
+    if(proposed===info.path)break;
+    const approved=await concealedGate.approve(sessionId,next,++info.secureSeq);
+    if(!approved){
+     info.secureBlockedTarget=target.dx+':'+target.dy;
+     break;
+    }
+    // A late response after cancellation, a revision or map switch cannot
+    // resurrect even a previously authorized client-side sprite transform.
+    if(drag.current!==info||info.secureReleased||
+     info.navigationAuthority!==navigation?.authority(map.id))break;
+    paintAcceptedOffset(info,{...next,path:[next]});
+   }
+  })().catch(error=>{
+   console.warn('Concealed movement validation failed',error);
+  }).finally(()=>{info.secureTask=null});
+ }
  function toolDropCarrier(event){
   const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
   if(!rect||!(cell>0))return null;
@@ -728,21 +930,54 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   }
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
+  if(info.secureMode&&info.secureTask){
+   if(info.secureFinishQueued)return;
+   info.secureFinishQueued=true;
+   info.secureReleased=true;
+   // React clears event.currentTarget after dispatch. Preserve the actual
+   // pointer target so an awaited server response can safely finish release.
+   const releaseEvent={pointerId:e.pointerId,clientX:e.clientX,
+    clientY:e.clientY,currentTarget:e.currentTarget};
+   void info.secureTask.finally(()=>{
+    if(drag.current===info)finishTokenDrag(releaseEvent,t,cancel);
+   });
+   return;
+  }
   drag.current=null;
+  endConcealedDrag(info);
   for(const member of info.members){
    if(cancel)motion.current?.clearPreview(member.id);
    else motion.current?.handoff(member.id);
   }
   if(e.currentTarget.hasPointerCapture(e.pointerId))
    e.currentTarget.releasePointerCapture(e.pointerId);
+  const cancelServerPreview=()=>{
+   // An out-and-back drag can end at (0,0), but an earlier server preview
+   // still exists and may otherwise hold temporary fog sight for its TTL.
+   // A mere click must not create an unnecessary Supabase cleanup request.
+   if(!info.path?.length&&!info.persistedDuringDrag)return;
+   onMovementCancel?.({
+    mapId:map.id,tokenIds:info.members.map(t=>t.id),
+    toolIssueIds:(info.tools||[]).map(t=>t.issue_id)
+   });
+  };
   if(cancel){
+   for(const tool of info.tools||[])
+    motion.current?.clearPreview('tool:'+tool.issue_id);
    setPreview(old=>{
     const next={...old};
     for(const member of info.members)delete next[member.id];
     return next;
    });
+   setToolPreview(old=>{
+    const next={...old};
+    for(const tool of info.tools||[])delete next[tool.issue_id];
+    return next;
+   });
+   cancelServerPreview();
+   return;
   }
-  const atomicGroup=!cancel&&!!moveGroup&&
+  const atomicGroup=!!moveGroup&&
    (info.members.length+(info.tools||[]).length)>0;
   // Keep group tool sprites at the destination until the atomic RPC settles;
   // otherwise a slow round-trip would flash their old positions.
@@ -775,13 +1010,16 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    for(const token of info.members)delete next[token.id];
    return next;
   });
-  if(info.dx===0&&info.dy===0&&!cancel&&!info.persistedDuringDrag){
+  if(info.dx===0&&info.dy===0&&!info.persistedDuringDrag){
    for(const member of info.members)motion.current?.clearPreview(member.id);
+   for(const tool of info.tools||[])
+    motion.current?.clearPreview('tool:'+tool.issue_id);
    setToolPreview(old=>{
     const next={...old};
     for(const tool of info.tools||[])delete next[tool.issue_id];
     return next;
    });
+   cancelServerPreview();
    return;
   }
   if(atomicGroup){
@@ -795,7 +1033,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    // resolves only after refreshing tool projections or after a failure.
    Promise.resolve(moveGroup({
     tokens:info.members,tools:info.tools||[],dx:info.dx,dy:info.dy,
-    path:info.path||[]
+    path:info.path||[],secureValidated:info.secureMode===true
    })).catch(error=>console.warn('Group movement rejected',error)).finally(()=>{
     for(const member of info.members)motion.current?.clearPreview(member.id);
     for(const tool of info.tools||[])motion.current?.clearPreview('tool:'+tool.issue_id);
@@ -811,7 +1049,8 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
    const next=cancel?{x:Number(t.x),y:Number(t.y)}:
     {x:Number(t.x)+info.dx,y:Number(t.y)+info.dy};
    onMovementPreview?.(t,next.x,next.y,true,cancel);
-   if(!cancel||info.persistedDuringDrag)move(t,next.x,next.y);
+   if(!cancel||info.persistedDuringDrag)
+    move(t,next.x,next.y,info.path||[],info.secureMode===true);
   }
   for(const tool of info.tools||[]){
    const next=cancel?{x:Number(tool.x),y:Number(tool.y)}:

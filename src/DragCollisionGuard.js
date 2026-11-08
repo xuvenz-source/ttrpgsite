@@ -58,3 +58,50 @@ export function sharedApprovedPath(members,grants){
   p.dx!==0||p.dy!==0:
   p.dx!==common[i-1].dx||p.dy!==common[i-1].dy);
 }
+
+/**
+ * A player may predict only server-issued transitions. Unknown/expired edges
+ * STOP movement; no browser copy of private wall or secret-door geometry.
+ * Attempt movement parallel to an obstruction so wall sliding remains natural.
+ * Return every accepted edge for authoritative curved-path persistence.
+ */
+export function traceAuthorizedGroupOffset({pieces,previous,desired,canStep}){
+ const last={dx:Number(previous?.dx),dy:Number(previous?.dy)};
+ if(!Array.isArray(pieces)||!pieces.length||typeof canStep!=='function'||
+  ![last.dx,last.dy,desired?.dx,desired?.dy].every(Number.isSafeInteger))
+  return {...(previous||{dx:0,dy:0}),path:[]};
+ const dx=desired.dx-last.dx,dy=desired.dy-last.dy;
+ const steps=Math.max(Math.abs(dx),Math.abs(dy));
+ if(steps>512)return {...last,path:[]};
+ let accepted=last;
+ const path=[];
+ function canMove(candidate){
+  if(candidate.dx===accepted.dx&&candidate.dy===accepted.dy)return false;
+  return pieces.every(piece=>{
+   const originX=Number(piece.x),originY=Number(piece.y);
+   if(!Number.isSafeInteger(originX)||!Number.isSafeInteger(originY)||
+    !piece.id||!piece.kind)return false;
+   return canStep(piece,{
+    x:originX+accepted.dx,y:originY+accepted.dy
+   },{
+    x:originX+candidate.dx,y:originY+candidate.dy
+   });
+  });
+ }
+ function move(candidate){
+  if(!canMove(candidate))return false;
+  accepted=candidate;path.push(candidate);return true;
+ }
+ for(let step=1;step<=steps;step++){
+  const target={dx:Math.round(last.dx+dx*step/steps),
+   dy:Math.round(last.dy+dy*step/steps)};
+  if(target.dx===accepted.dx&&target.dy===accepted.dy)continue;
+  if(move(target))continue;
+  // Never guess a diagonal through a blocked corner. Each fallback must
+  // independently appear in the server's opaque, versioned edge graph.
+  const xOnly={dx:target.dx,dy:accepted.dy};
+  const yOnly={dx:accepted.dx,dy:target.dy};
+  if(!move(xOnly))move(yOnly);
+ }
+ return {...accepted,path};
+}

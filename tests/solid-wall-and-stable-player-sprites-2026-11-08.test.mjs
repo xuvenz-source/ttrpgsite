@@ -104,33 +104,33 @@ test('queue drain waits through the latest unsent sample without cancelling serv
  assert.deepEqual(results,[[1,1],[2,2]]);
  queue.dispose();
 });
-test('board never paints a raw player coordinate and never tears down artwork on fog revocation',()=>{
+test('board paints locally only through server-issued navigation edges',()=>{
  const board=src('src/BattlemapBoard.jsx');
  const app=src('src/TabletopApp.jsx');
  const monitors=src('src/TokenMonitorFrames.jsx');
- assert.match(board,/if\(isDM\)for\(const token of info\.members\)/);
  assert.match(board,/traceSolidGroupOffset/);
+ assert.match(board,/traceAuthorizedGroupOffset/);
+ assert.match(board,/navigation\?\.allows\(map\.id,piece\.kind,piece\.id,from,to\)/);
+ assert.match(board,/for\(const token of info\.members\)\s*motion\.current\?\.preview/);
  assert.match(board,/presentedTokens\.map\(t=>/);
  assert.match(board,/visibility:concealed\?'hidden':'visible'/);
  assert.match(board,/concealedIds=\{concealedIds\}/);
  assert.match(monitors,/visibility:concealed\?'hidden':'visible'/);
- assert.match(app,/await queue\.drain\(id\)/);
- assert.match(app,/transport\.getApprovedPath\(mapId,'token',id\)/);
+ assert.match(app,/navigationStore\.routeApproved/);
+ assert.match(app,/commitPredictedPlayerMove/);
  assert.match(app,/commit_map_trajectory/);
- assert.match(app,/if\(!isDM\)\{void commitServerApprovedPlayerMove\(token,x,y\);return\}/);
- assert.match(app,/if\(data!==true\)return/);
- assert.match(app,/remoteMotion\.current\?\.preview\(p_piece,p_x,p_y\)/);
+ assert.doesNotMatch(app,/await queue\.drain\(id\)/);
+ assert.doesNotMatch(app,/remoteMotion\.current\?\.preview\(p_piece,p_x,p_y\)/);
 });
 
-test('group movement paints a synchronized grant instead of independent partially blocked sprites',()=>{
+test('group movement has one local graph decision, not serialized preview grants',()=>{
  const board=src('src/BattlemapBoard.jsx');
  const app=src('src/TabletopApp.jsx');
  assert.match(board,/if\(playerGroup\)onGroupMovementPreview\?\.\(/);
- assert.match(board,/if\(!playerGroup\)for\(const tool of info\.tools/);
- assert.match(app,/const belongsToActiveGroup=group\?\.mapId===selectedMap&&group\.keys\.has\(pieceKey\)/);
- assert.match(app,/if\(!isDM&&!belongsToActiveGroup&&packet\.params\?\.p_map===selectedMap\)/);
+ assert.match(board,/traceAuthorizedGroupOffset/);
  assert.match(app,/function sendLiveGroupMovement/);
- assert.match(app,/sharedApprovedPath\(pieces,pieces\.map\(piece=>/);
- assert.match(app,/groupPreviewGeneration\.current/);
+ assert.match(app,/membersWithKinds|const pieces=/);
+ assert.match(app,/navigationStore\.routeApproved\(mapId,piece\.kind,piece\.id/);
+ assert.doesNotMatch(app,/await Promise\.all\(keys\.map\(key=>queue\.drain\(key\)\)\)/);
  assert.match(app,/onGroupMovementPreview=\{sendLiveGroupMovement\}/);
 });

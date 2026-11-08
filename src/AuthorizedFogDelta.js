@@ -40,6 +40,8 @@ function normalizeEnvelopeFrame(raw,mapId,visible,explored){
   revision:raw.revision,enabled:raw.enabled,partyShared:raw.partyShared,
   protocolVersion:raw.protocolVersion,deltaProtocolVersion:raw.deltaProtocolVersion,
   epoch:raw.epoch,sequence:raw.sequence,collisionEnabled:raw.collisionEnabled,
+  navigationEnvironmentRevision:raw.navigationEnvironmentRevision,
+  permissionGeneration:raw.permissionGeneration,
   visible,explored
  },mapId);
 }

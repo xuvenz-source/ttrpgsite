@@ -57,9 +57,10 @@ import FloatingWindow from './FloatingWindow.jsx';
 import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
-import {sharedApprovedPath} from './DragCollisionGuard.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
+import {createAuthorizedNavigation} from './AuthorizedNavigation.js';
+import {planAuthorizedGridRoute} from './AuthorizedMovementPlanner.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
 import {clearVerifiedHiddenTokens,clearVerifiedHiddenTools} from './AuthorizedObserverVisibility.js';
 import {createRemotePositionSettler} from './RemotePositionSettler.js';
@@ -192,7 +193,8 @@ export default function TabletopApp(){
  const[uiScale,setUiScale]=useState(.9);
  const quickCache=useRef(new Map());
  // Keep the most recent local destination authoritative until the server acknowledges it.
- const movementPending=useRef(new Map()),tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
+ const movementPending=useRef(new Map()),toolMovementPending=useRef(new Set()),
+  tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const previewStepHandler=useRef(null);
  const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
@@ -277,6 +279,37 @@ export default function TabletopApp(){
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
   refreshCoordinator:refreshCoordinator});
+ const navigationStore=useMemo(()=>createAuthorizedNavigation({db}),[]);
+ useEffect(()=>()=>navigationStore.dispose(),[navigationStore]);
+ // Preauthorize bounded local movement before first drag; no private walls.
+ useEffect(()=>navigationStore.clear(),[navigationStore,selectedMap,user]);
+ useEffect(()=>{
+  if(!selectedMap||isDM||!user||playerMapId!==selectedMap)return;
+  // A pending or invalid sight frame MUST revoke navigation, even when the
+  // old frame's last visible cells are retained solely as cosmetic terrain.
+  if(!navigationStore.adoptFrame(selectedMap,fog.frame))return;
+  const permitted=new Set();
+  for(const token of tokens){
+   if(token.map_id!==selectedMap||token.owner_id!==user||
+      token.visible===false)continue;
+   permitted.add(selectedMap+':token:'+token.id);
+   if(!movementPending.current.has(token.id)&&fog.frame?.collisionEnabled!==true)
+    navigationStore.warm(selectedMap,'token',token.id,{x:token.x,y:token.y,
+     spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
+  }
+  for(const tool of campaignTools.placed){
+   if(tool.map_id!==selectedMap)continue;
+   const issued=campaignTools.issued.find(item=>item.id===tool.issue_id);
+   if(!toolCanControl(issued,user,false))continue;
+   permitted.add(selectedMap+':tool:'+tool.issue_id);
+   if(fog.frame?.collisionEnabled!==true)
+    navigationStore.warm(selectedMap,'tool',tool.issue_id,
+    {x:tool.x,y:tool.y,spanX:Number(tool.span??1),
+     spanY:Number(tool.span??1)});
+  }
+  navigationStore.retainPermitted(selectedMap,permitted);
+ },[navigationStore,selectedMap,user,isDM,playerMapId,
+  fog.frame,tokens,campaignTools.placed,campaignTools.issued]);
  const latestFogSnapshot=useRef(null);
  latestFogSnapshot.current=fog.frame;
  const queuePreviewFogRefresh=()=>{
@@ -637,27 +670,50 @@ export default function TabletopApp(){
   const existing=campaignTools.placed.find(p=>p.issue_id===id&&p.map_id===mapId);
   try{
    if(!isDM&&existing){
-    const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
-    if(!queue||!transport)return;
-    const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
-    if(seq===null)return;
-    liveMovementSeq.current=seq;
-    queue.enqueue('tool:'+id,{kind:'tool',params:{
-     p_map:mapId,p_kind:'tool',p_piece:id,p_x:x,p_y:y,
-     p_seq:seq,p_ignore_collision:false
-    }});
-    await queue.drain('tool:'+id);
-    if(tokenContextRef.current.mapId!==mapId)return;
-    const path=transport.getApprovedPath(mapId,'tool',id);
-    const steps=movementPathDeltas(path.map(p=>({
-     dx:p.x-Number(existing.x),dy:p.y-Number(existing.y)
-    })));
-    if(!steps?.length)return;
-    await read(db.rpc('commit_map_trajectory',{
-     p_map:mapId,p_token_ids:[],p_tool_issue_ids:[id],
-     p_steps:steps,p_ignore_collision:false
-    }));
-    await campaignTools.refresh(['issued','placed'],true);
+    // Sidebar repositioning uses the same server-issued local edge graph as
+    // ordinary drag movement. No old per-pointer session RPC and no private
+    // wall geometry may authorize an arbitrary tool teleport.
+    if(toolMovementPending.current.has(id))return;
+    const origin={x:Number(existing.x),y:Number(existing.y)};
+    const destination={x:Number(x),y:Number(y)};
+    if(origin.x===destination.x&&origin.y===destination.y)return;
+    toolMovementPending.current.add(id);
+    try{
+     const span=Number(existing.span??1);
+     const concealed=fog.frame?.collisionEnabled===true;
+     const current=concealed?true:await navigationStore.ensure(mapId,'tool',id,{
+      ...origin,spanX:span,spanY:span
+     });
+     if(tokenContextRef.current.mapId!==mapId)return;
+     if(!current)throw Error('Navigation is updating; try moving this tool again.');
+     const deltaX=destination.x-origin.x,deltaY=destination.y-origin.y;
+     // Sidebar placement is not a dragged, server-verified gesture. Only an
+     // adjacent attempted step may be sent to the authoritative final RPC.
+     // Multi-cell travel must use the secure map drag instead of surveying
+     // a hidden passage through an advance routing graph.
+     if(concealed&&Math.max(Math.abs(deltaX),Math.abs(deltaY))!==1)
+      throw Error('Drag this tool on the map to move it multiple cells.');
+     const route=concealed?[{dx:deltaX,dy:deltaY}]:planAuthorizedGridRoute({
+      origin,destination,
+      canStep:(from,to)=>navigationStore.allows(mapId,'tool',id,from,to)
+     });
+     if(!route?.length||(!concealed&&!navigationStore.routeApproved(
+      mapId,'tool',id,origin,route)))
+      throw Error('This tool cannot reach that destination through authorized cells.');
+     const steps=movementPathDeltas(route);
+     if(!steps?.length)throw Error('The tool movement path is invalid.');
+     const {data,error:moveError}=await db.rpc('commit_map_trajectory',{
+      p_map:mapId,p_token_ids:[],p_tool_issue_ids:[id],
+      p_steps:steps,p_ignore_collision:false
+     });
+     if(moveError)throw moveError;
+     const saved=data?.tools?.find(item=>item.id===id);
+     if(Number(saved?.x)!==destination.x||Number(saved?.y)!==destination.y)
+      throw Error('The server did not confirm the tool destination.');
+     await campaignTools.refresh(['issued','placed'],true);
+    }finally{
+     toolMovementPending.current.delete(id);
+    }
    }else await campaignTools.place(issued,mapId,x,y);
   }catch(e){fail(e)}
   finally{clearMapMovementPreview(mapId,[],[id])}
@@ -875,10 +931,12 @@ export default function TabletopApp(){
    // A sight revision must never reuse a request begun before authorization
    // changed. No completed snapshot is cached between refresh calls.
    if(fresh===true)refreshCoordinator.invalidate(key);
+   // The DM's local swept-collision simulation needs the same NPC attributes
+   // the SQL validator reads. Never request these private fields for players.
+   const projection='id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects';
    const response=await refreshCoordinator.request(key,
-    ()=>read(db.from('map_tokens').select(
-     'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
-    ).eq('map_id',mapId)));
+    ()=>read(db.from('map_tokens').select(isDM?
+     projection+',npc_values':projection).eq('map_id',mapId)));
    if(!response.current)return;
    const rows=response.value;
    // Ignore older requests, including requests started before switching maps.
@@ -1084,22 +1142,10 @@ export default function TabletopApp(){
   const queue=createLatestOnlyPreviewQueue({
    send:packet=>transport.send(packet),
    onResult:(packet,{data,error})=>{
-    if(error){console.warn('Secure movement preview unavailable',error.message);return}
+    if(error){console.warn('Secure observer preview unavailable',error.message);return}
     if(data!==true)return;
-    const pieceKey=packet.kind==='token'?packet.params?.p_piece:
-     'tool:'+packet.params?.p_piece;
-    const group=activeGroupPreview.current;
-    const belongsToActiveGroup=group?.mapId===selectedMap&&group.keys.has(pieceKey);
-    // A player's own token/tool may move visually only to a server grant.
-    if(!isDM&&!belongsToActiveGroup&&packet.params?.p_map===selectedMap){
-     const {p_piece,p_x,p_y}=packet.params;
-     if(packet.kind==='token'&&latestMovementAccess.current.tokens?.some(t=>
-      t.id===p_piece&&t.map_id===selectedMap&&t.owner_id===user))
-      remoteMotion.current?.preview(p_piece,p_x,p_y);
-     if(packet.kind==='tool'&&latestMovementAccess.current.toolPlacements?.some(t=>
-      t.issue_id===p_piece&&t.map_id===selectedMap))
-      remoteMotion.current?.preview('tool:'+p_piece,p_x,p_y);
-    }
+    // Only the private server observer broadcast waits for this RPC.
+    // The mover's local predicted sprite was painted on pointer input.
     if(packet.kind==='token')latestOwnFogRefresh.current?.();
    },
    onError:(_,error)=>console.warn('Secure movement preview unavailable',error)
@@ -1279,40 +1325,23 @@ export default function TabletopApp(){
    p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
   }});
  }
- // Group members must never diverge in the user's view when one piece
- // collides with a wall. All server checks complete before a synchronized
- // paint of the last common authorized step.
+ // A group is already painted atomically through the navigation graph.
+ // The cosmetic observer packets may lag, but they never gate local paint.
  function sendLiveGroupMovement({tokens:members=[],tools=[],dx,dy}){
-  if(isDM||!selectedMap||!movementPreviewQueue.current||
-     !movementSessionTransport.current)return;
-  const mapId=selectedMap;
+  if(isDM||!selectedMap||!movementPreviewQueue.current)return;
   const pieces=[...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
    ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))];
-  if(pieces.length<2)return;
-  const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
-  const keys=new Set(pieces.map(p=>p.kind==='token'?p.id:'tool:'+p.id));
-  const generation=++groupPreviewGeneration.current;
-  activeGroupPreview.current={mapId,keys,generation};
-  for(const p of pieces){
-   const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
+  for(const piece of pieces){
+   const now=Date.now(),key=piece.kind==='token'?piece.id:'tool:'+piece.id;
+   if(now-(lastMovementPreview.current.get(key)||0)<OBSERVER_PREVIEW_INTERVAL_MS)continue;
+   const seq=nextMotionSequence(now,liveMovementSeq.current);
    if(seq===null)return;
-   liveMovementSeq.current=seq;
-   queue.enqueue(p.kind==='token'?p.id:'tool:'+p.id,{
-    kind:p.kind,params:{p_map:mapId,p_kind:p.kind,p_piece:p.id,
-     p_x:p.x+dx,p_y:p.y+dy,p_seq:seq,p_ignore_collision:false}
-   });
+   liveMovementSeq.current=seq;lastMovementPreview.current.set(key,now);
+   movementPreviewQueue.current.enqueue(key,{kind:piece.kind,params:{
+    p_map:selectedMap,p_kind:piece.kind,p_piece:piece.id,
+    p_x:piece.x+dx,p_y:piece.y+dy,p_seq:seq,p_ignore_collision:false
+   }});
   }
-  void Promise.all([...keys].map(key=>queue.drain(key))).then(()=>{
-   if(activeGroupPreview.current?.generation!==generation||
-      tokenContextRef.current.mapId!==mapId)return;
-   const common=sharedApprovedPath(pieces,pieces.map(piece=>
-    transport.getApprovedPath(mapId,piece.kind,piece.id)));
-   const endpoint=common.at(-1);
-   if(!endpoint)return;
-   for(const p of pieces)remoteMotion.current?.preview(
-    p.kind==='token'?p.id:'tool:'+p.id,
-    p.x+endpoint.dx,p.y+endpoint.dy);
-  }).catch(error=>console.warn('Grouped motion validation unavailable',error));
  }
   function sendLiveMeasurement(measure,phase='preview',force=false){
   if(!liveMapReady.current||!liveMapChannel.current||!displayedMap||!user)return;
@@ -2420,77 +2449,96 @@ export default function TabletopApp(){
    throw Error('Unsupported hotbar command. Use /builder, /spell, /roll, /macro, /em or /say.');
   }catch(e){fail(e)}
  }
- // Player drags and keyboard moves use exactly the server-approved
- // waypoints. Never persist/paint a speculative destination through a wall.
- async function commitServerApprovedPlayerMove(token,wantedX,wantedY){
+ // Player and DM are equally responsive: a server-issued navigation
+ // graph checks the drag locally, while the final RPC independently checks
+ // every route leg, wall, footprint and authorization rule.
+ async function commitPredictedPlayerMove(token,wantedX,wantedY,route=[],secureValidated=false){
   const mapId=selectedMap,campaignId=activeId,id=token?.id;
-  if(!id||!mapId||!campaignId||!user||
-     token.map_id!==mapId||token.owner_id!==user||
-     playerMapId!==mapId||movementPending.current.has(id))return;
-  const queue=movementPreviewQueue.current,
-   transport=movementSessionTransport.current;
-  if(!queue||!transport)return;
-  const pending={mapId,campaignId,x:Number(token.x),y:Number(token.y),
-   baseX:Number(token.x),baseY:Number(token.y),saving:true,confirmed:false};
+  if(!id||!mapId||!campaignId||!user||token.map_id!==mapId||
+     token.owner_id!==user||playerMapId!==mapId||
+     movementPending.current.has(id))return;
+  const baseX=Number(token.x),baseY=Number(token.y);
+  const start={x:baseX,y:baseY};
+  // Keyboard and side-panel drops have no pointer path. Find an authorized
+  // bounded path through opaque server edges rather than validating a single
+  // sweeping teleport that could cut through a solid wall.
+  const concealed=fog.frame?.collisionEnabled===true;
+  const verifiedGesture=concealed&&secureValidated===true&&route.length>0;
+  const singleStep=concealed&&!verifiedGesture&&
+   Math.max(Math.abs(wantedX-baseX),Math.abs(wantedY-baseY))===1;
+  const path=concealed?
+   (verifiedGesture?route:singleStep?
+    [{dx:wantedX-baseX,dy:wantedY-baseY}]:null):
+   (route.length?route:planAuthorizedGridRoute({
+    origin:start,destination:{x:wantedX,y:wantedY},
+    canStep:(from,to)=>navigationStore.allows(mapId,'token',id,from,to)
+   }));
+  const end=path?.at(-1);
+  if(!end||baseX+end.dx!==wantedX||baseY+end.dy!==wantedY||
+    (!concealed&&!navigationStore.routeApproved(mapId,'token',id,
+     {x:baseX,y:baseY},path))){
+   if(!concealed)navigationStore.warm(mapId,'token',id,{x:baseX,y:baseY,
+    spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
+   remoteMotion.current?.clearPreview(id);
+   clearMapMovementPreview(mapId,[id],[]);
+   return;
+  }
+  const steps=movementPathDeltas(path);
+  if(!steps?.length){
+   remoteMotion.current?.clearPreview(id);
+   clearMapMovementPreview(mapId,[id],[]);
+   return;
+  }
+  const pending={mapId,campaignId,x:wantedX,y:wantedY,
+   baseX,baseY,saving:true,confirmed:false};
   movementPending.current.set(id,pending);
-  let committed=false;
-  try{
-   const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
-   if(seq===null)throw Error('Invalid movement sequence');
-   liveMovementSeq.current=seq;
-   queue.enqueue(id,{kind:'token',params:{
-    p_map:mapId,p_kind:'token',p_piece:id,p_x:wantedX,p_y:wantedY,
-    p_seq:seq,p_ignore_collision:false
-   }});
-   await queue.drain(id);
-   if(tokenContextRef.current.mapId!==mapId||
-      tokenContextRef.current.campaignId!==campaignId||
-      tokenContextRef.current.userId!==user||
-      movementPending.current.get(id)!==pending)return;
-   const approved=transport.getApprovedPath(mapId,'token',id);
-   if(!approved.length)return;
-   const tail=approved.at(-1);
-   if(tail.x===pending.baseX&&tail.y===pending.baseY)return;
-   // An approved packet may arrive AFTER pointerup and supersede the
-   // board's initial handoff. Re-arm it now so canonical React coordinates
-   // can retire the transform without doubling the offset.
+  // Keyboard movement into untested space must NEVER paint through a wall
+  // before its first server validation. A confirmed drag has already passed
+  // the gesture RPC, so it may retain its continuous local transform.
+  if(!singleStep){
    remoteMotion.current?.handoff(id);
-   const steps=movementPathDeltas(approved.map(point=>({
-    dx:point.x-pending.baseX,dy:point.y-pending.baseY
-   })));
-   if(!steps?.length)throw Error('No permitted movement trajectory');
-   // The trusted final transaction independently checks every swept wall.
+   setTokens(rows=>rows.map(row=>row.id===id?
+    {...row,x:wantedX,y:wantedY}:row));
+  }
+  let committed=false;
+  const finishTiming=movementDiagnostics.begin('final-trajectory-commit');
+  try{
    const {data,error}=await db.rpc('commit_map_trajectory',{
     p_map:mapId,p_token_ids:[id],p_tool_issue_ids:[],
     p_steps:steps,p_ignore_collision:false
    });
    if(error)throw error;
    const result=data?.tokens?.find(row=>row.id===id);
-   if(!result||Number(result.x)!==tail.x||Number(result.y)!==tail.y)
-    throw Error('Server trajectory and preview endpoints did not match');
-   pending.x=Number(result.x);pending.y=Number(result.y);pending.confirmed=true;
-   committed=true;
-   setTokens(rows=>rows.map(row=>row.id===id?
-    {...row,x:pending.x,y:pending.y}:row));
+   if(!result||Number(result.x)!==wantedX||Number(result.y)!==wantedY)
+    throw Error('Server trajectory differs from local predicted endpoint');
+   pending.confirmed=true;committed=true;
+   if(singleStep)setTokens(rows=>rows.map(row=>row.id===id?
+    {...row,x:Number(result.x),y:Number(result.y)}:row));
    ++tokenRefreshSeq.current;
    await refreshTokens(true);
   }catch(error){
-   fail(error);
-   ++tokenRefreshSeq.current;
+   fail(error);++tokenRefreshSeq.current;
    void refreshTokens(true);
   }finally{
+   finishTiming();
    if(!committed)remoteMotion.current?.clearPreview(id);
    if(movementPending.current.get(id)===pending)
     movementPending.current.delete(id);
+   if(committed&&!concealed)navigationStore.warm(mapId,'token',id,
+    {x:wantedX,y:wantedY,spanX:Number(token.span_x??1),
+     spanY:Number(token.span_y??1)});
    clearMapMovementPreview(mapId,[id],[]);
   }
  }
- function queueTokenMove(token,x,y){
+ function queueTokenMove(token,x,y,route=[],secureValidated=false){
   // DM player-preview movement is simulated; never persist it even if another
   // caller attempts to use the normal movement queue while previewing.
   if(isDM&&mapSettingEditor.previewing)return;
   if(!token||!activeId||!selectedMap||token.map_id!==selectedMap)return;
-  if(!isDM){void commitServerApprovedPlayerMove(token,x,y);return}
+  if(!isDM){
+   void commitPredictedPlayerMove(token,x,y,route,secureValidated);
+   return;
+  }
   const id=token.id;
   let pending=movementPending.current.get(id);
   if(!pending||pending.mapId!==selectedMap||pending.campaignId!==activeId){
@@ -2556,60 +2604,61 @@ export default function TabletopApp(){
    clearMapMovementPreview(pending.mapId,[id],[]);
   }
  }
- async function moveGroup({tokens:members=[],tools=[],dx,dy,path=[]}){
+ async function moveGroup({tokens:members=[],tools=[],dx,dy,path=[],
+  secureValidated=false}){
   const mapId=selectedMap,campaignId=activeId;
   if(!mapId||!campaignId||!Number.isSafeInteger(dx)||
     !Number.isSafeInteger(dy))return;
   if(!members.length&&!tools.length)return;
   if(isDM&&mapSettingEditor.previewing)return;
+  const tokenIds=members.map(t=>t.id),toolIds=tools.map(t=>t.issue_id);
+  const clearDenied=()=>{
+   for(const member of members)remoteMotion.current?.clearPreview(member.id);
+   for(const tool of tools)remoteMotion.current?.clearPreview('tool:'+tool.issue_id);
+   clearMapMovementPreview(mapId,tokenIds,toolIds);
+  };
   if(!isDM){
-   // Retire pending group previews before the release transaction paints.
-   if(activeGroupPreview.current?.mapId===mapId)
-    activeGroupPreview.current={...activeGroupPreview.current,
-     generation:++groupPreviewGeneration.current};
-   // No group sprite or tool may be committed past a wall just because the
-   // pointer asked for that position. Every member independently receives a
-   // server grant and only a common approved route can move the whole group.
-   const queue=movementPreviewQueue.current,transport=movementSessionTransport.current;
-   if(!queue||!transport)return;
-   const pieces=[...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
-    ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))];
-   const keys=[];
-   for(const piece of pieces){
-    const seq=nextMotionSequence(Date.now(),liveMovementSeq.current);
-    if(seq===null)return;
-    liveMovementSeq.current=seq;
-    const key=piece.kind==='token'?piece.id:'tool:'+piece.id;
-    keys.push(key);
-    queue.enqueue(key,{kind:piece.kind,params:{
-     p_map:mapId,p_kind:piece.kind,p_piece:piece.id,
-     p_x:piece.x+dx,p_y:piece.y+dy,p_seq:seq,p_ignore_collision:false
-    }});
+   const concealed=fog.frame?.collisionEnabled===true;
+   if(secureValidated===true&&!concealed){
+    clearDenied();return;
    }
-   await Promise.all(keys.map(key=>queue.drain(key)));
-   if(tokenContextRef.current.mapId!==mapId||
-      tokenContextRef.current.campaignId!==campaignId)return;
-   const grants=pieces.map(piece=>transport.getApprovedPath(
-    mapId,piece.kind,piece.id));
-   const common=sharedApprovedPath(pieces,grants);
-   if(!common.length){
-    clearMapMovementPreview(mapId,members.map(t=>t.id),
-     tools.map(t=>t.issue_id));
+   const pieces=[
+    ...members.map(t=>({kind:'token',id:t.id,x:Number(t.x),y:Number(t.y)})),
+    ...tools.map(t=>({kind:'tool',id:t.issue_id,x:Number(t.x),y:Number(t.y)}))
+   ];
+   const offsets=path?.length?path:[{dx,dy}];
+   if(!(concealed&&secureValidated===true)&&pieces.some(piece=>
+     !navigationStore.routeApproved(mapId,piece.kind,piece.id,
+      {x:piece.x,y:piece.y},offsets))){
+    for(const member of members)navigationStore.warm(mapId,'token',member.id,
+     {x:member.x,y:member.y,spanX:Number(member.span_x??1),
+      spanY:Number(member.span_y??1)});
+    for(const tool of tools)navigationStore.warm(mapId,'tool',tool.issue_id,
+     {x:tool.x,y:tool.y,spanX:Number(tool.span??1),
+      spanY:Number(tool.span??1)});
+    clearDenied();
     return;
    }
-   dx=common.at(-1).dx;dy=common.at(-1).dy;path=common;
+   path=offsets;
   }
   const steps=movementPathDeltas(path?.length?path:[{dx,dy}]);
   if(!steps?.length||steps.reduce((total,step)=>total+step.dx,0)!==dx||
-    steps.reduce((total,step)=>total+step.dy,0)!==dy)
+    steps.reduce((total,step)=>total+step.dy,0)!==dy){
+   clearDenied();
    throw Error('Invalid movement path; no units were moved.');
+  }
   const collisionOverride=isDM&&mapSettingEditor.ignoreCollision===true;
-  // Do not race a pending single-token save with a relative group delta.
-  if(members.some(t=>movementPending.current.has(t.id))){
+  // Token AND tool movements are exclusive until the authoritative group
+  // write settles. In particular, two fast tool-only drags must not race the
+  // same origin or commit a stale relative offset.
+  if(members.some(t=>movementPending.current.has(t.id))||
+    tools.some(t=>toolMovementPending.current.has(t.issue_id))){
+   clearDenied();
    fail(Error('Another movement is still being confirmed. Try again.'));
    return;
   }
   const pending=new Map();
+  for(const tool of tools)toolMovementPending.current.add(tool.issue_id);
   for(const member of members){
    const item={mapId,campaignId,x:Number(member.x)+dx,
     y:Number(member.y)+dy,saving:true,confirmed:false,group:true};
@@ -2622,44 +2671,51 @@ export default function TabletopApp(){
   }));
   try{
    const {data,error:moveError}=await db.rpc('commit_map_trajectory',{
-    p_map:mapId,p_token_ids:members.map(t=>t.id),
-    p_tool_issue_ids:tools.map(t=>t.issue_id),
+    p_map:mapId,p_token_ids:tokenIds,
+    p_tool_issue_ids:toolIds,
     p_steps:steps,p_ignore_collision:collisionOverride
    });
    if(moveError)throw moveError;
    if(!data||!Array.isArray(data.tokens)||!Array.isArray(data.tools)||
       data.tokens.length!==members.length||data.tools.length!==tools.length)
     throw Error('The movement acknowledgement was incomplete.');
-   for(const [id,item] of pending){
-    if(movementPending.current.get(id)===item){
-     item.confirmed=true;
-     const row=data.tokens.find(t=>t.id===id);
-     if(row){item.x=Number(row.x);item.y=Number(row.y)}
-    }
+   for(const member of members){
+    const row=data.tokens.find(t=>t.id===member.id);
+    if(!row||Number(row.x)!==Number(member.x)+dx||
+       Number(row.y)!==Number(member.y)+dy)
+     throw Error('The server did not confirm every token destination.');
    }
+   for(const tool of tools){
+    const row=data.tools.find(t=>t.id===tool.issue_id);
+    if(!row||Number(row.x)!==Number(tool.x)+dx||
+       Number(row.y)!==Number(tool.y)+dy)
+     throw Error('The server did not confirm every tool destination.');
+   }
+   for(const [id,item] of pending){
+    if(movementPending.current.get(id)===item)item.confirmed=true;
+   }
+   // A group (including tool-only groups) remains visually handed off until
+   // BOTH server projections are reconciled. Commit is one SQL transaction.
+   await Promise.all([refreshTokens(),campaignTools.refresh()]);
   }catch(e){
    fail(e);
+   ++tokenRefreshSeq.current;
+   await Promise.allSettled([refreshTokens(true),campaignTools.refresh()]);
+   throw e;
+  }finally{
+   for(const tool of tools)toolMovementPending.current.delete(tool.issue_id);
    for(const [id,item] of pending)
     if(movementPending.current.get(id)===item)movementPending.current.delete(id);
-   ++tokenRefreshSeq.current;
-   await Promise.all([refreshTokens(),campaignTools.refresh()]);
-   clearMapMovementPreview(mapId,members.map(t=>t.id),
-    tools.map(t=>t.issue_id));
-   throw e;
+   clearMapMovementPreview(mapId,tokenIds,toolIds);
   }
-  // Refresh both the token and issued-tool projections before dropping the
-  // local optimistic group. SQL commits all rows or no rows.
-  await Promise.all([refreshTokens(),campaignTools.refresh()]);
-  clearMapMovementPreview(mapId,members.map(t=>t.id),
-   tools.map(t=>t.issue_id));
-  for(const [id,item] of pending)
-   if(movementPending.current.get(id)===item)movementPending.current.delete(id);
  }
  function moveSelectedByKey(dx,dy){
   if(isDM&&mapSettingEditor.previewing)return;
   const token=selectedToken;
   if(!token||!activeMap||!camp||!user)return;
-  if(!isDM&&(token.owner_id!==user||camp.active_map_id!==activeMap.id))return;
+  // Assigned player maps may differ from the DM's campaign-wide active map.
+  // Apply the same per-player map authorization used by pointer movement.
+  if(!isDM&&(token.owner_id!==user||playerMapId!==activeMap.id))return;
   const last=movementPending.current.get(token.id)||{x:Number(token.x),y:Number(token.y)};
   const grid=Number(activeMap.grid_size)||70;
   const boundX=Math.max(0,Math.min(1000,Math.floor(Number(activeMap.width)/grid-Number(token.span_x??1))));
@@ -2668,8 +2724,8 @@ export default function TabletopApp(){
   const y=Math.max(0,Math.min(boundY,Math.round(last.y)+dy));
   queueTokenMove(token,x,y);
  }
- function moveToken(token,x,y){
-  queueTokenMove(token,x,y);
+ function moveToken(token,x,y,path=[],secureValidated=false){
+  queueTokenMove(token,x,y,path,secureValidated);
  }
  async function resizeToken(t,spanX,spanY){
   if(!isDM)return;
@@ -2825,7 +2881,7 @@ export default function TabletopApp(){
      const selectedIds=options.additive?[...new Set([...current,...incoming])]:incoming;
      return {...old,selectedPinId:null,selectedId:selectedIds[0]||null,selectedIds};
     })}
-   user={user} isDM={isDM} move={moveToken} moveGroup={moveGroup} remove={removeToken}
+   user={user} isDM={isDM} move={moveToken} moveGroup={moveGroup} navigation={navigationStore} remove={removeToken}
    onNpcDrop={placeNpc} onCharacterDrop={placeCharacterOnMap}
    toolPlacements={campaignTools.placed} toolIssued={campaignTools.issued}
    onToolPlace={placeIssuedToolOnMap} onToolPickUp={pickUpIssuedToolOnMap}
@@ -2833,6 +2889,8 @@ export default function TabletopApp(){
    onToolOpen={setSelectedToolIssueId} onToolMovementPreview={sendLiveToolMovement}
    remoteToolPositions={remoteToolPositions}
    onMovementPreview={sendLiveMovement} onGroupMovementPreview={sendLiveGroupMovement}
+   onMovementCancel={({mapId,tokenIds,toolIssueIds})=>
+    clearMapMovementPreview(mapId,tokenIds,toolIssueIds)}
     remotePositions={remoteTokenPositions}
    registerRemoteMotion={registerRemoteMotion}
     fogFrame={fog.frame}

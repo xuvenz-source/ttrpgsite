@@ -31,6 +31,9 @@ export function retainFogSnapshot(previous,next){
   previous.epoch===next.epoch&&previous.sequence===next.sequence&&
   previous.enabled===next.enabled&&
   previous.partyShared===next.partyShared&&
+  previous.collisionEnabled===next.collisionEnabled&&
+  previous.navigationEnvironmentRevision===next.navigationEnvironmentRevision&&
+  previous.permissionGeneration===next.permissionGeneration&&
   previous.width===next.width&&previous.height===next.height&&
   sameIndices(previous.visible,next.visible)&&
   sameIndices(previous.explored,next.explored)?previous:next;

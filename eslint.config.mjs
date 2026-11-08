@@ -27,7 +27,22 @@ export default [{
   'src/main.jsx',
   'src/LiveMovementPreview.js',
   'src/LiveTokenMovement.js',
-  'src/LiveToolMovement.js'
+  'src/LiveToolMovement.js',
+  // Consolidated movement/fog redesign: validate every new security-critical
+  // module for undeclared runtime identifiers, not only JSX entrypoints.
+  'src/AuthorizedNavigation.js',
+  'src/ConcealedMovementGate.js',
+  'src/AuthorizedMovementPlanner.js',
+  'src/AuthorizedViewerTick.js',
+  'src/AuthorizedFogDelta.js',
+  'src/FogVisibilityContinuity.js',
+  'src/MapFogModel.js',
+  'src/DragCollisionGuard.js',
+  'src/MovementDiagnostics.js',
+  'src/MapMovementPath.js',
+  'src/MapCollision.js',
+  'src/MapSelection.js',
+  'src/MapEnvironment.js'
  ],
  languageOptions:{
   ecmaVersion:2022,sourceType:'module',
