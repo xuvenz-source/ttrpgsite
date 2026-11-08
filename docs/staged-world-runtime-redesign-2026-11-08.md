@@ -2,7 +2,7 @@
 
 **Branch:** `stage/world-runtime-movement-collision-fog-2026-11-08`
 **Production base:** `aa3e00f184b1f230f5d43556295c54a88f25e77e` (PR #45)
-**Status:** IMPLEMENTATION STAGED; SECURITY/BROWSER/SQL VERIFICATION PENDING. NOT RELEASE READY. No production merge, database change, or preview deployment.
+**Status:** RELEASE CANDIDATE — atomic backend migration `20261108031754` successfully installed on the existing Supabase project and authenticated rollback-only SQL tests passed. GitHub unit/build/CodeQL passed. Awaiting designer-authorized PR merge and single Vercel production deployment; browser multiplayer QA remains.
 **Design ownership:** Designer controls gameplay semantics; developer proposes and implements underlying mechanics.
 **Infrastructure:** React/Vite, Supabase Free, Vercel Free. Do not introduce always-on paid infrastructure.
 
@@ -87,9 +87,9 @@ Originally the isolated rendering slice was frontend-only. The present branch al
 - The player light layer applies these sanitized cell masks to the existing radial light gradient. Failure returns no unoccluded player light, never raw private wall geometry.
 - This candidate covers **issued-tool torches**. It does not yet establish final photometric-quality smooth shadows for *every* light type; cell-edge artifacts, static map lights, windows, elevations and non-torch light sources remain explicit browser-acceptance cases.
 
-## Staging SQL dependency order (UNAPPLIED)
+## Staging SQL dependency order (APPLIED IN ONE ATOMIC MIGRATION)
 
-All candidates currently live only as committed GitHub source:
+All seven source candidates were applied together in Supabase migration `20261108031754_world_runtime_movement_fog_collision_20261108` and mirrored into `supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql` for reproducibility:
 
 1. `staging/sql-candidates/world_runtime_collision_and_group_move.sql`
 2. `staging/sql-candidates/world_runtime_dm_footprint_override.sql`
@@ -99,7 +99,7 @@ All candidates currently live only as committed GitHub source:
 6. `staging/sql-candidates/world_runtime_authorized_light_masks.sql`
 7. `staging/sql-candidates/world_runtime_visibility_tick_metadata.sql`
 
-These are **not yet deployable migration filenames**. Before an approved release, reconcile them against the live Supabase functions, review `SECURITY DEFINER` authorization, compile and release as ordered immutable migrations. Do not run them merely to obtain test feedback before the designer authorizes live testing.
+These candidates have already been consolidated, compiled and committed as one atomic migration. Schema/function/trigger installation and RPC role grants were verified, along with authenticated SQL smoke tests inside rolled-back transactions. Browser multi-client testing and visual performance profiling are still required after the coordinated frontend release.
 
 ## Release blockers and required acceptance
 
@@ -108,4 +108,4 @@ These are **not yet deployable migration filenames**. Before an approved release
 - Exercise a DM + two real players against *existing live test campaigns after designer release approval*, both fog on/off and shared/private LOS. Test 1x1 and larger footprints, diagonals, wall ends, doors, windows, moving torches, dynamic lighting, grouped tokens/tools, and rollbacks.
 - Profile 10/50/100 token boards, rapid drags, network loss/rejoin and map changes. Do not claim latency or 60fps targets from static checks.
 - Check known limitations: the current map background artwork remains inspectable by the recipient browser; visual fog does not cryptographically hide unrevealed background art. Full terrain confidentiality needs protected tiles or player-safe map images.
-- **Implementation remains in draft PR #46.** Do not merge or deploy independently of other pending staged components; preserve Vercel deployment quota and free-tier project policy.
+- **Implementation is in PR #46.** Merge once the release commit passes GitHub checks; this invokes one Vercel production build. No other outstanding release-ready staged components remain.
