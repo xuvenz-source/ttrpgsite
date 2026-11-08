@@ -60,3 +60,13 @@ test('additive viewer light wrapper preserves original authorized light calculat
  assert.match(undo,/drop function if exists public\.get_authorized_map_light_masks_v2\(uuid\)/);
  assert.doesNotMatch(undo,/drop function.*get_authorized_map_light_masks\(uuid\)/);
 });
+
+test('observer hide markers survive timer expiry until later trusted grant',()=>{
+ const app=read('src/TabletopApp.jsx');
+ assert.match(app,/if\(payload.action==='hide'\)\{/);
+ assert.match(app,/setRemoteTokenPositions\(markHidden\)/);
+ assert.match(app,/if\(isToken\)setRemoteTokenPositions\(clearHidden\)/);
+ assert.match(app,/acceptObserverMovementPacket\(payload,observerRevisions\.current\)/);
+ assert.doesNotMatch(app,/const unhide=prior/);
+ assert.match(app,/Timeout may reconcile positions but must/);
+});
