@@ -459,6 +459,17 @@
       "releaseReady": false,
       "databaseDependencies": [],
       "verification": "Added regression cases for same token set with coordinate moves, roster additions/removals, metadata changes and unknown values. RLS snapshot always fetched first, stale-context responses discarded. CI verification + authorized DM/player stress and permission revocation regression required; no SQL changes or claimed measured memory savings."
+    },
+    {
+      "id": "hidden-browser-fog-rpc-backpressure",
+      "description": "When a player's tab is hidden, revoke changed fog authorization immediately but defer fresh expensive per-viewer fog RPC until the tab is visible; preserve live updates to active players.",
+      "sources": [
+        "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [],
+      "verification": "Existing player fog tests and integrated server-auth guard updated. No stale sight persists on hidden-tab tick or reconnect. Need live focus/visibility, RLS and 2/4/6–10 browser stress acceptance."
     }
   ],
   "databaseDependencies": [
@@ -631,7 +642,7 @@
     "outstandingBranches": [
       "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08"
     ],
-    "stagePolicy": "PR #52 consolidates pending fog-revision coalescing and dependency-aware derived-RPC workload reduction after 1.54 GB stress-test memory commitment. No deployment without designer approval; run combined checks and verify fresh RLS/permissions. Server-side LOS optimization and PostgREST pool sizing require separate measured review and are not claimed complete.",
+    "stagePolicy": "PR #52 consolidates pending fog-revision coalescing and dependency-aware derived-RPC workload reduction after 1.54 GB stress-test memory commitment. No deployment without designer approval; run combined checks and verify fresh RLS/permissions. Server-side LOS optimization and PostgREST pool sizing require separate measured review and are not claimed complete. Background-tab fog requests are now deferred after immediate fail-closed revocation, with authorized refresh on visibility return.",
     "databaseReleaseVersion": null
   },
   "lastRelease": {
