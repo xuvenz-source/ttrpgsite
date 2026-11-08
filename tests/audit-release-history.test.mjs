@@ -12,7 +12,7 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,null);
+ assert.equal(ledger.releaseBranch,'stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08');
  assert.equal(ledger.productionBaseSha,'26765915deac294e154d1aeac05b23496d76de32');
  assert.deepEqual(ledger.upcomingRelease.outstandingBranches,
   ['stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08']);
