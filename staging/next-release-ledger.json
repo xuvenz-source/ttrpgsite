@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-08",
   "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
-  "releaseBranch": "stage/release-seamless-movement-hotbar-2026-11-08",
+  "releaseBranch": "stage/world-runtime-movement-collision-fog-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -123,8 +123,9 @@
     },
     {
       "name": "stage/world-runtime-movement-collision-fog-2026-11-08",
-      "status": "in-progress",
-      "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e"
+      "status": "included",
+      "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
+      "note": "Atomic SQL migration 20261108031754 applied and smoke-tested; consolidated GitHub PR #46 pending merge and one Vercel production deploy."
     }
   ],
   "features": [
@@ -296,8 +297,8 @@
       "sources": [
         "stage/world-runtime-movement-collision-fog-2026-11-08"
       ],
-      "status": "in-progress",
-      "releaseReady": false,
+      "status": "included",
+      "releaseReady": true,
       "databaseDependencies": [
         "world_runtime_collision_and_group_move",
         "world_runtime_dm_footprint_override",
@@ -307,7 +308,7 @@
         "world_runtime_authorized_light_masks",
         "world_runtime_visibility_tick_metadata"
       ],
-      "verification": "GitHub CI/static source checks only. Multiuser browser, privilege, geometry parity, SQL compile and live test campaigns after explicit release approval are REQUIRED."
+      "verification": "GitHub staged unit/build/CodeQL success; Supabase migration 20261108031754 applied as one transaction; installed functions, triggers, RLS and grants inspected; own-token positive and foreign-token/DM-override negative tests passed; atomic trajectory tested in rollback transaction. Multi-browser live UX profiling remains for test campaigns."
     }
   ],
   "databaseDependencies": [
@@ -363,58 +364,72 @@
     {
       "name": "world_runtime_collision_and_group_move",
       "file": "staging/sql-candidates/world_runtime_collision_and_group_move.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "dependsOn": null,
-      "releaseApprovalRequired": true
+      "releaseApprovalRequired": true,
+      "appliedVersion": "20261108031754",
+      "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
     },
     {
       "name": "world_runtime_dm_footprint_override",
       "file": "staging/sql-candidates/world_runtime_dm_footprint_override.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "dependsOn": "world_runtime_collision_and_group_move",
-      "releaseApprovalRequired": true
+      "releaseApprovalRequired": true,
+      "appliedVersion": "20261108031754",
+      "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
     },
     {
       "name": "world_runtime_atomic_trajectory",
       "file": "staging/sql-candidates/world_runtime_atomic_trajectory.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "dependsOn": "world_runtime_collision_and_group_move",
-      "releaseApprovalRequired": true
+      "releaseApprovalRequired": true,
+      "appliedVersion": "20261108031754",
+      "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
     },
     {
       "name": "world_runtime_private_observer_motion",
       "file": "staging/sql-candidates/world_runtime_private_observer_motion.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "dependsOn": "world_runtime_collision_and_group_move",
-      "releaseApprovalRequired": true
+      "releaseApprovalRequired": true,
+      "appliedVersion": "20261108031754",
+      "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
     },
     {
       "name": "world_runtime_preview_visibility",
       "file": "staging/sql-candidates/world_runtime_preview_visibility.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "dependsOn": "world_runtime_private_observer_motion",
-      "releaseApprovalRequired": true
+      "releaseApprovalRequired": true,
+      "appliedVersion": "20261108031754",
+      "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
     },
     {
       "name": "world_runtime_authorized_light_masks",
       "file": "staging/sql-candidates/world_runtime_authorized_light_masks.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "dependsOn": "world_runtime_preview_visibility",
-      "releaseApprovalRequired": true
+      "releaseApprovalRequired": true,
+      "appliedVersion": "20261108031754",
+      "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
     },
     {
       "name": "world_runtime_visibility_tick_metadata",
       "file": "staging/sql-candidates/world_runtime_visibility_tick_metadata.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
       "dependsOn": null,
-      "releaseApprovalRequired": true
+      "releaseApprovalRequired": true,
+      "appliedVersion": "20261108031754",
+      "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
     }
   ],
   "edgeFunctionDependencies": [
@@ -433,14 +448,18 @@
     "Macro quickcode helper is private, numeric-only, limited to an already authorized character/NPC macro source and keeps the strict server dice validator.",
     "Movement fog presentation only reuses previously visible and explored artwork: authorized visible remains empty during RPC refresh; no hidden token or new unexplored content is revealed.",
     "Hotbar roll drag payloads carry only validated IDs/action references, never raw sensitive character sheet records; invoking sheet actions checks campaign and source ownership and weapon/spell/initiative RPCs keep server authorization.",
-    "Consolidated approved release #45 is based on production #42; Supabase migration 20261107173054 was successfully applied and post-verified before the GitHub merge. No paid infrastructure."
+    "Consolidated approved release #45 is based on production #42; Supabase migration 20261107173054 was successfully applied and post-verified before the GitHub merge. No paid infrastructure.",
+    "World Runtime RPC grants checked: anon denied, authenticated authorized; forge_visibility remains private, preview rate table RLS enabled.",
+    "Authenticated SQL smoke-tested valid owned token, unauthorized foreign token, denied DM bypass, and reversible DM trajectory; all tests in rollback transactions."
   ],
   "upcomingRelease": {
     "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
-    "stagePolicy": "All previously staged release-ready components must be reconciled in one designer-approved production deployment. Unified world runtime SQL remains unapplied and this branch is not release ready.",
+    "stagePolicy": "The complete previously staged release-ready scope is included. World Runtime SQL already applied atomically; merge PR #46 once CI is green to issue one Vercel production deployment. Live multiplayer visual QA remains for existing test campaigns.",
     "outstandingBranches": [
       "stage/world-runtime-movement-collision-fog-2026-11-08"
-    ]
+    ],
+    "releaseBranch": "stage/world-runtime-movement-collision-fog-2026-11-08",
+    "databaseReleaseVersion": "20261108031754"
   },
   "lastRelease": {
     "name": "Seamless Multiplayer Movement and Universal Roll Hotbar",
@@ -525,5 +544,6 @@
       "description": "Consolidated and approved one-main-merge release of RLS-authorized smooth real-time token movement and all current roll-button hotbar assignments. Both source staging branches combined; migration applied and verified before merge.",
       "paidInfrastructure": false
     }
-  ]
+  ],
+  "databaseReleaseVersion": "20261108031754"
 }
