@@ -1377,7 +1377,7 @@ export default function TabletopApp(){
  // sanitized revision tick therefore re-queries authoritative token access.
  useEffect(()=>{
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
-  void refreshFogAwareTokens();void campaignTools.refresh(undefined,true);
+  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
  },[fog.frame?.revision,selectedMap]);
  // Movement previews can revise authorized LOS without changing the saved
  // visibility tick. Reconcile the RLS roster but don't refresh character
@@ -1391,7 +1391,7 @@ export default function TabletopApp(){
      current.displayVisibleDuringRefresh)return;
   const a=current.visible||[],b=previous.visible||[];
   if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
-  void refreshFogAwareTokens();void campaignTools.refresh(undefined,true);
+  void refreshFogAwareTokens();void campaignTools.refresh(['placed'],true);
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
