@@ -428,3 +428,45 @@ test('navigation permission protocol contains only opaque generations and origin
  delete noGeneration.permissionGeneration;
  assert.equal(normalizeAuthorizedNavigation(noGeneration,map,'token',owner),null);
 });
+
+test('private fog delta transports generation changes without revealing barrier fields',()=>{
+ const previous={
+  mapId:map,width:4,height:4,revision:8,enabled:true,partyShared:false,
+  collisionEnabled:true,navigationEnvironmentRevision:5,permissionGeneration:3,
+  protocolVersion:2,deltaProtocolVersion:1,epoch,sequence:6,
+  visible:[0,1,4,5],explored:[0,1,4,5]
+ };
+ const tick={
+  map_id:map,user_id:owner,revision:9,fog_enforced:true,
+  authorized_frame:{
+   mode:'delta',deltaProtocolVersion:1,protocolVersion:2,
+   mapId:map,revision:9,width:4,height:4,
+   enabled:true,partyShared:false,collisionEnabled:true,
+   navigationEnvironmentRevision:5,permissionGeneration:4,
+   epoch,sequence:7,baseRevision:8,baseSequence:6,
+   visibleAdd:[],visibleRemove:[],exploredAdd:[],exploredRemove:[]
+  }
+ };
+ const next=adoptVerifiedViewerTick(previous,tick,map,owner);
+ assert.equal(next?.permissionGeneration,4);
+ assert.deepEqual(next?.visible,previous.visible);
+ assert.notEqual(navigationAuthorizationKey(previous),navigationAuthorizationKey(next),
+  'a permission version change revokes navigation even without a visual fog change');
+ assert.equal(adoptVerifiedViewerTick(previous,{...tick,authorized_frame:{
+  ...tick.authorized_frame,permissionGeneration:-1}},map,owner),null);
+});
+
+test('security release SQL does not expose disconnected nodes or unrestricted geometry probing',()=>{
+ const sql=source('supabase/migrations/20261109000100_authorized_predictive_navigation.sql');
+ assert.match(sql,/IF \(candidate_masks \? neighbour_key\) AND NOT \(reachable \? neighbour_key\)/);
+ assert.match(sql,/IF reachable \? \(\(node->>0\)/);
+ assert.match(sql,/pg_catalog\.abs\(tx-bx\)>12/);
+ assert.match(sql,/pg_catalog\.abs\(ty-by\)>12/);
+ assert.match(sql,/IF fog_on AND dir\.dx<>0 AND dir\.dy<>0/);
+ assert.match(sql,/pg_catalog\.pg_try_advisory_xact_lock/);
+ assert.match(sql,/CREATE TRIGGER forge_navigation_token_permissions/);
+ assert.match(sql,/CREATE TRIGGER forge_navigation_tool_permissions/);
+ assert.match(sql,/REVOKE ALL ON FUNCTION forge_visibility\.bump_navigation_permission_generation/i);
+ assert.match(sql,/navigation_permission_generations.*ENABLE ROW LEVEL SECURITY/si);
+ assert.match(sql,/t\.owner_id IS NOT NULL/);
+});
