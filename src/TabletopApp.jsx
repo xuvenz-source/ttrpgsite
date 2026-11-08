@@ -38,6 +38,7 @@ import {normalizeEnvironment,withObject,patchObject,removeObject} from './MapEnv
 import {eventAffectsMap,createCoalescedRefresh,createTrailingRefresh,createAdaptiveReconciler,
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
+import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
 import {createDebouncedSerialWriter} from './QueuedWrites.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
@@ -102,6 +103,9 @@ export default function TabletopApp(){
  });
  const launchHandled=useRef(false);
  const signedAssetIdentity=useRef(null);
+ const refreshCoordinator=useRef(null);
+ if(!refreshCoordinator.current)
+  refreshCoordinator.current=createCampaignRefreshCoordinator();
  const[launchNpc]=useState(()=>{
   const params=new URLSearchParams(location.search);
   const campaignId=params.get('campaign'),id=params.get('npc');
@@ -256,9 +260,11 @@ export default function TabletopApp(){
   campaignHandouts.loading,campaignHandouts.error]);
 
  const campaignTools=useCampaignTools({
-  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM
+  db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
+  refreshCoordinator:refreshCoordinator.current
  });
- const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user});
+ const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,
+  refreshCoordinator:refreshCoordinator.current});
  const queuePreviewFogRefresh=()=>{
   const now=Date.now();
   if(now-lastPreviewFogRefresh.current<250)return;
@@ -778,17 +784,33 @@ export default function TabletopApp(){
     console.warn('Could not refresh campaign roster',e);
   }
  }
- async function refreshMonitors(){
+ async function refreshMonitors(fresh=false){
   const request=++monitorRequest.current;
-  if(!selectedMap||!activeId){setMonitorValues({});setEncumbranceBadges({});return}
+  if(!selectedMap||!activeId||!user){
+   setMonitorValues({});setEncumbranceBadges({});return;
+  }
+  // These are two independent server-derived resources. Concurrent callers
+  // share only in-flight reads for the same authorized campaign/map/viewer.
+  const valuesKey=campaignResourceKey({campaignId:activeId,mapId:selectedMap,
+   userId:user,resource:'token-monitor-values'});
+  const badgesKey=campaignResourceKey({campaignId:activeId,mapId:selectedMap,
+   userId:user,resource:'token-encumbrance-badges'});
+  if(fresh===true){
+   refreshCoordinator.current.invalidate(valuesKey);
+   refreshCoordinator.current.invalidate(badgesKey);
+  }
   try{
-   const [rows,badges]=await Promise.all([
-    read(db.rpc('get_token_monitor_values',{p_map:selectedMap})),
-    read(db.rpc('get_token_encumbrance_badges',{p_map:selectedMap}))
+   const [valuesReply,badgesReply]=await Promise.all([
+    refreshCoordinator.current.request(valuesKey,
+     ()=>read(db.rpc('get_token_monitor_values',{p_map:selectedMap}))),
+    refreshCoordinator.current.request(badgesKey,
+     ()=>read(db.rpc('get_token_encumbrance_badges',{p_map:selectedMap})))
    ]);
+   if(!valuesReply.current||!badgesReply.current)return;
+   const rows=valuesReply.value,badges=badgesReply.value;
    if(request===monitorRequest.current){
     const latest=Object.fromEntries((rows||[]).map(row=>[row.token_id,row.fields||{}]));
-    // Server reads can finish before a background edit. Keep local writes visible.
+    // Preserve optimistic patches while a remote read is pending.
     for(const pending of quickWritePatches.current.values()){
      for(const id of pending.affected){
       if(latest[id])latest[id]={...latest[id],...pending.patch};
@@ -801,14 +823,21 @@ export default function TabletopApp(){
    }
   }catch(e){if(request===monitorRequest.current)console.error('Could not refresh token monitors',e)}
  }
- async function refreshTokens(){
+ async function refreshTokens(fresh=false){
   const request=++tokenRefreshSeq.current;
   const mapId=selectedMap,campaignId=activeId;
   if(!mapId){setTokens([]);return}
   try{
-   const rows=await read(db.from('map_tokens').select(
-    'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
-   ).eq('map_id',mapId));
+   const key=campaignResourceKey({campaignId,mapId,userId:user,resource:'map-tokens'});
+   // A sight revision must never reuse a request begun before authorization
+   // changed. No completed snapshot is cached between refresh calls.
+   if(fresh===true)refreshCoordinator.current.invalidate(key);
+   const response=await refreshCoordinator.current.request(key,
+    ()=>read(db.from('map_tokens').select(
+     'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
+    ).eq('map_id',mapId)));
+   if(!response.current)return;
+   const rows=response.value;
    // Ignore older requests, including requests started before switching maps.
    if(request!==tokenRefreshSeq.current||
       tokenContextRef.current.mapId!==mapId||
@@ -1324,14 +1353,16 @@ export default function TabletopApp(){
  },[db,activeId,user]);
  useEffect(()=>{
   movementPending.current.clear();
+  refreshCoordinator.current.invalidateAll();
   ++tokenRefreshSeq.current;
+  ++monitorRequest.current;
  },[selectedMap,activeId,user]);
  useEffect(()=>{refreshTokens();refreshMonitors();refreshChat()},[selectedMap,activeId,user]);
  // Newly observed rows were absent from the player's old RLS stream. A
  // sanitized revision tick therefore re-queries the authoritative snapshots.
  useEffect(()=>{
   if(!fog.frame||fog.frame.mapId!==selectedMap)return;
-  void refreshTokens();void refreshMonitors();void campaignTools.refresh();
+  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh();
  },[fog.frame?.revision,selectedMap]);
  // Movement previews can revise authorized LOS without changing the saved
  // visibility tick. Refresh newly observable RLS rows only when that mask
@@ -1345,7 +1376,7 @@ export default function TabletopApp(){
      current.displayVisibleDuringRefresh)return;
   const a=current.visible||[],b=previous.visible||[];
   if(a.length===b.length&&a.every((value,i)=>value===b[i]))return;
-  void refreshTokens();void refreshMonitors();void campaignTools.refresh();
+  void refreshTokens(true);void refreshMonitors(true);void campaignTools.refresh();
  },[fog.frame,selectedMap]);
  useEffect(()=>{
   let live=true;
