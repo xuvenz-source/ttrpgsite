@@ -91,7 +91,7 @@ begin
 exception when others then
  -- On malformed scene or any unexpected error, suppress the preview.
  return 0;
-end $cached_observer$
+end $cached_observer$;
 
 revoke all on function forge_visibility.observer_path_status_cached(
  uuid,uuid,uuid,jsonb,integer,integer,integer,
