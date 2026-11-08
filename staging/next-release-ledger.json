@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-08",
-  "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
-  "releaseBranch": "stage/world-runtime-movement-collision-fog-2026-11-08",
+  "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
+  "releaseBranch": "stage/inventory-cross-transfer-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -123,9 +123,15 @@
     },
     {
       "name": "stage/world-runtime-movement-collision-fog-2026-11-08",
-      "status": "included",
+      "status": "released",
       "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
-      "note": "Atomic SQL migration 20261108031754 applied and smoke-tested; consolidated GitHub PR #46 pending merge and one Vercel production deploy."
+      "note": "PR #46 merged into main at a763b8d on 8 November 2026; SQL migration 20261108031754 recorded applied."
+    },
+    {
+      "name": "stage/inventory-cross-transfer-2026-11-08",
+      "status": "staged",
+      "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
+      "note": "Character inventory ↔ shared/issued-tool atomic transfers, click Move menu and cross-windowed-inventory pointer drops; SQL candidate unapplied; no deployment."
     }
   ],
   "features": [
@@ -297,7 +303,7 @@
       "sources": [
         "stage/world-runtime-movement-collision-fog-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [
         "world_runtime_collision_and_group_move",
@@ -309,6 +315,19 @@
         "world_runtime_visibility_tick_metadata"
       ],
       "verification": "GitHub staged unit/build/CodeQL success; Supabase migration 20261108031754 applied as one transaction; installed functions, triggers, RLS and grants inspected; own-token positive and foreign-token/DM-override negative tests passed; atomic trajectory tested in rollback transaction. Multi-browser live UX profiling remains for test campaigns."
+    },
+    {
+      "id": "atomic-character-party-inventory-transfers",
+      "description": "Fix misleading full-grid error and silent reverse transfer by destination-aware drag and click-to-Move; atomic authorized per-item character↔party/mount inventory migration with server-side footprint first-fit placement.",
+      "sources": [
+        "stage/inventory-cross-transfer-2026-11-08"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "campaign_cross_inventory_item_transfers"
+      ],
+      "verification": "New regression tests and GitHub CI (npm test, audit, build, Edge checks); requires authorized SQL migration and live player/DM browser validation."
     }
   ],
   "databaseDependencies": [
@@ -430,6 +449,15 @@
       "releaseApprovalRequired": true,
       "appliedVersion": "20261108031754",
       "appliedVia": "supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql"
+    },
+    {
+      "name": "campaign_cross_inventory_item_transfers",
+      "file": "staging/sql-candidates/campaign_cross_inventory_item_transfers.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "campaign_sheet_inventory_collaboration + campaign_tool_item_collaboration",
+      "notes": "Single SECURITY DEFINER RPC; own/shared tool + owned character authorization, leased source item, atomic add/remove, grid first-fit. Convert candidate to versioned migration after release approval; no separate paid testing DB."
     }
   ],
   "edgeFunctionDependencies": [
@@ -450,16 +478,17 @@
     "Hotbar roll drag payloads carry only validated IDs/action references, never raw sensitive character sheet records; invoking sheet actions checks campaign and source ownership and weapon/spell/initiative RPCs keep server authorization.",
     "Consolidated approved release #45 is based on production #42; Supabase migration 20261107173054 was successfully applied and post-verified before the GitHub merge. No paid infrastructure.",
     "World Runtime RPC grants checked: anon denied, authenticated authorized; forge_visibility remains private, preview rate table RLS enabled.",
-    "Authenticated SQL smoke-tested valid owned token, unauthorized foreign token, denied DM bypass, and reversible DM trajectory; all tests in rollback transactions."
+    "Authenticated SQL smoke-tested valid owned token, unauthorized foreign token, denied DM bypass, and reversible DM trajectory; all tests in rollback transactions.",
+    "Cross-inventory transfers: SQL candidate (not applied) separately authorizes owned character and shared/owned issued tool, requires active source-item lease and checks contiguous destination space. Staged frontend must not be released before its matching RPC."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "aa3e00f184b1f230f5d43556295c54a88f25e77e",
-    "stagePolicy": "The complete previously staged release-ready scope is included. World Runtime SQL already applied atomically; merge PR #46 once CI is green to issue one Vercel production deployment. Live multiplayer visual QA remains for existing test campaigns.",
+    "productionBaseSha": "a763b8d106e2362033c16ce44966e9b122d6a47b",
+    "stagePolicy": "Staging only. Candidate SQL must be reviewed and applied to the existing live Supabase Free project after explicit designer approval, before one consolidated frontend main merge. Retain other unreleased staged work as discovered during release audit. No previews or paid infrastructure.",
     "outstandingBranches": [
-      "stage/world-runtime-movement-collision-fog-2026-11-08"
+      "stage/inventory-cross-transfer-2026-11-08"
     ],
-    "releaseBranch": "stage/world-runtime-movement-collision-fog-2026-11-08",
-    "databaseReleaseVersion": "20261108031754"
+    "releaseBranch": "stage/inventory-cross-transfer-2026-11-08",
+    "databaseReleaseVersion": null
   },
   "lastRelease": {
     "name": "Seamless Multiplayer Movement and Universal Roll Hotbar",
