@@ -230,7 +230,10 @@ begin
   then continue;end if;
   -- Private recipients are validated by the existing current-LOS routine.
   -- No direct client send or public map topic can bypass this gate.
-  probe:=forge_visibility.observer_path_status(s.map_id,recipient.user_id,
+  probe:=forge_visibility.observer_path_status_cached(
+   s.map_id,recipient.user_id,s.campaign_id,s.scene,
+   (select b.grid_size from public.battle_maps b where b.id=s.map_id),
+   s.map_width,s.map_height,
    s.last_x+s.span_x/2,s.last_y+s.span_y/2,
    p_x+s.span_x/2,p_y+s.span_y/2,steps);
   if probe=0 then continue;end if;
