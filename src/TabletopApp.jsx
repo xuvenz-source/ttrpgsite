@@ -922,10 +922,12 @@ export default function TabletopApp(){
    // A sight revision must never reuse a request begun before authorization
    // changed. No completed snapshot is cached between refresh calls.
    if(fresh===true)refreshCoordinator.invalidate(key);
+   // The DM's local swept-collision simulation needs the same NPC attributes
+   // the SQL validator reads. Never request these private fields for players.
+   const projection='id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects';
    const response=await refreshCoordinator.request(key,
-    ()=>read(db.from('map_tokens').select(
-     'id,campaign_id,map_id,owner_id,name,color,x,y,visible,updated_at,npc_template_id,character_id,image_path,span_x,span_y,npc_bars_public,status_effects'
-    ).eq('map_id',mapId)));
+    ()=>read(db.from('map_tokens').select(isDM?
+     projection+',npc_values':projection).eq('map_id',mapId)));
    if(!response.current)return;
    const rows=response.value;
    // Ignore older requests, including requests started before switching maps.
