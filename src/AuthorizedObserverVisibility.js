@@ -31,8 +31,6 @@ export function clearVerifiedHiddenTokens(hidden,rows,frame,viewerId){
 export function clearVerifiedHiddenTools(hidden,rows,frame){
  if(!frame||frame.displayVisibleDuringRefresh||!Number.isSafeInteger(frame.revision)||
     !Array.isArray(rows))return hidden;
- const ids=new Set(rows.filter(row=>row?.map_id===frame.mapId)
-  .map(row=>row.issue_id));
  let changed=false;
  const next={...hidden};
  for(const [id,marker] of Object.entries(hidden||{})){
