@@ -4,6 +4,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 export function normalizeAuthorizedLightMasks(raw,mapId){
  if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.mapId!==mapId||
+    (raw.protocolVersion!==undefined&&raw.protocolVersion!==2)||
     !Number.isSafeInteger(raw.revision)||raw.revision<0||
     !Number.isSafeInteger(raw.width)||!Number.isSafeInteger(raw.height)||
     raw.width<1||raw.height<1||raw.width>128||raw.height>128||
@@ -24,6 +25,7 @@ export function normalizeAuthorizedLightMasks(raw,mapId){
   masks[source.id]=[...cells].sort((a,b)=>a-b);
  }
  return {mapId,revision:raw.revision,width:raw.width,
+  ...(raw.protocolVersion===2?{protocolVersion:2}:{}),
   height:raw.height,masks};
 }
 /** Coalesce contiguous illuminated cells into SVG rectangles to avoid a
