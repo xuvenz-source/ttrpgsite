@@ -16,7 +16,7 @@ DECLARE actor uuid:=auth.uid();camp uuid;role_name text;real_dm boolean;
  shared boolean:=false;w integer;h integer;grid integer;
  sources jsonb:='[]'::jsonb;lights jsonb:='[]'::jsonb;
  visible jsonb:='[]'::jsonb;explored jsonb:='[]'::jsonb;
- roster jsonb:='[]'::jsonb;pieces record;offset jsonb;
+ roster jsonb:='[]'::jsonb;pieces record;piece_delta jsonb;
  px integer;py integer;tx integer;ty integer;
  memory_count integer:=0;cursor bigint:=0;vision_epoch bigint:=0;
 BEGIN
@@ -137,10 +137,10 @@ BEGIN
   ORDER BY id LIMIT 500
  LOOP
   IF NOT real_dm AND pieces.shown IS DISTINCT FROM true THEN CONTINUE;END IF;
-  offset:=forge_world_v2.piece_offset_v2(
+  piece_delta:=forge_world_v2.piece_offset_v2(
    p_map,pieces.kind,pieces.id);
-  px:=pieces.x+(offset->>'dx')::integer;
-  py:=pieces.y+(offset->>'dy')::integer;
+  px:=pieces.x+(piece_delta->>'dx')::integer;
+  py:=pieces.y+(piece_delta->>'dy')::integer;
   IF px<0 OR py<0 OR px>=w OR py>=h THEN CONTINUE;END IF;
   IF fog_enabled AND NOT real_dm THEN
    IF NOT forge_world_v2.is_seen_v2(
