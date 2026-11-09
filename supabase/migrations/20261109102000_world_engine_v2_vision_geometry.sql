@@ -116,11 +116,11 @@ BEGIN
  THEN RETURN false;END IF;
  FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
   IF part->>'kind'='token' THEN
-   SELECT t.id,t.owner_id,t.visible,t.character_id,
-    t.x,t.y,t.span_x,t.span_y,t.updated_at
-   INTO t FROM public.map_tokens t
-   WHERE t.id=(part->>'id')::uuid AND
-    t.campaign_id=s.campaign_id AND t.map_id=s.map_id;
+   SELECT tok.id,tok.owner_id,tok.visible,tok.character_id,
+    tok.x,tok.y,tok.span_x,tok.span_y,tok.updated_at
+   INTO t FROM public.map_tokens tok
+   WHERE tok.id=(part->>'id')::uuid AND
+    tok.campaign_id=s.campaign_id AND tok.map_id=s.map_id;
    IF NOT FOUND OR t.x<>(part->>'x')::integer OR
     t.y<>(part->>'y')::integer OR
     t.span_x<>(part->>'spanX')::numeric OR
@@ -140,11 +140,11 @@ BEGIN
     THEN RETURN false;END IF;
    ELSIF part->>'characterId' IS NOT NULL THEN RETURN false;END IF;
   ELSIF part->>'kind'='tool' THEN
-   SELECT u.id,u.owner_id,u.party_shared,u.held_by_token_id,
-    u.x,u.y,u.revision
-   INTO u FROM public.campaign_tool_issues u
-   WHERE u.id=(part->>'id')::uuid AND
-    u.campaign_id=s.campaign_id AND u.map_id=s.map_id;
+   SELECT tool.id,tool.owner_id,tool.party_shared,tool.held_by_token_id,
+    tool.x,tool.y,tool.revision
+   INTO u FROM public.campaign_tool_issues tool
+   WHERE tool.id=(part->>'id')::uuid AND
+    tool.campaign_id=s.campaign_id AND tool.map_id=s.map_id;
    IF NOT FOUND OR u.held_by_token_id IS NOT NULL OR
     u.x<>(part->>'x')::integer OR u.y<>(part->>'y')::integer OR
     u.revision<>(part->>'toolRevision')::bigint OR
