@@ -33,15 +33,18 @@ CREATE TABLE public.map_tokens(
  id uuid PRIMARY KEY,map_id uuid,campaign_id uuid,owner_id uuid,
  visible boolean DEFAULT true,x integer,y integer,
  span_x numeric DEFAULT 1,span_y numeric DEFAULT 1,
- character_id uuid,npc_values jsonb DEFAULT '{}'::jsonb);
+ character_id uuid,npc_values jsonb DEFAULT '{}'::jsonb,
+ updated_at timestamptz DEFAULT now());
 CREATE TABLE public.characters(
  id uuid PRIMARY KEY,campaign_id uuid,user_id uuid,
- field_values jsonb DEFAULT '{}'::jsonb);
+ field_values jsonb DEFAULT '{}'::jsonb,
+ updated_at timestamptz DEFAULT now());
 CREATE TABLE public.campaign_tool_issues(
  id uuid PRIMARY KEY,campaign_id uuid,map_id uuid,
  x integer,y integer,kind text,config jsonb DEFAULT '{}'::jsonb,
  state jsonb DEFAULT '{}'::jsonb,
- held_by_token_id uuid,owner_id uuid,party_shared boolean DEFAULT false);
+ held_by_token_id uuid,owner_id uuid,party_shared boolean DEFAULT false,
+ revision bigint DEFAULT 0);
 CREATE TABLE forge_visibility.navigation_gestures(
  id uuid PRIMARY KEY,actor_id uuid NOT NULL,map_id uuid NOT NULL,
  campaign_id uuid NOT NULL,token_origins jsonb NOT NULL,
@@ -52,6 +55,15 @@ CREATE TABLE forge_visibility.navigation_gestures(
 ALTER TABLE forge_visibility.navigation_gestures ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE forge_visibility.navigation_gestures
  FROM PUBLIC,anon,authenticated;
+CREATE TABLE forge_visibility.movement_sessions(
+ id uuid PRIMARY KEY,actor_id uuid,piece_id uuid,kind text,map_id uuid,
+ campaign_id uuid,base_x integer,base_y integer,last_x integer,last_y integer,
+ last_seq bigint DEFAULT 0,map_width integer,map_height integer,grid_size integer,
+ span_x double precision,span_y double precision,scene jsonb,attributes jsonb,
+ environment_revision bigint,rules_updated_at timestamptz,
+ collision_enforced boolean,ignore_collision boolean,token_visible boolean,
+ base_updated_at timestamptz,base_tool_revision bigint,character_id uuid,
+ character_updated_at timestamptz,last_sent timestamptz,expires_at timestamptz);
 CREATE TABLE forge_visibility.movement_preview_rates(
  actor_id uuid,piece_id uuid,last_sent timestamptz,last_seq bigint,
  map_id uuid,kind text,base_x integer,base_y integer,
@@ -161,3 +173,16 @@ INSERT INTO forge_visibility.navigation_gestures(
  FROM forge_visibility.map_rules m
  JOIN public.map_environments e ON e.map_id=m.map_id
  WHERE m.map_id='33333333-3333-4333-8333-333333333333';
+
+INSERT INTO forge_visibility.movement_sessions(
+ id,actor_id,piece_id,kind,map_id,campaign_id,base_x,base_y,last_x,last_y,
+ last_seq,map_width,map_height,grid_size,span_x,span_y,scene,attributes,
+ environment_revision,rules_updated_at,collision_enforced,ignore_collision,
+ token_visible,base_updated_at,character_id,expires_at)
+ SELECT 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+ '99999999-9999-4999-8999-999999999999',t.id,'token',t.map_id,t.campaign_id,
+ t.x,t.y,t.x,t.y,0,10,10,10,1,1,e.live,'{}'::jsonb,e.revision,
+ r.updated_at,true,false,true,t.updated_at,t.character_id,now()+interval '1 hour'
+ FROM public.map_tokens t JOIN public.map_environments e ON e.map_id=t.map_id
+ JOIN forge_visibility.map_rules r ON r.map_id=t.map_id
+ WHERE t.id='55555555-5555-4555-8555-555555555555';
