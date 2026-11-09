@@ -159,6 +159,21 @@ export default function WorldV2Board(props){
    const allowed=renderer?.currentVisibility?.visiblePieces.some(row=>
     row.kind===piece.kind&&row.id===piece.id);
    if(!allowed)continue; // only an approved roster can create/show data
+   const signature=[
+    piece.kind,token?.name,token?.image_path,token?.owner_id,
+    token?.visible,token?.span_x,token?.span_y,token?.status_effects,
+    tool?.name,tool?.icon,tool?.span,tool?.kind,issue?.state,
+    selected.tokens.includes(piece.id),selected.tools.includes(piece.id),
+    inputs.combatActiveTokenId===piece.id,inputs.isDM,inputs.user,
+    previewRequested,inputs.displayConfig,
+    inputs.monitorValues?.[piece.id],inputs.encumbranceBadges?.[piece.id],
+    inputs.statusCatalog
+   ];
+   // Canonical x/y changes do not rerender React artwork. The single V2
+   // renderer is already moving the existing sprite parent at frame rate.
+   if(entry.signature?.length===signature.length&&
+    signature.every((value,i)=>value===entry.signature[i]))continue;
+   entry.signature=signature;
    if(token){
     entry.node.dataset.tokenId=piece.id;
     entry.node.className='token'+
@@ -186,9 +201,10 @@ export default function WorldV2Board(props){
     values={inputs.monitorValues?.[piece.id]}
     badge={inputs.encumbranceBadges?.[piece.id]}
     statusCatalog={inputs.statusCatalog}
-    onToolOpen={inputs.onToolOpen}
-    onTokenEdit={inputs.onTokenEdit} onTokenQuick={inputs.onTokenQuick}
-    onTokenStatus={inputs.onTokenStatus}
+    onToolOpen={id=>latest.current.onToolOpen?.(id)}
+    onTokenEdit={item=>latest.current.onTokenEdit?.(item)}
+    onTokenQuick={item=>latest.current.onTokenQuick?.(item)}
+    onTokenStatus={item=>latest.current.onTokenStatus?.(item)}
     onResize={startResize}/>);
   }
  },[previewRequested]);
