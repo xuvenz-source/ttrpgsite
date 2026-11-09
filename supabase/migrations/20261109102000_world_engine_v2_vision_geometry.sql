@@ -236,7 +236,7 @@ BEGIN
  FOR obj IN SELECT value FROM jsonb_array_elements(p_scene->'objects')
  WHERE value->>'type'='light' AND value->>'enabled'<>'false' LIMIT 60 LOOP
   sources:=sources||jsonb_build_array(jsonb_build_object(
-   'x',(obj->>'x')::double precision,
+   'kind','static','x',(obj->>'x')::double precision,
    'y',(obj->>'y')::double precision,
    'reach',greatest(0,least(200,
      (coalesce((obj->>'bright')::double precision,0)+
@@ -266,11 +266,59 @@ BEGIN
    torch_y:=tool.y+0.5+(delta->>'dy')::integer;
   END IF;
   sources:=sources||jsonb_build_array(jsonb_build_object(
-   'x',torch_x,'y',torch_y,
+   'kind','torch','x',torch_x,'y',torch_y,
    'reach',greatest(0,least(200,
     (coalesce(tool.light_bright,0)+coalesce(tool.light_dim,0))/5.0))));
  END LOOP;
  RETURN sources;
+EXCEPTION WHEN others THEN RETURN '[]'::jsonb;
+END $$;
+
+-- Cosmetic moving-torch levels confined to already authorized cells.
+-- Never grants vision. Bounds protect free-tier PostgreSQL resources.
+CREATE OR REPLACE FUNCTION forge_world_v2.visible_torch_levels_v2(
+ p_scene jsonb,p_sources jsonb,p_visible jsonb,p_width integer)
+RETURNS jsonb LANGUAGE plpgsql STABLE SET search_path=''
+AS $$
+DECLARE result jsonb:='[]'::jsonb;cell jsonb;light jsonb;
+ idx integer;x double precision;y double precision;
+ lx double precision;ly double precision;radius double precision;
+ distance2 double precision;level integer;maximum integer;
+ lamps jsonb:='[]'::jsonb;
+BEGIN
+ IF p_width NOT BETWEEN 1 AND 128 OR
+  jsonb_typeof(p_visible)<>'array' OR
+  jsonb_array_length(p_visible)>768 OR
+  jsonb_typeof(p_sources)<>'array' OR
+  jsonb_array_length(p_sources)>110 OR
+  jsonb_typeof(p_scene->'objects')<>'array'
+ THEN RETURN result;END IF;
+ SELECT coalesce(jsonb_agg(value),'[]'::jsonb) INTO lamps
+ FROM (SELECT value FROM jsonb_array_elements(p_sources)
+  WHERE value->>'kind'='torch' LIMIT 12) selected;
+ IF lamps='[]'::jsonb THEN RETURN result;END IF;
+ FOR cell IN SELECT value FROM jsonb_array_elements(p_visible) LOOP
+  idx:=(cell #>> '{}')::integer;
+  x:=(idx%p_width)+0.5;
+  y:=floor(idx::numeric/p_width)::double precision+0.5;
+  maximum:=0;
+  FOR light IN SELECT value FROM jsonb_array_elements(lamps) LOOP
+   lx:=(light->>'x')::double precision;
+   ly:=(light->>'y')::double precision;
+   radius:=(light->>'reach')::double precision;
+   distance2:=(x-lx)^2+(y-ly)^2;
+   IF radius<=0 OR distance2>radius^2 THEN CONTINUE;END IF;
+   IF forge_world_v2.ray_blocked_v2(
+    p_scene,lx,ly,x,y,'light','{}'::jsonb) THEN CONTINUE;END IF;
+   level:=CASE WHEN distance2<=radius^2*0.1225 THEN 3
+    WHEN distance2<=radius^2*0.49 THEN 2 ELSE 1 END;
+   maximum:=greatest(maximum,level);
+   IF maximum=3 THEN EXIT;END IF;
+  END LOOP;
+  IF maximum>0 THEN result:=result||
+   jsonb_build_array(jsonb_build_array(idx,maximum));END IF;
+ END LOOP;
+ RETURN result;
 EXCEPTION WHEN others THEN RETURN '[]'::jsonb;
 END $$;
 
