@@ -88,6 +88,14 @@ import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 
 import Board from './BattlemapBoard.jsx';
+/**
+ * Phase 9: not enabled in any current deployment. Requires both explicit
+ * release controls plus Phase 10 retirement and approved V2 SQL cutover.
+ */
+const WORLD_V2_CUTOVER=import.meta.env.VITE_WORLD_ENGINE_V2==='integrated'&&
+ import.meta.env.VITE_WORLD_ENGINE_V2_READY==='true';
+const BoardComponent=WORLD_V2_CUTOVER?
+ React.lazy(()=>import('./engine/v2/WorldV2Board.jsx')):Board;
 import Designer from './SheetTemplateDesigner.jsx';
 import {QuickEditBoundary} from './AppBoundaries.jsx';
 import {uid,D} from './TabletopSheetDefaults.js';
@@ -2914,7 +2922,9 @@ export default function TabletopApp(){
  <section className="panel tabletop-panel map-only-panel"
   style={tab==='tabletop'||tab==='sheet'?undefined:{display:'none'}}
   aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
-  {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
+  {displayedMap?<><React.Suspense fallback={
+    <div className="empty-tabletop" role="status">Loading tabletop…</div>
+   }><BoardComponent db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    publishedEnvironment={mapEnvironmentMapId===selectedMap?publishedMapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
@@ -2963,7 +2973,12 @@ export default function TabletopApp(){
    resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}
-   encumbranceBadges={encumbranceBadges} hotbarInset={hotbarVisible}/>
+   encumbranceBadges={encumbranceBadges} hotbarInset={hotbarVisible}
+   onMovementCommitted={()=>{
+    void refreshTokens();
+    void campaignTools.refresh(['issued','placed'],true);
+   }}
+   onV2Error={fail}/></React.Suspense>
    {(Object.keys(pendingQuickTokens).length+Object.keys(statusSavingTokens).length)>0&&
     <div className="quick-save-status" role="status">
      <span className="quick-save-pulse" aria-hidden="true"/>
