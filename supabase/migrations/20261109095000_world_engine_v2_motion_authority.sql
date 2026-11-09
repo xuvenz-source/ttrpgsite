@@ -372,7 +372,7 @@ BEGIN
     attrs:='{}'::jsonb;
     IF part->>'kind'='token' THEN
      SELECT tok.character_id,tok.npc_values INTO t FROM public.map_tokens tok
-      WHERE t.id=(part->>'id')::uuid;
+      WHERE tok.id=(part->>'id')::uuid;
      attrs:=coalesce(t.npc_values,'{}'::jsonb);
      IF t.character_id IS NOT NULL THEN
       SELECT ch.field_values INTO attrs FROM public.characters ch
@@ -381,7 +381,7 @@ BEGIN
      END IF;
     ELSE
      SELECT coalesce(tool.state->'attrs','{}'::jsonb) INTO attrs
-      FROM public.campaign_tool_issues tool WHERE u.id=(part->>'id')::uuid;
+      FROM public.campaign_tool_issues tool WHERE tool.id=(part->>'id')::uuid;
     END IF;
     IF NOT forge_world_v2.step_allowed(scene,attrs,
       (part->>'x')::double precision+(s.last_x-s.origin_x),
@@ -480,7 +480,7 @@ BEGIN
   attrs:='{}'::jsonb;
   IF part->>'kind'='token' THEN
    SELECT tok.character_id,tok.npc_values INTO t FROM public.map_tokens tok
-    WHERE t.id=(part->>'id')::uuid;
+    WHERE tok.id=(part->>'id')::uuid;
    attrs:=coalesce(t.npc_values,'{}'::jsonb);
    IF t.character_id IS NOT NULL THEN
     SELECT coalesce(ch.field_values,'{}'::jsonb) INTO attrs
@@ -489,7 +489,7 @@ BEGIN
    token_ids:=array_append(token_ids,(part->>'id')::uuid);
   ELSE
    SELECT coalesce(tool.state->'attrs','{}'::jsonb) INTO attrs
-   FROM public.campaign_tool_issues tool WHERE u.id=(part->>'id')::uuid;
+   FROM public.campaign_tool_issues tool WHERE tool.id=(part->>'id')::uuid;
    tool_ids:=array_append(tool_ids,(part->>'id')::uuid);
   END IF;
   cx:=(part->>'x')::integer;cy:=(part->>'y')::integer;
