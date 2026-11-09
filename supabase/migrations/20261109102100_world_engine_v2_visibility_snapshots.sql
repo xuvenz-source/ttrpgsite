@@ -15,6 +15,9 @@ AS $$
 DECLARE actor uuid:=auth.uid();camp uuid;role_name text;real_dm boolean;
  env jsonb;revision bigint:=0;scene_gen bigint:=0;
  permission_gen bigint:=0;fog_enabled boolean:=false;
+ collision_on boolean:=false;prediction_grants jsonb:='[]'::jsonb;
+ safe_quads jsonb;piece_attrs jsonb;sign_x integer;sign_y integer;
+ center_x integer;center_y integer;
  shared boolean:=false;w integer;h integer;grid integer;
  sources jsonb:='[]'::jsonb;lights jsonb:='[]'::jsonb;
  visible jsonb:='[]'::jsonb;explored jsonb:='[]'::jsonb;
@@ -57,9 +60,11 @@ BEGIN
  SELECT e.live,e.revision INTO env,revision
  FROM public.map_environments e WHERE e.map_id=p_map
   AND e.campaign_id=camp;
- SELECT coalesce(r.fog_enforced,false) INTO fog_enabled
+ SELECT coalesce(r.fog_enforced,false),
+  coalesce(r.collision_enforced,false) INTO fog_enabled,collision_on
  FROM forge_visibility.map_rules r
  WHERE r.map_id=p_map AND r.campaign_id=camp;
+ collision_on:=coalesce(collision_on,false);
  fog_enabled:=coalesce(fog_enabled,false);
  -- Automatic fog has a 128x128-cell authoring limit. Without fog, preserve
  -- large-map token rosters without generating a huge boolean fog texture.
@@ -175,6 +180,46 @@ BEGIN
   END IF;
   roster:=roster||jsonb_build_array(jsonb_build_object(
    'kind',pieces.kind,'id',pieces.id,'x',px,'y',py));
+  -- Prediction permits only bounded fractional displacements within
+  -- collision-free footprint envelopes; never emit a wall or hidden NPC.
+  -- Real movement still traverses the independent authority RPC.
+  IF role_name='player' AND pieces.kind='token' AND
+     pieces.owner_id=p_viewer AND jsonb_array_length(prediction_grants)<8 THEN
+   SELECT coalesce(ch.field_values,t.npc_values,'{}'::jsonb)
+   INTO piece_attrs FROM public.map_tokens t
+   LEFT JOIN public.characters ch ON ch.id=t.character_id
+    AND ch.campaign_id=camp
+   WHERE t.id=pieces.id AND t.map_id=p_map AND t.campaign_id=camp;
+   safe_quads:='[]'::jsonb;
+   center_x:=floor(px+pieces.sw/2.0)::integer;
+   center_y:=floor(py+pieces.sh/2.0)::integer;
+   FOR sign_x IN SELECT v FROM (VALUES(-1),(1)) AS q(v) LOOP
+    FOR sign_y IN SELECT v FROM (VALUES(-1),(1)) AS q(v) LOOP
+     IF fog_enabled AND NOT (
+      center_x+sign_x BETWEEN 0 AND w-1 AND
+      center_y+sign_y BETWEEN 0 AND h-1 AND
+      visible @> jsonb_build_array(center_x+sign_x+center_y*w) AND
+      visible @> jsonb_build_array(center_x+(center_y+sign_y)*w) AND
+      visible @> jsonb_build_array(
+       center_x+sign_x+(center_y+sign_y)*w)
+     ) THEN CONTINUE;END IF;
+     -- Stationary expanded footprint covers every fractional offset in
+     -- this quadrant, including paths missed by diagonal-ray sampling.
+     IF forge_world_v2.step_allowed(env,
+       coalesce(piece_attrs,'{}'::jsonb),
+       px+least(sign_x,0),py+least(sign_y,0),
+       px+least(sign_x,0),py+least(sign_y,0),
+       pieces.sw+1,pieces.sh+1,w,h,collision_on)
+     THEN safe_quads:=safe_quads||
+      jsonb_build_array(jsonb_build_array(sign_x,sign_y));END IF;
+    END LOOP;
+   END LOOP;
+   IF jsonb_array_length(safe_quads)>0 THEN
+    prediction_grants:=prediction_grants||jsonb_build_array(
+     jsonb_build_object('kind','token','id',pieces.id,
+      'x',px,'y',py,'quadrants',safe_quads));
+   END IF;
+  END IF;
  END LOOP;
  RETURN jsonb_build_object(
   'version',2,'mapId',p_map,'viewerId',p_viewer,
@@ -187,7 +232,7 @@ BEGIN
   'enabled',fog_enabled AND NOT real_dm,
   'width',w,'height',h,'partyShared',shared,
   'visible',visible,'explored',explored,
-  'visiblePieces',roster);
+  'visiblePieces',roster,'predictionGrants',prediction_grants);
 EXCEPTION WHEN others THEN
  -- No incomplete/partial fog frame or private geometry escapes on failure.
  RETURN NULL;
