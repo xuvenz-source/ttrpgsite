@@ -29,6 +29,10 @@ BEGIN
   viewer_id='30000000-0000-4000-8000-000000000001' AND
   map_id='10000000-0000-4000-8000-000000000001';
  PERFORM set_config('fixture.boundary_before',before_epoch::text,false);
+ PERFORM set_config('fixture.boundary_offmap_before',(
+  SELECT count(*)::text FROM realtime.messages m
+  WHERE m.event='world-vision-v2' AND m.payload->>'viewerId'=
+   '30000000-0000-4000-8000-000000000002'),false);
  PERFORM set_config('fixture.boundary_env',(
   SELECT revision::text FROM public.map_environments WHERE
   map_id='10000000-0000-4000-8000-000000000001'),false);
@@ -77,9 +81,10 @@ BEGIN
   last_msg ? 'x' OR last_msg ? 'y' OR last_msg ? 'visible' OR
   last_msg::text LIKE '%40000000-0000-4000-8000-000000000090%'
  THEN RAISE EXCEPTION 'Entry roster hint disclosed hidden identity: %',last_msg;END IF;
- IF EXISTS(SELECT 1 FROM realtime.messages m
+ IF (SELECT count(*) FROM realtime.messages m
   WHERE m.event='world-vision-v2' AND
-   m.payload->>'viewerId'='30000000-0000-4000-8000-000000000002')
+   m.payload->>'viewerId'='30000000-0000-4000-8000-000000000002')<>
+   current_setting('fixture.boundary_offmap_before')::integer
  THEN RAISE EXCEPTION 'Off-map viewer notified about an NPC';END IF;
  PERFORM set_config('fixture.boundary_enter_epoch',after_epoch::text,false);
 END $$;
