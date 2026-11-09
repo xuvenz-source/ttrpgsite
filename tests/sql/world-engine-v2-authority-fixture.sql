@@ -59,6 +59,13 @@ AS $$ SELECT auth.uid() IS NOT NULL AND EXISTS (
  JOIN public.battle_maps b ON b.campaign_id=m.campaign_id
  WHERE m.campaign_id=p_campaign AND m.user_id=auth.uid() AND b.id=p_map) $$;
 
+-- Realtime topic authorization checks map assignment under the joining role.
+ALTER TABLE public.battle_maps ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "fixture member reads assigned map" ON public.battle_maps
+ FOR SELECT TO authenticated
+ USING (public.can_view_campaign_map(campaign_id,id));
+GRANT SELECT ON public.battle_maps TO authenticated;
+
 -- Synthetic direct-write guard mirrors the requirement that final writes
 -- are valid only from an authorized, transaction-local route.
 CREATE OR REPLACE FUNCTION public.fixture_motion_guard()
