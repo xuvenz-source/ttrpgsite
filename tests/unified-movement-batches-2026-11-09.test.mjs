@@ -135,3 +135,12 @@ test('frame telemetry contains only aggregate timings, never coordinates',()=>{
  motion.dispose();
  movementDiagnostics.clear();
 });
+
+test('straight clear corridors use one sweep per member but blocked routes retain exact prefixes',()=>{
+ assert.match(sql,/IF delta_x=0 OR delta_y=0 THEN/);
+ assert.match(sql,/IF fast_legal THEN/);
+ assert.match(sql,/CONTINUE targets_loop;/);
+ assert.match(sql,/IF NOT valid THEN blocked:=true;EXIT targets_loop;END IF;/);
+ assert.match(sql,/PERFORM forge_visibility\.validate_piece_trajectory/);
+ assert.match(sql,/check_end:=forge_visibility\.validate_piece_trajectory/);
+});
