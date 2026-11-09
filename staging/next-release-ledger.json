@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
-  "releaseBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
+  "productionBaseSha": "7fb2c04fe4ca85721e08772e936265a649784bda",
+  "releaseBranch": "stage/world-v2-live-regression-integrated-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
       "name": "stage/world-v2-live-regression-integrated-2026-11-10",
       "status": "staged",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 61,
       "productionBaseSha": "7fb2c04fe4ca85721e08772e936265a649784bda",
       "note": "Frontend-only integrated V2 repair: single-owner startup sight, map-sized grid, fog-safe interactive popups, native Ctrl+wheel, buffered key movement. No SQL or production release. CI and real browser multiplayer acceptance required."
     },
@@ -186,16 +186,18 @@
     },
     {
       "name": "stage/world-engine-v2-2026-11-09",
-      "status": "staged-unreleased",
+      "status": "released",
       "linkedPullRequest": 58,
       "productionBaseSha": "ab0901f7cbe85f2bf62bccf7c0941c3eec928d04",
-      "note": "Draft PR #58 carries all Phases 1–10 plus code-first audit corrections (NPC boundary roster, fogless dynamic lights, authorized loose/shared tool prediction). Read-only live schema baseline verified; V2 SQL remains unapplied and old board default. Synthetic Node/PG17/CodeQL required at latest SHA. Do not deploy or mark release-ready before designer-approved integrated cutover and real browser/free-tier acceptance."
+      "note": "PR #58 integrated V2 released to production as 26841990c53fedef2567a95c8bc0f2e1513ab98c; all eight V2 SQL migrations applied. Startup hotfix PR #59 followed. Live campaign regressions are tracked in staging PR #61; manual multiplayer acceptance remains outstanding.",
+      "productionCommit": "26841990c53fedef2567a95c8bc0f2e1513ab98c"
     },
     {
       "name": "stage/supabase-free-tier-memory-optimizations-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "bb7d058b504a960965b393d8c4e506bab2c946db",
-      "note": "Supabase Free-tier resource optimization staging, migration 20261110050000 unapplied. No merge or deployment approval; see docs/supabase-free-tier-memory-staging-2026-11-10.md."
+      "note": "PR #60 released to production as 7fb2c04fe4ca85721e08772e936265a649784bda, including free_tier_rls_initplan_optimization_20261110050000 applied on production. Manual free-tier resource measurements remain outstanding.",
+      "productionCommit": "7fb2c04fe4ca85721e08772e936265a649784bda"
     }
   ],
   "features": [
