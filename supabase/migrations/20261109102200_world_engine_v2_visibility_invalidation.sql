@@ -12,7 +12,7 @@ AS $$
 DECLARE new_epoch bigint;env_rev bigint:=0;
  perm_gen bigint:=0;scene_gen bigint:=0;
 BEGIN
- IF forge_world_v2.viewer_on_map(p_campaign,p_map,p_viewer)<>'player'
+ IF forge_world_v2.viewer_on_map(p_campaign,p_map,p_viewer) IS DISTINCT FROM 'player'
  THEN RETURN NULL;END IF;
  INSERT INTO forge_world_v2.vision_epochs(
   map_id,viewer_id,campaign_id,epoch,changed_at)
@@ -76,7 +76,7 @@ BEGIN
   WHERE cm.campaign_id=s.campaign_id AND cm.role='player'
   ORDER BY cm.user_id LIMIT 32 LOOP
   IF forge_world_v2.viewer_on_map(s.campaign_id,s.map_id,viewer.user_id)
-   <>'player' THEN CONTINUE;END IF;
+   IS DISTINCT FROM 'player' THEN CONTINUE;END IF;
   affected:=false;
   FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
    IF part->>'kind'='token' THEN
@@ -208,7 +208,7 @@ BEGIN
   ORDER BY cm.user_id LIMIT 32
  LOOP
   IF forge_world_v2.viewer_on_map(p_campaign,p_map,v.user_id)
-    <>'player' THEN CONTINUE;END IF;
+    IS DISTINCT FROM 'player' THEN CONTINUE;END IF;
   nearby:=false;
   FOR source IN SELECT value FROM jsonb_array_elements(
    forge_world_v2.vision_sources_v2(p_map,p_campaign,v.user_id,scene))
