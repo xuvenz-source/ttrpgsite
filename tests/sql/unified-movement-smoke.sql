@@ -265,3 +265,39 @@ BEGIN
  THEN RAISE EXCEPTION 'Unverified torch moved without a server-authorized rate';END IF;
 END $$;
 \echo 'PASS: DM-carried torches use authorized ephemeral coordinates and revoke stale light'
+
+-- Attempts to create fresh hidden-wall probing sessions are bounded by
+-- a private actor/map rate limit. This fixture proves the trigger and RLS,
+-- not the browser's pointer-intent authenticity.
+DO $$
+DECLARE n integer;blocked boolean:=false;
+BEGIN
+ IF has_table_privilege('authenticated',
+  'forge_visibility.navigation_gesture_budgets','SELECT')
+ THEN RAISE EXCEPTION 'Player can inspect hidden navigation rate budget';END IF;
+ PERFORM set_config('request.jwt.claim.sub',
+  '22222222-2222-4222-8222-222222222222',true);
+ FOR n IN 1..120 LOOP
+  INSERT INTO forge_visibility.navigation_gestures(
+   id,actor_id,map_id,campaign_id,token_origins,tool_origins,
+   environment_revision,permission_generation,rules_updated_at,expires_at)
+  SELECT gen_random_uuid(),actor_id,map_id,campaign_id,token_origins,tool_origins,
+   environment_revision,permission_generation,rules_updated_at,
+   clock_timestamp()+interval '5 seconds'
+  FROM forge_visibility.navigation_gestures
+  WHERE id='77777777-7777-4777-8777-777777777777';
+ END LOOP;
+ BEGIN
+  INSERT INTO forge_visibility.navigation_gestures(
+   id,actor_id,map_id,campaign_id,token_origins,tool_origins,
+   environment_revision,permission_generation,rules_updated_at,expires_at)
+  SELECT gen_random_uuid(),actor_id,map_id,campaign_id,token_origins,tool_origins,
+   environment_revision,permission_generation,rules_updated_at,
+   clock_timestamp()+interval '5 seconds'
+  FROM forge_visibility.navigation_gestures
+  WHERE id='77777777-7777-4777-8777-777777777777';
+ EXCEPTION WHEN others THEN blocked:=true;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Private session restart probe budget failed';END IF;
+END $$;
+\echo 'PASS: private navigation restart budget, 121st session denied'
