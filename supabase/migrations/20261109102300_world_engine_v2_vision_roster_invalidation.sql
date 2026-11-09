@@ -24,7 +24,7 @@ BEGIN
   ORDER BY cm.user_id LIMIT 32
  LOOP
   IF forge_world_v2.viewer_on_map(p_campaign,p_map,recipient.user_id)
-    <>'player' THEN CONTINUE;END IF;
+    IS DISTINCT FROM 'player' THEN CONTINUE;END IF;
   affected:=p_owner IS NOT NULL AND recipient.user_id=p_owner;
   IF NOT affected AND share AND p_owner IS NOT NULL AND
    forge_world_v2.viewer_on_map(p_campaign,p_map,p_owner)='player'
