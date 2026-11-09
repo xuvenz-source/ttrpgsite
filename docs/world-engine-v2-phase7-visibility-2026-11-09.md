@@ -38,6 +38,7 @@ No migration publishes raw DM map geometry to a player, creates a per-cell Realt
   "version": 2,
   "mapId": "map-uuid",
   "viewerId": "authenticated-viewer-uuid",
+  "scope": "viewer",
   "cursor": 5,
   "environmentRevision": 9,
   "permissionGeneration": 4,
@@ -61,6 +62,7 @@ The response excludes walls, hidden/light source coordinates, secret door condit
 - **`explored`**: persistent historical cells in `forge_visibility.exploration`. When nothing new is explored, there is no exploration UPDATE/WAL write. When party sharing is published, explored history is the permitted party union.
 - **`visiblePieces`**: roster of entities currently authorized for the viewer, including their latest server-approved transient/canonical position; no hidden NPC appears solely from a broadcast.
 - **`cursor`**: this viewer's private movement sequence, acquired in the *same snapshot* as sight and roster so Phase 5's reconnect guard can safely unlock.
+- **`scope`**: an explicit server-owned `viewer` or `dm` role. Phase 8 refuses to display player sight over stale DM-only scene geometry and hard-revokes a privileged scene on a role mismatch.
 - **`environmentRevision` / `sceneGeneration` / `permissionGeneration` / `visionEpoch`**: distinct guards for published scene, rule/permission changes and moving vision, with out-of-order or revoked frames rejected.
 
 No client has an API to publish authoritative sight or set an exploration state. DM preview delegates to the server's player-effective view and never changes the player's explored history.
