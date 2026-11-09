@@ -207,8 +207,9 @@ export default function TabletopApp(){
  // Keep the most recent local destination authoritative until the server acknowledges it.
  const movementPending=useRef(new Map()),toolMovementPending=useRef(new Set()),
   tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
- const previewStepHandler=useRef(null);
+ const previewStepHandler=useRef(null),v2StepHandler=useRef(null);
  const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
+ const registerV2Step=useCallback(handler=>{v2StepHandler.current=handler},[]);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
  if(!mapEnvironmentWriter.current){
   mapEnvironmentWriter.current=createDebouncedSerialWriter(
@@ -1700,12 +1701,14 @@ export default function TabletopApp(){
    if(e.repeat&&!isMove)return;
    if(isMove){
     const simulated=isDM&&mapSettingEditor.previewing;
-    if(!simulated&&(!selectedToken||(!isDM&&selectedToken.owner_id!==user)))return;
+    if(!WORLD_V2_CUTOVER&&!simulated&&
+     (!selectedToken||(!isDM&&selectedToken.owner_id!==user)))return;
     if(e.repeat&&performance.now()-lastKeyboardMove.current<115){e.preventDefault();return}
     lastKeyboardMove.current=performance.now();
     e.preventDefault();
     const delta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[action];
     if(simulated)previewStepHandler.current?.(delta[0],delta[1]);
+    else if(WORLD_V2_CUTOVER)v2StepHandler.current?.(delta[0],delta[1]);
     else moveSelectedByKey(delta[0],delta[1]);
    }else if(action==='sheet'){
     e.preventDefault();
@@ -2940,6 +2943,7 @@ export default function TabletopApp(){
    publishedEnvironment={mapEnvironmentMapId===selectedMap?publishedMapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} registerPreviewStep={registerPreviewStep}
+    registerV2Step={registerV2Step}
    onAddEnvironmentObject={addEnvironmentObject}
    handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
    onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
