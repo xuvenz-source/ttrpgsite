@@ -11,12 +11,13 @@ const isPoint=p=>p&&finite(p.x)&&finite(p.y);
 const blocksLight=object=>{
  if(!['wall','door','window'].includes(object?.type))return false;
  if(['open','broken'].includes(object.state))return false;
- if(object.type==='window'&&object.curtains===true)return true;
+ if(object.type==='window'&&
+  (object.curtains===true||object.curtains==='true'))return true;
  return object.blocksLight!==false;
 };
 /**
  * Returns a conservative view polygon or null if geometry is malformed or
- * unbounded. Up to 768 blocker segments per light. There is deliberately
+ * unbounded. Up to 128 nearby blocker segments per light. There is deliberately
  * no unoccluded-fallback glow when this validator rejects geometry.
  */
 export function occludedLightFan(objects,source,radius,{samples=128}={}){
@@ -31,7 +32,12 @@ export function occludedLightFan(objects,source,radius,{samples=128}={}){
   for(let i=1;i<object.points.length;i++){
    const a=object.points[i-1],b=object.points[i];
    if(!isPoint(a)||!isPoint(b))return null;
-   if(segments.length>=768)return null;
+   // Far-away segments cannot occlude this radius.
+   if(Math.max(Math.min(a.x,b.x)-source.x,
+      source.x-Math.max(a.x,b.x),
+      Math.min(a.y,b.y)-source.y,
+      source.y-Math.max(a.y,b.y))>radius)continue;
+   if(segments.length>=128)return null;
    segments.push({a,b,diff:diff(b,a)});
   }
  }
@@ -50,7 +56,7 @@ export function occludedLightFan(objects,source,radius,{samples=128}={}){
    for(const shift of [-0.00005,0,0.00005])pushAngle(angle+shift);
   }
  }
- if(angles.length>5000)return null;
+ if(angles.length>1024)return null;
  angles.sort((a,b)=>a-b);
  const result=[],minRay=0.00001;
  for(const angle of angles){
