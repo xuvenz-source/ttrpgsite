@@ -154,6 +154,7 @@ export default function TabletopApp(){
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[mapEnvironment,setMapEnvironment]=useState(null);
  const[publishedMapEnvironment,setPublishedMapEnvironment]=useState(null);
+ const[v2Published,setV2Published]=useState(null);
  const mapEnvironmentCurrent=useRef(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
@@ -2988,7 +2989,12 @@ export default function TabletopApp(){
     void refreshTokens();
     void campaignTools.refresh(['issued','placed'],true);
    }}
-   onV2Error={fail}/></React.Suspense>
+   onV2Error={fail}
+   onV2SceneSnapshot={snapshot=>setV2Published({
+    mapId:snapshot.mapId,
+    fog:snapshot.fogEnabled,
+    collision:snapshot.collisionEnabled
+   })}/></React.Suspense>
    {(Object.keys(pendingQuickTokens).length+Object.keys(statusSavingTokens).length)>0&&
     <div className="quick-save-status" role="status">
      <span className="quick-save-pulse" aria-hidden="true"/>
@@ -3030,7 +3036,10 @@ export default function TabletopApp(){
  onPublishEnvironment={publishEnvironmentRules}
  onDisablePublished={publishEnvironmentRules}
  onResetExploration={publishEnvironmentRules}
- publishedEnvironment={fog.published}
+ publishedEnvironment={WORLD_V2_CUTOVER?
+    (v2Published?.mapId===selectedMap?{
+     fog:v2Published.fog,collision:v2Published.collision
+    }:null):fog.published}
  pinsForMap={campaignHandouts.pins}
  onUpdateHandoutPin={updateMapHandoutPin} onDeleteHandoutPin={deleteMapHandoutPin}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
@@ -3116,7 +3125,10 @@ export default function TabletopApp(){
      onPublishEnvironment={publishEnvironmentRules}
      onDisablePublished={publishEnvironmentRules}
      onResetExploration={publishEnvironmentRules}
-     publishedEnvironment={fog.published}
+     publishedEnvironment={WORLD_V2_CUTOVER?
+    (v2Published?.mapId===selectedMap?{
+     fog:v2Published.fog,collision:v2Published.collision
+    }:null):fog.published}
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
      template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
