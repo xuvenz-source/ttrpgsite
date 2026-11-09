@@ -885,16 +885,24 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     return; // Bounded gesture: never paint a path we cannot commit.
    path=next;
   }
+  const from={dx:info.dx,dy:info.dy};
   info.path=path;
   info.dx=delta.dx;info.dy=delta.dy;
-  // Both players and DM paint a server-preauthorized legal destination
-  // immediately using an imperative transform: no React board rerender.
+  // All secure intermediate coordinates came from the server's validated
+  // prefix. Animate each straight run; do not shortcut between turns.
+  const acknowledged=info.secureMode?delta.path:null;
+  const animate=(id,x,y)=>{
+   const accepted=Array.isArray(acknowledged)&&acknowledged.length&&
+    motion.current?.previewAuthorizedPath(id,[
+     {x:x+from.dx,y:y+from.dy},
+     ...acknowledged.map(p=>({x:x+p.dx,y:y+p.dy}))
+    ]);
+   if(!accepted)motion.current?.preview(id,x+delta.dx,y+delta.dy);
+  };
   for(const token of info.members)
-   motion.current?.preview(token.id,
-    Number(token.x)+delta.dx,Number(token.y)+delta.dy);
+   animate(token.id,Number(token.x),Number(token.y));
   for(const tool of info.tools||[])
-   motion.current?.preview('tool:'+tool.issue_id,
-    Number(tool.x)+delta.dx,Number(tool.y)+delta.dy);
+   animate('tool:'+tool.issue_id,Number(tool.x),Number(tool.y));
   // Secure player batches publish a single trusted, path-checked observer
   // envelope and verified viewer fog tick from Postgres. Do not ALSO send
   // the old straight-endpoint motion RPC, which can cut corners or race this
