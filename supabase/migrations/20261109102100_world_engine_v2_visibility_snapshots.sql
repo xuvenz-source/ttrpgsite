@@ -156,6 +156,7 @@ BEGIN
  END LOOP;
  RETURN jsonb_build_object(
   'version',2,'mapId',p_map,'viewerId',p_viewer,
+  'scope',CASE WHEN real_dm THEN 'dm' ELSE 'viewer' END,
   'cursor',coalesce(cursor,0),
   'environmentRevision',coalesce(revision,0),
   'permissionGeneration',coalesce(permission_gen,0),
