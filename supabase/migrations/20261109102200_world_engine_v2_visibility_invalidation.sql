@@ -43,17 +43,21 @@ BEGIN
  RETURN new_epoch;
 END $$;
 
--- A move can change a recipient's sight ONLY when it moves one of the
--- viewer's own/party-shared vision sources or a real emitting torch close
--- enough to intersect that viewer's vision envelope.
--- This deliberately does not notify players about unrelated hidden NPC
--- movement. The DM is already fully visible and needs no fog refresh.
+-- An approved move may change a recipient's own or shared sight,
+-- moving-light coverage, or visible-piece roster at the sight boundary.
+-- Deeply hidden NPC movement remains silent and private; a boundary
+-- transition issues only a recipient-scoped, identity-free revision tick.
+-- The DM already has full sight and needs no fog refresh.
 CREATE OR REPLACE FUNCTION forge_world_v2.signal_movement_vision_v2(
  s forge_world_v2.motion_sessions,p_accepted jsonb)
 RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $$
 DECLARE viewer record;part jsonb;scene jsonb;shared boolean;
- affected boolean;lights boolean;source jsonb;
+ affected boolean;source jsonb;
+ viewer_sources jsonb;viewer_lights jsonb;part_shown boolean;
+ start_x double precision;start_y double precision;
+ finish_x double precision;finish_y double precision;
+ was_seen boolean;now_seen boolean;part_id uuid;
  source_x double precision;source_y double precision;
  torch record;light_x double precision;light_y double precision;
  delta_x integer;delta_y integer;reach double precision;notices integer:=0;
@@ -134,6 +138,59 @@ BEGIN
     END LOOP;
     IF affected THEN EXIT;END IF;
    END LOOP;
+  END IF;
+  -- A token/tool with a concealed origin cannot send an observer path.
+  -- If it enters view, silently invalidate this recipient's private
+  -- roster. Leaving view likewise reconciles missed hide packets.
+  -- Do not publish an ID, location, blocker, or any geometry.
+  IF NOT affected THEN
+   viewer_sources:=forge_world_v2.vision_sources_v2(
+    s.map_id,s.campaign_id,viewer.user_id,scene);
+   IF jsonb_typeof(viewer_sources)='array' AND
+      jsonb_array_length(viewer_sources)>0 THEN
+    viewer_lights:=forge_world_v2.light_sources_v2(
+     s.map_id,s.campaign_id,scene);
+    FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
+     part_id:=(part->>'id')::uuid;
+     IF part->>'kind'='token' THEN
+      SELECT t.visible INTO part_shown FROM public.map_tokens t
+      WHERE t.id=part_id AND t.map_id=s.map_id AND
+       t.campaign_id=s.campaign_id;
+      IF part_shown IS DISTINCT FROM true THEN CONTINUE;END IF;
+     ELSIF part->>'kind'='tool' THEN
+      IF NOT EXISTS(
+       SELECT 1 FROM public.campaign_tool_map_tokens p
+       WHERE p.issue_id=part_id AND p.map_id=s.map_id AND
+        p.campaign_id=s.campaign_id AND p.held_by_token_id IS NULL
+      ) THEN CONTINUE;END IF;
+     ELSE CONTINUE;END IF;
+     start_x:=(part->>'x')::double precision+
+      (part->>'spanX')::double precision/2.0+s.last_x-s.origin_x;
+     start_y:=(part->>'y')::double precision+
+      (part->>'spanY')::double precision/2.0+s.last_y-s.origin_y;
+     finish_x:=start_x+delta_x;finish_y:=start_y+delta_y;
+     IF start_x=finish_x AND start_y=finish_y THEN CONTINUE;END IF;
+     -- Avoid expensive LOS rays for pieces deep outside all vision sources.
+     IF NOT EXISTS(
+      SELECT 1 FROM jsonb_array_elements(viewer_sources) AS src(value)
+      WHERE (start_x-(src.value->>'x')::double precision-
+        (src.value->>'spanX')::double precision/2.0)^2+
+       (start_y-(src.value->>'y')::double precision-
+        (src.value->>'spanY')::double precision/2.0)^2<=196 OR
+       (finish_x-(src.value->>'x')::double precision-
+        (src.value->>'spanX')::double precision/2.0)^2+
+       (finish_y-(src.value->>'y')::double precision-
+        (src.value->>'spanY')::double precision/2.0)^2<=196
+     ) THEN CONTINUE;END IF;
+     was_seen:=forge_world_v2.is_seen_v2(
+      scene,viewer_sources,viewer_lights,start_x,start_y);
+     now_seen:=forge_world_v2.is_seen_v2(
+      scene,viewer_sources,viewer_lights,finish_x,finish_y);
+     IF was_seen IS DISTINCT FROM now_seen THEN
+      affected:=true;EXIT;
+     END IF;
+    END LOOP;
+   END IF;
   END IF;
   IF affected THEN
    PERFORM forge_world_v2.bump_vision_epoch_v2(
