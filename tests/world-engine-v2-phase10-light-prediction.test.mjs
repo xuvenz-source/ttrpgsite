@@ -93,7 +93,8 @@ test('malformed or excessively complex occlusion geometry never shows a full glo
   type:'wall',points:[{x:2,y:3},{x:NaN,y:4}]
  }],{x:2,y:2},4),null);
  const many=Array.from({length:120},(_,i)=>({
-  type:'wall',points:[{x:2+i/100,y:2},{x:2+i/100,y:4}]
+  type:'wall',points:[{x:2+i/100,y:2},{x:2+i/100,y:3},
+   {x:2+i/100,y:4}]
  }));
  assert.equal(occludedLightFan(many,{x:2,y:3},2),null);
 });
