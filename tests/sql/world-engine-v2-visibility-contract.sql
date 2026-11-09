@@ -123,11 +123,15 @@ BEGIN
   '10000000-0000-4000-8000-000000000001');
  IF f->'visible' IS DISTINCT FROM second->'visible'
  THEN RAISE EXCEPTION 'Stationary map fog jitters across snapshots';END IF;
+
+END $$;
+RESET ROLE;
+DO $
+BEGIN
  IF (SELECT revision FROM forge_visibility.exploration ex WHERE
  ex.user_id='30000000-0000-4000-8000-000000000001')<>0
  THEN RAISE EXCEPTION 'Idempotent fog wrote redundant exploration revision';END IF;
-END $$;
-RESET ROLE;
+END $;
 
 -- DM sees all entities, including explicitly DM-hidden NPC and all map cells
 -- without any player scope or leaked prepared editing state.
@@ -176,12 +180,8 @@ RESET ROLE;
 SET ROLE authenticated;
 SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000001';
 DO $$
-DECLARE s uuid;ack jsonb;f jsonb;start_epoch bigint;
+DECLARE s uuid;ack jsonb;f jsonb;
 BEGIN
- SELECT coalesce(epoch,0) INTO start_epoch
- FROM forge_world_v2.vision_epochs WHERE
- map_id='10000000-0000-4000-8000-000000000001' AND
- viewer_id='30000000-0000-4000-8000-000000000001';
  s:=(public.begin_world_motion_v2(
   '10000000-0000-4000-8000-000000000001',
   '[{"kind":"token","id":"40000000-0000-4000-8000-000000000001"}]',
@@ -200,10 +200,8 @@ BEGIN
  THEN RAISE EXCEPTION 'In-flight approved token not tracked in sight: %',f;END IF;
  ack:=public.advance_world_motion_v2(s,1,'{"x":2,"y":4}',
   '[{"x":3,"y":4}]',9,4);
- IF ack->>'seq'<>'1' OR
-  (SELECT epoch FROM forge_world_v2.vision_epochs
-   WHERE viewer_id='30000000-0000-4000-8000-000000000001')<>1
- THEN RAISE EXCEPTION 'Duplicate move caused redundant fog broadcast';END IF;
+ IF ack->>'seq'<>'1'
+ THEN RAISE EXCEPTION 'Duplicate move changed ACK sequence';END IF;
  ack:=public.commit_world_motion_v2(s,2,'{"x":3,"y":4}',9,4);
  IF ack->'endpoint'<>'{"x":3,"y":4}'::jsonb
  THEN RAISE EXCEPTION 'Phase 7 commit failed: %',ack;END IF;
@@ -213,7 +211,9 @@ DO $$
 DECLARE msg jsonb;
 BEGIN
  IF (SELECT count(*) FROM realtime.messages WHERE
- event='world-vision-v2')<>1
+ event='world-vision-v2')<>1 OR
+  (SELECT epoch FROM forge_world_v2.vision_epochs
+   WHERE viewer_id='30000000-0000-4000-8000-000000000001')<>1
  THEN RAISE EXCEPTION 'Expected exactly one owner vision invalidation';END IF;
  SELECT payload INTO msg FROM realtime.messages
  WHERE event='world-vision-v2' LIMIT 1;
