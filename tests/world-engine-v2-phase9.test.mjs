@@ -158,7 +158,7 @@ test('runtime only receives private movement; never sends browser position broad
  });
  await r.start();
  for(const channel of x.channels.values())
-  assert.equal(channel.config.private,true);
+  assert.equal(channel.config.config.private,true);
  assert.equal(x.calls.some(([name])=>name==='move_map_group'),false);
  assert.equal(x.calls.some(([name])=>name==='commit_map_trajectory'),false);
  await r.dispose();
