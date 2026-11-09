@@ -115,7 +115,7 @@ AS $publish$
 DECLARE
  s forge_visibility.navigation_gestures%rowtype;actor uuid:=auth.uid();
  piece jsonb;accepted jsonb;route jsonb;recipient record;
- kind_name text;id uuid;start_x integer;start_y integer;
+ kind_name text;piece_uuid uuid;start_x integer;start_y integer;
  path_x integer;path_y integer;end_x integer;end_y integer;
  visible_flag boolean;access integer;
  server_seq bigint;now_at timestamptz:=clock_timestamp();
@@ -139,7 +139,7 @@ BEGIN
  LOOP
   kind_name:=CASE WHEN (s.token_origins @> jsonb_build_array(piece))
                   THEN 'token' ELSE 'tool' END;
-  id:=(piece->>'id')::uuid;
+  piece_uuid:=(piece->>'id')::uuid;
   start_x:=(piece->>'x')::integer;
   start_y:=(piece->>'y')::integer;
   path_x:=start_x+p_start_dx;path_y:=start_y+p_start_dy;
@@ -152,14 +152,14 @@ BEGIN
   end_x:=path_x;end_y:=path_y;
   IF kind_name='token' THEN
    SELECT t.visible INTO visible_flag FROM public.map_tokens t
-   WHERE t.id=id AND t.map_id=s.map_id AND t.campaign_id=s.campaign_id;
+   WHERE t.id=piece_uuid AND t.map_id=s.map_id AND t.campaign_id=s.campaign_id;
   ELSE visible_flag:=true;END IF;
   -- A single idempotent transient position per member feeds the EXISTING
   -- authorized sight/torch functions. It does not mutate canonical tokens.
   INSERT INTO forge_visibility.movement_preview_rates(
    actor_id,piece_id,last_sent,last_seq,map_id,kind,
    base_x,base_y,last_x,last_y
-  )VALUES(actor,id,now_at,server_seq,s.map_id,kind_name,
+  )VALUES(actor,piece_uuid,now_at,server_seq,s.map_id,kind_name,
    start_x,start_y,end_x,end_y)
   ON CONFLICT(actor_id,piece_id) DO UPDATE SET
    last_sent=excluded.last_sent,last_seq=excluded.last_seq,
@@ -179,13 +179,13 @@ BEGIN
    IF access=0 THEN CONTINUE;END IF;
    IF access=1 THEN
     PERFORM realtime.send(jsonb_build_object(
-     'kind',kind_name,'id',id,'mapId',s.map_id,
+     'kind',kind_name,'id',piece_uuid,'mapId',s.map_id,
      'actor',actor,'seq',server_seq,'action','path','path',route),
      'motion','forge-observer:'||s.map_id::text||':'||
       recipient.user_id::text,true);
    ELSE
     PERFORM realtime.send(jsonb_build_object(
-     'kind',kind_name,'id',id,'mapId',s.map_id,
+     'kind',kind_name,'id',piece_uuid,'mapId',s.map_id,
      'actor',actor,'seq',server_seq,'action','hide'),
      'motion','forge-observer:'||s.map_id::text||':'||
       recipient.user_id::text,true);
