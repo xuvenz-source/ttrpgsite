@@ -31,3 +31,7 @@ export {normalizeWorldVisibilityFrame,makeWorldFogMask,
  from './VisibilityFrame.js';
 export {createVisibilityController,WORLD_VISION_EVENT}
  from './VisibilityController.js';
+
+export {createWorldFrameScheduler} from './WorldFrameScheduler.js';
+export {paintWorldFogLayer,paintWorldStaticLayer} from './WorldLayerPainter.js';
+export {createWorldRenderer} from './WorldRenderer.js';
