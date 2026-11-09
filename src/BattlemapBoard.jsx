@@ -895,6 +895,11 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   for(const tool of info.tools||[])
    motion.current?.preview('tool:'+tool.issue_id,
     Number(tool.x)+delta.dx,Number(tool.y)+delta.dy);
+  // Secure player batches publish a single trusted, path-checked observer
+  // envelope and verified viewer fog tick from Postgres. Do not ALSO send
+  // the old straight-endpoint motion RPC, which can cut corners or race this
+  // batch's canonical observer sequence.
+  if(info.secureMode)return;
   const playerGroup=!isDM&&
    info.members.length+(info.tools||[]).length>1;
   if(playerGroup)onGroupMovementPreview?.({
