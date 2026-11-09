@@ -40,3 +40,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql
       - name: Verify ownership, RLS grants, collision and replay
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-contract.sql
+      - name: Apply proposed private observer stream migration to disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql
+      - name: Verify recipient filtering, stream ordering, concealment and anti-forgery
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-observer-contract.sql
