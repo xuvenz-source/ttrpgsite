@@ -6,12 +6,6 @@ on:
   push:
     branches:
       - stage/unified-realtime-movement-2026-11-09
-    paths:
-      - 'supabase/migrations/20261109000500_batched_concealed_navigation.sql'
-      - 'supabase/migrations/20261109000600_batched_motion_observer_visibility.sql'
-      - 'tests/sql/unified-movement-fixture.sql'
-      - 'tests/sql/unified-movement-smoke.sql'
-      - '.github/workflows/staging-unified-movement-sql.yml'
   workflow_dispatch:
 
 permissions:
