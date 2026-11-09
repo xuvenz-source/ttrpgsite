@@ -100,6 +100,17 @@ export default function WorldV2Board(props){
  const viewport=useRef(null),board=useRef(null);
  const rendererRef=useRef(null),runtimeRef=useRef(null),roots=useRef(new Map());
  const latest=useRef(props);latest.current=props;
+ const rosterMetadata=useMemo(()=>JSON.stringify({
+  // Only roster/permission/appearance changes, never x/y cell positions.
+  // Remote motion uses V2 private paths, not token row React state.
+  tokens:tokens.filter(t=>t.map_id===map.id)
+   .map(t=>[t.id,t.owner_id,t.visible,t.span_x,t.span_y,
+    t.character_id]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),
+  tools:toolPlacements.filter(t=>t.map_id===map.id)
+   .map(t=>[t.issue_id,t.held_by_token_id,t.kind,t.span,
+    t.light_enabled,t.light_bright,t.light_dim])
+   .sort((a,b)=>String(a[0]).localeCompare(String(b[0])))
+ }),[tokens,toolPlacements,map.id]);
  const [selectedTokenIds,setSelectedTokenIds]=useState([]);
  const [selectedToolIds,setSelectedToolIds]=useState([]);
  const selectedRef=useRef({tokens:[],tools:[]});
@@ -400,6 +411,11 @@ export default function WorldV2Board(props){
    void runtime.refreshVisibility('board-active');
   }else rendererRef.current?.pause();
  },[active]);
+ useEffect(()=>{
+  const runtime=runtimeRef.current;
+  if(runtime?.started&&runtime.currentMap===map.id)
+   void runtime.refreshVisibility('map-roster-metadata-changed');
+ },[rosterMetadata,map.id]);
  useEffect(()=>{
   if(!registerPreviewStep)return;
   // DM preview uses the player-effective server frame but does not yet
