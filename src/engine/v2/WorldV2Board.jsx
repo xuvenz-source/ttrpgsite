@@ -23,6 +23,9 @@ import {TokenStatusBadges,normalizedEffects,statusTitle}
  * No legacy MapFogOverlay/TokenMotionRuntime/ConcealedGestureBatch/MapCollision
  * is imported or mounted here. Active app routing remains OFF until Phase 10.
  */
+// App keybindings route into V2 explicitly; never attach a second
+// hard-coded arrow handler that could race a custom shortcut.
+const noDuplicateKeyboard={addEventListener(){},removeEventListener(){}};
 const styles={absolute:{position:'absolute',left:0,top:0},fill:{
  position:'absolute',inset:0}};
 const idOf=p=>p.kind+':'+p.id;
@@ -97,7 +100,7 @@ export default function WorldV2Board(props){
   onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,onReadHandoutPin,
   onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
   onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject,
-  onDeleteEnvironmentObject,registerPreviewStep,resize,
+  onDeleteEnvironmentObject,registerPreviewStep,registerV2Step,resize,
   onMovementCommitted,onV2Error,remove,hotbarInset=false
  }=props;
  const viewport=useRef(null),board=useRef(null);
@@ -405,7 +408,7 @@ export default function WorldV2Board(props){
   runtimeRef.current=runtime;
   runtime.attachInput({
    target:board.current,
-   keyboardTarget:window,
+   keyboardTarget:noDuplicateKeyboard,
    pointFromEvent:event=>mapGridRef.current(event),
    resolveSelection:(event,point,context)=>resolveRef.current(event,point,context),
    onPointerRelease:(event,pick,point)=>
@@ -468,6 +471,31 @@ export default function WorldV2Board(props){
   registerPreviewStep(moveVirtual);
   return()=>registerPreviewStep(null);
  },[registerPreviewStep,map.id,dmPreview,previewToken?.id]);
+ useEffect(()=>{
+  if(!registerV2Step)return;
+  const moveOne=(dx,dy)=>{
+   const runtime=runtimeRef.current;
+   if(dmPreview||!runtime?.active||runtime.movement.active||
+    !Number.isSafeInteger(dx)||!Number.isSafeInteger(dy)||
+    Math.abs(dx)+Math.abs(dy)!==1)return false;
+   viewport.current?.focus?.({preventScroll:true});
+   const picked=resolveRef.current({target:board.current},null,{keyboard:true});
+   const scene=runtime.sceneManager.displayedScene;
+   const frame=runtime.visibility.frame;
+   if(!picked||!scene||!frame)return false;
+   const to={x:picked.origin.x+dx,y:picked.origin.y+dy};
+   if(!runtime.movement.beginGesture({
+    ...picked,pointer:picked.origin,mode:'keyboard',
+    environmentRevision:scene.revision,
+    permissionGeneration:frame.permissionGeneration
+   }))return false;
+   runtime.movement.updateGesture(to);
+   void runtime.movement.endGesture();
+   return true;
+  };
+  registerV2Step(moveOne);
+  return()=>registerV2Step(null);
+ },[registerV2Step,map.id,dmPreview]);
  function startResize(event,token){
   if(!isDM||previewRequested||event.button!==0)return;
   event.preventDefault();event.stopPropagation();
