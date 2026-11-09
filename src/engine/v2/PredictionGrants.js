@@ -30,7 +30,8 @@ export function canPredictWithinWorldGrants({frame,scene,request}={}){
  const visible=new Map(frame.visiblePieces.map(p=>[id(p),p]));
  const seen=new Set();
  for(const item of request.selection){
-  if(item?.kind!=='token'||typeof item.id!=='string')return false;
+  if(!['token','tool'].includes(item?.kind)||
+   typeof item.id!=='string')return false;
   const key=id(item),grant=granted.get(key),piece=visible.get(key);
   if(seen.has(key)||!grant||!piece||
    grant.x!==piece.x||grant.y!==piece.y||
