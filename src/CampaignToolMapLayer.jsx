@@ -32,8 +32,55 @@ export default function CampaignToolMapLayer({placements=[],issued=[],tokens=[],
  environment=null,authorizedLightMasks=null,
  active=true,editing=false,measuring=false,preview={},remotePositions={},
  selectedIds=[],onTokenPointerDown,onTokenPointerMove,onTokenPointerUp,onTokenPointerCancel,onOpen}){
+ // Keep DOM refs stable across unrelated fog, roster or monitor rerenders.
+ // Ref churn previously detached the light/tool transform while a route was
+ // active, producing a one-frame jump back to canonical left/top.
+ const spriteRefs=React.useRef(new Map());
+ const spriteNodes=React.useRef(new Map());
+ const metadata=React.useRef(new Map());
+ const activeBindings=new Set();
+ const cell=Number(map?.grid_size)*scale;
+ function motionRef(visualId,kind,x,y){
+  const key=visualId+':'+kind;
+  activeBindings.add(key);
+  metadata.current.set(key,{visualId,kind,x,y,cell});
+  let callback=spriteRefs.current.get(key);
+  if(!callback){
+   callback=node=>{
+    if(node){
+     spriteNodes.current.set(key,node);
+     const entry=metadata.current.get(key);
+     if(entry)motionRuntime?.bind(entry.visualId,entry.kind,node,entry);
+    }else{
+     spriteNodes.current.delete(key);
+     motionRuntime?.bind(visualId,kind,null);
+    }
+   };
+   spriteRefs.current.set(key,callback);
+  }
+  return callback;
+ }
+ React.useLayoutEffect(()=>{
+  for(const [key,node] of spriteNodes.current){
+   const entry=metadata.current.get(key);
+   if(activeBindings.has(key)&&entry&&node)
+    motionRuntime?.bind(entry.visualId,entry.kind,node,entry);
+   else{
+    motionRuntime?.bind(entry?.visualId,entry?.kind,null);
+    spriteNodes.current.delete(key);
+   }
+  }
+  for(const key of spriteRefs.current.keys()){
+   if(!activeBindings.has(key)){
+    spriteRefs.current.delete(key);metadata.current.delete(key);
+   }
+  }
+  for(const p of placements){
+   if(!p.held_by_token_id)
+    motionRuntime?.reconcile('tool:'+p.issue_id,Number(p.x),Number(p.y));
+  }
+ });
  if(!map)return null;
- const cell=Number(map.grid_size)*scale;
  return <div className="campaign-tool-map-layer" aria-label="Issued tool tokens">
   {placements.map(p=>{
    if(remotePositions[p.issue_id]?.hidden)return null;
@@ -65,16 +112,14 @@ export default function CampaignToolMapLayer({placements=[],issued=[],tokens=[],
      sourceX={Number(at.x)+centerX} sourceY={Number(at.y)+centerY}
      radius={radius} cell={cell}/>}
     {lightOn&&<div className="campaign-tool-light-radius" aria-hidden="true"
-     ref={node=>isDM?motionRuntime?.bind(carrier?.id||'tool:'+p.issue_id,
-      'light:'+p.issue_id,node,{x:Number(at.x),y:Number(at.y),cell}):
-      undefined}
+     ref={motionRef(carrier?.id||'tool:'+p.issue_id,
+      'light:'+p.issue_id,Number(at.x),Number(at.y))}
      style={{left:x+cell*centerX-radius,top:y+cell*centerY-radius,width:radius*2,height:radius*2,
       opacity:Math.min(1,Math.max(0,Number(p.light_intensity)||0)/100),
       clipPath,
       background:`radial-gradient(circle,rgba(${rgb},.65) 0%,rgba(${rgb},.32) ${bright}%,rgba(${rgb},0) 100%)`}}/>}
     {!carrier&&<button type="button"
-     ref={node=>motionRuntime?.bind('tool:'+p.issue_id,
-      'sprite',node,{x:Number(at.x),y:Number(at.y),cell})}
+     ref={motionRef('tool:'+p.issue_id,'sprite',Number(at.x),Number(at.y))}
      className={'campaign-tool-map-token'+(canMove?' can-move':'')+
       (selectedIds.includes(p.issue_id)?' tool-selected':'')}
      style={{left:x,top:y,width:cell*span,height:cell*span}}
