@@ -96,12 +96,13 @@ export async function fetchWorldObserverCursorV2({db,mapId,viewerId}={}){
  */
 export function createWorldRealtimeTransport({
  db,mapId,viewerId,onResync,onPath=()=>{},onHide=()=>{},
- onRevoke=()=>{},onError=()=>{},onState=()=>{}
+ onRevoke=()=>{},onError=()=>{},onState=()=>{},onVisionDirty=()=>{}
 }={}){
  if(!db?.channel||!db?.removeChannel||!uuid(mapId)||!uuid(viewerId)||
   typeof onResync!=='function'||typeof onPath!=='function'||
   typeof onHide!=='function'||typeof onRevoke!=='function'||
-  typeof onError!=='function'||typeof onState!=='function')
+  typeof onError!=='function'||typeof onState!=='function'||
+  typeof onVisionDirty!=='function')
   throw Error('Invalid V2 private observer transport');
  let channel=null,disposed=false,started=false,connected=false,locked=true;
  let generation=0,cursor=null,revision=null,permission=null;
@@ -184,6 +185,12 @@ export function createWorldRealtimeTransport({
    channel=db.channel(worldObserverTopic(mapId,viewerId),
     {config:{private:true,broadcast:{self:false,ack:false}}});
    channel.on('broadcast',{event:WORLD_MOTION_EVENT},incoming);
+   channel.on('broadcast',{event:'world-vision-v2'},payload=>{
+    if(disposed||!connected)return;
+    try{onVisionDirty(payload?.payload)}catch{
+     void resync('invalid-vision-event');
+    }
+   });
    channel.subscribe(status=>{
     if(disposed)return;
     if(status==='SUBSCRIBED'){
