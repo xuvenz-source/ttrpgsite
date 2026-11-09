@@ -1226,9 +1226,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        visibility:concealed?'hidden':'visible',pointerEvents:concealed?'none':undefined,
-       opacity:t.visible?1:.55,cursor:canMove?'grab':'default',
-        transition:remotePositions[t.id]&&!preview[t.id]?
-         'left 50ms linear, top 50ms linear':undefined
+       // MotionRuntime is the sole frame-by-frame position owner.
+       // CSS left/top transitions would compete with its sprite translate.
+       opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
       }}
       title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
        ((isDM||t.owner_id===user)?' · Alt + double-click to edit sheet':'')}
