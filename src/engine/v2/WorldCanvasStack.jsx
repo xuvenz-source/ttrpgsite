@@ -14,7 +14,8 @@ import {createWorldRenderer} from './WorldRenderer.js';
  */
 export default function WorldCanvasStack({
  mapId,viewerId,onRendererReady,createSpriteElement,
- playerPreview=false,className='',style={},children
+ onRemoveSprite,onNeedResync,onRendererError,
+ mapLayers=null,playerPreview=false,className='',style={},children
 }){
  const root=useRef(null),stage=useRef(null),terrain=useRef(null);
  const statics=useRef(null),fog=useRef(null),sprites=useRef(null);
@@ -23,6 +24,11 @@ export default function WorldCanvasStack({
  callback.current=onRendererReady;
  const createSprite=useRef(createSpriteElement);
  createSprite.current=createSpriteElement;
+ const spriteRemoved=useRef(onRemoveSprite),resync=useRef(onNeedResync);
+ const rendererError=useRef(onRendererError);
+ spriteRemoved.current=onRemoveSprite;
+ resync.current=onNeedResync;
+ rendererError.current=onRendererError;
  // A single renderer exists for this mounted board. React re-rendering the
  // toolbar, token data, fog or character sheet never remounts canvas layers.
  useLayoutEffect(()=>{
@@ -36,6 +42,9 @@ export default function WorldCanvasStack({
     viewport:stage.current
    },
    createSpriteElement:createSprite.current??null,
+   onRemoveSprite:event=>spriteRemoved.current?.(event),
+   onNeedResync:reason=>resync.current?.(reason),
+   onError:error=>rendererError.current?.(error),
    playerPreview
   });
   rendererRef.current=renderer;
@@ -68,6 +77,7 @@ export default function WorldCanvasStack({
     <div ref={sprites} className="world-v2-sprites"
      style={{position:'absolute',left:0,top:0,zIndex:2,
       pointerEvents:'none'}}/>
+    {mapLayers}
     <canvas ref={fog} aria-hidden="true"
      className="world-v2-fog"
      style={{position:'absolute',left:0,top:0,zIndex:3,
