@@ -716,7 +716,7 @@ export default function WorldV2Board(props){
       }
      }}>
      <WorldCanvasStack key={boardIdentity}
-      mapId={map.id} viewerId={user}
+      mapId={map.id} viewerId={identity}
       playerPreview={dmPreview}
       createSpriteElement={createSpriteElement}
       onRemoveSprite={onRemoveSprite}
