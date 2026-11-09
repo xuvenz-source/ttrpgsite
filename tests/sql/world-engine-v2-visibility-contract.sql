@@ -91,6 +91,11 @@ BEGIN
   f::text LIKE '%secret-wall%' OR
   f::text LIKE '%secret-light%'
  THEN RAISE EXCEPTION 'DM player preview not viewer-effective: %',f;END IF;
+IF f->'dmMovingLights'<>'[]'::jsonb OR
+   EXISTS(SELECT 1 FROM jsonb_array_elements(
+    coalesce(f->'lightCells','[]'::jsonb)) AS lc(value)
+    WHERE NOT (f->'visible' @> jsonb_build_array(lc.value->0)))
+  THEN RAISE EXCEPTION 'Cosmetic torch data escaped player sight';END IF;
 END $$;
 RESET ROLE;
 DO $$
@@ -159,6 +164,11 @@ BEGIN
   f::text LIKE '%raw%' OR
   f->>'sceneGeneration' IS NULL OR f->>'visionEpoch' IS NULL
  THEN RAISE EXCEPTION 'Incorrect player authorized frame: %',f;END IF;
+IF f->'dmMovingLights'<>'[]'::jsonb OR
+   EXISTS(SELECT 1 FROM jsonb_array_elements(
+    coalesce(f->'lightCells','[]'::jsonb)) AS lc(value)
+    WHERE NOT (f->'visible' @> jsonb_build_array(lc.value->0)))
+  THEN RAISE EXCEPTION 'Cosmetic torch data escaped player sight';END IF;
  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') obj
   WHERE obj->>'id'='40000000-0000-4000-8000-000000000001')
  OR EXISTS(SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') obj
@@ -193,6 +203,9 @@ BEGIN
   NOT EXISTS(SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') obj
    WHERE obj->>'id'='40000000-0000-4000-8000-000000000002')
  THEN RAISE EXCEPTION 'DM full map visibility unavailable: %',f;END IF;
+IF jsonb_array_length(coalesce(f->'dmMovingLights','[]'::jsonb))<2 OR
+  f->'lightCells'<>'[]'::jsonb
+ THEN RAISE EXCEPTION 'DM moving torch visuals missing';END IF;
 END $$;
 RESET ROLE;
 
