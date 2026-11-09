@@ -707,8 +707,18 @@ export default function WorldV2Board(props){
       onRendererReady={renderer=>rendererReady.current(renderer)}
       onNeedResync={reason=>{
        const r=runtimeRef.current;
-       if(reason==='canonical-commit')void r?.refreshVisibility(reason);
-       else void r?.forceReauthorize();
+       if(!r)return;
+       // MovementController already reconciles commit, cancellation and
+       // rejection. Do not force a scene/permission reload on ordinary
+       // interaction or create a recursive revocation loop.
+       if(['canonical-commit','gesture-rejected',
+        'gesture-cancelled'].includes(reason))return;
+       if(['observer-sequence-gap','observer-path-discontinuity',
+        'observer-path-not-in-authorized-fog',
+        'invalid-or-stale-visibility','invalid-fog-mask',
+        'bad-roster','sprite-factory-error',
+        'invalid-published-scene'].includes(reason))
+        void r.forceReauthorize();
       }}
       onRendererError={error=>setIssue(error?.message||String(error))}
       style={{width:map.width*scale,height:map.height*scale}}
