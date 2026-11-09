@@ -6,6 +6,7 @@ import {
  createWorldV2TabletopRuntime
 } from '../src/engine/v2/WorldV2TabletopRuntime.js';
 import {expandGestureRoute} from '../src/engine/v2/GesturePath.js';
+import {visibleWorldPins} from '../src/engine/v2/WorldPinVisibility.js';
 
 const mapId='10000000-0000-4000-8000-000000000001';
 const viewerId='30000000-0000-4000-8000-000000000001';
@@ -397,4 +398,35 @@ test('Phase 9 board and cutover gate compile with old board mutually exclusive',
  assert.ok(app.includes("VITE_WORLD_ENGINE_V2_READY==='true'"));
  assert.ok(app.includes('<BoardComponent db={db}'));
  assert.equal(app.includes('<WorldV2Board db={db}'),false);
+});
+
+
+test('handout pins cannot be clicked through unrevealed V2 fog',()=>{
+ const pins=[
+  {id:'visible-pin',x:2.2,y:2.1},
+  {id:'hidden-pin',x:8.5,y:8.5},
+  {id:'outside-map',x:99,y:99}
+ ];
+ assert.deepEqual(visibleWorldPins(pins,null),[],
+  'unauthorized player cannot interact with any pin');
+ const f=frame('viewer');
+ assert.deepEqual(visibleWorldPins(pins,f).map(p=>p.id),['visible-pin']);
+ assert.deepEqual(visibleWorldPins(pins,{...f,visible:[]}),[]);
+ assert.deepEqual(visibleWorldPins(pins,{
+  ...f,enabled:false,visible:[],explored:[]
+ }),pins,'fog-disabled map preserves handout interactions');
+});
+test('staged app disables legacy fog and old private observer on V2 route',async()=>{
+ const app=await readFile(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8');
+ const hook=await readFile(new URL('../src/useAuthorizedMapFog.js',import.meta.url),'utf8');
+ const board=await readFile(
+  new URL('../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
+ assert.match(app,/enabled:!WORLD_V2_CUTOVER/);
+ assert.match(app,/if\(WORLD_V2_CUTOVER\|\|!db\|\|!selectedMap\)return;/);
+ assert.match(app,/if\(WORLD_V2_CUTOVER\|\|!db\|\|!activeId\|\|!selectedMap\|\|!user\)return;/);
+ assert.match(hook,/if\(!enabled\|\|!db\|\|!campaignId\|\|!mapId\|\|!userId\)/);
+ assert.match(board,/visibleWorldPins\(handoutPins,authorizedSight\)/);
+ assert.match(board,/createPortal/);
+ assert.doesNotMatch(board,/createRoot\(/,
+  'one existing React tree, not 500 independent token roots');
 });
