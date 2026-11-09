@@ -132,7 +132,9 @@ function firstImpact(scene,pieces,anchor,from,to){
  for(const part of pieces){
   const start=footprintAt(part,anchor,from),end=footprintAt(part,anchor,to);
   const sweep=footprintSweepBounds(start,end,part.spanX,part.spanY);
-  for(const segment of scene.segments){
+  const candidates=typeof scene.querySegments==='function'?
+   scene.querySegments(sweep):scene.segments;
+  for(const segment of candidates){
    if(barrierPasses(segment,part)||!boxesMayOverlap(sweep,segment.bounds))continue;
    const intersects=t=>segmentCrossesSweptFootprint(segment.a,segment.b,
     start,lerp(start,end,t),part.spanX,part.spanY);
