@@ -26,6 +26,8 @@ const styles={absolute:{position:'absolute',left:0,top:0},fill:{
  position:'absolute',inset:0}};
 const idOf=p=>p.kind+':'+p.id;
 const sameIds=(a,b)=>a.length===b.length&&a.every((id,i)=>id===b[i]);
+const sameCells=(a,b)=>a?.length===b?.length&&
+ a?.every((value,i)=>value===b[i]);
 const within=(point,piece)=>point&&
  point.x>=Number(piece.x)&&point.y>=Number(piece.y)&&
  point.x<Number(piece.x)+Number(piece.span_x??piece.span??1)&&
@@ -115,6 +117,7 @@ export default function WorldV2Board(props){
  const [selectedToolIds,setSelectedToolIds]=useState([]);
  const selectedRef=useRef({tokens:[],tools:[]});
  const [roster,setRoster]=useState([]),[issue,setIssue]=useState(null);
+ const [authorizedSight,setAuthorizedSight]=useState(null);
  const [activeMeasure,setActiveMeasure]=useState(null);
  const [localMeasures,setLocalMeasures]=useState([]);
  const measureRef=useRef(null),marqueeRef=useRef(null),panRef=useRef(null);
@@ -358,12 +361,19 @@ export default function WorldV2Board(props){
        v.npc_values||{}):
       (src.toolIssued.find(x=>x.id===p.id)?.state?.attrs||{})};
    }),
-   onAuthorizedRoster:rows=>{
+   onAuthorizedRoster:(rows,snapshot)=>{
     setRoster(previous=>{
      const old=previous.map(idOf),next=rows.map(idOf);
      return sameIds(old,next)?previous:rows;
     });
-
+    setAuthorizedSight(previous=>
+     !snapshot?null:
+     previous?.mapId===snapshot.mapId&&
+     previous.scope===snapshot.scope&&
+     previous.enabled===snapshot.enabled&&
+     previous.permissionGeneration===snapshot.permissionGeneration&&
+     sameCells(previous.visible,snapshot.visible)?
+      previous:snapshot);
    },
    onCommit:()=>{
     latest.current.onMovementCommitted?.();
@@ -628,12 +638,22 @@ export default function WorldV2Board(props){
   ...Object.values(remoteMeasurements),...localMeasures
  ],[remoteMeasurements,localMeasures]);
  const editor=environmentEditor;
+ const visiblePins=useMemo(()=>{
+  if(!authorizedSight)return [];
+  if(!authorizedSight.enabled)return handoutPins;
+  const cells=new Set(authorizedSight.visible);
+  const w=authorizedSight.width,h=authorizedSight.height;
+  return handoutPins.filter(pin=>{
+   const x=Math.floor(Number(pin.x)),y=Math.floor(Number(pin.y));
+   return x>=0&&y>=0&&x<w&&y<h&&cells.has(y*w+x);
+  });
+ },[handoutPins,authorizedSight]);
  const mapLayers=<>
   <div className="gridlines" style={{...styles.fill,
    pointerEvents:'none',
    backgroundSize:map.grid_size+'px '+map.grid_size+'px'}}/>
   <MapPinLayer map={map} scale={1} pointerScale={scale}
-   pins={handoutPins} isDM={isDM&&!dmPreview} editor={editor} active={active}
+   pins={visiblePins} isDM={isDM&&!dmPreview} editor={editor} active={active}
    onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin}
    onMove={onMoveHandoutPin} onRead={onReadHandoutPin}
    onCollect={onCollectHandoutPin} onDelete={onDeleteHandoutPin}
