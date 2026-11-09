@@ -27,7 +27,7 @@ export function expandSweptPreviewLeg(from,to,max=MAX_QUEUED_PATH_CELLS){
  return path;
 }
 export function createBufferedObserverPathQueue({
- send,onResult=()=>{},onError=()=>{},setTimer=setTimeout,
+ send,onResult=()=>{},onError=()=>{},clock=Date.now,setTimer=setTimeout,
  clearTimer=clearTimeout,spacingMs=100
 }){
  const entries=new Map();let disposed=false;
@@ -43,6 +43,12 @@ export function createBufferedObserverPathQueue({
  function pump(key,entry){
   if(disposed||entry.cancelled||entry.busy||entry.timer!==null)return;
   if(entry.points.length<2){if(entry.cancelled)retire(key,entry);return}
+  const elapsed=clock()-entry.lastSettledAt;
+  if(entry.lastSettledAt&&elapsed<Math.max(90,spacingMs)){
+   entry.timer=setTimer(()=>{entry.timer=null;pump(key,entry)},
+    Math.max(90,spacingMs)-elapsed);
+   return;
+  }
   const batch=entry.points.slice(0,MAX_PATH_PREVIEW_CELLS+1);
   const packet={...entry.packet,params:{
    ...entry.packet.params,p_path:batch
@@ -61,7 +67,7 @@ export function createBufferedObserverPathQueue({
    if(disposed||entry.cancelled)return;
    entry.points=[];onError(packet,error);
   }).finally(()=>{
-   entry.busy=false;
+   entry.busy=false;entry.lastSettledAt=clock();
    if(disposed||entry.cancelled){retire(key,entry);return}
    if(entry.points.length<2){resolve(entry);return}
    entry.timer=setTimer(()=>{
@@ -76,7 +82,8 @@ export function createBufferedObserverPathQueue({
    if(!segment||segment.length<2)return false;
    let entry=entries.get(key);
    if(!entry){
-    entry={points:[],packet,busy:false,timer:null,cancelled:false,waiters:[]};
+    entry={points:[],packet,busy:false,timer:null,cancelled:false,
+     lastSettledAt:0,waiters:[]};
     entries.set(key,entry);
    }
    const previous=entry.points.at(-1);
