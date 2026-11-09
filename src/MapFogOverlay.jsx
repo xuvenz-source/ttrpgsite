@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useRef} from 'react';
+import {movementDiagnostics} from './MovementDiagnostics.js';
 import {normalizeAuthorizedFogFrame,MAX_FOG_AXIS} from './MapFogModel.js';
 import {fogPaintMask,changedFogCells,FOG_UNEXPLORED,FOG_EXPLORED} from './FogRenderDelta.js';
 
@@ -35,6 +36,7 @@ export default function MapFogOverlay({map,frame,scale=1}){
   // network interruption. Do not reuse stale visibility from another map.
   if(!sanitized){
    if(!sameMap||!old.mask||old.mask.some(v=>v!==FOG_UNEXPLORED)){
+    movementDiagnostics.count('fog-canvas-invalidated');
     context.fillStyle='#040914';
     context.fillRect(0,0,width,height);
    }
@@ -44,6 +46,9 @@ export default function MapFogOverlay({map,frame,scale=1}){
   const next=fogPaintMask(sanitized,displayVisible);
   if(!next)return;
   const dirty=changedFogCells(sameMap?old.mask:null,next);
+  if(dirty.length===width*height)movementDiagnostics.count('fog-canvas-full-frame');
+  else if(dirty.length)movementDiagnostics.count('fog-canvas-delta-frame');
+  const finishPaint=movementDiagnostics.begin('fog-canvas-paint');
   for(const index of dirty){
    const x=index%width,y=Math.floor(index/width),state=next[index];
    context.clearRect(x,y,1,1);
@@ -53,6 +58,7 @@ export default function MapFogOverlay({map,frame,scale=1}){
    }
   }
   painted.current={mapId,width,height,mask:next};
+  finishPaint();
  },[sanitized,width,height,displayVisible,mapId]);
  if(!map)return null;
  return <canvas ref={canvas} className="map-fog-overlay"
