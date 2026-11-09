@@ -399,3 +399,37 @@ BEGIN
  THEN RAISE EXCEPTION 'Phase 5 observer still depends on legacy fog';END IF;
 END $$;
 SELECT 'world-engine-v2-extended-visibility-contract-passed' AS result;
+
+
+-- A large campaign map with fog DISABLED must still show all canonical
+-- tokens. Do not allocate a 200x200 fog grid or reject its viewer roster.
+INSERT INTO public.battle_maps(id,campaign_id,width,height,grid_size)
+VALUES('10000000-0000-4000-8000-000000000003',
+ '20000000-0000-4000-8000-000000000001',20000,20000,100);
+UPDATE public.campaign_player_maps SET
+ map_id='10000000-0000-4000-8000-000000000003'
+WHERE user_id='30000000-0000-4000-8000-000000000002';
+INSERT INTO public.map_tokens(
+ id,campaign_id,map_id,owner_id,x,y,visible,span_x,span_y)
+VALUES('40000000-0000-4000-8000-00000000000b',
+ '20000000-0000-4000-8000-000000000001',
+ '10000000-0000-4000-8000-000000000003',
+ '30000000-0000-4000-8000-000000000002',
+ 198,198,true,1,1);
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000002';
+DO $$
+DECLARE frame jsonb;
+BEGIN
+ frame:=public.get_world_visibility_v2(
+  '10000000-0000-4000-8000-000000000003');
+ IF frame IS NULL OR frame->>'enabled'<>'false'
+  OR frame->>'width'<>'200' OR frame->>'height'<>'200'
+  OR frame->'visible'<>'[]'::jsonb OR
+  frame->'explored'<>'[]'::jsonb OR
+  NOT EXISTS(SELECT 1 FROM jsonb_array_elements(frame->'visiblePieces') p
+   WHERE p->>'x'='198' AND p->>'y'='198')
+ THEN RAISE EXCEPTION 'Unfogged large map lost distant token: %',frame;END IF;
+END $$;
+RESET ROLE;
+SELECT 'world-engine-v2-large-map-no-fog-passed' AS result;
