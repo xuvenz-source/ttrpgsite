@@ -5,6 +5,8 @@ import {enqueueConcealedTarget,takeConcealedBatch,
  MAX_SECURE_BATCH_CELLS} from '../src/ConcealedGestureBatch.js';
 import {createConcealedMovementGate} from '../src/ConcealedMovementGate.js';
 import {createTokenMotionRuntime} from '../src/TokenMotionRuntime.js';
+import {authorizedFractionalOffset} from '../src/AuthorizedFractionalMotion.js';
+import {movementDiagnostics} from '../src/MovementDiagnostics.js';
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const sql=source('supabase/migrations/20261109000500_batched_concealed_navigation.sql');
 const map='10000000-0000-4000-8000-000000000001';
@@ -99,4 +101,37 @@ test('remote settle cannot rewind to a stale canonical cell on a timer',()=>{
  motion.bind('token','sprite',node,{x:5,y:0,cell:70});
  assert.equal(motion.getPreview('token'),null);
  motion.dispose();
+});
+
+test('subcell pointer follows only an authorized swept edge',()=>{
+ const allowed=(_from,to)=>to.dx===1&&to.dy===0;
+ assert.deepEqual(authorizedFractionalOffset({dx:0,dy:0},
+  {dx:.42,dy:0},allowed),{dx:.42,dy:0});
+ assert.deepEqual(authorizedFractionalOffset({dx:0,dy:0},
+  {dx:-.4,dy:0},allowed),{dx:0,dy:0});
+ assert.deepEqual(authorizedFractionalOffset({dx:0,dy:0},
+  {dx:.42,dy:.3},allowed),{dx:.42,dy:0});
+ assert.deepEqual(authorizedFractionalOffset({dx:0,dy:0},
+  {dx:.3,dy:.3},()=>false),{dx:0,dy:0});
+ assert.deepEqual(authorizedFractionalOffset({dx:0,dy:0},
+  {dx:NaN,dy:0},allowed),{dx:0,dy:0});
+});
+test('frame telemetry contains only aggregate timings, never coordinates',()=>{
+ movementDiagnostics.clear();
+ let now=10;const frames=[];
+ const motion=createTokenMotionRuntime({
+  clock:()=>now,
+  requestFrame:fn=>{frames.push(fn);return frames.length},
+  cancelFrame:()=>{}
+ });
+ const node={style:{}};
+ motion.bind('sensitive-id','sprite',node,{x:0,y:0,cell:50});
+ motion.preview('sensitive-id',.4,0);
+ now=18;frames.shift()();
+ const metric=movementDiagnostics.snapshot();
+ assert.equal(metric['local-motion-frame-latency'].p50Ms,8);
+ assert.equal(JSON.stringify(metric).includes('sensitive-id'),false);
+ assert.equal(JSON.stringify(metric).includes('.4'),false);
+ motion.dispose();
+ movementDiagnostics.clear();
 });
