@@ -18,6 +18,7 @@ import {createVisibilityController} from './VisibilityController.js';
 import {createWorldRealtimeTransport} from './RealtimeTransport.js';
 import {collisionAllowsStep} from './CollisionSolver.js';
 import {createPreviewAuthority} from './PreviewAuthority.js';
+import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -125,8 +126,11 @@ export function createWorldV2TabletopRuntime({
  const movement=createMovementController({
   authority,
   canPredict:request=>{
-   if(disposed||!isDM||!authorized()||
-    manager.displayedScene.scope!=='dm')return false;
+    if(disposed||!authorized())return false;
+    if(!isDM)return canPredictWithinWorldGrants({
+     frame:vision.frame,scene:manager.displayedScene,request
+    });
+    if(manager.displayedScene.scope!=='dm')return false;
    const scene=manager.collisionScene;
    if(!scene||request.mapId!==mapId||
     request.environmentRevision!==scene.revision||
