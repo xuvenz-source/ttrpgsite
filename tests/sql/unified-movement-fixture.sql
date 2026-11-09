@@ -154,7 +154,7 @@ INSERT INTO forge_visibility.navigation_gestures(
  environment_revision,permission_generation,rules_updated_at,expires_at)
  SELECT '77777777-7777-4777-8777-777777777777',
  '22222222-2222-4222-8222-222222222222',
- m.map_id,m.campaign_id,
+ m.map_id,e.campaign_id,
  '[{"id":"55555555-5555-4555-8555-555555555555","x":1,"y":1,
  "spanX":1,"spanY":1,"characterId":null}]'::jsonb,
  '[]'::jsonb,0,0,m.updated_at,now()+interval '1 hour'
