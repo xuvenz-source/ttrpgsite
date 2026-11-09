@@ -26,18 +26,20 @@ export function createWorldAuthorityClient({db}={}){
  const required=()=>{if(disposed)throw Error('V2 authority disposed')};
  return {
   async begin({mapId,gestureId,selection,mode,origin,
-   environmentRevision,permissionGeneration}){
+   environmentRevision,permissionGeneration,collisionOverride=false}){
    required();
    if(!id(mapId)||!int(gestureId)||gestureId<1||
     !validateSelection(selection)||!point(origin)||
     !['drag','touch','keyboard','preview'].includes(mode)||
     !int(environmentRevision)||environmentRevision<0||
-    !int(permissionGeneration)||permissionGeneration<0)
+    !int(permissionGeneration)||permissionGeneration<0||
+    typeof collisionOverride!=='boolean')
     throw Error('Invalid V2 begin request');
    const {data,error}=await db.rpc('begin_world_motion_v2',{
     p_map:mapId,p_selection:selection,p_origin:origin,p_mode:mode,
     p_environment_revision:environmentRevision,
-    p_permission_generation:permissionGeneration
+    p_permission_generation:permissionGeneration,
+    p_collision_override:collisionOverride
    });
    const reply=requireReply(data,error);
    if(!id(reply.sessionId)||disposed){
