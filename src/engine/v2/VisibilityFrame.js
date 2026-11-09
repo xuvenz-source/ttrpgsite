@@ -8,7 +8,7 @@ const validInt=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
 const allowed=new Set(['version','mapId','viewerId','scope','cursor',
  'environmentRevision','permissionGeneration','sceneGeneration',
  'visionEpoch','enabled','width','height','partyShared',
- 'visible','explored','visiblePieces']);
+ 'visible','explored','visiblePieces','predictionGrants']);
 const pieceKey=p=>p.kind+':'+p.id;
 function orderedCells(cells,count){
  if(!Array.isArray(cells)||cells.length>count)return false;
@@ -32,6 +32,33 @@ function piecesValid(pieces,width,height){
  }
  return true;
 }
+function grantsValid(grants,pieces,width,height){
+ if(grants===undefined)return true;
+ if(!Array.isArray(grants)||grants.length>8)return false;
+ const visible=new Map(pieces.map(p=>[pieceKey(p),p]));
+ const seen=new Set();
+ for(const grant of grants){
+  if(!grant||grant.kind!=='token'||!UUID.test(grant.id||'')||
+   !validInt(grant.x,0,width-1)||!validInt(grant.y,0,height-1)||
+   !Array.isArray(grant.quadrants)||grant.quadrants.length<1||
+   grant.quadrants.length>4||
+   Object.keys(grant).some(k=>![
+    'kind','id','x','y','quadrants'].includes(k)))return false;
+  const id=pieceKey(grant),actor=visible.get(id);
+  if(seen.has(id)||!actor||
+   actor.x!==grant.x||actor.y!==grant.y)return false;
+  seen.add(id);
+  const quads=new Set();
+  for(const p of grant.quadrants){
+   if(!Array.isArray(p)||p.length!==2||
+    ![-1,1].includes(p[0])||![-1,1].includes(p[1]))return false;
+   const q=p.join(':');
+   if(quads.has(q))return false;
+   quads.add(q);
+  }
+ }
+ return true;
+}
 export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
  if(!raw||typeof raw!=='object'||raw.version!==2||
   raw.mapId!==mapId||raw.viewerId!==viewerId||
@@ -50,13 +77,17 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
   return null;
  const count=raw.width*raw.height;
  if(!orderedCells(raw.visible,count)||!orderedCells(raw.explored,count)||
-  !piecesValid(raw.visiblePieces,raw.width,raw.height))return null;
+  !piecesValid(raw.visiblePieces,raw.width,raw.height)||
+  !grantsValid(raw.predictionGrants,raw.visiblePieces,raw.width,raw.height))return null;
  if(!raw.enabled&&(raw.visible.length||raw.explored.length))return null;
  if(raw.scope==='dm'&&raw.enabled)return null;
  const visible=Object.freeze([...raw.visible]);
  const explored=Object.freeze([...raw.explored]);
  const visiblePieces=Object.freeze(raw.visiblePieces.map(p=>
   Object.freeze({kind:p.kind,id:p.id,x:p.x,y:p.y})));
+ const predictionGrants=Object.freeze((raw.predictionGrants??[]).map(g=>
+  Object.freeze({kind:g.kind,id:g.id,x:g.x,y:g.y,
+   quadrants:Object.freeze(g.quadrants.map(q=>Object.freeze([...q])))})));
  return Object.freeze({
   version:2,mapId,viewerId,scope:raw.scope,cursor:raw.cursor,
   environmentRevision:raw.environmentRevision,
