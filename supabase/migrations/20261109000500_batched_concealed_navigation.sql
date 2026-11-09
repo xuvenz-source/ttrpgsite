@@ -22,7 +22,7 @@ DECLARE
  requested_dx integer;requested_dy integer;
  delta_x integer;delta_y integer;steps integer;step integer;
  next_dx integer;next_dy integer;current_dx integer;current_dy integer;
- used integer:=0;blocked boolean:=false;valid boolean;w double precision;
+ used integer:=0;blocked boolean:=false;valid boolean;fast_legal boolean;w double precision;
 BEGIN
  -- A batch follows a real, bounded gesture cursor, never an arbitrary origin.
  IF actor IS NULL OR p_session IS NULL OR p_seq IS NULL OR p_seq<=0 OR
@@ -117,8 +117,37 @@ BEGIN
   IF steps=0 THEN CONTINUE;END IF;
   IF steps>48 OR used+steps>48 OR
      s.validated_cells+used+steps>128 THEN RETURN NULL;END IF;
-  -- Every swept adjacent crossing is independently tested. A 20-cell
-  -- gesture is one RPC, but never a 20-cell teleport through a wall.
+  -- Cheap secure fast path: one full swept-footprint validation per piece
+  -- is sufficient for an unobstructed straight corridor. The private
+  -- validator checks the entire continuous segment, not just its endpoint.
+  -- Fall back to adjacent checks on collision so accepted-prefix semantics
+  -- and opaque hidden-wall denial remain exactly the same.
+  IF delta_x=0 OR delta_y=0 THEN
+   fast_legal:=true;
+   FOR part IN SELECT value FROM jsonb_array_elements(tokens||tools) LOOP
+    BEGIN
+     PERFORM forge_visibility.validate_piece_trajectory(
+      scene,part->'attrs',
+      (part->>'x')::double precision+current_dx,
+      (part->>'y')::double precision+current_dy,
+      (part->>'w')::double precision,(part->>'h')::double precision,
+      map_w,map_h,
+      jsonb_build_array(jsonb_build_object('dx',delta_x,'dy',delta_y)));
+    EXCEPTION WHEN others THEN fast_legal:=false;EXIT;
+    END;
+   END LOOP;
+   IF fast_legal THEN
+    FOR step IN 1..steps LOOP
+     approved:=approved||jsonb_build_array(jsonb_build_object(
+      'dx',current_dx+sign(delta_x)::integer*step,
+      'dy',current_dy+sign(delta_y)::integer*step));
+    END LOOP;
+    used:=used+steps;current_dx:=requested_dx;current_dy:=requested_dy;
+    CONTINUE targets_loop;
+   END IF;
+  END IF;
+  -- Every remaining swept adjacent crossing is independently tested.
+  -- A multi-cell drag remains one RPC, never a multi-cell teleport.
   FOR step IN 1..steps LOOP
    next_dx:=current_dx+round(delta_x*step::numeric/steps)::integer;
    next_dy:=current_dy+round(delta_y*step::numeric/steps)::integer;
