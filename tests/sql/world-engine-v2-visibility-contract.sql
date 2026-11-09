@@ -452,3 +452,40 @@ BEGIN
 END $$;
 RESET ROLE;
 SELECT 'world-engine-v2-large-map-no-fog-passed' AS result;
+
+
+-- Reassignment removes an off-map teammate as a source of shared sight;
+-- surviving party viewers receive one private revalidation hint.
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000001';
+DO $$
+DECLARE frame jsonb;
+BEGIN
+ frame:=public.get_world_visibility_v2(
+  '10000000-0000-4000-8000-000000000001');
+ IF frame->'visible' @> '[88]'::jsonb
+ THEN RAISE EXCEPTION 'Off-map teammate still reveals hidden distant cells';END IF;
+END $$;
+RESET ROLE;
+
+-- Toggling a HELD torch checks its holder position, not a stale tool-cell
+-- placeholder. The update signals only relevant private vision epochs.
+DO $$
+DECLARE before_epoch bigint;before_scene bigint;
+BEGIN
+ SELECT epoch INTO before_epoch FROM forge_world_v2.vision_epochs
+ WHERE viewer_id='30000000-0000-4000-8000-000000000001' AND
+ map_id='10000000-0000-4000-8000-000000000001';
+ SELECT generation INTO before_scene FROM forge_world_v2.scene_publications
+ WHERE map_id='10000000-0000-4000-8000-000000000001';
+ UPDATE public.campaign_tool_map_tokens SET light_enabled=false
+ WHERE issue_id='50000000-0000-4000-8000-000000000002';
+ IF (SELECT epoch FROM forge_world_v2.vision_epochs
+ WHERE viewer_id='30000000-0000-4000-8000-000000000001' AND
+ map_id='10000000-0000-4000-8000-000000000001')<>before_epoch+1
+ OR (SELECT generation FROM forge_world_v2.scene_publications
+ WHERE map_id='10000000-0000-4000-8000-000000000001')<>before_scene
+ THEN RAISE EXCEPTION 'Held torch toggle failed to dirty sight without republishing';END IF;
+END $$;
+
+SELECT 'world-engine-v2-roster-reassignment-and-held-light-passed' AS result;
