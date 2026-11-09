@@ -8,7 +8,8 @@ const validInt=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
 const allowed=new Set(['version','mapId','viewerId','scope','cursor',
  'environmentRevision','permissionGeneration','sceneGeneration',
  'visionEpoch','enabled','width','height','partyShared',
- 'visible','explored','visiblePieces','predictionGrants']);
+ 'visible','explored','visiblePieces','predictionGrants',
+ 'lightCells','dmMovingLights']);
 const pieceKey=p=>p.kind+':'+p.id;
 function orderedCells(cells,count){
  if(!Array.isArray(cells)||cells.length>count)return false;
@@ -59,6 +60,30 @@ function grantsValid(grants,pieces,width,height){
  }
  return true;
 }
+function cosmeticLightsValid(raw){
+ const cells=raw.lightCells??[],lamps=raw.dmMovingLights??[];
+ if(!Array.isArray(cells)||cells.length>768||!Array.isArray(lamps)||
+  lamps.length>50||raw.scope==='viewer'&&lamps.length>0||
+  raw.scope==='dm'&&cells.length>0)return false;
+ const visible=new Set(raw.visible||[]);
+ let previous=-1;
+ for(const cell of cells){
+  if(!Array.isArray(cell)||cell.length!==2||
+   !validInt(cell[0],0,raw.width*raw.height-1)||
+   !validInt(cell[1],1,3)||cell[0]<=previous||
+   !visible.has(cell[0]))return false;
+  previous=cell[0];
+ }
+ for(const source of lamps){
+  if(!source||typeof source!=='object'||
+   Object.keys(source).some(k=>!['x','y','reach'].includes(k))||
+   !Number.isFinite(source.x)||!Number.isFinite(source.y)||
+   !Number.isFinite(source.reach)||source.reach<0||
+   source.reach>200||source.x<0||source.y<0||
+   source.x>raw.width||source.y>raw.height)return false;
+ }
+ return true;
+}
 export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
  if(!raw||typeof raw!=='object'||raw.version!==2||
   raw.mapId!==mapId||raw.viewerId!==viewerId||
@@ -78,7 +103,8 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
  const count=raw.width*raw.height;
  if(!orderedCells(raw.visible,count)||!orderedCells(raw.explored,count)||
   !piecesValid(raw.visiblePieces,raw.width,raw.height)||
-  !grantsValid(raw.predictionGrants,raw.visiblePieces,raw.width,raw.height))return null;
+  !grantsValid(raw.predictionGrants,raw.visiblePieces,raw.width,raw.height)||
+  !cosmeticLightsValid(raw))return null;
  if(!raw.enabled&&(raw.visible.length||raw.explored.length))return null;
  if(raw.scope==='dm'&&raw.enabled)return null;
  const visible=Object.freeze([...raw.visible]);
@@ -88,6 +114,10 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
  const predictionGrants=Object.freeze((raw.predictionGrants??[]).map(g=>
   Object.freeze({kind:g.kind,id:g.id,x:g.x,y:g.y,
    quadrants:Object.freeze(g.quadrants.map(q=>Object.freeze([...q])))})));
+ const lightCells=Object.freeze((raw.lightCells??[]).map(row=>
+  Object.freeze([...row])));
+ const dmMovingLights=Object.freeze((raw.dmMovingLights??[]).map(light=>
+  Object.freeze({x:light.x,y:light.y,reach:light.reach})));
  return Object.freeze({
   version:2,mapId,viewerId,scope:raw.scope,cursor:raw.cursor,
   environmentRevision:raw.environmentRevision,
@@ -95,7 +125,8 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
   sceneGeneration:raw.sceneGeneration,
   visionEpoch:raw.visionEpoch,enabled:raw.enabled,
   width:raw.width,height:raw.height,partyShared:raw.partyShared,
-  visible,explored,visiblePieces,predictionGrants
+  visible,explored,visiblePieces,predictionGrants,
+  lightCells,dmMovingLights
  });
 }
 /** 0 = fully concealed, 1 = explored but not visible, 2 = currently
