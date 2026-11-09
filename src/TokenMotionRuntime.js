@@ -22,11 +22,20 @@ export function createTokenMotionRuntime({
 }={}){
  const mounted=new Map(),previews=new Map(),dirty=new Set();
  const settleTimers=new Map(),requestedAt=new Map(),remoteRoutes=new Map();
- let scheduled=null,disposed=false;
+ let scheduled=null,routeFrame=null,disposed=false;
+ // One compositor tick handles every active path; avoid an RAF callback per
+ // token during DM group moves or high-population player stress tests.
+ function ensureRouteFrame(){
+  if(disposed||routeFrame!==null||remoteRoutes.size===0)return;
+  routeFrame=requestFrame(()=>{
+   routeFrame=null;
+   for(const id of [...remoteRoutes.keys()])advanceRemoteRoute(id);
+   if(remoteRoutes.size)ensureRouteFrame();
+  });
+ }
  function stopRemoteRoute(id){
   const route=remoteRoutes.get(id);
   if(!route)return null;
-  if(route.handle!==null)cancelFrame(route.handle);
   remoteRoutes.delete(id);
   return route;
  }
@@ -137,13 +146,12 @@ export function createTokenMotionRuntime({
   remoteRoutes.set(id,route);
   movementDiagnostics.count(remote?'observerValidatedPathAccepted':
    'localValidatedPathAccepted');
-  route.handle=requestFrame(()=>advanceRemoteRoute(id));
+  ensureRouteFrame();
   return true;
  }
  function advanceRemoteRoute(id){
   const route=remoteRoutes.get(id);
   if(!route||disposed)return;
-  route.handle=null;
   const now=clock();
   if(route.nextIndex===null)
    route.nextIndex=nextVerifiedRun(route.points,route.index);
@@ -195,7 +203,6 @@ export function createTokenMotionRuntime({
    route.nextIndex=null;
    route.started=now;
   }
-  route.handle=requestFrame(()=>advanceRemoteRoute(id));
  }
  return {
   bind(id,kind,node,{x,y,cell}={}){
@@ -291,6 +298,7 @@ export function createTokenMotionRuntime({
    schedule(id);
   },
   clear(){
+   if(routeFrame!==null){cancelFrame(routeFrame);routeFrame=null}
    for(const id of remoteRoutes.keys())stopRemoteRoute(id);
    for(const id of settleTimers.keys())cancelSettle(id);
    previews.clear();requestedAt.clear();
@@ -299,6 +307,7 @@ export function createTokenMotionRuntime({
    for(const id of mounted.keys())paint(id);
   },
   dispose(){
+   if(routeFrame!==null){cancelFrame(routeFrame);routeFrame=null}
    for(const id of remoteRoutes.keys())stopRemoteRoute(id);
    for(const id of settleTimers.keys())cancelSettle(id);
    if(scheduled!==null)cancelFrame(scheduled);
