@@ -5,7 +5,7 @@ import {appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from '.
  */
 const terminal=new Set(['Committed','Cancelled','Rejected','Revoked']);
 const validPoint=p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)&&Math.abs(p.x)<=100000&&Math.abs(p.y)<=100000;
-const validSelection=selection=>Array.isArray(selection)&&selection.length>0&&selection.length<=64&&
+const validSelection=selection=>Array.isArray(selection)&&selection.length>0&&selection.length<=48&&
  selection.every(p=>['token','tool'].includes(p?.kind)&&typeof p.id==='string'&&p.id.length>0)&&
  new Set(selection.map(p=>p.kind+':'+p.id)).size===selection.length;
 const validSession=r=>r?.version===2&&typeof r.sessionId==='string'&&r.sessionId.length>0;
