@@ -95,6 +95,10 @@ BEGIN
    END IF;
   END LOOP;
   IF NOT affected THEN
+   -- Build a single recipient-specific source list for BOTH torch effects
+   -- and piece-boundary checks. Never repeat this expensive query per torch.
+   viewer_sources:=forge_world_v2.vision_sources_v2(
+    s.map_id,s.campaign_id,viewer.user_id,scene);
    -- Remote moving torches can alter the viewer's real lighting.
    -- Check proximity to entitled sources before publishing a sight tick.
    FOR torch IN
@@ -123,9 +127,7 @@ BEGIN
     -- Include previously approved displacement before this batch.
     light_x:=light_x+s.last_x-s.origin_x;
     light_y:=light_y+s.last_y-s.origin_y;
-    FOR source IN SELECT value FROM jsonb_array_elements(
-     forge_world_v2.vision_sources_v2(
-      s.map_id,s.campaign_id,viewer.user_id,scene)) LOOP
+    FOR source IN SELECT value FROM jsonb_array_elements(viewer_sources) LOOP
      source_x:=(source->>'x')::double precision+
       (source->>'spanX')::double precision/2.0;
      source_y:=(source->>'y')::double precision+
@@ -144,12 +146,11 @@ BEGIN
   -- roster. Leaving view likewise reconciles missed hide packets.
   -- Do not publish an ID, location, blocker, or any geometry.
   IF NOT affected THEN
-   viewer_sources:=forge_world_v2.vision_sources_v2(
-    s.map_id,s.campaign_id,viewer.user_id,scene);
    IF jsonb_typeof(viewer_sources)='array' AND
       jsonb_array_length(viewer_sources)>0 THEN
-    viewer_lights:=forge_world_v2.light_sources_v2(
-     s.map_id,s.campaign_id,scene);
+    -- Delay expensive per-cell light sourcing until a moved piece is
+    -- actually close enough to cross this recipient's sight boundary.
+    viewer_lights:=NULL;
     FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
      part_id:=(part->>'id')::uuid;
      IF part->>'kind'='token' THEN
@@ -182,6 +183,10 @@ BEGIN
        (finish_y-(src.value->>'y')::double precision-
         (src.value->>'spanY')::double precision/2.0)^2<=196
      ) THEN CONTINUE;END IF;
+     IF viewer_lights IS NULL THEN
+      viewer_lights:=forge_world_v2.light_sources_v2(
+       s.map_id,s.campaign_id,scene);
+     END IF;
      was_seen:=forge_world_v2.is_seen_v2(
       scene,viewer_sources,viewer_lights,start_x,start_y);
      now_seen:=forge_world_v2.is_seen_v2(
