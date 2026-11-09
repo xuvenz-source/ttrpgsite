@@ -17,10 +17,12 @@ const validId=v=>typeof v==='string'&&UUID.test(v);
 export const WORLD_VISION_EVENT='world-vision-v2';
 export function createVisibilityController({
  db,mapId,viewerId,dmPreview=false,getScene=()=>null,
+ getPreviewPosition=()=>null,
  onFog=noop,onRoster=noop,onSnapshot=noop,onRevoke=noop,onError=noop
 }={}){
  if(!db?.rpc||!validId(mapId)||!validId(viewerId)||
   typeof dmPreview!=='boolean'||typeof getScene!=='function'||
+  typeof getPreviewPosition!=='function'||
   typeof onFog!=='function'||typeof onRoster!=='function'||
   typeof onSnapshot!=='function'||typeof onRevoke!=='function'||
   typeof onError!=='function')
@@ -76,7 +78,15 @@ export function createVisibilityController({
   return next;
  }
  async function fetchFrame(){
-  const args=dmPreview?{
+  const virtual=dmPreview?getPreviewPosition():null;
+  if(virtual&&(!validId(virtual.tokenId)||
+   !Number.isSafeInteger(virtual.x)||!Number.isSafeInteger(virtual.y)))
+   throw Error('Invalid virtual preview position');
+  const args=dmPreview?virtual?{
+   name:'preview_world_visibility_at_v2',
+   params:{p_map:currentMap,p_viewer:currentViewer,
+    p_token:virtual.tokenId,p_x:virtual.x,p_y:virtual.y}
+  }:{
    name:'preview_world_visibility_v2',
    params:{p_map:currentMap,p_viewer:currentViewer}
   }:{
