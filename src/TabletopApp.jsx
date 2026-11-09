@@ -87,7 +87,17 @@ import {DEFAULT_ENCUMBRANCE,evaluateEncumbrance} from './InventoryMath.js';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 
-import Board from './BattlemapBoard.jsx';
+/**
+ * Phase 9: not enabled in any current deployment. Requires both explicit
+ * release controls plus Phase 10 retirement and approved V2 SQL cutover.
+ */
+const WORLD_V2_CUTOVER=import.meta.env.VITE_WORLD_ENGINE_V2==='integrated'&&
+ import.meta.env.VITE_WORLD_ENGINE_V2_READY==='true';
+// Keep the legacy board code OUT of the V2 loaded component graph.
+ // The inactive board is never mounted or eagerly imported.
+const BoardComponent=React.lazy(()=>WORLD_V2_CUTOVER?
+ import('./engine/v2/WorldV2Board.jsx'):
+ import('./BattlemapBoard.jsx'));
 import Designer from './SheetTemplateDesigner.jsx';
 import {QuickEditBoundary} from './AppBoundaries.jsx';
 import {uid,D} from './TabletopSheetDefaults.js';
@@ -146,6 +156,7 @@ export default function TabletopApp(){
  const[mapCalibrationPreview,setMapCalibrationPreview]=useState(null);
  const[mapEnvironment,setMapEnvironment]=useState(null);
  const[publishedMapEnvironment,setPublishedMapEnvironment]=useState(null);
+ const[v2Published,setV2Published]=useState(null);
  const mapEnvironmentCurrent=useRef(null);
  const[mapEnvironmentMapId,setMapEnvironmentMapId]=useState('');
  const[mapEnvironmentStatus,setMapEnvironmentStatus]=useState('Choose a map');
@@ -198,8 +209,9 @@ export default function TabletopApp(){
  // Keep the most recent local destination authoritative until the server acknowledges it.
  const movementPending=useRef(new Map()),toolMovementPending=useRef(new Set()),
   tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
- const previewStepHandler=useRef(null);
+ const previewStepHandler=useRef(null),v2StepHandler=useRef(null);
  const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
+ const registerV2Step=useCallback(handler=>{v2StepHandler.current=handler},[]);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
  if(!mapEnvironmentWriter.current){
   mapEnvironmentWriter.current=createDebouncedSerialWriter(
@@ -281,13 +293,14 @@ export default function TabletopApp(){
   refreshCoordinator:refreshCoordinator
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
-  refreshCoordinator:refreshCoordinator});
+  refreshCoordinator:refreshCoordinator,enabled:!WORLD_V2_CUTOVER});
  const navigationStore=useMemo(()=>createAuthorizedNavigation({db}),[]);
  useEffect(()=>()=>navigationStore.dispose(),[navigationStore]);
  // Preauthorize bounded local movement before first drag; no private walls.
  useEffect(()=>navigationStore.clear(),[navigationStore,selectedMap,user]);
  useEffect(()=>{
-  if(!selectedMap||isDM||!user||playerMapId!==selectedMap)return;
+  if(WORLD_V2_CUTOVER||!selectedMap||isDM||!user||
+   playerMapId!==selectedMap)return;
   // A pending or invalid sight frame MUST revoke navigation, even when the
   // old frame's last visible cells are retained solely as cosmetic terrain.
   if(!navigationStore.adoptFrame(selectedMap,fog.frame))return;
@@ -333,7 +346,8 @@ export default function TabletopApp(){
   revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision,
   protocolVersion:fog.frame?.protocolVersion===2?2:1,
   refreshNonce:fog.frame,
-  enabled:campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
+  enabled:!WORLD_V2_CUTOVER&&
+   campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
  });
  const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=useCampaignPresence({
@@ -1142,7 +1156,7 @@ export default function TabletopApp(){
  // unsent positions if the server round trip exceeds the pointer interval.
  // Per-recipient authorization and broadcasts remain exclusively in Postgres.
  useEffect(()=>{
-  if(!db||!selectedMap)return;
+  if(WORLD_V2_CUTOVER||!db||!selectedMap)return;
   const transport=createAuthorizedMotionTransport({db});
   movementSessionTransport.current=transport;
   activeGroupPreview.current=null;
@@ -1179,7 +1193,7 @@ export default function TabletopApp(){
  // authorized coordinate. This prevents a previous commit from rewinding
  // another player's currently active drag.
  useEffect(()=>{
-  if(!selectedMap)return;
+  if(WORLD_V2_CUTOVER||!selectedMap)return;
   const manager=createRemotePositionSettler({
    settle:(id,x,y)=>{
     const preview=remoteMotion.current?.getPreview(id);
@@ -1198,7 +1212,7 @@ export default function TabletopApp(){
  // Pointer packets paint token/tool transforms directly, not TabletopApp state.
  useEffect(()=>{
   observerRevisions.current.clear();
-  if(!db||!activeId||!selectedMap||!user)return;
+  if(WORLD_V2_CUTOVER||!db||!activeId||!selectedMap||!user)return;
   const mapId=selectedMap;
   const channel=db.channel(observerMotionTopic(mapId,user),{
    config:{private:true,broadcast:{ack:false,self:false}}
@@ -1439,6 +1453,14 @@ export default function TabletopApp(){
     filter:'campaign_id=eq.'+activeId},event=>{
     const mapId=tokenContextRef.current.mapId;
     if(!eventAffectsMap(event,mapId))return;
+    if(WORLD_V2_CUTOVER){
+     // Non-positional metadata changes still refresh sheets/resources.
+     // The V2 sight+observer owner alone supplies movement and fog.
+     if(event.eventType!=='UPDATE'||!isPositionOnlyTokenEvent(
+      event,latestMovementAccess.current.tokens||[],mapId))
+      tokenUpdates.request();
+     return;
+    }
     // The database has already applied this viewer's RLS on the row event.
     // Patch observed coordinates now, then run background reconciliation.
     const isMotionOnly=isPositionOnlyTokenEvent(
@@ -1681,12 +1703,14 @@ export default function TabletopApp(){
    if(e.repeat&&!isMove)return;
    if(isMove){
     const simulated=isDM&&mapSettingEditor.previewing;
-    if(!simulated&&(!selectedToken||(!isDM&&selectedToken.owner_id!==user)))return;
+    if(!WORLD_V2_CUTOVER&&!simulated&&
+     (!selectedToken||(!isDM&&selectedToken.owner_id!==user)))return;
     if(e.repeat&&performance.now()-lastKeyboardMove.current<115){e.preventDefault();return}
     lastKeyboardMove.current=performance.now();
     e.preventDefault();
     const delta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[action];
     if(simulated)previewStepHandler.current?.(delta[0],delta[1]);
+    else if(WORLD_V2_CUTOVER)v2StepHandler.current?.(delta[0],delta[1]);
     else moveSelectedByKey(delta[0],delta[1]);
    }else if(action==='sheet'){
     e.preventDefault();
@@ -2914,11 +2938,14 @@ export default function TabletopApp(){
  <section className="panel tabletop-panel map-only-panel"
   style={tab==='tabletop'||tab==='sheet'?undefined:{display:'none'}}
   aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
-  {displayedMap?<><Board db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
+  {displayedMap?<><React.Suspense fallback={
+    <div className="empty-tabletop" role="status">Loading tabletop…</div>
+   }><BoardComponent db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    publishedEnvironment={mapEnvironmentMapId===selectedMap?publishedMapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
    environmentEditor={mapSettingEditor} registerPreviewStep={registerPreviewStep}
+    registerV2Step={registerV2Step}
    onAddEnvironmentObject={addEnvironmentObject}
    handoutPins={campaignHandouts.pins} onCreateHandoutPin={createHandoutPin}
    onOpenHandoutPin={openMapHandoutPin} onMoveHandoutPin={moveMapHandoutPin}
@@ -2963,7 +2990,17 @@ export default function TabletopApp(){
    resize={resizeToken}
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}
-   encumbranceBadges={encumbranceBadges} hotbarInset={hotbarVisible}/>
+   encumbranceBadges={encumbranceBadges} hotbarInset={hotbarVisible}
+   onMovementCommitted={()=>{
+    void refreshTokens();
+    void campaignTools.refresh(['issued','placed'],true);
+   }}
+   onV2Error={fail}
+   onV2SceneSnapshot={snapshot=>setV2Published({
+    mapId:snapshot.mapId,
+    fog:snapshot.fogEnabled,
+    collision:snapshot.collisionEnabled
+   })}/></React.Suspense>
    {(Object.keys(pendingQuickTokens).length+Object.keys(statusSavingTokens).length)>0&&
     <div className="quick-save-status" role="status">
      <span className="quick-save-pulse" aria-hidden="true"/>
@@ -3005,7 +3042,10 @@ export default function TabletopApp(){
  onPublishEnvironment={publishEnvironmentRules}
  onDisablePublished={publishEnvironmentRules}
  onResetExploration={publishEnvironmentRules}
- publishedEnvironment={fog.published}
+ publishedEnvironment={WORLD_V2_CUTOVER?
+    (v2Published?.mapId===selectedMap?{
+     fog:v2Published.fog,collision:v2Published.collision
+    }:null):fog.published}
  pinsForMap={campaignHandouts.pins}
  onUpdateHandoutPin={updateMapHandoutPin} onDeleteHandoutPin={deleteMapHandoutPin}
  mapSettingEditor={mapSettingEditor} onMapSettingEditorChange={setMapSettingEditor}
@@ -3091,7 +3131,10 @@ export default function TabletopApp(){
      onPublishEnvironment={publishEnvironmentRules}
      onDisablePublished={publishEnvironmentRules}
      onResetExploration={publishEnvironmentRules}
-     publishedEnvironment={fog.published}
+     publishedEnvironment={WORLD_V2_CUTOVER?
+    (v2Published?.mapId===selectedMap?{
+     fog:v2Published.fog,collision:v2Published.collision
+    }:null):fog.published}
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
      template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}

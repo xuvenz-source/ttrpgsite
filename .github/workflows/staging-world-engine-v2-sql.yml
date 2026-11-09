@@ -1,0 +1,74 @@
+name: World Engine V2 isolated PostgreSQL authority tests
+on:
+  push:
+    branches:
+      - stage/world-engine-v2-2026-11-09
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: v2fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d v2fixture"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: v2fixture
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install synthetic fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-fixture.sql
+      - name: Apply staged V2 schema to disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql
+      - name: Verify ownership, RLS grants, collision and replay
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-contract.sql
+      - name: Apply proposed private observer stream migration to disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql
+      - name: Verify recipient filtering, stream ordering, concealment and anti-forgery
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-observer-contract.sql
+      - name: Prepare synthetic published and DM draft maps
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-scene-fixture.sql
+      - name: Apply staged V2 static-scene publication schema
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109101000_world_engine_v2_static_scene_publication.sql
+      - name: Verify map persistence, scene generations and viewer-private metadata
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-scene-contract.sql
+      - name: Install synthetic exploration, placed and carried torch fixtures
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-vision-fixture.sql
+      - name: Install V2 independent sight/light geometry and observer authorization
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102000_world_engine_v2_vision_geometry.sql
+      - name: Install actor-bound fog, exploration and roster snapshots
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102100_world_engine_v2_visibility_snapshots.sql
+      - name: Install private movement-linked vision invalidations
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102200_world_engine_v2_visibility_invalidation.sql
+      - name: Install token reveal and party source reassignment invalidation
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102300_world_engine_v2_vision_roster_invalidation.sql
+      - name: Install Phase 10 V2 checkpoint-aware collision trigger definitions
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109103000_world_engine_v2_legacy_commit_checkpoint.sql
+      - name: Verify sealed transaction checkpoint and no legacy V2 GUCs
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-phase10-checkpoint-contract.sql
+      - name: Verify V2 LOS, static and moving light, privacy, preview and exploration
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-visibility-contract.sql
+      - name: Verify hidden NPC entering visible sight triggers private roster refresh
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-boundary-roster-contract.sql
+      - name: Verify owned, party-shared and held tool prediction permissions
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-tool-prediction-contract.sql
+      - name: Verify real collision triggers accept only sealed V2 group commits
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-phase10-real-triggers.sql

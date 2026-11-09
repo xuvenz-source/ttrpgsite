@@ -6,7 +6,10 @@ test('bootstrap is independent of the tabletop controller and map engine',()=>{
  const main=read('main.jsx'),app=read('TabletopApp.jsx'),
   board=read('BattlemapBoard.jsx'),designer=read('SheetTemplateDesigner.jsx');
  assert.match(main,/import TabletopApp from '\.\/TabletopApp\.jsx'/);
- assert.match(app,/import Board from '\.\/BattlemapBoard\.jsx'/);
+ assert.doesNotMatch(app,/import Board from '\.\/BattlemapBoard\.jsx'/);
+ assert.match(app,/React\.lazy\(\(\)=>WORLD_V2_CUTOVER\?/);
+ assert.match(app,/import\('\.\/engine\/v2\/WorldV2Board\.jsx'\)/);
+ assert.match(app,/import\('\.\/BattlemapBoard\.jsx'\)/);
  assert.match(app,/import Designer from '\.\/SheetTemplateDesigner\.jsx'/);
  assert.match(board,/export default function Board\(/);
  assert.match(designer,/export default function Designer\(/);
