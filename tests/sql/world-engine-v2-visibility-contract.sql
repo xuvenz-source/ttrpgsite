@@ -80,7 +80,7 @@ BEGIN
  f:=public.preview_world_visibility_v2(
  '10000000-0000-4000-8000-000000000001',
  '30000000-0000-4000-8000-000000000001');
- IF f->>'enabled'<>'true' OR
+ IF f->>'enabled'<>'true' OR f->>'scope'<>'viewer' OR
   f->>'viewerId'<>'30000000-0000-4000-8000-000000000001'
   OR f->>'width'<>'10' OR f->>'height'<>'10' OR
   f->'visible' IS NULL OR f->'explored' IS NULL OR
@@ -142,7 +142,8 @@ DECLARE f jsonb;
 BEGIN
  f:=public.get_world_visibility_v2(
   '10000000-0000-4000-8000-000000000001');
- IF f->>'enabled'<>'false' OR f->'visible'<>'[]'::jsonb OR
+ IF f->>'scope'<>'dm' OR
+  f->>'enabled'<>'false' OR f->'visible'<>'[]'::jsonb OR
   f->'explored'<>'[]'::jsonb OR
   NOT EXISTS(SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') obj
    WHERE obj->>'id'='40000000-0000-4000-8000-000000000002')
