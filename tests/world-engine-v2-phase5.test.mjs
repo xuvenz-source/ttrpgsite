@@ -53,7 +53,7 @@ test('strict private topic is viewer+map scoped and no send API exists',async()=
  assert.equal(state.calls.length,1);
  assert.equal(state.authCount,1);
  assert.equal(state.calls[0].topic,worldObserverTopic(mapId,viewerId));
- assert.equal(state.calls[0].config.private,true);
+ assert.equal(state.calls[0].config.config.private,true);
  assert.deepEqual(state.events,[{type:'broadcast',filter:{event:WORLD_MOTION_EVENT}}]);
  assert.equal(typeof transport.send,'undefined');
  status('SUBSCRIBED');await flush();
