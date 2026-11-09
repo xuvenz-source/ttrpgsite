@@ -24,6 +24,7 @@ import {enqueueConcealedTarget,takeConcealedBatch}
  from './ConcealedGestureBatch.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
 import {movementDiagnostics} from './MovementDiagnostics.js';
+import {authorizedFractionalOffset} from './AuthorizedFractionalMotion.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -810,6 +811,18 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   })),...(info.tools||[]).map(tool=>({
    kind:'tool',id:tool.issue_id,x:Number(tool.x),y:Number(tool.y)
   }))];
+  const collisionPieces=isDM?[
+   ...info.members.map(token=>{
+    const values=characters.find(c=>c.id===token.character_id)?.field_values;
+    return values?{...token,field_values:values}:token;
+   }),
+   ...(info.tools||[]).map(tool=>({
+    ...groupToolFootprint(tool),
+    npc_values:toolIssued.find(t=>t.id===tool.issue_id)?.state?.attrs||{}
+   }))
+  ]:null;
+  const collisionEnabled=isDM&&environmentEditor?.ignoreCollision!==true&&
+   fogFrame?.collisionEnabled!==false&&collisionScene;
   const delta=isDM?
    (environmentEditor?.ignoreCollision!==true&&
     fogFrame?.collisionEnabled!==false&&collisionScene?
@@ -817,16 +830,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
      // Conditional walls must use the same effective creature/tool values
      // as the server. These private attributes are held by the DM only;
      // players continue using opaque authorized edge masks.
-     pieces:[
-      ...info.members.map(token=>{
-       const values=characters.find(c=>c.id===token.character_id)?.field_values;
-       return values?{...token,field_values:values}:token;
-      }),
-      ...(info.tools||[]).map(tool=>({
-       ...groupToolFootprint(tool),
-       npc_values:toolIssued.find(t=>t.id===tool.issue_id)?.state?.attrs||{}
-      }))
-     ],
+     pieces:collisionPieces,
      map,environment:collisionScene,previous,desired:requested
     }):requested):
    traceAuthorizedGroupOffset({
@@ -835,6 +839,39 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
      navigation?.allows(map.id,piece.kind,piece.id,from,to)===true
    });
   paintAcceptedOffset(info,delta);
+  // Continue following the mouse at sub-cell resolution only along a
+  // verified crossing. This does not persist floats, grant sight or change
+  // observer positions. Unknown and one-way edges stay solid.
+  const at={dx:info.dx,dy:info.dy};
+  const members=[...info.members,...(info.tools||[]).map(groupToolFootprint)];
+  const canCross=(from,to)=>{
+   const bounded=boundedGroupOffset(members,to.dx,to.dy,
+    map.width,map.height,map.grid_size);
+   if(bounded.dx!==to.dx||bounded.dy!==to.dy)return false;
+   if(isDM){
+    if(!collisionEnabled)return true;
+    const checked=traceSolidGroupOffset({
+     pieces:collisionPieces,map,environment:collisionScene,
+     previous:from,desired:to
+    });
+    return checked.dx===to.dx&&checked.dy===to.dy;
+   }
+   return pieces.every(piece=>navigation?.allows(
+    map.id,piece.kind,piece.id,
+    {x:piece.x+from.dx,y:piece.y+from.dy},
+    {x:piece.x+to.dx,y:piece.y+to.dy})===true);
+  };
+  const visual=authorizedFractionalOffset(at,{
+   dx:(e.clientX-info.startX)/cell,dy:(e.clientY-info.startY)/cell
+  },canCross);
+  if(visual.dx!==at.dx||visual.dy!==at.dy){
+   for(const token of info.members)
+    motion.current?.preview(token.id,Number(token.x)+visual.dx,
+     Number(token.y)+visual.dy);
+   for(const tool of info.tools||[])
+    motion.current?.preview('tool:'+tool.issue_id,
+     Number(tool.x)+visual.dx,Number(tool.y)+visual.dy);
+  }
  }
  function paintAcceptedOffset(info,delta){
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
