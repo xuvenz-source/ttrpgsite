@@ -276,3 +276,21 @@ test('V2 sight frame rejects missing viewer scope and DM scope with enabled fog'
  }),mapId,viewerId);
  assert.equal(dm.scope,'dm');
 });
+
+test('unpublished map with explicitly disabled rules allows authorized sight, protected map does not',async()=>{
+ const valid={mapId,revision:9,sceneGeneration:6,published:false,
+  fogEnabled:false,collisionEnabled:false,environment:null};
+ const unfogged=frame({enabled:false,visible:[],explored:[],
+  visiblePieces:[hero],lightCells:[],dmMovingLights:[]});
+ const {db}=fakeDb(unfogged);
+ const controller=createVisibilityController({db,mapId,viewerId,
+  getScene:()=>valid});
+ assert.equal((await controller.refresh())?.scope,'viewer');
+ assert.equal(controller.authorized,true);
+ controller.dispose();
+ const invalid=createVisibilityController({db,mapId,viewerId,
+  getScene:()=>({...valid,collisionEnabled:true})});
+ assert.equal(await invalid.refresh(),null);
+ assert.equal(invalid.authorized,false);
+ invalid.dispose();
+});
