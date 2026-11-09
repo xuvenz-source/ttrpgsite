@@ -121,12 +121,13 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   get state(){return state},
   get active(){return !!active},
   beginGesture({mapId,selection,origin,pointer,mode='drag',
-   environmentRevision=0,permissionGeneration=0}={}){
+   environmentRevision=0,permissionGeneration=0,collisionOverride=false}={}){
    if(disposed||active||typeof mapId!=='string'||!mapId||
     !validSelection(selection)||!['drag','touch','keyboard','preview'].includes(mode)||
     !validPoint(origin)||!Number.isSafeInteger(origin.x)||!Number.isSafeInteger(origin.y)||
     !validPoint(pointer)||!Number.isSafeInteger(environmentRevision)||environmentRevision<0||
-    !Number.isSafeInteger(permissionGeneration)||permissionGeneration<0)return false;
+    !Number.isSafeInteger(permissionGeneration)||permissionGeneration<0||
+    typeof collisionOverride!=='boolean')return false;
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
@@ -137,7 +138,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    emit(g,'grabbed'); // immediate, before any asynchronous permission operation
    void Promise.resolve().then(()=>authority.begin({
     version:2,mapId,gestureId:g.generation,selection:g.selection,mode,
-    origin:g.origin,environmentRevision,permissionGeneration
+    origin:g.origin,environmentRevision,permissionGeneration,
+    collisionOverride
    })).then(reply=>{
     if(!validSession(reply))throw Error('invalid-session');
     g.sessionId=reply.sessionId;
