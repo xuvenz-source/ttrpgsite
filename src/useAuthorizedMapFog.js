@@ -89,6 +89,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
     previous:viewer?'viewer':'global');
    validated.current=safe;
    pendingTick.current=null;
+   movementDiagnostics.count('fog-authorized-frame-adopted');
    setFrame(previous=>retainFogSnapshot(previous,safe));
    setPublished(previous=>previous?.fog===!!data.enabled&&
     previous?.collision===!!data.collisionEnabled?
@@ -130,6 +131,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    // An authoritative fog-off revision never needs a temporary black mask.
    // If fog was enabled before this event, remain fail-closed until RPC.
    // Unknown/older revision payloads also fail closed.
+   movementDiagnostics.count('fog-unverified-visibility-refresh');
    setFrame(previous=>
     event?.new?.fog_enforced===false&&previous?.enabled===false?
      previous:fogFrameDuringRefresh(previous,mapId));
@@ -155,6 +157,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
        pendingTick.current))return;
      ++request.current;coordinator.invalidate(key);
      validated.current=safe;pendingTick.current=null;
+     movementDiagnostics.count('fog-verified-delta-adopted');
      setFrame(previous=>retainFogSnapshot(previous,safe));
      setPublished(previous=>previous?.fog===safe.enabled&&
       previous?.collision===safe.collisionEnabled?previous:{
