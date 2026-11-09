@@ -22,6 +22,7 @@ DECLARE actor uuid:=auth.uid();camp uuid;role_name text;real_dm boolean;
  sources jsonb:='[]'::jsonb;lights jsonb:='[]'::jsonb;
  visible jsonb:='[]'::jsonb;explored jsonb:='[]'::jsonb;
  roster jsonb:='[]'::jsonb;pieces record;piece_delta jsonb;
+ cosmetic_torch_cells jsonb:='[]'::jsonb;dm_moving_lights jsonb:='[]'::jsonb;
  px integer;py integer;tx integer;ty integer;
  memory_count integer:=0;cursor bigint:=0;vision_epoch bigint:=0;
 BEGIN
@@ -147,6 +148,17 @@ BEGIN
     WHERE ex.map_id=p_map AND ex.user_id=p_viewer;
   END IF;
   explored:=coalesce(explored,'[]'::jsonb);
+  cosmetic_torch_cells:=forge_world_v2.visible_torch_levels_v2(
+   env,lights,visible,w);
+ END IF;
+ IF real_dm AND jsonb_typeof(env->'objects')='array' THEN
+  lights:=forge_world_v2.light_sources_v2(p_map,camp,env);
+  SELECT coalesce(jsonb_agg(jsonb_build_object(
+   'x',(value->>'x')::double precision,
+   'y',(value->>'y')::double precision,
+   'reach',(value->>'reach')::double precision)),
+   '[]'::jsonb) INTO dm_moving_lights
+  FROM jsonb_array_elements(lights) WHERE value->>'kind'='torch';
  END IF;
  -- Select visible tokens and placed tools with server canonical/approved
  -- positions, without any raw NPC sheet or hidden environment details.
@@ -232,7 +244,8 @@ BEGIN
   'enabled',fog_enabled AND NOT real_dm,
   'width',w,'height',h,'partyShared',shared,
   'visible',visible,'explored',explored,
-  'visiblePieces',roster,'predictionGrants',prediction_grants);
+  'visiblePieces',roster,'predictionGrants',prediction_grants,
+  'lightCells',cosmetic_torch_cells,'dmMovingLights',dm_moving_lights);
 EXCEPTION WHEN others THEN
  -- No incomplete/partial fog frame or private geometry escapes on failure.
  RETURN NULL;
