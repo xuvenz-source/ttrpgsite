@@ -107,3 +107,57 @@ INSERT INTO public.campaign_tool_issues(id,campaign_id,map_id,owner_id,party_sha
  '20000000-0000-4000-8000-000000000001',
  '10000000-0000-4000-8000-000000000001',
  '30000000-0000-4000-8000-000000000001',true,'torch',0,6);
+
+
+-- Phase 5 synthetic Realtime private topic and map assignment fixtures.
+CREATE TABLE public.campaigns(
+ id uuid PRIMARY KEY,active_map_id uuid
+);
+CREATE TABLE public.campaign_player_maps(
+ campaign_id uuid NOT NULL,user_id uuid NOT NULL,map_id uuid,
+ PRIMARY KEY(campaign_id,user_id)
+);
+INSERT INTO public.campaigns(id,active_map_id) VALUES(
+ '20000000-0000-4000-8000-000000000001',
+ '10000000-0000-4000-8000-000000000001');
+CREATE SCHEMA realtime;
+CREATE TABLE realtime.messages(
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ topic text NOT NULL,event text NOT NULL,
+ extension text NOT NULL DEFAULT 'broadcast',
+ payload jsonb NOT NULL,private boolean NOT NULL DEFAULT true
+);
+ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+GRANT USAGE ON SCHEMA realtime TO authenticated,anon;
+GRANT SELECT,INSERT ON realtime.messages TO authenticated,anon;
+CREATE OR REPLACE FUNCTION realtime.topic()
+RETURNS text LANGUAGE sql STABLE SET search_path=''
+AS $$ SELECT nullif(current_setting('request.realtime.topic',true),'') $$;
+CREATE OR REPLACE FUNCTION realtime.send(
+ payload jsonb,event text,topic text,private boolean DEFAULT true)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $$
+BEGIN
+ INSERT INTO realtime.messages(topic,event,payload,private)
+ VALUES(topic,event,payload,private);
+END $$;
+
+-- Fixture-only deterministic sight boundary at x=2:
+-- viewer sees all approved points x<=2; when a path crosses x>2,
+-- only a hide marker is permitted. Origin beyond x=2 is fully concealed.
+-- This is NOT a stand-in for the true fog/lighting acceptance tests in Phase 7.
+CREATE OR REPLACE FUNCTION forge_visibility.observer_verified_path_status(
+ p_map uuid,p_recipient uuid,p_campaign uuid,p_scene jsonb,
+ p_grid integer,p_width integer,p_height integer,p_path jsonb)
+RETURNS integer LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=''
+AS $$
+DECLARE step jsonb;
+BEGIN
+ IF jsonb_typeof(p_path)<>'array' OR jsonb_array_length(p_path)<2
+ THEN RETURN 0;END IF;
+ IF (p_path->0->>'x')::integer>2 THEN RETURN 0;END IF;
+ FOR step IN SELECT value FROM jsonb_array_elements(p_path) LOOP
+  IF (step->>'x')::integer>2 THEN RETURN 2;END IF;
+ END LOOP;
+ RETURN 1;
+END $$;
