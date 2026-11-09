@@ -6,14 +6,17 @@
  * React render for every cell crossed. No permissions or saved coordinates are
  * decided here. In particular, this does not grant sight through fog.
  */
+import {movementDiagnostics} from './MovementDiagnostics.js';
+
 export function createTokenMotionRuntime({
  requestFrame=callback=>requestAnimationFrame(callback),
+ clock=()=>performance.now(),
  cancelFrame=handle=>cancelAnimationFrame(handle),
  setTimer=(callback,delay)=>setTimeout(callback,delay),
  clearTimer=handle=>clearTimeout(handle)
 }={}){
  const mounted=new Map(),previews=new Map(),dirty=new Set();
- const settleTimers=new Map();
+ const settleTimers=new Map(),requestedAt=new Map();
  let scheduled=null,disposed=false;
  function cancelSettle(id){
   const timer=settleTimers.get(id);
@@ -70,7 +73,17 @@ export function createTokenMotionRuntime({
   if(scheduled!==null)return;
   scheduled=requestFrame(()=>{
    scheduled=null;
-   for(const changedId of dirty)paint(changedId);
+   const now=clock();
+   for(const changedId of dirty){
+    const requested=requestedAt.get(changedId);
+    if(requested){
+     movementDiagnostics.record(requested.remote?
+      'remote-motion-frame-latency':'local-motion-frame-latency',
+      Math.max(0,now-requested.time));
+     requestedAt.delete(changedId);
+    }
+    paint(changedId);
+   }
    dirty.clear();
   });
  }
@@ -101,12 +114,14 @@ export function createTokenMotionRuntime({
   preview(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
    cancelSettle(id);
-   previews.set(id,{x,y,remote:false});schedule(id);
+   previews.set(id,{x,y,remote:false});
+   requestedAt.set(id,{time:clock(),remote:false});schedule(id);
   },
   previewRemote(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
    cancelSettle(id);
-   previews.set(id,{x,y,remote:true});schedule(id);
+   previews.set(id,{x,y,remote:true});
+   requestedAt.set(id,{time:clock(),remote:true});schedule(id);
   },
   // An authoritative final position may differ from the last throttled
   // preview packet. Ease to that final cell, then drop the overlay only
@@ -153,7 +168,7 @@ export function createTokenMotionRuntime({
   },
   clear(){
    for(const id of settleTimers.keys())cancelSettle(id);
-   previews.clear();
+   previews.clear();requestedAt.clear();
    if(scheduled!==null){cancelFrame(scheduled);scheduled=null}
    dirty.clear();
    for(const id of mounted.keys())paint(id);
@@ -161,7 +176,7 @@ export function createTokenMotionRuntime({
   dispose(){
    for(const id of settleTimers.keys())cancelSettle(id);
    if(scheduled!==null)cancelFrame(scheduled);
-   scheduled=null;disposed=true;dirty.clear();previews.clear();mounted.clear();
+   scheduled=null;disposed=true;dirty.clear();requestedAt.clear();previews.clear();mounted.clear();
   },
   getPreview(id){return previews.get(id)||null}
  };
