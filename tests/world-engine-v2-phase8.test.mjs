@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
  createWorldFrameScheduler,createObserverPathBuffer,
- paintWorldFogLayer,paintWorldStaticLayer,createWorldRenderer,
+ createVisibilityController,paintWorldFogLayer,paintWorldStaticLayer,createWorldRenderer,
  normalizeWorldVisibilityFrame,makeWorldFogMask
 } from '../src/engine/v2/index.js';
 
@@ -533,4 +533,43 @@ test('large map with fog disabled never needs a giant canvas for 500 tokens',()=
  assert.equal(ctx.surfaces.fogCanvas.width,1);
  assert.equal(ctx.renderer.getSpriteElement('token',hero.id).style.visibility,'visible');
  ctx.renderer.dispose();
+});
+
+
+test('cursor-only visibility snapshots do not trigger idle RAF or sprite painting',()=>{
+ const ctx=make();activate(ctx);
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ const before=ctx.renderer.stats;
+ const requested=ctx.clock.requests;
+ for(let i=1;i<=25;i++)
+  assert.equal(ctx.renderer.adoptVisibility(sight({
+   cursor:5+i,visionEpoch:6+i
+  })),true);
+ assert.equal(ctx.clock.queued,0);
+ assert.equal(ctx.clock.requests,requested);
+ assert.equal(ctx.renderer.stats.spritePaints,before.spritePaints);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ ctx.renderer.dispose();
+});
+test('Phase 7 onSnapshot callback delivers every cursor for the Phase 8 renderer',async()=>{
+ const ctx=make();
+ assert.equal(ctx.renderer.adoptScene(scene()),true);
+ let current=sight({visiblePieces:[hero]}),updates=0;
+ const controller=createVisibilityController({
+  db:{rpc:async()=>({data:current,error:null})},
+  mapId,viewerId,
+  onSnapshot:snapshot=>{
+   updates++;
+   assert.equal(ctx.renderer.adoptVisibility(snapshot),true);
+  }
+ });
+ await controller.refresh();ctx.clock.flush(1000);
+ const original=ctx.renderer.getSpriteElement('token',hero.id);
+ const requests=ctx.clock.requests;
+ current=sight({cursor:6,visionEpoch:7,visiblePieces:[hero]});
+ await controller.refresh();
+ assert.equal(updates,2);
+ assert.equal(ctx.clock.requests,requests);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),original);
+ controller.dispose();ctx.renderer.dispose();
 });
