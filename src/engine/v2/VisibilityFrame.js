@@ -39,7 +39,8 @@ function grantsValid(grants,pieces,width,height){
  const visible=new Map(pieces.map(p=>[pieceKey(p),p]));
  const seen=new Set();
  for(const grant of grants){
-  if(!grant||grant.kind!=='token'||!UUID.test(grant.id||'')||
+  if(!grant||!['token','tool'].includes(grant.kind)||
+   !UUID.test(grant.id||'')||
    !validInt(grant.x,0,width-1)||!validInt(grant.y,0,height-1)||
    !Array.isArray(grant.quadrants)||grant.quadrants.length<1||
    grant.quadrants.length>4||
