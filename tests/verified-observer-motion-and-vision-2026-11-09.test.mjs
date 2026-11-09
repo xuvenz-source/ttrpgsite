@@ -133,3 +133,27 @@ test('local authorized batches animate a straight corridor without skipping a si
  assert.equal(motion.reconcile('self',2,2),true);
  motion.dispose();
 });
+
+test('many authorized tokens share one RAF callback per screen refresh',()=>{
+ let now=0;const frames=[];
+ const motion=createTokenMotionRuntime({
+  clock:()=>now,observerStepMs:24,
+  requestFrame:fn=>{frames.push(fn);return frames.length},
+  cancelFrame:()=>{}
+ });
+ for(const id of ['a','b','c','d']){
+  motion.bind(id,'sprite',{style:{}},{x:0,y:0,cell:50});
+  assert.equal(motion.previewRemotePath(id,[
+   {x:0,y:0},{x:1,y:0},{x:2,y:0}]),true);
+ }
+ assert.equal(frames.length,1,
+  'four moving tokens should schedule one shared frame, not four');
+ now=20;for(const frame of frames.splice(0))frame();
+ assert.equal(frames.length,1,'the next four-token frame is still coalesced');
+ for(const id of ['a','b','c','d']){
+  const preview=motion.getPreview(id);
+  assert.ok(preview.x>0&&preview.x<2);
+  assert.equal(preview.y,0);
+ }
+ motion.clear();motion.dispose();
+});
