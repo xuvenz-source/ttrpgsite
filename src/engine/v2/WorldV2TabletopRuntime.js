@@ -17,6 +17,7 @@ import {createSceneTransport} from './SceneTransport.js';
 import {createVisibilityController} from './VisibilityController.js';
 import {createWorldRealtimeTransport} from './RealtimeTransport.js';
 import {collisionAllowsStep} from './CollisionSolver.js';
+import {createPreviewAuthority} from './PreviewAuthority.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -59,6 +60,7 @@ export function createWorldV2TabletopRuntime({
  let disposed=false,started=false,connected=false;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
+ let previewPosition=null;
  const signal=(fn,...args)=>{if(!disposed)try{fn(...args)}catch{}};
  const authorized=()=>!disposed&&!manager.stale&&
   !!vision.frame&&vision.authorized&&renderer.authorized&&
@@ -90,7 +92,8 @@ export function createWorldV2TabletopRuntime({
  });
  const vision=createVisibilityController({
   db,mapId,viewerId:identity,dmPreview,
-  getScene:()=>manager.stale?{mapId:'revoked'}:manager.displayedScene,
+  getPreviewPosition:()=>previewPosition,
+   getScene:()=>manager.stale?{mapId:'revoked'}:manager.displayedScene,
   onSnapshot:snapshot=>{
    if(disposed)return;
    if(!renderer.adoptVisibility(snapshot)){
@@ -111,11 +114,18 @@ export function createWorldV2TabletopRuntime({
   },
   onError:error=>signal(onError,error)
  });
- const authority=createWorldAuthorityClient({db});
+ const authority=dmPreview?createPreviewAuthority({
+   getScene:()=>manager.stale?null:manager.collisionScene,
+   getPieces:selection=>{
+    try{return authorizedPieces(getAuthorizedPieces(selection),selection)}
+    catch{return null}
+   },
+   getPosition:()=>previewPosition
+  }):createWorldAuthorityClient({db});
  const movement=createMovementController({
   authority,
   canPredict:request=>{
-   if(disposed||!isDM||dmPreview||!authorized()||
+   if(disposed||!isDM||!authorized()||
     manager.displayedScene.scope!=='dm')return false;
    const scene=manager.collisionScene;
    if(!scene||request.mapId!==mapId||
@@ -129,6 +139,9 @@ export function createWorldV2TabletopRuntime({
    try{
     const rows=getAuthorizedPieces(request.selection);
     parts=authorizedPieces(rows,request.selection);
+     if(dmPreview&&previewPosition&&parts)
+      parts=parts.map(p=>p.id===previewPosition.tokenId?
+       {...p,x:previewPosition.x,y:previewPosition.y}:p);
    }catch{return false}
    if(!parts||parts.length!==request.selection.length||
     !parts.every(p=>vision.frame.visiblePieces.some(row=>key(row)===key(p))))
@@ -145,7 +158,13 @@ export function createWorldV2TabletopRuntime({
    if(disposed)return;
    renderer.applyLocalMovement(event);
    signal(onGesture,event);
-   if(event.type==='committed'){
+   if(dmPreview&&['approved','blocked'].includes(event.type)&&
+    event.selection?.length===1&&event.selection[0].kind==='token'){
+    previewPosition={tokenId:event.selection[0].id,
+     x:event.approved.x,y:event.approved.y};
+    void refreshVisibility('virtual-preview-step');
+   }
+   if(event.type==='committed'&&!dmPreview){
     // Actor's final motion is acknowledged once by Phase 4. The renderer
     // holds its approved endpoint until this authorized snapshot arrives.
     signal(onCommit,{mapId,selection:event.selection,
@@ -176,8 +195,8 @@ export function createWorldV2TabletopRuntime({
  }
  function revoke(reason,hard=true){
   if(disposed)return;
-  ++refreshRevision;privateReady=false;
-  movement.cancelGesture('permission');
+  ++refreshRevision;privateReady=false;previewPosition=null;
+   movement.cancelGesture('permission');
   manager.revokeAuthorization();
   vision.revoke(reason);
   renderer.revoke(reason,hard);
@@ -294,6 +313,7 @@ export function createWorldV2TabletopRuntime({
   get started(){return started},
   get disposed(){return disposed},
   get currentMap(){return mapId},
-  get effectiveViewer(){return identity}
+  get effectiveViewer(){return identity},
+   get previewPosition(){return previewPosition?{...previewPosition}:null}
  });
 }
