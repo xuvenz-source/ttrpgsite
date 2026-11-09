@@ -884,7 +884,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   // Queue every actual pointer bend while one request is in flight. Never
   // interpolate directly from an old acknowledgement to the latest pointer
   // if an intervening event changed direction around a doorway.
-  const from=info.secureQueue.at(-1)||{dx:info.dx,dy:info.dy};
+  const from={dx:info.dx,dy:info.dy};
   if(!enqueueConcealedTarget(info.secureQueue,requested,from)){
    info.secureBlocked=true;
    console.warn('Concealed gesture exceeded its bounded path queue');
