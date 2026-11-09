@@ -133,7 +133,9 @@ export default function WorldV2Board(props){
  const previewToken=tokens.find(token=>token.id===environmentEditor?.previewTokenId);
  const previewViewerId=previewToken?.owner_id;
  const previewRequested=Boolean(isDM&&environmentEditor?.previewing);
- const dmPreview=Boolean(previewRequested&&previewViewerId);
+ // DM-owned actors produce DM-scoped sight, not player-effective sight.
+ // Preview needs an actual player identity; never downgrade DM scope.
+ const dmPreview=Boolean(previewRequested&&previewViewerId&&previewViewerId!==user);
  const identity=dmPreview?previewViewerId:user;
  const boardIdentity=map.id+':'+user+':'+(dmPreview?previewViewerId:'normal');
  const currentMeta=useRef(new Map());
@@ -361,7 +363,7 @@ export default function WorldV2Board(props){
   rendererRef.current=renderer;
   setIssue(null);
   if(previewRequested&&!dmPreview){
-   setIssue('Choose a player-owned token for DM preview.');return;
+   setIssue('Choose a token owned by an actual player for DM preview.');return;
   }
   const runtime=createWorldV2TabletopRuntime({
    db,mapId:map.id,viewerId:user,renderer,isDM,dmPreview,

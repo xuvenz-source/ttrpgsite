@@ -41,3 +41,14 @@ test('custom V2 keybinds use held gesture and keyup idle flush',()=>{
  assert.doesNotMatch(board,/runtime\.movement\.updateGesture\(to\);\s*void runtime\.movement\.endGesture\(\)/);
  assert.match(board,/cancelGesture\('keyboard-unmount'\)/);
 });
+
+test('preview cannot use DM-owned identity, and rejection shows safe reason only',()=>{
+ const board=file('src/engine/v2/WorldV2Board.jsx');
+ const renderer=file('src/engine/v2/WorldRenderer.js');
+ const runtime=file('src/engine/v2/WorldV2TabletopRuntime.js');
+ assert.match(board,/previewRequested&&previewViewerId&&previewViewerId!==user/);
+ assert.match(renderer,/get lastSightRejection\(\)/);
+ assert.match(renderer,/viewer-scope-mismatch/);
+ assert.match(renderer,/scene-generation-mismatch/);
+ assert.match(runtime,/renderer\.lastSightRejection\|\|'unclassified'/);
+});

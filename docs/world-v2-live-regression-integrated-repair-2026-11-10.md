@@ -22,3 +22,12 @@
 - Measure movement p50/p95, Supabase CPU/RSS/WAL and Realtime changes during existing live campaign testing. Synthetic CI cannot certify these.
 
 Staging branch pushes do not invoke Vercel under `vercel.json`. Reconcile every release-ready staged branch before a designer-authorized consolidated production release.
+
+## Diagnostics added during staging review
+
+The renderer now reports a bounded rejection code (invalid frame, scope,
+scene generation/revision mismatch, stale cursor/frame, permission generation,
+fog mask, roster or sprite factory) without returning hidden geometry.
+DM-owned tokens cannot be selected as a player-effective preview identity.
+If a genuine player-owned token still triggers a mismatch, the code enables
+a targeted browser/transport fix rather than weakening security checks.

@@ -105,7 +105,10 @@ export function createWorldV2TabletopRuntime({
   onSnapshot:snapshot=>{
    if(disposed)return;
    if(!renderer.adoptVisibility(snapshot)){
-    signal(onError,Error('V2 renderer rejected authorized sight'));
+    // Report only a bounded reason code: never expose scene cells,
+    // private coordinates, hidden entity IDs, or raw RPC payloads.
+    signal(onError,Error('V2 renderer rejected authorized sight: '+
+     (renderer.lastSightRejection||'unclassified')));
     return;
    }
    privateReady=true;
