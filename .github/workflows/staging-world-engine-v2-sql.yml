@@ -50,3 +50,13 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109101000_world_engine_v2_static_scene_publication.sql
       - name: Verify map persistence, scene generations and viewer-private metadata
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-scene-contract.sql
+      - name: Install synthetic exploration, placed and carried torch fixtures
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-vision-fixture.sql
+      - name: Install V2 independent sight/light geometry and observer authorization
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102000_world_engine_v2_vision_geometry.sql
+      - name: Install actor-bound fog, exploration and roster snapshots
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102100_world_engine_v2_visibility_snapshots.sql
+      - name: Install private movement-linked vision invalidations
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102200_world_engine_v2_visibility_invalidation.sql
+      - name: Verify V2 LOS, static and moving light, privacy, preview and exploration
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-visibility-contract.sql
