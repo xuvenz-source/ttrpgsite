@@ -114,3 +114,21 @@ test('V2 staged SQL has protected session storage and actor-owned RPC grants',()
  assert.doesNotMatch(sql,/public\.commit_map_trajectory\(/);
  assert.doesNotMatch(sql,/public\.advance_map_motion_session\(/);
 });
+
+test('collision bypass must be explicitly opted in; player status is server-validated',async()=>{
+ const {db,calls}=mockRpc();
+ const authority=createWorldAuthorityClient({db});
+ await assert.rejects(authority.begin({...start,collisionOverride:'true'}));
+ await authority.begin({...start,collisionOverride:true});
+ assert.equal(calls[0][0],'begin_world_motion_v2');
+ assert.equal(calls[0][1].p_collision_override,true);
+ assert.equal(await authority.cancel({mapId,sessionId,gestureId:1}),true);
+ const {db:db2,calls:otherCalls}=mockRpc();
+ const controller=createMovementController({authority:createWorldAuthorityClient({db:db2})});
+ assert.equal(controller.beginGesture({mapId,selection:[piece],
+  origin:{x:0,y:1},pointer:{x:0,y:1},
+  environmentRevision:7,permissionGeneration:3,collisionOverride:true}),true);
+ await tick();
+ assert.equal(otherCalls[0][1].p_collision_override,true);
+ controller.cancelGesture();
+});
