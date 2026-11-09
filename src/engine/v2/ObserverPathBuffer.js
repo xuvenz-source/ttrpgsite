@@ -6,7 +6,7 @@
  * the server. Every interpolated point follows a server-approved adjacent
  * segment; do not interpolate directly across a bent route or unknown gap.
  */
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const key=p=>p.kind+':'+p.id;
 const validPoint=p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)&&
  p.x>=0&&p.y>=0&&p.x<=10000&&p.y<=10000;
@@ -40,9 +40,12 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
    * refresh. Clear every previous pending path/visibility marker first.
    */
   authorizePieces(rows){
-   if(disposed||!Array.isArray(rows)||rows.length>maxPieces||
+   if(disposed)return false;
+   if(!Array.isArray(rows)||rows.length>maxPieces||
     !rows.every(authorizedPiece)||
-    new Set(rows.map(key)).size!==rows.length)return false;
+    new Set(rows.map(key)).size!==rows.length){
+    pieces.clear();return false;
+   }
    pieces.clear();
    for(const item of rows){
     pieces.set(key(item),{
