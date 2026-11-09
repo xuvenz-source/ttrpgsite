@@ -342,8 +342,9 @@ export default function WorldV2Board(props){
     setIssue(error?.message||'World Engine V2 authorization unavailable.');
     latest.current.onV2Error?.(error);
    },
-   onScene:()=>{
+   onScene:snapshot=>{
     if(latest.current.url)renderer.setTerrainSource(latest.current.url);
+    latest.current.onV2SceneSnapshot?.(snapshot);
    }
   });
   runtimeRef.current=runtime;
