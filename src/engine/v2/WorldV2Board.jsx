@@ -1,5 +1,5 @@
 import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import {createRoot} from 'react-dom/client';
+import {createPortal} from 'react-dom';
 import WorldCanvasStack from './WorldCanvasStack.jsx';
 import {createWorldV2TabletopRuntime} from './WorldV2TabletopRuntime.js';
 import Artwork from '../../Artwork.jsx';
@@ -134,85 +134,82 @@ export default function WorldV2Board(props){
  const createSpriteElement=useCallback(piece=>{
   const node=document.createElement('div');
   node.dataset.worldKind=piece.kind;node.dataset.worldId=piece.id;
-  const root=createRoot(node);
-  roots.current.set(idOf(piece),{node,root,piece,signature:null});
+  roots.current.set(idOf(piece),{node,piece});
   return node;
  },[]);
  const onRemoveSprite=useCallback(({kind,id})=>{
-  const label=kind+':'+id,entry=roots.current.get(label);
-  if(!entry)return;
-  roots.current.delete(label);
-  entry.root.unmount();
+  roots.current.delete(kind+':'+id);
  },[]);
- const updateSprites=useCallback(()=>{
-  const renderer=rendererRef.current,inputs=latest.current;
-  const index=new Map(inputs.tokens.map(token=>['token:'+token.id,token]));
-  const placed=new Map(inputs.toolPlacements.map(tool=>['tool:'+tool.issue_id,tool]));
-  const issued=new Map(inputs.toolIssued.map(tool=>[tool.id,tool]));
-  const display=normalizeConfig(inputs.displayConfig);
-  const selected=selectedRef.current;
-  for(const [id,entry] of roots.current){
-   const piece=entry.piece;
-   const token=piece.kind==='token'?index.get(id):null;
-   const tool=piece.kind==='tool'?placed.get(id):null;
-   const issue=piece.kind==='tool'?issued.get(piece.id):null;
-   const allowed=renderer?.currentVisibility?.visiblePieces.some(row=>
-    row.kind===piece.kind&&row.id===piece.id);
-   if(!allowed)continue; // only an approved roster can create/show data
-   const signature=[
-    piece.kind,token?.name,token?.image_path,token?.owner_id,
-    token?.visible,token?.span_x,token?.span_y,token?.status_effects,
-    tool?.name,tool?.icon,tool?.span,tool?.kind,issue?.state,
-    selected.tokens.includes(piece.id),selected.tools.includes(piece.id),
-    inputs.combatActiveTokenId===piece.id,inputs.isDM,inputs.user,
-    previewRequested,inputs.displayConfig,
-    inputs.monitorValues?.[piece.id],inputs.encumbranceBadges?.[piece.id],
-    inputs.statusCatalog
-   ];
-   // Canonical x/y changes do not rerender React artwork. The single V2
-   // renderer is already moving the existing sprite parent at frame rate.
-   if(entry.signature?.length===signature.length&&
-    signature.every((value,i)=>value===entry.signature[i]))continue;
-   entry.signature=signature;
-   if(token){
-    entry.node.dataset.tokenId=piece.id;
-    entry.node.className='token'+
-     (token.image_path?' token-image':'')+
-     (selected.tokens.includes(piece.id)?' token-selected':'')+
-     (inputs.combatActiveTokenId===piece.id?' token-current-turn':'')+
-     (normalizedEffects(token.status_effects).some(s=>s.id==='dead')?' token-dead':'');
-    entry.node.title=token.name+
-     ((inputs.isDM||token.owner_id===inputs.user)?' · Alt + double-click to edit sheet':'');
-    entry.node.style.opacity=token.visible?1:.55;
-    renderer?.setSpriteDimensions('token',piece.id,{
-     spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
+ // All sprite artwork belongs to ONE React tree via keyed portals.
+ // WorldRenderer imperatively moves only their persistent container nodes.
+ // Position changes and private fog ticks don't create React roots or
+ // remount independent Artwork / TokenMonitors / sheet action content.
+ const spriteContent=useMemo(()=>{
+  const byToken=new Map(tokens.map(row=>[row.id,row]));
+  const byTool=new Map(toolPlacements.map(row=>[row.issue_id,row]));
+  const byIssue=new Map(toolIssued.map(row=>[row.id,row]));
+  const selected=new Set(selectedTokenIds),selectedTools=new Set(selectedToolIds);
+  const content=normalizeConfig(displayConfig);
+  return roster.map(piece=>{
+   const entry=roots.current.get(idOf(piece));
+   if(!entry)return null;
+   const token=piece.kind==='token'?byToken.get(piece.id):null;
+   const tool=piece.kind==='tool'?byTool.get(piece.id):null;
+   const own=piece.kind==='tool'?byIssue.get(piece.id):null;
+   return {
+    ...entry,token,tool,own,
+    selected:selected.has(piece.id),
+    selectedTool:selectedTools.has(piece.id),
+    currentTurn:props.combatActiveTokenId===piece.id,
+    content
+   };
+  }).filter(Boolean);
+ },[roster,tokens,toolPlacements,toolIssued,selectedTokenIds,selectedToolIds,
+  displayConfig,monitorValues,encumbranceBadges,statusCatalog,
+  props.combatActiveTokenId,previewRequested,isDM,user]);
+ useLayoutEffect(()=>{
+  const renderer=rendererRef.current;
+  if(!renderer?.authorized)return;
+  for(const entry of spriteContent){
+   const {node,piece,token,tool}=entry;
+   if(piece.kind==='token'){
+    if(token){
+     node.dataset.tokenId=piece.id;
+     node.className='token'+(token.image_path?' token-image':'')+
+      (entry.selected?' token-selected':'')+
+      (entry.currentTurn?' token-current-turn':'')+
+      (normalizedEffects(token.status_effects).some(v=>v.id==='dead')?
+       ' token-dead':'');
+     node.title=String(token.name||'Token')+
+      ((isDM||token.owner_id===user)?
+       ' · Alt + double-click to edit sheet':'');
+     node.style.opacity=token.visible?1:.55;
+     renderer.setSpriteDimensions('token',piece.id,{
+      spanX:Number(token.span_x??1),spanY:Number(token.span_y??1)});
+    }
    }else if(tool){
-    entry.node.className='campaign-tool-map-token'+
-     (selected.tools.includes(piece.id)?' tool-selected':'');
-    renderer?.setSpriteDimensions('tool',piece.id,{
+    node.className='campaign-tool-map-token'+
+     (entry.selectedTool?' tool-selected':'');
+    renderer.setSpriteDimensions('tool',piece.id,{
      spanX:Number(tool.span??1),spanY:Number(tool.span??1)});
    }
-   // Root content changes only when campaign metadata, selection, status
-   // or displayed resources change. WorldRenderer alone moves its parent.
-   entry.root.render(<SpriteContent piece={piece} token={token} tool={tool}
-    issued={issue} selected={selected.tokens.includes(piece.id)}
-    isDM={inputs.isDM} user={inputs.user} preview={previewRequested}
-    db={inputs.db} display={display}
-    values={inputs.monitorValues?.[piece.id]}
-    badge={inputs.encumbranceBadges?.[piece.id]}
-    statusCatalog={inputs.statusCatalog}
-    onToolOpen={id=>latest.current.onToolOpen?.(id)}
-    onTokenEdit={item=>latest.current.onTokenEdit?.(item)}
-    onTokenQuick={item=>latest.current.onTokenQuick?.(item)}
-    onTokenStatus={item=>latest.current.onTokenStatus?.(item)}
-    onResize={startResize}/>);
   }
- },[previewRequested]);
- const updateRef=useRef(updateSprites);updateRef.current=updateSprites;
- useLayoutEffect(()=>{updateRef.current()},[
-  tokens,toolPlacements,toolIssued,selectedTokenIds,selectedToolIds,
-  displayConfig,monitorValues,encumbranceBadges,statusCatalog,scale
- ]);
+ },[spriteContent,isDM,user]);
+ const spritePortals=spriteContent.map(entry=>createPortal(
+  <SpriteContent piece={entry.piece} token={entry.token}
+   tool={entry.tool} issued={entry.own} selected={entry.selected}
+   isDM={isDM} user={user} preview={previewRequested}
+   db={db} display={entry.content}
+   values={monitorValues?.[entry.piece.id]}
+   badge={encumbranceBadges?.[entry.piece.id]}
+   statusCatalog={statusCatalog}
+   onToolOpen={id=>latest.current.onToolOpen?.(id)}
+   onTokenEdit={item=>latest.current.onTokenEdit?.(item)}
+   onTokenQuick={item=>latest.current.onTokenQuick?.(item)}
+   onTokenStatus={item=>latest.current.onTokenStatus?.(item)}
+   onResize={startResize}/>,
+  entry.node,idOf(entry.piece)
+ ));
  function mapGridPoint(event){
   const rect=board.current?.getBoundingClientRect();
   if(!rect||!rect.width||!rect.height)return null;
@@ -321,7 +318,6 @@ export default function WorldV2Board(props){
    const old=runtimeRef.current;runtimeRef.current=null;
    void old?.dispose();
    rendererRef.current=null;
-   for(const entry of roots.current.values())entry.root.unmount();
    roots.current.clear();return;
   }
   rendererRef.current=renderer;
@@ -349,7 +345,7 @@ export default function WorldV2Board(props){
      const old=previous.map(idOf),next=rows.map(idOf);
      return sameIds(old,next)?previous:rows;
     });
-    updateRef.current();
+
    },
    onCommit:()=>{
     latest.current.onMovementCommitted?.();
@@ -713,5 +709,6 @@ export default function WorldV2Board(props){
     </div>
    </div>
   </div>
+  {spritePortals}
  </>;
 }
