@@ -6,7 +6,7 @@
  * Reconnect and lost notices are resolved through the server's persisted
  * sceneGeneration; an event is only an invalidation hint, NEVER geometry.
  */
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const worldSceneTopic=mapId=>'forge-world-scene-v2:'+mapId;
 export const WORLD_SCENE_EVENT='scene-revision-v2';
 const validNotice=(notice,mapId)=>notice?.version===2&&
