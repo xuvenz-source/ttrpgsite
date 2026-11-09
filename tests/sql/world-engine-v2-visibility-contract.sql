@@ -261,6 +261,7 @@ BEGIN
   '[{"x":3,"y":5}]',9,4);
  IF ack->>'blocked'<>'false' THEN
   RAISE EXCEPTION 'DM authorized movement denied: %',ack;END IF;
+ PERFORM set_config('fixture.dm_session_id',s::text,false);
  -- Keep session pending for an independent player-user snapshot below.
 END $$;
 RESET ROLE;
@@ -297,10 +298,8 @@ SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000003';
 DO $$
 DECLARE session_id uuid;ack jsonb;
 BEGIN
- SELECT s.id INTO session_id FROM forge_world_v2.motion_sessions s
- WHERE s.actor_id='30000000-0000-4000-8000-000000000003'
- AND s.status='active'
- ORDER BY s.created_at DESC LIMIT 1;
+ session_id:=nullif(
+  current_setting('fixture.dm_session_id',true),'')::uuid;
  -- No direct client access to sessions; verify final persistence as owner
  -- through its original server-issued commit.
  IF session_id IS NULL THEN
