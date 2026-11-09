@@ -164,6 +164,10 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
     entry.hidden=true;entry.pending.length=0;
    }
   },
+  resetClock(){
+   if(disposed)return;
+   for(const entry of pieces.values())entry.lastNow=null;
+  },
   dispose(){disposed=true;pieces.clear()}
  };
 }
