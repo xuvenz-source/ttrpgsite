@@ -88,9 +88,9 @@ test('board keeps single-token pointer motion off React state and server events 
  const board=readFileSync(new URL('../src/BattlemapBoard.jsx',import.meta.url),'utf8');
  assert.match(app,/remoteMotion\.current\?\.handoffRemote\(id\)/);
  assert.match(app,/movementPreviewQueue\.current\?\.enqueue\(token\.id/);
- assert.match(app,/Promise\.all\(keys\.map\(key=>queue\?\.cancel\(key\)\)\)/);
+ assert.match(app,/keys\.flatMap\(key=>\[/);
  assert.doesNotMatch(board,/if\\(isDM&&info\\.tools\\?\\.length\\)setToolPreview/);
- assert.match(board,/motion\\.current\\?\\.preview\\('tool:'/);
- assert.match(board,/for\(const token of info\.members\)\s*motion\.current\?\.preview/);
+ assert.ok(board.includes("animate('tool:'+tool.issue_id"));
+ assert.match(board,/for\(const token of info\.members\)\s*animate\(token\.id/);
  assert.doesNotMatch(app,/await queue\.drain\(id\)/);
 });
