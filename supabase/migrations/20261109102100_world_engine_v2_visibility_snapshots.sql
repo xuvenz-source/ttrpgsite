@@ -7,7 +7,9 @@
 -- player's explored history. Only the real viewer may persist exploration.
 
 CREATE OR REPLACE FUNCTION forge_world_v2.visibility_frame_v2(
- p_map uuid,p_viewer uuid,p_store_exploration boolean DEFAULT true)
+ p_map uuid,p_viewer uuid,p_store_exploration boolean DEFAULT true,
+ p_preview_token uuid DEFAULT NULL,p_preview_x integer DEFAULT NULL,
+ p_preview_y integer DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $$
 DECLARE actor uuid:=auth.uid();camp uuid;role_name text;real_dm boolean;
@@ -32,6 +34,22 @@ BEGIN
  WHERE m.id=p_map AND m.grid_size>0;
  IF NOT FOUND OR w<1 OR h<1 OR w>10000 OR h>10000
  THEN RETURN NULL;END IF;
+ -- Virtual sight is DM-only, non-mutating and bounded to a player token.
+ IF p_preview_token IS NOT NULL OR p_preview_x IS NOT NULL OR
+    p_preview_y IS NOT NULL THEN
+  IF p_preview_token IS NULL OR p_preview_x IS NULL OR
+     p_preview_y IS NULL OR p_store_exploration OR
+     NOT public.is_campaign_dm(camp) OR
+     forge_world_v2.viewer_on_map(camp,p_map,p_viewer)<>'player' OR
+     NOT EXISTS(
+      SELECT 1 FROM public.map_tokens t
+      WHERE t.id=p_preview_token AND t.map_id=p_map AND
+       t.campaign_id=camp AND t.owner_id=p_viewer AND t.visible
+       AND p_preview_x>=0 AND p_preview_y>=0 AND
+       p_preview_x+t.span_x<=w AND p_preview_y+t.span_y<=h
+     )
+  THEN RETURN NULL;END IF;
+ END IF;
  role_name:=forge_world_v2.viewer_on_map(camp,p_map,p_viewer);
  IF role_name IS NULL THEN RETURN NULL;END IF;
  -- A map may be unpublished. A fog-enabled scene cannot be synthesized
@@ -60,8 +78,10 @@ BEGIN
  WHERE e.map_id=p_map AND e.viewer_id=p_viewer AND e.campaign_id=camp;
  real_dm:=role_name='dm';
  IF fog_enabled AND NOT real_dm THEN
-  sources:=forge_world_v2.vision_sources_v2(p_map,camp,p_viewer,env);
-  lights:=forge_world_v2.light_sources_v2(p_map,camp,env);
+  sources:=forge_world_v2.vision_sources_v2(p_map,camp,p_viewer,env,
+   p_preview_token,p_preview_x,p_preview_y);
+  lights:=forge_world_v2.light_sources_v2(p_map,camp,env,
+   p_preview_token,p_preview_x,p_preview_y);
   -- Compute a bounded candidate union around at most eight vision sources;
   -- do not scan the full map if the viewer has no entitled tokens.
   WITH candidates AS (
@@ -142,8 +162,10 @@ BEGIN
   IF NOT real_dm AND pieces.shown IS DISTINCT FROM true THEN CONTINUE;END IF;
   piece_delta:=forge_world_v2.piece_offset_v2(
    p_map,pieces.kind,pieces.id);
-  px:=pieces.x+(piece_delta->>'dx')::integer;
-  py:=pieces.y+(piece_delta->>'dy')::integer;
+  px:=CASE WHEN pieces.id=p_preview_token THEN p_preview_x
+   ELSE pieces.x+(piece_delta->>'dx')::integer END;
+  py:=CASE WHEN pieces.id=p_preview_token THEN p_preview_y
+   ELSE pieces.y+(piece_delta->>'dy')::integer END;
   IF px<0 OR py<0 OR px>=w OR py>=h THEN CONTINUE;END IF;
   IF fog_enabled AND NOT real_dm THEN
    IF NOT forge_world_v2.is_seen_v2(
@@ -194,6 +216,22 @@ BEGIN
  RETURN forge_world_v2.visibility_frame_v2(p_map,p_viewer,false);
 END $$;
 
+-- Distinct name avoids PostgREST overload ambiguity; this does not
+-- mutate player positions, exploration history or private streams.
+CREATE OR REPLACE FUNCTION public.preview_world_visibility_at_v2(
+ p_map uuid,p_viewer uuid,p_token uuid,p_x integer,p_y integer)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $
+DECLARE campaign uuid;
+BEGIN
+ SELECT m.campaign_id INTO campaign FROM public.battle_maps m WHERE m.id=p_map;
+ IF auth.uid() IS NULL OR p_viewer IS NULL OR p_token IS NULL OR
+    p_x IS NULL OR p_y IS NULL OR campaign IS NULL OR
+    NOT public.is_campaign_dm(campaign) THEN RETURN NULL;END IF;
+ RETURN forge_world_v2.visibility_frame_v2(
+  p_map,p_viewer,false,p_token,p_x,p_y);
+END $;
+
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA forge_world_v2 FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.get_world_visibility_v2(uuid)
  FROM PUBLIC,anon,authenticated;
@@ -203,3 +241,7 @@ GRANT EXECUTE ON FUNCTION public.get_world_visibility_v2(uuid)
  TO authenticated;
 GRANT EXECUTE ON FUNCTION public.preview_world_visibility_v2(uuid,uuid)
  TO authenticated;
+REVOKE ALL ON FUNCTION public.preview_world_visibility_at_v2(
+ uuid,uuid,uuid,integer,integer) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.preview_world_visibility_at_v2(
+ uuid,uuid,uuid,integer,integer) TO authenticated;
