@@ -278,6 +278,9 @@ BEGIN
    THEN RETURN NULL;END IF;
    fw:=CASE WHEN u.kind='mount' THEN
     coalesce((u.config->>'span')::numeric,2) ELSE 1 END;fh:=fw;
+   -- The existing authoritative tool trigger limits mounts to four cells.
+   -- Preserve that contract until it is replaced at the integrated cutover.
+   IF fw>4 THEN RETURN NULL;END IF;
    actual:=jsonb_build_object('kind','tool','id',u.id,'x',u.x,'y',u.y,
     'spanX',fw,'spanY',fh,'toolRevision',u.revision);
   END IF;
@@ -338,7 +341,11 @@ BEGIN
  SELECT * INTO s FROM forge_world_v2.motion_sessions
   WHERE id=p_session AND actor_id=auth.uid() FOR UPDATE;
  IF NOT FOUND THEN RETURN NULL; END IF;
- IF p_seq=s.last_seq AND s.last_reply IS NOT NULL THEN RETURN s.last_reply; END IF;
+ IF p_seq=s.last_seq AND s.last_reply IS NOT NULL THEN
+  -- Replay must not re-expose an approved prefix after revocation.
+  IF forge_world_v2.session_valid(s) THEN RETURN s.last_reply;END IF;
+  RETURN NULL;
+ END IF;
  IF p_seq<>s.last_seq+1 OR s.batches>=64 OR s.attempted_cells>=128 OR
    s.environment_revision IS DISTINCT FROM p_environment_revision OR
    s.permission_generation IS DISTINCT FROM p_permission_generation OR
@@ -441,7 +448,16 @@ BEGIN
  SELECT * INTO s FROM forge_world_v2.motion_sessions
   WHERE id=p_session AND actor_id=auth.uid() FOR UPDATE;
  IF NOT FOUND THEN RETURN NULL;END IF;
- IF s.status='committed' AND s.last_seq=p_seq THEN RETURN s.last_reply;END IF;
+ IF s.status='committed' AND s.last_seq=p_seq THEN
+  -- A completed session can be retried only while its map access persists.
+  IF clock_timestamp()<=s.expires_at AND
+    public.can_view_campaign_map(s.campaign_id,s.map_id) AND
+    (SELECT coalesce(g.generation,0)
+     FROM forge_visibility.navigation_permission_generations g
+     WHERE g.map_id=s.map_id)=s.permission_generation
+  THEN RETURN s.last_reply;END IF;
+  RETURN NULL;
+ END IF;
  IF p_seq<>s.last_seq+1 OR s.mode='preview' OR
    s.accepted_cells<1 OR s.accepted_steps='[]'::jsonb OR
    p_environment_revision IS DISTINCT FROM s.environment_revision OR
@@ -474,6 +490,15 @@ BEGIN
   floor(m.height/m.grid_size)::integer AS h INTO grid FROM public.battle_maps m
   WHERE m.id=s.map_id AND m.campaign_id=s.campaign_id AND m.grid_size>0;
  IF NOT FOUND THEN RETURN NULL;END IF;
+ -- Hold environment, rule and permission revisions stable for the commit
+ -- transaction so a concurrent DM edit cannot race our last validation.
+ PERFORM 1 FROM public.map_environments
+  WHERE map_id=s.map_id AND campaign_id=s.campaign_id FOR SHARE;
+ PERFORM 1 FROM forge_visibility.map_rules
+  WHERE map_id=s.map_id FOR SHARE;
+ PERFORM 1 FROM forge_visibility.navigation_permission_generations
+  WHERE map_id=s.map_id FOR SHARE;
+ IF NOT forge_world_v2.session_valid(s) THEN RETURN NULL;END IF;
  -- Independently verify all previously accepted legs against current scene.
  -- A stored approved route cannot bypass a changed rule or a bad endpoint.
  FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
@@ -543,6 +568,8 @@ END $$;
 
 -- Every exposed definer RPC is deny-by-default; authenticated users still
 -- require the explicit actor/map/ownership checks above. No anon access.
+-- Private helper functions are never directly executable through client roles.
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA forge_world_v2 FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.begin_world_motion_v2(uuid,jsonb,jsonb,text,bigint,bigint,boolean)
  FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)
