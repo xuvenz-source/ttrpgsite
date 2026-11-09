@@ -371,7 +371,7 @@ BEGIN
    FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
     attrs:='{}'::jsonb;
     IF part->>'kind'='token' THEN
-     SELECT t.character_id,t.npc_values INTO t FROM public.map_tokens t
+     SELECT tok.character_id,tok.npc_values INTO t FROM public.map_tokens tok
       WHERE t.id=(part->>'id')::uuid;
      attrs:=coalesce(t.npc_values,'{}'::jsonb);
      IF t.character_id IS NOT NULL THEN
@@ -380,8 +380,8 @@ BEGIN
       attrs:=coalesce(attrs,'{}'::jsonb);
      END IF;
     ELSE
-     SELECT coalesce(u.state->'attrs','{}'::jsonb) INTO attrs
-      FROM public.campaign_tool_issues u WHERE u.id=(part->>'id')::uuid;
+     SELECT coalesce(tool.state->'attrs','{}'::jsonb) INTO attrs
+      FROM public.campaign_tool_issues tool WHERE u.id=(part->>'id')::uuid;
     END IF;
     IF NOT forge_world_v2.step_allowed(scene,attrs,
       (part->>'x')::double precision+(s.last_x-s.origin_x),
@@ -479,7 +479,7 @@ BEGIN
  FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
   attrs:='{}'::jsonb;
   IF part->>'kind'='token' THEN
-   SELECT t.character_id,t.npc_values INTO t FROM public.map_tokens t
+   SELECT tok.character_id,tok.npc_values INTO t FROM public.map_tokens tok
     WHERE t.id=(part->>'id')::uuid;
    attrs:=coalesce(t.npc_values,'{}'::jsonb);
    IF t.character_id IS NOT NULL THEN
@@ -488,8 +488,8 @@ BEGIN
    END IF;
    token_ids:=array_append(token_ids,(part->>'id')::uuid);
   ELSE
-   SELECT coalesce(u.state->'attrs','{}'::jsonb) INTO attrs
-   FROM public.campaign_tool_issues u WHERE u.id=(part->>'id')::uuid;
+   SELECT coalesce(tool.state->'attrs','{}'::jsonb) INTO attrs
+   FROM public.campaign_tool_issues tool WHERE u.id=(part->>'id')::uuid;
    tool_ids:=array_append(tool_ids,(part->>'id')::uuid);
   END IF;
   cx:=(part->>'x')::integer;cy:=(part->>'y')::integer;
@@ -512,12 +512,12 @@ BEGIN
  IF s.dm_override THEN
   PERFORM set_config('forge.collision_override','on',true);
  END IF;
- UPDATE public.map_tokens t SET x=t.x+s.last_x-s.origin_x,
-  y=t.y+s.last_y-s.origin_y
- WHERE t.id=ANY(token_ids) AND t.map_id=s.map_id AND t.campaign_id=s.campaign_id;
- UPDATE public.campaign_tool_issues u SET x=u.x+s.last_x-s.origin_x,
-  y=u.y+s.last_y-s.origin_y
- WHERE u.id=ANY(tool_ids) AND u.map_id=s.map_id AND u.campaign_id=s.campaign_id;
+ UPDATE public.map_tokens tok SET x=tok.x+s.last_x-s.origin_x,
+  y=tok.y+s.last_y-s.origin_y
+ WHERE tok.id=ANY(token_ids) AND tok.map_id=s.map_id AND tok.campaign_id=s.campaign_id;
+ UPDATE public.campaign_tool_issues tool SET x=tool.x+s.last_x-s.origin_x,
+  y=tool.y+s.last_y-s.origin_y
+ WHERE tool.id=ANY(tool_ids) AND tool.map_id=s.map_id AND tool.campaign_id=s.campaign_id;
  PERFORM set_config('forge.trajectory_steps','',true);
  PERFORM set_config('forge.trajectory_map','',true);
  PERFORM set_config('forge.trajectory_actor','',true);
