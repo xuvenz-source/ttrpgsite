@@ -185,7 +185,9 @@ END $$;
 -- Materialized once for a viewer snapshot or approved observer path.
 -- Never return this server-internal values/owner list to a player.
 CREATE OR REPLACE FUNCTION forge_world_v2.vision_sources_v2(
- p_map uuid,p_campaign uuid,p_viewer uuid,p_scene jsonb)
+ p_map uuid,p_campaign uuid,p_viewer uuid,p_scene jsonb,
+ p_preview_token uuid DEFAULT NULL,p_preview_x integer DEFAULT NULL,
+ p_preview_y integer DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=''
 AS $$
 DECLARE party boolean:=coalesce((p_scene->'fog'->>'partyShared')::boolean,false);
@@ -205,8 +207,10 @@ BEGIN
  LOOP
   delta:=forge_world_v2.piece_offset_v2(p_map,'token',piece.id);
   sources:=sources||jsonb_build_array(jsonb_build_object(
-   'x',piece.x+(delta->>'dx')::integer,
-   'y',piece.y+(delta->>'dy')::integer,
+   'x',CASE WHEN piece.id=p_preview_token THEN p_preview_x
+     ELSE piece.x+(delta->>'dx')::integer END,
+   'y',CASE WHEN piece.id=p_preview_token THEN p_preview_y
+     ELSE piece.y+(delta->>'dy')::integer END,
    'spanX',piece.span_x,'spanY',piece.span_y,
    'values',coalesce(piece.field_values,piece.npc_values,'{}'::jsonb)));
  END LOOP;
@@ -219,7 +223,9 @@ END $$;
 -- Light emitters can be used to calculate pixels but their coordinates are
 -- never included in a player-facing visibility response.
 CREATE OR REPLACE FUNCTION forge_world_v2.light_sources_v2(
- p_map uuid,p_campaign uuid,p_scene jsonb)
+ p_map uuid,p_campaign uuid,p_scene jsonb,
+ p_preview_token uuid DEFAULT NULL,p_preview_x integer DEFAULT NULL,
+ p_preview_y integer DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=''
 AS $$
 DECLARE sources jsonb:='[]'::jsonb;obj jsonb;tool record;delta jsonb;
@@ -250,8 +256,10 @@ BEGIN
  LOOP
   IF tool.held_by_token_id IS NOT NULL THEN
    delta:=forge_world_v2.piece_offset_v2(p_map,'token',tool.token_id);
-   torch_x:=tool.token_x+tool.span_x/2.0+(delta->>'dx')::integer;
-   torch_y:=tool.token_y+tool.span_y/2.0+(delta->>'dy')::integer;
+   torch_x:=(CASE WHEN tool.token_id=p_preview_token THEN p_preview_x
+    ELSE tool.token_x+(delta->>'dx')::integer END)+tool.span_x/2.0;
+   torch_y:=(CASE WHEN tool.token_id=p_preview_token THEN p_preview_y
+    ELSE tool.token_y+(delta->>'dy')::integer END)+tool.span_y/2.0;
   ELSE
    delta:=forge_world_v2.piece_offset_v2(p_map,'tool',tool.issue_id);
    torch_x:=tool.x+0.5+(delta->>'dx')::integer;
