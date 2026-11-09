@@ -58,5 +58,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102100_world_engine_v2_visibility_snapshots.sql
       - name: Install private movement-linked vision invalidations
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102200_world_engine_v2_visibility_invalidation.sql
+      - name: Install token reveal and party source reassignment invalidation
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102300_world_engine_v2_vision_roster_invalidation.sql
       - name: Verify V2 LOS, static and moving light, privacy, preview and exploration
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-visibility-contract.sql
