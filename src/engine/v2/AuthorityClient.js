@@ -5,7 +5,7 @@
  * The Phase 4 SQL is staged independently and is NOT installed on production.
  * Do not connect this adapter to the live map until the integrated release.
  */
-const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const int=Number.isSafeInteger;
 const point=p=>int(p?.x)&&int(p?.y)&&Math.abs(p.x)<=100000&&Math.abs(p.y)<=100000;
 const id=x=>uuid.test(String(x??''));
