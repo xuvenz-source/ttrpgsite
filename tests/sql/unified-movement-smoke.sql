@@ -33,7 +33,18 @@ BEGIN
  THEN RAISE EXCEPTION 'Sequence replay was accepted';END IF;
 END $$;
 COMMIT;
-DO $$
+-- Probe the private publisher directly inside an always-rolled-back
+-- transaction so SQL errors cannot disappear behind the public neutral
+-- response or modify the smoke-test counts.
+BEGIN;
+SELECT set_config('request.jwt.claim.sub',
+ '22222222-2222-4222-8222-222222222222',true);
+SELECT forge_visibility.publish_approved_navigation_batch(
+ '77777777-7777-4777-8777-777777777777',0,0,
+ '[{"dx":1,"dy":0}]'::jsonb,
+ '{"objects":[],"fog":{"partyShared":true}}'::jsonb,true);
+ROLLBACK;
+DO $
 BEGIN
  IF (SELECT count(*) FROM realtime.notifications
    WHERE packet->>'action'='path' AND is_private
