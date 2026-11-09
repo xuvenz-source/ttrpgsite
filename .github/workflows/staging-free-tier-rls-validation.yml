@@ -1,0 +1,52 @@
+name: Supabase free-tier RLS security and permission parity
+on:
+  push:
+    branches:
+      - stage/supabase-free-tier-memory-optimizations-2026-11-10
+    paths:
+      - 'supabase/migrations/20261110050000_free_tier_rls_initplan_optimization.sql'
+      - 'tests/sql/free-tier-rls-*'
+      - '.github/workflows/staging-free-tier-rls-validation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261110050000_free_tier_rls_initplan_optimization.sql'
+      - 'tests/sql/free-tier-rls-*'
+      - '.github/workflows/staging-free-tier-rls-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rls-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rlsfixture
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rlsfixture"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: rlsfixture
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install synthetic fixture and 13 original policy definitions
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/free-tier-rls-fixture.sql
+      - name: Prove original DM, player, outsider and observer permissions
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/free-tier-rls-authority-contract.sql
+      - name: Apply the exact staged migration ONLY to disposable PostgreSQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261110050000_free_tier_rls_initplan_optimization.sql
+      - name: Prove unchanged policy identity, roles and security gates
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/free-tier-rls-metadata-contract.sql
+      - name: Repeat the identical permission matrix after migration
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/free-tier-rls-authority-contract.sql
