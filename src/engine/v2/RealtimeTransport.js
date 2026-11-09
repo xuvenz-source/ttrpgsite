@@ -68,6 +68,27 @@ export function validWorldObserverSnapshot(snapshot,mapId,viewerId){
  }
  return true;
 }
+/** Read the server-owned viewer cursor. This is NOT a sprite or sight grant.
+ * The caller must combine it with a fresh, RLS-authorized roster and fog frame
+ * (Phase 7) before unlock. Never invent a cursor or fall back to a public map.
+ */
+export async function fetchWorldObserverCursorV2({db,mapId,viewerId}={}){
+ if(typeof db?.rpc!=='function'||!uuid(mapId)||!uuid(viewerId))
+  throw Error('Invalid V2 observer cursor request');
+ const {data,error}=await db.rpc('get_world_observer_cursor_v2',{p_map:mapId});
+ if(error||!data||data.version!==2||
+  data.mapId!==mapId||data.viewerId!==viewerId||
+  !int(data.cursor)||data.cursor<0||
+  !int(data.environmentRevision)||data.environmentRevision<0||
+  !int(data.permissionGeneration)||data.permissionGeneration<0||
+  Object.keys(data).some(k=>![
+   'version','mapId','viewerId','cursor','environmentRevision',
+   'permissionGeneration'
+  ].includes(k)))
+  throw Error('Unauthorized or invalid V2 observer cursor');
+ return data;
+}
+
 /**
  * onResync(reason) MUST obtain an authoritative, RLS-authorized snapshot,
  * including the *viewer-specific* stream cursor. This is intentionally a
