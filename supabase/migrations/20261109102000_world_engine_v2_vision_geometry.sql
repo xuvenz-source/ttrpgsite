@@ -168,6 +168,8 @@ DECLARE s forge_world_v2.motion_sessions%rowtype;
 BEGIN
  SELECT * INTO s FROM forge_world_v2.motion_sessions m
  WHERE m.map_id=p_map AND m.status='active' AND
+  -- DM preview never changes a real player's fog or moving light.
+  m.mode IS DISTINCT FROM 'preview' AND
   m.expires_at>statement_timestamp() AND
   m.selection @> jsonb_build_array(jsonb_build_object(
    'kind',p_kind,'id',p_piece))
