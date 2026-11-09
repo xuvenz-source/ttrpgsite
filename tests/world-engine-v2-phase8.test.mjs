@@ -628,3 +628,16 @@ test('authorized clear fog cells remain actually transparent over terrain',()=>{
  assert.ok(canvas.calls.some(call=>call[0]==='clear'&&
   call[1]===16&&call[2]===16));
 });
+
+
+test('explicit security revocation never recursively asks for another resync',()=>{
+ const ctx=make();activate(ctx);
+ const before=ctx.resync.length;
+ ctx.renderer.revoke('private-stream-disconnected',false);
+ ctx.renderer.revoke('map-authorization-revoked',true);
+ assert.equal(ctx.resync.length,before,
+  'security owner already controls reauthorization; renderer must not loop');
+ assert.equal(ctx.renderer.authorized,false);
+ assert.equal(ctx.renderer.currentScene,null);
+ ctx.renderer.dispose();
+});
