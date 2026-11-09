@@ -15,7 +15,7 @@ const hero={kind:'token',id:'40000000-0000-4000-8000-000000000001',
 const torch={kind:'tool',id:'50000000-0000-4000-8000-000000000001',
  x:1,y:3};
 const frame=(overrides={})=>({
- version:2,mapId,viewerId,cursor:5,
+ version:2,mapId,viewerId,scope:'viewer',cursor:5,
  environmentRevision:9,permissionGeneration:4,
  sceneGeneration:6,visionEpoch:7,
  enabled:true,width:10,height:10,partyShared:false,
@@ -53,7 +53,7 @@ test('strict server scope rejects raw walls, light source details and wrong view
 });
 
 test('DM bypass frame has no fog mask cells but renders all map light',()=>{
- const raw=frame({enabled:false,visible:[],explored:[]});
+ const raw=frame({scope:'dm',enabled:false,visible:[],explored:[]});
  const normalized=normalizeWorldVisibilityFrame(raw,mapId,viewerId);
  assert.deepEqual([...makeWorldFogMask(normalized)],Array(100).fill(2));
  assert.equal(normalizeWorldVisibilityFrame(frame({
@@ -263,4 +263,16 @@ test('large unfogged maps retain rosters without huge fog bitmap allocation',()=
  assert.equal(normalizeWorldVisibilityFrame({
   ...large,enabled:true
  },mapId,viewerId),null,'automatic fog is bounded to 128 cells per axis');
+});
+
+
+test('V2 sight frame rejects missing viewer scope and DM scope with enabled fog',()=>{
+ assert.equal(normalizeWorldVisibilityFrame(frame({scope:null}),mapId,viewerId),null);
+ assert.equal(normalizeWorldVisibilityFrame(frame({
+  scope:'dm',enabled:true
+ }),mapId,viewerId),null);
+ const dm=normalizeWorldVisibilityFrame(frame({
+  scope:'dm',enabled:false,visible:[],explored:[]
+ }),mapId,viewerId);
+ assert.equal(dm.scope,'dm');
 });
