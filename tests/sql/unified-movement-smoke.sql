@@ -44,7 +44,7 @@ SELECT forge_visibility.publish_approved_navigation_batch(
  '[{"dx":1,"dy":0}]'::jsonb,
  '{"objects":[],"fog":{"partyShared":true}}'::jsonb,true);
 ROLLBACK;
-DO $
+DO $$
 BEGIN
  IF (SELECT count(*) FROM realtime.notifications
    WHERE packet->>'action'='path' AND is_private
