@@ -50,7 +50,7 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
    for(const item of rows){
     pieces.set(key(item),{
      kind:item.kind,id:item.id,position:{x:item.x,y:item.y},
-     pending:[],hidden:false,lastNow:null
+     pending:[],hidden:false,lastNow:null,pathStart:null
     });
    }
    return true;
@@ -77,18 +77,20 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
     const canonical={x:item.x,y:item.y};
     if(!existing||existing.hidden){
      next.set(id,{kind:item.kind,id:item.id,position:canonical,
-      pending:[],hidden:false,lastNow:null});
+      pending:[],hidden:false,lastNow:null,pathStart:null});
      continue;
     }
     const approved=existing.pending.some(waypoint=>
      same(waypoint,canonical));
-    const inProgress=same(existing.position,canonical)||approved;
+    const inProgress=same(existing.position,canonical)||
+     (existing.pending.length>0&&(
+      approved||same(existing.pathStart,canonical)));
     if(inProgress){
      next.set(id,existing);
     }else{
      // Server canonical state wins. No extrapolation through walls.
      next.set(id,{kind:item.kind,id:item.id,position:canonical,
-      pending:[],hidden:false,lastNow:null});
+      pending:[],hidden:false,lastNow:null,pathStart:null});
     }
    }
    pieces.clear();
@@ -102,6 +104,7 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
    const expected=entry.pending.at(-1)||entry.position;
    if(!same(item.path[0],expected)||entry.pending.length+item.path.length-1>maxQueue)
     return false; // Require a genuine server snapshot, not a guessed diagonal.
+   if(!entry.pending.length)entry.pathStart={...entry.position};
    entry.pending.push(...item.path.slice(1).map(p=>({x:p.x,y:p.y})));
    return true;
   },
@@ -111,7 +114,7 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
     Object.hasOwn(item,'path'))return false;
    const entry=pieces.get(key(item));
    if(!entry)return false;
-   entry.hidden=true;entry.pending.length=0;
+   entry.hidden=true;entry.pending.length=0;entry.pathStart=null;
    return true;
   },
   /**
@@ -128,7 +131,9 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
     entry.lastNow=now;
     if(!elapsed||!entry.pending.length)continue;
     const distanceLeft=remaining(entry);
-    if(distanceLeft<=1e-9){entry.pending.length=0;continue}
+    if(distanceLeft<=1e-9){
+     entry.pending.length=0;entry.pathStart=null;continue
+    }
     const speed=Math.max(1/28,distanceLeft/catchupMs);
     let advance=elapsed*speed,modified=false;
     while(advance>1e-9&&entry.pending.length){
@@ -145,6 +150,7 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
      }
      modified=true;
     }
+    if(!entry.pending.length)entry.pathStart=null;
     if(modified)changed.push({
      kind:entry.kind,id:entry.id,x:entry.position.x,y:entry.position.y
     });
@@ -161,7 +167,7 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
   },
   hideAll(){
    for(const entry of pieces.values()){
-    entry.hidden=true;entry.pending.length=0;
+    entry.hidden=true;entry.pending.length=0;entry.pathStart=null;
    }
   },
   resetClock(){
