@@ -2,7 +2,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {PIN_ICONS,normalizePinPosition,pinVisibleTo} from './CampaignHandouts.js';
 import HandoutBody from './HandoutBody.jsx';
 /** Map pins are separate from DM lighting geometry. Players receive only RLS-allowed pins. */
-export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
+export default function MapPinLayer({map,scale,pointerScale=1,pins=[],isDM,editor,active=true,
  onCreate,onMove,onOpen,onRead,onCollect,onDelete,onSelect}){
  const [preview,setPreview]=useState({});
  const drag=useRef(null),skipClick=useRef(null),request=useRef(0);
@@ -59,13 +59,14 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
   finally{setBusy(false)}
  }
  const cell=Math.max(1,Number(map?.grid_size)*scale);
+ const pointerCell=cell*Math.max(0.1,Number(pointerScale)||1);
  const placing=isDM&&editor?.enabled&&editor?.layer==='light'&&
   editor?.tool==='pin'&&!!editor?.pinHandoutId;
  if(!map)return null;
  function point(event){
   const root=event.currentTarget.getBoundingClientRect();
-  return normalizePinPosition((event.clientX-root.left)/cell,
-   (event.clientY-root.top)/cell,map);
+  return normalizePinPosition((event.clientX-root.left)/pointerCell,
+   (event.clientY-root.top)/pointerCell,map);
  }
  function start(event,pin){
   event.stopPropagation();
@@ -80,8 +81,8 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
  function move(event,pin){
   const d=drag.current;
   if(!d||d.id!==pin.id||d.pointerId!==event.pointerId)return;
-  const next=normalizePinPosition(d.x+(event.clientX-d.startX)/cell,
-   d.y+(event.clientY-d.startY)/cell,map);
+  const next=normalizePinPosition(d.x+(event.clientX-d.startX)/pointerCell,
+   d.y+(event.clientY-d.startY)/pointerCell,map);
   setPreview(prev=>({...prev,[pin.id]:next}));
  }
  function finish(event,pin,cancel=false){
@@ -91,8 +92,8 @@ export default function MapPinLayer({map,scale,pins=[],isDM,editor,active=true,
   // Release coordinates are authoritative even if React has not painted the
   // most recent pointer-move preview yet.
   const next=cancel?{x:d.x,y:d.y}:normalizePinPosition(
-   d.x+(event.clientX-d.startX)/cell,
-   d.y+(event.clientY-d.startY)/cell,map);
+   d.x+(event.clientX-d.startX)/pointerCell,
+   d.y+(event.clientY-d.startY)/pointerCell,map);
   try{event.currentTarget.releasePointerCapture(event.pointerId)}catch{}
   if(!cancel&&(Math.abs(next.x-d.x)>.01||Math.abs(next.y-d.y)>.01)){
    skipClick.current=pin.id;
