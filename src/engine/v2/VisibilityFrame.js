@@ -5,7 +5,7 @@
  */
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const validInt=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
-const allowed=new Set(['version','mapId','viewerId','cursor',
+const allowed=new Set(['version','mapId','viewerId','scope','cursor',
  'environmentRevision','permissionGeneration','sceneGeneration',
  'visionEpoch','enabled','width','height','partyShared',
  'visible','explored','visiblePieces']);
@@ -37,6 +37,7 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
   raw.mapId!==mapId||raw.viewerId!==viewerId||
   typeof mapId!=='string'||!UUID.test(mapId)||
   typeof viewerId!=='string'||!UUID.test(viewerId)||
+  !['dm','viewer'].includes(raw.scope)||
   Object.keys(raw).some(k=>!allowed.has(k))||
   !validInt(raw.cursor,0,Number.MAX_SAFE_INTEGER)||
   !validInt(raw.environmentRevision,0,Number.MAX_SAFE_INTEGER)||
@@ -51,12 +52,13 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
  if(!orderedCells(raw.visible,count)||!orderedCells(raw.explored,count)||
   !piecesValid(raw.visiblePieces,raw.width,raw.height))return null;
  if(!raw.enabled&&(raw.visible.length||raw.explored.length))return null;
+ if(raw.scope==='dm'&&raw.enabled)return null;
  const visible=Object.freeze([...raw.visible]);
  const explored=Object.freeze([...raw.explored]);
  const visiblePieces=Object.freeze(raw.visiblePieces.map(p=>
   Object.freeze({kind:p.kind,id:p.id,x:p.x,y:p.y})));
  return Object.freeze({
-  version:2,mapId,viewerId,cursor:raw.cursor,
+  version:2,mapId,viewerId,scope:raw.scope,cursor:raw.cursor,
   environmentRevision:raw.environmentRevision,
   permissionGeneration:raw.permissionGeneration,
   sceneGeneration:raw.sceneGeneration,
