@@ -1,0 +1,42 @@
+name: World Engine V2 isolated PostgreSQL authority tests
+on:
+  push:
+    branches:
+      - stage/world-engine-v2-2026-11-09
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: v2fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d v2fixture"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: v2fixture
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install synthetic fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-fixture.sql
+      - name: Apply staged V2 schema to disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql
+      - name: Verify ownership, RLS grants, collision and replay
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-contract.sql
