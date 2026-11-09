@@ -161,7 +161,9 @@ export function createWorldRealtimeTransport({
    if(item.action==='hide'){
     // Never reveal IDs or send hide actions for a piece never in an
     // authorized roster; conceal a known sprite immediately.
-    if(roster.has(id)){roster.delete(id);onHide(item)}
+    if(roster.has(id)){
+     roster.delete(id);onHide(item,{seq:frame.seq,mapId});
+    }
    }else if(roster.has(id)){
     pendingPaths.push(item);
    }else{
