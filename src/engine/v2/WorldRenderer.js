@@ -130,7 +130,9 @@ export function createWorldRenderer({
   paintedMask=null;fogPending=false;
  }
  // Permissions are revoked synchronously, without waiting for a RAF.
- function seal(reason='authorization-revoked',{forgetScene=false}={}){
+ function seal(reason='authorization-revoked',{
+  forgetScene=false,requestResync=true
+ }={}){
   authorized=false;visibility=null;fogMask=null;paintedMask=null;
   observer.authorizePieces([]);clearLocal();clearSprites();
   latestSeq=0;seqItems.clear();setOpaque();
@@ -145,7 +147,7 @@ export function createWorldRenderer({
     surfaces.terrain.removeAttribute('src');
    else surfaces.terrain.src='';
   }
-  safe(onNeedResync,reason);
+  if(requestResync)safe(onNeedResync,reason);
  }
  function installSprite(item){
   const id=key(item);
@@ -539,12 +541,12 @@ export function createWorldRenderer({
    */
   revoke(reason='permission-revoked',hard=true){
    if(disposed)return;
-   seal(reason,{forgetScene:hard});
+   seal(reason,{forgetScene:hard,requestResync:false});
   },
   changeContext({mapId:nextMap,viewerId:nextViewer}={}){
    if(disposed||!validId(nextMap)||!validId(nextViewer))return false;
    if(nextMap===currentMap&&nextViewer===currentViewer)return true;
-   seal('viewer-map-switch',{forgetScene:true});
+   seal('viewer-map-switch',{forgetScene:true,requestResync:false});
    currentMap=nextMap;currentViewer=nextViewer;
    return true;
   },
