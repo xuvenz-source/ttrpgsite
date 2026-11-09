@@ -314,11 +314,13 @@ export default function WorldV2Board(props){
   if(!selection.length||!authorizeSelection(selection))return null;
   if(!keyboard)setSelection(selection.filter(p=>p.kind==='token').map(p=>p.id),
    selection.filter(p=>p.kind==='tool').map(p=>p.id));
-  const row=picked.kind==='token'?t:p;
+  const current=runtimeRef.current?.visibility.visiblePieces.find(
+   part=>part.kind===picked.kind&&part.id===picked.id);
+  if(!current)return null;
   const virtual=dmPreview?runtimeRef.current?.previewPosition:null;
   const origin=virtual&&virtual.tokenId===picked.id?
    {x:virtual.x,y:virtual.y}:
-   {x:Number(row.x),y:Number(row.y)};
+   {x:current.x,y:current.y};
   if(!Number.isSafeInteger(origin.x)||!Number.isSafeInteger(origin.y))
    return null;
   if(!keyboard)viewport.current?.focus?.({preventScroll:true});
@@ -333,11 +335,12 @@ export default function WorldV2Board(props){
    pick.selection[0].kind!=='tool')return false;
   const data=latest.current,issue=data.toolIssued.find(x=>x.id===pick.selection[0].id);
   if(!issue||!toolCanBeHeld(issue))return false;
-  const carrier=data.tokens.find(t=>
-   t.map_id===map.id&&within(point,t)&&
-   canControlMapToken(t,user,isDM,map.id)&&
-   runtimeRef.current?.visibility.visiblePieces.some(v=>
-    v.kind==='token'&&v.id===t.id));
+  const positions=runtimeRef.current?.visibility.visiblePieces??[];
+  const carrier=data.tokens.find(t=>{
+   const actual=positions.find(v=>v.kind==='token'&&v.id===t.id);
+   return t.map_id===map.id&&actual&&within(point,{...t,...actual})&&
+    canControlMapToken(t,user,isDM,map.id);
+  });
   if(!carrier)return false;
   Promise.resolve().then(()=>data.onToolHold?.(issue.id,carrier.id))
    .catch(error=>setIssue(error?.message||String(error)));
@@ -363,8 +366,10 @@ export default function WorldV2Board(props){
     const src=latest.current;
     const v=p.kind==='token'?src.tokens.find(x=>x.id===p.id):
      src.toolPlacements.find(x=>x.issue_id===p.id);
-    if(!v)return null;
-    return {kind:p.kind,id:p.id,x:Number(v.x),y:Number(v.y),
+    const current=runtimeRef.current?.visibility.visiblePieces.find(
+     row=>row.kind===p.kind&&row.id===p.id);
+    if(!v||!current)return null;
+    return {kind:p.kind,id:p.id,x:current.x,y:current.y,
      spanX:Number(v.span_x??v.span??1),spanY:Number(v.span_y??v.span??1),
      attributes:p.kind==='token'?
       (src.characters.find(c=>c.id===v.character_id)?.field_values||
