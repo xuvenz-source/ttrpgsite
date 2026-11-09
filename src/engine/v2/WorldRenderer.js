@@ -313,6 +313,11 @@ export function createWorldRenderer({
    }
    const previously=visibility;
    const prevMask=fogMask;
+   const priorPositions=new Map();
+   for(const id of sprites.keys()){
+    const [kind,pieceId]=id.split(':');
+    priorPositions.set(id,observer.getPosition(kind,pieceId));
+   }
    visibility=next;fogMask=nextMask;authorized=true;
    latestSeq=next.cursor;seqItems.clear();
    if(!observer.reconcilePieces(next.visiblePieces)){
@@ -334,8 +339,17 @@ export function createWorldRenderer({
      prevMask.length!==nextMask.length||
      prevMask.some((value,i)=>value!==nextMask[i])));
    if(!previously||maskChanged)fogPending=true;
-   for(const piece of next.visiblePieces)dirtySprites.add(key(piece));
-   scheduler.invalidate();
+   // Compare old and newly authorized cosmetic positions. Cursor-only
+   // advances update stream authorization without painting 500 idle sprites.
+   for(const piece of next.visiblePieces){
+    const id=key(piece);
+    if(maskChanged||!previously||!priorPositions.has(id)||
+     !same(priorPositions.get(id),
+      observer.getPosition(piece.kind,piece.id)))
+     dirtySprites.add(id);
+   }
+   if(fogPending||dirtySprites.size||staticPending)
+    scheduler.invalidate();
    return true;
   },
   /**
