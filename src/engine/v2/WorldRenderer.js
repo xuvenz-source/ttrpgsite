@@ -80,13 +80,13 @@ export function createWorldRenderer({
   rejectedPackets:0,fullFogDraws:0};
  const safe=(fn,...args)=>{try{fn(...args)}catch{}};
  const present=p=>validMotionPoint(p)&&
-  p.x<=(scene?.dimensions.width??0)/(scene?.dimensions.gridSize??1)&&
-  p.y<=(scene?.dimensions.height??0)/(scene?.dimensions.gridSize??1);
- const currentCell=p=>({x:Math.floor(p.x),y:Math.floor(p.y)});
- function masked(p){
+  p.x<(scene?.dimensions.width??0)/(scene?.dimensions.gridSize??1)&&
+  p.y<(scene?.dimensions.height??0)/(scene?.dimensions.gridSize??1);
+ function masked(p,spanX=1,spanY=1){
   if(!visibility||!present(p))return false;
   if(!visibility.enabled)return true;
-  const {x,y}=currentCell(p);
+  // Match the server's centre-based current visibility for a footprint.
+  const x=Math.floor(p.x+spanX/2),y=Math.floor(p.y+spanY/2);
   if(x<0||y<0||x>=visibility.width||y>=visibility.height)return false;
   return fogMask?.[y*visibility.width+x]===2;
  }
@@ -161,7 +161,8 @@ export function createWorldRenderer({
    node.dataset.worldKind=item.kind;node.dataset.worldId=item.id;
   }
   surfaces.spriteHost.appendChild(node);
-  sprites.set(id,{node,x:null,y:null,visible:false});
+  sprites.set(id,{node,x:null,y:null,visible:false,
+   spanX:1,spanY:1});
   dirtySprites.add(id);stats.spriteCreates++;
   return true;
  }
@@ -177,7 +178,7 @@ export function createWorldRenderer({
    isLocal=true;
   }
   const allowed=authorized&&position&&present(position)&&
-   (isLocal||masked(position));
+   (isLocal||masked(position,sprite.spanX,sprite.spanY));
   if(!allowed){
    if(sprite.visible||sprite.node.style.visibility!=='hidden'){
     sprite.node.style.visibility='hidden';sprite.visible=false;
@@ -358,7 +359,10 @@ export function createWorldRenderer({
     seal('observer-sequence-gap');return false;
    }
    if(!Array.isArray(item.path)||!item.path.length||
-    item.path.some(point=>!masked(point))){
+    item.path.some(point=>{
+     const sprite=sprites.get(key(item));
+     return !masked(point,sprite?.spanX??1,sprite?.spanY??1);
+    })){
     stats.rejectedPackets++;
     seal('observer-path-not-in-authorized-fog');return false;
    }
@@ -453,6 +457,26 @@ export function createWorldRenderer({
    // sampled and released retain their last known-authorized presentation.
    for(const id of local?.anchors.keys()??[])dirtySprites.add(id);
    scheduler.invalidate();return true;
+  },
+  /**
+   * Phase 9 supplies dimensions only from RLS-authorized token/tool rows
+   * AFTER Phase 7 grants the piece ID. Metadata never creates a sprite,
+   * reveals fog, changes movement physics or remounts a token.
+   */
+  setSpriteDimensions(kind,id,{spanX=1,spanY=1}={}){
+   if(disposed||!authorized||!scene||
+    !['token','tool'].includes(kind)||!validId(id)||
+    !finite(spanX)||!finite(spanY)||spanX<=0||spanY<=0||
+    spanX>12||spanY>12)return false;
+   const sprite=sprites.get(kind+':'+id);
+   if(!sprite)return false;
+   if(sprite.spanX===spanX&&sprite.spanY===spanY)return true;
+   sprite.spanX=spanX;sprite.spanY=spanY;
+   const size=scene.dimensions.gridSize;
+   sprite.node.style.width=size*spanX+'px';
+   sprite.node.style.height=size*spanY+'px';
+   dirtySprites.add(kind+':'+id);scheduler.invalidate();
+   return true;
   },
   setTerrainSource(source){
    if(disposed||!scene||typeof source!=='string'||
