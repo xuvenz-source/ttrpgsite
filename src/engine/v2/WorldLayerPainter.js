@@ -223,3 +223,94 @@ export function paintWorldStaticLayer({
  ctx.restore();
  return {ok:true,objects:painted,full:whole,resized};
 }
+
+/**
+ * Phase 10 moving lights. DM paints from the DM-only published geometry;
+ * players paint ONLY server-issued visible-cell bands, without light-source
+ * positions or concealed barriers. The fog mask remains the final layer.
+ * No standalone animation loop, private subscriptions or additional RPCs.
+ */
+export function paintWorldMovingLightLayer({
+ canvas,scene,frame,previousFrame=null,playerPreview=false
+}={}){
+ if(!canvas||!scene?.dimensions||
+  !finite(scene.dimensions.width)||!finite(scene.dimensions.height)||
+  !finite(scene.dimensions.gridSize)||scene.dimensions.gridSize<=0)
+  return {ok:false,painted:0};
+ const d=scene.dimensions;
+ place(canvas,d.width,d.height);
+ const ctx=safeCtx(canvas);
+ if(!ctx)return {ok:false,painted:0};
+ if(!frame){
+  resize(canvas,1,1);ctx.clearRect(0,0,1,1);
+  return {ok:true,painted:0,full:true};
+ }
+ const dm=frame.scope==='dm'&&!playerPreview;
+ if(dm){
+  const width=Math.floor(d.width/d.gridSize);
+  const height=Math.floor(d.height/d.gridSize);
+  if(width<1||height<1||width>10000||height>10000||
+   !Array.isArray(frame.dmMovingLights)||frame.dmMovingLights.length>50||
+   scene.scope!=='dm'||!Array.isArray(scene.environment?.objects))
+   return {ok:false,painted:0};
+  const cw=Math.min(2048,Math.max(1,width*4));
+  const ch=Math.min(2048,Math.max(1,height*4));
+  resize(canvas,cw,ch);
+  ctx.clearRect(0,0,cw,ch);
+  ctx.save();ctx.setTransform(cw/width,0,0,ch/height,0,0);
+  let painted=0;
+  for(const light of frame.dmMovingLights){
+   const {x,y,reach}=light;
+   if(!finite(x)||!finite(y)||!finite(reach)||reach<=0||
+    reach>200)continue;
+   const fan=occludedLightFan(scene.environment.objects,{x,y},reach);
+   if(!fan?.length)continue;
+   ctx.save();ctx.beginPath();ctx.moveTo(x,y);
+   for(const point of fan)ctx.lineTo(point.x,point.y);
+   ctx.closePath?.();ctx.clip();
+   if(typeof ctx.createRadialGradient==='function'){
+    const gradient=ctx.createRadialGradient(x,y,0,x,y,reach);
+    gradient.addColorStop(0,'rgba(255,190,95,0.24)');
+    gradient.addColorStop(1,'rgba(255,190,95,0)');
+    ctx.fillStyle=gradient;ctx.beginPath();
+    ctx.arc(x,y,reach,0,Math.PI*2);ctx.fill();
+    painted++;
+   }
+   ctx.restore();
+  }
+  ctx.restore();
+  return {ok:true,painted,full:true};
+ }
+ if(frame.scope!=='viewer'||!frame.enabled||
+  !Array.isArray(frame.lightCells)||frame.width>128||frame.height>128)
+  return {ok:false,painted:0};
+ const cellPx=8,width=frame.width*cellPx,height=frame.height*cellPx;
+ const resized=resize(canvas,width,height);
+ const old=new Map(previousFrame?.lightCells??[]);
+ const current=new Map(frame.lightCells);
+ if(!resized&&previousFrame?.width===frame.width&&
+  previousFrame?.height===frame.height&&
+  [...current].every(([cell,level])=>old.get(cell)===level)&&
+  [...old.keys()].every(cell=>current.has(cell)))
+  return {ok:true,painted:0,full:false};
+ if(resized||previousFrame?.width!==frame.width||
+  previousFrame?.height!==frame.height)ctx.clearRect(0,0,width,height);
+ else for(const [cell,level] of old){
+  if(current.get(cell)!==level)
+   ctx.clearRect((cell%frame.width)*cellPx,
+    Math.floor(cell/frame.width)*cellPx,cellPx,cellPx);
+ }
+ let painted=0;
+ const tint={1:'rgba(255,188,102,0.07)',
+  2:'rgba(255,188,102,0.13)',3:'rgba(255,188,102,0.20)'};
+ for(const [cell,level] of current){
+  if(!resized&&old.get(cell)===level&&
+   previousFrame?.width===frame.width&&
+   previousFrame?.height===frame.height)continue;
+  const x=(cell%frame.width)*cellPx;
+  const y=Math.floor(cell/frame.width)*cellPx;
+  ctx.fillStyle=tint[level];ctx.fillRect(x,y,cellPx,cellPx);
+  painted++;
+ }
+ return {ok:true,painted,full:resized};
+}
