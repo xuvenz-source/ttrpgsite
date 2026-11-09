@@ -218,8 +218,11 @@ test('pointer sampling preserves coalesced bends and releases captured pointer',
 test('keyboard nudges share controller and ignore input fields',async()=>{
  const surface=new FakeEvents(),keyboard=new FakeEvents(),{authority,calls}=makeAuthority();
  const controller=createMovementController({authority});
+ const timers=[];
  const input=createInputController({target:surface,keyboardTarget:keyboard,controller,
   keyboardIdleMs:0,
+  setTimer:fn=>{timers.push(fn);return timers.length},
+  clearTimer:id=>{timers[id-1]=null},
   pointFromEvent:e=>({x:e.clientX,y:e.clientY}),
   resolveSelection:()=>({mapId,selection,origin})});
  input.mount();
@@ -232,6 +235,8 @@ test('keyboard nudges share controller and ignore input fields',async()=>{
   preventDefault(){}});
  keyboard.dispatch('keyup',{key:'ArrowRight',target:{tagName:'DIV'},
   preventDefault(){}});
+ assert.equal(timers.filter(Boolean).length,1);
+ timers.at(-1)();
  await tick();await tick();await tick();
  assert.deepEqual(calls.commit[0].endpoint,{x:2,y:0});
  assert.equal(calls.begin.length,1);
