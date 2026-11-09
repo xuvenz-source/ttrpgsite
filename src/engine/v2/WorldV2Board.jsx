@@ -246,6 +246,12 @@ export default function WorldV2Board(props){
   return selection.every(piece=>granted.some(v=>idOf(v)===idOf(piece)));
  };
  function resolveSelection(event,point,{keyboard=false}={}){
+  // Arrow keys control the world only while the map viewport owns focus.
+  // Campaign sheets, hotbar settings and other noneditable controls
+  // must not accidentally move a selected token.
+  if(keyboard&&typeof document!=='undefined'&&
+   document.activeElement!==viewport.current&&
+   !viewport.current?.contains(document.activeElement))return null;
   // The viewer-effective DM preview is read-only until Phase 10 adds
   // isolated token-origin vision overrides. Never move a real player's
   // token or reveal preview positions through another user's sight RPC.
@@ -313,6 +319,7 @@ export default function WorldV2Board(props){
   const origin={x:Number(row.x),y:Number(row.y)};
   if(!Number.isSafeInteger(origin.x)||!Number.isSafeInteger(origin.y))
    return null;
+  if(!keyboard)viewport.current?.focus?.({preventScroll:true});
   return {mapId:map.id,origin,selection,
    mode:dmPreview?'preview':undefined,
    collisionOverride:Boolean(isDM&&!dmPreview&&
