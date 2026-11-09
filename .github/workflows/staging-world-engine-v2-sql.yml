@@ -66,3 +66,5 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102300_world_engine_v2_vision_roster_invalidation.sql
       - name: Verify V2 LOS, static and moving light, privacy, preview and exploration
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-visibility-contract.sql
+      - name: Verify real collision triggers accept only sealed V2 group commits
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-phase10-real-triggers.sql
