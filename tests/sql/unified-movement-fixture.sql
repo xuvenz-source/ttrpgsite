@@ -123,8 +123,8 @@ CREATE OR REPLACE FUNCTION forge_visibility.ray_blocked(
  p_attributes jsonb DEFAULT '{}'::jsonb)
 RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;
 CREATE OR REPLACE FUNCTION forge_visibility.is_lit(
- p_map uuid,p_scene jsonb,p_viewer_x double precision,p_viewer_y double precision,
- p_target_x double precision,p_target_y double precision,p_grid integer)
+ p_map uuid,scene jsonb,viewer_x double precision,viewer_y double precision,
+ target_x double precision,target_y double precision,grid_size integer)
 RETURNS boolean LANGUAGE sql STABLE AS $$SELECT true$$;
 CREATE OR REPLACE FUNCTION forge_visibility.bump_viewer_ticks(
  p_map uuid,p_viewers uuid[] DEFAULT NULL)
