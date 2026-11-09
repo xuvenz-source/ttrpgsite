@@ -3,7 +3,8 @@
 -- Existing adjacent-step RPC remains available for a frontend-first rollback.
 ALTER TABLE forge_visibility.navigation_gestures
  ADD COLUMN IF NOT EXISTS batch_count integer NOT NULL DEFAULT 0,
- ADD COLUMN IF NOT EXISTS validated_cells integer NOT NULL DEFAULT 0;
+ ADD COLUMN IF NOT EXISTS validated_cells integer NOT NULL DEFAULT 0,
+ ADD COLUMN IF NOT EXISTS last_fog_sent timestamptz;
 
 CREATE OR REPLACE FUNCTION public.advance_authorized_navigation_gesture_batch(
  p_session uuid, p_targets jsonb, p_seq bigint)
@@ -23,6 +24,7 @@ DECLARE
  delta_x integer;delta_y integer;steps integer;step integer;
  next_dx integer;next_dy integer;current_dx integer;current_dy integer;
  used integer:=0;blocked boolean:=false;valid boolean;fast_legal boolean;w double precision;
+ refresh_fog boolean:=false;
 BEGIN
  -- A batch follows a real, bounded gesture cursor, never an arbitrary origin.
  IF actor IS NULL OR p_session IS NULL OR p_seq IS NULL OR p_seq<=0 OR
@@ -190,11 +192,26 @@ BEGIN
   current_dx:=(approved->(jsonb_array_length(approved)-1)->>'dx')::integer;
   current_dy:=(approved->(jsonb_array_length(approved)-1)->>'dy')::integer;
  END IF;
+ refresh_fog:=used>0 AND (s.last_fog_sent IS NULL OR
+  clock_timestamp()-s.last_fog_sent>=interval '115 milliseconds');
  UPDATE forge_visibility.navigation_gestures
  SET last_dx=current_dx,last_dy=current_dy,last_seq=p_seq,
   batch_count=s.batch_count+1,validated_cells=s.validated_cells+used,
+  last_fog_sent=CASE WHEN refresh_fog THEN clock_timestamp()
+   ELSE s.last_fog_sent END,
   expires_at=clock_timestamp()+interval '8 seconds'
  WHERE id=s.id;
+ IF used>0 THEN
+  BEGIN
+   -- Preview emission is entirely derived from the verified prefix.
+   -- A realtime delivery error must never grant new cells or skip the final
+   -- canonical trajectory validator. It also must not leak SQL geometry.
+   PERFORM forge_visibility.publish_approved_navigation_batch(
+    s.id,s.last_dx,s.last_dy,approved,scene,refresh_fog);
+  EXCEPTION WHEN others THEN
+   NULL; -- final persistence remains independently fail-closed
+  END;
+ END IF;
  RETURN jsonb_build_object('version',1,'seq',p_seq,
   'approved',approved,'blocked',blocked);
 EXCEPTION WHEN others THEN
