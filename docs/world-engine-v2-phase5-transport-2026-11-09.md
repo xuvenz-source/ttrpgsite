@@ -14,9 +14,11 @@ The existing Phase 4 authority RPC validates gestures and collision before sendi
 ## Source additions
 
 - `src/engine/v2/RealtimeTransport.js`: receive-only private Supabase channel, viewer-scoped topic, strict payload validation, monotonic viewer sequence, duplicate/gap detection, full resync on reconnect/permission/version changes, fail-closed unknown-piece handling and lifecycle cleanup. No `send()` method.
+- `src/engine/v2/ObserverPathBuffer.js`: bounded approved-route interpolation model; preserves every intermediate turn, rejects discontinuities, and is advanced only by the future WorldRenderer's **single shared animation-frame scheduler**. Hide and reconnect immediately clear pending motion.
 - `src/engine/v2/index.js`: public V2 facade exports.
 - `supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql`: protected viewer sequence table, private Realtime receive-only RLS policy, viewer cursor RPC, recipient membership/map check, temporary per-viewer sight bridge and V2-only observer broadcaster.
 - `tests/world-engine-v2-phase5.test.mjs`: JS protocol, anti-forgery, reconnect, order/gap, revocation, unknown NPC, snapshot and disposal tests.
+- `tests/world-engine-v2-phase5-path-buffer.test.mjs`: pure observer interpolation regression tests covering wall-corner fidelity, multiple pieces in one frame, bounds, hide and reconnection.
 - `tests/sql/world-engine-v2-observer-contract.sql`: synthetic SQL topic permissions, unauthorized broadcasts, partial concealment, actor/DM/map assignment, mixed group batching and monotonic stream cursor tests.
 - `.github/workflows/staging-world-engine-v2-sql.yml`: Phase 4 and Phase 5 executed in disposable PostgreSQL 17 only.
 
@@ -93,6 +95,7 @@ The current client transport requires a caller-supplied `onResync(reason)` retur
 - Phase 5 observer motion is ephemeral and never writes canonical token/tool coordinates per tile or per frame.
 - The Phase 4 transaction still authoritatively commits the end position once and preserves existing token/tool collision triggers during staging.
 - A temporary backend wrapper moves the old Phase 4 `advance_world_motion_v2` into `forge_world_v2.advance_core_v2` and adds the new private broadcast after a fresh ACK. Replay is idempotent and never sends a duplicate broadcast.
+- Phase 5 includes a pure **ObserverPathBuffer** that interpolates only approved adjacent points and never creates its own RAF, per-token timers or database writes. Phase 8 will drive this buffer inside its single renderer loop.
 - **Cancellation/commit reconciliation** with stable sprite state is the responsibility of Phases 8–9. Until then, transport packets are not a substitute for canonical RLS snapshot reconciliation. Do not leave a cancelled ghost trajectory visible indefinitely in the final integrated engine.
 - The final Phase 10 cutover must remove the Phase 4 legacy trigger GUC bridge, the Phase 5 `forge_visibility.observer_verified_path_status` bridge, old observer preview functions/queues and old private topic grants. The new V2 transport cannot become another permanent parallel runtime.
 
