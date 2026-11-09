@@ -131,6 +131,10 @@ export function createWorldRenderer({
   observer.authorizePieces([]);clearLocal();clearSprites();
   latestSeq=0;seqItems.clear();setOpaque();
   if(forgetScene){
+   // A role/map revocation must immediately erase any DM-only guide layer.
+   surfaces.staticCanvas.width=1;surfaces.staticCanvas.height=1;
+   if(surfaces.staticCanvas.style)
+    surfaces.staticCanvas.style.backgroundColor='transparent';
    scene=null;staticPending=null;lastSceneRevision=null;
    terrainUrl=null;
    if(typeof surfaces.terrain.removeAttribute==='function')
@@ -324,9 +328,10 @@ export function createWorldRenderer({
     seal('sprite-factory-error');return false;
    }
    reconcileLocal(next);
-   const maskChanged=prevMask?.length!==nextMask?.length||
-    !prevMask||!nextMask||
-    prevMask.some((value,i)=>value!==nextMask[i]);
+   const maskChanged=Boolean(prevMask)!==Boolean(nextMask)||
+    Boolean(prevMask&&nextMask&&(
+     prevMask.length!==nextMask.length||
+     prevMask.some((value,i)=>value!==nextMask[i])));
    if(!previously||maskChanged)fogPending=true;
    for(const piece of next.visiblePieces)dirtySprites.add(key(piece));
    scheduler.invalidate();
@@ -345,7 +350,8 @@ export function createWorldRenderer({
     stats.rejectedPackets++;return false;
    }
    if(meta.seq<latestSeq||
-    (meta.seq===latestSeq&&seqItems.has(key(item)))){
+    (meta.seq===latestSeq&&
+     (!seqItems.size||seqItems.has(key(item))))){
     stats.rejectedPackets++;return false;
    }
    if(meta.seq>latestSeq+1){
@@ -370,7 +376,9 @@ export function createWorldRenderer({
    // Hiding an already-authorized piece is always safe even if the event
    // cursor is missing. A stamped cursor prevents a stale re-show.
    if(meta?.mapId===currentMap&&Number.isSafeInteger(meta.seq)){
-    if(meta.seq<latestSeq)return false;
+    if(meta.seq<latestSeq||
+     (meta.seq===latestSeq&&(!seqItems.size||seqItems.has(key(item)))))
+     return false;
     if(meta.seq>latestSeq+1){seal('observer-sequence-gap');return false}
     if(meta.seq>latestSeq){latestSeq=meta.seq;seqItems.clear()}
     seqItems.add(key(item));
@@ -467,7 +475,7 @@ export function createWorldRenderer({
    * A map or permission switch clears all authorized sprites/fog right now.
    * A static scene publication may retain terrain while sight refreshes.
    */
-  revoke(reason='permission-revoked',hard=false){
+  revoke(reason='permission-revoked',hard=true){
    if(disposed)return;
    seal(reason,{forgetScene:hard});
   },
