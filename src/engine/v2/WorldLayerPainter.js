@@ -281,6 +281,14 @@ export function paintWorldMovingLightLayer({
   ctx.restore();
   return {ok:true,painted,full:true};
  }
+ // Fog disabled is a normal, authorized map state. There is no
+ // player-specific light mask to paint, even on maps above 128 cells.
+ // Clear any prior glow rather than reporting a false rendering failure.
+ if(frame.scope==='viewer'&&frame.enabled===false){
+  const resized=resize(canvas,1,1);
+  ctx.clearRect(0,0,1,1);
+  return {ok:true,painted:0,full:resized};
+ }
  if(frame.scope!=='viewer'||!frame.enabled||
   !Array.isArray(frame.lightCells)||frame.width>128||frame.height>128)
   return {ok:false,painted:0};
