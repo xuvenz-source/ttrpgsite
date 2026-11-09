@@ -44,3 +44,9 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql
       - name: Verify recipient filtering, stream ordering, concealment and anti-forgery
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-observer-contract.sql
+      - name: Prepare synthetic published and DM draft maps
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-scene-fixture.sql
+      - name: Apply staged V2 static-scene publication schema
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109101000_world_engine_v2_static_scene_publication.sql
+      - name: Verify map persistence, scene generations and viewer-private metadata
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-scene-contract.sql
