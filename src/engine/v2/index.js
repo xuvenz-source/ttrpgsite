@@ -18,3 +18,10 @@ export {createWorldRealtimeTransport,worldObserverTopic,fetchWorldObserverCursor
  from './RealtimeTransport.js';
 
 export {createObserverPathBuffer} from './ObserverPathBuffer.js';
+
+export {createSceneSpatialIndex} from './SceneSpatialIndex.js';
+export {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
+ from './SceneSnapshot.js';
+export {createSceneManager,fetchWorldSceneV2} from './SceneManager.js';
+export {createSceneTransport,worldSceneTopic,WORLD_SCENE_EVENT}
+ from './SceneTransport.js';
