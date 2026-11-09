@@ -221,7 +221,7 @@ END $$;
 CREATE OR REPLACE FUNCTION public.preview_world_visibility_at_v2(
  p_map uuid,p_viewer uuid,p_token uuid,p_x integer,p_y integer)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
-AS $
+AS $$
 DECLARE campaign uuid;
 BEGIN
  SELECT m.campaign_id INTO campaign FROM public.battle_maps m WHERE m.id=p_map;
@@ -230,7 +230,7 @@ BEGIN
     NOT public.is_campaign_dm(campaign) THEN RETURN NULL;END IF;
  RETURN forge_world_v2.visibility_frame_v2(
   p_map,p_viewer,false,p_token,p_x,p_y);
-END $;
+END $$;
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA forge_world_v2 FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.get_world_visibility_v2(uuid)
