@@ -915,15 +915,21 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   });
   else for(const t of info.members){
    const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
-   onMovementPreview?.(t,next.x,next.y,false);
+   onMovementPreview?.(t,next.x,next.y,false,false,isDM?[
+    {x:Number(t.x)+from.dx,y:Number(t.y)+from.dy},next
+   ]:undefined);
   }
   // An ordinary token-only drag has no tool positions to change.
   // Avoid allocating a new React state object and rerendering the board on
   // every grid step just to keep an empty tool preview unchanged.
   // Tool and carried-light DOM transforms are now owned by MotionRuntime;
   // no per-cell React board state update is needed for a DM tool drag.
-  if(!playerGroup)for(const tool of info.tools||[])
-   onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
+  if(!playerGroup)for(const tool of info.tools||[]){
+   const next={x:Number(tool.x)+delta.dx,y:Number(tool.y)+delta.dy};
+   onToolMovementPreview?.(tool,next.x,next.y,false,false,isDM?[
+    {x:Number(tool.x)+from.dx,y:Number(tool.y)+from.dy},next
+   ]:undefined);
+  }
   // Server-validated observer previews carry movement without writing
   // token positions or invalidating fog on every pointer sample.
   // Only the final release persists via authoritative movement writes.
