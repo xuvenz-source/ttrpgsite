@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-08",
+  "updated": "2026-11-10",
   "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
   "releaseBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
@@ -176,6 +176,13 @@
       "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
       "linkedPullRequest": 54,
       "note": "Complete combined staging fix attempt for player visual wall penetration and all-token fog flash. DM local swept wall checks, server-confirmed player previews/final token/group/tool trajectories, RLS-aware sprite and monitor mount retention, bounded motion paths and stale callback cleanup. No production SQL, no deployment, no paid services. Unit/build/CodeQL and later live multiplayer verification required."
+    },
+    {
+      "name": "stage/world-engine-v2-2026-11-09",
+      "status": "staged-unreleased",
+      "linkedPullRequest": 58,
+      "productionBaseSha": "ab0901f7cbe85f2bf62bccf7c0941c3eec928d04",
+      "note": "Integrated World Engine V2 Phases 1–10; draft PR #58, inactive two-setting cutover, no production SQL or Vercel deployment. Frontend/PG17/CodeQL validation and full multiplayer browser/free-tier acceptance required before promotion. Preserve all other ready staged components in the next single release."
     }
   ],
   "features": [
@@ -597,6 +604,26 @@
       "releaseReady": true,
       "databaseDependencies": [],
       "verification": "Tests cover stable IDs on fog revoke, hidden + RLS removed entities and monitor concealment. Manual two-player simultaneous movement and token artwork network inspection remain live acceptance."
+    },
+    {
+      "id": "world-engine-v2-phase10-integrated",
+      "description": "Integrated V2 movement/collision/fog pipeline: one board and renderer, safe player prediction grants, DM virtual sight, server-only moving light cosmetics, private observer stream, and V2 transaction checkpoint replacing legacy movement-GUC bridge.",
+      "sources": [
+        "stage/world-engine-v2-2026-11-09"
+      ],
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "20261109095000_world_engine_v2_motion_authority",
+        "20261109100000_world_engine_v2_private_observer_stream",
+        "20261109101000_world_engine_v2_static_scene_publication",
+        "20261109102000_world_engine_v2_vision_geometry",
+        "20261109102100_world_engine_v2_visibility_snapshots",
+        "20261109102200_world_engine_v2_visibility_invalidation",
+        "20261109102300_world_engine_v2_vision_roster_invalidation",
+        "20261109103000_world_engine_v2_legacy_commit_checkpoint"
+      ],
+      "verification": "PostgreSQL 17 synthetic contract, frontend suite/build and CodeQL to be checked at exact PR head; real multi-client responsiveness/fog/torches and Supabase Free CPU/RSS/WAL remain mandatory live acceptance after approved integrated cutover."
     }
   ],
   "databaseDependencies": [
@@ -812,6 +839,78 @@
         "supabase/migrations/20261108112252_guard_stationary_motion_collision_20261108.sql",
         "supabase/migrations/20261108112544_fix_motion_step_count_builtin_20261108.sql"
       ]
+    },
+    {
+      "name": "20261109095000_world_engine_v2_motion_authority",
+      "file": "supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+    },
+    {
+      "name": "20261109100000_world_engine_v2_private_observer_stream",
+      "file": "supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+    },
+    {
+      "name": "20261109101000_world_engine_v2_static_scene_publication",
+      "file": "supabase/migrations/20261109101000_world_engine_v2_static_scene_publication.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+    },
+    {
+      "name": "20261109102000_world_engine_v2_vision_geometry",
+      "file": "supabase/migrations/20261109102000_world_engine_v2_vision_geometry.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+    },
+    {
+      "name": "20261109102100_world_engine_v2_visibility_snapshots",
+      "file": "supabase/migrations/20261109102100_world_engine_v2_visibility_snapshots.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+    },
+    {
+      "name": "20261109102200_world_engine_v2_visibility_invalidation",
+      "file": "supabase/migrations/20261109102200_world_engine_v2_visibility_invalidation.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+    },
+    {
+      "name": "20261109102300_world_engine_v2_vision_roster_invalidation",
+      "file": "supabase/migrations/20261109102300_world_engine_v2_vision_roster_invalidation.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+    },
+    {
+      "name": "20261109103000_world_engine_v2_legacy_commit_checkpoint",
+      "file": "supabase/migrations/20261109103000_world_engine_v2_legacy_commit_checkpoint.sql",
+      "status": "staged-unapplied",
+      "mustApplyBeforeFrontend": true,
+      "releaseApprovalRequired": true,
+      "dependsOn": "V2 migrations in ascending timestamp order",
+      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
     }
   ],
   "edgeFunctionDependencies": [
