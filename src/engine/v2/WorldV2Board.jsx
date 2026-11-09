@@ -416,7 +416,8 @@ export default function WorldV2Board(props){
   });
   void runtime.start().then(ok=>{
    if(!ok&&runtimeRef.current===runtime)
-    setIssue('World Engine V2 unavailable; movement is safely disabled.');
+    setIssue(previous=>previous||
+     'World Engine V2 unavailable; movement is safely disabled.');
   }).catch(error=>setIssue(error?.message||String(error)));
  }
  const rendererReady=useRef(onRendererReady);

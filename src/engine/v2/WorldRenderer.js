@@ -279,7 +279,13 @@ export function createWorldRenderer({
   adoptScene(raw,dirty=null){
    if(disposed)return false;
    const next=normalizeWorldSceneSnapshot(raw,currentMap);
-   if(!next||next.published!==true){
+   // New or unconfigured maps are playable with no fog/collision rules.
+    // The server explicitly reports published:false, no geometry and both
+    // safety rules disabled. Never accept an unpublished protected scene.
+    const safeUnconfigured=next?.published===false&&
+     next.fogEnabled===false&&next.collisionEnabled===false&&
+     next.environment===null;
+    if(!next||next.published!==true&&!safeUnconfigured){
     seal('invalid-published-scene',{forgetScene:true});return false;
    }
    if(scene&&(

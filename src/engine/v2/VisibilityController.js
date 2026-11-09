@@ -42,7 +42,9 @@ export function createVisibilityController({
   return scene.mapId===currentMap &&
    scene.revision===frame.environmentRevision &&
    scene.sceneGeneration===frame.sceneGeneration &&
-   scene.published===true;
+   (scene.published===true||
+     scene.published===false&&scene.fogEnabled===false&&
+     scene.collisionEnabled===false&&scene.environment===null);
  }
  function adopt(raw,requestEpoch){
   if(disposed||epoch!==requestEpoch)return null;

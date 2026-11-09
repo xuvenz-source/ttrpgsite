@@ -246,6 +246,15 @@ export function paintWorldMovingLightLayer({
   return {ok:true,painted:0,full:true};
  }
  const dm=frame.scope==='dm'&&!playerPreview;
+ if(dm&&scene.published===false&&
+  scene.fogEnabled===false&&scene.collisionEnabled===false&&
+  scene.environment===null){
+  // Ordinary unconfigured maps have no DM lights or occlusion guides.
+  // Clear the old glow without treating this safe state as an error.
+  const changed=resize(canvas,1,1);
+  ctx.clearRect(0,0,1,1);
+  return {ok:true,painted:0,full:changed};
+ }
  if(dm){
   const width=Math.floor(d.width/d.gridSize);
   const height=Math.floor(d.height/d.gridSize);

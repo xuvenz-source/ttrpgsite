@@ -120,3 +120,14 @@ test('fog-disabled maps, including large maps, clear light cosmetics without err
  assert.equal(huge.ok,true);
  assert.equal(huge.painted,0);
 });
+
+test('DM moving-light painter treats a safely unpublished map as empty, not failed',()=>{
+ const surface=canvas(),scene={scope:'dm',published:false,
+  fogEnabled:false,collisionEnabled:false,environment:null,dimensions};
+ const frame={scope:'dm',dmMovingLights:[]};
+ const outcome=paintWorldMovingLightLayer({canvas:surface,scene,frame});
+ assert.equal(outcome.ok,true);
+ assert.equal(outcome.painted,0);
+ assert.equal(surface.width,1);
+ assert.equal(surface.height,1);
+});

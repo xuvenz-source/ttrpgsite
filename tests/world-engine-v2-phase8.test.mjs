@@ -641,3 +641,28 @@ test('explicit security revocation never recursively asks for another resync',()
  assert.equal(ctx.renderer.currentScene,null);
  ctx.renderer.dispose();
 });
+
+test('unconfigured fogless maps boot renderer with server-authorized roster, not a black failed board',()=>{
+ for(const scope of ['viewer','dm']){
+  const ctx=make(),raw=scene({
+   scope,published:false,collisionEnabled:false,fogEnabled:false,
+   environment:null
+  }),frame=sight({
+   scope,enabled:false,visible:[],explored:[],visiblePieces:[hero],
+   lightCells:[],dmMovingLights:[]
+  });
+  assert.equal(ctx.renderer.adoptScene(raw),true);
+  assert.equal(ctx.renderer.adoptVisibility(frame),true);
+  ctx.clock.flush(100);
+  assert.equal(ctx.renderer.authorized,true);
+  assert.equal(ctx.renderer.getSpriteElement('token',hero.id)?.style.visibility,'visible');
+  assert.equal(ctx.surfaces.fogCanvas.style.backgroundColor,'transparent');
+  ctx.renderer.dispose();
+ }
+ const ctx=make();
+ assert.equal(ctx.renderer.adoptScene(scene({
+  published:false,collisionEnabled:true,fogEnabled:false,
+  environment:null
+ })),false,'unpublished collision-protected map must remain blocked');
+ ctx.renderer.dispose();
+});
