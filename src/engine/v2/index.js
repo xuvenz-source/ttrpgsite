@@ -12,6 +12,7 @@ export {createCollisionPredictor} from './CollisionPreflight.js';
 
 export {createWorldAuthorityClient} from './AuthorityClient.js';
 
-export {createWorldRealtimeTransport,worldObserverTopic,validWorldMotionFrame,
+export {createWorldRealtimeTransport,worldObserverTopic,fetchWorldObserverCursorV2,
+ validWorldMotionFrame,
  validWorldObserverSnapshot,WORLD_MOTION_EVENT}
  from './RealtimeTransport.js';
