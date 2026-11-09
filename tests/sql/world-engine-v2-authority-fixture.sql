@@ -127,6 +127,21 @@ CREATE TABLE public.campaign_player_maps(
 INSERT INTO public.campaigns(id,active_map_id) VALUES(
  '20000000-0000-4000-8000-000000000001',
  '10000000-0000-4000-8000-000000000001');
+-- Match the production map-assignment contract, including explicit
+-- player overrides and unrestricted DM map access.
+CREATE OR REPLACE FUNCTION public.can_view_campaign_map(p_campaign uuid,p_map uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=''
+AS $
+ SELECT auth.uid() IS NOT NULL AND EXISTS(
+  SELECT 1 FROM public.campaign_members cm
+  JOIN public.campaigns c ON c.id=cm.campaign_id
+  LEFT JOIN public.campaign_player_maps pm
+   ON pm.campaign_id=cm.campaign_id AND pm.user_id=cm.user_id
+  WHERE cm.campaign_id=p_campaign AND cm.user_id=auth.uid()
+   AND (cm.role='dm' OR (cm.role='player' AND
+    p_map=coalesce(pm.map_id,c.active_map_id)))
+ )
+$;
 CREATE SCHEMA realtime;
 CREATE TABLE realtime.messages(
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
