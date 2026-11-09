@@ -3,7 +3,9 @@ Date: 2026-11-09
 Branch: `stage/unified-realtime-movement-2026-11-09`
 Base production/main SHA: `ab905866306e9a0669287ac4b7e620c4ee33c880`
 Primary handoff: `TTRPG_Unified_Movement_Engine_Design_Handoff_2026-11-09.md`
-Status: **PARTIAL / NOT RELEASE READY**. No production migration, merge or Vercel deployment is authorized.
+Status update: **ONE CONSOLIDATED STAGING RELEASE CANDIDATE PREPARED**; source-level and isolated SQL/permission tests are available. Production-role and real browser multiplayer acceptance still require explicit approval. No production migration, merge or Vercel deployment is authorized.
+Current manifest and migration order: `docs/unified-realtime-movement-release-candidate-2026-11-09.md`.
+The work-package table below is the original audit snapshot; the newer manifest supersedes its intermediate "still required" implementation notes.
 
 ## Ground truth / compatibility
 - Main and the most recent Vercel production deployment matched `ab905866` at audit time. Main includes PRs #55 and #56.
