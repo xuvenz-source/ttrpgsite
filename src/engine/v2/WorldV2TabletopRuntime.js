@@ -61,7 +61,14 @@ export function createWorldV2TabletopRuntime({
  let disposed=false,started=false,connected=false;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
- let previewPosition=null;
+ let previewPosition=null,dmLightRefreshTimer=null;
+ function scheduleDmLightRefresh(){
+  if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
+  dmLightRefreshTimer=setTimeout(()=>{
+   dmLightRefreshTimer=null;
+   if(!disposed)void refreshVisibility('dm-approved-motion-light');
+  },150);
+ }
  const signal=(fn,...args)=>{if(!disposed)try{fn(...args)}catch{}};
  const authorized=()=>!disposed&&!manager.stale&&
   !!vision.frame&&vision.authorized&&renderer.authorized&&
@@ -200,6 +207,9 @@ export function createWorldV2TabletopRuntime({
  function revoke(reason,hard=true){
   if(disposed)return;
   ++refreshRevision;privateReady=false;previewPosition=null;
+   if(dmLightRefreshTimer!==null){
+    clearTimeout(dmLightRefreshTimer);dmLightRefreshTimer=null;
+   }
    movement.cancelGesture('permission');
   manager.revokeAuthorization();
   vision.revoke(reason);
@@ -233,9 +243,12 @@ export function createWorldV2TabletopRuntime({
     },
     onPath:(item,meta)=>{
      if(!renderer.applyObserverPath(item,meta))
-      signal(onError,Error('V2 observer path denied by renderer'));
+       signal(onError,Error('V2 observer path denied by renderer'));
+      else scheduleDmLightRefresh();
     },
-    onHide:(item,meta)=>renderer.applyObserverHide(item,meta),
+    onHide:(item,meta)=>{
+      if(renderer.applyObserverHide(item,meta))scheduleDmLightRefresh();
+     },
     onVisionDirty:notice=>{
      if(!vision.onVisionDirty(notice))return;
      // onSnapshot automatically repaints only changed fog and sprite rows.
@@ -301,7 +314,10 @@ export function createWorldV2TabletopRuntime({
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
    ++refreshRevision;
-   input?.unmount();input=null;
+    if(dmLightRefreshTimer!==null){
+     clearTimeout(dmLightRefreshTimer);dmLightRefreshTimer=null;
+    }
+    input?.unmount();input=null;
    movement.dispose();authority.dispose();
    const s=stream,t=sceneTransport;
    stream=null;sceneTransport=null;
