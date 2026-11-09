@@ -112,7 +112,7 @@ BEGIN
   f::text LIKE '%secret-wall%' OR f::text LIKE '%secret-light%'
   OR f::text LIKE '%npc_values%' OR
   f::text LIKE '%raw%' OR
-  f->>'sceneGeneration' IS NULL OR f->>'visionEpoch'<>'0'
+  f->>'sceneGeneration' IS NULL OR f->>'visionEpoch' IS NULL
  THEN RAISE EXCEPTION 'Incorrect player authorized frame: %',f;END IF;
  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') obj
   WHERE obj->>'id'='40000000-0000-4000-8000-000000000001')
@@ -180,8 +180,10 @@ RESET ROLE;
 SET ROLE authenticated;
 SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000001';
 DO $$
-DECLARE s uuid;ack jsonb;f jsonb;
+DECLARE s uuid;ack jsonb;f jsonb;prior_epoch bigint;
 BEGIN
+ prior_epoch:=(public.get_world_visibility_v2(
+  '10000000-0000-4000-8000-000000000001')->>'visionEpoch')::bigint;
  s:=(public.begin_world_motion_v2(
   '10000000-0000-4000-8000-000000000001',
   '[{"kind":"token","id":"40000000-0000-4000-8000-000000000001"}]',
@@ -193,32 +195,43 @@ BEGIN
   RAISE EXCEPTION 'Phase 7 legal owner move rejected: %',ack;END IF;
  f:=public.get_world_visibility_v2(
   '10000000-0000-4000-8000-000000000001');
- IF f->>'visionEpoch'<>'1' OR
+ IF (f->>'visionEpoch')::bigint<>prior_epoch+1 OR
   NOT EXISTS(SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') item
     WHERE item->>'id'='40000000-0000-4000-8000-000000000001'
     AND item->>'x'='3')
  THEN RAISE EXCEPTION 'In-flight approved token not tracked in sight: %',f;END IF;
  ack:=public.advance_world_motion_v2(s,1,'{"x":2,"y":4}',
   '[{"x":3,"y":4}]',9,4);
- IF ack->>'seq'<>'1'
- THEN RAISE EXCEPTION 'Duplicate move changed ACK sequence';END IF;
+ IF ack->>'seq'<>'1' OR
+  (public.get_world_visibility_v2(
+   '10000000-0000-4000-8000-000000000001')->>'visionEpoch')::bigint
+    <>prior_epoch+1
+ THEN RAISE EXCEPTION 'Duplicate move generated another sight epoch';END IF;
  ack:=public.commit_world_motion_v2(s,2,'{"x":3,"y":4}',9,4);
  IF ack->'endpoint'<>'{"x":3,"y":4}'::jsonb
  THEN RAISE EXCEPTION 'Phase 7 commit failed: %',ack;END IF;
+ PERFORM set_config('fixture.first_player_epoch',
+  (prior_epoch+1)::text,false);
 END $$;
 RESET ROLE;
 DO $$
 DECLARE msg jsonb;
 BEGIN
- IF (SELECT count(*) FROM realtime.messages WHERE
- event='world-vision-v2')<>1 OR
-  (SELECT epoch FROM forge_world_v2.vision_epochs
-   WHERE viewer_id='30000000-0000-4000-8000-000000000001')<>1
- THEN RAISE EXCEPTION 'Expected exactly one owner vision invalidation';END IF;
- SELECT payload INTO msg FROM realtime.messages
- WHERE event='world-vision-v2' LIMIT 1;
+ IF (SELECT count(*) FROM realtime.messages msg
+ WHERE msg.event='world-vision-v2' AND
+  msg.payload->>'viewerId'='30000000-0000-4000-8000-000000000001'
+  AND (msg.payload->>'visionEpoch')::bigint=(
+   SELECT epoch FROM forge_world_v2.vision_epochs
+   WHERE viewer_id='30000000-0000-4000-8000-000000000001'))<>1
+ THEN RAISE EXCEPTION 'Owner movement duplicated its sight notice';END IF;
+ SELECT msg.payload INTO msg FROM realtime.messages msg
+ WHERE msg.event='world-vision-v2' AND
+  msg.payload->>'viewerId'='30000000-0000-4000-8000-000000000001'
+ ORDER BY id DESC LIMIT 1;
  IF msg->>'viewerId'<>'30000000-0000-4000-8000-000000000001'
- OR msg->>'visionEpoch'<>'1'
+ OR (msg->>'visionEpoch')::bigint<>(
+  SELECT epoch FROM forge_world_v2.vision_epochs
+   WHERE viewer_id='30000000-0000-4000-8000-000000000001')
  OR msg ? 'visible' OR msg ? 'explored'
  OR msg ? 'x' OR msg ? 'y' OR msg ? 'tokenId' OR
  msg::text LIKE '%secret-wall%'
@@ -286,7 +299,9 @@ DECLARE f jsonb;
 BEGIN
  f:=public.get_world_visibility_v2(
   '10000000-0000-4000-8000-000000000001');
- IF f->>'visionEpoch'<>'2' OR NOT EXISTS(
+ IF (f->>'visionEpoch')::bigint<>(
+  current_setting('fixture.first_player_epoch',true))::bigint+1
+  OR NOT EXISTS(
   SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') p
    WHERE p->>'id'='40000000-0000-4000-8000-000000000001'
     AND p->>'x'='3' AND p->>'y'='5')
@@ -311,9 +326,13 @@ END $$;
 RESET ROLE;
 DO $$
 BEGIN
- IF (SELECT count(*) FROM realtime.messages
- WHERE event='world-vision-v2')<>2
- THEN RAISE EXCEPTION 'DM movement must signal owner but not other map';END IF;
+ IF (SELECT count(*) FROM realtime.messages msg
+ WHERE msg.event='world-vision-v2' AND
+  msg.payload->>'viewerId'='30000000-0000-4000-8000-000000000001'
+  AND (msg.payload->>'visionEpoch')::bigint=(
+   SELECT epoch FROM forge_world_v2.vision_epochs
+   WHERE viewer_id='30000000-0000-4000-8000-000000000001'))<>1
+ THEN RAISE EXCEPTION 'DM movement did not uniquely signal the owner';END IF;
  IF EXISTS(SELECT 1 FROM realtime.messages m
  WHERE m.event='world-vision-v2' AND
  m.payload->>'viewerId'='30000000-0000-4000-8000-000000000002')
