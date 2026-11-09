@@ -18,7 +18,7 @@ export default function WorldCanvasStack({
  mapLayers=null,playerPreview=false,className='',style={},children
 }){
  const root=useRef(null),stage=useRef(null),terrain=useRef(null);
- const statics=useRef(null),fog=useRef(null),sprites=useRef(null);
+ const statics=useRef(null),moving=useRef(null),fog=useRef(null),sprites=useRef(null);
  const rendererRef=useRef(null);
  const callback=useRef(onRendererReady);
  callback.current=onRendererReady;
@@ -37,6 +37,7 @@ export default function WorldCanvasStack({
    surfaces:{
     terrain:terrain.current,
     staticCanvas:statics.current,
+     movingCanvas:moving.current,
     fogCanvas:fog.current,
     spriteHost:sprites.current,
     viewport:stage.current
@@ -72,6 +73,10 @@ export default function WorldCanvasStack({
       pointerEvents:'none',userSelect:'none'}}/>
     <canvas ref={statics} aria-hidden="true"
      className="world-v2-environment"
+     style={{position:'absolute',left:0,top:0,zIndex:1,
+      pointerEvents:'none'}}/>
+    <canvas ref={moving} aria-hidden="true"
+     className="world-v2-moving-light"
      style={{position:'absolute',left:0,top:0,zIndex:1,
       pointerEvents:'none'}}/>
     <div ref={sprites} className="world-v2-sprites"
