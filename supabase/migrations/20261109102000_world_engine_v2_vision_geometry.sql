@@ -31,7 +31,8 @@ BEGIN
   obj->>'state' IN ('open','broken') THEN RETURN true;END IF;
  IF mode='light' THEN
   RETURN obj->>'blocksLight'='false' AND
-   NOT (obj->>'type'='window' AND obj->>'curtains'='true');
+   NOT (obj->>'type'='window' AND
+    coalesce((obj->>'curtains')::boolean,false));
  END IF;
  IF obj->>'type'='window' AND obj->>'curtains'='true' THEN RETURN false;END IF;
  IF obj->>'vision'='pass' THEN RETURN true;END IF;
