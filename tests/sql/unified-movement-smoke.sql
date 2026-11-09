@@ -155,6 +155,13 @@ ROLLBACK;
 
 \echo 'PASS: all isolated batch, wall, group, RLS/grant and private observer tests'
 
+-- Synthetic map edits above deliberately invalidated the DM's old
+-- session. Re-arm it with the latest published scene, as a new authorized
+-- begin_map_motion_session call would do in the real application.
+UPDATE forge_visibility.movement_sessions ms SET
+ environment_revision=e.revision,scene=e.live,
+ last_x=ms.base_x,last_y=ms.base_y,last_seq=0,last_sent=NULL
+ FROM public.map_environments e WHERE e.map_id=ms.map_id;
 -- DM moved a player-owned token along a right-angle turn. The old server
 -- would validate only a straight endpoint, but the staged endpoint must
 -- preserve this exact swept route in both recipients' private broadcasts.
