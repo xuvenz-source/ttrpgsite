@@ -1,0 +1,190 @@
+/**
+ * World Engine V2 — viewer-scoped, receive-only Realtime transport.
+ *
+ * Incoming packets are cosmetic hints, never authorization to load a sprite,
+ * move a canonical row or reveal fog. A fresh authorized roster + stream cursor
+ * is required before accepting ANY motion after join/reconnect/gaps.
+ *
+ * Do not mount until Phase 7 supplies an atomic authorized sight/roster
+ * refresh and Phase 9 wires this to the single V2 rendering store.
+ */
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const int=Number.isSafeInteger;
+const uuid=x=>typeof x==='string'&&UUID.test(x);
+const validPoint=p=>p&&int(p.x)&&int(p.y)&&p.x>=0&&p.y>=0&&
+ p.x<=10000&&p.y<=10000&&Object.keys(p).every(k=>k==='x'||k==='y');
+const key=p=>p.kind+':'+p.id;
+export const worldObserverTopic=(mapId,viewerId)=>
+ 'forge-world-v2:'+mapId+':'+viewerId;
+export const WORLD_MOTION_EVENT='world-motion-v2';
+export const MAX_OBSERVER_FRAME_PIECES=48;
+export const MAX_OBSERVER_PATH_POINTS=25;
+
+function validPiece(item){
+ if(!item||typeof item!=='object'||!['token','tool'].includes(item.kind)||
+  !uuid(item.id)||!['path','hide'].includes(item.action)||
+  Object.keys(item).some(k=>!['kind','id','action','path'].includes(k)))return false;
+ if(item.action==='hide')return !Object.hasOwn(item,'path');
+ if(!Array.isArray(item.path)||item.path.length<2||
+  item.path.length>MAX_OBSERVER_PATH_POINTS||!item.path.every(validPoint))return false;
+ for(let i=1;i<item.path.length;i++){
+  const a=item.path[i-1],b=item.path[i];
+  if(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))!==1)return false;
+ }
+ return true;
+}
+export function validWorldMotionFrame(packet,mapId,viewerId){
+ if(!packet||typeof packet!=='object'||packet.version!==2||
+  packet.mapId!==mapId||packet.viewerId!==viewerId||
+  !int(packet.seq)||packet.seq<1||
+  !int(packet.environmentRevision)||packet.environmentRevision<0||
+  !int(packet.permissionGeneration)||packet.permissionGeneration<0||
+  !Array.isArray(packet.items)||!packet.items.length||
+  packet.items.length>MAX_OBSERVER_FRAME_PIECES||
+  Object.keys(packet).some(k=>![
+   'version','mapId','viewerId','seq','environmentRevision',
+   'permissionGeneration','items'
+  ].includes(k)))return false;
+ const ids=new Set();
+ for(const item of packet.items){
+  if(!validPiece(item)||ids.has(key(item)))return false;
+  ids.add(key(item));
+ }
+ return true;
+}
+export function validWorldObserverSnapshot(snapshot,mapId,viewerId){
+ if(!snapshot||snapshot.version!==2||
+  snapshot.mapId!==mapId||snapshot.viewerId!==viewerId||
+  !int(snapshot.cursor)||snapshot.cursor<0||
+  !int(snapshot.environmentRevision)||snapshot.environmentRevision<0||
+  !int(snapshot.permissionGeneration)||snapshot.permissionGeneration<0||
+  !Array.isArray(snapshot.visiblePieces)||snapshot.visiblePieces.length>500)
+  return false;
+ const ids=new Set();
+ for(const p of snapshot.visiblePieces){
+  if(!p||!['token','tool'].includes(p.kind)||!uuid(p.id)||
+   ids.has(key(p)))return false;
+  ids.add(key(p));
+ }
+ return true;
+}
+/**
+ * onResync(reason) MUST obtain an authoritative, RLS-authorized snapshot,
+ * including the *viewer-specific* stream cursor. This is intentionally a
+ * required injected dependency until the Phase 7 scene/sight RPC is complete.
+ */
+export function createWorldRealtimeTransport({
+ db,mapId,viewerId,onResync,onPath=()=>{},onHide=()=>{},
+ onRevoke=()=>{},onError=()=>{},onState=()=>{}
+}={}){
+ if(!db?.channel||!db?.removeChannel||!uuid(mapId)||!uuid(viewerId)||
+  typeof onResync!=='function'||typeof onPath!=='function'||
+  typeof onHide!=='function'||typeof onRevoke!=='function'||
+  typeof onError!=='function'||typeof onState!=='function')
+  throw Error('Invalid V2 private observer transport');
+ let channel=null,disposed=false,started=false,connected=false,locked=true;
+ let generation=0,cursor=null,revision=null,permission=null;
+ let roster=new Set(),pending=null;
+ const state=reason=>onState({reason,connected,locked,cursor});
+ const seal=reason=>{
+  if(disposed)return;
+  locked=true;roster.clear();cursor=null;revision=null;permission=null;
+  generation++;
+  onRevoke(reason);state(reason);
+ };
+ async function resync(reason='manual'){
+  if(disposed||!started||!connected)return false;
+  seal(reason);
+  const current=generation;
+  if(pending) {
+   // The older request is now invalid; its response will be discarded.
+  }
+  const task=Promise.resolve().then(()=>onResync(reason)).then(snapshot=>{
+   if(disposed||!connected||current!==generation)return false;
+   if(!validWorldObserverSnapshot(snapshot,mapId,viewerId))
+    throw Error('Invalid authorized V2 observer snapshot');
+   cursor=snapshot.cursor;
+   revision=snapshot.environmentRevision;
+   permission=snapshot.permissionGeneration;
+   roster=new Set(snapshot.visiblePieces.map(key));
+   locked=false;state('authorized');
+   return true;
+  }).catch(error=>{
+   if(!disposed&&current===generation){
+    locked=true;onError(error);state('resync-error');
+   }
+   return false;
+  }).finally(()=>{if(pending===task)pending=null});
+  pending=task;
+  return task;
+ }
+ function incoming(payload){
+  if(disposed||locked||!connected)return;
+  const frame=payload?.payload;
+  if(!validWorldMotionFrame(frame,mapId,viewerId)){
+   void resync('invalid-packet');
+   return;
+  }
+  if(frame.environmentRevision!==revision||
+   frame.permissionGeneration!==permission){
+   void resync('version-change');return;
+  }
+  if(frame.seq<=cursor)return;
+  if(frame.seq!==cursor+1){void resync('sequence-gap');return}
+  cursor=frame.seq;
+  const pendingPaths=[];
+  let needRoster=false;
+  for(const item of frame.items){
+   const id=key(item);
+   if(item.action==='hide'){
+    // Never reveal IDs or send hide actions for a piece never in an
+    // authorized roster; conceal a known sprite immediately.
+    if(roster.has(id)){roster.delete(id);onHide(item)}
+   }else if(roster.has(id)){
+    pendingPaths.push(item);
+   }else{
+    // A piece entering light may require a new authorized roster; do not
+    // use this packet as permission to render a previously unknown NPC.
+    needRoster=true;
+   }
+  }
+  if(needRoster){void resync('unknown-piece');return}
+  for(const item of pendingPaths)onPath(item,{seq:frame.seq,mapId});
+ }
+ return {
+  async start(){
+   if(disposed)return false;
+   if(started)return true;
+   started=true;
+   // Supabase private Realtime authorization uses the authenticated JWT.
+   try{if(db.realtime?.setAuth)await db.realtime.setAuth()}
+   catch(error){started=false;onError(error);return false}
+   if(disposed||!started)return false;
+   channel=db.channel(worldObserverTopic(mapId,viewerId),
+    {config:{private:true,broadcast:{self:false,ack:false}}});
+   channel.on('broadcast',{event:WORLD_MOTION_EVENT},incoming);
+   channel.subscribe(status=>{
+    if(disposed)return;
+    if(status==='SUBSCRIBED'){
+     connected=true;void resync('subscribed');
+    }else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
+     connected=false;seal('disconnected');
+    }
+   });
+   return true;
+  },
+  resync,
+  // No send/broadcast method. All accepted motion is published by Postgres.
+  async dispose(){
+   if(disposed)return;
+   disposed=true;started=false;connected=false;locked=true;
+   generation++;roster.clear();cursor=null;revision=null;permission=null;
+   const old=channel;channel=null;
+   if(old)await db.removeChannel(old);
+  },
+  get connected(){return connected},
+  get locked(){return locked},
+  get cursor(){return cursor},
+  get topic(){return worldObserverTopic(mapId,viewerId)}
+ };
+}
