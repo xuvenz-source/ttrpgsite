@@ -9,3 +9,5 @@ export {compileCollisionScene,solveCollisionPath,collisionAllowsStep}
 export {sweptFootprintHull,segmentCrossesSweptFootprint}
  from './CollisionGeometry.js';
 export {createCollisionPredictor} from './CollisionPreflight.js';
+
+export {createWorldAuthorityClient} from './AuthorityClient.js';
