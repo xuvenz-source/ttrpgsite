@@ -101,7 +101,10 @@ export function paintWorldFogLayer({
   return paintWorldFogLayer({canvas,frame:null,mask:null,widthPx,heightPx});
  const w=width*pixelsPerCell,h=height*pixelsPerCell;
  const resized=resize(canvas,w,h);
- if(canvas.style)canvas.style.backgroundColor=DARK;
+ // The canvas must remain transparent *behind* currently visible cells.
+ // Hidden cells themselves are explicitly filled opaque below. Leaving
+ // the fallback CSS background dark here would black out authorized sight.
+ if(canvas.style)canvas.style.backgroundColor='transparent';
  const full=forceFull||resized||!previousMask||
   previousMask.length!==mask.length;
  const dirty=full?{full:true,rects:[{x:0,y:0,width,height}]}:
