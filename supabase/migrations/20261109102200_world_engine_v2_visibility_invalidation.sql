@@ -84,10 +84,9 @@ BEGIN
      WHERE t.id=(part->>'id')::uuid AND t.map_id=s.map_id
       AND t.campaign_id=s.campaign_id AND t.visible AND
       (t.owner_id=viewer.user_id OR
-       (shared AND t.owner_id IS NOT NULL AND EXISTS(
-        SELECT 1 FROM public.campaign_members cm
-        WHERE cm.campaign_id=s.campaign_id AND cm.user_id=t.owner_id
-         AND cm.role='player'))))
+       (shared AND t.owner_id IS NOT NULL AND
+        forge_world_v2.viewer_on_map(
+         s.campaign_id,s.map_id,t.owner_id)='player')))
     THEN affected:=true;EXIT;END IF;
    END IF;
   END LOOP;
