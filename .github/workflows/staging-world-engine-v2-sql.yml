@@ -38,12 +38,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-fixture.sql
       - name: Apply staged V2 schema to disposable PostgreSQL
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql
-      - name: Install Phase 10 V2 checkpoint-aware collision trigger definitions
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109103000_world_engine_v2_legacy_commit_checkpoint.sql
       - name: Verify ownership, RLS grants, collision and replay
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-contract.sql
-      - name: Verify sealed transaction checkpoint and no legacy V2 GUCs
-        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-phase10-checkpoint-contract.sql
       - name: Apply proposed private observer stream migration to disposable PostgreSQL
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql
       - name: Verify recipient filtering, stream ordering, concealment and anti-forgery
@@ -64,6 +60,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102200_world_engine_v2_visibility_invalidation.sql
       - name: Install token reveal and party source reassignment invalidation
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109102300_world_engine_v2_vision_roster_invalidation.sql
+      - name: Install Phase 10 V2 checkpoint-aware collision trigger definitions
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109103000_world_engine_v2_legacy_commit_checkpoint.sql
+      - name: Verify sealed transaction checkpoint and no legacy V2 GUCs
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-phase10-checkpoint-contract.sql
       - name: Verify V2 LOS, static and moving light, privacy, preview and exploration
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-visibility-contract.sql
       - name: Verify hidden NPC entering visible sight triggers private roster refresh
