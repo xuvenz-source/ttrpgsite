@@ -84,6 +84,79 @@ BEGIN
 EXCEPTION WHEN others THEN RETURN true;
 END $$;
 
+-- A different player's viewer refresh must safely see authorized in-flight
+-- movement, including DM-owned gestures. The Phase 4 session_valid() is
+-- deliberately bound to auth.uid() and cannot serve this read-only purpose.
+CREATE OR REPLACE FUNCTION forge_world_v2.source_session_valid_v2(
+ s forge_world_v2.motion_sessions)
+RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=''
+AS $$
+DECLARE role_name text;part jsonb;t record;u record;c record;
+ env_rev bigint;perm_rev bigint;rule_stamp timestamptz;coll boolean;
+BEGIN
+ IF s.status<>'active' OR s.expires_at<=statement_timestamp() OR
+  s.created_at+interval '60 seconds'<=statement_timestamp()
+ THEN RETURN false;END IF;
+ role_name:=forge_world_v2.viewer_on_map(
+  s.campaign_id,s.map_id,s.actor_id);
+ IF role_name IS NULL OR
+  (s.dm_override AND role_name<>'dm') THEN RETURN false;END IF;
+ SELECT e.revision INTO env_rev FROM public.map_environments e
+ WHERE e.map_id=s.map_id AND e.campaign_id=s.campaign_id;
+ SELECT g.generation INTO perm_rev
+ FROM forge_visibility.navigation_permission_generations g
+ WHERE g.map_id=s.map_id;
+ SELECT r.updated_at,r.collision_enforced INTO rule_stamp,coll
+ FROM forge_visibility.map_rules r
+ WHERE r.map_id=s.map_id AND r.campaign_id=s.campaign_id;
+ IF coalesce(env_rev,0)<>s.environment_revision OR
+  coalesce(perm_rev,0)<>s.permission_generation OR
+  rule_stamp IS DISTINCT FROM s.rules_updated_at OR
+  coalesce(coll,false)<>s.collision_on
+ THEN RETURN false;END IF;
+ FOR part IN SELECT value FROM jsonb_array_elements(s.selection) LOOP
+  IF part->>'kind'='token' THEN
+   SELECT t.id,t.owner_id,t.visible,t.character_id,
+    t.x,t.y,t.span_x,t.span_y,t.updated_at
+   INTO t FROM public.map_tokens t
+   WHERE t.id=(part->>'id')::uuid AND
+    t.campaign_id=s.campaign_id AND t.map_id=s.map_id;
+   IF NOT FOUND OR t.x<>(part->>'x')::integer OR
+    t.y<>(part->>'y')::integer OR
+    t.span_x<>(part->>'spanX')::numeric OR
+    t.span_y<>(part->>'spanY')::numeric OR
+    t.updated_at::text<>(part->>'updatedAt') OR
+    (role_name<>'dm' AND (t.owner_id IS DISTINCT FROM s.actor_id
+      OR t.visible IS DISTINCT FROM true))
+   THEN RETURN false;END IF;
+   IF t.character_id IS NOT NULL THEN
+    SELECT ch.id,ch.user_id,ch.updated_at INTO c
+     FROM public.characters ch
+     WHERE ch.id=t.character_id AND ch.campaign_id=s.campaign_id;
+    IF NOT FOUND OR t.character_id::text IS DISTINCT FROM
+      part->>'characterId' OR
+     c.updated_at::text IS DISTINCT FROM part->>'characterUpdatedAt'
+     OR (role_name<>'dm' AND c.user_id IS DISTINCT FROM s.actor_id)
+    THEN RETURN false;END IF;
+   ELSIF part->>'characterId' IS NOT NULL THEN RETURN false;END IF;
+  ELSIF part->>'kind'='tool' THEN
+   SELECT u.id,u.owner_id,u.party_shared,u.held_by_token_id,
+    u.x,u.y,u.revision
+   INTO u FROM public.campaign_tool_issues u
+   WHERE u.id=(part->>'id')::uuid AND
+    u.campaign_id=s.campaign_id AND u.map_id=s.map_id;
+   IF NOT FOUND OR u.held_by_token_id IS NOT NULL OR
+    u.x<>(part->>'x')::integer OR u.y<>(part->>'y')::integer OR
+    u.revision<>(part->>'toolRevision')::bigint OR
+    (role_name<>'dm' AND u.owner_id IS DISTINCT FROM s.actor_id
+     AND u.party_shared IS DISTINCT FROM true)
+   THEN RETURN false;END IF;
+  ELSE RETURN false;END IF;
+ END LOOP;
+ RETURN true;
+EXCEPTION WHEN others THEN RETURN false;
+END $$;
+
 -- Return the last AUTHORIZED in-flight V2 displacement only. This is not a
 -- free-form preview table, and the session_valid check revokes changed rights.
 CREATE OR REPLACE FUNCTION forge_world_v2.piece_offset_v2(
@@ -98,7 +171,7 @@ BEGIN
   m.selection @> jsonb_build_array(jsonb_build_object(
    'kind',p_kind,'id',p_piece))
  ORDER BY m.created_at DESC LIMIT 1;
- IF NOT FOUND OR NOT forge_world_v2.session_valid(s)
+ IF NOT FOUND OR NOT forge_world_v2.source_session_valid_v2(s)
  THEN RETURN jsonb_build_object('dx',0,'dy',0);END IF;
  RETURN jsonb_build_object('dx',s.last_x-s.origin_x,
   'dy',s.last_y-s.origin_y);
