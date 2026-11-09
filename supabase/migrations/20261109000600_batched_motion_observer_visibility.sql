@@ -123,8 +123,8 @@ DECLARE
 BEGIN
  IF actor IS NULL OR p_session IS NULL OR jsonb_typeof(p_approved)<>'array' OR
     jsonb_array_length(p_approved) NOT BETWEEN 1 AND 48 THEN RETURN;END IF;
- SELECT * INTO s FROM forge_visibility.navigation_gestures
- WHERE id=p_session AND actor_id=actor;
+ SELECT ng.* INTO s FROM forge_visibility.navigation_gestures ng
+ WHERE ng.id=p_session AND ng.actor_id=actor;
  IF NOT FOUND OR s.expires_at<now_at THEN RETURN;END IF;
  SELECT floor(m.width/m.grid_size),floor(m.height/m.grid_size),m.grid_size
  INTO map_w,map_h,grid FROM public.battle_maps m
