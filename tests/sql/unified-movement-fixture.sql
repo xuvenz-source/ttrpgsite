@@ -45,6 +45,12 @@ CREATE TABLE public.campaign_tool_issues(
  state jsonb DEFAULT '{}'::jsonb,
  held_by_token_id uuid,owner_id uuid,party_shared boolean DEFAULT false,
  revision bigint DEFAULT 0);
+CREATE TABLE public.campaign_tool_map_tokens(
+ issue_id uuid PRIMARY KEY,map_id uuid,campaign_id uuid,
+ kind text,held_by_token_id uuid,
+ x integer,y integer,span numeric DEFAULT 1,
+ light_enabled boolean DEFAULT false,light_bright numeric DEFAULT 0,
+ light_dim numeric DEFAULT 0);
 CREATE TABLE forge_visibility.navigation_gestures(
  id uuid PRIMARY KEY,actor_id uuid NOT NULL,map_id uuid NOT NULL,
  campaign_id uuid NOT NULL,token_origins jsonb NOT NULL,
