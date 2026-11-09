@@ -10,7 +10,7 @@ import {movementDiagnostics} from './MovementDiagnostics.js';
 
 /** RLS and RPC responses are authoritative; any invalid/unavailable frame
  * leaves the player map obscured until a valid server snapshot arrives. */
-export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=false,refreshCoordinator}){
+export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=false,refreshCoordinator,enabled=true}){
  const [frame,setFrame]=useState(null),[error,setError]=useState(''),
   [published,setPublished]=useState(null);
  const request=useRef(0),validated=useRef(null),pendingTick=useRef(null);
@@ -24,7 +24,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
  const key=campaignId&&mapId&&userId?campaignResourceKey({campaignId,mapId,userId,
   resource:'authorized-fog'}):null;
  const refresh=useCallback(async(fresh=false)=>{
-  if(!db||!campaignId||!mapId||!userId){
+  if(!enabled||!db||!campaignId||!mapId||!userId){
    validated.current=null;pendingTick.current=null;setFrame(null);setPublished(null);return;
   }
   const seq=++request.current;
@@ -101,7 +101,7 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    pendingTick.current=null;
    setFrame(null);setPublished(null);setError(cause?.message||String(cause));
   }finally{finishTiming()}
- },[db,campaignId,mapId,userId,isDM,key,coordinator]);
+ },[db,campaignId,mapId,userId,isDM,key,coordinator,enabled]);
  // Authorization identity changes must discard all previous sight and
  // explored data. Switching global -> viewer notification streams is NOT an
  // identity change: subscription revalidation below revokes *visible* cells,
@@ -109,10 +109,10 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
  useEffect(()=>{
   validated.current=null;pendingTick.current=null;
   setFrame(null);setPublished(null);setError('');
-  void refresh();
- },[db,campaignId,mapId,userId,isDM,refresh,key,coordinator]);
+  if(enabled)void refresh();
+ },[db,campaignId,mapId,userId,isDM,refresh,key,coordinator,enabled]);
  useEffect(()=>{
-  if(!db||!campaignId||!mapId||!userId)return;
+  if(!enabled||!db||!campaignId||!mapId||!userId)return;
   // Invalidate in-flight RPCs before the 60ms batched refresh: a stale
   // pre-movement response must never reinstate old visibility permissions.
   // Keep previously explored cells dimmed instead of painting the map black.
@@ -212,6 +212,6 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
    document.removeEventListener('visibilitychange',onVisibility);
    void db.removeChannel(channel);
   };
- },[db,campaignId,mapId,userId,refresh,key,coordinator,scope]);
+ },[db,campaignId,mapId,userId,refresh,key,coordinator,scope,enabled]);
  return {frame,error,published,refresh};
 }
