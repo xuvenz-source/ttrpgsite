@@ -37,14 +37,10 @@ export function createTokenMotionRuntime({
   // reconciliation grace period elapsed. Rebase to the current canonical
   // position, which is already RLS-authorized, before removing the overlay.
   if(mount&&(mount.x!==x||mount.y!==y)){
-   previews.set(id,{x:mount.x,y:mount.y,remote:true,settling:true});
-   schedule(id);
-   settleTimers.set(id,setTimer(()=>{
-    settleTimers.delete(id);
-    if(previews.get(id)?.settling){
-     previews.delete(id);schedule(id);
-    }
-   },125));
+   // A timer never proves a newer canonical coordinate. Retain the accepted
+   // visual destination until React binds the matching authoritative row,
+   // or the caller explicitly revokes it after a failed authorized refresh.
+   settleTimers.delete(id);
    return;
   }
   previews.delete(id);schedule(id);
@@ -93,8 +89,13 @@ export function createTokenMotionRuntime({
    const baseTransition=existing?.node===node?
     existing.baseTransition:(node.style.transition||'');
    positions.set(kind,{node,x,y,cell,baseTransition});
-   // A React commit may alter the base left/top; rebase before the next paint
-   // rather than briefly showing a stale transform.
+   // A React commit may alter the base left/top. A late canonical rebind
+   // finishes the handoff even after the short settle timer has expired.
+   const preview=previews.get(id);
+   if(preview?.settling&&preview.x===x&&preview.y===y&&
+      (kind==='sprite'||!positions.has('sprite'))){
+    cancelSettle(id);previews.delete(id);
+   }
    paint(id);
   },
   preview(id,x,y){
