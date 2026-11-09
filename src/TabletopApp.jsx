@@ -39,7 +39,7 @@ import {eventAffectsMap,createCoalescedRefresh,createTrailingRefresh,createAdapt
  CHAT_RECONCILE_MS,ROSTER_RECONCILE_MS} from './PerformanceScheduling.js';
 import {signedAssetStore} from './SignedAssetUrls.js';
 import {campaignResourceKey,createCampaignRefreshCoordinator} from './CampaignRefreshCoordinator.js';
-import {authorizedTokenDerivedInputsChanged} from './AuthorizedTokenDerivedRefresh.js';
+import {authorizedTokenDerivedInputsChanged,tokenEventMayAffectDerivedResources} from './AuthorizedTokenDerivedRefresh.js';
 import {createDebouncedSerialWriter} from './QueuedWrites.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
@@ -1072,11 +1072,7 @@ export default function TabletopApp(){
    filter:'campaign_id=eq.'+activeId
   },event=>{
    if(!isDM&&event.new?.user_id===user)void refreshPlayerMapRouting();
-  }).on('postgres_changes',{
-   event:'UPDATE',schema:'public',table:'campaigns',
-   filter:'id=eq.'+activeId
-  },()=>{if(!isDM)void refreshPlayerMapRouting()})
-  .subscribe(status=>{
+  }).subscribe(status=>{
    // A reconnect reconciles notifications missed while a user was offline.
    if(status==='SUBSCRIBED'&&!isDM)void refreshPlayerMapRouting();
   });
@@ -1434,9 +1430,12 @@ export default function TabletopApp(){
  }
  useEffect(()=>{
   if(!db||!activeId)return;
+  let derivedDirty=false;
   const tokenUpdates=createCoalescedRefresh(()=>{
    void latestTokenRefresh.current?.();
-   void latestMonitorRefresh.current?.();
+   // Cosmetic token events do not invalidate character HUD/encumbrance.
+   if(derivedDirty)void latestMonitorRefresh.current?.();
+   derivedDirty=false;
   },100);
   // A coordinate-only event updates one token immediately. A single slower
   // authoritative read after the final waypoint catches missed deltas without
@@ -1457,8 +1456,11 @@ export default function TabletopApp(){
      // Non-positional metadata changes still refresh sheets/resources.
      // The V2 sight+observer owner alone supplies movement and fog.
      if(event.eventType!=='UPDATE'||!isPositionOnlyTokenEvent(
-      event,latestMovementAccess.current.tokens||[],mapId))
+      event,latestMovementAccess.current.tokens||[],mapId)){
+      derivedDirty=derivedDirty||tokenEventMayAffectDerivedResources(
+       event,latestMovementAccess.current.tokens||[],mapId);
       tokenUpdates.request();
+     }
      return;
     }
     // The database has already applied this viewer's RLS on the row event.
@@ -1489,11 +1491,19 @@ export default function TabletopApp(){
       }
      }
     }
+    if(!isMotionOnly)derivedDirty=derivedDirty||
+     tokenEventMayAffectDerivedResources(
+      event,latestMovementAccess.current.tokens||[],mapId);
     if(isMotionOnly)motionUpdates.request();
     else tokenUpdates.request();
    })
    .on('postgres_changes',{event:'*',schema:'public',table:'campaigns',
-    filter:'id=eq.'+activeId},()=>campaignUpdates.request())
+    filter:'id=eq.'+activeId},event=>{
+    campaignUpdates.request();
+    // Reuse the campaign stream for routing updates instead of a second
+    // Postgres Changes subscription on the navigation channel.
+    if(event.eventType==='UPDATE'&&!isDM)void refreshPlayerMapRouting();
+   })
    .on('postgres_changes',{event:'*',schema:'public',table:'npc_templates',
     filter:'campaign_id=eq.'+activeId},()=>void latestNpcsRefresh.current?.())
    .on('postgres_changes',{event:'*',schema:'public',table:'battle_maps',
@@ -1503,7 +1513,7 @@ export default function TabletopApp(){
    tokenUpdates.cancel();motionUpdates.cancel();campaignUpdates.cancel();
    void db.removeChannel(c);
   };
- },[db,activeId,user]);
+ },[db,activeId,user,isDM]);
 
  // Keep the latest closures without tearing down network subscriptions on each
  // map change. Healthy Realtime uses sparse backstop polls; failures retain
@@ -1519,9 +1529,11 @@ export default function TabletopApp(){
     fallbackMs:CHAT_RECONCILE_MS.fallback,
     isVisible:()=>document.visibilityState==='visible'}
   );
+  const chatUpdates=createCoalescedRefresh(
+   ()=>void latestChatRefresh.current?.(),65);
   const channel=db.channel('vtt-chat-'+campaignId)
    .on('postgres_changes',{event:'*',schema:'public',table:'chat_messages',
-    filter:'campaign_id=eq.'+campaignId},()=>void latestChatRefresh.current?.())
+    filter:'campaign_id=eq.'+campaignId},()=>chatUpdates.request())
    .subscribe(status=>{
     reconcile.setConnected(status==='SUBSCRIBED');
     if(status==='SUBSCRIBED')reconcile.refreshNow();
@@ -1530,7 +1542,8 @@ export default function TabletopApp(){
   const focus=()=>{if(document.visibilityState==='visible')reconcile.refreshNow()};
   document.addEventListener('visibilitychange',focus);
   return()=>{
-   reconcile.dispose();document.removeEventListener('visibilitychange',focus);
+   chatUpdates.cancel();reconcile.dispose();
+   document.removeEventListener('visibilitychange',focus);
    void db.removeChannel(channel);
   };
  },[db,activeId,user]);
