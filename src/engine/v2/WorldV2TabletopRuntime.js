@@ -239,7 +239,7 @@ export function createWorldV2TabletopRuntime({
    state('started');return true;
   },
   attachInput({target,pointFromEvent,resolveSelection,
-   keyboardTarget,keyboardIdleMs=90}={}){
+   onPointerRelease=()=>false,keyboardTarget,keyboardIdleMs=90}={}){
    if(disposed||input||!target)return false;
    const choose=(event,p,context)=>{
     if(!authorized())return null;
@@ -256,7 +256,7 @@ export function createWorldV2TabletopRuntime({
    };
    input=createInputController({
     target,controller:movement,pointFromEvent,
-    resolveSelection:choose,
+    resolveSelection:choose,onPointerRelease,
     ...(keyboardTarget?{keyboardTarget}:{}),
     keyboardIdleMs
    });
