@@ -87,15 +87,17 @@ import {DEFAULT_ENCUMBRANCE,evaluateEncumbrance} from './InventoryMath.js';
 import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 
-import Board from './BattlemapBoard.jsx';
 /**
  * Phase 9: not enabled in any current deployment. Requires both explicit
  * release controls plus Phase 10 retirement and approved V2 SQL cutover.
  */
 const WORLD_V2_CUTOVER=import.meta.env.VITE_WORLD_ENGINE_V2==='integrated'&&
  import.meta.env.VITE_WORLD_ENGINE_V2_READY==='true';
-const BoardComponent=WORLD_V2_CUTOVER?
- React.lazy(()=>import('./engine/v2/WorldV2Board.jsx')):Board;
+// Keep the legacy board code OUT of the V2 loaded component graph.
+ // The inactive board is never mounted or eagerly imported.
+const BoardComponent=React.lazy(()=>WORLD_V2_CUTOVER?
+ import('./engine/v2/WorldV2Board.jsx'):
+ import('./BattlemapBoard.jsx'));
 import Designer from './SheetTemplateDesigner.jsx';
 import {QuickEditBoundary} from './AppBoundaries.jsx';
 import {uid,D} from './TabletopSheetDefaults.js';
