@@ -223,3 +223,45 @@ BEGIN
 END $$;
 ROLLBACK;
 \echo 'PASS: DM verified paths, scene-specific sequence and private observer recipients'
+
+-- Regression: DM drag of an owned character carrying a torch must move
+-- the private illuminated position. A random viewer cannot author a rate.
+INSERT INTO public.campaign_tool_map_tokens(
+ issue_id,map_id,campaign_id,kind,held_by_token_id,
+ x,y,light_enabled,light_bright,light_dim)
+VALUES(
+ 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+ '33333333-3333-4333-8333-333333333333',
+ '11111111-1111-4111-8111-111111111111',
+ 'torch','55555555-5555-4555-8555-555555555555',
+ 1,1,true,5,0);
+INSERT INTO forge_visibility.movement_preview_rates(
+ actor_id,piece_id,last_sent,last_seq,map_id,kind,
+ base_x,base_y,last_x,last_y)
+VALUES(
+ '99999999-9999-4999-8999-999999999999',
+ '55555555-5555-4555-8555-555555555555',
+ clock_timestamp(),9000000,'33333333-3333-4333-8333-333333333333',
+ 'token',1,1,8,1)
+ON CONFLICT(actor_id,piece_id) DO UPDATE SET
+ last_sent=excluded.last_sent,last_seq=excluded.last_seq,
+ last_x=excluded.last_x,last_y=excluded.last_y;
+DO $$
+DECLARE scene jsonb:='{"objects":[],"ambient":0}'::jsonb;
+BEGIN
+ IF NOT forge_visibility.is_lit(
+  '33333333-3333-4333-8333-333333333333',
+  scene,1.5,1.5,8.5,1.5,10)
+ THEN RAISE EXCEPTION 'DM moving a held torch failed to update authorized light';END IF;
+END $$;
+DELETE FROM forge_visibility.movement_preview_rates
+ WHERE piece_id='55555555-5555-4555-8555-555555555555';
+DO $$
+DECLARE scene jsonb:='{"objects":[],"ambient":0}'::jsonb;
+BEGIN
+ IF forge_visibility.is_lit(
+  '33333333-3333-4333-8333-333333333333',
+  scene,1.5,1.5,8.5,1.5,10)
+ THEN RAISE EXCEPTION 'Unverified torch moved without a server-authorized rate';END IF;
+END $$;
+\echo 'PASS: DM-carried torches use authorized ephemeral coordinates and revoke stale light'
