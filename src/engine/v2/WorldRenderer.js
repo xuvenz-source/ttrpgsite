@@ -17,7 +17,8 @@ import {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
  from './SceneSnapshot.js';
 import {normalizeWorldVisibilityFrame,makeWorldFogMask}
  from './VisibilityFrame.js';
-import {paintWorldFogLayer,paintWorldStaticLayer}
+import {paintWorldFogLayer,paintWorldStaticLayer,
+ paintWorldMovingLightLayer}
  from './WorldLayerPainter.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -74,12 +75,14 @@ export function createWorldRenderer({
  const sprites=new Map(),dirtySprites=new Set();
  let currentMap=mapId,currentViewer=viewerId;
  let scene=null,visibility=null,fogMask=null,paintedMask=null;
+  let paintedLightFrame=null,lightPending=false;
  let authorized=false,disposed=false,local=null;
  let staticPending=null,fogPending=false,terrainUrl=null;
  let latestSeq=0,seqItems=new Set(),lastSceneRevision=null;
  let stats={frames:0,spritePaints:0,spriteCreates:0,spriteRemoves:0,
   fogPaintedCells:0,fogDraws:0,staticDraws:0,terrainAssignments:0,
-  rejectedPackets:0,fullFogDraws:0};
+  rejectedPackets:0,fullFogDraws:0,
+   movingLightDraws:0,movingLightCells:0};
  const safe=(fn,...args)=>{try{fn(...args)}catch{}};
  const present=p=>validMotionPoint(p)&&
   p.x<(scene?.dimensions.width??0)/(scene?.dimensions.gridSize??1)&&
@@ -128,6 +131,10 @@ export function createWorldRenderer({
    widthPx:d?.width??1,heightPx:d?.height??1
   });
   paintedMask=null;fogPending=false;
+   paintedLightFrame=null;lightPending=false;
+   if(surfaces.movingCanvas){
+    surfaces.movingCanvas.width=1;surfaces.movingCanvas.height=1;
+   }
  }
  // Permissions are revoked synchronously, without waiting for a RAF.
  function seal(reason='authorization-revoked',{
@@ -212,7 +219,20 @@ export function createWorldRenderer({
    if(result.ok&&result.objects>=0)stats.staticDraws++;
    else safe(onError,Error('V2 static painter failed'));
   }
-  if(fogPending&&scene){
+  if(lightPending&&scene&&surfaces.movingCanvas){
+    lightPending=false;
+    const result=paintWorldMovingLightLayer({
+     canvas:surfaces.movingCanvas,scene,
+     frame:authorized?visibility:null,
+     previousFrame:paintedLightFrame,playerPreview
+    });
+    if(result.ok){
+     paintedLightFrame=authorized?visibility:null;
+     stats.movingLightDraws++;
+     stats.movingLightCells+=result.painted;
+    }else safe(onError,Error('V2 moving-light painter failed'));
+   }
+   if(fogPending&&scene){
    fogPending=false;
    const result=paintWorldFogLayer({
     canvas:surfaces.fogCanvas,frame:authorized?visibility:null,
@@ -290,7 +310,7 @@ export function createWorldRenderer({
     forceFull:!prior};
    configureHost(surfaces.spriteHost,scene);
    configureTerrain(surfaces.terrain,scene);
-   fogPending=true;
+    fogPending=true;lightPending=true;
    lastSceneRevision=next.revision;
    scheduler.invalidate();
    return true;
@@ -365,6 +385,16 @@ export function createWorldRenderer({
      prevMask.length!==nextMask.length||
      prevMask.some((value,i)=>value!==nextMask[i])));
    if(!previously||maskChanged)fogPending=true;
+    const changedPlayerLights=(previously?.lightCells?.length??-1)!==
+     next.lightCells.length||next.lightCells.some((entry,i)=>
+      entry[0]!==previously.lightCells[i]?.[0]||
+      entry[1]!==previously.lightCells[i]?.[1]);
+    const changedDmLights=(previously?.dmMovingLights?.length??-1)!==
+     next.dmMovingLights.length||next.dmMovingLights.some((entry,i)=>
+      entry.x!==previously.dmMovingLights[i]?.x||
+      entry.y!==previously.dmMovingLights[i]?.y||
+      entry.reach!==previously.dmMovingLights[i]?.reach);
+    if(changedPlayerLights||changedDmLights)lightPending=true;
    // Compare old and newly authorized cosmetic positions. Cursor-only
    // advances update stream authorization without painting 500 idle sprites.
    for(const piece of next.visiblePieces){
@@ -374,7 +404,7 @@ export function createWorldRenderer({
       observer.getPosition(piece.kind,piece.id)))
      dirtySprites.add(id);
    }
-   if(fogPending||dirtySprites.size||staticPending)
+   if(fogPending||lightPending||dirtySprites.size||staticPending)
     scheduler.invalidate();
    return true;
   },
@@ -558,6 +588,7 @@ export function createWorldRenderer({
    observer.dispose();clearLocal();clearSprites();
    scene=null;visibility=null;fogMask=null;paintedMask=null;
    staticPending=null;fogPending=false;
+    lightPending=false;paintedLightFrame=null;
   },
   get stats(){return Object.freeze({...stats,
    scheduler:scheduler.stats,observerPending:observer.pendingCount,
