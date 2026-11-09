@@ -18,9 +18,12 @@ import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
 import {traceSolidGroupOffset,traceAuthorizedGroupOffset} from './DragCollisionGuard.js';
 import {stableTokenPresentation} from './StableTokenPresentation.js';
 import {appendMovementWaypoint} from './MapMovementPath.js';
-import {createConcealedMovementGate,needsConcealedStep,nextConcealedStep}
+import {createConcealedMovementGate,needsConcealedStep}
  from './ConcealedMovementGate.js';
+import {enqueueConcealedTarget,takeConcealedBatch}
+ from './ConcealedGestureBatch.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
+import {movementDiagnostics} from './MovementDiagnostics.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -83,13 +86,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   if(!needsConcealedStep(fogFrame,isDM))return;
   info.secureMode=true;
   info.secureSeq=0;
-  info.secureDesired={dx:0,dy:0};
-  info.secureBlockedTarget=null;
+  info.secureQueue=[];
+  info.secureCancelled=false;
+  info.secureBlocked=false;
   info.secureReleased=false;
+  info.secureFinalized=false;
  }
  function endConcealedDrag(info){
   if(!info?.secureMode)return;
   info.secureReleased=true;
+  info.secureCancelled=true;
+  info.secureQueue=[];
   if(info.secureStart)void info.secureStart.then(sessionId=>
    sessionId&&concealedGate.end(sessionId)
   ).catch(error=>console.warn('Secure gesture cleanup failed',error));
@@ -871,44 +878,68 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   // token positions or invalidating fog on every pointer sample.
   // Only the final release persists via authoritative movement writes.
  }
- function requestConcealedOffset(info,requested){
-  if(!info?.secureMode||info.secureReleased||drag.current!==info)return;
-  info.secureDesired=requested;
-  const goalKey=requested.dx+':'+requested.dy;
-  if(info.secureBlockedTarget===goalKey||info.secureTask)return;
-  info.secureBlockedTarget=null;
+ function requestConcealedOffset(info,requested,closing=false){
+  if(!info?.secureMode||info.secureCancelled||info.secureBlocked||
+    drag.current!==info||(info.secureReleased&&!closing))return info?.secureTask||null;
+  // Queue every actual pointer bend while one request is in flight. Never
+  // interpolate directly from an old acknowledgement to the latest pointer
+  // if an intervening event changed direction around a doorway.
+  const from=info.secureQueue.at(-1)||{dx:info.dx,dy:info.dy};
+  if(!enqueueConcealedTarget(info.secureQueue,requested,from)){
+   info.secureBlocked=true;
+   console.warn('Concealed gesture exceeded its bounded path queue');
+   return info.secureTask||null;
+  }
+  if(info.secureTask||!info.secureQueue.length)return info.secureTask||null;
   if(!info.secureStart){
    info.secureStart=concealedGate.begin(map.id,
     info.members.map(t=>t.id),(info.tools||[]).map(t=>t.issue_id))
     .catch(error=>{
      console.warn('Concealed navigation unavailable',error);
+     info.secureBlocked=true;
      return null;
     });
   }
   info.secureTask=(async()=>{
    const sessionId=await info.secureStart;
    if(!sessionId)return;
-   while(drag.current===info&&!info.secureReleased&&
-    info.navigationAuthority===navigation?.authority(map.id)){
-    const target=info.secureDesired;
-    const next=nextConcealedStep({dx:info.dx,dy:info.dy},target);
-    if(!next)break;
-    const proposed=appendMovementWaypoint(info.path||[],next.dx,next.dy);
-    if(proposed===info.path)break;
-    const approved=await concealedGate.approve(sessionId,next,++info.secureSeq);
-    if(!approved){
-     info.secureBlockedTarget=target.dx+':'+target.dy;
+   while(drag.current===info&&!info.secureCancelled&&!info.secureBlocked&&
+     info.navigationAuthority===navigation?.authority(map.id)){
+    const {targets,remaining}=takeConcealedBatch(
+     {dx:info.dx,dy:info.dy},info.secureQueue);
+    if(!targets.length)break;
+    info.secureQueue=remaining;
+    const finish=movementDiagnostics.begin('concealed-batch-rpc');
+    let acknowledgement;
+    try{
+     acknowledgement=await concealedGate.approveBatch(
+      sessionId,targets,++info.secureSeq,{dx:info.dx,dy:info.dy});
+    }finally{finish()}
+    // A late response from another scene or revoked capability is NEVER a
+    // grant to present motion, even if Postgres approved the prior scene.
+    if(info.secureCancelled||drag.current!==info||
+      info.navigationAuthority!==navigation?.authority(map.id))break;
+    if(!acknowledgement)break;
+    if(acknowledgement.approved.length){
+     const accepted=acknowledgement.approved;
+     const last=accepted.at(-1);
+     paintAcceptedOffset(info,{...last,path:accepted});
+     movementDiagnostics.count('concealedBatchAccepted');
+    }
+    if(acknowledgement.blocked){
+     info.secureBlocked=true;
+     info.secureQueue=[];
+     movementDiagnostics.count('concealedBatchBlocked');
      break;
     }
-    // A late response after cancellation, a revision or map switch cannot
-    // resurrect even a previously authorized client-side sprite transform.
-    if(drag.current!==info||info.secureReleased||
-     info.navigationAuthority!==navigation?.authority(map.id))break;
-    paintAcceptedOffset(info,{...next,path:[next]});
    }
   })().catch(error=>{
+   info.secureBlocked=true;
+   info.secureQueue=[];
+   movementDiagnostics.count('concealedBatchFailed');
    console.warn('Concealed movement validation failed',error);
   }).finally(()=>{info.secureTask=null});
+  return info.secureTask;
  }
  function toolDropCarrier(event){
   const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
@@ -930,16 +961,24 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   }
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
-  if(info.secureMode&&info.secureTask){
+  if(info.secureMode&&!cancel&&!info.secureFinalized){
    if(info.secureFinishQueued)return;
    info.secureFinishQueued=true;
-   info.secureReleased=true;
-   // React clears event.currentTarget after dispatch. Preserve the actual
-   // pointer target so an awaited server response can safely finish release.
+   // Pointerup is part of the attempted route. Freeze the final coordinate
+   // and drain every queued batch BEFORE the one canonical group commit.
+   const cell=map.grid_size*zoomRef.current;
+   const finalTarget=boundedGroupOffset([
+    ...info.members,...(info.tools||[]).map(groupToolFootprint)],
+    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
+    map.width,map.height,map.grid_size);
    const releaseEvent={pointerId:e.pointerId,clientX:e.clientX,
     clientY:e.clientY,currentTarget:e.currentTarget};
-   void info.secureTask.finally(()=>{
-    if(drag.current===info)finishTokenDrag(releaseEvent,t,cancel);
+   const pending=requestConcealedOffset(info,finalTarget,true);
+   info.secureReleased=true;
+   void Promise.resolve(pending).finally(()=>{
+    info.secureFinishQueued=false;
+    info.secureFinalized=true;
+    if(drag.current===info)finishTokenDrag(releaseEvent,t,false);
    });
    return;
   }
