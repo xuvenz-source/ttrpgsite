@@ -4,7 +4,53 @@
 ALTER TABLE forge_visibility.navigation_gestures
  ADD COLUMN IF NOT EXISTS batch_count integer NOT NULL DEFAULT 0,
  ADD COLUMN IF NOT EXISTS validated_cells integer NOT NULL DEFAULT 0,
+ ADD COLUMN IF NOT EXISTS attempted_cells integer NOT NULL DEFAULT 0,
  ADD COLUMN IF NOT EXISTS last_fog_sent timestamptz;
+
+-- A private actor/map budget limits arbitrary hidden-wall probes across
+-- repeated short-lived gesture sessions. DM editing remains unrestricted.
+CREATE TABLE IF NOT EXISTS forge_visibility.navigation_gesture_budgets(
+ actor_id uuid NOT NULL,map_id uuid NOT NULL,
+ window_started timestamptz NOT NULL,
+ attempts integer NOT NULL DEFAULT 0,
+ PRIMARY KEY(actor_id,map_id)
+);
+ALTER TABLE forge_visibility.navigation_gesture_budgets ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE forge_visibility.navigation_gesture_budgets
+ FROM PUBLIC,anon,authenticated;
+
+CREATE OR REPLACE FUNCTION forge_visibility.throttle_navigation_gesture()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
+AS $budget$
+DECLARE
+ now_at timestamptz:=clock_timestamp();
+ n integer;
+BEGIN
+ IF auth.uid() IS NULL OR NEW.actor_id IS DISTINCT FROM auth.uid()
+ THEN RAISE EXCEPTION 'Navigation gesture unavailable';END IF;
+ IF public.is_campaign_dm(NEW.campaign_id) THEN RETURN NEW;END IF;
+ INSERT INTO forge_visibility.navigation_gesture_budgets(
+  actor_id,map_id,window_started,attempts)
+ VALUES(NEW.actor_id,NEW.map_id,now_at,1)
+ ON CONFLICT(actor_id,map_id) DO UPDATE SET
+  window_started=CASE
+   WHEN now_at-forge_visibility.navigation_gesture_budgets.window_started>=interval '60 seconds'
+   THEN now_at ELSE forge_visibility.navigation_gesture_budgets.window_started END,
+  attempts=CASE
+   WHEN now_at-forge_visibility.navigation_gesture_budgets.window_started>=interval '60 seconds'
+   THEN 1 ELSE forge_visibility.navigation_gesture_budgets.attempts+1 END
+ RETURNING attempts INTO n;
+ IF n>120 THEN RAISE EXCEPTION 'Navigation gesture unavailable';END IF;
+ RETURN NEW;
+END $budget$;
+DROP TRIGGER IF EXISTS forge_navigation_gesture_budget
+ ON forge_visibility.navigation_gestures;
+CREATE TRIGGER forge_navigation_gesture_budget
+ BEFORE INSERT ON forge_visibility.navigation_gestures
+ FOR EACH ROW EXECUTE FUNCTION forge_visibility.throttle_navigation_gesture();
+REVOKE ALL ON FUNCTION forge_visibility.throttle_navigation_gesture()
+ FROM PUBLIC,anon,authenticated;
+
 
 CREATE OR REPLACE FUNCTION public.advance_authorized_navigation_gesture_batch(
  p_session uuid, p_targets jsonb, p_seq bigint)
@@ -23,7 +69,8 @@ DECLARE
  requested_dx integer;requested_dy integer;
  delta_x integer;delta_y integer;steps integer;step integer;
  next_dx integer;next_dy integer;current_dx integer;current_dy integer;
- used integer:=0;blocked boolean:=false;valid boolean;fast_legal boolean;w double precision;
+ used integer:=0;tested_cells integer:=0;blocked boolean:=false;
+ valid boolean;fast_legal boolean;w double precision;
  refresh_fog boolean:=false;
 BEGIN
  -- A batch follows a real, bounded gesture cursor, never an arbitrary origin.
@@ -33,7 +80,8 @@ BEGIN
  SELECT * INTO s FROM forge_visibility.navigation_gestures
   WHERE id=p_session AND actor_id=actor FOR UPDATE;
  IF NOT FOUND OR s.expires_at<clock_timestamp() OR p_seq<=s.last_seq OR
-    s.batch_count>=64 OR s.validated_cells>=128 THEN RETURN NULL;END IF;
+    s.batch_count>=64 OR s.validated_cells>=128 OR
+    s.attempted_cells>=128 THEN RETURN NULL;END IF;
  IF NOT public.can_view_campaign_map(s.campaign_id,s.map_id)
  THEN RETURN NULL;END IF;
  SELECT coalesce(e.live,'{}'::jsonb),coalesce(e.revision,0)
@@ -118,7 +166,9 @@ BEGIN
   steps:=greatest(abs(delta_x),abs(delta_y));
   IF steps=0 THEN CONTINUE;END IF;
   IF steps>48 OR used+steps>48 OR
-     s.validated_cells+used+steps>128 THEN RETURN NULL;END IF;
+     s.validated_cells+used+steps>128 OR
+     s.attempted_cells+tested_cells+steps>128 THEN RETURN NULL;END IF;
+  tested_cells:=tested_cells+steps;
   -- Cheap secure fast path: one full swept-footprint validation per piece
   -- is sufficient for an unobstructed straight corridor. The private
   -- validator checks the entire continuous segment, not just its endpoint.
@@ -197,6 +247,7 @@ BEGIN
  UPDATE forge_visibility.navigation_gestures
  SET last_dx=current_dx,last_dy=current_dy,last_seq=p_seq,
   batch_count=s.batch_count+1,validated_cells=s.validated_cells+used,
+  attempted_cells=s.attempted_cells+tested_cells,
   last_fog_sent=CASE WHEN refresh_fog THEN clock_timestamp()
    ELSE s.last_fog_sent END,
   expires_at=clock_timestamp()+interval '8 seconds'
