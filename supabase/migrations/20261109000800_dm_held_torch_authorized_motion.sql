@@ -69,7 +69,7 @@ begin
  end loop;
  return false;
 exception when others then return false;
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_authorized_map_light_masks(p_map uuid)
@@ -184,5 +184,5 @@ exception when others then
  -- Never silently fall back to the unoccluded client radial gradient.
  return jsonb_build_object('mapId',p_map,'revision',coalesce(revision,0),
   'width',coalesce(width,1),'height',coalesce(height,1),'masks','[]'::jsonb);
-end $function$
+end $function$;
 
