@@ -87,7 +87,7 @@ test('pointer, keyboard, group and tool routes respect the separate authorizatio
  assert.match(board,/takeConcealedBatch/);
  assert.match(board,/approveBatch/);
  assert.ok(board.includes('paintAcceptedOffset(info,{...last,path:accepted})'));
- assert.match(board,/info\\.secureFinalized=true/);
+ assert.ok(board.includes('info.secureFinalized=true'));
  assert.match(board,/secureValidated:info\.secureMode===true/);
  assert.match(app,/const singleStep=concealed&&!verifiedGesture/);
  assert.match(app,/if\(!singleStep\)\{/);
