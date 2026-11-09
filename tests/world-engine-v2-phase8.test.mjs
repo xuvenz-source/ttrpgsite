@@ -465,3 +465,72 @@ test('dispose cancels pending RAF and forbids a late update',()=>{
  assert.equal(ctx.renderer.adoptVisibility(sight()),false);
  assert.equal(ctx.renderer.stats.sprites,0);
 });
+
+
+test('slow canonical roster at original route cell never snaps an active observer backwards',()=>{
+ const b=createObserverPathBuffer();b.authorizePieces([hero]);
+ b.applyPath(path(hero,[[2,2],[3,2],[4,2],[4,3]]));
+ b.tick(1000);b.tick(1040);
+ const progress=b.getPosition('token',hero.id);
+ assert.ok(progress.x>2&&progress.x<4);
+ assert.equal(b.reconcilePieces([hero]),true);
+ assert.deepEqual(b.getPosition('token',hero.id),progress);
+ b.tick(1080);
+ assert.ok(b.getPosition('token',hero.id).x>=progress.x);
+ b.dispose();
+});
+test('stale canonical origin wins after route ends unless a newer authorization arrives',()=>{
+ const b=createObserverPathBuffer();b.authorizePieces([hero]);
+ b.applyPath(path(hero,[[2,2],[3,2]]));
+ b.tick(1000);for(let t=1040;t<=1280;t+=40)b.tick(t);
+ assert.equal(b.pendingCount,0);
+ assert.deepEqual(b.getPosition('token',hero.id),{x:3,y:2});
+ assert.equal(b.reconcilePieces([hero]),true);
+ assert.deepEqual(b.getPosition('token',hero.id),{x:2,y:2});
+ b.dispose();
+});
+test('authorized large token dimensions persist without remounting or revealing secrets',()=>{
+ const ctx=make();
+ activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ assert.equal(ctx.renderer.setSpriteDimensions('token',hero.id,
+  {spanX:2.5,spanY:1.5}),true);
+ assert.equal(node.style.width,'250px');
+ assert.equal(node.style.height,'150px');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.setSpriteDimensions('token',ally.id,
+  {spanX:2,spanY:2}),false,'unknown piece cannot be created through metadata');
+ assert.equal(ctx.renderer.setSpriteDimensions('token',hero.id,
+  {spanX:50,spanY:1}),false);
+ assert.equal(ctx.surfaces.spriteHost.children.length,1);
+ ctx.renderer.dispose();
+});
+test('fog visibility for large authorized footprint follows its centre',()=>{
+ const ctx=make();
+ activate(ctx,scene(),sight({visible:[33],explored:[33],
+  visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ assert.equal(node.style.visibility,'hidden',
+  'top-left 2,2 is concealed before the server-owned dimensions arrive');
+ assert.equal(ctx.renderer.setSpriteDimensions('token',hero.id,
+  {spanX:2,spanY:2}),true);
+ ctx.clock.flush(1020);
+ assert.equal(node.style.visibility,'visible',
+  'server-authorized 2x2 footprint centre 3,3 is visible');
+ ctx.renderer.dispose();
+});
+test('large map with fog disabled never needs a giant canvas for 500 tokens',()=>{
+ const ctx=make();
+ const bigScene=scene({dimensions:{
+  width:500000,height:400000,gridSize:100},fogEnabled:false});
+ const distant=[{...hero,x:4000,y:3000}];
+ assert.equal(ctx.renderer.adoptScene(bigScene),true);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  enabled:false,width:5000,height:4000,visible:[],explored:[],
+  visiblePieces:distant
+ })),true);
+ ctx.clock.flush(1000);
+ assert.equal(ctx.surfaces.fogCanvas.width,1);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id).style.visibility,'visible');
+ ctx.renderer.dispose();
+});
