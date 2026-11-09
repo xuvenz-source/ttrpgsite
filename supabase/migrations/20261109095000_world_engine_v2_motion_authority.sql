@@ -52,7 +52,7 @@ CREATE OR REPLACE FUNCTION forge_world_v2.swept_hits_segment(
 RETURNS boolean LANGUAGE plpgsql IMMUTABLE SET search_path=''
 AS $$
 DECLARE
- xs double precision[]:=array[x0,x0+w,x0+w,x0,x1,x1+w,x1+w,x1+w-w];
+ xs double precision[]:=array[x0,x0+w,x0+w,x0,x1,x1+w,x1+w,x1];
  ys double precision[]:=array[y0,y0,y0+h,y0+h,y1,y1,y1+h,y1+h];
  axes double precision[][]:=array[
    array[1.0::double precision,0.0::double precision],
@@ -216,10 +216,10 @@ DECLARE actor uuid:=auth.uid();camp uuid;is_dm boolean;
  new_session uuid;new_attempts integer;
 BEGIN
  IF actor IS NULL OR p_map IS NULL OR
-  jsonb_typeof(p_selection)<>'array' OR
+  p_selection IS NULL OR jsonb_typeof(p_selection)<>'array' OR
   jsonb_array_length(p_selection) NOT BETWEEN 1 AND 48 OR
   NOT forge_world_v2.valid_point(p_origin) OR
-  p_mode NOT IN ('drag','touch','keyboard','preview') OR
+  p_mode IS NULL OR p_mode NOT IN ('drag','touch','keyboard','preview') OR
   p_environment_revision IS NULL OR p_permission_generation IS NULL OR
   p_collision_override IS NULL THEN RETURN NULL;END IF;
  SELECT m.campaign_id INTO camp FROM public.battle_maps m WHERE m.id=p_map;
@@ -248,8 +248,8 @@ BEGIN
    coalesce(part->>'id','') !~
    '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
   THEN RETURN NULL;END IF;
-  IF (part->>'kind'||':'||part->>'id')=ANY(seen) THEN RETURN NULL;END IF;
-  seen:=array_append(seen,part->>'kind'||':'||part->>'id');
+  IF ((part->>'kind')||':'||(part->>'id'))=ANY(seen) THEN RETURN NULL;END IF;
+  seen:=array_append(seen,(part->>'kind')||':'||(part->>'id'));
   IF part->>'kind'='token' THEN
    SELECT id,owner_id,visible,character_id,x,y,span_x,span_y,updated_at
    INTO t FROM public.map_tokens
