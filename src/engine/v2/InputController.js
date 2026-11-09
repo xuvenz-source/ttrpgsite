@@ -7,13 +7,26 @@ const editable=target=>!!target&&(target.isContentEditable===true||
  typeof target.closest==='function'&&!!target.closest('[contenteditable="true"],[role="textbox"]'));
 export function createInputController({
  target,controller,pointFromEvent,resolveSelection,
- keyboardTarget=typeof window==='undefined'?target:window
+ keyboardTarget=typeof window==='undefined'?target:window,
+ setTimer=(fn,delay)=>setTimeout(fn,delay),
+ clearTimer=handle=>clearTimeout(handle),keyboardIdleMs=90
 }={}){
  if(!target?.addEventListener||!target?.removeEventListener||
   !keyboardTarget?.addEventListener||!keyboardTarget?.removeEventListener||
   !controller||typeof pointFromEvent!=='function'||
   typeof resolveSelection!=='function')throw Error('Invalid V2 input adapter');
- let mounted=false,activePointer=null;
+ let mounted=false,activePointer=null,keyboardCursor=null,keyboardTimer=null;
+ const heldArrows=new Set();
+ const clearKeyboardTimer=()=>{
+  if(keyboardTimer!==null)clearTimer(keyboardTimer);
+  keyboardTimer=null;
+ };
+ const finishKeyboard=()=>{
+  clearKeyboardTimer();
+  if(!keyboardCursor)return;
+  keyboardCursor=null;heldArrows.clear();
+  void controller.endGesture();
+ };
  const point=event=>{
   try{return pointFromEvent(event)}catch{return null}
  };
@@ -61,20 +74,41 @@ export function createInputController({
   }
  };
  const blur=()=>{
-  if(activePointer!==null){release();controller.cancelGesture('blur')}
+  clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
+  if(activePointer!==null)release();
+  if(controller.active)controller.cancelGesture('blur');
  };
  const key=event=>{
   if(event.key==='Escape'&&controller.active){
-   release();controller.cancelGesture('user');event.preventDefault?.();return;
+   release();clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
+   controller.cancelGesture('user');event.preventDefault?.();return;
   }
   const delta=arrows[event.key];
-  if(!delta||event.defaultPrevented||editable(event.target)||
-   activePointer!==null||controller.active)return;
-  const picked=resolveSelection(event,null,{keyboard:true});
-  const origin=picked?.origin;
-  if(!origin||!controller.beginGesture({...picked,pointer:origin,mode:'keyboard'}))return;
-  controller.updateGesture({x:origin.x+delta[0],y:origin.y+delta[1]});
-  void controller.endGesture();
+  if(!delta||event.defaultPrevented||editable(event.target)||activePointer!==null)return;
+  if(!keyboardCursor){
+   if(controller.active)return;
+   const picked=resolveSelection(event,null,{keyboard:true});
+   const origin=picked?.origin;
+   if(!origin||!controller.beginGesture({...picked,pointer:origin,mode:'keyboard'}))return;
+   keyboardCursor={x:origin.x,y:origin.y};
+  }
+  clearKeyboardTimer();heldArrows.add(event.key);
+  keyboardCursor={x:keyboardCursor.x+delta[0],y:keyboardCursor.y+delta[1]};
+  if(!controller.updateGesture(keyboardCursor)){
+   clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;return;
+  }
+  event.preventDefault?.();
+ };
+ const keyup=event=>{
+  if(!arrows[event.key]||!keyboardCursor)return;
+  heldArrows.delete(event.key);
+  if(!heldArrows.size){
+   clearKeyboardTimer();
+   keyboardTimer=setTimer(()=>{
+    keyboardTimer=null;
+    if(!heldArrows.size)finishKeyboard();
+   },keyboardIdleMs);
+  }
   event.preventDefault?.();
  };
  return {
@@ -86,17 +120,20 @@ export function createInputController({
    target.addEventListener('pointercancel',cancel);
    target.addEventListener('lostpointercapture',lost);
    keyboardTarget.addEventListener('keydown',key);
+   keyboardTarget.addEventListener('keyup',keyup);
    keyboardTarget.addEventListener('blur',blur);
   },
   unmount(){
    if(!mounted)return;
-   mounted=false;release();controller.cancelGesture('unmount');
+   mounted=false;release();clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
+   controller.cancelGesture('unmount');
    target.removeEventListener('pointerdown',down);
    target.removeEventListener('pointermove',move);
    target.removeEventListener('pointerup',up);
    target.removeEventListener('pointercancel',cancel);
    target.removeEventListener('lostpointercapture',lost);
    keyboardTarget.removeEventListener('keydown',key);
+   keyboardTarget.removeEventListener('keyup',keyup);
    keyboardTarget.removeEventListener('blur',blur);
   },
   get mounted(){return mounted}
