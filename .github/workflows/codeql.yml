@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - stage/complete-predictive-navigation-and-fog-2026-11-09
+      - stage/unified-realtime-movement-2026-11-09
   pull_request:
     branches:
       - main
@@ -44,7 +45,7 @@ jobs:
           category: /language:javascript-typescript
 
       - name: Publish staging CodeQL result
-        if: always() && github.ref == 'refs/heads/stage/complete-predictive-navigation-and-fog-2026-11-09'
+        if: always() && (github.ref == 'refs/heads/stage/complete-predictive-navigation-and-fog-2026-11-09' || github.ref == 'refs/heads/stage/unified-realtime-movement-2026-11-09')
         env:
           GH_TOKEN: ${{ github.token }}
           CODEQL_RESULT: ${{ job.status }}

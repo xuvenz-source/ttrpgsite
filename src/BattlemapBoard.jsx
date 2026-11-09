@@ -18,9 +18,13 @@ import {traceLegalTokenDestination} from './MapMovementTrajectory.js';
 import {traceSolidGroupOffset,traceAuthorizedGroupOffset} from './DragCollisionGuard.js';
 import {stableTokenPresentation} from './StableTokenPresentation.js';
 import {appendMovementWaypoint} from './MapMovementPath.js';
-import {createConcealedMovementGate,needsConcealedStep,nextConcealedStep}
+import {createConcealedMovementGate,needsConcealedStep}
  from './ConcealedMovementGate.js';
+import {enqueueConcealedTarget,takeConcealedBatch}
+ from './ConcealedGestureBatch.js';
 import {createTokenMotionRuntime} from './TokenMotionRuntime.js';
+import {movementDiagnostics} from './MovementDiagnostics.js';
+import {authorizedFractionalOffset} from './AuthorizedFractionalMotion.js';
 import {normalizeConfig} from './TokenMonitors.jsx';
 import TokenMonitorFrames from './TokenMonitorFrames.jsx';
 import {canControlMapToken,selectionRectangle,selectableTokenIds,
@@ -50,8 +54,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   let callback=spriteRefs.current.get(id);
   if(!callback){
    callback=node=>{
-    if(node)spriteNodes.current.set(id,node);
+    if(node){
+     if(!spriteNodes.current.has(id))movementDiagnostics.count('token-sprite-mounted');
+     spriteNodes.current.set(id,node);
+    }
     else{
+     if(spriteNodes.current.has(id))movementDiagnostics.count('token-sprite-detached');
      spriteNodes.current.delete(id);
      motion.current?.bind(id,'sprite',null);
     }
@@ -83,13 +91,17 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   if(!needsConcealedStep(fogFrame,isDM))return;
   info.secureMode=true;
   info.secureSeq=0;
-  info.secureDesired={dx:0,dy:0};
-  info.secureBlockedTarget=null;
+  info.secureQueue=[];
+  info.secureCancelled=false;
+  info.secureBlocked=false;
   info.secureReleased=false;
+  info.secureFinalized=false;
  }
  function endConcealedDrag(info){
   if(!info?.secureMode)return;
   info.secureReleased=true;
+  info.secureCancelled=true;
+  info.secureQueue=[];
   if(info.secureStart)void info.secureStart.then(sessionId=>
    sessionId&&concealedGate.end(sessionId)
   ).catch(error=>console.warn('Secure gesture cleanup failed',error));
@@ -799,6 +811,18 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   })),...(info.tools||[]).map(tool=>({
    kind:'tool',id:tool.issue_id,x:Number(tool.x),y:Number(tool.y)
   }))];
+  const collisionPieces=isDM?[
+   ...info.members.map(token=>{
+    const values=characters.find(c=>c.id===token.character_id)?.field_values;
+    return values?{...token,field_values:values}:token;
+   }),
+   ...(info.tools||[]).map(tool=>({
+    ...groupToolFootprint(tool),
+    npc_values:toolIssued.find(t=>t.id===tool.issue_id)?.state?.attrs||{}
+   }))
+  ]:null;
+  const collisionEnabled=isDM&&environmentEditor?.ignoreCollision!==true&&
+   fogFrame?.collisionEnabled!==false&&collisionScene;
   const delta=isDM?
    (environmentEditor?.ignoreCollision!==true&&
     fogFrame?.collisionEnabled!==false&&collisionScene?
@@ -806,16 +830,7 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
      // Conditional walls must use the same effective creature/tool values
      // as the server. These private attributes are held by the DM only;
      // players continue using opaque authorized edge masks.
-     pieces:[
-      ...info.members.map(token=>{
-       const values=characters.find(c=>c.id===token.character_id)?.field_values;
-       return values?{...token,field_values:values}:token;
-      }),
-      ...(info.tools||[]).map(tool=>({
-       ...groupToolFootprint(tool),
-       npc_values:toolIssued.find(t=>t.id===tool.issue_id)?.state?.attrs||{}
-      }))
-     ],
+     pieces:collisionPieces,
      map,environment:collisionScene,previous,desired:requested
     }):requested):
    traceAuthorizedGroupOffset({
@@ -824,6 +839,39 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
      navigation?.allows(map.id,piece.kind,piece.id,from,to)===true
    });
   paintAcceptedOffset(info,delta);
+  // Continue following the mouse at sub-cell resolution only along a
+  // verified crossing. This does not persist floats, grant sight or change
+  // observer positions. Unknown and one-way edges stay solid.
+  const at={dx:info.dx,dy:info.dy};
+  const members=[...info.members,...(info.tools||[]).map(groupToolFootprint)];
+  const canCross=(from,to)=>{
+   const bounded=boundedGroupOffset(members,to.dx,to.dy,
+    map.width,map.height,map.grid_size);
+   if(bounded.dx!==to.dx||bounded.dy!==to.dy)return false;
+   if(isDM){
+    if(!collisionEnabled)return true;
+    const checked=traceSolidGroupOffset({
+     pieces:collisionPieces,map,environment:collisionScene,
+     previous:from,desired:to
+    });
+    return checked.dx===to.dx&&checked.dy===to.dy;
+   }
+   return pieces.every(piece=>navigation?.allows(
+    map.id,piece.kind,piece.id,
+    {x:piece.x+from.dx,y:piece.y+from.dy},
+    {x:piece.x+to.dx,y:piece.y+to.dy})===true);
+  };
+  const visual=authorizedFractionalOffset(at,{
+   dx:(e.clientX-info.startX)/cell,dy:(e.clientY-info.startY)/cell
+  },canCross);
+  if(visual.dx!==at.dx||visual.dy!==at.dy){
+   for(const token of info.members)
+    motion.current?.preview(token.id,Number(token.x)+visual.dx,
+     Number(token.y)+visual.dy);
+   for(const tool of info.tools||[])
+    motion.current?.preview('tool:'+tool.issue_id,
+     Number(tool.x)+visual.dx,Number(tool.y)+visual.dy);
+  }
  }
  function paintAcceptedOffset(info,delta){
   if(info.dx===delta.dx&&info.dy===delta.dy)return;
@@ -837,16 +885,29 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
     return; // Bounded gesture: never paint a path we cannot commit.
    path=next;
   }
+  const from={dx:info.dx,dy:info.dy};
   info.path=path;
   info.dx=delta.dx;info.dy=delta.dy;
-  // Both players and DM paint a server-preauthorized legal destination
-  // immediately using an imperative transform: no React board rerender.
+  // All secure intermediate coordinates came from the server's validated
+  // prefix. Animate each straight run; do not shortcut between turns.
+  const acknowledged=info.secureMode?delta.path:null;
+  const animate=(id,x,y)=>{
+   const accepted=Array.isArray(acknowledged)&&acknowledged.length&&
+    motion.current?.previewAuthorizedPath(id,[
+     {x:x+from.dx,y:y+from.dy},
+     ...acknowledged.map(p=>({x:x+p.dx,y:y+p.dy}))
+    ]);
+   if(!accepted)motion.current?.preview(id,x+delta.dx,y+delta.dy);
+  };
   for(const token of info.members)
-   motion.current?.preview(token.id,
-    Number(token.x)+delta.dx,Number(token.y)+delta.dy);
+   animate(token.id,Number(token.x),Number(token.y));
   for(const tool of info.tools||[])
-   motion.current?.preview('tool:'+tool.issue_id,
-    Number(tool.x)+delta.dx,Number(tool.y)+delta.dy);
+   animate('tool:'+tool.issue_id,Number(tool.x),Number(tool.y));
+  // Secure player batches publish a single trusted, path-checked observer
+  // envelope and verified viewer fog tick from Postgres. Do not ALSO send
+  // the old straight-endpoint motion RPC, which can cut corners or race this
+  // batch's canonical observer sequence.
+  if(info.secureMode)return;
   const playerGroup=!isDM&&
    info.members.length+(info.tools||[]).length>1;
   if(playerGroup)onGroupMovementPreview?.({
@@ -854,61 +915,87 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   });
   else for(const t of info.members){
    const next={x:Number(t.x)+delta.dx,y:Number(t.y)+delta.dy};
-   onMovementPreview?.(t,next.x,next.y,false);
+   onMovementPreview?.(t,next.x,next.y,false,false,isDM?[
+    {x:Number(t.x)+from.dx,y:Number(t.y)+from.dy},next
+   ]:undefined);
   }
   // An ordinary token-only drag has no tool positions to change.
   // Avoid allocating a new React state object and rerendering the board on
   // every grid step just to keep an empty tool preview unchanged.
-  if(isDM&&info.tools?.length)setToolPreview(old=>{
-   const next={...old};
-   for(const tool of info.tools)
-    next[tool.issue_id]={x:Number(tool.x)+delta.dx,y:Number(tool.y)+delta.dy};
-   return next;
-  });
-  if(!playerGroup)for(const tool of info.tools||[])
-   onToolMovementPreview?.(tool,Number(tool.x)+delta.dx,Number(tool.y)+delta.dy,false);
+  // Tool and carried-light DOM transforms are now owned by MotionRuntime;
+  // no per-cell React board state update is needed for a DM tool drag.
+  if(!playerGroup)for(const tool of info.tools||[]){
+   const next={x:Number(tool.x)+delta.dx,y:Number(tool.y)+delta.dy};
+   onToolMovementPreview?.(tool,next.x,next.y,false,false,isDM?[
+    {x:Number(tool.x)+from.dx,y:Number(tool.y)+from.dy},next
+   ]:undefined);
+  }
   // Server-validated observer previews carry movement without writing
   // token positions or invalidating fog on every pointer sample.
   // Only the final release persists via authoritative movement writes.
  }
- function requestConcealedOffset(info,requested){
-  if(!info?.secureMode||info.secureReleased||drag.current!==info)return;
-  info.secureDesired=requested;
-  const goalKey=requested.dx+':'+requested.dy;
-  if(info.secureBlockedTarget===goalKey||info.secureTask)return;
-  info.secureBlockedTarget=null;
+ function requestConcealedOffset(info,requested,closing=false){
+  if(!info?.secureMode||info.secureCancelled||info.secureBlocked||
+    drag.current!==info||(info.secureReleased&&!closing))return info?.secureTask||null;
+  // Queue every actual pointer bend while one request is in flight. Never
+  // interpolate directly from an old acknowledgement to the latest pointer
+  // if an intervening event changed direction around a doorway.
+  const from={dx:info.dx,dy:info.dy};
+  if(!enqueueConcealedTarget(info.secureQueue,requested,from)){
+   info.secureBlocked=true;
+   console.warn('Concealed gesture exceeded its bounded path queue');
+   return info.secureTask||null;
+  }
+  if(info.secureTask||!info.secureQueue.length)return info.secureTask||null;
   if(!info.secureStart){
    info.secureStart=concealedGate.begin(map.id,
     info.members.map(t=>t.id),(info.tools||[]).map(t=>t.issue_id))
     .catch(error=>{
      console.warn('Concealed navigation unavailable',error);
+     info.secureBlocked=true;
      return null;
     });
   }
   info.secureTask=(async()=>{
    const sessionId=await info.secureStart;
    if(!sessionId)return;
-   while(drag.current===info&&!info.secureReleased&&
-    info.navigationAuthority===navigation?.authority(map.id)){
-    const target=info.secureDesired;
-    const next=nextConcealedStep({dx:info.dx,dy:info.dy},target);
-    if(!next)break;
-    const proposed=appendMovementWaypoint(info.path||[],next.dx,next.dy);
-    if(proposed===info.path)break;
-    const approved=await concealedGate.approve(sessionId,next,++info.secureSeq);
-    if(!approved){
-     info.secureBlockedTarget=target.dx+':'+target.dy;
+   while(drag.current===info&&!info.secureCancelled&&!info.secureBlocked&&
+     info.navigationAuthority===navigation?.authority(map.id)){
+    const {targets,remaining}=takeConcealedBatch(
+     {dx:info.dx,dy:info.dy},info.secureQueue);
+    if(!targets.length)break;
+    info.secureQueue=remaining;
+    const finish=movementDiagnostics.begin('concealed-batch-rpc');
+    let acknowledgement;
+    try{
+     acknowledgement=await concealedGate.approveBatch(
+      sessionId,targets,++info.secureSeq,{dx:info.dx,dy:info.dy});
+    }finally{finish()}
+    // A late response from another scene or revoked capability is NEVER a
+    // grant to present motion, even if Postgres approved the prior scene.
+    if(info.secureCancelled||drag.current!==info||
+      info.navigationAuthority!==navigation?.authority(map.id))break;
+    if(!acknowledgement)break;
+    if(acknowledgement.approved.length){
+     const accepted=acknowledgement.approved;
+     const last=accepted.at(-1);
+     paintAcceptedOffset(info,{...last,path:accepted});
+     movementDiagnostics.count('concealedBatchAccepted');
+    }
+    if(acknowledgement.blocked){
+     info.secureBlocked=true;
+     info.secureQueue=[];
+     movementDiagnostics.count('concealedBatchBlocked');
      break;
     }
-    // A late response after cancellation, a revision or map switch cannot
-    // resurrect even a previously authorized client-side sprite transform.
-    if(drag.current!==info||info.secureReleased||
-     info.navigationAuthority!==navigation?.authority(map.id))break;
-    paintAcceptedOffset(info,{...next,path:[next]});
    }
   })().catch(error=>{
+   info.secureBlocked=true;
+   info.secureQueue=[];
+   movementDiagnostics.count('concealedBatchFailed');
    console.warn('Concealed movement validation failed',error);
   }).finally(()=>{info.secureTask=null});
+  return info.secureTask;
  }
  function toolDropCarrier(event){
   const rect=boardRef.current?.getBoundingClientRect(),cell=map.grid_size*zoomRef.current;
@@ -930,16 +1017,24 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   }
   const info=drag.current;
   if(!info||info.id!==t.id||info.pointerId!==e.pointerId)return;
-  if(info.secureMode&&info.secureTask){
+  if(info.secureMode&&!cancel&&!info.secureFinalized){
    if(info.secureFinishQueued)return;
    info.secureFinishQueued=true;
-   info.secureReleased=true;
-   // React clears event.currentTarget after dispatch. Preserve the actual
-   // pointer target so an awaited server response can safely finish release.
+   // Pointerup is part of the attempted route. Freeze the final coordinate
+   // and drain every queued batch BEFORE the one canonical group commit.
+   const cell=map.grid_size*zoomRef.current;
+   const finalTarget=boundedGroupOffset([
+    ...info.members,...(info.tools||[]).map(groupToolFootprint)],
+    (e.clientX-info.startX)/cell,(e.clientY-info.startY)/cell,
+    map.width,map.height,map.grid_size);
    const releaseEvent={pointerId:e.pointerId,clientX:e.clientX,
     clientY:e.clientY,currentTarget:e.currentTarget};
-   void info.secureTask.finally(()=>{
-    if(drag.current===info)finishTokenDrag(releaseEvent,t,cancel);
+   const pending=requestConcealedOffset(info,finalTarget,true);
+   info.secureReleased=true;
+   void Promise.resolve(pending).finally(()=>{
+    info.secureFinishQueued=false;
+    info.secureFinalized=true;
+    if(drag.current===info)finishTokenDrag(releaseEvent,t,false);
    });
    return;
   }
@@ -1146,9 +1241,9 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
       style={{
        left:Number(p.x)*cell,top:Number(p.y)*cell,width:cell*spanX,height:cell*spanY,
        visibility:concealed?'hidden':'visible',pointerEvents:concealed?'none':undefined,
-       opacity:t.visible?1:.55,cursor:canMove?'grab':'default',
-        transition:remotePositions[t.id]&&!preview[t.id]?
-         'left 50ms linear, top 50ms linear':undefined
+       // MotionRuntime is the sole frame-by-frame position owner.
+       // CSS left/top transitions would compete with its sprite translate.
+       opacity:t.visible?1:.55,cursor:canMove?'grab':'default'
       }}
       title={t.name+(effectTitles.length?' · '+effectTitles.join(', '):'')+
        ((isDM||t.owner_id===user)?' · Alt + double-click to edit sheet':'')}

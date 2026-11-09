@@ -83,9 +83,11 @@ test('client accepts server-confirmed motion only and closes the gesture',async(
 });
 
 test('pointer, keyboard, group and tool routes respect the separate authorization modes',()=>{
- assert.match(board,/requestConcealedOffset\(info,requested\)/);
- assert.match(board,/if\(!approved\)/);
- assert.match(board,/paintAcceptedOffset\(info,\{\.\.\.next,path:\[next\]\}\)/);
+ assert.ok(board.includes('requestConcealedOffset(info,requested)'));
+ assert.match(board,/takeConcealedBatch/);
+ assert.match(board,/approveBatch/);
+ assert.ok(board.includes('paintAcceptedOffset(info,{...last,path:accepted})'));
+ assert.ok(board.includes('info.secureFinalized=true'));
  assert.match(board,/secureValidated:info\.secureMode===true/);
  assert.match(app,/const singleStep=concealed&&!verifiedGesture/);
  assert.match(app,/if\(!singleStep\)\{/);

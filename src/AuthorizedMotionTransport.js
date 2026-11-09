@@ -2,6 +2,7 @@
 // coordinates; this adapter never sends player-authored position broadcasts.
 // One session is cached per map piece and no per-waypoint scene data enters JS.
 import {movementDiagnostics} from './MovementDiagnostics.js';
+import {validVerifiedObserverPath} from './VerifiedObserverPath.js';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function createAuthorizedMotionTransport({db}){
@@ -13,6 +14,8 @@ export function createAuthorizedMotionTransport({db}){
   if(disposed||!params||!['token','tool'].includes(params.p_kind)||
     !UUID.test(String(params.p_map||''))||
     !UUID.test(String(params.p_piece||'')))return {data:false,error:null};
+  if(params.p_path!==undefined&&!validVerifiedObserverPath(params.p_path))
+   return {data:false,error:Error('Invalid bounded observer path')};
   const done=movementDiagnostics.begin('movement-preview-rpc');
   const key=keyOf(params);
   let state=sessions.get(key);
@@ -36,7 +39,10 @@ export function createAuthorizedMotionTransport({db}){
   try{
    const sessionId=state.sessionId||await state.initializing;
    if(disposed||sessions.get(key)!==state)return {data:false,error:null};
-   const reply=await db.rpc('advance_map_motion_session',{
+   const route=Array.isArray(params.p_path)?params.p_path:null;
+   const reply=route?await db.rpc('advance_map_motion_session_path',{
+    p_session:sessionId,p_path:route,p_seq:params.p_seq
+   }):await db.rpc('advance_map_motion_session',{
     p_session:sessionId,p_x:params.p_x,p_y:params.p_y,p_seq:params.p_seq
    });
    if(reply.error)throw reply.error;

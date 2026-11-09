@@ -1,0 +1,64 @@
+name: Isolated unified-movement PostgreSQL contract checks
+
+# Runs in a disposable GitHub Actions container. No project credentials,
+# Supabase project/branch, production SQL, Vercel deploy or hourly billing.
+on:
+  push:
+    branches:
+      - stage/unified-realtime-movement-2026-11-09
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unified-motion-sql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres-contract:
+    name: PostgreSQL 16 ephemeral migration and role checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ttrpg_movement_fixture
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ttrpg_movement_fixture"
+          --health-interval 3s --health-timeout 2s --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: ttrpg_movement_fixture
+      PGPASSWORD: disposable-ci-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install PostgreSQL client if necessary
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+      - name: Create isolated schema and synthetic role fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/unified-movement-fixture.sql
+      - name: Parse and execute both additive movement migrations
+        run: |
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261109000500_batched_concealed_navigation.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261109000600_batched_motion_observer_visibility.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261109000700_authorized_dm_observer_paths.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261109000800_dm_held_torch_authorized_motion.sql
+      - name: Check ownership, collision prefixes, path privacy and fog
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/unified-movement-smoke.sql

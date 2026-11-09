@@ -6,15 +6,39 @@
  * React render for every cell crossed. No permissions or saved coordinates are
  * decided here. In particular, this does not grant sight through fog.
  */
+import {movementDiagnostics} from './MovementDiagnostics.js';
+import {validVerifiedObserverPath,sameObserverCell,
+ appendVerifiedObserverPoints} from './VerifiedObserverPath.js';
+
 export function createTokenMotionRuntime({
  requestFrame=callback=>requestAnimationFrame(callback),
+ clock=()=>performance.now(),
  cancelFrame=handle=>cancelAnimationFrame(handle),
  setTimer=(callback,delay)=>setTimeout(callback,delay),
- clearTimer=handle=>clearTimeout(handle)
+ clearTimer=handle=>clearTimeout(handle),
+ observerStepMs=24,
+ prefersReducedMotion=()=>typeof window!=='undefined'&&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true
 }={}){
  const mounted=new Map(),previews=new Map(),dirty=new Set();
- const settleTimers=new Map();
- let scheduled=null,disposed=false;
+ const settleTimers=new Map(),requestedAt=new Map(),remoteRoutes=new Map();
+ let scheduled=null,routeFrame=null,disposed=false;
+ // One compositor tick handles every active path; avoid an RAF callback per
+ // token during DM group moves or high-population player stress tests.
+ function ensureRouteFrame(){
+  if(disposed||routeFrame!==null||remoteRoutes.size===0)return;
+  routeFrame=requestFrame(()=>{
+   routeFrame=null;
+   for(const id of [...remoteRoutes.keys()])advanceRemoteRoute(id);
+   if(remoteRoutes.size)ensureRouteFrame();
+  });
+ }
+ function stopRemoteRoute(id){
+  const route=remoteRoutes.get(id);
+  if(!route)return null;
+  remoteRoutes.delete(id);
+  return route;
+ }
  function cancelSettle(id){
   const timer=settleTimers.get(id);
   if(timer!==undefined)clearTimer(timer);
@@ -37,14 +61,10 @@ export function createTokenMotionRuntime({
   // reconciliation grace period elapsed. Rebase to the current canonical
   // position, which is already RLS-authorized, before removing the overlay.
   if(mount&&(mount.x!==x||mount.y!==y)){
-   previews.set(id,{x:mount.x,y:mount.y,remote:true,settling:true});
-   schedule(id);
-   settleTimers.set(id,setTimer(()=>{
-    settleTimers.delete(id);
-    if(previews.get(id)?.settling){
-     previews.delete(id);schedule(id);
-    }
-   },125));
+   // A timer never proves a newer canonical coordinate. Retain the accepted
+   // visual destination until React binds the matching authoritative row,
+   // or the caller explicitly revokes it after a failed authorized refresh.
+   settleTimers.delete(id);
    return;
   }
   previews.delete(id);schedule(id);
@@ -60,7 +80,7 @@ export function createTokenMotionRuntime({
    const dy=preview?(preview.y-mount.y)*mount.cell:0;
    // Remote samples interpolate between server-approved destinations;
    // local dragging remains immediate with no interpolation latency.
-   mount.node.style.transition=preview?.remote?
+   mount.node.style.transition=preview?.route?'':preview?.remote?
     'translate 95ms linear':mount.baseTransition;
    // CSS translate is independent from other token CSS transform effects.
    mount.node.style.translate=number(dx)&&number(dy)&&
@@ -74,9 +94,115 @@ export function createTokenMotionRuntime({
   if(scheduled!==null)return;
   scheduled=requestFrame(()=>{
    scheduled=null;
-   for(const changedId of dirty)paint(changedId);
+   const now=clock();
+   for(const changedId of dirty){
+    const requested=requestedAt.get(changedId);
+    if(requested){
+     movementDiagnostics.record(requested.remote?
+      'remote-motion-frame-latency':'local-motion-frame-latency',
+      Math.max(0,now-requested.time));
+     requestedAt.delete(changedId);
+    }
+    paint(changedId);
+   }
    dirty.clear();
   });
+ }
+ // Collapse only consecutive, same-direction VERIFIED cells into one
+ // compositor segment. Never connect two bends with a wall-cutting chord.
+ function nextVerifiedRun(points,from){
+  if(from+1>=points.length)return points.length;
+  let last=from+1;
+  const dx=points[last].x-points[from].x;
+  const dy=points[last].y-points[from].y;
+  while(last+1<points.length&&
+   points[last+1].x-points[last].x===dx&&
+   points[last+1].y-points[last].y===dy)last++;
+  return last;
+ }
+ function queueVerifiedPath(id,path,remote){
+  if(disposed||!id||!validVerifiedObserverPath(path))return false;
+  const existing=remoteRoutes.get(id);
+  if(existing){
+   if(existing.remote!==remote)return false;
+   if(existing.index>0){
+    existing.points=existing.points.slice(existing.index);
+    if(existing.nextIndex!==null)
+     existing.nextIndex-=existing.index;
+    existing.index=0;
+   }
+   const appended=appendVerifiedObserverPoints(existing.points,path);
+   if(!appended)return false;
+   existing.points=appended;return true;
+  }
+  const nodes=mounted.get(id);
+  const mountedCell=nodes?.get('sprite')||nodes?.values().next().value;
+  const preview=previews.get(id);
+  const current=preview||mountedCell;
+  if(!sameObserverCell(current,path[0]))return false;
+  cancelSettle(id);
+  const route={points:[...path],index:0,nextIndex:null,
+   started:clock(),handle:null,remote,settleAt:null,handoffPending:false};
+  remoteRoutes.set(id,route);
+  movementDiagnostics.count(remote?'observerValidatedPathAccepted':
+   'localValidatedPathAccepted');
+  ensureRouteFrame();
+  return true;
+ }
+ function advanceRemoteRoute(id){
+  const route=remoteRoutes.get(id);
+  if(!route||disposed)return;
+  const now=clock();
+  if(route.nextIndex===null)
+   route.nextIndex=nextVerifiedRun(route.points,route.index);
+  const a=route.points[route.index],b=route.points[route.nextIndex];
+  if(!b){
+   stopRemoteRoute(id);
+   const finish=route.points.at(-1);
+   previews.set(id,{x:finish.x,y:finish.y,remote:route.remote});
+   paint(id);
+   if(route.handoffPending){
+    const canonical=mounted.get(id)?.get('sprite')||
+     mounted.get(id)?.values().next().value;
+    if(canonical?.x===finish.x&&canonical?.y===finish.y){
+     previews.delete(id);paint(id);
+    }else previews.set(id,{x:finish.x,y:finish.y,
+      remote:route.remote,handoff:true});
+   }else if(route.settleAt){
+    const destination=route.settleAt;
+    // A new token snapshot may already match the most recently played
+    // waypoint; only then can its remote transform be released safely.
+    if(destination.x===finish.x&&destination.y===finish.y){
+     const mount=mounted.get(id)?.get('sprite')||
+      mounted.get(id)?.values().next().value;
+     if(mount?.x===finish.x&&mount?.y===finish.y){
+      previews.delete(id);paint(id);
+     }else previews.set(id,{x:finish.x,y:finish.y,
+       remote:true,settling:true});
+    }else{
+     previews.set(id,{x:finish.x,y:finish.y,remote:true});
+     schedule(id);
+     // This is a canonical RLS coordinate, not a guessed straight route.
+     // The caller may fetch an updated verified path if the last packet was
+     // lost; do not interpolate to the new point through unknown geometry.
+    }
+   }
+   return;
+  }
+  const cells=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y));
+  const duration=Math.max(1,Math.min(route.remote?150:95,
+   Math.max(route.remote?32:22,cells*(route.remote?observerStepMs/2:8))));
+  const fraction=prefersReducedMotion()?1:
+   Math.max(0,Math.min(1,(now-route.started)/duration));
+  previews.set(id,{x:a.x+(b.x-a.x)*fraction,
+   y:a.y+(b.y-a.y)*fraction,remote:route.remote,route:true});
+  requestedAt.set(id,{time:route.started,remote:true});
+  paint(id);
+  if(fraction>=1){
+   route.index=route.nextIndex;
+   route.nextIndex=null;
+   route.started=now;
+  }
  }
  return {
   bind(id,kind,node,{x,y,cell}={}){
@@ -93,24 +219,40 @@ export function createTokenMotionRuntime({
    const baseTransition=existing?.node===node?
     existing.baseTransition:(node.style.transition||'');
    positions.set(kind,{node,x,y,cell,baseTransition});
-   // A React commit may alter the base left/top; rebase before the next paint
-   // rather than briefly showing a stale transform.
+   // A React commit may alter the base left/top. A late canonical rebind
+   // finishes the handoff even after the short settle timer has expired.
+   const preview=previews.get(id);
+   if(preview?.settling&&preview.x===x&&preview.y===y&&
+      (kind==='sprite'||!positions.has('sprite'))){
+    cancelSettle(id);previews.delete(id);
+   }
    paint(id);
   },
   preview(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
+   stopRemoteRoute(id);
    cancelSettle(id);
-   previews.set(id,{x,y,remote:false});schedule(id);
+   previews.set(id,{x,y,remote:false});
+   requestedAt.set(id,{time:clock(),remote:false});schedule(id);
   },
   previewRemote(id,x,y){
    if(disposed||!id||!number(x)||!number(y))return;
+   stopRemoteRoute(id);
    cancelSettle(id);
-   previews.set(id,{x,y,remote:true});schedule(id);
+   previews.set(id,{x,y,remote:true});
+   requestedAt.set(id,{time:clock(),remote:true});schedule(id);
   },
+  previewRemotePath(id,path){return queueVerifiedPath(id,path,true)},
+  previewAuthorizedPath(id,path){return queueVerifiedPath(id,path,false)},
   // An authoritative final position may differ from the last throttled
   // preview packet. Ease to that final cell, then drop the overlay only
   // after its 95ms CSS interpolation and React position commit are complete.
   settleRemote(id,x,y){
+   const route=remoteRoutes.get(id);
+   if(route&&number(x)&&number(y)){
+    route.settleAt={x,y};
+    return true;
+   }
    const preview=previews.get(id);
    if(!preview?.remote||!number(x)||!number(y))return false;
    cancelSettle(id);
@@ -123,6 +265,8 @@ export function createTokenMotionRuntime({
   // optimistic left/top. Clearing on pointerup first paints the old position
   // for a frame, then jumps forward when the DB/client state settles.
   handoff(id){
+   const route=remoteRoutes.get(id);
+   if(route&&!route.remote){route.handoffPending=true;return}
    const preview=previews.get(id);
    if(!preview||preview.remote)return;
    previews.set(id,{...preview,handoff:true});
@@ -131,6 +275,8 @@ export function createTokenMotionRuntime({
   // preview until the corresponding React left/top is committed. Otherwise
   // the sprite briefly paints its old canonical coordinates and rubber-bands.
   handoffRemote(id){
+   const route=remoteRoutes.get(id);
+   if(route&&route.remote){route.handoffPending=true;return true}
    const preview=previews.get(id);
    if(!preview?.remote)return false;
    cancelSettle(id);
@@ -146,21 +292,26 @@ export function createTokenMotionRuntime({
    return true;
   },
   clearPreview(id){
+   stopRemoteRoute(id);
    cancelSettle(id);
    if(!previews.delete(id))return;
    schedule(id);
   },
   clear(){
+   if(routeFrame!==null){cancelFrame(routeFrame);routeFrame=null}
+   for(const id of remoteRoutes.keys())stopRemoteRoute(id);
    for(const id of settleTimers.keys())cancelSettle(id);
-   previews.clear();
+   previews.clear();requestedAt.clear();
    if(scheduled!==null){cancelFrame(scheduled);scheduled=null}
    dirty.clear();
    for(const id of mounted.keys())paint(id);
   },
   dispose(){
+   if(routeFrame!==null){cancelFrame(routeFrame);routeFrame=null}
+   for(const id of remoteRoutes.keys())stopRemoteRoute(id);
    for(const id of settleTimers.keys())cancelSettle(id);
    if(scheduled!==null)cancelFrame(scheduled);
-   scheduled=null;disposed=true;dirty.clear();previews.clear();mounted.clear();
+   scheduled=null;disposed=true;dirty.clear();requestedAt.clear();previews.clear();mounted.clear();
   },
   getPreview(id){return previews.get(id)||null}
  };

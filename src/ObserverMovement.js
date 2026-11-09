@@ -1,3 +1,4 @@
+import {validVerifiedObserverPath} from './VerifiedObserverPath.js';
 /**
  * Observer-specific motion envelopes originate only from the trusted
  * Postgres RPC. No client may publish to a forge-observer channel.
@@ -20,11 +21,14 @@ export function validObserverMovementPacket(packet,mapId,viewerId){
     !UUID.test(String(packet.id||''))||
     !UUID.test(String(packet.actor||''))||
     !['token','tool'].includes(packet.kind)||
-    !['move','hide'].includes(packet.action)||
+    !['move','hide','path'].includes(packet.action)||
     !Number.isSafeInteger(packet.seq)||packet.seq<=0||
     packet.seq>9000000000000000)return false;
  if(packet.action==='hide')
-  return packet.x===undefined&&packet.y===undefined;
+  return packet.x===undefined&&packet.y===undefined&&packet.path===undefined;
+ if(packet.action==='path')
+  return packet.x===undefined&&packet.y===undefined&&
+   validVerifiedObserverPath(packet.path);
  return Number.isSafeInteger(packet.x)&&Number.isSafeInteger(packet.y)&&
   packet.x>=0&&packet.y>=0&&packet.x<=10000&&packet.y<=10000;
 }
