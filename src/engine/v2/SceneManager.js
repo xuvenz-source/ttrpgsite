@@ -43,7 +43,8 @@ export function createSceneManager({
   stale=true;
   // Keep the static visual map to avoid black flashes, but revoke any
   // interpretation of this scene as current movement/vision authority.
-  collision=null;spatial=null;
+  // Keep the compiled object in memory as a cache while access remains
+  // disabled by the stale getter. A reconnect to the SAME revision reuses it.
   call(onInvalidate,{reason,mapId:currentMap,viewerId:currentViewer,
    requiredGeneration});
   return true;
@@ -124,6 +125,13 @@ export function createSceneManager({
    return invalidate('published',event.sceneGeneration);
   },
   invalidate,
+  revokeAuthorization(){
+   if(disposed)return;
+   epoch++;manifest=null;collision=null;spatial=null;stale=true;
+   requiredGeneration=0;
+   call(onInvalidate,{reason:'authorization-revoked',mapId:currentMap,
+    viewerId:currentViewer,requiredGeneration:0});
+  },
   changeContext({mapId:nextMap,viewerId:nextViewer}={}){
    if(disposed||!isUuid(nextMap)||!isUuid(nextViewer))return false;
    if(currentMap===nextMap&&currentViewer===nextViewer)return true;
