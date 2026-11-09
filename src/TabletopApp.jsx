@@ -58,6 +58,7 @@ import {movementTopic,canSendMovementPreview,applyAuthoritativeTokenMotion,
  reconcileTokenSnapshot,isPositionOnlyTokenEvent,isOlderTokenSnapshot} from './LiveTokenMovement.js';
 import {movementPathDeltas} from './MapMovementPath.js';
 import {createLatestOnlyPreviewQueue} from './ObserverPreviewQueue.js';
+import {createBufferedObserverPathQueue} from './BufferedObserverPathQueue.js';
 import {createAuthorizedMotionTransport} from './AuthorizedMotionTransport.js';
 import {createAuthorizedNavigation} from './AuthorizedNavigation.js';
 import {planAuthorizedGridRoute} from './AuthorizedMovementPlanner.js';
@@ -182,6 +183,7 @@ export default function TabletopApp(){
   remotePositionSettler=useRef(null);
  const lastPreviewFogRefresh=useRef(0),latestPartyFogRefresh=useRef(null),
   latestOwnFogRefresh=useRef(null),movementPreviewQueue=useRef(null),
+  movementPathPreviewQueue=useRef(null),
   movementSessionTransport=useRef(null),activeGroupPreview=useRef(null),
   groupPreviewGeneration=useRef(0);
  const registerRemoteMotion=useCallback(instance=>{remoteMotion.current=instance},[]);
@@ -1156,9 +1158,19 @@ export default function TabletopApp(){
    onError:(_,error)=>console.warn('Secure movement preview unavailable',error)
   });
   movementPreviewQueue.current=queue;
+  const pathQueue=createBufferedObserverPathQueue({
+   send:packet=>transport.send(packet),
+   onError:(_,error)=>{
+    movementDiagnostics.count('validatedObserverPathRejected');
+    console.warn('Authorized observer route unavailable',error);
+   }
+  });
+  movementPathPreviewQueue.current=pathQueue;
   return()=>{
    if(movementPreviewQueue.current===queue)movementPreviewQueue.current=null;
-   queue.dispose();
+   if(movementPathPreviewQueue.current===pathQueue)
+    movementPathPreviewQueue.current=null;
+   pathQueue.dispose();queue.dispose();
    if(movementSessionTransport.current===transport)movementSessionTransport.current=null;
    transport.dispose();
   };
@@ -1289,13 +1301,15 @@ export default function TabletopApp(){
   // A final/cancelled gesture must revoke temporary fog sight even when
   // nothing changed in persisted map_tokens (and thus no tick was emitted).
   const queue=movementPreviewQueue.current;
+  const pathQueue=movementPathPreviewQueue.current;
   const keys=[...tokenIds,...issueIds.map(id=>'tool:'+id)];
   const group=activeGroupPreview.current;
   if(group?.mapId===mapId&&keys.some(key=>group.keys.has(key)))
    activeGroupPreview.current=null;
   // A preview RPC already in flight could otherwise finish AFTER cleanup
   // and resurrect the stale observer position / temporary fog sight.
-  void Promise.all(keys.map(key=>queue?.cancel(key)))
+  void Promise.all(keys.flatMap(key=>[
+   queue?.cancel(key),pathQueue?.cancel(key)]))
    .then(()=>movementSessionTransport.current?.end(mapId,tokenIds,issueIds))
    .then(()=>{
    }).catch(error=>console.warn('Movement preview cleanup failed',error))
@@ -1304,7 +1318,7 @@ export default function TabletopApp(){
      void fog.refresh(true);
    });
  }
- function sendLiveMovement(token,x,y,final=false,cancelled=false){
+ function sendLiveMovement(token,x,y,final=false,cancelled=false,verifiedSegment=null){
   if(final&&cancelled){
    clearMapMovementPreview(selectedMap,[token.id],[]);
    return;
@@ -1313,6 +1327,19 @@ export default function TabletopApp(){
   if(final||!fog.frame||fog.frame.mapId!==selectedMap)return;
   if(!canSendMovementPreview(token,user,selectedMap,isDM)||
     !Number.isSafeInteger(x)||!Number.isSafeInteger(y))return;
+  if(isDM&&Array.isArray(verifiedSegment)&&verifiedSegment.length===2){
+   const now=Date.now(),seq=nextMotionSequence(now,liveMovementSeq.current);
+   if(seq===null)return;
+   liveMovementSeq.current=seq;
+   const packet={kind:'token',params:{
+    p_map:selectedMap,p_kind:'token',p_piece:token.id,p_x:x,p_y:y,
+    p_seq:seq,p_ignore_collision:mapSettingEditor.ignoreCollision===true
+   }};
+   if(!movementPathPreviewQueue.current?.enqueue(
+    token.id,packet,verifiedSegment[0],verifiedSegment[1]))
+    movementDiagnostics.count('validatedObserverPathBackpressure');
+   return;
+  }
   const now=Date.now(),last=lastMovementPreview.current.get(token.id)||0;
   if(now-last<OBSERVER_PREVIEW_INTERVAL_MS)return;
   const seq=nextMotionSequence(now,liveMovementSeq.current);
@@ -1324,7 +1351,7 @@ export default function TabletopApp(){
    p_seq:seq,p_ignore_collision:isDM&&mapSettingEditor.ignoreCollision===true
   }});
  }
- function sendLiveToolMovement(placement,x,y,final=false,cancelled=false){
+ function sendLiveToolMovement(placement,x,y,final=false,cancelled=false,verifiedSegment=null){
   if(final&&cancelled){
    clearMapMovementPreview(selectedMap,[],[placement.issue_id]);
    return;
@@ -1334,6 +1361,19 @@ export default function TabletopApp(){
   if(!canSendToolMovementPreview(issue,user,isDM,selectedMap)||
     !Number.isSafeInteger(x)||!Number.isSafeInteger(y))return;
   const id=placement.issue_id,now=Date.now(),key='tool:'+id;
+  if(isDM&&Array.isArray(verifiedSegment)&&verifiedSegment.length===2){
+   const seq=nextMotionSequence(now,liveMovementSeq.current);
+   if(seq===null)return;
+   liveMovementSeq.current=seq;
+   const packet={kind:'tool',params:{
+    p_map:selectedMap,p_kind:'tool',p_piece:id,p_x:x,p_y:y,
+    p_seq:seq,p_ignore_collision:mapSettingEditor.ignoreCollision===true
+   }};
+   if(!movementPathPreviewQueue.current?.enqueue(
+    key,packet,verifiedSegment[0],verifiedSegment[1]))
+    movementDiagnostics.count('validatedObserverPathBackpressure');
+   return;
+  }
   const last=lastMovementPreview.current.get(key)||0;
   if(now-last<OBSERVER_PREVIEW_INTERVAL_MS)return;
   const seq=nextMotionSequence(now,liveMovementSeq.current);
