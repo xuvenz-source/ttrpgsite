@@ -50,7 +50,21 @@ function SpriteContent({piece,token,tool,issued,selected,isDM,user,
  const effects=normalizedEffects(token.status_effects);
  const dead=effects.some(item=>item.id==='dead');
  const canEdit=isDM||token.owner_id===user;
- return <>
+ return <div className="world-v2-token-content"
+  style={{position:'relative',width:'100%',height:'100%',pointerEvents:'auto'}}
+  onDoubleClick={e=>{
+   if(e.altKey&&!preview&&canEdit){
+    e.preventDefault();e.stopPropagation();onTokenEdit?.(token);
+   }
+  }}
+  onClick={e=>{
+   if(preview)return;
+   if(e.shiftKey&&!e.ctrlKey&&!e.altKey){
+    e.preventDefault();e.stopPropagation();onTokenStatus?.(token);
+   }else if(e.ctrlKey&&!e.altKey&&canEdit){
+    e.preventDefault();e.stopPropagation();onTokenQuick?.(token);
+   }
+  }}>
   {token.image_path?<Artwork db={db} path={token.image_path}
    alt={token.name} className="token-art" loading="eager"/>:
    <span className="token-placeholder">{String(token.name||'?').slice(0,2).toUpperCase()}</span>}
@@ -66,9 +80,7 @@ function SpriteContent({piece,token,tool,issued,selected,isDM,user,
    onPointerDown={e=>onResize(e,token)}>
    <span aria-hidden="true">↘</span>
   </div>}
-  <span className="world-v2-token-commands"
-   style={{position:'absolute',inset:0,pointerEvents:'none'}} aria-hidden="true"/>
- </>;
+ </div>;
 }
 export default function WorldV2Board(props){
  const {
@@ -444,6 +456,9 @@ export default function WorldV2Board(props){
    setPanning(true);event.preventDefault();
    event.currentTarget.setPointerCapture?.(event.pointerId);return;
   }
+  if(activeMeasure&&(event.button===0||event.button===2)){
+   startMeasure(event,activeMeasure);return;
+  }
   if(event.button!==0||activeMeasure||environmentEditor?.enabled||
    previewRequested||event.target.closest?.(
     '[data-world-id],.map-handout-pin,.map-measure-tool,.map-editor-svg'))
@@ -555,12 +570,12 @@ export default function WorldV2Board(props){
    }
    if(event.key!=='Delete'||!isDM||event.repeat)return;
    if(environmentEditor?.enabled){
-    if(environmentEditor.lockTokens!==false)return;
-    if(environmentEditor.selectedId){
+    if(environmentEditor.selectedId&&!environmentEditor.lockLight){
      onDeleteEnvironmentObject?.(environmentEditor.selectedIds?.length?
       environmentEditor.selectedIds:[environmentEditor.selectedId]);
      event.preventDefault();return;
     }
+    if(environmentEditor.lockTokens!==false)return;
    }
    const tools=selectedRef.current.tools;
    if(tools.length){
@@ -654,7 +669,8 @@ export default function WorldV2Board(props){
      style={{width:map.width*scale,height:map.height*scale,
       position:'relative'}}
      onDragOver={e=>{
-      if(e.dataTransfer.types.some(t=>t.startsWith('application/x-forge-')))
+      if(Array.from(e.dataTransfer?.types||[]).some(t=>
+       t.startsWith('application/x-forge-')))
        e.preventDefault();
      }}
      onDrop={onDrop}
