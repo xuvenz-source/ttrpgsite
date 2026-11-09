@@ -59,11 +59,13 @@ const defaults=host=>piece=>{
 export function createWorldRenderer({
  mapId,viewerId,surfaces,createSpriteElement=null,
  requestFrame, cancelFrame,onError=noop,onNeedResync=noop,
+ onRemoveSprite=noop,
  playerPreview=false,pixelsPerCell=8,reducedMotion=false
 }={}){
  if(!validId(mapId)||!validId(viewerId)||!validSurfaces(surfaces)||
   createSpriteElement!==null&&typeof createSpriteElement!=='function'||
   typeof onError!=='function'||typeof onNeedResync!=='function'||
+  typeof onRemoveSprite!=='function'||
   typeof playerPreview!=='boolean'||typeof reducedMotion!=='boolean'||
   !Number.isSafeInteger(pixelsPerCell)||pixelsPerCell<2||pixelsPerCell>16)
   throw Error('Invalid V2 WorldRenderer configuration');
@@ -99,6 +101,8 @@ export function createWorldRenderer({
   else if(entry.node?.parentNode?.removeChild)
    entry.node.parentNode.removeChild(entry.node);
   stats.spriteRemoves++;
+  safe(onRemoveSprite,{kind:id.split(':')[0],id:id.split(':')[1],
+   node:entry.node});
  }
  function clearSprites(){
   for(const id of [...sprites.keys()])removeSprite(id);
