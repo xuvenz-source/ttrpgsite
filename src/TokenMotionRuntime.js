@@ -102,7 +102,7 @@ export function createTokenMotionRuntime({
  // Collapse only consecutive, same-direction VERIFIED cells into one
  // compositor segment. Never connect two bends with a wall-cutting chord.
  function nextVerifiedRun(points,from){
-  if(from+1>=points.length)return from;
+  if(from+1>=points.length)return points.length;
   let last=from+1;
   const dx=points[last].x-points[from].x;
   const dy=points[last].y-points[from].y;
