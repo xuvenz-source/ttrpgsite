@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "7fb2c04fe4ca85721e08772e936265a649784bda",
-  "releaseBranch": "stage/world-v2-live-regression-integrated-2026-11-10",
+  "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
+  "releaseBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
