@@ -242,3 +242,161 @@ BEGIN
 END $$;
 
 SELECT 'world-engine-v2-visibility-contract-passed' AS result;
+
+
+-- A DM-moving player token must change the PLAYER'S authorized sight,
+-- not just the DM's local view. Carrying a torch follows the moving token
+-- even before the final canonical write, without trusting client previews.
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000003';
+DO $$
+DECLARE s uuid;ack jsonb;
+BEGIN
+ s:=(public.begin_world_motion_v2(
+  '10000000-0000-4000-8000-000000000001',
+  '[{"kind":"token","id":"40000000-0000-4000-8000-000000000001"}]',
+  '{"x":3,"y":4}','drag',9,4)->>'sessionId')::uuid;
+ IF s IS NULL THEN RAISE EXCEPTION 'DM could not move player token';END IF;
+ ack:=public.advance_world_motion_v2(s,1,'{"x":3,"y":4}',
+  '[{"x":3,"y":5}]',9,4);
+ IF ack->>'blocked'<>'false' THEN
+  RAISE EXCEPTION 'DM authorized movement denied: %',ack;END IF;
+ -- Keep session pending for an independent player-user snapshot below.
+END $$;
+RESET ROLE;
+DO $$
+DECLARE scene jsonb;lights jsonb;
+BEGIN
+ SELECT e.live INTO scene FROM public.map_environments e
+ WHERE e.map_id='10000000-0000-4000-8000-000000000001';
+ lights:=forge_world_v2.light_sources_v2(
+  '10000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000001',scene);
+ IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(lights) l
+  WHERE (l->>'x')::numeric=3.5 AND (l->>'y')::numeric=5.5
+    AND (l->>'reach')::numeric=4)
+ THEN RAISE EXCEPTION 'Carried torch did not follow DM-approved token: %',
+  lights;END IF;
+END $$;
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000001';
+DO $$
+DECLARE f jsonb;
+BEGIN
+ f:=public.get_world_visibility_v2(
+  '10000000-0000-4000-8000-000000000001');
+ IF f->>'visionEpoch'<>'2' OR NOT EXISTS(
+  SELECT 1 FROM jsonb_array_elements(f->'visiblePieces') p
+   WHERE p->>'id'='40000000-0000-4000-8000-000000000001'
+    AND p->>'x'='3' AND p->>'y'='5')
+ THEN RAISE EXCEPTION 'Player missed DM moving their vision token: %',f;END IF;
+END $$;
+RESET ROLE;
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000003';
+DO $$
+DECLARE session_id uuid;ack jsonb;
+BEGIN
+ SELECT s.id INTO session_id FROM forge_world_v2.motion_sessions s
+ WHERE s.actor_id='30000000-0000-4000-8000-000000000003'
+ AND s.status='active'
+ ORDER BY s.created_at DESC LIMIT 1;
+ -- No direct client access to sessions; verify final persistence as owner
+ -- through its original server-issued commit.
+ IF session_id IS NULL THEN
+  RAISE EXCEPTION 'DM session disappeared before commit';END IF;
+ ack:=public.commit_world_motion_v2(session_id,2,'{"x":3,"y":5}',9,4);
+ IF ack->'endpoint'<>'{"x":3,"y":5}'::jsonb
+ THEN RAISE EXCEPTION 'DM final commit failed: %',ack;END IF;
+END $$;
+RESET ROLE;
+DO $$
+BEGIN
+ IF (SELECT count(*) FROM realtime.messages
+ WHERE event='world-vision-v2')<>2
+ THEN RAISE EXCEPTION 'DM movement must signal owner but not other map';END IF;
+ IF EXISTS(SELECT 1 FROM realtime.messages m
+ WHERE m.event='world-vision-v2' AND
+ m.payload->>'viewerId'='30000000-0000-4000-8000-000000000002')
+ THEN RAISE EXCEPTION 'Out-of-map viewer was signalled';END IF;
+END $$;
+
+-- Party-shared sight unions allowed player SOURCES, not raw wall data.
+-- A teammate standing beyond the wall reveals that side to the party.
+UPDATE public.campaign_player_maps SET
+ map_id='10000000-0000-4000-8000-000000000001'
+WHERE user_id='30000000-0000-4000-8000-000000000002';
+INSERT INTO public.map_tokens(
+ id,campaign_id,map_id,owner_id,x,y,visible,span_x,span_y
+) VALUES(
+ '40000000-0000-4000-8000-00000000000a',
+ '20000000-0000-4000-8000-000000000001',
+ '10000000-0000-4000-8000-000000000001',
+ '30000000-0000-4000-8000-000000000002',
+ 8,8,true,1,1
+);
+UPDATE public.map_environments SET live=jsonb_set(
+ live,'{fog,partyShared}','true'::jsonb),
+ revision=revision+1
+WHERE map_id='10000000-0000-4000-8000-000000000001';
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000001';
+DO $$
+DECLARE f jsonb;
+BEGIN
+ f:=public.get_world_visibility_v2(
+  '10000000-0000-4000-8000-000000000001');
+ IF f->>'partyShared'<>'true' OR
+ NOT (f->'visible' @> '[88]'::jsonb) OR
+ NOT (f->'explored' @> '[88]'::jsonb)
+ THEN RAISE EXCEPTION 'Shared teammate source did not reveal own side: %',f;
+ END IF;
+END $$;
+RESET ROLE;
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000002';
+DO $$
+DECLARE f jsonb;
+BEGIN
+ f:=public.get_world_visibility_v2(
+  '10000000-0000-4000-8000-000000000001');
+ IF f->>'partyShared'<>'true' OR NOT
+  (f->'visible' @> '[88]'::jsonb)
+ THEN RAISE EXCEPTION 'Teammate cannot receive own shared sight: %',f;
+ END IF;
+END $$;
+RESET ROLE;
+
+-- Tool configuration edits invalidate ONLY affected viewer fog, without
+-- republishing static map geometry or sending any torch coordinates.
+UPDATE public.campaign_tool_map_tokens SET light_enabled=false
+ WHERE issue_id='50000000-0000-4000-8000-000000000001';
+DO $$
+DECLARE before integer;
+BEGIN
+ SELECT count(*) INTO before FROM realtime.messages
+ WHERE event='world-vision-v2';
+ IF before<4 THEN
+  RAISE EXCEPTION 'Dynamic torch edit failed to refresh entitled viewers';
+ END IF;
+ IF EXISTS(SELECT 1 FROM realtime.messages m
+  WHERE m.event='world-vision-v2' AND (
+   m.payload ? 'x' OR m.payload ? 'y' OR m.payload ? 'light' OR
+   m.payload::text LIKE '%secret-light%'))
+ THEN RAISE EXCEPTION 'Torch edit disclosed a private light location';END IF;
+ IF (SELECT revision FROM public.map_environments
+ WHERE map_id='10000000-0000-4000-8000-000000000001')<>10
+ THEN RAISE EXCEPTION 'Torch change republished fixed map';END IF;
+END $$;
+DO $$
+DECLARE body text;
+BEGIN
+ SELECT pg_get_functiondef(
+ 'forge_world_v2.observer_path_status(
+ forge_world_v2.motion_sessions,uuid,text,uuid,jsonb,jsonb,integer,integer,integer
+ )'::regprocedure) INTO body;
+ IF position('forge_world_v2.observer_verified_path_v2' IN body)=0 OR
+ position('forge_visibility.observer_verified_path_status' IN body)>0
+ THEN RAISE EXCEPTION 'Phase 5 observer still depends on legacy fog';END IF;
+END $$;
+SELECT 'world-engine-v2-extended-visibility-contract-passed' AS result;
