@@ -25,3 +25,9 @@ export {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
 export {createSceneManager,fetchWorldSceneV2} from './SceneManager.js';
 export {createSceneTransport,worldSceneTopic,WORLD_SCENE_EVENT}
  from './SceneTransport.js';
+
+export {normalizeWorldVisibilityFrame,makeWorldFogMask,
+ diffWorldFogMasks,diffWorldVisiblePieces,fogEdgeWeight}
+ from './VisibilityFrame.js';
+export {createVisibilityController,WORLD_VISION_EVENT}
+ from './VisibilityController.js';
