@@ -247,3 +247,20 @@ test('late disconnected response cannot resurrect another map viewer',async()=>{
  assert.equal(next.mapId,otherMap);
  ctl.dispose();
 });
+
+
+test('large unfogged maps retain rosters without huge fog bitmap allocation',()=>{
+ const large=frame({
+  enabled:false,width:5000,height:4000,
+  visible:[],explored:[],visiblePieces:[
+   {...hero,x:4000,y:3000},{...torch,x:4999,y:3999}
+  ]
+ });
+ const normalized=normalizeWorldVisibilityFrame(large,mapId,viewerId);
+ assert.ok(normalized);
+ assert.equal(normalized.visiblePieces.length,2);
+ assert.equal(makeWorldFogMask(normalized),null);
+ assert.equal(normalizeWorldVisibilityFrame({
+  ...large,enabled:true
+ },mapId,viewerId),null,'automatic fog is bounded to 128 cells per axis');
+});
