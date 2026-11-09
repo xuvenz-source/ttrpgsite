@@ -162,6 +162,28 @@ INSERT INTO fixture_revocation_session(session_id)
  SELECT (public.begin_world_motion_v2('10000000-0000-4000-8000-000000000001',
  '[{"kind":"token","id":"40000000-0000-4000-8000-000000000001"}]',
  '{"x":2,"y":1}','drag',7,3)->>'sessionId')::uuid;
+DO $
+DECLARE s uuid;r jsonb;
+BEGIN
+ SELECT session_id INTO s FROM fixture_revocation_session;
+ r:=public.advance_world_motion_v2(s,1,'{"x":2,"y":1}',
+ '[{"x":2,"y":2}]',7,3);
+ IF r->>'blocked'<>'false' THEN
+  RAISE EXCEPTION 'pre-revocation step rejected: %',r;END IF;
+END $;
+RESET ROLE;
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000002';
+DO $
+DECLARE s uuid;
+BEGIN
+ SELECT session_id INTO s FROM fixture_revocation_session;
+ IF public.advance_world_motion_v2(s,1,'{"x":2,"y":1}',
+  '[{"x":2,"y":2}]',7,3) IS NOT NULL
+ THEN RAISE EXCEPTION 'foreign actor replay was accepted';END IF;
+ IF public.cancel_world_motion_v2(s)
+ THEN RAISE EXCEPTION 'foreign actor cancelled another session';END IF;
+END $;
 RESET ROLE;
 UPDATE forge_visibility.navigation_permission_generations SET generation=4;
 SET ROLE authenticated;
@@ -172,6 +194,9 @@ BEGIN
  SELECT session_id INTO s FROM fixture_revocation_session;
  IF public.advance_world_motion_v2(s,1,'{"x":2,"y":1}',
  '[{"x":2,"y":2}]',7,3) IS NOT NULL THEN
+  RAISE EXCEPTION 'revoked actor replay returned stale accepted route';END IF;
+ IF public.advance_world_motion_v2(s,2,'{"x":2,"y":2}',
+ '[{"x":2,"y":3}]',7,3) IS NOT NULL THEN
   RAISE EXCEPTION 'revoked navigation permission accepted';END IF;
 END $$;
 RESET ROLE;
