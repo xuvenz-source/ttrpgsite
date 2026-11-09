@@ -53,8 +53,12 @@ export default function Board({db,map,url,tokens,user,isDM,move,moveGroup,remove
   let callback=spriteRefs.current.get(id);
   if(!callback){
    callback=node=>{
-    if(node)spriteNodes.current.set(id,node);
+    if(node){
+     if(!spriteNodes.current.has(id))movementDiagnostics.count('token-sprite-mounted');
+     spriteNodes.current.set(id,node);
+    }
     else{
+     if(spriteNodes.current.has(id))movementDiagnostics.count('token-sprite-detached');
      spriteNodes.current.delete(id);
      motion.current?.bind(id,'sprite',null);
     }
