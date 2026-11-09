@@ -303,7 +303,11 @@ export function createWorldRenderer({
     next.sceneGeneration!==scene.sceneGeneration||
     next.cursor<latestSeq){
     stats.rejectedPackets++;
-    seal('invalid-or-stale-visibility');return false;
+    // A role/scope mismatch or malformed frame is a hard authorization
+    // revocation: erase the cached DM scene, guide pixels and map bitmap.
+    // A same-scope older cursor still cannot revive a hidden sprite.
+    seal('invalid-or-stale-visibility',{forgetScene:!next||!scoped});
+    return false;
    }
    if(visibility&&(
     next.environmentRevision<visibility.environmentRevision||
