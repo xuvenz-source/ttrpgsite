@@ -16,3 +16,5 @@ export {createWorldRealtimeTransport,worldObserverTopic,fetchWorldObserverCursor
  validWorldMotionFrame,
  validWorldObserverSnapshot,WORLD_MOTION_EVENT}
  from './RealtimeTransport.js';
+
+export {createObserverPathBuffer} from './ObserverPathBuffer.js';
