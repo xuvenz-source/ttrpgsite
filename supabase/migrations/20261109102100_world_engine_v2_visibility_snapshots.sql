@@ -30,7 +30,7 @@ BEGIN
   floor(m.height/m.grid_size)::integer
  INTO camp,grid,w,h FROM public.battle_maps m
  WHERE m.id=p_map AND m.grid_size>0;
- IF NOT FOUND OR w<1 OR h<1 OR w>128 OR h>128
+ IF NOT FOUND OR w<1 OR h<1 OR w>10000 OR h>10000
  THEN RETURN NULL;END IF;
  role_name:=forge_world_v2.viewer_on_map(camp,p_map,p_viewer);
  IF role_name IS NULL THEN RETURN NULL;END IF;
@@ -43,6 +43,9 @@ BEGIN
  FROM forge_visibility.map_rules r
  WHERE r.map_id=p_map AND r.campaign_id=camp;
  fog_enabled:=coalesce(fog_enabled,false);
+ -- Automatic fog has a 128x128-cell authoring limit. Without fog, preserve
+ -- large-map token rosters without generating a huge boolean fog texture.
+ IF fog_enabled AND (w>128 OR h>128) THEN RETURN NULL;END IF;
  IF fog_enabled AND (jsonb_typeof(env->'objects')<>'array'
   OR jsonb_array_length(env->'objects')>120) THEN RETURN NULL;END IF;
  shared:=coalesce((env->'fog'->>'partyShared')::boolean,false);
