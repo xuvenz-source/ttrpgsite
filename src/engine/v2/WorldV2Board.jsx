@@ -139,6 +139,12 @@ export default function WorldV2Board(props){
  },[]);
  const onRemoveSprite=useCallback(({kind,id})=>{
   roots.current.delete(kind+':'+id);
+  // A private concealment packet immediately detaches the native node.
+  // Also release its React portal on this event, not on a later roster poll.
+  setRoster(previous=>previous.some(piece=>
+   piece.kind===kind&&piece.id===id)?
+   previous.filter(piece=>!(piece.kind===kind&&piece.id===id)):
+   previous);
  },[]);
  // All sprite artwork belongs to ONE React tree via keyed portals.
  // WorldRenderer imperatively moves only their persistent container nodes.
@@ -195,7 +201,7 @@ export default function WorldV2Board(props){
    }
   }
  },[spriteContent,isDM,user]);
- const spritePortals=spriteContent.map(entry=>createPortal(
+ const spritePortals=useMemo(()=>spriteContent.map(entry=>createPortal(
   <SpriteContent piece={entry.piece} token={entry.token}
    tool={entry.tool} issued={entry.own} selected={entry.selected}
    isDM={isDM} user={user} preview={previewRequested}
@@ -209,7 +215,8 @@ export default function WorldV2Board(props){
    onTokenStatus={item=>latest.current.onTokenStatus?.(item)}
    onResize={startResize}/>,
   entry.node,idOf(entry.piece)
- ));
+ )),[spriteContent,monitorValues,encumbranceBadges,statusCatalog,
+  db,user,isDM,previewRequested]);
  function mapGridPoint(event){
   const rect=board.current?.getBoundingClientRect();
   if(!rect||!rect.width||!rect.height)return null;
