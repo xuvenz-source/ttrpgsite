@@ -101,3 +101,22 @@ test('the V2 stack keeps one moving light canvas under the authorized fog',async
  assert.match(runtime,/scheduleDmLightRefresh/);
  assert.match(runtime,/dm-approved-motion-light/);
 });
+
+test('fog-disabled maps, including large maps, clear light cosmetics without errors',()=>{
+ const surface=canvas(),scene={scope:'viewer',dimensions};
+ const lit=normalizeWorldVisibilityFrame(raw(),mapId,viewerId);
+ paintWorldMovingLightLayer({canvas:surface,scene,frame:lit});
+ const cleared=paintWorldMovingLightLayer({canvas:surface,scene,
+  frame:normalizeWorldVisibilityFrame(raw({
+   enabled:false,visible:[],explored:[],lightCells:[]
+  }),mapId,viewerId),previousFrame:lit});
+ assert.deepEqual(cleared,{ok:true,painted:0,full:true});
+ assert.equal(surface.width,1);
+ assert.equal(surface.height,1);
+ const huge=paintWorldMovingLightLayer({
+  canvas:surface,scene,frame:{scope:'viewer',enabled:false,
+   width:200,height:200,lightCells:[]}
+ });
+ assert.equal(huge.ok,true);
+ assert.equal(huge.painted,0);
+});
