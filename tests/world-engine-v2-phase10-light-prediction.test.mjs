@@ -98,3 +98,45 @@ test('malformed or excessively complex occlusion geometry never shows a full glo
  }));
  assert.equal(occludedLightFan(many,{x:2,y:3},2),null);
 });
+
+test('server-granted loose tools and mixed token/tool groups predict only safe fractions',()=>{
+ const toolId='50000000-0000-4000-8000-000000000001';
+ const tool={kind:'tool',id:toolId,x:3,y:2};
+ const frame=normalizeWorldVisibilityFrame(data({
+  visiblePieces:[hero,tool],
+  predictionGrants:[
+   {kind:'token',id:tokenId,x:2,y:2,quadrants:[[1,1]]},
+   {kind:'tool',id:toolId,x:3,y:2,quadrants:[[1,1]]}
+  ]
+ }),mapId,viewerId);
+ assert.ok(frame);
+ assert.equal(canPredictWithinWorldGrants({
+  frame,scene,request:{
+   ...request({x:3.35,y:2.25}),
+   selection:[{kind:'tool',id:toolId}],from:{x:3,y:2}
+  }
+ }),true);
+ assert.equal(canPredictWithinWorldGrants({
+  frame,scene,request:{
+   ...request({x:2.35,y:2.25}),
+   selection:[{kind:'token',id:tokenId},{kind:'tool',id:toolId}]
+  }
+ }),true);
+ assert.equal(canPredictWithinWorldGrants({
+  frame,scene,request:{
+   ...request({x:2.35,y:2.25}),
+   selection:[{kind:'token',id:tokenId},
+    {kind:'tool',id:'50000000-0000-4000-8000-000000000002'}]
+  }
+ }),false);
+ assert.equal(canPredictWithinWorldGrants({
+  frame,scene,request:{
+   ...request({x:2.35,y:1.75}),
+   selection:[{kind:'token',id:tokenId},{kind:'tool',id:toolId}]
+  }
+ }),false);
+ assert.equal(normalizeWorldVisibilityFrame(data({
+  visiblePieces:[hero],
+  predictionGrants:[{kind:'tool',id:toolId,x:3,y:2,quadrants:[[1,1]]}]
+ }),mapId,viewerId),null);
+});
