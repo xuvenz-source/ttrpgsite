@@ -48,6 +48,36 @@ export function createConcealedMovementGate({db}){
    if(error)throw error;
    return !disposed&&data===true;
   },
+  async approveBatch(sessionId,targets,seq,origin={dx:0,dy:0}){
+   if(disposed||!UUID.test(String(sessionId))||!Array.isArray(targets)||
+      targets.length<1||targets.length>12||!Number.isSafeInteger(seq)||
+      seq<1||!Number.isSafeInteger(origin?.dx)||!Number.isSafeInteger(origin?.dy)||
+      targets.some(p=>!Number.isSafeInteger(p?.dx)||
+       !Number.isSafeInteger(p?.dy)||Math.abs(p.dx)>128||Math.abs(p.dy)>128))
+    throw Error('Invalid secure movement batch');
+   const {data,error}=await db.rpc('advance_authorized_navigation_gesture_batch',{
+    p_session:sessionId,p_targets:targets,p_seq:seq
+   });
+   if(error)throw error;
+   if(disposed)return null;
+   // This allowlist is intentionally stricter than the database response.
+   if(!data||data.version!==1||data.seq!==seq||
+      typeof data.blocked!=='boolean'||!Array.isArray(data.approved)||
+      data.approved.length>48||
+      Object.keys(data).some(k=>!['version','seq','blocked','approved'].includes(k)))
+    throw Error('Invalid secure movement acknowledgement');
+   let at=origin;
+   for(const point of data.approved){
+    if(!Number.isSafeInteger(point?.dx)||!Number.isSafeInteger(point?.dy)||
+       Object.keys(point).some(k=>!['dx','dy'].includes(k))||
+       Math.max(Math.abs(point.dx-at.dx),Math.abs(point.dy-at.dy))!==1)
+     throw Error('Invalid secure movement path');
+    at=point;
+   }
+   if(!data.blocked&&data.approved.length===0)
+    throw Error('Empty secure movement acknowledgement');
+   return {approved:data.approved,blocked:data.blocked};
+  },
   async end(sessionId){
    if(!UUID.test(String(sessionId)))return;
    const {error}=await db.rpc('end_authorized_navigation_gesture',{
