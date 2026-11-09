@@ -175,6 +175,11 @@ export function createWorldV2TabletopRuntime({
      x:event.approved.x,y:event.approved.y};
     void refreshVisibility('virtual-preview-step');
    }
+   if(event.type==='committed'&&dmPreview){
+    // End the local handoff against a fresh non-mutating player-effective
+    // snapshot; never ask the live movement database to commit preview.
+    void refreshVisibility('virtual-preview-final');
+   }
    if(event.type==='committed'&&!dmPreview){
     // Actor's final motion is acknowledged once by Phase 4. The renderer
     // holds its approved endpoint until this authorized snapshot arrives.
