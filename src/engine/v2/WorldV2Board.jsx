@@ -252,10 +252,8 @@ export default function WorldV2Board(props){
   if(keyboard&&typeof document!=='undefined'&&
    document.activeElement!==viewport.current&&
    !viewport.current?.contains(document.activeElement))return null;
-  // The viewer-effective DM preview is read-only until Phase 10 adds
-  // isolated token-origin vision overrides. Never move a real player's
-  // token or reveal preview positions through another user's sight RPC.
-  if(previewRequested)return null;
+  // Preview gestures are virtual; only this player's token may move.
+  if(previewRequested&&!dmPreview)return null;
   if(!active||activeMeasure||
    environmentEditor?.enabled&&environmentEditor.lockTokens!==false)
    return null;
@@ -276,7 +274,8 @@ export default function WorldV2Board(props){
   const movable=picked.kind==='token'?
    Boolean(t&&canControlMapToken(t,user,isDM,map.id)):
    Boolean(p&&!p.held_by_token_id&&toolCanControl(own,user,isDM));
-  if(!movable)return null;
+  if(!movable||dmPreview&&(
+   picked.kind!=='token'||picked.id!==previewToken?.id))return null;
   if(!keyboard){
    const prev=selectedRef.current;
    if(event.shiftKey){
@@ -316,7 +315,10 @@ export default function WorldV2Board(props){
   if(!keyboard)setSelection(selection.filter(p=>p.kind==='token').map(p=>p.id),
    selection.filter(p=>p.kind==='tool').map(p=>p.id));
   const row=picked.kind==='token'?t:p;
-  const origin={x:Number(row.x),y:Number(row.y)};
+  const virtual=dmPreview?runtimeRef.current?.previewPosition:null;
+  const origin=virtual&&virtual.tokenId===picked.id?
+   {x:virtual.x,y:virtual.y}:
+   {x:Number(row.x),y:Number(row.y)};
   if(!Number.isSafeInteger(origin.x)||!Number.isSafeInteger(origin.y))
    return null;
   if(!keyboard)viewport.current?.focus?.({preventScroll:true});
@@ -436,12 +438,31 @@ export default function WorldV2Board(props){
  },[rosterMetadata,map.id]);
  useEffect(()=>{
   if(!registerPreviewStep)return;
-  // DM preview uses the player-effective server frame but does not yet
-  // authorize an independent, per-preview moving sight source. Fail closed.
-  const noPreviewMovement=()=>false;
-  registerPreviewStep(noPreviewMovement);
+  const moveVirtual=(dx,dy)=>{
+   const runtime=runtimeRef.current,token=previewToken;
+   if(!dmPreview||!runtime?.active||runtime.movement.active||
+    !token||![dx,dy].every(Number.isSafeInteger)||
+    Math.abs(dx)+Math.abs(dy)!==1)return false;
+   const current=runtime.previewPosition||
+    runtime.visibility.visiblePieces.find(p=>
+     p.kind==='token'&&p.id===token.id);
+   const frame=runtime.visibility.frame,scene=runtime.sceneManager.displayedScene;
+   if(!current||!frame||!scene)return false;
+   const origin={x:current.x,y:current.y};
+   const to={x:origin.x+dx,y:origin.y+dy};
+   if(!runtime.movement.beginGesture({
+    mapId:map.id,selection:[{kind:'token',id:token.id}],
+    origin,pointer:origin,mode:'preview',
+    environmentRevision:scene.revision,
+    permissionGeneration:frame.permissionGeneration
+   }))return false;
+   runtime.movement.updateGesture(to);
+   void runtime.movement.endGesture(to);
+   return true;
+  };
+  registerPreviewStep(moveVirtual);
   return()=>registerPreviewStep(null);
- },[registerPreviewStep,map.id,dmPreview]);
+ },[registerPreviewStep,map.id,dmPreview,previewToken?.id]);
  function startResize(event,token){
   if(!isDM||previewRequested||event.button!==0)return;
   event.preventDefault();event.stopPropagation();
@@ -658,12 +679,12 @@ export default function WorldV2Board(props){
    onMove={onMoveHandoutPin} onRead={onReadHandoutPin}
    onCollect={onCollectHandoutPin} onDelete={onDeleteHandoutPin}
    onSelect={onSelectHandoutPin}/>
-  {isDM&&environment&&<MapEnvironmentOverlay
+  {isDM&&!dmPreview&&environment&&<MapEnvironmentOverlay
    map={map} scale={1} objects={environment.objects}
    editor={editor} onAdd={onAddEnvironmentObject}
    onSelect={onSelectEnvironmentObject}
    onPatch={onPatchEnvironmentObject}/>}
-  {isDM&&editor?.enabled&&editor?.selectedId&&
+  {isDM&&!dmPreview&&editor?.enabled&&editor?.selectedId&&
    <MapObjectQuickAdjust map={map} scale={1}
     object={environment?.objects?.find(o=>o.id===editor.selectedId)}
     template={props.template} onPatch={onPatchEnvironmentObject}
@@ -700,8 +721,7 @@ export default function WorldV2Board(props){
     onMeasurementPreview?.(null,'clear')}}/>
   {issue&&<div role="alert" className="world-v2-engine-error">{issue}</div>}
   {dmPreview&&<div role="status" className="world-v2-preview-note">
-   DM player preview is read-only in this staged build. Token-based vision
-   simulation requires the isolated preview movement source in Phase 10.
+   DM preview movement is simulated. Player positions and explored fog are not saved.
   </div>}
   <div ref={viewport}
    className={'mapscroll map-pan-region'+(panning?' is-panning':'')}
