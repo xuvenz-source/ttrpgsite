@@ -157,8 +157,8 @@ export default function useAuthorizedMapFog({db,campaignId,mapId,userId,isDM=fal
        pendingTick.current))return;
      ++request.current;coordinator.invalidate(key);
      validated.current=safe;pendingTick.current=null;
-     movementDiagnostics.count('fog-verified-delta-adopted');
      setFrame(previous=>retainFogSnapshot(previous,safe));
+     movementDiagnostics.count('fog-verified-delta-adopted');
      setPublished(previous=>previous?.fog===safe.enabled&&
       previous?.collision===safe.collisionEnabled?previous:{
        fog:safe.enabled,collision:safe.collisionEnabled===true
