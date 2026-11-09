@@ -74,6 +74,11 @@ BEGIN
  IF s.collision_enforced AND NOT s.ignore_collision AND
     (jsonb_typeof(s.scene->'objects')<>'array' OR
      jsonb_array_length(s.scene->'objects')>120) THEN RETURN false;END IF;
+ IF jsonb_typeof(p_path->0->'x')<>'number' OR
+    jsonb_typeof(p_path->0->'y')<>'number' OR
+    (p_path->0->>'x')::numeric IS DISTINCT FROM s.last_x OR
+    (p_path->0->>'y')::numeric IS DISTINCT FROM s.last_y
+ THEN RETURN false;END IF;
  x:=s.last_x;y:=s.last_y;
  approved:=jsonb_build_array(jsonb_build_object('x',x,'y',y));
  FOR piece IN SELECT value FROM jsonb_array_elements(p_path) LOOP
