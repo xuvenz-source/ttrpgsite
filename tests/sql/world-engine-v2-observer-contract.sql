@@ -219,6 +219,49 @@ BEGIN
  THEN RAISE EXCEPTION 'concealed trajectory disclosed: %',frame;END IF;
 END $$;
 
+-- One mixed token/tool group sends one bounded frame per recipient, not
+-- separate messages for every member or each intermediate grid step.
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000001';
+DO $$
+DECLARE session uuid;result jsonb;
+BEGIN
+ session:=(public.begin_world_motion_v2(
+  '10000000-0000-4000-8000-000000000001',
+  '[{"kind":"token","id":"40000000-0000-4000-8000-000000000001"},
+    {"kind":"tool","id":"50000000-0000-4000-8000-000000000001"}]',
+  '{"x":2,"y":3}','drag',7,4)->>'sessionId')::uuid;
+ IF session IS NULL THEN RAISE EXCEPTION 'Phase 5 mixed group begin denied';END IF;
+ result:=public.advance_world_motion_v2(
+  session,1,'{"x":2,"y":3}','[{"x":2,"y":4}]',7,4);
+ IF result->>'blocked'<>'false' OR
+   jsonb_array_length(result->'accepted')<>1
+ THEN RAISE EXCEPTION 'Phase 5 group movement invalid: %',result;END IF;
+ result:=public.commit_world_motion_v2(session,2,'{"x":2,"y":4}',7,4);
+ IF result->'endpoint'<>'{"x":2,"y":4}'::jsonb
+ THEN RAISE EXCEPTION 'Phase 5 group did not commit atomically: %',result;END IF;
+END $$;
+RESET ROLE;
+DO $$
+DECLARE newest jsonb;
+BEGIN
+ IF (SELECT count(*) FROM realtime.messages)<>6
+ THEN RAISE EXCEPTION 'Mixed group did not produce exactly two recipient frames';END IF;
+ SELECT payload INTO newest FROM realtime.messages WHERE
+ topic='forge-world-v2:10000000-0000-4000-8000-000000000001:30000000-0000-4000-8000-000000000002'
+ ORDER BY id DESC LIMIT 1;
+ IF newest->>'seq'<>'3' OR
+  jsonb_array_length(newest->'items')<>2 OR
+  newest->'items'->0->>'action'<>'path' OR
+  newest->'items'->1->>'action'<>'path'
+ THEN RAISE EXCEPTION 'Group path packing/sequence failed: %',newest;END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.map_tokens
+   WHERE id='40000000-0000-4000-8000-000000000001' AND x=2 AND y=4)
+ OR NOT EXISTS(SELECT 1 FROM public.campaign_tool_issues
+   WHERE id='50000000-0000-4000-8000-000000000001' AND x=1 AND y=7)
+ THEN RAISE EXCEPTION 'Group canonical commit did not preserve offsets';END IF;
+END $$;
+
 -- A map assignment change must immediately bar a listener from a topic
 -- even if the WebSocket previously subscribed successfully.
 INSERT INTO public.battle_maps(id,campaign_id,width,height,grid_size)
