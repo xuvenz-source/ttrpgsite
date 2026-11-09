@@ -6,8 +6,10 @@ BEGIN
   'public.get_world_visibility_v2(uuid)','EXECUTE') OR
   has_function_privilege('anon',
    'public.preview_world_visibility_v2(uuid,uuid)','EXECUTE') OR
+   has_function_privilege('anon',
+    'public.preview_world_visibility_at_v2(uuid,uuid,uuid,integer,integer)','EXECUTE') OR
   has_function_privilege('authenticated',
-   'forge_world_v2.visibility_frame_v2(uuid,uuid,boolean)','EXECUTE') OR
+   'forge_world_v2.visibility_frame_v2(uuid,uuid,boolean,uuid,integer,integer)','EXECUTE') OR
   has_table_privilege('authenticated','forge_world_v2.vision_epochs','SELECT') OR
   has_table_privilege('authenticated','forge_visibility.exploration','SELECT')
  THEN RAISE EXCEPTION 'Phase 7 sight secrets or helper privileges exposed';END IF;
@@ -95,6 +97,49 @@ DO $$
 BEGIN
  IF EXISTS(SELECT 1 FROM forge_visibility.exploration)
  THEN RAISE EXCEPTION 'DM preview wrote player explored history';END IF;
+END $$;
+
+-- Virtual preview must move only the selected player's view: no real
+-- token updates, exploration writes, hidden scene data or auth escalation.
+SET ROLE authenticated;
+SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000003';
+DO $$
+DECLARE original jsonb;after jsonb;position jsonb;
+BEGIN
+ original:=public.preview_world_visibility_v2(
+  '10000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000001');
+ after:=public.preview_world_visibility_at_v2(
+  '10000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000001',3,4);
+ IF after IS NULL OR after->>'viewerId'<>
+   '30000000-0000-4000-8000-000000000001' OR
+   NOT EXISTS(SELECT 1 FROM jsonb_array_elements(after->'visiblePieces') p
+    WHERE p->>'id'='40000000-0000-4000-8000-000000000001'
+     AND p->>'x'='3' AND p->>'y'='4') OR
+   original->'visiblePieces'=after->'visiblePieces' OR
+   after::text LIKE '%secret-wall%' OR after::text LIKE '%secret-light%'
+ THEN RAISE EXCEPTION 'Virtual preview failed to isolate movement: %',after;END IF;
+ IF public.preview_world_visibility_at_v2(
+  '10000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000002',3,4) IS NOT NULL
+ THEN RAISE EXCEPTION 'DM could preview an unowned or hidden token';END IF;
+ IF public.preview_world_visibility_at_v2(
+  '10000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000001',
+  '40000000-0000-4000-8000-000000000001',999,999) IS NOT NULL
+ THEN RAISE EXCEPTION 'Out-of-bounds virtual sight accepted';END IF;
+END $$;
+RESET ROLE;
+DO $$
+BEGIN
+ IF EXISTS(SELECT 1 FROM forge_visibility.exploration)
+ THEN RAISE EXCEPTION 'Virtual DM sight persisted explored cells';END IF;
+ IF (SELECT x FROM public.map_tokens WHERE
+ id='40000000-0000-4000-8000-000000000001')<>2
+ THEN RAISE EXCEPTION 'Virtual DM sight changed the real token';END IF;
 END $$;
 
 -- Real player obtains only the current viewer mask and visible entity IDs.
