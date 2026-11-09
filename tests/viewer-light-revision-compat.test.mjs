@@ -78,7 +78,7 @@ test('switching fog notification streams cannot clear a confirmed map to black',
  assert.ok(start>=0&&end>start,'identity-only initialization must be isolated');
  const identity=source.slice(start,end);
  assert.match(identity,/setFrame\(null\);setPublished\(null\);setError\(''\)/);
- assert.match(identity,/\[db,campaignId,mapId,userId,isDM,refresh,key,coordinator\]/);
+ assert.match(identity,/\[db,campaignId,mapId,userId,isDM,refresh,key,coordinator(?:,enabled)?\]/);
  assert.doesNotMatch(identity,/scope\]/);
  assert.match(source,/if\(state==='SUBSCRIBED'\)\{[\s\S]*?fogFrameDuringRefresh\(previous,mapId\)/);
 });
