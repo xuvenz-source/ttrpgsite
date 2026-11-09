@@ -7,6 +7,7 @@ const editable=target=>!!target&&(target.isContentEditable===true||
  typeof target.closest==='function'&&!!target.closest('[contenteditable="true"],[role="textbox"]'));
 export function createInputController({
  target,controller,pointFromEvent,resolveSelection,
+ onPointerRelease=()=>false,
  keyboardTarget=typeof window==='undefined'?target:window,
  setTimer=(fn,delay)=>setTimeout(fn,delay),
  clearTimer=handle=>clearTimeout(handle),keyboardIdleMs=90
@@ -14,8 +15,10 @@ export function createInputController({
  if(!target?.addEventListener||!target?.removeEventListener||
   !keyboardTarget?.addEventListener||!keyboardTarget?.removeEventListener||
   !controller||typeof pointFromEvent!=='function'||
-  typeof resolveSelection!=='function')throw Error('Invalid V2 input adapter');
+  typeof resolveSelection!=='function'||
+  typeof onPointerRelease!=='function')throw Error('Invalid V2 input adapter');
  let mounted=false,activePointer=null,keyboardCursor=null,keyboardTimer=null;
+ let pointerOffset=null,activePick=null;
  const heldArrows=new Set();
  const clearKeyboardTimer=()=>{
   if(keyboardTimer!==null)clearTimer(keyboardTimer);
@@ -32,6 +35,7 @@ export function createInputController({
  };
  const release=()=>{
   const id=activePointer;activePointer=null;
+  pointerOffset=null;activePick=null;
   if(id!==null)try{
    if(target.hasPointerCapture?.(id))target.releasePointerCapture?.(id);
   }catch{}
@@ -40,8 +44,15 @@ export function createInputController({
   if(activePointer!==null||controller.active||event.button!==0)return;
   const p=point(event);if(!p)return;
   const picked=resolveSelection(event,p);
-  if(!picked||!controller.beginGesture({...picked,pointer:p,
-   mode:event.pointerType==='touch'?'touch':'drag'}))return;
+  if(!picked?.origin)return;
+  const target=Object.freeze({x:picked.origin.x,y:picked.origin.y});
+  if(!controller.beginGesture({...picked,pointer:target,
+   mode:picked.mode==='preview'?'preview':
+    event.pointerType==='touch'?'touch':'drag'}))return;
+  // Grab offset is fixed at pointer-down. Without it, clicking the middle
+  // of a wide token snaps the anchor to the cursor's top-left grid cell.
+  pointerOffset={x:target.x-p.x,y:target.y-p.y};
+  activePick=picked;
   activePointer=event.pointerId;
   try{target.setPointerCapture?.(event.pointerId)}catch{}
   event.preventDefault?.();
@@ -51,7 +62,10 @@ export function createInputController({
   const samples=event.getCoalescedEvents?.();
   for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
    const p=point(sample);
-   if(p)controller.updateGesture(p);
+   if(p)controller.updateGesture({
+    x:p.x+(pointerOffset?.x??0),
+    y:p.y+(pointerOffset?.y??0)
+   });
   }
   if(!controller.active)release();
   event.preventDefault?.();
@@ -59,9 +73,17 @@ export function createInputController({
  const up=event=>{
   if(activePointer===null||event.pointerId!==activePointer)return;
   const p=point(event);
-  if(p)controller.updateGesture(p);
-  release();
-  void controller.endGesture();
+  let intercepted=false;
+  try{intercepted=onPointerRelease(event,activePick,p)===true}catch{}
+  if(intercepted){
+   release();controller.cancelGesture('tool-handoff');
+  }else{
+   if(p)controller.updateGesture({
+    x:p.x+(pointerOffset?.x??0),
+    y:p.y+(pointerOffset?.y??0)
+   });
+   release();void controller.endGesture();
+  }
   event.preventDefault?.();
  };
  const cancel=event=>{
@@ -89,7 +111,8 @@ export function createInputController({
    if(controller.active)return;
    const picked=resolveSelection(event,null,{keyboard:true});
    const origin=picked?.origin;
-   if(!origin||!controller.beginGesture({...picked,pointer:origin,mode:'keyboard'}))return;
+   if(!origin||!controller.beginGesture({...picked,pointer:origin,
+    mode:picked.mode==='preview'?'preview':'keyboard'}))return;
    keyboardCursor={x:origin.x,y:origin.y};
   }
   clearKeyboardTimer();heldArrows.add(event.key);
