@@ -2,6 +2,7 @@ import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} fro
 import {createPortal} from 'react-dom';
 import WorldCanvasStack from './WorldCanvasStack.jsx';
 import {createWorldV2TabletopRuntime} from './WorldV2TabletopRuntime.js';
+import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
 import MapPinLayer from '../../MapPinLayer.jsx';
 import MapEnvironmentOverlay from '../../MapEnvironmentOverlay.jsx';
@@ -638,16 +639,8 @@ export default function WorldV2Board(props){
   ...Object.values(remoteMeasurements),...localMeasures
  ],[remoteMeasurements,localMeasures]);
  const editor=environmentEditor;
- const visiblePins=useMemo(()=>{
-  if(!authorizedSight)return [];
-  if(!authorizedSight.enabled)return handoutPins;
-  const cells=new Set(authorizedSight.visible);
-  const w=authorizedSight.width,h=authorizedSight.height;
-  return handoutPins.filter(pin=>{
-   const x=Math.floor(Number(pin.x)),y=Math.floor(Number(pin.y));
-   return x>=0&&y>=0&&x<w&&y<h&&cells.has(y*w+x);
-  });
- },[handoutPins,authorizedSight]);
+ const visiblePins=useMemo(()=>visibleWorldPins(handoutPins,authorizedSight),
+  [handoutPins,authorizedSight]);
  const mapLayers=<>
   <div className="gridlines" style={{...styles.fill,
    pointerEvents:'none',
