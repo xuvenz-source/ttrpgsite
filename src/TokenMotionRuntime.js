@@ -16,7 +16,9 @@ export function createTokenMotionRuntime({
  cancelFrame=handle=>cancelAnimationFrame(handle),
  setTimer=(callback,delay)=>setTimeout(callback,delay),
  clearTimer=handle=>clearTimeout(handle),
- observerStepMs=24
+ observerStepMs=24,
+ prefersReducedMotion=()=>typeof window!=='undefined'&&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true
 }={}){
  const mounted=new Map(),previews=new Map(),dirty=new Set();
  const settleTimers=new Map(),requestedAt=new Map(),remoteRoutes=new Map();
@@ -137,7 +139,8 @@ export function createTokenMotionRuntime({
    return;
   }
   const duration=Math.max(1,observerStepMs);
-  const fraction=Math.max(0,Math.min(1,(now-route.started)/duration));
+  const fraction=prefersReducedMotion()?1:
+   Math.max(0,Math.min(1,(now-route.started)/duration));
   previews.set(id,{x:a.x+(b.x-a.x)*fraction,
    y:a.y+(b.y-a.y)*fraction,remote:true,route:true});
   requestedAt.set(id,{time:route.started,remote:true});
@@ -190,6 +193,12 @@ export function createTokenMotionRuntime({
    if(disposed||!id||!validVerifiedObserverPath(path))return false;
    const existing=remoteRoutes.get(id);
    if(existing){
+    // Drop already painted steps, never the current incomplete crossing.
+    // This bounds memory even during a long continuous 128-cell gesture.
+    if(existing.index>0){
+     existing.points=existing.points.slice(existing.index);
+     existing.index=0;
+    }
     const appended=appendVerifiedObserverPoints(existing.points,path);
     if(!appended)return false;
     existing.points=appended;return true;
