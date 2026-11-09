@@ -154,3 +154,65 @@ END $$;
 ROLLBACK;
 
 \echo 'PASS: all isolated batch, wall, group, RLS/grant and private observer tests'
+
+-- DM moved a player-owned token along a right-angle turn. The old server
+-- would validate only a straight endpoint, but the staged endpoint must
+-- preserve this exact swept route in both recipients' private broadcasts.
+DO $$
+BEGIN
+ IF has_function_privilege('anon',
+  'public.advance_map_motion_session_path(uuid,jsonb,bigint)','EXECUTE')
+ THEN RAISE EXCEPTION 'Anonymous role can publish DM path';END IF;
+END $$;
+BEGIN;
+SELECT set_config('request.jwt.claim.sub',
+ '99999999-9999-4999-8999-999999999999',true);
+SET LOCAL ROLE authenticated;
+DO $$
+BEGIN
+ IF public.advance_map_motion_session_path(
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  '[{"x":1,"y":1},{"x":2,"y":1},{"x":2,"y":2}]'::jsonb,1234500)
+ IS DISTINCT FROM true
+ THEN RAISE EXCEPTION 'Server rejected valid DM corner route';END IF;
+END $$;
+COMMIT;
+DO $$
+BEGIN
+ IF (SELECT count(*) FROM realtime.notifications
+  WHERE packet->>'action'='path'
+   AND (packet->'path'->0->>'x')::integer=1
+   AND (packet->'path'->2->>'y')::integer=2
+   AND topic LIKE 'forge-observer:%')<2
+ THEN RAISE EXCEPTION 'DM corner did not reach authorized observers';END IF;
+ IF (SELECT x FROM public.map_tokens
+   WHERE id='55555555-5555-4555-8555-555555555555')<>1
+ THEN RAISE EXCEPTION 'DM path preview persisted canonical position';END IF;
+END $$;
+-- A player cannot adopt the DM's server-owned session and use override.
+BEGIN;
+SELECT set_config('request.jwt.claim.sub',
+ '22222222-2222-4222-8222-222222222222',true);
+SET LOCAL ROLE authenticated;
+DO $$
+BEGIN
+ IF public.advance_map_motion_session_path(
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  '[{"x":2,"y":2},{"x":3,"y":2}]'::jsonb,1234600)
+ IS DISTINCT FROM false THEN RAISE EXCEPTION 'DM session hijack';END IF;
+END $$;
+ROLLBACK;
+-- A valid actor cannot start the requested route at a forged coordinate.
+BEGIN;
+SELECT set_config('request.jwt.claim.sub',
+ '99999999-9999-4999-8999-999999999999',true);
+SET LOCAL ROLE authenticated;
+DO $$
+BEGIN
+ IF public.advance_map_motion_session_path(
+  'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+  '[{"x":7,"y":7},{"x":8,"y":7}]'::jsonb,1234600)
+ IS DISTINCT FROM false THEN RAISE EXCEPTION 'DM forged origin accepted';END IF;
+END $$;
+ROLLBACK;
+\echo 'PASS: DM verified paths, scene-specific sequence and private observer recipients'
