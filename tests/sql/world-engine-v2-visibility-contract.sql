@@ -46,10 +46,10 @@ BEGIN
   s,8,6,2.5,6,'light','{}'::jsonb)
  THEN RAISE EXCEPTION 'Opaque wall leaks light or vision';END IF;
  IF forge_world_v2.is_lit_v2(s,
-  '[{"x":8,"y":6,"reach":20}]',2.5,4.5,2.5,6)
+  '[{"x":8,"y":6,"reach":20}]',2.5,4.5,2.5,7)
  THEN
-  -- Point 2.5,6 is inside the personal 1.5 radius, so test darkness with
-  -- a viewer far enough from the target.
+  -- This target is outside personal light, and the distant static lamp
+  -- is blocked by the solid wall.
   RAISE EXCEPTION 'Bad lighting test fixture';END IF;
 END $$;
 
