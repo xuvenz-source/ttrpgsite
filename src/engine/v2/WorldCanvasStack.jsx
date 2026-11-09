@@ -80,7 +80,7 @@ export default function WorldCanvasStack({
     {mapLayers}
     <canvas ref={fog} aria-hidden="true"
      className="world-v2-fog"
-     style={{position:'absolute',left:0,top:0,zIndex:3,
+     style={{position:'absolute',left:0,top:0,zIndex:1000,
       pointerEvents:'none',backgroundColor:'#040914'}}/>
    </div>
    {children}
