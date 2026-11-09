@@ -17,6 +17,7 @@ DECLARE actor uuid:=auth.uid();camp uuid;role_name text;real_dm boolean;
  permission_gen bigint:=0;fog_enabled boolean:=false;
  collision_on boolean:=false;prediction_grants jsonb:='[]'::jsonb;
  safe_quads jsonb;piece_attrs jsonb;sign_x integer;sign_y integer;
+ tool_kind text;tool_span_text text;
  center_x integer;center_y integer;
  shared boolean:=false;w integer;h integer;grid integer;
  sources jsonb:='[]'::jsonb;lights jsonb:='[]'::jsonb;
@@ -195,13 +196,37 @@ BEGIN
   -- Prediction permits only bounded fractional displacements within
   -- collision-free footprint envelopes; never emit a wall or hidden NPC.
   -- Real movement still traverses the independent authority RPC.
-  IF role_name='player' AND pieces.kind='token' AND
-     pieces.owner_id=p_viewer AND jsonb_array_length(prediction_grants)<8 THEN
-   SELECT coalesce(ch.field_values,t.npc_values,'{}'::jsonb)
-   INTO piece_attrs FROM public.map_tokens t
-   LEFT JOIN public.characters ch ON ch.id=t.character_id
-    AND ch.campaign_id=camp
-   WHERE t.id=pieces.id AND t.map_id=p_map AND t.campaign_id=camp;
+  IF role_name='player' AND jsonb_array_length(prediction_grants)<8
+   AND ((pieces.kind='token' AND pieces.owner_id=p_viewer)
+    OR pieces.kind='tool') THEN
+   IF pieces.kind='token' THEN
+    SELECT coalesce(ch.field_values,t.npc_values,'{}'::jsonb)
+    INTO piece_attrs FROM public.map_tokens t
+    LEFT JOIN public.characters ch ON ch.id=t.character_id
+     AND ch.campaign_id=camp
+    WHERE t.id=pieces.id AND t.map_id=p_map AND t.campaign_id=camp;
+    IF NOT FOUND THEN CONTINUE;END IF;
+   ELSE
+    -- Tools receive the same conservative fractional grant only when
+    -- their issue is actually controllable by this recipient. Held tools
+    -- are not independently draggable. Attribute and footprint checks
+    -- must match the Phase 4 authoritative tool movement exactly.
+    SELECT coalesce(u.state->'attrs','{}'::jsonb),
+     u.kind,u.config->>'span'
+    INTO piece_attrs,tool_kind,tool_span_text
+    FROM public.campaign_tool_issues u
+    WHERE u.id=pieces.id AND u.map_id=p_map AND
+     u.campaign_id=camp AND u.held_by_token_id IS NULL AND
+     (u.owner_id=p_viewer OR u.party_shared IS TRUE);
+    IF NOT FOUND THEN CONTINUE;END IF;
+    IF tool_kind='mount' THEN
+     IF tool_span_text IS NOT NULL AND
+      tool_span_text !~ '^[0-9]{1,2}([.][0-9]{1,3})?$'
+     THEN CONTINUE;END IF;
+     IF pieces.sw IS DISTINCT FROM
+      coalesce(tool_span_text::numeric,2) THEN CONTINUE;END IF;
+    ELSIF pieces.sw IS DISTINCT FROM 1 THEN CONTINUE;END IF;
+   END IF;
    safe_quads:='[]'::jsonb;
    center_x:=floor(px+pieces.sw/2.0)::integer;
    center_y:=floor(py+pieces.sh/2.0)::integer;
@@ -228,7 +253,7 @@ BEGIN
    END LOOP;
    IF jsonb_array_length(safe_quads)>0 THEN
     prediction_grants:=prediction_grants||jsonb_build_array(
-     jsonb_build_object('kind','token','id',pieces.id,
+     jsonb_build_object('kind',pieces.kind,'id',pieces.id,
       'x',px,'y',py,'quadrants',safe_quads));
    END IF;
   END IF;
