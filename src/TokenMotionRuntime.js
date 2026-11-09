@@ -99,16 +99,59 @@ export function createTokenMotionRuntime({
    dirty.clear();
   });
  }
+ // Collapse only consecutive, same-direction VERIFIED cells into one
+ // compositor segment. Never connect two bends with a wall-cutting chord.
+ function nextVerifiedRun(points,from){
+  if(from+1>=points.length)return from;
+  let last=from+1;
+  const dx=points[last].x-points[from].x;
+  const dy=points[last].y-points[from].y;
+  while(last+1<points.length&&
+   points[last+1].x-points[last].x===dx&&
+   points[last+1].y-points[last].y===dy)last++;
+  return last;
+ }
+ function queueVerifiedPath(id,path,remote){
+  if(disposed||!id||!validVerifiedObserverPath(path))return false;
+  const existing=remoteRoutes.get(id);
+  if(existing){
+   if(existing.remote!==remote)return false;
+   if(existing.index>0){
+    existing.points=existing.points.slice(existing.index);
+    if(existing.nextIndex!==null)
+     existing.nextIndex-=existing.index;
+    existing.index=0;
+   }
+   const appended=appendVerifiedObserverPoints(existing.points,path);
+   if(!appended)return false;
+   existing.points=appended;return true;
+  }
+  const nodes=mounted.get(id);
+  const mountedCell=nodes?.get('sprite')||nodes?.values().next().value;
+  const preview=previews.get(id);
+  const current=preview||mountedCell;
+  if(!sameObserverCell(current,path[0]))return false;
+  cancelSettle(id);
+  const route={points:[...path],index:0,nextIndex:null,
+   started:clock(),handle:null,remote,settleAt:null,handoffPending:false};
+  remoteRoutes.set(id,route);
+  movementDiagnostics.count(remote?'observerValidatedPathAccepted':
+   'localValidatedPathAccepted');
+  route.handle=requestFrame(()=>advanceRemoteRoute(id));
+  return true;
+ }
  function advanceRemoteRoute(id){
   const route=remoteRoutes.get(id);
   if(!route||disposed)return;
   route.handle=null;
   const now=clock();
-  const a=route.points[route.index],b=route.points[route.index+1];
+  if(route.nextIndex===null)
+   route.nextIndex=nextVerifiedRun(route.points,route.index);
+  const a=route.points[route.index],b=route.points[route.nextIndex];
   if(!b){
    stopRemoteRoute(id);
    const finish=route.points.at(-1);
-   previews.set(id,{x:finish.x,y:finish.y,remote:true});
+   previews.set(id,{x:finish.x,y:finish.y,remote:route.remote});
    paint(id);
    if(route.handoffPending){
     const canonical=mounted.get(id)?.get('sprite')||
@@ -116,7 +159,7 @@ export function createTokenMotionRuntime({
     if(canonical?.x===finish.x&&canonical?.y===finish.y){
      previews.delete(id);paint(id);
     }else previews.set(id,{x:finish.x,y:finish.y,
-      remote:true,handoff:true});
+      remote:route.remote,handoff:true});
    }else if(route.settleAt){
     const destination=route.settleAt;
     // A new token snapshot may already match the most recently played
@@ -138,15 +181,18 @@ export function createTokenMotionRuntime({
    }
    return;
   }
-  const duration=Math.max(1,observerStepMs);
+  const cells=Math.max(Math.abs(b.x-a.x),Math.abs(b.y-a.y));
+  const duration=Math.max(1,Math.min(route.remote?150:95,
+   Math.max(route.remote?32:22,cells*(route.remote?observerStepMs/2:8))));
   const fraction=prefersReducedMotion()?1:
    Math.max(0,Math.min(1,(now-route.started)/duration));
   previews.set(id,{x:a.x+(b.x-a.x)*fraction,
-   y:a.y+(b.y-a.y)*fraction,remote:true,route:true});
+   y:a.y+(b.y-a.y)*fraction,remote:route.remote,route:true});
   requestedAt.set(id,{time:route.started,remote:true});
   paint(id);
   if(fraction>=1){
-   route.index++;
+   route.index=route.nextIndex;
+   route.nextIndex=null;
    route.started=now;
   }
   route.handle=requestFrame(()=>advanceRemoteRoute(id));
@@ -189,35 +235,8 @@ export function createTokenMotionRuntime({
    previews.set(id,{x,y,remote:true});
    requestedAt.set(id,{time:clock(),remote:true});schedule(id);
   },
-  previewRemotePath(id,path){
-   if(disposed||!id||!validVerifiedObserverPath(path))return false;
-   const existing=remoteRoutes.get(id);
-   if(existing){
-    // Drop already painted steps, never the current incomplete crossing.
-    // This bounds memory even during a long continuous 128-cell gesture.
-    if(existing.index>0){
-     existing.points=existing.points.slice(existing.index);
-     existing.index=0;
-    }
-    const appended=appendVerifiedObserverPoints(existing.points,path);
-    if(!appended)return false;
-    existing.points=appended;return true;
-   }
-   const nodes=mounted.get(id);
-   const mountedCell=nodes?.get('sprite')||nodes?.values().next().value;
-   const preview=previews.get(id);
-   const current=preview?.remote?preview:mountedCell;
-   // Missing packets are NOT permission to draw a straight line between
-   // unrelated visible coordinates. Wait for canonical/RLS reconciliation.
-   if(!sameObserverCell(current,path[0]))return false;
-   cancelSettle(id);
-   const route={points:[...path],index:0,started:clock(),handle:null,
-    settleAt:null,handoffPending:false};
-   remoteRoutes.set(id,route);
-   movementDiagnostics.count('observerValidatedPathAccepted');
-   route.handle=requestFrame(()=>advanceRemoteRoute(id));
-   return true;
-  },
+  previewRemotePath(id,path){return queueVerifiedPath(id,path,true)},
+  previewAuthorizedPath(id,path){return queueVerifiedPath(id,path,false)},
   // An authoritative final position may differ from the last throttled
   // preview packet. Ease to that final cell, then drop the overlay only
   // after its 95ms CSS interpolation and React position commit are complete.
@@ -239,6 +258,8 @@ export function createTokenMotionRuntime({
   // optimistic left/top. Clearing on pointerup first paints the old position
   // for a frame, then jumps forward when the DB/client state settles.
   handoff(id){
+   const route=remoteRoutes.get(id);
+   if(route&&!route.remote){route.handoffPending=true;return}
    const preview=previews.get(id);
    if(!preview||preview.remote)return;
    previews.set(id,{...preview,handoff:true});
@@ -248,7 +269,7 @@ export function createTokenMotionRuntime({
   // the sprite briefly paints its old canonical coordinates and rubber-bands.
   handoffRemote(id){
    const route=remoteRoutes.get(id);
-   if(route){route.handoffPending=true;return true}
+   if(route&&route.remote){route.handoffPending=true;return true}
    const preview=previews.get(id);
    if(!preview?.remote)return false;
    cancelSettle(id);
