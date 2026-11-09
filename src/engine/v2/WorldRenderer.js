@@ -296,7 +296,10 @@ export function createWorldRenderer({
   adoptVisibility(raw){
    if(disposed||!scene)return false;
    const next=normalizeWorldVisibilityFrame(raw,currentMap,currentViewer);
-   if(!next||next.environmentRevision!==scene.revision||
+   const scoped=next&&(playerPreview?
+    scene.scope==='dm'&&next.scope==='viewer':
+    scene.scope===next.scope);
+   if(!next||!scoped||next.environmentRevision!==scene.revision||
     next.sceneGeneration!==scene.sceneGeneration||
     next.cursor<latestSeq){
     stats.rejectedPackets++;
@@ -312,8 +315,14 @@ export function createWorldRenderer({
     next.cursor<visibility.cursor)){
     stats.rejectedPackets++;return false;
    }
-   if(visibility&&next.permissionGeneration!==visibility.permissionGeneration)
-    seal('new-permission-generation');
+   if(visibility&&next.permissionGeneration!==visibility.permissionGeneration){
+    // An authenticated role/assignment change may turn a DM into a
+    // regular player. Never reuse a DM-full environment after a new
+    // permission generation, even when the published revision is identical.
+    stats.rejectedPackets++;
+    seal('permission-generation-changed',{forgetScene:true});
+    return false;
+   }
    const nextMask=makeWorldFogMask(next);
    if(next.enabled&&!nextMask){
     stats.rejectedPackets++;seal('invalid-fog-mask');return false;
