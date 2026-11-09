@@ -265,7 +265,14 @@ export function createWorldRenderer({
     prior.revision===next.revision&&
     prior.scope===next.scope&&
     prior.fogEnabled===next.fogEnabled&&
-    prior.collisionEnabled===next.collisionEnabled;
+    prior.collisionEnabled===next.collisionEnabled&&
+    prior.rulesRevision===next.rulesRevision&&
+    prior.ambient===next.ambient&&
+    prior.effects.weather===next.effects.weather&&
+    prior.effects.intensity===next.effects.intensity&&
+    prior.dimensions.width===next.dimensions.width&&
+    prior.dimensions.height===next.dimensions.height&&
+    prior.dimensions.gridSize===next.dimensions.gridSize;
    if(sameScene)return true;
    if(prior){
     // A real publication invalidates prior sight and observer authorization.
