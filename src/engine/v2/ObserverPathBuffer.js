@@ -55,6 +55,46 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
    }
    return true;
   },
+  /**
+   * Adopt an authoritative roster incrementally. A newer authorized cursor
+   * can arrive while the accepted observer route is still rendering. Keep
+   * that route ONLY if the canonical cell lies on an already-approved
+   * remaining waypoint; never draw an unverified shortcut to an unrelated
+   * canonical cell. Removed/hidden pieces are discarded immediately.
+   *
+   * Only the Phase 7 authorized snapshot may invoke this method.
+   */
+  reconcilePieces(rows){
+   if(disposed)return false;
+   if(!Array.isArray(rows)||rows.length>maxPieces||
+    !rows.every(authorizedPiece)||
+    new Set(rows.map(key)).size!==rows.length){
+    pieces.clear();return false;
+   }
+   const next=new Map();
+   for(const item of rows){
+    const id=key(item),existing=pieces.get(id);
+    const canonical={x:item.x,y:item.y};
+    if(!existing||existing.hidden){
+     next.set(id,{kind:item.kind,id:item.id,position:canonical,
+      pending:[],hidden:false,lastNow:null});
+     continue;
+    }
+    const approved=existing.pending.some(waypoint=>
+     same(waypoint,canonical));
+    const inProgress=same(existing.position,canonical)||approved;
+    if(inProgress){
+     next.set(id,existing);
+    }else{
+     // Server canonical state wins. No extrapolation through walls.
+     next.set(id,{kind:item.kind,id:item.id,position:canonical,
+      pending:[],hidden:false,lastNow:null});
+    }
+   }
+   pieces.clear();
+   for(const [id,entry] of next)pieces.set(id,entry);
+   return true;
+  },
   applyPath(item){
    if(disposed||!approvedPath(item))return false;
    const entry=pieces.get(key(item));
