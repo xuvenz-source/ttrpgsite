@@ -106,6 +106,26 @@ any pending staged bundle conflicts:
 The last migration updates existing collision functions, **not** their
 trigger bindings, minimizing disruption to the old board.
 
+## Follow-up PR #58 audit corrections (10 November 2026)
+
+A detailed code-first audit identified and led to staged corrections for
+concealed-to-visible NPC/tool roster transitions, fog-disabled cosmetic
+rendering, and missing owned/party-shared loose-tool prediction.
+The server sends a viewer-specific, identity-free fog revision when approved
+movement crosses that viewer's current sight boundary; hidden NPC movement
+remains silent. The player prediction channel grants only safe one-cell
+quadrants for owned tokens and controllable unheld tools, not raw walls.
+A new disposable PostgreSQL test covers the entry boundary and strict tool
+ownership; Node tests cover fogless rendering and mixed tool/token prediction.
+The recipient-source caching change limits extra sight-query overhead.
+
+The legacy source remains solely for default-board compatibility and a safe
+post-acceptance rollback; the V2 runtime itself does not use old position
+writers or the old trajectory GUC bridge. These corrections are staged,
+not approved for production. See
+`docs/world-engine-v2-pr58-audit-corrections-2026-11-10.md` for the
+exact tests, dependencies and still-unmeasured multiplayer release gates.
+
 ## Automated checks, release gates and what cannot be asserted yet
 
 - Frontend Node tests and Vite build via `Verify staged tabletop changes`.
