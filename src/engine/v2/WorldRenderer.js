@@ -219,8 +219,9 @@ export function createWorldRenderer({
    if(result.ok&&result.objects>=0)stats.staticDraws++;
    else safe(onError,Error('V2 static painter failed'));
   }
-  if(lightPending&&scene&&surfaces.movingCanvas){
+  if(lightPending&&scene){
     lightPending=false;
+    if(surfaces.movingCanvas){
     const result=paintWorldMovingLightLayer({
      canvas:surfaces.movingCanvas,scene,
      frame:authorized?visibility:null,
@@ -231,6 +232,7 @@ export function createWorldRenderer({
      stats.movingLightDraws++;
      stats.movingLightCells+=result.painted;
     }else safe(onError,Error('V2 moving-light painter failed'));
+    }
    }
    if(fogPending&&scene){
    fogPending=false;
