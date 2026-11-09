@@ -608,3 +608,23 @@ test('new permission generation requires a freshly authorized published scene',(
  })),true);
  ctx.renderer.dispose();
 });
+
+
+test('authorized clear fog cells remain actually transparent over terrain',()=>{
+ const canvas=fakeCanvas();
+ const f=normalizeWorldVisibilityFrame(sight({
+  visible:[22],explored:[22],visiblePieces:[hero]
+ }),mapId,viewerId);
+ const m=makeWorldFogMask(f);
+ const result=paintWorldFogLayer({
+  canvas,frame:f,mask:m,widthPx:1000,heightPx:1000
+ });
+ assert.equal(result.ok,true);
+ assert.equal(canvas.style.backgroundColor,'transparent');
+ // Hidden cell x9,y9 is still filled opaque in the canvas pixel data.
+ assert.ok(canvas.calls.some(call=>call[0]==='fillRect'&&
+  call[1]===72&&call[2]===72&&call[5]==='#040914'));
+ // Visible cell x2,y2 is cleared; gradients never paint behind it.
+ assert.ok(canvas.calls.some(call=>call[0]==='clear'&&
+  call[1]===16&&call[2]===16));
+});
