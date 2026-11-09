@@ -11,3 +11,7 @@ export {sweptFootprintHull,segmentCrossesSweptFootprint}
 export {createCollisionPredictor} from './CollisionPreflight.js';
 
 export {createWorldAuthorityClient} from './AuthorityClient.js';
+
+export {createWorldRealtimeTransport,worldObserverTopic,validWorldMotionFrame,
+ validWorldObserverSnapshot,WORLD_MOTION_EVENT}
+ from './RealtimeTransport.js';
