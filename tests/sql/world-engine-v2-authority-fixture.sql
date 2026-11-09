@@ -131,7 +131,7 @@ INSERT INTO public.campaigns(id,active_map_id) VALUES(
 -- player overrides and unrestricted DM map access.
 CREATE OR REPLACE FUNCTION public.can_view_campaign_map(p_campaign uuid,p_map uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=''
-AS $
+AS $$
  SELECT auth.uid() IS NOT NULL AND EXISTS(
   SELECT 1 FROM public.campaign_members cm
   JOIN public.campaigns c ON c.id=cm.campaign_id
@@ -141,7 +141,7 @@ AS $
    AND (cm.role='dm' OR (cm.role='player' AND
     p_map=coalesce(pm.map_id,c.active_map_id)))
  )
-$;
+$$;
 CREATE SCHEMA realtime;
 CREATE TABLE realtime.messages(
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
