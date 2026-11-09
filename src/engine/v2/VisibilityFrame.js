@@ -43,7 +43,8 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
   !validInt(raw.permissionGeneration,0,Number.MAX_SAFE_INTEGER)||
   !validInt(raw.sceneGeneration,0,Number.MAX_SAFE_INTEGER)||
   !validInt(raw.visionEpoch,0,Number.MAX_SAFE_INTEGER)||
-  !validInt(raw.width,1,128)||!validInt(raw.height,1,128)||
+  !validInt(raw.width,1,10000)||!validInt(raw.height,1,10000)||
+  (raw.enabled&&(raw.width>128||raw.height>128))||
   typeof raw.enabled!=='boolean'||typeof raw.partyShared!=='boolean')
   return null;
  const count=raw.width*raw.height;
@@ -68,8 +69,11 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
  * visible. The renderer alone chooses alpha/color/feather treatment.
  */
 export function makeWorldFogMask(frame){
- if(!frame||!validInt(frame.width,1,128)||!validInt(frame.height,1,128))
-  return null;
+ if(!frame||!validInt(frame.width,1,10000)||
+  !validInt(frame.height,1,10000))return null;
+ // On large maps with fog off, a null fog mask means no overlay.
+ // Never allocate a 100-million-cell buffer just to fill it "visible".
+ if(!frame.enabled&&(frame.width>128||frame.height>128))return null;
  const mask=new Uint8Array(frame.width*frame.height);
  if(!frame.enabled){mask.fill(2);return mask}
  for(const cell of frame.explored)mask[cell]=1;
