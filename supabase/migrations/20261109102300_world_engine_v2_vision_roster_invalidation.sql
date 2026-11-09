@@ -92,6 +92,18 @@ BEGIN
   NEW.span_y IS NOT DISTINCT FROM OLD.span_y AND
   NEW.character_id IS NOT DISTINCT FROM OLD.character_id
  THEN RETURN NEW;END IF;
+ IF TG_OP='UPDATE' AND
+  NEW.campaign_id IS NOT DISTINCT FROM OLD.campaign_id AND
+  NEW.map_id IS NOT DISTINCT FROM OLD.map_id AND
+  NEW.owner_id IS NOT DISTINCT FROM OLD.owner_id THEN
+  -- A visibility toggle/footprint edit on the same map is one change,
+  -- not one invalidation for OLD and another for NEW.
+  PERFORM forge_world_v2.notify_roster_change_v2(
+   NEW.campaign_id,NEW.map_id,NEW.owner_id,
+   NEW.x+NEW.span_x/2.0,NEW.y+NEW.span_y/2.0,
+   coalesce(OLD.visible,false) OR coalesce(NEW.visible,false));
+  RETURN NEW;
+ END IF;
  IF TG_OP IN ('DELETE','UPDATE') THEN
   PERFORM forge_world_v2.notify_roster_change_v2(
    OLD.campaign_id,OLD.map_id,OLD.owner_id,
