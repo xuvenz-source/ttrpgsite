@@ -196,10 +196,9 @@ BEGIN
    ch.campaign_id=p_campaign
   WHERE t.map_id=p_map AND t.campaign_id=p_campaign AND t.visible
    AND (t.owner_id=p_viewer OR
-    (party AND t.owner_id IS NOT NULL AND EXISTS(
-     SELECT 1 FROM public.campaign_members cm
-     WHERE cm.campaign_id=p_campaign AND cm.user_id=t.owner_id
-      AND cm.role='player')))
+    (party AND t.owner_id IS NOT NULL AND
+     forge_world_v2.viewer_on_map(
+      p_campaign,p_map,t.owner_id)='player'))
   ORDER BY t.id LIMIT 8
  LOOP
   delta:=forge_world_v2.piece_offset_v2(p_map,'token',piece.id);
