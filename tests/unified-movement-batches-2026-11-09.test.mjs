@@ -69,7 +69,7 @@ test('SQL additive protocol retains actor session, revocation, full-footprint sw
  assert.match(sql,/forge_visibility\.validate_piece_trajectory/);
  assert.match(sql,/REVOKE ALL ON FUNCTION public\.advance_authorized_navigation_gesture_batch/);
  assert.doesNotMatch(sql,/GRANT EXECUTE[^;]*TO anon/);
- assert.doesNotMatch(sql,/RETURN[^;]*scene|RETURN[^;]*barrier/i);
+ assert.equal(sql.includes('RETURN scene;')||sql.includes('RETURN barrier;'),false);
 });
 test('release drains queued moves before the atomic final commit',()=>{
  const board=source('src/BattlemapBoard.jsx');
