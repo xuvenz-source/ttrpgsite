@@ -26,11 +26,11 @@ const hide=(id=tokenId)=>({kind:'token',id,action:'hide'});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function fakeDb(){
  const state={events:[],statuses:[],calls:[],removed:[],authCount:0};
- let listener,subscribed;
+ const listeners=new Map();let subscribed;
  const channel={
   on(type,filter,cb){
    state.events.push({type,filter});
-   listener=cb;return this;
+   listeners.set(filter.event,cb);return this;
   },
   subscribe(fn){subscribed=fn;return this}
  };
@@ -41,7 +41,7 @@ function fakeDb(){
  };
  return {db,state,
   status:v=>subscribed?.(v),
-  emit:p=>listener?.({payload:p})};
+  emit:(p,event=WORLD_MOTION_EVENT)=>listeners.get(event)?.({payload:p})};
 }
 
 test('strict private topic is viewer+map scoped and no send API exists',async()=>{
@@ -54,7 +54,10 @@ test('strict private topic is viewer+map scoped and no send API exists',async()=
  assert.equal(state.authCount,1);
  assert.equal(state.calls[0].topic,worldObserverTopic(mapId,viewerId));
  assert.equal(state.calls[0].config.config.private,true);
- assert.deepEqual(state.events,[{type:'broadcast',filter:{event:WORLD_MOTION_EVENT}}]);
+ assert.deepEqual(state.events,[
+  {type:'broadcast',filter:{event:WORLD_MOTION_EVENT}},
+  {type:'broadcast',filter:{event:'world-vision-v2'}}
+ ]);
  assert.equal(typeof transport.send,'undefined');
  status('SUBSCRIBED');await flush();
  assert.equal(transport.locked,false);
@@ -230,4 +233,19 @@ test('viewer cursor reader returns only an authorized typed private cursor',asyn
  await assert.rejects(fetchWorldObserverCursorV2({
   db:{rpc:async()=>({data:null,error:{message:'RLS denied'}})},mapId,viewerId
  }),/Unauthorized/);
+});
+
+
+test('same viewer socket dispatches server-only sight dirty notices',async()=>{
+ const {db,status,emit,state}=fakeDb(),notices=[];
+ const t=createWorldRealtimeTransport({db,mapId,viewerId,
+  onResync:async()=>snapshot(),onVisionDirty:n=>notices.push(n)});
+ await t.start();status('SUBSCRIBED');await flush();
+ const notice={version:2,mapId,viewerId,
+  visionEpoch:4,environmentRevision:7,
+  permissionGeneration:4,sceneGeneration:8};
+ emit(notice,'world-vision-v2');
+ assert.deepEqual(notices,[notice]);
+ assert.equal(state.calls.length,1,'vision does not open another socket');
+ await t.dispose();
 });
