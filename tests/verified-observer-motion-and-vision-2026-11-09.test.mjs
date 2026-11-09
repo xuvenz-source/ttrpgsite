@@ -48,14 +48,14 @@ test('remote renderer follows every accepted corner without endpoint shortcuts',
   for(const callback of pending)callback();
  };
  now=12;flush();
- assert.deepEqual([motion.getPreview(id).x,motion.getPreview(id).y],[1.5,1]);
+ assert.deepEqual([motion.getPreview(id).x,motion.getPreview(id).y],[1.375,1]);
  assert.equal(sprite.style.translate,monitor.style.translate);
  assert.equal(sprite.style.translate,light.style.translate);
  assert.equal(sprite.style.transition,'');
  now=24;flush();
- assert.deepEqual([motion.getPreview(id).x,motion.getPreview(id).y],[2,1]);
+ assert.deepEqual([motion.getPreview(id).x,motion.getPreview(id).y],[1.75,1]);
  now=36;flush();
- assert.deepEqual([motion.getPreview(id).x,motion.getPreview(id).y],[2,1.5]);
+ assert.deepEqual([motion.getPreview(id).x,motion.getPreview(id).y],[2,1]);
  assert.equal(motion.previewRemotePath(id,[{x:3,y:2},{x:4,y:2}]),true);
  now=48;flush();
  now=72;flush();
@@ -82,7 +82,7 @@ test('canonical handoff never aborts a verified remote turn halfway',()=>{
  const flush=()=>{for(const fn of frames.splice(0))fn()};
  now=10;flush();
  assert.equal(motion.handoffRemote('piece'),true);
- now=20;flush();now=40;flush();now=60;flush();
+ now=20;flush();now=40;flush();now=60;flush();now=80;flush();now=100;flush();
  assert.equal(motion.getPreview('piece')?.x,1);
  motion.bind('piece','sprite',sprite,{x:1,y:1,cell:30});
  assert.equal(motion.reconcile('piece',1,1),true);
@@ -108,4 +108,28 @@ test('server only broadcasts path after per-viewer LOS check; fog is per-batch',
  assert.match(app,/previewRemotePath\(visualId,payload\.path\)/);
  assert.match(app,/payload\.action!=='path'/);
  assert.match(tools,/motionRef\(carrier\?\.id\|\|'tool:'/);
+});
+
+test('local authorized batches animate a straight corridor without skipping a signed turn',()=>{
+ let now=0;const frames=[];
+ const motion=createTokenMotionRuntime({clock:()=>now,
+  requestFrame:fn=>{frames.push(fn);return frames.length},cancelFrame:()=>{}});
+ const sprite={style:{}};
+ motion.bind('self','sprite',sprite,{x:0,y:0,cell:60});
+ const path=[{x:0,y:0},{x:1,y:0},{x:2,y:0},{x:2,y:1},{x:2,y:2}];
+ assert.equal(motion.previewAuthorizedPath('self',path),true);
+ const flush=()=>{for(const fn of frames.splice(0))fn()};
+ now=15;flush();
+ const first=motion.getPreview('self');
+ assert.ok(first.x>0&&first.x<2);
+ assert.equal(first.y,0,'must not cut directly from origin to last corner');
+ now=80;flush();
+ assert.equal(motion.getPreview('self').x,2);
+ now=100;flush();
+ assert.ok(motion.getPreview('self').y>0);
+ motion.handoff('self');
+ now=200;flush();now=225;flush();
+ motion.bind('self','sprite',sprite,{x:2,y:2,cell:60});
+ assert.equal(motion.reconcile('self',2,2),true);
+ motion.dispose();
 });
