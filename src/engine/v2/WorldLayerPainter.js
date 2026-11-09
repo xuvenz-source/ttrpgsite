@@ -10,6 +10,7 @@
  * clear or reveal a concealed neighbouring cell.
  */
 import {diffWorldFogMasks} from './VisibilityFrame.js';
+import {occludedLightFan} from './LightOcclusion.js';
 
 const DARK='#040914';
 const EXPLORED='rgba(4,9,20,0.74)';
@@ -183,15 +184,23 @@ export function paintWorldStaticLayer({
      object.x+radius<left||object.x-radius>right||
      object.y+radius<top||object.y-radius>bottom)continue;
     if(typeof ctx.createRadialGradient==='function'){
-     const gradient=ctx.createRadialGradient(
-      object.x,object.y,0,object.x,object.y,radius);
-     gradient.addColorStop(0,'rgba(255,217,125,0.2)');
-     gradient.addColorStop(1,'rgba(255,217,125,0)');
-     ctx.fillStyle=gradient;ctx.beginPath();
-     ctx.arc(object.x,object.y,radius,0,Math.PI*2);
-     ctx.fill();
+     // DM lighting is decorative only. Never paint an unoccluded
+     // radius through the environment's light-blocking geometry.
+     const fan=occludedLightFan(objects,{x:object.x,y:object.y},radius);
+     if(fan&&fan.length){
+      ctx.save();ctx.beginPath();ctx.moveTo(object.x,object.y);
+      for(const point of fan)ctx.lineTo(point.x,point.y);
+      ctx.closePath?.();ctx.clip();
+      const gradient=ctx.createRadialGradient(
+       object.x,object.y,0,object.x,object.y,radius);
+      gradient.addColorStop(0,'rgba(255,217,125,0.2)');
+      gradient.addColorStop(1,'rgba(255,217,125,0)');
+      ctx.fillStyle=gradient;ctx.beginPath();
+      ctx.arc(object.x,object.y,radius,0,Math.PI*2);
+      ctx.fill();ctx.restore();painted++;
+     }
     }
-    painted++;continue;
+    continue;
    }
    if(!['wall','door','window'].includes(object.type)||
     !Array.isArray(object.points)||object.points.length<2)continue;
