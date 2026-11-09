@@ -35,6 +35,19 @@ REVOKE ALL ON TABLE forge_world_v2.motion_sessions FROM PUBLIC, anon, authentica
 CREATE INDEX IF NOT EXISTS world_v2_motion_actor_map_idx
   ON forge_world_v2.motion_sessions(actor_id,map_id,expires_at);
 
+-- Non-forgeable transaction-scoped authority for a validated V2 group commit.
+CREATE TABLE IF NOT EXISTS forge_world_v2.commit_checkpoints(
+ transaction_id bigint PRIMARY KEY,
+ session_id uuid NOT NULL REFERENCES forge_world_v2.motion_sessions(id)
+  ON DELETE CASCADE,
+ actor_id uuid NOT NULL,
+ campaign_id uuid NOT NULL,
+ map_id uuid NOT NULL
+);
+ALTER TABLE forge_world_v2.commit_checkpoints ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE forge_world_v2.commit_checkpoints
+ FROM PUBLIC,anon,authenticated;
+
 CREATE TABLE IF NOT EXISTS forge_world_v2.gesture_budgets(
   actor_id uuid NOT NULL, map_id uuid NOT NULL,
   window_started timestamptz NOT NULL,
@@ -201,6 +214,46 @@ BEGIN
  END LOOP;
  RETURN true;
 END $$;
+
+-- Only a fully revalidated commit RPC may insert the private checkpoint.
+-- Triggers match the exact original/approved coordinates for each selected
+-- piece. Do not recheck session_valid after earlier group rows are updated.
+CREATE OR REPLACE FUNCTION forge_world_v2.commit_allows_piece_v2(
+ p_kind text,p_id uuid,p_campaign uuid,p_map uuid,
+ p_old_x integer,p_old_y integer,p_new_x integer,p_new_y integer)
+RETURNS boolean LANGUAGE plpgsql VOLATILE SECURITY DEFINER
+SET search_path=''
+AS $$
+DECLARE actor uuid:=auth.uid();s forge_world_v2.motion_sessions%rowtype;
+ part jsonb;dx integer;dy integer;
+BEGIN
+ IF actor IS NULL OR p_kind NOT IN ('token','tool') OR
+  p_id IS NULL OR p_campaign IS NULL OR p_map IS NULL OR
+  p_old_x IS NULL OR p_old_y IS NULL OR p_new_x IS NULL OR p_new_y IS NULL
+ THEN RETURN false;END IF;
+ SELECT motion.* INTO s FROM forge_world_v2.commit_checkpoints checkpoint
+ JOIN forge_world_v2.motion_sessions motion
+  ON motion.id=checkpoint.session_id
+ WHERE checkpoint.transaction_id=txid_current() AND
+  checkpoint.actor_id=actor AND checkpoint.campaign_id=p_campaign
+  AND checkpoint.map_id=p_map AND motion.actor_id=actor AND
+  motion.campaign_id=p_campaign AND motion.map_id=p_map AND
+  motion.status='active' AND motion.mode<>'preview' AND
+  motion.accepted_cells>0 AND motion.accepted_steps<>'[]'::jsonb;
+ IF NOT FOUND OR s.dm_override AND
+    NOT public.is_campaign_dm(p_campaign) THEN RETURN false;END IF;
+ SELECT value INTO part FROM jsonb_array_elements(s.selection)
+ WHERE value->>'kind'=p_kind AND (value->>'id')::uuid=p_id;
+ IF NOT FOUND THEN RETURN false;END IF;
+ dx:=s.last_x-s.origin_x;dy:=s.last_y-s.origin_y;
+ RETURN p_old_x=(part->>'x')::integer AND
+  p_old_y=(part->>'y')::integer AND
+  p_new_x=p_old_x+dx AND p_new_y=p_old_y+dy;
+EXCEPTION WHEN others THEN RETURN false;
+END $$;
+REVOKE ALL ON FUNCTION forge_world_v2.commit_allows_piece_v2(
+ text,uuid,uuid,uuid,integer,integer,integer,integer)
+ FROM PUBLIC,anon,authenticated;
 
 -- Build one actor-scoped, bounded gesture. Scene data is retained server-side.
 CREATE OR REPLACE FUNCTION public.begin_world_motion_v2(
@@ -529,24 +582,21 @@ BEGIN
   IF cx<>(part->>'x')::integer+s.last_x-s.origin_x OR
    cy<>(part->>'y')::integer+s.last_y-s.origin_y THEN RETURN NULL;END IF;
  END LOOP;
- -- Temporary bridge for existing collision triggers. This same accepted route
- -- was independently validated above. Phase 10 replaces these triggers with V2.
- PERFORM set_config('forge.trajectory_steps',s.accepted_steps::text,true);
- PERFORM set_config('forge.trajectory_map',s.map_id::text,true);
- PERFORM set_config('forge.trajectory_actor',s.actor_id::text,true);
- IF s.dm_override THEN
-  PERFORM set_config('forge.collision_override','on',true);
- END IF;
+ -- A trusted transaction checkpoint replaces every legacy GUC route hint.
+ INSERT INTO forge_world_v2.commit_checkpoints(
+  transaction_id,session_id,actor_id,campaign_id,map_id)
+ VALUES(txid_current(),s.id,s.actor_id,s.campaign_id,s.map_id);
  UPDATE public.map_tokens tok SET x=tok.x+s.last_x-s.origin_x,
   y=tok.y+s.last_y-s.origin_y
- WHERE tok.id=ANY(token_ids) AND tok.map_id=s.map_id AND tok.campaign_id=s.campaign_id;
- UPDATE public.campaign_tool_issues tool SET x=tool.x+s.last_x-s.origin_x,
+ WHERE tok.id=ANY(token_ids) AND tok.map_id=s.map_id
+  AND tok.campaign_id=s.campaign_id;
+ UPDATE public.campaign_tool_issues tool SET
+  x=tool.x+s.last_x-s.origin_x,
   y=tool.y+s.last_y-s.origin_y
- WHERE tool.id=ANY(tool_ids) AND tool.map_id=s.map_id AND tool.campaign_id=s.campaign_id;
- PERFORM set_config('forge.trajectory_steps','',true);
- PERFORM set_config('forge.trajectory_map','',true);
- PERFORM set_config('forge.trajectory_actor','',true);
- PERFORM set_config('forge.collision_override','',true);
+ WHERE tool.id=ANY(tool_ids) AND tool.map_id=s.map_id
+  AND tool.campaign_id=s.campaign_id;
+ DELETE FROM forge_world_v2.commit_checkpoints
+ WHERE transaction_id=txid_current() AND session_id=s.id;
  reply:=jsonb_build_object('version',2,'sessionId',s.id,'seq',p_seq,
   'endpoint',jsonb_build_object('x',s.last_x,'y',s.last_y));
  UPDATE forge_world_v2.motion_sessions SET status='committed',
