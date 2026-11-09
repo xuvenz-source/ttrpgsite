@@ -289,13 +289,14 @@ export default function TabletopApp(){
   refreshCoordinator:refreshCoordinator
  });
  const fog=useAuthorizedMapFog({db,campaignId:activeId,mapId:selectedMap,userId:user,isDM,
-  refreshCoordinator:refreshCoordinator});
+  refreshCoordinator:refreshCoordinator,enabled:!WORLD_V2_CUTOVER});
  const navigationStore=useMemo(()=>createAuthorizedNavigation({db}),[]);
  useEffect(()=>()=>navigationStore.dispose(),[navigationStore]);
  // Preauthorize bounded local movement before first drag; no private walls.
  useEffect(()=>navigationStore.clear(),[navigationStore,selectedMap,user]);
  useEffect(()=>{
-  if(!selectedMap||isDM||!user||playerMapId!==selectedMap)return;
+  if(WORLD_V2_CUTOVER||!selectedMap||isDM||!user||
+   playerMapId!==selectedMap)return;
   // A pending or invalid sight frame MUST revoke navigation, even when the
   // old frame's last visible cells are retained solely as cosmetic terrain.
   if(!navigationStore.adoptFrame(selectedMap,fog.frame))return;
@@ -341,7 +342,8 @@ export default function TabletopApp(){
   revision:fog.frame?.displayVisibleDuringRefresh?null:fog.frame?.revision,
   protocolVersion:fog.frame?.protocolVersion===2?2:1,
   refreshNonce:fog.frame,
-  enabled:campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
+  enabled:!WORLD_V2_CUTOVER&&
+   campaignTools.placed.some(t=>t.kind==='torch'&&t.light_enabled)
  });
  const selectedToolIssue=campaignTools.issued.find(t=>t.id===selectedToolIssueId);
  const onlineMembers=useCampaignPresence({
@@ -1150,7 +1152,7 @@ export default function TabletopApp(){
  // unsent positions if the server round trip exceeds the pointer interval.
  // Per-recipient authorization and broadcasts remain exclusively in Postgres.
  useEffect(()=>{
-  if(!db||!selectedMap)return;
+  if(WORLD_V2_CUTOVER||!db||!selectedMap)return;
   const transport=createAuthorizedMotionTransport({db});
   movementSessionTransport.current=transport;
   activeGroupPreview.current=null;
@@ -1187,7 +1189,7 @@ export default function TabletopApp(){
  // authorized coordinate. This prevents a previous commit from rewinding
  // another player's currently active drag.
  useEffect(()=>{
-  if(!selectedMap)return;
+  if(WORLD_V2_CUTOVER||!selectedMap)return;
   const manager=createRemotePositionSettler({
    settle:(id,x,y)=>{
     const preview=remoteMotion.current?.getPreview(id);
@@ -1206,7 +1208,7 @@ export default function TabletopApp(){
  // Pointer packets paint token/tool transforms directly, not TabletopApp state.
  useEffect(()=>{
   observerRevisions.current.clear();
-  if(!db||!activeId||!selectedMap||!user)return;
+  if(WORLD_V2_CUTOVER||!db||!activeId||!selectedMap||!user)return;
   const mapId=selectedMap;
   const channel=db.channel(observerMotionTopic(mapId,user),{
    config:{private:true,broadcast:{ack:false,self:false}}
@@ -1447,6 +1449,14 @@ export default function TabletopApp(){
     filter:'campaign_id=eq.'+activeId},event=>{
     const mapId=tokenContextRef.current.mapId;
     if(!eventAffectsMap(event,mapId))return;
+    if(WORLD_V2_CUTOVER){
+     // Non-positional metadata changes still refresh sheets/resources.
+     // The V2 sight+observer owner alone supplies movement and fog.
+     if(event.eventType!=='UPDATE'||!isPositionOnlyTokenEvent(
+      event,latestMovementAccess.current.tokens||[],mapId))
+      tokenUpdates.request();
+     return;
+    }
     // The database has already applied this viewer's RLS on the row event.
     // Patch observed coordinates now, then run background reconciliation.
     const isMotionOnly=isPositionOnlyTokenEvent(
