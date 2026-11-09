@@ -85,15 +85,22 @@ VALUES('50000000-0000-4000-8000-000000000070',
  '10000000-0000-4000-8000-000000000001',
  '30000000-0000-4000-8000-000000000001',true,'torch',1,6);
 
+-- Load fixture revisions as postgres; real browser roles do not have direct
+-- SELECT grants on private scene/permission tables.
+SELECT set_config('fixture.v2_phase10_env_revision',
+ (SELECT revision::text FROM public.map_environments
+  WHERE map_id='10000000-0000-4000-8000-000000000001'),false);
+SELECT set_config('fixture.v2_phase10_permission_generation',
+ (SELECT generation::text FROM forge_visibility.navigation_permission_generations
+  WHERE map_id='10000000-0000-4000-8000-000000000001'),false);
 SET ROLE authenticated;
 SET request.jwt.claim.sub='30000000-0000-4000-8000-000000000001';
 DO $$
 DECLARE sid uuid;response jsonb;map uuid:='10000000-0000-4000-8000-000000000001';
  rev bigint;perm bigint;
 BEGIN
- SELECT revision INTO rev FROM public.map_environments WHERE map_id=map;
- SELECT generation INTO perm FROM forge_visibility.navigation_permission_generations
- WHERE map_id=map;
+ rev:=current_setting('fixture.v2_phase10_env_revision')::bigint;
+ perm:=current_setting('fixture.v2_phase10_permission_generation')::bigint;
  sid:=(public.begin_world_motion_v2(map,
   '[{"kind":"token","id":"40000000-0000-4000-8000-000000000070"},
     {"kind":"tool","id":"50000000-0000-4000-8000-000000000070"}]',
