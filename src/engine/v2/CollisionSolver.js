@@ -178,7 +178,12 @@ export function solveCollisionPath({
    current=goal;waypoints.push(point(current));break;
   }
   blocked=true;
-  const at=lerp(current,goal,hit.t);
+  // Keep a microscopic clearance on the legal side of a solid edge.
+  // Without it, float rounding can put the touching wall inside the next
+  // swept rectangle and incorrectly prevent a parallel wall slide.
+  const stride=Math.max(Math.abs(goal.x-current.x),Math.abs(goal.y-current.y),1);
+  const safeT=Math.max(0,hit.t-1e-6/stride);
+  const at=lerp(current,goal,safeT);
   if(!same(at,current)){
    current=at;waypoints.push(point(current));
   }
