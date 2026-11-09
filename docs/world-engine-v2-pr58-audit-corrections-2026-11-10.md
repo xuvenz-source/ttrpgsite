@@ -64,3 +64,26 @@ corresponding frontend deletion with a new security/test review.
 interpret green unit/build/PostgreSQL/CodeQL checks as proof of smoothness
 or deployed security. Recheck the exact latest commit SHA before approving
 a coordinated deployment.
+
+## Live Supabase schema reconciliation (read-only, 10 November 2026)
+
+- Verified the connected TTRPG Site database reports PostgreSQL 17.11.
+- Verified V2 `motion_sessions`, `commit_checkpoints`, `vision_epochs`,
+  `begin_world_motion_v2` and `get_world_visibility_v2` are **absent**.
+  The eight staged V2 migration versions do not appear in the recorded
+  production migrations; nothing V2 has been applied during this audit.
+- Verified existing `forge_player_collision` and `forge_tool_collision`
+  triggers remain enabled and refer to
+  `forge_visibility.enforce_collision` and
+  `forge_visibility.enforce_tool_collision`.
+- Compared the live function bodies with the staged Phase 10 compatibility
+  replacements: every nontrivial existing body line was retained, with
+  only the V2 private checkpoint authorization branch added. This avoids
+  accidentally replacing a later production collision fix.
+- Relevant production canonical tables and fields (token footprint,
+  tool config/state, placement span, fog rules, permission generation)
+  match the staging migration dependency assumptions.
+- These are **schema/definition checks only**, not a dry-run migration
+  against a restored production database, live performance test, or
+  proof of application success. No production rows were changed.
+
