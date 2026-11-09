@@ -15,7 +15,8 @@ import {createWorldRenderer} from './WorldRenderer.js';
 export default function WorldCanvasStack({
  mapId,viewerId,onRendererReady,createSpriteElement,
  onRemoveSprite,onNeedResync,onRendererError,
- mapLayers=null,playerPreview=false,className='',style={},children
+ mapLayers=null,foregroundLayers=null,mapWidth=null,mapHeight=null,
+ playerPreview=false,className='',style={},children
 }){
  const root=useRef(null),stage=useRef(null),terrain=useRef(null);
  const statics=useRef(null),moving=useRef(null),fog=useRef(null),sprites=useRef(null);
@@ -66,7 +67,10 @@ export default function WorldCanvasStack({
    style={{position:'relative',width:'100%',height:'100%',
     overflow:'hidden',...style}}>
    <div ref={stage} className="world-v2-stage"
-    style={{position:'absolute',left:0,top:0,transformOrigin:'0 0'}}>
+    style={{position:'absolute',left:0,top:0,
+     width:Number.isFinite(mapWidth)&&mapWidth>0?mapWidth:undefined,
+     height:Number.isFinite(mapHeight)&&mapHeight>0?mapHeight:undefined,
+     transformOrigin:'0 0'}}>
     <img ref={terrain} alt="" draggable={false}
      className="world-v2-terrain"
      style={{position:'absolute',left:0,top:0,zIndex:0,
@@ -87,6 +91,10 @@ export default function WorldCanvasStack({
      className="world-v2-fog"
      style={{position:'absolute',left:0,top:0,zIndex:1000,
       pointerEvents:'none',backgroundColor:'#040914'}}/>
+    {foregroundLayers&&<div className="world-v2-interaction-layer"
+     style={{position:'absolute',inset:0,zIndex:1001,pointerEvents:'none'}}>
+     {foregroundLayers}
+    </div>}
    </div>
    {children}
   </div>

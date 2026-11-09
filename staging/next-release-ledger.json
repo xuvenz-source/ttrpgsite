@@ -6,6 +6,13 @@
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
+      "name": "stage/world-v2-live-regression-integrated-2026-11-10",
+      "status": "staged",
+      "linkedPullRequest": null,
+      "productionBaseSha": "7fb2c04fe4ca85721e08772e936265a649784bda",
+      "note": "Frontend-only integrated V2 repair: single-owner startup sight, map-sized grid, fog-safe interactive popups, native Ctrl+wheel, buffered key movement. No SQL or production release. CI and real browser multiplayer acceptance required."
+    },
+    {
       "name": "stage/account-settings-map-measurements",
       "status": "released"
     },

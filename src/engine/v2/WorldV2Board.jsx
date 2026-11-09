@@ -128,6 +128,7 @@ export default function WorldV2Board(props){
  const [marquee,setMarquee]=useState(null);
  const [panning,setPanning]=useState(false);
  const resizeRef=useRef(null),zoomAnchor=useRef(null);
+ const wheelHandler=useRef(null);
  const settings=useMemo(()=>normalizeConfig(displayConfig),[displayConfig]);
  const previewToken=tokens.find(token=>token.id===environmentEditor?.previewTokenId);
  const previewViewerId=previewToken?.owner_id;
@@ -474,28 +475,60 @@ export default function WorldV2Board(props){
  },[registerPreviewStep,map.id,dmPreview,previewToken?.id]);
  useEffect(()=>{
   if(!registerV2Step)return;
-  const moveOne=(dx,dy)=>{
+  const keyboard={cursor:null,timer:null};
+  const clearIdle=()=>{
+   if(keyboard.timer!==null)clearTimeout(keyboard.timer);
+   keyboard.timer=null;
+  };
+  const finish=()=>{
+   clearIdle();
+   if(!keyboard.cursor)return;
+   keyboard.cursor=null;
+   void runtimeRef.current?.movement.endGesture();
+  };
+  const moveOne=(dx,dy,{release=false}={})=>{
+   if(release){
+    if(!keyboard.cursor)return false;
+    clearIdle();
+    // Rapid taps join the same authority session. Held-key repeats do
+    // not wait on an individual server commit per tile.
+    keyboard.timer=setTimeout(finish,90);
+    return true;
+   }
    const runtime=runtimeRef.current;
-   if(dmPreview||!runtime?.active||runtime.movement.active||
+   if(dmPreview||!runtime?.active||
     !Number.isSafeInteger(dx)||!Number.isSafeInteger(dy)||
     Math.abs(dx)+Math.abs(dy)!==1)return false;
-   viewport.current?.focus?.({preventScroll:true});
-   const picked=resolveRef.current({target:board.current},null,{keyboard:true});
-   const scene=runtime.sceneManager.displayedScene;
-   const frame=runtime.visibility.frame;
-   if(!picked||!scene||!frame)return false;
-   const to={x:picked.origin.x+dx,y:picked.origin.y+dy};
-   if(!runtime.movement.beginGesture({
-    ...picked,pointer:picked.origin,mode:'keyboard',
-    environmentRevision:scene.revision,
-    permissionGeneration:frame.permissionGeneration
-   }))return false;
-   runtime.movement.updateGesture(to);
-   void runtime.movement.endGesture();
+   clearIdle();
+   if(keyboard.cursor&&!runtime.movement.active)keyboard.cursor=null;
+   if(!keyboard.cursor){
+    if(runtime.movement.active)return false;
+    viewport.current?.focus?.({preventScroll:true});
+    const picked=resolveRef.current({target:board.current},null,{keyboard:true});
+    const scene=runtime.sceneManager.displayedScene;
+    const frame=runtime.visibility.frame;
+    if(!picked||!scene||!frame)return false;
+    if(!runtime.movement.beginGesture({
+     ...picked,pointer:picked.origin,mode:'keyboard',
+     environmentRevision:scene.revision,
+     permissionGeneration:frame.permissionGeneration
+    }))return false;
+    keyboard.cursor={...picked.origin};
+   }
+   const to={x:keyboard.cursor.x+dx,y:keyboard.cursor.y+dy};
+   if(!runtime.movement.updateGesture(to)){
+    keyboard.cursor=null;
+    return false;
+   }
+   keyboard.cursor=to;
    return true;
   };
   registerV2Step(moveOne);
-  return()=>registerV2Step(null);
+  return()=>{
+   clearIdle();
+   if(keyboard.cursor)runtimeRef.current?.movement.cancelGesture('keyboard-unmount');
+   registerV2Step(null);
+  };
  },[registerV2Step,map.id,dmPreview]);
  function startResize(event,token){
   if(!isDM||previewRequested||event.button!==0)return;
@@ -707,6 +740,11 @@ export default function WorldV2Board(props){
   <div className="gridlines" style={{...styles.fill,
    pointerEvents:'none',
    backgroundSize:map.grid_size+'px '+map.grid_size+'px'}}/>
+  <MapMeasurementOverlay map={map} scale={1} measures={measures}/>
+ </>;
+ // Grid and measuring stay under fog. The player-visible interaction
+ // surfaces are filtered by server-authorized sight before painting.
+ const foregroundLayers=<>
   <MapPinLayer map={map} scale={1} pointerScale={scale}
    pins={visiblePins} isDM={isDM&&!dmPreview} editor={editor} active={active}
    onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin}
@@ -723,7 +761,6 @@ export default function WorldV2Board(props){
     object={environment?.objects?.find(o=>o.id===editor.selectedId)}
     template={props.template} onPatch={onPatchEnvironmentObject}
     onClose={()=>onSelectEnvironmentObject?.(null)}/>}
-  <MapMeasurementOverlay map={map} scale={1} measures={measures}/>
   {marquee&&<div className="map-selection-marquee"
    style={{...styles.absolute,...selectionRectangle(
     marquee.start,marquee.end)}} aria-hidden="true"/>}
@@ -746,6 +783,14 @@ export default function WorldV2Board(props){
   }
   setScale(next);
  }
+ wheelHandler.current=onWheel;
+ useEffect(()=>{
+  const node=viewport.current;
+  if(!node)return;
+  const nativeWheel=event=>wheelHandler.current?.(event);
+  node.addEventListener('wheel',nativeWheel,{passive:false});
+  return()=>node.removeEventListener('wheel',nativeWheel);
+ },[]);
  return <>
   <MeasurementToolBar tool={activeMeasure}
    onPointerDown={startMeasure} onPointerMove={onBoardMove}
@@ -760,8 +805,7 @@ export default function WorldV2Board(props){
   <div ref={viewport}
    className={'mapscroll map-pan-region'+(panning?' is-panning':'')}
    tabIndex={0}
-   aria-label="World Engine V2 battlemap viewport"
-   onWheel={onWheel}>
+   aria-label="World Engine V2 battlemap viewport">
    <div className="board-scroll-content" style={{
     width:map.width*scale,height:map.height*scale+(hotbarInset?78:0)
    }}>
@@ -791,6 +835,7 @@ export default function WorldV2Board(props){
      }}>
      <WorldCanvasStack key={boardIdentity}
       mapId={map.id} viewerId={identity}
+      mapWidth={map.width} mapHeight={map.height}
       playerPreview={dmPreview}
       createSpriteElement={createSpriteElement}
       onRemoveSprite={onRemoveSprite}
@@ -812,7 +857,7 @@ export default function WorldV2Board(props){
       }}
       onRendererError={error=>setIssue(error?.message||String(error))}
       style={{width:map.width*scale,height:map.height*scale}}
-      mapLayers={mapLayers}/>
+      mapLayers={mapLayers} foregroundLayers={foregroundLayers}/>
     </div>
    </div>
   </div>

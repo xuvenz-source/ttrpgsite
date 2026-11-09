@@ -58,7 +58,7 @@ export function createWorldV2TabletopRuntime({
    .some(callback=>typeof callback!=='function'))
   throw Error('Invalid V2 tabletop integration');
  const identity=dmPreview?previewViewerId:viewerId;
- let disposed=false,started=false,connected=false;
+ let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
  let previewPosition=null,dmLightRefreshTimer=null;
@@ -222,10 +222,13 @@ export function createWorldV2TabletopRuntime({
   signal(onAuthorizedRoster,[],null);state(reason);
  }
  return Object.freeze({
-  async start(){
-   if(disposed)return false;
-   if(started)return authorized();
-   started=true;
+  start(){
+   if(disposed)return Promise.resolve(false);
+   if(started)return Promise.resolve(authorized());
+   if(starting)return starting;
+   // The first scene adoption cannot trigger an independent sight request:
+   // started remains false until the initial scene and sight are coherent.
+   const task=(async()=>{
    const ok=await manager.load();
    if(!ok||disposed){state('scene-unavailable');return false}
    if(!(await refreshVisibility('initial'))||disposed){
@@ -281,7 +284,10 @@ export function createWorldV2TabletopRuntime({
    });
    if(stream&&(!await stream.start()||disposed))return false;
    if(!await sceneTransport.start()||disposed)return false;
-   state('started');return true;
+   started=true;state('started');return true;
+   })().finally(()=>{if(starting===task)starting=null});
+   starting=task;
+   return task;
   },
   attachInput({target,pointFromEvent,resolveSelection,
    onPointerRelease=()=>false,keyboardTarget,keyboardIdleMs=90}={}){

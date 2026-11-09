@@ -430,3 +430,16 @@ test('staged app disables legacy fog and old private observer on V2 route',async
  assert.doesNotMatch(board,/createRoot\(/,
   'one existing React tree, not 500 independent token roots');
 });
+
+test('initial V2 scene boot requests one sight frame before subscribing',async()=>{
+ const x=fakeClient();
+ const runtime=createWorldV2TabletopRuntime({
+  ...x.config,getAuthorizedPieces:pieceData
+ });
+ assert.equal(await runtime.start(),true);
+ assert.equal(x.calls.filter(([name])=>name==='get_world_visibility_v2').length,1,
+  'initial scene change must not race the bootstrap sight refresh');
+ assert.equal(x.channels.size,2);
+ assert.equal(runtime.active,true);
+ await runtime.dispose();
+});
