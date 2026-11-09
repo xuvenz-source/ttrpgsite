@@ -183,6 +183,12 @@
       "linkedPullRequest": 58,
       "productionBaseSha": "ab0901f7cbe85f2bf62bccf7c0941c3eec928d04",
       "note": "Draft PR #58 carries all Phases 1–10 plus code-first audit corrections (NPC boundary roster, fogless dynamic lights, authorized loose/shared tool prediction). Read-only live schema baseline verified; V2 SQL remains unapplied and old board default. Synthetic Node/PG17/CodeQL required at latest SHA. Do not deploy or mark release-ready before designer-approved integrated cutover and real browser/free-tier acceptance."
+    },
+    {
+      "name": "stage/supabase-free-tier-memory-optimizations-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "bb7d058b504a960965b393d8c4e506bab2c946db",
+      "note": "Supabase Free-tier resource optimization staging, migration 20261110050000 unapplied. No merge or deployment approval; see docs/supabase-free-tier-memory-staging-2026-11-10.md."
     }
   ],
   "features": [
