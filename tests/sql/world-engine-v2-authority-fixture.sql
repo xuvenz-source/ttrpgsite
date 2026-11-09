@@ -73,6 +73,12 @@ RETURNS trigger LANGUAGE plpgsql SET search_path=''
 AS $$
 BEGIN
  IF new.x IS DISTINCT FROM old.x OR new.y IS DISTINCT FROM old.y THEN
+  -- Simulate the production Phase 10 checkpoint-aware collision trigger.
+  IF forge_world_v2.commit_allows_piece_v2(
+   CASE WHEN TG_TABLE_NAME='map_tokens' THEN 'token' ELSE 'tool' END,
+   new.id,new.campaign_id,new.map_id,old.x,old.y,new.x,new.y)
+  THEN RETURN new;END IF;
+  -- Preserve old-only route checks during the dual-compatible release.
   IF current_setting('forge.trajectory_steps',true) IS NULL OR
     current_setting('forge.trajectory_steps',true)='' OR
     current_setting('forge.trajectory_map',true) IS DISTINCT FROM new.map_id::text OR
