@@ -95,7 +95,7 @@ export function normalizeWorldVisibilityFrame(raw,mapId,viewerId){
   sceneGeneration:raw.sceneGeneration,
   visionEpoch:raw.visionEpoch,enabled:raw.enabled,
   width:raw.width,height:raw.height,partyShared:raw.partyShared,
-  visible,explored,visiblePieces
+  visible,explored,visiblePieces,predictionGrants
  });
 }
 /** 0 = fully concealed, 1 = explored but not visible, 2 = currently
