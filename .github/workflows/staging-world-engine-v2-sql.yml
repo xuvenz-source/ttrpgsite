@@ -38,6 +38,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-fixture.sql
       - name: Apply staged V2 schema to disposable PostgreSQL
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql
+      - name: Install Phase 10 V2 checkpoint-aware collision trigger definitions
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261109103000_world_engine_v2_legacy_commit_checkpoint.sql
       - name: Verify ownership, RLS grants, collision and replay
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-contract.sql
       - name: Apply proposed private observer stream migration to disposable PostgreSQL
