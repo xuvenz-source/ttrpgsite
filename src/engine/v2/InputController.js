@@ -45,13 +45,13 @@ export function createInputController({
   const p=point(event);if(!p)return;
   const picked=resolveSelection(event,p);
   if(!picked?.origin)return;
-  const target=Object.freeze({x:picked.origin.x,y:picked.origin.y});
-  if(!controller.beginGesture({...picked,pointer:target,
+  const originPoint=Object.freeze({x:picked.origin.x,y:picked.origin.y});
+  if(!controller.beginGesture({...picked,pointer:originPoint,
    mode:picked.mode==='preview'?'preview':
     event.pointerType==='touch'?'touch':'drag'}))return;
   // Grab offset is fixed at pointer-down. Without it, clicking the middle
   // of a wide token snaps the anchor to the cursor's top-left grid cell.
-  pointerOffset={x:target.x-p.x,y:target.y-p.y};
+  pointerOffset={x:originPoint.x-p.x,y:originPoint.y-p.y};
   activePick=picked;
   activePointer=event.pointerId;
   try{target.setPointerCapture?.(event.pointerId)}catch{}
