@@ -19,7 +19,7 @@ BEGIN
  IF actor IS NULL OR p_session IS NULL OR p_seq IS NULL OR
     p_seq<=0 OR p_seq>9000000000000000 OR
     jsonb_typeof(p_path)<>'array' OR
-    jsonb_array_length(p_path) NOT BETWEEN 2 AND 12
+    jsonb_array_length(p_path) NOT BETWEEN 2 AND 49
  THEN RETURN false;END IF;
  SELECT ms.* INTO s FROM forge_visibility.movement_sessions ms
   WHERE ms.id=p_session AND ms.actor_id=actor FOR UPDATE;
