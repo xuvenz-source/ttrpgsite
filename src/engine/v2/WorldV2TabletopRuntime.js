@@ -193,7 +193,11 @@ export function createWorldV2TabletopRuntime({
    if(!(await refreshVisibility('initial'))||disposed){
     state('sight-unavailable');return false;
    }
-   stream=createWorldRealtimeTransport({
+   // A DM cannot (and must not) join another player's private movement
+   // channel using their DM JWT. In player-effective DM preview, use only
+   // the DM-authorized preview RPC; a dedicated preview observer feed is a
+   // Phase 10 integration task, never a bypass of recipient channel RLS.
+   if(!dmPreview)stream=createWorldRealtimeTransport({
     db,mapId,viewerId:identity,
     onResync:async reason=>{
      if(manager.stale){
@@ -234,7 +238,7 @@ export function createWorldV2TabletopRuntime({
     },
     onError:error=>signal(onError,error)
    });
-   if(!await stream.start()||disposed)return false;
+   if(stream&&(!await stream.start()||disposed))return false;
    if(!await sceneTransport.start()||disposed)return false;
    state('started');return true;
   },
