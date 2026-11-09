@@ -56,5 +56,7 @@ jobs:
             -f supabase/migrations/20261109000500_batched_concealed_navigation.sql
           psql -X -v ON_ERROR_STOP=1 \
             -f supabase/migrations/20261109000600_batched_motion_observer_visibility.sql
+          psql -X -v ON_ERROR_STOP=1 \
+            -f supabase/migrations/20261109000700_authorized_dm_observer_paths.sql
       - name: Check ownership, collision prefixes, path privacy and fog
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/unified-movement-smoke.sql
