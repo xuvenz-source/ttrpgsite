@@ -118,3 +118,14 @@ test('preview SQL is player-token bounded and does not persist exploration',asyn
  assert.match(board,/isDM&&!dmPreview&&environment&&<MapEnvironmentOverlay/);
  assert.match(board,/isDM&&!dmPreview&&editor\?\.enabled/);
 });
+
+test('V2 keybindings never dispatch the legacy movement writer',async()=>{
+ const app=await readFile(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8');
+ const board=await readFile(new URL(
+  '../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
+ assert.match(app,/else if\(WORLD_V2_CUTOVER\)v2StepHandler\.current/);
+ assert.match(app,/registerV2Step=useCallback/);
+ assert.match(board,/keyboardTarget:noDuplicateKeyboard/);
+ assert.match(board,/registerV2Step\(moveOne\)/);
+ assert.match(board,/current=runtimeRef\.current\?\.visibility\.visiblePieces/);
+});
