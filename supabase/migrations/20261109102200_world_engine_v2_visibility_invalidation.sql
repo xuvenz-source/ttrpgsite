@@ -68,7 +68,10 @@ BEGIN
  SELECT e.live INTO scene FROM public.map_environments e
  WHERE e.map_id=s.map_id AND e.campaign_id=s.campaign_id;
  shared:=coalesce((scene->'fog'->>'partyShared')::boolean,false);
- delta_x:=s.last_x-s.origin_x;delta_y:=s.last_y-s.origin_y;
+ -- The wrapper passes the PRE-advance session. Read the approved
+ -- endpoint to avoid sending stale-light proximity on later batches.
+ delta_x:=(p_accepted->(jsonb_array_length(p_accepted)-1)->>'x')::integer-s.last_x;
+ delta_y:=(p_accepted->(jsonb_array_length(p_accepted)-1)->>'y')::integer-s.last_y;
  FOR viewer IN SELECT cm.user_id FROM public.campaign_members cm
   WHERE cm.campaign_id=s.campaign_id AND cm.role='player'
   ORDER BY cm.user_id LIMIT 32 LOOP
@@ -114,6 +117,9 @@ BEGIN
      light_x:=torch.holder_x+torch.span_x/2.0;
      light_y:=torch.holder_y+torch.span_y/2.0;
     END IF;
+    -- Include previously approved displacement before this batch.
+    light_x:=light_x+s.last_x-s.origin_x;
+    light_y:=light_y+s.last_y-s.origin_y;
     FOR source IN SELECT value FROM jsonb_array_elements(
      forge_world_v2.vision_sources_v2(
       s.map_id,s.campaign_id,viewer.user_id,scene)) LOOP
@@ -228,20 +234,44 @@ CREATE OR REPLACE FUNCTION forge_world_v2.tool_light_edit_trigger_v2()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $$
 DECLARE old_reach double precision;new_reach double precision;
+ old_x double precision;old_y double precision;
+ new_x double precision;new_y double precision;
 BEGIN
  IF TG_OP IN ('UPDATE','DELETE') AND OLD.kind='torch' AND
   OLD.light_enabled THEN
   old_reach:=(coalesce(OLD.light_bright,0)+
     coalesce(OLD.light_dim,0))/5.0;
-  PERFORM forge_world_v2.signal_light_edit_v2(
-   OLD.map_id,OLD.campaign_id,OLD.x+0.5,OLD.y+0.5,old_reach);
+  old_x:=OLD.x+0.5;old_y:=OLD.y+0.5;
+  IF OLD.held_by_token_id IS NOT NULL THEN
+   SELECT t.x+t.span_x/2.0,t.y+t.span_y/2.0
+    INTO old_x,old_y FROM public.map_tokens t
+   WHERE t.id=OLD.held_by_token_id AND
+    t.map_id=OLD.map_id AND t.campaign_id=OLD.campaign_id
+    AND t.visible;
+   IF NOT FOUND THEN old_x:=NULL;END IF;
+  END IF;
+  IF old_x IS NOT NULL THEN
+   PERFORM forge_world_v2.signal_light_edit_v2(
+    OLD.map_id,OLD.campaign_id,old_x,old_y,old_reach);
+  END IF;
  END IF;
  IF TG_OP IN ('UPDATE','INSERT') AND NEW.kind='torch' AND
   NEW.light_enabled THEN
   new_reach:=(coalesce(NEW.light_bright,0)+
     coalesce(NEW.light_dim,0))/5.0;
-  PERFORM forge_world_v2.signal_light_edit_v2(
-   NEW.map_id,NEW.campaign_id,NEW.x+0.5,NEW.y+0.5,new_reach);
+  new_x:=NEW.x+0.5;new_y:=NEW.y+0.5;
+  IF NEW.held_by_token_id IS NOT NULL THEN
+   SELECT t.x+t.span_x/2.0,t.y+t.span_y/2.0
+    INTO new_x,new_y FROM public.map_tokens t
+   WHERE t.id=NEW.held_by_token_id AND
+    t.map_id=NEW.map_id AND t.campaign_id=NEW.campaign_id
+    AND t.visible;
+   IF NOT FOUND THEN new_x:=NULL;END IF;
+  END IF;
+  IF new_x IS NOT NULL THEN
+   PERFORM forge_world_v2.signal_light_edit_v2(
+    NEW.map_id,NEW.campaign_id,new_x,new_y,new_reach);
+  END IF;
  END IF;
  IF TG_OP='DELETE' THEN RETURN OLD;END IF;
  RETURN NEW;
