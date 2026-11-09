@@ -219,6 +219,7 @@ test('keyboard nudges share controller and ignore input fields',async()=>{
  const surface=new FakeEvents(),keyboard=new FakeEvents(),{authority,calls}=makeAuthority();
  const controller=createMovementController({authority});
  const input=createInputController({target:surface,keyboardTarget:keyboard,controller,
+  keyboardIdleMs:0,
   pointFromEvent:e=>({x:e.clientX,y:e.clientY}),
   resolveSelection:()=>({mapId,selection,origin})});
  input.mount();
@@ -227,8 +228,13 @@ test('keyboard nudges share controller and ignore input fields',async()=>{
  assert.equal(controller.state,'Idle');
  keyboard.dispatch('keydown',{key:'ArrowRight',target:{tagName:'DIV'},
   preventDefault(){}});
- await tick();await tick();
- assert.deepEqual(calls.commit[0].endpoint,{x:1,y:0});
+ keyboard.dispatch('keydown',{key:'ArrowRight',repeat:true,target:{tagName:'DIV'},
+  preventDefault(){}});
+ keyboard.dispatch('keyup',{key:'ArrowRight',target:{tagName:'DIV'},
+  preventDefault(){}});
+ await tick();await tick();await tick();
+ assert.deepEqual(calls.commit[0].endpoint,{x:2,y:0});
+ assert.equal(calls.begin.length,1);
  input.unmount();
 });
 
@@ -249,4 +255,39 @@ test('blur, pointer cancellation and unmount end captures cleanly',async()=>{
  assert.equal(controller.state,'Cancelled');
  input.unmount();
  assert.equal(input.mounted,false);
+});
+
+test('group movement sends one gesture with all piece identities',async()=>{
+ const {authority,calls}=makeAuthority();
+ const members=[{kind:'token',id:'hero'},{kind:'tool',id:'torch'}];
+ const controller=createMovementController({authority});
+ assert.equal(controller.beginGesture({...config,selection:members}),true);
+ controller.updateGesture({x:4,y:0});
+ assert.equal((await controller.endGesture()).status,'committed');
+ assert.deepEqual(calls.begin[0].selection,members);
+ assert.deepEqual(calls.advance[0].selection,members);
+ assert.equal(calls.commit.length,1);
+});
+
+test('scene revision invalidation and duplicate members fail safely',async()=>{
+ const {authority,calls}=makeAuthority();
+ const controller=createMovementController({authority});
+ assert.equal(controller.beginGesture({...config,selection:[token,token]}),false);
+ assert.equal(controller.beginGesture({...config,environmentRevision:7}),true);
+ await tick();
+ controller.updateContext({environmentRevision:8});
+ await tick();
+ assert.equal(controller.state,'Cancelled');
+ assert.equal(calls.commit.length,0);
+});
+
+test('bounded gesture path refuses excessive turns instead of dropping bends',async()=>{
+ const {authority}=makeAuthority({begin:()=>new Promise(()=>{})});
+ const controller=createMovementController({authority});
+ controller.beginGesture(config);
+ for(let i=1;i<=130&&controller.active;i++){
+  const x=i%2===1?1:0;
+  controller.updateGesture({x,y:i});
+ }
+ assert.equal(controller.state,'Rejected');
 });
