@@ -1216,14 +1216,29 @@ export default function TabletopApp(){
     if(isToken)setRemoteTokenPositions(markHidden);
     else setRemoteToolPositions(markHidden);
    }else{
-    remoteMotion.current?.previewRemote(visualId,payload.x,payload.y);
-    if(isToken)latestPartyFogRefresh.current?.();
-    const clearHidden=prior=>{
-     if(!prior[payload.id]?.hidden)return prior;
-     const copy={...prior};delete copy[payload.id];return copy;
-    };
-    if(isToken)setRemoteTokenPositions(clearHidden);
-    else setRemoteToolPositions(clearHidden);
+    // Verified path packets are the only way to animate through corners.
+    // Their intermediate cells were individually accepted by Postgres and
+    // independently LOS-filtered for THIS viewer. Unknown packet gaps never
+    // become an unverified straight-line interpolation through a wall.
+    const accepted=payload.action==='path'?
+     remoteMotion.current?.previewRemotePath(visualId,payload.path)===true:
+     (remoteMotion.current?.previewRemote(visualId,payload.x,payload.y),true);
+    if(!accepted){
+     movementDiagnostics.count('observerPathGap');
+     const recheck=isToken?latestTokenRefresh.current:latestToolRefresh.current;
+     void Promise.resolve(recheck?.()).catch(error=>
+      console.warn('Observer path revalidation failed',error));
+    }else{
+     // Private batched motion issues its own verified viewer fog tick; the
+     // legacy endpoint requires a separate refresh for compatibility.
+     if(isToken&&payload.action!=='path')latestPartyFogRefresh.current?.();
+     const clearHidden=prior=>{
+      if(!prior[payload.id]?.hidden)return prior;
+      const copy={...prior};delete copy[payload.id];return copy;
+     };
+     if(isToken)setRemoteTokenPositions(clearHidden);
+     else setRemoteToolPositions(clearHidden);
+    }
    }
    const timer=setTimeout(()=>{
     expiry.delete(payload.id);
