@@ -75,8 +75,8 @@ export function compileCollisionScene({
     tangent:{x:(to.x-from.x)/length,y:(to.y-from.y)/length},rule});
   }
  }
- return {version:2,scope,revision,collisionEnabled,
-  widthCells,heightCells,segments};
+ return {version:2,mapId:typeof map.id==='string'?map.id:null,
+  scope,revision,collisionEnabled,widthCells,heightCells,segments};
 }
 function normalizedPieces(pieces){
  if(!Array.isArray(pieces)||pieces.length<1||pieces.length>64)return null;
