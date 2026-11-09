@@ -608,7 +608,7 @@ export default function WorldV2Board(props){
    pointerEvents:'none',
    backgroundSize:map.grid_size+'px '+map.grid_size+'px'}}/>
   <MapPinLayer map={map} scale={1} pointerScale={scale}
-   pins={handoutPins} isDM={isDM} editor={editor} active={active}
+   pins={handoutPins} isDM={isDM&&!dmPreview} editor={editor} active={active}
    onCreate={onCreateHandoutPin} onOpen={onOpenHandoutPin}
    onMove={onMoveHandoutPin} onRead={onReadHandoutPin}
    onCollect={onCollectHandoutPin} onDelete={onDeleteHandoutPin}
