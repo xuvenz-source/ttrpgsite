@@ -17,12 +17,13 @@ const validId=v=>typeof v==='string'&&UUID.test(v);
 export const WORLD_VISION_EVENT='world-vision-v2';
 export function createVisibilityController({
  db,mapId,viewerId,dmPreview=false,getScene=()=>null,
- onFog=noop,onRoster=noop,onRevoke=noop,onError=noop
+ onFog=noop,onRoster=noop,onSnapshot=noop,onRevoke=noop,onError=noop
 }={}){
  if(!db?.rpc||!validId(mapId)||!validId(viewerId)||
   typeof dmPreview!=='boolean'||typeof getScene!=='function'||
   typeof onFog!=='function'||typeof onRoster!=='function'||
-  typeof onRevoke!=='function'||typeof onError!=='function')
+  typeof onSnapshot!=='function'||typeof onRevoke!=='function'||
+  typeof onError!=='function')
   throw Error('Invalid V2 visibility controller');
  let disposed=false,epoch=0,currentMap=mapId,currentViewer=viewerId;
  let current=null,mask=null,inFlight=null,queued=false,authorized=false;
@@ -62,6 +63,10 @@ export function createVisibilityController({
   const shouldUpdateRoster=pieces.added.length||pieces.removed.length||
    pieces.moved.length;
   current=next;mask=nextMask;authorized=true;
+  // Phase 8's single presentation owner needs EVERY accepted cursor,
+  // including snapshots with no fog/roster delta. It may update its stream
+  // gate without scheduling a redraw of otherwise unchanged sprites.
+  safe(onSnapshot,next);
   if(shouldUpdateFog)safe(onFog,{
    frame:next,mask:nextMask,dirty:changes
   });
