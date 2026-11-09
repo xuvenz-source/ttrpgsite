@@ -121,8 +121,8 @@ BEGIN
  WHERE r.map_id=p_map AND r.campaign_id=m.campaign_id;
  SELECT s.generation INTO scene_gen FROM forge_world_v2.scene_publications s
  WHERE s.map_id=p_map AND s.campaign_id=m.campaign_id;
- published:=jsonb_typeof(full_scene->'objects')='array' AND
-  jsonb_array_length(full_scene->'objects')<=120;
+ published:=CASE WHEN jsonb_typeof(full_scene->'objects')='array'
+  THEN jsonb_array_length(full_scene->'objects')<=120 ELSE false END;
  -- A malformed unpublished scene cannot become an empty, visible map
  -- while rules still require collision/fog: clients treat this as invalid.
  fog_on:=coalesce(fog_on,false);
