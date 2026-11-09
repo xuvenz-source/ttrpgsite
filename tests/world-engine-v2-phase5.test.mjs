@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
- createWorldRealtimeTransport,worldObserverTopic,
+ createWorldRealtimeTransport,worldObserverTopic,fetchWorldObserverCursorV2,
  validWorldMotionFrame,validWorldObserverSnapshot,WORLD_MOTION_EVENT
 } from '../src/engine/v2/index.js';
 
@@ -211,4 +211,23 @@ test('invalid resync result keeps channel fail-closed and never shows paths',asy
  assert.equal(seen.length,0);
  assert.equal(errors.length,1);
  await t.dispose();
+});
+
+
+test('viewer cursor reader returns only an authorized typed private cursor',async()=>{
+ const calls=[],cursor={version:2,mapId,viewerId,cursor:7,
+  environmentRevision:9,permissionGeneration:3};
+ const db={rpc:async(name,args)=>{
+  calls.push([name,args]);return {data:cursor,error:null};
+ }};
+ assert.deepEqual(await fetchWorldObserverCursorV2({db,mapId,viewerId}),cursor);
+ assert.deepEqual(calls,[['get_world_observer_cursor_v2',{p_map:mapId}]]);
+ await assert.rejects(fetchWorldObserverCursorV2({db,mapId,viewerId:tokenId}),
+  /Unauthorized/);
+ await assert.rejects(fetchWorldObserverCursorV2({
+  db:{rpc:async()=>({data:{...cursor,secretNPCs:[]},error:null})},mapId,viewerId
+ }),/Unauthorized/);
+ await assert.rejects(fetchWorldObserverCursorV2({
+  db:{rpc:async()=>({data:null,error:{message:'RLS denied'}})},mapId,viewerId
+ }),/Unauthorized/);
 });
