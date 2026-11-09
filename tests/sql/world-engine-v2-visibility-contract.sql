@@ -126,12 +126,12 @@ BEGIN
 
 END $$;
 RESET ROLE;
-DO $
+DO $$
 BEGIN
  IF (SELECT revision FROM forge_visibility.exploration ex WHERE
  ex.user_id='30000000-0000-4000-8000-000000000001')<>0
  THEN RAISE EXCEPTION 'Idempotent fog wrote redundant exploration revision';END IF;
-END $;
+END $$;
 
 -- DM sees all entities, including explicitly DM-hidden NPC and all map cells
 -- without any player scope or leaked prepared editing state.
