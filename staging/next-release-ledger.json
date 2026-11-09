@@ -10,7 +10,7 @@
       "status": "staged",
       "linkedPullRequest": 61,
       "productionBaseSha": "7fb2c04fe4ca85721e08772e936265a649784bda",
-      "note": "Frontend-only integrated V2 repair: single-owner startup sight, map-sized grid, fog-safe interactive popups, native Ctrl+wheel, buffered key movement. No SQL or production release. CI and real browser multiplayer acceptance required."
+      "note": "Frontend-only V2 live repair plus memory diagnostics and optional separately-approved Nano 128MB shared_buffers trial. Memory trial is NOT applied or triggered by merge/deployment. See docs/supabase-nano-memory-trial-2026-11-10.md."
     },
     {
       "name": "stage/account-settings-map-measurements",
