@@ -145,7 +145,8 @@ BEGIN
   SELECT m.user_id FROM public.campaign_members m
   WHERE m.campaign_id=p_session.campaign_id
    AND m.user_id<>p_session.actor_id AND m.role IN ('player','dm')
-  ORDER BY m.user_id LIMIT 32
+  ORDER BY CASE WHEN m.role='dm' THEN 0 ELSE 1 END,
+   m.user_id LIMIT 32
  LOOP
   viewer_role:=forge_world_v2.viewer_on_map(
    p_session.campaign_id,p_session.map_id,audience.user_id);
