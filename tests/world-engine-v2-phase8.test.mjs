@@ -27,7 +27,7 @@ const scene=(o={})=>({
 });
 const dm=()=>scene({scope:'dm',environment:{version:1,objects:[wall,light]}});
 const sight=(o={})=>({
- version:2,mapId,viewerId,cursor:5,environmentRevision:7,
+ version:2,mapId,viewerId,scope:'viewer',cursor:5,environmentRevision:7,
  permissionGeneration:4,sceneGeneration:2,visionEpoch:6,
  enabled:true,width:10,height:10,partyShared:false,
  visible:allCells,explored:allCells,visiblePieces:[hero,ally,torch],...o
@@ -572,4 +572,39 @@ test('Phase 7 onSnapshot callback delivers every cursor for the Phase 8 renderer
  assert.equal(ctx.clock.requests,requests);
  assert.equal(ctx.renderer.getSpriteElement('token',hero.id),original);
  controller.dispose();ctx.renderer.dispose();
+});
+
+
+test('DM-to-player scope mismatch fails closed and clears all cached DM layers',()=>{
+ const ctx=make();
+ const dmScene=dm();
+ const dmSight=sight({scope:'dm',enabled:false,
+  visible:[],explored:[],visiblePieces:[hero]});
+ activate(ctx,dmScene,dmSight);
+ ctx.renderer.setTerrainSource('https://example.test/secret-dm-map.png');
+ const stale=ctx.renderer.getSpriteElement('token',hero.id);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  scope:'viewer',enabled:true,visible:allCells,explored:allCells,
+  visiblePieces:[hero],cursor:6,permissionGeneration:5,visionEpoch:7
+ })),false);
+ assert.equal(ctx.renderer.authorized,false);
+ assert.equal(ctx.renderer.currentScene,null);
+ assert.equal(ctx.surfaces.terrain.src,'');
+ assert.equal(ctx.surfaces.staticCanvas.width,1);
+ assert.equal(stale.parentNode,null);
+ ctx.renderer.dispose();
+});
+test('new permission generation requires a freshly authorized published scene',()=>{
+ const ctx=make();activate(ctx);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  permissionGeneration:5,visionEpoch:7,cursor:6
+ })),false);
+ assert.equal(ctx.renderer.currentScene,null);
+ assert.equal(ctx.renderer.authorized,false);
+ assert.ok(ctx.resync.includes('permission-generation-changed'));
+ assert.equal(ctx.renderer.adoptScene(scene()),true);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  permissionGeneration:5,cursor:6,visionEpoch:7
+ })),true);
+ ctx.renderer.dispose();
 });
