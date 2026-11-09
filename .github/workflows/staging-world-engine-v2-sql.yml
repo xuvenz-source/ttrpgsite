@@ -68,5 +68,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-visibility-contract.sql
       - name: Verify hidden NPC entering visible sight triggers private roster refresh
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-boundary-roster-contract.sql
+      - name: Verify owned, party-shared and held tool prediction permissions
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-tool-prediction-contract.sql
       - name: Verify real collision triggers accept only sealed V2 group commits
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-phase10-real-triggers.sql
