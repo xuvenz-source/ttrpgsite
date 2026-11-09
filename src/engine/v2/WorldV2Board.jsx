@@ -211,7 +211,10 @@ export default function WorldV2Board(props){
   return selection.every(piece=>granted.some(v=>idOf(v)===idOf(piece)));
  };
  function resolveSelection(event,point,{keyboard=false}={}){
-  if(previewRequested&&!dmPreview)return null;
+  // The viewer-effective DM preview is read-only until Phase 10 adds
+  // isolated token-origin vision overrides. Never move a real player's
+  // token or reveal preview positions through another user's sight RPC.
+  if(previewRequested)return null;
   if(!active||activeMeasure||
    environmentEditor?.enabled&&environmentEditor.lockTokens!==false)
    return null;
@@ -379,24 +382,10 @@ export default function WorldV2Board(props){
  },[active]);
  useEffect(()=>{
   if(!registerPreviewStep)return;
-  const previewStep=(dx,dy)=>{
-   if(!dmPreview||!Number.isSafeInteger(dx)||!Number.isSafeInteger(dy))
-    return false;
-   const t=latest.current.tokens.find(v=>
-    v.id===latest.current.environmentEditor?.previewTokenId);
-   const movement=runtimeRef.current?.movement;
-   if(!t||!movement||movement.active)return false;
-   const origin={x:Number(t.x),y:Number(t.y)};
-   if(!movement.beginGesture({
-    mapId:map.id,selection:[{kind:'token',id:t.id}],
-    origin,pointer:origin,mode:'preview',
-    environmentRevision:runtimeRef.current.sceneManager.displayedScene?.revision??0,
-    permissionGeneration:runtimeRef.current.visibility.frame?.permissionGeneration??0
-   }))return false;
-   movement.updateGesture({x:origin.x+dx,y:origin.y+dy});
-   void movement.endGesture();return true;
-  };
-  registerPreviewStep(previewStep);
+  // DM preview uses the player-effective server frame but does not yet
+  // authorize an independent, per-preview moving sight source. Fail closed.
+  const noPreviewMovement=()=>false;
+  registerPreviewStep(noPreviewMovement);
   return()=>registerPreviewStep(null);
  },[registerPreviewStep,map.id,dmPreview]);
  function startResize(event,token){
@@ -654,6 +643,10 @@ export default function WorldV2Board(props){
    onClearPins={()=>{setLocalMeasures(old=>old.filter(m=>!m.pinned));
     onMeasurementPreview?.(null,'clear')}}/>
   {issue&&<div role="alert" className="world-v2-engine-error">{issue}</div>}
+  {dmPreview&&<div role="status" className="world-v2-preview-note">
+   DM player preview is read-only in this staged build. Token-based vision
+   simulation requires the isolated preview movement source in Phase 10.
+  </div>}
   <div ref={viewport}
    className={'mapscroll map-pan-region'+(panning?' is-panning':'')}
    tabIndex={0}
