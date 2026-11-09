@@ -182,7 +182,7 @@
       "status": "staged-unreleased",
       "linkedPullRequest": 58,
       "productionBaseSha": "ab0901f7cbe85f2bf62bccf7c0941c3eec928d04",
-      "note": "Integrated World Engine V2 Phases 1–10; draft PR #58, inactive two-setting cutover, no production SQL or Vercel deployment. Frontend/PG17/CodeQL validation and full multiplayer browser/free-tier acceptance required before promotion. Preserve all other ready staged components in the next single release."
+      "note": "Draft PR #58 carries all Phases 1–10 plus code-first audit corrections (NPC boundary roster, fogless dynamic lights, authorized loose/shared tool prediction). Read-only live schema baseline verified; V2 SQL remains unapplied and old board default. Synthetic Node/PG17/CodeQL required at latest SHA. Do not deploy or mark release-ready before designer-approved integrated cutover and real browser/free-tier acceptance."
     }
   ],
   "features": [
@@ -623,7 +623,7 @@
         "20261109102300_world_engine_v2_vision_roster_invalidation",
         "20261109103000_world_engine_v2_legacy_commit_checkpoint"
       ],
-      "verification": "PostgreSQL 17 synthetic contract, frontend suite/build and CodeQL to be checked at exact PR head; real multi-client responsiveness/fog/torches and Supabase Free CPU/RSS/WAL remain mandatory live acceptance after approved integrated cutover."
+      "verification": "Staged audit corrections: hidden NPC/tool entering authorized sight now issues a private identity-free roster tick; fogless lights clear without errors; owned and party-shared loose tools receive bounded server-certified prediction grants, with withheld/held/unowned cases denied. Frontend/isolated PG17/CodeQL checks must pass at exact final SHA. Production Supabase PG17 schema read-only verified: eight V2 migrations unapplied and original enabled collision trigger bodies preserved in Phase 10 compatibility migration. Real 2/4/8-client movement, visual parity, latency p50/p95, CPU/RSS/WAL and Vercel/Supabase deployment acceptance are NOT performed; releaseReady remains false."
     }
   ],
   "databaseDependencies": [
