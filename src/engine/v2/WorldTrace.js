@@ -9,7 +9,7 @@ const EVENTS=new Set([
  'input.pointer.cancel','input.pointer.blur','input.keyboard.start','input.keyboard.end',
  'movement.grabbed','movement.approved','movement.blocked','movement.released',
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
- 'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
+ 'observer.seal','observer.resync','observer.authorized','observer.sight-hold','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','visibility.revoke','visibility.refresh',
  'visibility.snapshot','visibility.stale-snapshot',
