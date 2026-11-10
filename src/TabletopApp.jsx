@@ -211,6 +211,7 @@ export default function TabletopApp(){
  const movementPending=useRef(new Map()),toolMovementPending=useRef(new Set()),
   tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const previewStepHandler=useRef(null),v2StepHandler=useRef(null);
+ const v2CommitReconciler=useRef(null);
  const v2HeldMovementKeys=useRef(new Set());
  const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
  const registerV2Step=useCallback(handler=>{v2StepHandler.current=handler},[]);
@@ -1581,6 +1582,21 @@ export default function TabletopApp(){
   ++monitorRequest.current;
  },[selectedMap,activeId,user,isDM]);
  useEffect(()=>{refreshTokens(true);refreshMonitors(true);refreshChat()},[selectedMap,activeId,user,isDM]);
+ // V2's authorized observer paints movement independently of React token
+ // rows. Preserve canonical data reads for sheets/tools, but issue only one
+ // after a rapid series of commits rather than one per arrow or drag release.
+ useEffect(()=>{
+  if(!WORLD_V2_CUTOVER||!db||!activeId||!selectedMap)return;
+  const queue=createTrailingRefresh(()=>{
+   void latestTokenRefresh.current?.();
+   void latestToolRefresh.current?.(['issued','placed'],true);
+  },280);
+  v2CommitReconciler.current=queue;
+  return()=>{
+   if(v2CommitReconciler.current===queue)v2CommitReconciler.current=null;
+   queue.cancel();
+  };
+ },[db,activeId,selectedMap,user,isDM]);
  // Fog revisions always require a new RLS-authorized token snapshot, but
  // coordinate-only moves do NOT invalidate expensive inventory/monitor values.
  // Refresh those derived resources only if the server's authorized roster (or
@@ -3029,10 +3045,7 @@ export default function TabletopApp(){
    scale={mapZoom} setScale={setMapZoom} selectedId={selectedTokenId} setSelectedId={setSelectedTokenId}
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}
    encumbranceBadges={encumbranceBadges} hotbarInset={hotbarVisible}
-   onMovementCommitted={()=>{
-    void refreshTokens();
-    void campaignTools.refresh(['issued','placed'],true);
-   }}
+   onMovementCommitted={()=>v2CommitReconciler.current?.request()}
    onV2Error={fail}
    onV2SceneSnapshot={snapshot=>setV2Published({
     mapId:snapshot.mapId,
