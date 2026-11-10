@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "workflowVersion": "1.0",
+  "workflowApprovedOn": "2026-11-10",
+  "updatedOn": "2026-11-10",
+  "repository": "xuvenz-source/ttrpgsite",
+  "workflowPath": "docs/engineering-workflow.md",
+  "releaseLedgerPath": "staging/next-release-ledger.json",
+  "docsStagingPullRequest": 72,
+  "canonicalProduction": {
+    "mainSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+    "mergedPullRequest": 70,
+    "vercelDeploymentId": "dpl_FNwPjVY7o1781dc8Uo6Eizgf8rb4",
+    "vercelStatus": "READY",
+    "supabaseProjectId": "lwhwgqaunxbmvyndswze",
+    "supabaseStatus": "ACTIVE_HEALTHY",
+    "appliedMigrationCountAtAudit": 83,
+    "verifiedAt": "2026-11-10"
+  },
+  "nextStep": "A04",
+  "steps": {
+    "A01": {
+      "status": "VERIFIED"
+    },
+    "A02": {
+      "status": "VERIFIED"
+    },
+    "A03": {
+      "status": "STAGED"
+    },
+    "A04": {
+      "status": "NOT STARTED"
+    },
+    "A05": {
+      "status": "NOT STARTED"
+    },
+    "A06": {
+      "status": "NOT STARTED"
+    },
+    "B01": {
+      "status": "NOT STARTED"
+    },
+    "B02": {
+      "status": "NOT STARTED"
+    },
+    "B03": {
+      "status": "NOT STARTED"
+    },
+    "B04": {
+      "status": "NOT STARTED"
+    },
+    "B05": {
+      "status": "NOT STARTED"
+    },
+    "B06": {
+      "status": "NOT STARTED"
+    },
+    "B07": {
+      "status": "NOT STARTED"
+    },
+    "B08": {
+      "status": "NOT STARTED"
+    },
+    "B09": {
+      "status": "NOT STARTED"
+    },
+    "B10": {
+      "status": "NOT STARTED"
+    },
+    "C01": {
+      "status": "NOT STARTED"
+    },
+    "C02": {
+      "status": "NOT STARTED"
+    },
+    "C03": {
+      "status": "NOT STARTED"
+    },
+    "C04": {
+      "status": "NOT STARTED"
+    },
+    "C05": {
+      "status": "NOT STARTED"
+    },
+    "C06": {
+      "status": "NOT STARTED"
+    },
+    "D01": {
+      "status": "NOT STARTED"
+    },
+    "D02": {
+      "status": "NOT STARTED"
+    },
+    "D03": {
+      "status": "NOT STARTED"
+    },
+    "D04": {
+      "status": "NOT STARTED"
+    },
+    "D05": {
+      "status": "NOT STARTED"
+    },
+    "E01": {
+      "status": "NOT STARTED"
+    },
+    "E02": {
+      "status": "NOT STARTED"
+    },
+    "E03": {
+      "status": "NOT STARTED"
+    },
+    "E04": {
+      "status": "NOT STARTED"
+    },
+    "E05": {
+      "status": "NOT STARTED"
+    },
+    "F01": {
+      "status": "NOT STARTED"
+    },
+    "F02": {
+      "status": "NOT STARTED"
+    },
+    "F03": {
+      "status": "NOT STARTED"
+    }
+  },
+  "handoffs": {
+    "A01": {
+      "status": "VERIFIED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "scope": "Read-only GitHub main, 71 branches, six open PRs, Vercel READY production SHA, 83 applied Supabase migrations, release ledger and test campaign inventory",
+      "evidence": [
+        "https://github.com/xuvenz-source/ttrpgsite/commit/b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+        "https://github.com/xuvenz-source/ttrpgsite/pull/70"
+      ],
+      "noCodeChanges": true,
+      "findings": [
+        "PR #71 is the only open non-Dependabot PR",
+        "Historical ledger stale after PR #53 and prior PR #68 release",
+        "Eight V2 migrations already applied under distinct recorded version numbers",
+        "Issue #69: previously applied historical anon grants migration lacks exact source file"
+      ]
+    },
+    "A02": {
+      "status": "VERIFIED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "reviewedHeadSha": "ae02168387d36c80f13204a4804b6cf765e8d6a5",
+      "pullRequest": 71,
+      "decision": "AMEND BEFORE MERGE",
+      "changedFiles": 6,
+      "additions": 172,
+      "deletions": 7,
+      "ciAtReview": {
+        "codeql": "SUCCESS",
+        "isolatedPostgres": "SUCCESS",
+        "priorBuildAndTest": "SUCCESS",
+        "additionalBuildAndTest": "IN_PROGRESS",
+        "supabasePreview": "SKIPPED"
+      },
+      "releaseBlockingAmendments": [
+        "Add a hard cancellable observer-sight retention deadline covering indefinitely pending RPC and ensure stale in-flight visibility does not block recovery",
+        "While private observer stream is locked, preserve only previously certified rendering and prohibit new movement based on stale authorization",
+        "Add real-renderer edge tests for pending/hanging RPC, bounded retries, permission changes, disconnect, context switching and disposal",
+        "Reconcile only affected token/tool resources on movement commit, not all issued/placed tool data after token-only movement",
+        "Verify all required checks on exact amended PR head, including the previously in-progress run"
+      ],
+      "scope": "Complete six-file PR diff and surrounding WorldV2 runtime, observer transport, visibility, renderer, board and scheduling review",
+      "reviewUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/71",
+      "noCodeChanges": true
+    },
+    "A03": {
+      "status": "STAGED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/engineering-workflow-and-ledger-a03-2026-11-10",
+      "pullRequest": 72,
+      "scope": "Approved 35-step workflow + persistent tracker + documentation-only release ledger reconciliation",
+      "expectedFiles": [
+        "docs/engineering-workflow.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "noRuntimeChanges": true,
+      "noSqlChanges": true,
+      "noDeployment": true,
+      "verification": "Final branch diff / CI to be verified before considering review complete",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/72"
+    }
+  },
+  "pendingWork": [
+    {
+      "id": "PR71-A02",
+      "pr": 71,
+      "category": "movement-security",
+      "status": "BLOCKED",
+      "decision": "AMEND BEFORE MERGE",
+      "ownerStep": "A02-review-followup",
+      "notes": "Do not silently merge PR #71 during A03 or A04; require distinct authorization for amendments and a future release."
+    },
+    {
+      "id": "ISSUE69",
+      "issue": 69,
+      "category": "migration-provenance",
+      "status": "OPEN",
+      "ownerStep": "E05",
+      "notes": "Applied migration version 20261107051546 has no exact matching SQL source on main; documentation/provenance only until dedicated E05. Never reapply it."
+    },
+    {
+      "id": "GATE-A",
+      "category": "acceptance",
+      "status": "NOT STARTED",
+      "notes": "Authenticated DM/player browser movement/fog regression and measured baseline remain outstanding; CI does not prove live gameplay quality."
+    }
+  ],
+  "sourceOfTruthRules": [
+    "Current GitHub main + Vercel production deployment metadata determine served frontend SHA; release ledger is an auditable record, not a substitute for verification.",
+    "Supabase actual applied migration history is authoritative for applied SQL; repository source filename timestamps can differ from applied version numbers.",
+    "Open and draft PRs are unmerged staging work. Historical diverged branches are not automatically outstanding work; inspect PR/merge ancestry and semantic diff.",
+    "Progress STAGED means changes exist in a draft PR only; future chats must load PR #72 head until approved merge.",
+    "No deployment, SQL, Vercel setting or Supabase mutation without explicit designer release approval."
+  ]
+}
