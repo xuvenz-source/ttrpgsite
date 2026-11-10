@@ -22,28 +22,16 @@ export function createInputController({
   typeof onPointerStatus!=='function')throw Error('Invalid V2 input adapter');
  let mounted=false,activePointer=null,keyboardCursor=null,keyboardTimer=null;
  let pointerOffset=null,activePick=null,lastMoveEvent=null;
- // Pointer capture is not guaranteed (e.g. a detached element or browser
- // gesture takeover). Keep the move/up lifecycle on the owning document if
- // capture fails instead of silently losing every movement sample.
- const documentTarget=target.ownerDocument;
- const canUseDocument=documentTarget&&documentTarget!==target&&
-  typeof documentTarget.addEventListener==='function'&&
-  typeof documentTarget.removeEventListener==='function';
- let fallbackAttached=false;
- const detachFallback=()=>{
-  if(!fallbackAttached)return;
-  fallbackAttached=false;
-  documentTarget.removeEventListener('pointermove',move,true);
-  documentTarget.removeEventListener('pointerup',up,true);
-  documentTarget.removeEventListener('pointercancel',cancel,true);
- };
- const attachFallback=()=>{
-  if(!canUseDocument||fallbackAttached)return;
-  fallbackAttached=true;
-  documentTarget.addEventListener('pointermove',move,{capture:true,passive:false});
-  documentTarget.addEventListener('pointerup',up,{capture:true,passive:false});
-  documentTarget.addEventListener('pointercancel',cancel,true);
- };
+ // Listen on the owning document in capture phase. React delegates events
+ // above the map viewport, so a child portal/editor can stop propagation
+ // BEFORE a native viewport capture listener ever sees the pointerdown.
+ // A document-capture listener runs first, stays alive across map bounds,
+ // and hears pointerup/cancel even if pointer capture was transferred.
+ const root=target.ownerDocument?.addEventListener&&
+  target.ownerDocument?.removeEventListener?target.ownerDocument:target;
+ const withinMap=event=>root===target||
+  target.contains?.(event.target)===true||
+  (typeof event.composedPath==='function'&&event.composedPath().includes(target));
  const heldArrows=new Set();
  const clearKeyboardTimer=()=>{
   if(keyboardTimer!==null)clearTimer(keyboardTimer);
@@ -60,13 +48,13 @@ export function createInputController({
  };
  const release=()=>{
   const id=activePointer;activePointer=null;
-  pointerOffset=null;activePick=null;lastMoveEvent=null;detachFallback();
+  pointerOffset=null;activePick=null;lastMoveEvent=null;
   if(id!==null)try{
    if(target.hasPointerCapture?.(id))target.releasePointerCapture?.(id);
   }catch{}
  };
  const down=event=>{
-  if(event.button!==0||event.isPrimary===false)return;
+  if(event.button!==0||event.isPrimary===false||!withinMap(event))return;
   if(activePointer!==null||controller.active){
    onPointerStatus(event,'busy');return;
   }
@@ -86,14 +74,9 @@ export function createInputController({
   pointerOffset={x:originPoint.x-p.x,y:originPoint.y-p.y};
   activePick=picked;
   activePointer=event.pointerId;
-  let captured=false;
-  try{
-   if(typeof target.setPointerCapture==='function'){
-    target.setPointerCapture(event.pointerId);
-    captured=target.hasPointerCapture?.(event.pointerId)!==false;
-   }
-  }catch{}
-  if(!captured)attachFallback();
+  // Capture is a browser convenience, not a lifecycle requirement:
+  // document-capture still receives every move/up/cancel.
+  try{target.setPointerCapture?.(event.pointerId)}catch{}
   event.preventDefault?.();
  };
  const move=event=>{
@@ -133,16 +116,16 @@ export function createInputController({
  };
  const lost=event=>{
   if(activePointer===null||event.pointerId!==activePointer)return;
-  // Losing capture during a real drag should not leave an unfinishable
-  // gesture. The document fallback keeps its matching release observable.
-  if(canUseDocument){attachFallback();return}
+  // The document listener continues a gesture after capture migrates.
+  if(root!==target)return;
   release();controller.cancelGesture('lost-capture');
   onPointerStatus(event,'lost-capture');
  };
  const nativeDragStart=event=>{
   // Map sprites move through Pointer Events, not the browser HTML5 DnD
   // machinery. Do not interfere with drops arriving from the Units panel.
-  if(event.target?.closest?.('[data-world-kind][data-world-id]'))
+  if(withinMap(event)&&
+   event.target?.closest?.('[data-world-kind][data-world-id]'))
    event.preventDefault?.();
  };
  const blur=()=>{
@@ -187,14 +170,14 @@ export function createInputController({
  return {
   mount(){
    if(mounted)return;mounted=true;
-   // Capture before a child React portal or overlay stops bubbling. The
-   // resolver still enforces server sight, control and editor permissions.
-   target.addEventListener('pointerdown',down,{capture:true,passive:false});
-   target.addEventListener('pointermove',move,{passive:false});
-   target.addEventListener('pointerup',up,{passive:false});
-   target.addEventListener('pointercancel',cancel);
+   // A single scoped capture pipeline; only pointerdown inside the map may
+   // begin an authorized gesture. Moves/releases are pointerId-matched.
+   root.addEventListener('pointerdown',down,{capture:true,passive:false});
+   root.addEventListener('pointermove',move,{capture:true,passive:false});
+   root.addEventListener('pointerup',up,{capture:true,passive:false});
+   root.addEventListener('pointercancel',cancel,true);
    target.addEventListener('lostpointercapture',lost);
-   target.addEventListener('dragstart',nativeDragStart,{capture:true});
+   root.addEventListener('dragstart',nativeDragStart,true);
    keyboardTarget.addEventListener('keydown',key);
    keyboardTarget.addEventListener('keyup',keyup);
    // Board delegates arrows to the app and supplies a no-op keyboard
@@ -205,12 +188,12 @@ export function createInputController({
    if(!mounted)return;
    mounted=false;release();clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
    controller.cancelGesture('unmount');
-   target.removeEventListener('pointerdown',down,true);
-   target.removeEventListener('pointermove',move);
-   target.removeEventListener('pointerup',up);
-   target.removeEventListener('pointercancel',cancel);
+   root.removeEventListener('pointerdown',down,true);
+   root.removeEventListener('pointermove',move,true);
+   root.removeEventListener('pointerup',up,true);
+   root.removeEventListener('pointercancel',cancel,true);
    target.removeEventListener('lostpointercapture',lost);
-   target.removeEventListener('dragstart',nativeDragStart,true);
+   root.removeEventListener('dragstart',nativeDragStart,true);
    keyboardTarget.removeEventListener('keydown',key);
    keyboardTarget.removeEventListener('keyup',keyup);
    blurTarget.removeEventListener('blur',blur);
