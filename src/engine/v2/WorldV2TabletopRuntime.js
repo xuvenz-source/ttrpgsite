@@ -20,6 +20,7 @@ import {collisionAllowsStep} from './CollisionSolver.js';
 import {createPreviewAuthority} from './PreviewAuthority.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {worldV2Trace} from './WorldTrace.js';
+import {mayRetainCertifiedSightOnObserverRecovery} from './ObserverSightContinuity.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -64,6 +65,7 @@ export function createWorldV2TabletopRuntime({
  let refreshRevision=0,reloading=null,privateReady=false;
  let sceneRecovery=null;
  let previewPosition=null,dmLightRefreshTimer=null;
+ let retainingObserverSight=false;
  function scheduleDmLightRefresh(){
   if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
   // Most maps have no moving DM lights. Ordinary token paths already have
@@ -302,16 +304,39 @@ export function createWorldV2TabletopRuntime({
      // onSnapshot automatically repaints only changed fog and sprite rows.
     },
     onRevoke:reason=>{
-     connected=false;privateReady=false;
+     connected=stream?.connected===true;privateReady=false;
+     if(mayRetainCertifiedSightOnObserverRecovery({
+      reason,scene:manager.displayedScene,frame:vision.frame,
+      painted:renderer.currentVisibility,
+      rendererAuthorized:renderer.authorized,sceneStale:manager.stale
+     })){
+      // Only the already-authorized view is retained. The private stream
+      // remains locked, and the new piece cannot be painted until sight
+      // and the recipient-scoped observer roster are refreshed.
+      retainingObserverSight=true;
+      worldV2Trace.event('observer.sight-hold','unknown-piece');
+      state(reason);return;
+     }
+     retainingObserverSight=false;
      renderer.revoke(reason,false);
      movement.cancelGesture('disconnected');
      state(reason);
     },
     onState:streamState=>{
      connected=streamState.connected;
+     if(streamState.reason==='authorized')retainingObserverSight=false;
      state('private-'+streamState.reason);
     },
-    onError:error=>signal(onError,error)
+    onError:error=>{
+     // A bounded unknown-piece recovery that exhausts its retries must
+     // conceal just like an ordinary authorization failure. Never leave
+     // a stale certified map visible indefinitely after recovery fails.
+     if(retainingObserverSight&&stream?.locked){
+      retainingObserverSight=false;
+      vision.revoke('observer-resync-error');
+     }
+     signal(onError,error);
+    }
    });
    sceneTransport=createSceneTransport({
     db,mapId,sceneManager:manager,
