@@ -1,6 +1,6 @@
 import {worldV2Trace} from './WorldTrace.js';
 import {appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from './GesturePath.js';
-import {certifiedMotionMatchesSight} from './CertifiedMotionPresentation.js';
+import {certifiedMotionPaintAllowed} from './CertifiedMotionPresentation.js';
 
 /** V2 gesture orchestration. This is deliberately isolated from live RPCs.
  * Authority adapter MUST be backed by server validation in later phases.
@@ -316,8 +316,10 @@ export function createMovementController({
   syncCertifiedSight({frame,scene}={}){
    const g=active;
    if(!certifiedMotion||!g||!g.certificate)return false;
-   if(certifiedMotionMatchesSight(g.certificate,frame,scene))
-    return true;
+   if(certifiedMotionPaintAllowed({
+    certificate:g.certificate,frame,scene,mapId:g.mapId,
+    selection:g.selection,approved:g.approved,presented:g.presented
+   }))return true;
    g.certificate=null;g.predicted=false;g.presented={...g.approved};
    emit(g,'presentation-reset');
    return false;
