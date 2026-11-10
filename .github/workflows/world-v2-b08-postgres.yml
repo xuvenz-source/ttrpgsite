@@ -1,0 +1,37 @@
+name: World V2 B08 isolated final-commit and replay tests
+on:
+  push:
+    paths:
+      - 'supabase/candidates/world_v2_b08_commit_reconciliation.sql'
+      - 'tests/world-v2-b08-postgres/**'
+      - 'tests/world-v2-b07-postgres/**'
+      - '.github/workflows/world-v2-b08-postgres.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-security:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: b08_ephemeral_only
+          POSTGRES_DB: world_v2_b08
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_b08"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute source-real V2 movement commit/replay regression
+        env:
+          WORLD_V2_B08_ISOLATED: 'yes'
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: b08_ephemeral_only
+          PGDATABASE: world_v2_b08
+        run: bash tests/world-v2-b08-postgres/run.sh

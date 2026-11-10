@@ -157,12 +157,16 @@ export function createWorldV2TabletopRuntime({
     catch{return null}
    },
    getPosition:()=>previewPosition
-  }):createWorldAuthorityClient({db});
+  }):createWorldAuthorityClient({db,
+   commitReconciliation:import.meta.env?.VITE_WORLD_V2_COMMIT_RECONCILE==='1'
+  });
  const movement=createMovementController({
   authority,
   // Staged B05 opt-in only. All normal builds retain the current adapter.
   // No public runtime or production deployment is enabled by this branch.
   coalesceMotion:import.meta.env?.VITE_WORLD_V2_COALESCE_MOTION==='1',
+  // B08 is independently opt-in, off until reviewed integrated SQL release.
+  commitReconciliation:import.meta.env?.VITE_WORLD_V2_COMMIT_RECONCILE==='1',
   // B06 affects only server-certified player viewer presentation. DM's
   // known-geometry local preview remains the existing separate path.
   certifiedMotion:!isDM&&!dmPreview&&

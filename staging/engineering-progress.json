@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B08",
+  "nextStep": "B09",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -247,7 +247,29 @@
       "latestPassingStandardRun": 42838547542
     },
     "B08": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "stackedOnPullRequest": 82,
+      "sqlCandidate": "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+      "clientFeatureFlag": "VITE_WORLD_V2_COMMIT_RECONCILE=1 (OFF by default)",
+      "testWorkflow": ".github/workflows/world-v2-b08-postgres.yml",
+      "docs": "docs/architecture/world-v2-b08-final-commit-reconciliation.md",
+      "scope": "Source-derived V2 atomic Commit retains checkpoint/locks, exact-batch Advance replay, exact Commit replay, bounded postcommit B07 private drain, one opt-in client retry and uncertain-authority/signed-sight reconciliation.",
+      "statusDetail": "STAGED SOURCE AND TESTS; exact-head CI pending; no live DB or real authenticated DM/P1/P2 QA.",
+      "security": "No new public RPC, private transport topic or grants; generic denial for changed replay; final canonical write independent of private budget; sight authority required for unknown commit.",
+      "knownGaps": [
+        "B07 FIFO hide priority now staged/tested in isolation; real Auth/LOS multi-piece/multi-tab revocation and budget-saturated eventual hiding NOT RUN",
+        "No retry=no guarantee of terminal drain when message budget exhausted; B10 must test eventual resync",
+        "Original isolated fixture does not include full production update triggers/real Auth/LOS or multi-tab Realtime",
+        "A06/Gate A blocked; PR #71 security amendments pending; no real browser p95/map flashing evidence",
+        "A final reviewed migration and integrated SQL + flags release require separate approval"
+      ],
+      "pullRequest": 83,
+      "gateA": "NOT PASSED",
+      "next": "B09 after exact-head CI; no production rollout",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/83",
+      "b07HidePriorityAmendment": "Same nonapplied B07 candidate now prioritizes certified hide ahead of stale queued paths for that piece; tested under 25-point deferred FIFO and exhausted budget. Real end-to-end hiding/sight revocation remains B10 gated."
     },
     "B09": {
       "status": "NOT STARTED"
@@ -716,6 +738,43 @@
         "conclusion": "SUCCESS",
         "note": "pre-handoff metadata-only update"
       }
+    },
+    "B08": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B08",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "stackedOnPullRequest": 82,
+      "scope": "Source-derived V2 atomic Commit retains checkpoint/locks, exact-batch Advance replay, exact Commit replay, bounded postcommit B07 private drain, one opt-in client retry and uncertain-authority/signed-sight reconciliation.",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+        ".github/workflows/world-v2-b08-postgres.yml",
+        "tests/world-v2-b08-postgres/schema.sql",
+        "tests/world-v2-b08-postgres/hostile.sql",
+        "tests/world-v2-b08-postgres/run.sh",
+        "tests/world-v2-b08-final-commit-2026-11-11.test.mjs",
+        "src/engine/v2/AuthorityClient.js",
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "src/engine/v2/WorldRenderer.js",
+        "docs/architecture/world-v2-b08-final-commit-reconciliation.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "B08 source-real PG17 tested, including exact Advance+Commit replay, real canonical write, budget outage and saturated FIFO hide preemption at #42845242094; source/final PR head CI pending. See PR #83.",
+      "securityParity": "No new public RPC, private transport topic or grants; generic denial for changed replay; final canonical write independent of private budget; sight authority required for unknown commit.",
+      "sqlDeployment": "NONE — candidate only in supabase/candidates, no migration, no production apply",
+      "blockers": [
+        "B07 FIFO hide priority now staged/tested in isolation; real Auth/LOS multi-piece/multi-tab revocation and budget-saturated eventual hiding NOT RUN",
+        "No retry=no guarantee of terminal drain when message budget exhausted; B10 must test eventual resync",
+        "Original isolated fixture does not include full production update triggers/real Auth/LOS or multi-tab Realtime",
+        "A06/Gate A blocked; PR #71 security amendments pending; no real browser p95/map flashing evidence",
+        "A final reviewed migration and integrated SQL + flags release require separate approval"
+      ],
+      "next": "B09 subject to B08 exact-head CI",
+      "pullRequest": 83,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/83"
     }
   },
   "pendingWork": [
@@ -780,23 +839,23 @@
     {
       "id": "B04-H39-EXACT-PAYLOAD-REPLAY",
       "category": "security-contract",
-      "status": "BLOCKED",
+      "status": "STAGED_CANDIDATE_NOT_RELEASED",
       "ownerStep": "B08",
-      "notes": "Source-real public.advance_world_motion_v2 same sequence with different targets returns previously cached ACK rather than a generic denial; B04 H39 verified no new motion/broadcast. Record strict same-payload retry hash/compare and hostile test before Gate B. Do not confuse harmless replay side effects with contract compliance."
+      "notes": "B08 nonapplied candidate binds same-seq replay to exact Advance payload; source-real isolated PG/CI still require verification and B10 integrated qualification. Not fixed in production."
     },
     {
       "id": "B07-TERMINAL-FLUSH-B08",
       "category": "security-integration",
-      "status": "BLOCKED",
+      "status": "STAGED_CANDIDATE_NOT_RELEASED",
       "ownerStep": "B08",
-      "notes": "B07 private buffered paths must be drained only after an authenticated successful V2 atomic commit; budget exhaustion, cancel/expiry, hidden viewer and lost-ACK recovery require adversarial tests. B07 SQL is nonapplied."
+      "notes": "B08 candidate invokes bounded recipient FIFO drain only after atomic Commit; exact-ACK replay reattempts, but no guaranteed drain without future authorized RPC/canonical sight when quota exhausted. B10 gate; candidate nonapplied."
     },
     {
       "id": "B07-HIDE-PRIORITY-B08",
       "category": "security-integration",
-      "status": "BLOCKED",
+      "status": "STAGED_CANDIDATE_NOT_RELEASED",
       "ownerStep": "B08",
-      "notes": "Priority hide while 25-point FIFO and project Realtime cap are saturated must avoid revealing hidden continuation and bound retention of a previously visible sprite; verify private per-recipient resync, no silent disclosure."
+      "notes": "B08 amends nonapplied B07 queue for urgent hide preemption and removal of all same-piece unsent paths, isolated PostgreSQL P11/H07/P12 tests passed #42845242094. Still requires real multi-user LOS/revoke tests and priority budget eventual-delivery/resync in B10; no production fix."
     }
   ],
   "sourceOfTruthRules": [
@@ -885,6 +944,19 @@
         "B08 MUST integrate verified post-successful-commit terminal flush, own idempotent reconciliation and review hide priority; B07 is not release ready",
         "B04 H39 same-seq changed-payload cached ACK and PR #71 security/recovery amendments remain blockers",
         "No staging flag activation, PR merge, live DM/P1/P2 test or B08 implementation authorized by this one microstep"
+      ]
+    },
+    {
+      "id": "B08-STAGING-ONLY-ATOMIC-RECONCILIATION-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly instructed 'Proceed with B08' after B07 staged handoff",
+      "appliesTo": "B08 source-derived nonapplied SQL candidate, disabled-by-default client reconciliation, focused isolated tests, documentation and ledgers only",
+      "rationale": "Bounded, isolated security and UX work can be staged without disturbing live campaigns while authenticated A06/Gate A tests remain blocked",
+      "constraints": [
+        "No main merge, Vercel deploy, Supabase migrations, public grants, campaign edits, new paid infrastructure, or activating environment flags",
+        "A06/Gate A NOT PASSED, PR #71 still blocked, hidden-piece B07 hide-priority and no-trigger budget drain remain release blockers",
+        "B08 source/CI stages don't prove real authenticated group/multi-tab fog/collision or browser presentation acceptance",
+        "B09 only in separately requested microstep; final B10 release still requires explicit approval"
       ]
     }
   ]

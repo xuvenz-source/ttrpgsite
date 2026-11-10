@@ -315,6 +315,8 @@ AS $b07$
 DECLARE q forge_world_v2.observer_pending_b07%ROWTYPE;
  merged jsonb;new_deferred jsonb;
  count_sent integer:=0;has_hide boolean;last_index integer;
+ hides jsonb;keep jsonb;other_items jsonb;frame jsonb;
+ clean_deferred jsonb;piece record;
 BEGIN
  IF auth.uid() IS NULL OR p_session.actor_id IS DISTINCT FROM auth.uid() OR
   p_session.status<>'active' OR
@@ -356,6 +358,49 @@ BEGIN
  -- recipient frame is full or no Realtime budget is currently available.
  -- The V2 session itself admits max 64 advances; first frame + 63 extra
  -- frames is a deterministic, bounded backlog. Pop in FIFO order.
+ -- B08 hardening of the B07 candidate: a newly certified hide MUST
+ -- supersede all unsent paths for that piece, including deep deferred FIFO.
+ -- An old valid prefix must never be published after concealment. Keep
+ -- unrelated piece paths in their original FIFO order behind the hide.
+ SELECT coalesce(jsonb_agg(i.value ORDER BY i.ord),'[]'::jsonb)
+ INTO hides FROM jsonb_array_elements(p_items) WITH ORDINALITY i(value,ord)
+ WHERE i.value->>'action'='hide';
+ IF hides<>'[]'::jsonb THEN
+  SELECT coalesce(jsonb_agg(i.value ORDER BY i.ord),'[]'::jsonb)
+  INTO keep FROM jsonb_array_elements(q.pending) WITH ORDINALITY i(value,ord)
+  WHERE NOT EXISTS (
+   SELECT 1 FROM jsonb_array_elements(hides) h
+   WHERE h->>'kind'=i.value->>'kind' AND h->>'id'=i.value->>'id');
+  clean_deferred:='[]'::jsonb;
+  IF keep<>'[]'::jsonb THEN
+   clean_deferred:=jsonb_build_array(keep);
+  END IF;
+  FOR frame IN SELECT value FROM jsonb_array_elements(q.deferred) LOOP
+   SELECT coalesce(jsonb_agg(i.value ORDER BY i.ord),'[]'::jsonb)
+   INTO keep FROM jsonb_array_elements(frame) WITH ORDINALITY i(value,ord)
+   WHERE NOT EXISTS (
+    SELECT 1 FROM jsonb_array_elements(hides) h
+    WHERE h->>'kind'=i.value->>'kind' AND h->>'id'=i.value->>'id');
+   IF keep<>'[]'::jsonb THEN
+    clean_deferred:=clean_deferred||jsonb_build_array(keep);
+   END IF;
+  END LOOP;
+  SELECT coalesce(jsonb_agg(i.value ORDER BY i.ord),'[]'::jsonb)
+  INTO other_items FROM jsonb_array_elements(p_items) WITH ORDINALITY i(value,ord)
+  WHERE i.value->>'action'<>'hide';
+  IF other_items<>'[]'::jsonb THEN
+   clean_deferred:=clean_deferred||jsonb_build_array(other_items);
+  END IF;
+  IF jsonb_array_length(clean_deferred)>63 THEN
+   -- Never silently discard canonical path or hide information.
+   RAISE EXCEPTION 'B07 hide priority queue capacity exhausted';
+  END IF;
+  UPDATE forge_world_v2.observer_pending_b07
+  SET pending=hides,deferred=clean_deferred,updated_at=p_now
+  WHERE session_id=p_session.id AND viewer_id=p_viewer;
+  RETURN forge_world_v2.flush_recipient_observer_b07(
+   p_session,p_viewer,p_now);
+ END IF;
  new_deferred:=q.deferred;
  IF q.deferred='[]'::jsonb THEN
   merged:=forge_world_v2.merge_observer_items_b07(q.pending,p_items);
