@@ -168,7 +168,8 @@
       "verification": "PostgreSQL actual function compile and 61 SQL assertions + direct role negative/positive tests PASS on isolated runner; standard staged CI passed on inspected SHA; exact PR head recheck pending.",
       "security": "B03 candidate unchanged/nonapplied; no live schema/permissions; H39 replay exact-match policy gap explicitly not claimed as denied",
       "gateA": "NOT PASSED",
-      "next": "B05 subject to Gate A or a new, explicitly recorded staging-only exception"
+      "next": "B05 subject to Gate A or a new, explicitly recorded staging-only exception",
+      "pullRequest": 79
     },
     "B05": {
       "status": "NOT STARTED"
@@ -533,7 +534,9 @@
         "Real Supabase Auth, PostgREST JWT, private LOS observer and commit checkpoint integration not exercised in isolated fixture",
         "No free-tier headroom / browser p95 proof"
       ],
-      "next": "B05 only, with explicit Gate A completion or separately recorded staging-only sequencing decision; no production release"
+      "next": "B05 only, with explicit Gate A completion or separately recorded staging-only sequencing decision; no production release",
+      "pullRequest": 79,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/79"
     }
   },
   "pendingWork": [
