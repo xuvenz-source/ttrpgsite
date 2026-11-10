@@ -394,7 +394,11 @@ export function createWorldV2TabletopRuntime({
    keyboardTarget,keyboardIdleMs=90}={}){
    if(disposed||input||!target)return false;
    const choose=(event,p,context)=>{
-    if(!authorized()){
+    if(!authorized()||
+     // A retained/cached sight cannot be movement authorization when its
+     // private recipient stream is locked or reconnecting. PR #71's
+     // proposed soft sight hold lacked this gate; do not cherry-pick it.
+     (!dmPreview&&(!privateReady||!stream?.connected||stream?.locked))){
      worldV2Trace.event('input.pick','runtime-inactive');return null;
     }
     let picked;
