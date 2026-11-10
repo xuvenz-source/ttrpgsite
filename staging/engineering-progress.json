@@ -74,7 +74,31 @@
       }
     },
     "A06": {
-      "status": "NOT STARTED"
+      "status": "BLOCKED",
+      "phase": "Read-only data collection complete; real three-account acceptance unexecuted",
+      "branch": "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "pullRequest": 75,
+      "dependsOnPullRequest": 74,
+      "baselineDocument": "docs/testing/world-v2-a06-live-baseline-2026-11-10.md",
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "evidenceCapturedOn": "2026-11-10T11:22:13Z",
+      "measuredFrom": "Cumulative pg_stat_statements (reset 2026-11-05T09:51:43Z), Vercel/GitHub source-of-truth and live test-campaign read-only inspection",
+      "importantLimitation": "Not p95, not end-to-end browser latency, not necessarily current-release-only data; no authenticated DM/P1/P2 fixture run or A05 diagnostic data",
+      "conditionToVerify": "Designer-authorized deployed A05/integrated QA build, prepared protected fixture, three distinct authenticated DM/P1/P2 sessions, 24 A04 cases with actual p50/p95 and flash/authorization evidence",
+      "observedCalls": {
+        "begin": 250,
+        "advance": 426,
+        "commit": 209,
+        "viewerVisibility": 622
+      },
+      "meanDbMs": {
+        "begin": 24.3,
+        "advance": 53.2,
+        "commit": 135.74,
+        "viewerVisibility": 49.16
+      },
+      "liveBrowserTestStatus": "NOT_RUN",
+      "nextStepRemains": "A06"
     },
     "B01": {
       "status": "NOT STARTED"
@@ -300,6 +324,50 @@
         "A05 exact head CI and combined release security gate must be checked"
       ],
       "next": "A06 — Baseline capture and actual multi-user measurement; read-only/approved QA only"
+    },
+    "A06": {
+      "status": "BLOCKED",
+      "date": "2026-11-10",
+      "step": "A06",
+      "scope": "Read-only production verification, historical SQL RPC latency and database activity, published test-fixture readiness; written evidence only",
+      "branch": "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "pullRequest": 75,
+      "stackedOnPullRequest": 74,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/75",
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "evidence": {
+        "baselineDocument": "docs/testing/world-v2-a06-live-baseline-2026-11-10.md",
+        "source": "Read-only PostgreSQL pg_stat_statements, pg_stat_user_tables, pg_stat_database, Supabase unified log summary, GitHub and Vercel snapshots",
+        "historicalMeansDbMs": {
+          "begin": 24.3,
+          "advance": 53.2,
+          "commit": 135.74,
+          "viewerVisibility": 49.16
+        },
+        "historicalSlowestDbMs": {
+          "begin": 743.61,
+          "advance": 1534.19,
+          "commit": 2765.8,
+          "viewerVisibility": 1844.02
+        },
+        "statementStatsReset": "2026-11-05 09:51:43 UTC",
+        "limitation": "Cumulative per-statement database execution (not p95/RTT, not user gesture measurement)",
+        "fixture": "TestCampaign has 1 DM/8 other members but active map published automatic fog=false, collision=false, no door, one-way vision or 2×2 token",
+        "actualAuthenticatedBrowserTesting": "NOT RUN; cannot enter user's DM and two separate player browser sessions from the available connector tools",
+        "optInA05DiagnosticsInLive": "NOT DEPLOYED",
+        "currentUserExperience": "Designer earlier reported laggy normal DM/player movement, player-side flashes and fast DM preview; not independently reproduced during A06"
+      },
+      "securityFeatureParity": "Read-only; no change to auth, RLS, fog, movement or observer paths; PR #71 safety blockers remain.",
+      "sqlDeployment": "NONE — no SQL writes, migrations, deployments, fixture data writes or campaign actions.",
+      "blockers": [
+        "A05 performance diagnostics are in draft PR #74, not deployed",
+        "No access to distinct live authenticated DM/P1/P2 browser sessions",
+        "Published test map has fog and collision disabled and lacks door, one-way barrier and 2×2 token",
+        "Must obtain separate designer approval for integrated release and for altering any live test campaign",
+        "PR #71 still blocked by hard observer retention deadline, stream-lock movement gate, renderer/security tests and CI",
+        "Gate A cannot be claimed from historical SQL means and owner's prior subjective reports"
+      ],
+      "next": "A06 remains open: collect live authenticated baseline after explicitly approved setup. Do not start B01 without Gate A or documented designer-approved plan deviation."
     }
   },
   "pendingWork": [
@@ -339,6 +407,13 @@
       "category": "QA",
       "ownerStep": "A06",
       "notes": "A05 traces are staged only. Need approved release/testing context and three independently authenticated DM/P1/P2 sessions to gather real end-to-end latency and flash counts. Do not treat CI fixture as live QA."
+    },
+    {
+      "id": "A06-AUTH-BROWSER-BASELINE",
+      "category": "QA",
+      "status": "BLOCKED",
+      "ownerStep": "A06",
+      "notes": "Live 24-case A04 browser QA cannot run with current tools, non-deployed A05 telemetry and incomplete protected map setup. Need explicit designer release/fixture approval and 3 authenticated independent sessions. No further work promised asynchronously."
     }
   ],
   "sourceOfTruthRules": [
