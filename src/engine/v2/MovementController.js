@@ -34,11 +34,48 @@ const predictionReached=(origin,predicted,approved)=>{
  return d<=1e-9||(approved.x-origin.x)*dx+
   (approved.y-origin.y)*dy>=d-1e-7;
 };
-export function createMovementController({authority,onEvent=noop,canPredict=()=>false}={}){
+export function createMovementController({
+ authority,onEvent=noop,canPredict=()=>false,
+ // B05 staged opt-in. The existing adapter stays the default until Gate B.
+ coalesceMotion=false,coalesceWindowMs=16,authorityTimeoutMs=8000,
+ setTimer=(callback,ms)=>setTimeout(callback,ms),
+ clearTimer=timer=>clearTimeout(timer)
+}={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
-  typeof onEvent!=='function'||typeof canPredict!=='function')
+  typeof onEvent!=='function'||typeof canPredict!=='function'||
+  typeof coalesceMotion!=='boolean'||
+  !Number.isSafeInteger(coalesceWindowMs)||coalesceWindowMs<0||coalesceWindowMs>32||
+  !Number.isSafeInteger(authorityTimeoutMs)||
+  authorityTimeoutMs<1000||authorityTimeoutMs>9000||
+  typeof setTimer!=='function'||typeof clearTimer!=='function')
   throw Error('V2 movement requires a complete authority interface');
  let active=null,disposed=false,state='Idle',generation=0;
+ const clearFlush=g=>{
+  if(g.flushTimer!==null){clearTimer(g.flushTimer);g.flushTimer=null}
+ };
+ // A stalled or malicious server must never hold local input hostage
+ // indefinitely. Cancellation is best effort; expiry remains server owned.
+ // Late begin ACKs are retired, never promoted into a new gesture.
+ const bounded=(task,onLate=noop)=>{
+  if(!coalesceMotion)return Promise.resolve(task);
+  return new Promise((resolve,reject)=>{
+   let status='pending';
+   const timer=setTimer(()=>{
+    if(status!=='pending')return;
+    status='timed-out';reject(Error('authority-timeout'));
+   },authorityTimeoutMs);
+   Promise.resolve(task).then(value=>{
+    if(status==='timed-out'){
+     try{onLate(value)}catch{}return;
+    }
+    if(status!=='pending')return;
+    status='done';clearTimer(timer);resolve(value);
+   },error=>{
+    if(status!=='pending')return;
+    status='done';clearTimer(timer);reject(error);
+   });
+  });
+ };
  const emit=(gesture,type,extra={})=>{
   if(type!=='sampled'&&type!=='presented')
    worldV2Trace.event('movement.'+type,gesture.mode);
@@ -47,6 +84,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    approved:{...gesture.approved},presented:{...gesture.presented},...extra});
  };
  const finish=(g,result)=>{
+  clearFlush(g);
   if(active===g)active=null;
   state=result.status==='committed'?'Committed':
    result.status==='revoked'?'Revoked':
@@ -54,12 +92,26 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   emit(g,result.status,{reason:result.reason||null});
   if(g.resolveFinish){g.resolveFinish(result);g.resolveFinish=null}
  };
- const cancelSession=g=>{
-  if(!g.sessionId)return;
-  // Never allow a stale cleanup to mutate a later gesture locally.
+ const retireSession=(g,sessionId)=>{
+  if(!sessionId)return;
+  // The server remains responsible for rejecting stale/foreign session
+  // changes. Late responses never authorize a local position.
   void Promise.resolve().then(()=>authority.cancel({
-   mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation
+   mapId:g.mapId,sessionId,gestureId:g.generation
   })).catch(noop);
+ };
+ const cancelSession=g=>retireSession(g,g.sessionId);
+ const scheduleDrain=g=>{
+  if(active!==g||!g.sessionId||g.draining)return;
+  if(!coalesceMotion||g.closing||g.mode==='preview'||coalesceWindowMs===0){
+   clearFlush(g);void drain(g);return;
+  }
+  if(g.pending.length&&g.flushTimer===null){
+   g.flushTimer=setTimer(()=>{
+    g.flushTimer=null;
+    if(active===g)void drain(g);
+   },coalesceWindowMs);
+  }
  };
  const reject=(g,reason)=>{
   if(active!==g)return;
@@ -68,6 +120,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
  };
  async function drain(g){
   if(g.draining||active!==g||!g.sessionId)return;
+  clearFlush(g);
   g.draining=true;
   try{
    while(active===g){
@@ -76,22 +129,31 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      const batch=takeGestureBatch(g.approved,snapshot);
      if(!batch||!batch.targets.length){reject(g,'invalid-path');break}
      const before={...g.approved},seq=++g.seq;
-     const response=await authority.advance({
+     if(coalesceMotion){
+      // Detach the exact request BEFORE yielding. Pointer samples arriving
+      // while it is pending must never be silently spliced/deleted at ACK.
+      g.pending=batch.remaining.map(p=>({...p}));
+      g.queueFrom={...batch.targets.at(-1)};
+     }
+     const response=await bounded(authority.advance({
       version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
       seq,from:before,targets:batch.targets,selection:g.selection,
       environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
-     });
+     }));
      if(active!==g)break;
      if(!validAck(response,g.sessionId,seq,before,batch.targets)){
       reject(g,'invalid-authority-ack');break;
      }
-     g.pending.splice(0,batch.consumed);
+     if(!coalesceMotion)g.pending.splice(0,batch.consumed);
      if(response.accepted.length){
       g.approved={...response.accepted.at(-1)};
       g.hadMotion=true;
      }
      // A denied crossing invalidates the entire unapproved route.
-     if(response.blocked)g.pending.length=0;
+     if(response.blocked){
+      g.pending.length=0;
+      if(coalesceMotion)g.queueFrom={...g.approved};
+     }
      if(response.blocked||!g.predicted||
        predictionReached(g.origin,g.presented,g.approved)){
        g.presented={...g.approved};g.predicted=false;
@@ -110,11 +172,11 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      break;
     }
     const seq=++g.seq;
-    const reply=await authority.commit({
+    const reply=await bounded(authority.commit({
      version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
      seq,endpoint:{...g.approved},selection:g.selection,
      environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
-    });
+    }));
     if(active!==g)break;
     if(!validSession(reply)||reply.sessionId!==g.sessionId||reply.seq!==seq||
      !Number.isSafeInteger(reply.endpoint?.x)||!Number.isSafeInteger(reply.endpoint?.y)||
@@ -146,21 +208,24 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],seq:0,mode,sessionId:null,closing:false,
+    pending:[],queueFrom:{...origin},flushTimer:null,
+    seq:0,mode,sessionId:null,closing:false,
      predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
     environmentRevision,permissionGeneration};
    active=g;state='Grabbed';
    emit(g,'grabbed'); // immediate, before any asynchronous permission operation
-   void Promise.resolve().then(()=>authority.begin({
+   void Promise.resolve().then(()=>bounded(authority.begin({
     version:2,mapId,gestureId:g.generation,selection:g.selection,mode,
     origin:g.origin,environmentRevision,permissionGeneration,
     collisionOverride
+   }),late=>{
+    if(validSession(late))retireSession(g,late.sessionId);
    })).then(reply=>{
     if(!validSession(reply))throw Error('invalid-session');
     g.sessionId=reply.sessionId;
     if(active!==g){cancelSession(g);return}
-    void drain(g);
+    scheduleDrain(g);
    }).catch(error=>{
     if(active===g)reject(g,error?.message||'begin-failed');
    });
@@ -170,7 +235,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g=active;
    if(disposed||!g||g.closing||!validPoint(pointer))return false;
    const cell=gridPoint(pointer);
-   if(!cell||!appendGestureBend(g.pending,cell,g.approved)){
+   if(!cell||!appendGestureBend(g.pending,cell,
+     coalesceMotion?g.queueFrom:g.approved)){
     reject(g,'path-limit');return false;
    }
    g.pointer={...pointer};
@@ -188,7 +254,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     g.presented={...pointer};g.predicted=true;
      emit(g,'presented',{predicted:true});
    }
-   if(g.sessionId)void drain(g);
+   if(g.sessionId)scheduleDrain(g);
    return true;
   },
   endGesture(pointer){
@@ -199,7 +265,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(g.finishPromise)return g.finishPromise;
    g.closing=true;state='Finishing';emit(g,'released');
    g.finishPromise=new Promise(resolve=>{g.resolveFinish=resolve});
-   if(g.sessionId)void drain(g);
+   if(g.sessionId)scheduleDrain(g);
    return g.finishPromise;
   },
   cancelGesture(reason='user'){
