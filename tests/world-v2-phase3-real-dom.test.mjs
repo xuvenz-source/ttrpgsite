@@ -113,7 +113,10 @@ test('actual Chromium DOM pointer capture: player, DM unlocked, preview, locked 
    if(ready)break;
    await delay(100);
   }
-  assert.ok(ready,'actual browser fixture should load ES modules');
+  if(!ready){
+   const page=await browser.evaluate('({url:location.href,ready:document.readyState,title:document.title,body:document.body?.textContent?.slice(0,250)})').catch(e=>({error:e.message}));
+   assert.fail('browser fixture module failed to initialize: '+JSON.stringify(page));
+  }
   const bounds=await browser.evaluate('window.__v2Probe.bounds()');
   const dispatch=async(type,x,y)=>browser.send('Input.dispatchMouseEvent',{
    type,x,y,button:type==='mouseMoved'?'none':'left',
