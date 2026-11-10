@@ -66,7 +66,7 @@
   ],
   "expectedNextAction": "Do not merge, apply SQL or deploy. Preserve draft B10 PR and blockers; designer must explicitly authorize release remediation/test fixture or a future release step.",
   "secretsPolicy": "No user IDs, JWTs, hidden map data, raw private Realtime payloads or signed URLs in this ledger.",
-  "ciStabilityNote": "The two embedded real-Chromium DevTools harnesses can exhaust startup resources under parallel Node workers. B10 sets the npm test script to --test-concurrency=1 without skipping tests; workflow preserves run: npm test. Final exact PR SHA CI still must be checked.",
+  "ciStabilityNote": "The two embedded real-Chromium DevTools harnesses can exhaust startup resources under parallel Node workers. B10 sets the npm test script to --test-concurrency=1 without skipping tests; workflow preserves run: npm test. Final exact PR SHA CI still must be checked. After recurrent CDP startup failures on hosted Chrome, tests/world-v2-phase3-real-dom.test.mjs now retries only the initial DevToolsActivePort launch once in a new temporary profile. All behavioral assertions still run; a second launch failure is a hard CI failure.",
   "supabaseReadOnlyEvidence": {
     "verifiedOn": "2026-11-11",
     "migrations": 83,
@@ -94,5 +94,11 @@
     },
     "interpretation": "project-wide existing advisor notices, not proof of B10-introduced vulnerabilities; individual privileged RPCs need reviewed triage"
   },
-  "pullRequest": 85
+  "pullRequest": 85,
+  "ciStartupRetryPolicy": {
+    "maxAttempts": 2,
+    "scope": "headless Chromium DevToolsActivePort creation only",
+    "noTestSkipping": true,
+    "neverRetryMovementAssertions": true
+  }
 }
