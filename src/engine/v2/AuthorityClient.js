@@ -26,8 +26,9 @@ async function traceRpc(db,name,params,metric){
   result=response?.error?'error':'ok';return response;
  }finally{done(result)}
 }
-export function createWorldAuthorityClient({db}={}){
- if(!db||typeof db.rpc!=='function')throw Error('V2 requires an RPC client');
+export function createWorldAuthorityClient({db,commitReconciliation=false}={}){
+ if(!db||typeof db.rpc!=='function'||typeof commitReconciliation!=='boolean')
+  throw Error('V2 requires a valid RPC client and reconciliation mode');
  let disposed=false;
  const sessions=new Map();
  const required=()=>{if(disposed)throw Error('V2 authority disposed')};
@@ -86,12 +87,25 @@ export function createWorldAuthorityClient({db}={}){
     throw Error('Invalid V2 commit');
    current.seq=seq;
    try{
-    const {data,error}=await traceRpc(db,'commit_world_motion_v2',{
+    // On an ambiguous transport failure, retry the identical idempotency
+    // tuple; the B08 SQL server is the only canonical arbiter.
+    const params={
      p_session:sessionId,p_seq:seq,p_endpoint:endpoint,
      p_environment_revision:environmentRevision,
      p_permission_generation:permissionGeneration
-    },'authority.commit');
-    const reply=requireReply(data,error);
+    };
+    let response;
+    for(let attempt=0;attempt<(commitReconciliation?2:1);attempt++){
+     try{response=await traceRpc(db,'commit_world_motion_v2',
+      params,'authority.commit')}
+     catch(error){
+      if(commitReconciliation&&attempt===0)continue;
+      throw error;
+     }
+     if(response?.error&&commitReconciliation&&attempt===0)continue;
+     break;
+    }
+    const reply=requireReply(response?.data,response?.error);
     if(disposed||sessions.get(sessionId)!==current)
      throw Error('V2 movement cancelled');
     return reply;
