@@ -482,18 +482,26 @@ export default function WorldV2Board(props){
     // No sprite lookup is needed for this generic authorization state:
     // hidden IDs and coordinates must never reach diagnostics. When sight
     // is unavailable, the visible roster itself may be empty.
+    if(previewRequested&&!dmPreview){
+     setDragIssue('Player preview requires a token assigned to an actual campaign player.');
+     return;
+    }
     if(!runtimeRef.current?.active){
      setDragIssue('Drag blocked: map sight is not yet authorized.');
      return;
     }
-    if(!pointerPieceAt(event,point))return;
     const editor=latest.current.environmentEditor;
+    if(!dmPreview&&editor?.enabled&&editor.lockTokens!==false){
+     setDragIssue('Drag blocked: turn off Lock Tokens in the DM map editor.');
+     return;
+    }
+    if(activeMeasureRef.current){
+     setDragIssue('Drag blocked: exit the measurement tool first.');
+     return;
+    }
+    if(!pointerPieceAt(event,point))return;
     if(code==='lost-capture')
      setDragIssue('Drag interrupted: pointer capture was lost.');
-    else if(activeMeasureRef.current)
-     setDragIssue('Drag blocked: exit the measurement tool first.');
-    else if(!dmPreview&&editor?.enabled&&editor.lockTokens!==false)
-     setDragIssue('Drag blocked: turn off Lock Tokens in the DM map editor.');
     else if(code==='busy')
      setDragIssue('Drag blocked: another movement is finishing.');
     else setDragIssue('Drag could not start: check token or player-preview selection.');
