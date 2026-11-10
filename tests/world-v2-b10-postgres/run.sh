@@ -46,5 +46,6 @@ for role in anon authenticated;do
   cat "/tmp/b10_${role}_deny.log" >&2;exit 1
  }
 done
+echo 'B10-R01 PASS: source-real B03+B07+B08 integrated private-core and hostile regressions'
 echo 'B10-R03 PASS: B03+B07+B08+R01 canonical core and terminal queue-retirement hostile regressions'
 echo 'B10 RELEASE GATE STILL BLOCKED: nonapplied candidate, observer-budget recovery and live Auth/LOS QA remain.'
