@@ -415,7 +415,11 @@
         "postgresAssertions": 35,
         "negativeSqlRoleChecks": 2,
         "standardRun": 42837858900,
-        "standardTests": 803
+        "standardTests": 803,
+        "latestPassingHeadBeforeHandoffUpdate": "254799d5281e6165b9b1fba4186978d029536c59",
+        "latestSqlRun": 42838560260,
+        "latestStandardRun": 42838547542,
+        "conclusion": "Both SQL and standard CI succeeded on exact source head; no live SQL or production release"
       },
       "linkedPullRequest": 82
     }
