@@ -313,7 +313,8 @@
       "basePullRequest": 75,
       "releaseReady": false,
       "documentationOnly": true,
-      "note": "B01 design-only V2 authority contract, hostile input matrix and explicitly recorded delegated sequencing exception; Gate A/A06 remain blocked. Stacked on draft A06 PR #75; no runtime/SQL/Edge changes or production deployment."
+      "note": "B01 design-only V2 authority contract, hostile input matrix and explicitly recorded delegated sequencing exception; Gate A/A06 remain blocked. Stacked on draft A06 PR #75; no runtime/SQL/Edge changes or production deployment.",
+      "linkedPullRequest": 76
     }
   ],
   "features": [
