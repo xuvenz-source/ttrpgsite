@@ -44,7 +44,10 @@
     "groupAndPreviewParityLive": "NOT_RUN",
     "rollbackMigrationDryRun": "NOT_RUN",
     "observerRecovery": "STAGED_SOURCE_CANDIDATE__UNIT_AND_FINAL_CI_PENDING",
-    "terminalQueueR03": "STAGED_ISOLATED_PG17_14_ASSERTIONS_PASS_EARLIER_HEAD__FINAL_HEAD_PENDING"
+    "terminalQueueR03": "STAGED_ISOLATED_PG17_14_ASSERTIONS_PASS_EARLIER_HEAD__FINAL_HEAD_PENDING",
+    "migrationR04": "PASS_DISPOSABLE_PG17_ATOMIC_INSTALL_ROLLBACK_42879039106",
+    "r04Application": "PASS_841_OF_841_TESTS_BUILD_EDGE_ESLINT_NPM_AUDIT_ZERO_42879038586",
+    "r04CodeQL": "PASS_ACTIONS_42879038807__SCAN_EXECUTION_NOT_ZERO_OPEN_ALERTS_PROOF"
   },
   "sourceLimitations": {
     "B03Installed": false,
@@ -60,9 +63,9 @@
   "noGoReasons": [
     "B03 is now wired into a **nonapplied B10-R01 private Core candidate**. Actual production forge_world_v2.advance_core_v2 remains unchanged and has no B03 validator; forward-only migration/rollout and live Auth/permission QA not approved.",
     "B10-R03 now stages a private nonapplied terminal queue scrub so old committed-session paths are retired and certified hides are retained. This must be co-released with default-OFF B10-R02 authenticated canonical sight recovery. Offline/background deadlines, abnormal DB faults, 24-case real Auth/LOS testing and free-tier load remain unverified. Realtime budget exhaustion still delays certified hides and leaves B10-R02 signed sight as a CPU-consuming eventual recovery; these are active release blockers.",
-    "PR #71 renderer/observer sight continuity remains a separate blocked draft with recovery and security amendments; no safe reconciliation/merge decision.",
-    "No A06 authenticated DM/Player1/Player2 prepared fog/collision/door/2x2/hidden NPC/torch/test map fixture or 24-case live browser evidence.",
-    "No browser/device p95 first paint, observer lag, terrain reassignment/flash, sprite remount, reconnect/multi-tab or Supabase free-tier stress measurements for B03–B09.",
+    "PR #71 was CLOSED UNMERGED after R04 diff review; its 280ms V2 commit read coalescing was safely ported, but its unbounded unknown-piece sight retention was rejected. The source-real R04 suite also rejected strict private-stream connection gating that broke three legitimate DM grab tests. C02 still needs bounded scoped renderer continuity.",
+    "A06 authenticated DM/Player1/Player2 24-case protected fog/collision/door/2x2/hidden NPC/browser test is NOT RUN. Only test campaigns exist, so test data may be reset, but real Auth/LOS/access and revocation proof remains necessary.",
+    "B10-R04 rehearses atomic B03→B07→B08→R01→R03 candidate SQL in disposable PG17 and exact transactional rollback. No production versioned forward migration, operational rollback or client/backend flag synchronization has yet been approved.",
     "No reviewed, forward-only production migration or compatible rollback/downgrade strategy for installed B03+B07+B08 and active versioned RPCs.",
     "No merged consolidated release, main+Vercel+database build parity or separate designer deployment approval."
   ],
@@ -191,7 +194,51 @@
       ],
       "authenticatedQA": "NOT_RUN",
       "releaseDecision": "NO_GO"
+    },
+    "B10_R04": {
+      "status": "STAGED_REHEARSED_NOT_INSTALLED",
+      "sourceBranch": "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
+      "parentPullRequest": 88,
+      "safePR71Scope": {
+        "retained": "Port trailing 280ms canonical token+tool read coalescing after V2 committed movement, cancel on map/actor change; default non-V2 immediate fallback preserved.",
+        "explicitlyRejected": "Do not cherry-pick PR71 unknown-piece certified-sight hold while private observer stream is locked; missing hard deadline, potential stale fog/permission retention.",
+        "safetyHardening": "Reject PR71 soft sight retention; original observer onRevoke synchronously revokes renderer and cancels the gesture. The proposed new stream-connection input guard was rolled back because it broke otherwise-authorized early DM grabbing in 3 existing tests.",
+        "supersession": "PR #71 CLOSED UNMERGED 11 November 2026, with safe 280ms commit coalescing ported to R04; no unsafe sight hold, dedicated C02/C03 security design remains."
+      },
+      "rehearsal": {
+        "sqlSourceOrder": [
+          "supabase/candidates/world_v2_b03_path_validation.sql",
+          "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+          "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+          "supabase/candidates/world_v2_b10_r01_core_path_integration.sql",
+          "supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql"
+        ],
+        "file": "tests/world-v2-b10-postgres/migration-rehearsal-r04.sql",
+        "mode": "single transaction BEGIN, private catalog+ACL/visibility functions verification, explicit ROLLBACK and digest comparison against disposable source-real baseline",
+        "sourcePG17NotLive": true,
+        "rolloutMigrationGenerated": false,
+        "rollbackRealProductionRehearsed": false,
+        "realAuthSessionTests": false,
+        "result": "PASSED_DISPOSABLE_PG17 #42879039106: 5-candidate atomic install, role/RLS/function assertions, ROLLBACK restored original digests and removed private candidates; full hostile suite passed."
+      },
+      "livePreflight": {
+        "method": "read-only pg_catalog live Supabase; no data/role/migration writes",
+        "originalAdvanceInstalled": true,
+        "originalCommitInstalled": true,
+        "originalPrivateCoreInstalled": true,
+        "visibilityInstalled": true,
+        "b03Installed": false,
+        "b07Installed": false,
+        "b08Installed": false,
+        "r01Installed": false,
+        "r03Installed": false,
+        "appliedMigrationCount": 83,
+        "latestVersion": "20261109171247"
+      },
+      "liveCampaignUse": "Test-only campaigns, no real campaign progress to preserve; resets acceptable once explicit paired SQL+client rollback and real auth/fog permission gates pass. Does not make hidden NPC/ownership/foreign-user leaks acceptable.",
+      "releaseReady": false,
+      "productionDeployed": false
     }
   },
-  "nextRemediation": "B10-R04: resolve PR #71 source and sight-recovery security conflicts, rehearse forward-only migration and recovery on disposable live-shape SQL with complete A06 protected multi-user acceptance before release."
+  "nextRemediation": "B10-R05: produce versioned forward-only release migration and safe rollback/rollforward with exact Supabase signature preflight, then consented authenticated test-campaign deployment and 24-case DM/P1/P2 acceptance. C02 separately handles stable renderer revocation."
 }

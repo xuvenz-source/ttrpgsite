@@ -211,6 +211,9 @@ export default function TabletopApp(){
  const movementPending=useRef(new Map()),toolMovementPending=useRef(new Set()),
   tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const previewStepHandler=useRef(null),v2StepHandler=useRef(null);
+ // Only a trailing canonical data read is required after V2 has painted a
+ // server-authorized commit: do NOT trigger two row queries every tile.
+ const v2CommitReconciler=useRef(null);
  const v2HeldMovementKeys=useRef(new Set());
  const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
  const registerV2Step=useCallback(handler=>{v2StepHandler.current=handler},[]);
@@ -1581,6 +1584,22 @@ export default function TabletopApp(){
   ++monitorRequest.current;
  },[selectedMap,activeId,user,isDM]);
  useEffect(()=>{refreshTokens(true);refreshMonitors(true);refreshChat()},[selectedMap,activeId,user,isDM]);
+ useEffect(()=>{
+  if(!WORLD_V2_CUTOVER||!db||!activeId||!selectedMap||!user)return;
+  // The V2 authority already updates the rendered sprite. A single
+  // canonical reconciliation after the last commit preserves token and
+  // issued-tool inventory data without repeated network+React churn.
+  const reconcile=createTrailingRefresh(()=>{
+   void latestTokenRefresh.current?.();
+   void latestToolRefresh.current?.(['issued','placed'],true);
+  },280);
+  v2CommitReconciler.current=reconcile;
+  return()=>{
+   if(v2CommitReconciler.current===reconcile)
+    v2CommitReconciler.current=null;
+   reconcile.cancel();
+  };
+ },[db,activeId,selectedMap,user,isDM]);
  // Fog revisions always require a new RLS-authorized token snapshot, but
  // coordinate-only moves do NOT invalidate expensive inventory/monitor values.
  // Refresh those derived resources only if the server's authorized roster (or
@@ -3030,8 +3049,12 @@ export default function TabletopApp(){
    displayConfig={camp?.token_display_config} monitorValues={monitorValues}
    encumbranceBadges={encumbranceBadges} hotbarInset={hotbarVisible}
    onMovementCommitted={()=>{
-    void refreshTokens();
-    void campaignTools.refresh(['issued','placed'],true);
+    if(WORLD_V2_CUTOVER){
+     v2CommitReconciler.current?.request();
+    }else{
+     void refreshTokens();
+     void campaignTools.refresh(['issued','placed'],true);
+    }
    }}
    onV2Error={fail}
    onV2SceneSnapshot={snapshot=>setV2Published({

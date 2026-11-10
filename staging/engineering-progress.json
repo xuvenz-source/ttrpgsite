@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10-R04",
+  "nextStep": "B10-R05",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -517,6 +517,46 @@
       "featureFlagsActivated": false,
       "productionDeployed": false,
       "next": "B10-R04 source conflict resolution PR71 and version-safe migration/rollback rehearsal, then A06 real signed multi-account QA before release."
+    },
+    "B10_R04": {
+      "status": "STAGED",
+      "releaseReady": false,
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
+      "pullRequest": 89,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/89",
+      "basePullRequest": 88,
+      "baseHead": "c66148971a75f65503bcd3140e3acaecc7be05c6",
+      "documentation": "docs/architecture/world-v2-b10-r04-pr71-migration-rehearsal.md",
+      "sqlRehearsal": "tests/world-v2-b10-postgres/migration-rehearsal-r04.sql",
+      "expectedFiles": [
+        "src/TabletopApp.jsx",
+        "tests/world-v2-b10-postgres/migration-rehearsal-r04.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-r04-pr71-migration.test.mjs",
+        "docs/architecture/world-v2-b10-r04-pr71-migration-rehearsal.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "Safely supersede PR71's unbounded sight hold, port scoped 280ms trailing V2 token/tool canonical read reconciliation, preserve early authorized DM token grab, and rehearse five SQL candidates in one disposable PostgreSQL 17 transaction with exact rollback source digests and private role guards.",
+      "verification": "PASS at pre-handoff head b9b291385db04da46dc92287cf887f3de50032d3: 841/841 full frontend tests, ESLint, Vite production build, Deno Edge checks, zero npm audit vulnerabilities (Actions #42879038586); atomic B03→B07→B08→R01→R03 installation+ROLLBACK and full hostile suite (Actions #42879039106); CodeQL security scan (Actions #42879038807). Exact subsequent ledger-head CI will be checked.",
+      "security": "No retained sight without independent current authority. Original V2 renderer revokes on observer lock and cancels gesture; guard that blocked valid early DM grabbing was rejected based on three existing tests. Private RLS, public function grants, rollback and no new channels asserted in PG17.",
+      "blockers": [
+        "PR71 unsafe unbounded soft sight hold is rejected; accepted 280ms commit row coalescing still needs live p95/React/map-flash measurements and future C02 renderer scoped retention.",
+        "Atomic 5-candidate transactional PostgreSQL install and rollback is synthetic; no versioned forward-only deployment migration or real post-commit roll-forward recovery has been prepared.",
+        "R03 terminal path retirement requires same-release enabled R02 signed canonical sight recovery; release ordering and flag rollback not yet verified against live project.",
+        "Separate authenticated DM/P1/P2 protected fog/LOS/hidden NPC/2×2/door/ownership multi-tab and 24 A06 cases NOT RUN; production user privacy must still fail closed despite disposable test data.",
+        "Database rate, Realtime per-recipient billing, CPU/RAM/memory, client first-paint/remote lag/map flashing under budget exhaustion not measured.",
+        "Any production URL test rollout must be coupled to exact live SQL provenance and a recoverable release plan, not an automatic staging merge."
+      ],
+      "sqlApplied": false,
+      "featureFlagsActivated": false,
+      "productionDeployed": false,
+      "note": "Designer confirmed live campaigns are disposable test-only; this allows controlled live acceptance when the coupled migration/permission gates pass, but is not an authorization leak waiver.",
+      "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight.",
+      "pr71Status": "CLOSED_UNMERGED_SUPERSEDED",
+      "pr71ClosureComment": "https://github.com/xuvenz-source/ttrpgsite/pull/71#issuecomment-6776267305"
     }
   },
   "handoffs": {
@@ -1131,6 +1171,41 @@
       ],
       "next": "B10-R04 source conflict resolution PR71 and version-safe migration/rollback rehearsal, then A06 real signed multi-account QA before release.",
       "productionUnchanged": true
+    },
+    "B10_R04": {
+      "step": "B10-R04",
+      "date": "2026-11-11",
+      "status": "STAGED — NO-GO release",
+      "branch": "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
+      "pullRequest": 89,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/89",
+      "parentPR": 88,
+      "parentHead": "c66148971a75f65503bcd3140e3acaecc7be05c6",
+      "expectedFiles": [
+        "src/TabletopApp.jsx",
+        "tests/world-v2-b10-postgres/migration-rehearsal-r04.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-r04-pr71-migration.test.mjs",
+        "docs/architecture/world-v2-b10-r04-pr71-migration-rehearsal.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "Safely supersede PR71's unbounded sight hold, port scoped 280ms trailing V2 token/tool canonical read reconciliation, preserve early authorized DM token grab, and rehearse five SQL candidates in one disposable PostgreSQL 17 transaction with exact rollback source digests and private role guards.",
+      "evidence": "PASS at pre-handoff head b9b291385db04da46dc92287cf887f3de50032d3: 841/841 full frontend tests, ESLint, Vite production build, Deno Edge checks, zero npm audit vulnerabilities (Actions #42879038586); atomic B03→B07→B08→R01→R03 installation+ROLLBACK and full hostile suite (Actions #42879039106); CodeQL security scan (Actions #42879038807). Exact subsequent ledger-head CI will be checked.",
+      "security": "No retained sight without independent current authority. Original V2 renderer revokes on observer lock and cancels gesture; guard that blocked valid early DM grabbing was rejected based on three existing tests. Private RLS, public function grants, rollback and no new channels asserted in PG17.",
+      "blockers": [
+        "PR71 unsafe unbounded soft sight hold is rejected; accepted 280ms commit row coalescing still needs live p95/React/map-flash measurements and future C02 renderer scoped retention.",
+        "Atomic 5-candidate transactional PostgreSQL install and rollback is synthetic; no versioned forward-only deployment migration or real post-commit roll-forward recovery has been prepared.",
+        "R03 terminal path retirement requires same-release enabled R02 signed canonical sight recovery; release ordering and flag rollback not yet verified against live project.",
+        "Separate authenticated DM/P1/P2 protected fog/LOS/hidden NPC/2×2/door/ownership multi-tab and 24 A06 cases NOT RUN; production user privacy must still fail closed despite disposable test data.",
+        "Database rate, Realtime per-recipient billing, CPU/RAM/memory, client first-paint/remote lag/map flashing under budget exhaustion not measured.",
+        "Any production URL test rollout must be coupled to exact live SQL provenance and a recoverable release plan, not an automatic staging merge."
+      ],
+      "noAppliedSql": true,
+      "noDeployment": true,
+      "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight.",
+      "pr71Status": "CLOSED_UNMERGED_SUPERSEDED"
     }
   },
   "pendingWork": [
@@ -1138,10 +1213,10 @@
       "id": "PR71-A02",
       "pr": 71,
       "category": "movement-security",
-      "status": "BLOCKED",
-      "decision": "AMEND BEFORE MERGE",
+      "status": "CLOSED_UNMERGED_SUPERSEDED",
+      "decision": "REJECT_UNBOUNDED_SIGHT_HOLD",
       "ownerStep": "A02-review-followup",
-      "notes": "Do not silently merge PR #71 during A03 or A04; require distinct authorization for amendments and a future release."
+      "notes": "PR #71 closed without merge, 11 Nov 2026, after source-level comparison. Safe 280ms V2 commit coalescing ported in R04 PR #89; unsafe unbounded unknown-piece retention rejected. Renderer scoped continuity remains separate C02/C03 design; no live deployment."
     },
     {
       "id": "ISSUE69",
@@ -1236,10 +1311,11 @@
     },
     {
       "id": "B10-PR71-RECONCILIATION",
-      "status": "BLOCKED",
+      "status": "CLOSED_UNMERGED_SUPERSEDED",
       "ownerStep": "B10-remediation",
       "category": "release-gate",
-      "notes": "PR #71 still draft with outstanding viewer scope/lock deadline/metadata safety amendments. Analyze conflicts on WorldV2TabletopRuntime and WorldTrace before any combined merge."
+      "notes": "PR #71 closed without merge, 11 Nov 2026, after source-level comparison. Safe 280ms V2 commit coalescing ported in R04 PR #89; unsafe unbounded unknown-piece retention rejected. Renderer scoped continuity remains separate C02/C03 design; no live deployment.",
+      "decision": "REJECT_UNBOUNDED_SIGHT_HOLD"
     },
     {
       "id": "B10-AUTHENTICATED-QA",
@@ -1279,9 +1355,16 @@
     {
       "id": "B10-R03-COUPLED-R02-ROLLOUT",
       "status": "BLOCKED",
-      "ownerStep": "B10-R04",
+      "ownerStep": "B10-R05",
       "category": "release-gate",
-      "notes": "Never install R03 server terminal queue path retirement with R02 signed observer recovery OFF; versioned migration/flags compatibility and live Auth/LOS/fog/fanout must be rehearsed."
+      "notes": "R04 synthetic full stack install+transactional rollback, but real forward migration and paired client R02 flag/backend R03 safe rollout not complete."
+    },
+    {
+      "id": "B10-R04-SYNTHETIC-ROLLOUT-LIMIT",
+      "status": "BLOCKED",
+      "ownerStep": "B10-R05",
+      "category": "release-gate",
+      "notes": "R04 PG17 source-real fixture lacks original public Commit although live Supabase has it. Rehearsal checks clean install+rollback under both original presence/absence but does not prove live schema triggers, Auth or post-commit downgrade. Require CLI-created versioned migration with exact live signature and recoverability."
     }
   ],
   "sourceOfTruthRules": [
