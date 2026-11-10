@@ -30,9 +30,9 @@ function timer(){
  };
 }
 const group=[{kind:'token',id:TOKEN},{kind:'token',id:SECOND},{kind:'tool',id:TOOL}];
-function keyboardHarness({refresh=true,mode='keyboard',selection=[group[0]]}={}){
+function keyboardHarness({refresh=true,staleSight=false,mode='keyboard',selection=[group[0]]}={}){
  const clock=timer(),calls=[],begins=[],ends=[],positions=[],finish=deferred();
- let active=false;let refreshCalls=0;
+ let active=false;let refreshCalls=0,canonicalOrigin=point(2,2);
  const runtime={active:true,sceneManager:{displayedScene:{revision:9}},
   visibility:{frame:{permissionGeneration:4}},
   async refreshVisibility(){refreshCalls++;return refresh},
@@ -45,13 +45,18 @@ function keyboardHarness({refresh=true,mode='keyboard',selection=[group[0]]}={})
   }
  };
  const stepper=createWorldKeyboardStepper({
-  getRuntime:()=>runtime,makePick:()=>({mapId:MAP,origin:point(2,2),
+  getRuntime:()=>runtime,makePick:()=>({mapId:MAP,origin:{...canonicalOrigin},
    selection,mode}),setTimer:clock.setTimer,clearTimer:clock.clearTimer,
   idleMs:180,maxQueued:2
  });
  return {runtime,stepper,clock,positions,begins,calls,
   get refreshCalls(){return refreshCalls},
-  resolve(status='committed'){active=false;finish.resolve({status})}};
+  resolve(status='committed'){
+   active=false;
+   const endpoint={...(positions.at(-1)||canonicalOrigin)};
+   if(status==='committed'&&!staleSight)canonicalOrigin={...endpoint};
+   finish.resolve({status,endpoint});
+  }};
 }
 test('B09 rapid keyboard turns coalesce in one gesture and preserve mixed-group IDs',async()=>{
  const h=keyboardHarness({selection:group});
@@ -86,6 +91,27 @@ test('B09 queue continuation requires fresh canonical sight before any new Begin
  await tick();await tick();
  assert.equal(h.refreshCalls,1);
  assert.equal(h.begins.length,1,'no new Begin after failed visibility authorization');
+ assert.equal(h.positions.length,1);
+ assert.equal(h.stepper.queueLength,0);
+ h.stepper.dispose();
+});
+test('B09 subsequent rapid key begins exactly at freshly authorized prior endpoint',async()=>{
+ const h=keyboardHarness();
+ h.stepper.step(1,0);h.stepper.step(0,0,{release:true});h.clock.fire(180);
+ h.stepper.step(0,1);
+ h.resolve('committed');await tick();await tick();
+ assert.equal(h.begins.length,2);
+ assert.deepEqual(h.begins[1].origin,point(3,2));
+ assert.deepEqual(h.positions.at(-1),point(3,3));
+ h.stepper.dispose();
+});
+test('B09 old signed sight with stale canonical tile refuses queued replay',async()=>{
+ const h=keyboardHarness({staleSight:true});
+ h.stepper.step(1,0);h.stepper.step(0,0,{release:true});h.clock.fire(180);
+ h.stepper.step(0,1);
+ h.resolve('committed');await tick();await tick();
+ assert.equal(h.refreshCalls,1);
+ assert.equal(h.begins.length,1);
  assert.equal(h.positions.length,1);
  assert.equal(h.stepper.queueLength,0);
  h.stepper.dispose();
