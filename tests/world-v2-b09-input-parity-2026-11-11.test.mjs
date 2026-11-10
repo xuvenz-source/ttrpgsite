@@ -152,6 +152,36 @@ test('B09 single-finger drag uses the same authority; second touch cancels safel
  assert.ok(status.includes('multi-touch'));
  input.unmount();
 });
+test('B09 second finger outside viewport also cancels held touch drag',()=>{
+ const root=emitter(),events=[];
+ const viewport={
+  ownerDocument:root,contains:element=>element?.inside===true,
+  addEventListener:(name,fn)=>root.addEventListener(name,fn),
+  removeEventListener:(name,fn)=>root.removeEventListener(name,fn),
+  setPointerCapture(){},releasePointerCapture(){},hasPointerCapture(){return true}
+ };
+ let active=false;
+ const controller={
+  get active(){return active},
+  beginGesture(){active=true;events.push('begin');return true},
+  updateGesture(){events.push('move');return true},
+  endGesture(){active=false;events.push('commit');return Promise.resolve({status:'committed'})},
+  cancelGesture(reason){active=false;events.push(reason)}
+ };
+ const input=createInputController({target:viewport,
+  keyboardTarget:root,blurTarget:root,controller,
+  pointFromEvent:e=>e.point,
+  resolveSelection:()=>({mapId:MAP,origin:point(2,2),selection:[group[0]]})});
+ input.mount();
+ root.emit('pointerdown',{pointerId:41,target:{inside:true}});
+ root.emit('pointerdown',{pointerId:42,isPrimary:false,target:{inside:false}});
+ assert.deepEqual(events,['begin','multi-touch']);
+ root.emit('pointermove',{pointerId:41,target:{inside:true},point:point(5,2)});
+ root.emit('pointerup',{pointerId:41});
+ root.emit('pointerup',{pointerId:42,isPrimary:false});
+ assert.deepEqual(events,['begin','multi-touch'],'no commit after multi-finger gesture');
+ input.unmount();
+});
 test('B09 keyboard/touch/drag share ordered server-approved route and atomic group commit',async()=>{
  for(const mode of ['keyboard','touch','drag']){
   const calls=[],events=[],origin=point(2,2);
