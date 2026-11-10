@@ -201,6 +201,10 @@ BEGIN
   terminal_sent=1 AND
   (SELECT count(*)=old_sent+1 FROM realtime.b07_outbox),
   'P14 terminal flush drains only genuinely pending authorized recipients');
+ PERFORM public.b07_assert(
+  (SELECT count(*)=0 FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=session_uuid),
+  'P14b a successful terminal drain reclaims recipient queue rows');
  PERFORM set_config('request.jwt.claim.sub',player::text,true);
  PERFORM public.b07_assert(
   forge_world_v2.flush_session_observers_b07(session_uuid)=0,
@@ -258,6 +262,20 @@ BEGIN
    WHERE (message->>'viewerId')=player::text AND
     (message->>'seq')::bigint>old_cursor),
   'P17 receiver order and cursor continuity survive overflow/recovery');
+
+ -- Expired abandoned queues must be removed without a paid cron worker.
+ UPDATE forge_world_v2.observer_pending_b07
+ SET expires_at=clock_timestamp()-interval '1 second'
+ WHERE session_id=second_uuid AND viewer_id=player;
+ PERFORM public.b04_issue_token_session(
+  '00000000-0000-4000-8000-000000000389',actor,token);
+ SELECT * INTO s FROM forge_world_v2.motion_sessions
+ WHERE id='00000000-0000-4000-8000-000000000389';
+ PERFORM forge_world_v2.queue_recipient_observer_b07(s,player,body);
+ PERFORM public.b07_assert(
+  (SELECT count(*)=0 FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=second_uuid),
+  'P18 bounded opportunistic TTL prunes old recipient paths');
 
  PERFORM public.b07_assert(
   NOT has_schema_privilege('authenticated','forge_world_v2','USAGE') AND
