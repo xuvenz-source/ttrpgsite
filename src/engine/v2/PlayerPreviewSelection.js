@@ -6,7 +6,8 @@ export function eligiblePlayerPreviewTokens({tokens=[],members=[],
  mapId,dmUserId}={}){
  if(typeof mapId!=='string'||typeof dmUserId!=='string'||
   !Array.isArray(tokens)||!Array.isArray(members))return [];
- const players=new Set(members.map(member=>member?.user_id)
+ const players=new Set(members.filter(member=>member?.role==='player')
+  .map(member=>member.user_id)
   .filter(id=>typeof id==='string'&&id&&id!==dmUserId));
  return tokens.filter(token=>token?.map_id===mapId&&
   token.visible!==false&&players.has(token.owner_id));
