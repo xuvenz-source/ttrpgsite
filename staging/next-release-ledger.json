@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
-  "releaseBranch": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
+  "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
+  "releaseBranch": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -230,10 +230,17 @@
     },
     {
       "name": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
+      "linkedPullRequest": 66,
+      "note": "Released production as PR #66, commit 9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1. Automated checks passed, but live drag still fails and DM player preview cannot move."
+    },
+    {
+      "name": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
       "linkedPullRequest": null,
-      "note": "Recover late signed map URLs; capture V2 pointer input at viewport, handle lost capture/browser blur, prevent native sprite drag, and enforce a single player-owned actor in DM preview. Add gesture lifecycle and authority regression tests. No migration or deployment."
+      "note": "Replace viewport-native pointer event pipeline with scoped document capture before React; repair DM editor unlocked token layering, player-preview actor eligibility, and safe unpublished scene collision cache. Add regression tests. No SQL or deployment."
     }
   ],
   "features": [
@@ -988,12 +995,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
-    "releaseBranch": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
+    "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
+    "releaseBranch": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
     "outstandingBranches": [
-      "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10"
+      "fix/world-v2-document-pointer-preview-unassigned-2026-11-10"
     ],
-    "stagePolicy": "Consolidated release only after designer approval, green frontend/build, isolated V2 PostgreSQL authority tests, CodeQL, and authenticated DM/player browser drag acceptance. No SQL changes or extra Realtime streams.",
+    "stagePolicy": "One consolidated designer-approved release after green frontend/build, isolated PostgreSQL V2 authority suites, CodeQL, and authenticated DM/player drag and preview acceptance. No SQL changes or extra Realtime streams.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
