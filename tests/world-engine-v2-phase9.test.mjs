@@ -49,6 +49,9 @@ function fakeClient({dm=false,preview=false}={}){
    if(name==='get_world_visibility_v2'||
       name==='preview_world_visibility_v2')
     return {data:sightData,error:null};
+   if(name==='preview_world_visibility_at_v2')
+    return {data:{...sightData,visiblePieces:sightData.visiblePieces.map(p=>
+     p.id===args.p_token?{...p,x:args.p_x,y:args.p_y}:p)},error:null};
    if(name==='begin_world_motion_v2')
     return {data:{version:2,sessionId},error:null};
    if(name==='advance_world_motion_v2'){
@@ -363,6 +366,49 @@ test('invalid or unassigned effective viewer fails closed and cannot mount engin
  assert.equal(x.channels.size,0);
  await r.dispose();
 });
+test('player-preview pointer drag advances locally with no persistent movement RPC',async()=>{
+ const x=fakeClient({dm:true,preview:true}),gestures=[];
+ const r=createWorldV2TabletopRuntime({...x.config,
+  getAuthorizedPieces:pieceData,onGesture:event=>gestures.push(event)});
+ const target=fakeEventTarget();
+ try{
+  assert.equal(await r.start(),true);
+  assert.equal(r.sceneManager.collisionScene?.scope,'dm');
+  assert.equal(r.visibility.frame?.scope,'viewer');
+  r.attachInput({target,keyboardTarget:fakeEventTarget(),
+   pointFromEvent:event=>event.point,
+   resolveSelection:()=>({mapId,origin:{x:2,y:2},mode:'preview',
+    selection:[{kind:'token',id:heroId}]})});
+  target.emit('pointerdown',{point:{x:2.25,y:2.25}});
+  assert.ok(gestures.some(e=>e.type==='grabbed'));
+  target.emit('pointermove',{point:{x:3.25,y:2.25}});
+  target.emit('pointerup',{point:{x:3.25,y:2.25}});
+  await nextTick();await nextTick();await nextTick();
+  assert.ok(gestures.some(e=>e.type==='approved'&&e.approved.x===3));
+  assert.equal(r.previewPosition?.x,3);
+  assert.ok(x.calls.some(([name])=>name==='preview_world_visibility_at_v2'));
+  assert.ok(!x.calls.some(([name])=>name.includes('world_motion_v2')));
+ }finally{await r.dispose()}
+});
+
+test('V2 board native pointer-down is capture-phase and symmetrically removed',async()=>{
+ const x=fakeClient({dm:true}),target=fakeEventTarget(),added=[],removed=[];
+ const add=target.addEventListener.bind(target),del=target.removeEventListener.bind(target);
+ target.addEventListener=(n,fn,opts)=>{added.push([n,opts]);add(n,fn)};
+ target.removeEventListener=(n,fn,opts)=>{removed.push([n,opts]);del(n)};
+ const r=createWorldV2TabletopRuntime({...x.config,getAuthorizedPieces:pieceData});
+ try{
+  await r.start();
+  r.attachInput({target,keyboardTarget:fakeEventTarget(),
+   pointFromEvent:event=>event.point,resolveSelection:select});
+  assert.ok(added.some(([n,o])=>n==='pointerdown'&&o.capture===true&&o.passive===false));
+  target.emit('pointerdown');
+  assert.ok(x.renderer.events.some(e=>e[0]==='local'&&e[1]==='grabbed'));
+  r.detachInput();
+  assert.ok(removed.some(([n,o])=>n==='pointerdown'&&o===true));
+ }finally{await r.dispose()}
+});
+
 test('missing permission or map change revokes the renderer and stops the gesture',async()=>{
  const x=fakeClient(),r=createWorldV2TabletopRuntime({
   ...x.config,getAuthorizedPieces:pieceData

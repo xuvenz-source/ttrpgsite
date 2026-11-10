@@ -137,7 +137,9 @@ export function createInputController({
  return {
   mount(){
    if(mounted)return;mounted=true;
-   target.addEventListener('pointerdown',down,{passive:false});
+   // Capture before a child React portal or overlay stops bubbling. The
+   // resolver still enforces server sight, control and editor permissions.
+   target.addEventListener('pointerdown',down,{capture:true,passive:false});
    target.addEventListener('pointermove',move,{passive:false});
    target.addEventListener('pointerup',up,{passive:false});
    target.addEventListener('pointercancel',cancel);
@@ -150,7 +152,7 @@ export function createInputController({
    if(!mounted)return;
    mounted=false;release();clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
    controller.cancelGesture('unmount');
-   target.removeEventListener('pointerdown',down);
+   target.removeEventListener('pointerdown',down,true);
    target.removeEventListener('pointermove',move);
    target.removeEventListener('pointerup',up);
    target.removeEventListener('pointercancel',cancel);

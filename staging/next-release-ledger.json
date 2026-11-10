@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "bab5286189f2d83a287a804ce383e9e574525fcf",
-  "releaseBranch": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
+  "productionBaseSha": "131252bab88435568adb6d892e5fe4c1b510ddf4",
+  "releaseBranch": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -216,10 +216,17 @@
     },
     {
       "name": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "bab5286189f2d83a287a804ce383e9e574525fcf",
+      "linkedPullRequest": 64,
+      "note": "Released production as PR #64 commit 131252ba. Click select and rapid arrows improved, drag and DM preview remain broken."
+    },
+    {
+      "name": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "131252bab88435568adb6d892e5fe4c1b510ddf4",
       "linkedPullRequest": null,
-      "note": "Integrated V2 pointer selection/drag, buffered keyboard movement and DM player-preview input repair. Frontend only, not deployed. Requires CI, CodeQL and authenticated multiplayer acceptance."
+      "note": "Restores V2 pointerdown capture and valid DM preview exemption from editor token lock; includes no-write preview drag tests. Frontend only."
     }
   ],
   "features": [
@@ -974,10 +981,10 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "bab5286189f2d83a287a804ce383e9e574525fcf",
-    "releaseBranch": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
+    "productionBaseSha": "131252bab88435568adb6d892e5fe4c1b510ddf4",
+    "releaseBranch": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
     "outstandingBranches": [
-      "fix/world-v2-pointer-keyboard-preview-input-2026-11-10"
+      "fix/world-v2-drag-preview-gesture-handoff-2026-11-10"
     ],
     "stagePolicy": "One consolidated release after explicit approval. Include and verify every outstanding release-ready staged component. This V2 observer recovery is frontend only and requires authenticated DM/player live validation; the optional Supabase Nano memory trial is deferred and needs separate maintenance approval.",
     "databaseReleaseVersion": null,
