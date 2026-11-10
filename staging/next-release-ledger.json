@@ -282,6 +282,17 @@
       "releaseReady": false,
       "documentationOnly": true,
       "note": "A04-only authenticated 3-account fixture guide, 24-case JSON manifest and local validation test. It is stacked on draft A03 PR #72; no live campaign setup or actual browser testing performed, and no runtime/SQL/Vercel changes. Future A06 testing requires separately authorized test fixture setup."
+    },
+    {
+      "name": "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "718067e58a252ef9ab98e317b349fb0e77914ca4",
+      "linkedPullRequest": 74,
+      "basePullRequest": 73,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "note": "A05 opt-in bounded diagnostics only: client gesture/render first changed sprite position, remote authorized observer path-to-position update, renderer RAF interval/stall and mount/unmount, plus static and headless browser tests. No SQL, movement authority, fog, permissions or deployment changes. Stacked on draft A04 PR #73 (and A03 PR #72). Real user performance measurements deferred to A06."
     }
   ],
   "features": [
@@ -763,6 +774,18 @@
       "databaseDependencies": [],
       "verification": "Read-only Supabase test campaign audit verified enough distinct roles and tokens, but published fog/collision disabled and doors, one-way wall and large token missing. Node contract test must pass CI on final head; no authenticated live testing has been run.",
       "nextAcceptanceStep": "A06"
+    },
+    {
+      "id": "v2-bounded-first-paint-and-frame-trace-a05",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Privacy-safe opt-in bounded local/remote first position style-update durations, frame gaps, and actual renderer mount/unmount. Existing RPC and fog/sprite/terrain counters remain intact.",
+      "sources": [
+        "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10"
+      ],
+      "databaseDependencies": [],
+      "verification": "Trace unit tests, isolated React headless drag assertions and exact-head CI required. Timing describes renderer style mutation, not confirmed compositor paint or real authenticated user latency; A06 NOT RUN.",
+      "nextAcceptanceStep": "A06"
     }
   ],
   "databaseDependencies": [
@@ -1116,7 +1139,8 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release.",
     "A03: historical applied anon GRANT cleanup has missing source migration parity (issue #69); this is documentation follow-up E05, NOT permission to reapply SQL.",
     "A02: PR #71 may retain previously authorized renderer sight during indefinitely pending observer resync; require bounded deadline, stream-locked movement input gating, tests, targeted metadata refresh and final green CI before merge.",
-    "A04: manual authenticated DM+two-player fixture contract staged only. Do not run live fixture writes or record player identities, invite codes, JWTs, signed media URLs or unrevealed NPC data in public test evidence."
+    "A04: manual authenticated DM+two-player fixture contract staged only. Do not run live fixture writes or record player identities, invite codes, JWTs, signed media URLs or unrevealed NPC data in public test evidence.",
+    "A05: browser trace opt-in ?worldV2Trace=1 keeps only 256 bounded allowlisted events/duration samples per metric and no secret IDs, RPC payloads or coordinates. No extra network logging or telemetry service. Counter results are not substitute for RLS security acceptance."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1124,9 +1148,10 @@
     "outstandingBranches": [
       "fix/world-v2-live-authority-continuity-2026-11-10",
       "stage/engineering-workflow-and-ledger-a03-2026-11-10",
-      "stage/world-v2-authenticated-fixture-a04-2026-11-10"
+      "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10"
     ],
-    "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared.",
+    "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": [],
     "blockedPullRequests": [
@@ -1135,15 +1160,21 @@
     "draftPullRequests": [
       71,
       72,
-      73
+      73,
+      74
     ],
-    "nextMicrostep": "A05",
+    "nextMicrostep": "A06",
     "manualAcceptancePending": true,
     "stackedPullRequests": [
       {
         "number": 73,
         "basePullRequest": 72,
         "reason": "Depends on PR72 persistent A03 tracker and ledger; staging only"
+      },
+      {
+        "number": 74,
+        "basePullRequest": 73,
+        "reason": "A05 instrumentation branch inherits A04 fixture manifest and A03 persistent tracker; all remain draft and unreleased"
       }
     ]
   },
