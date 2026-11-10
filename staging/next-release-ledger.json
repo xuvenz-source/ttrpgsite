@@ -304,6 +304,16 @@
       "releaseReady": false,
       "documentationOnly": true,
       "note": "A06 read-only evidence record only, no live authenticated browser testing. The SQL statement statistics aggregate all activity since 5 Nov, not per-gesture current-release p95. Production is still PR #70; A05 tracing remains draft PR #74. BLOCKED pending approved release and DM/P1/P2 sessions plus protected map fixture. No SQL/production changes."
+    },
+    {
+      "name": "stage/world-v2-authority-contract-b01-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "ba816658ff26a91c4c1563ef99ecb5f243aaa0ad",
+      "basePullRequest": 75,
+      "releaseReady": false,
+      "documentationOnly": true,
+      "note": "B01 design-only V2 authority contract, hostile input matrix and explicitly recorded delegated sequencing exception; Gate A/A06 remain blocked. Stacked on draft A06 PR #75; no runtime/SQL/Edge changes or production deployment."
     }
   ],
   "features": [
