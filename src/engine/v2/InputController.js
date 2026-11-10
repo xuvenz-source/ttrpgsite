@@ -9,11 +9,13 @@ export function createInputController({
  target,controller,pointFromEvent,resolveSelection,
  onPointerRelease=()=>false,onPointerStatus=()=>{},
  keyboardTarget=typeof window==='undefined'?target:window,
+ blurTarget=typeof window==='undefined'?keyboardTarget:window,
  setTimer=(fn,delay)=>setTimeout(fn,delay),
  clearTimer=handle=>clearTimeout(handle),keyboardIdleMs=90
 }={}){
  if(!target?.addEventListener||!target?.removeEventListener||
   !keyboardTarget?.addEventListener||!keyboardTarget?.removeEventListener||
+  !blurTarget?.addEventListener||!blurTarget?.removeEventListener||
   !controller||typeof pointFromEvent!=='function'||
   typeof resolveSelection!=='function'||
   typeof onPointerRelease!=='function'||
@@ -195,7 +197,9 @@ export function createInputController({
    target.addEventListener('dragstart',nativeDragStart,{capture:true});
    keyboardTarget.addEventListener('keydown',key);
    keyboardTarget.addEventListener('keyup',keyup);
-   keyboardTarget.addEventListener('blur',blur);
+   // Board delegates arrows to the app and supplies a no-op keyboard
+   // target. Blur must still reach the real window to prevent a stuck drag.
+   blurTarget.addEventListener('blur',blur);
   },
   unmount(){
    if(!mounted)return;
@@ -209,7 +213,7 @@ export function createInputController({
    target.removeEventListener('dragstart',nativeDragStart,true);
    keyboardTarget.removeEventListener('keydown',key);
    keyboardTarget.removeEventListener('keyup',keyup);
-   keyboardTarget.removeEventListener('blur',blur);
+   blurTarget.removeEventListener('blur',blur);
   },
   get mounted(){return mounted}
  };
