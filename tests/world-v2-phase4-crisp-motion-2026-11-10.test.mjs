@@ -24,8 +24,9 @@ test('unknown, nonadjacent, invalid and out-of-order client routes fail closed',
  p.reset({x:1,y:1});
  assert.equal(p.accept({x:1,y:1},[{x:4,y:1}]),false);
  assert.equal(p.accept({x:1,y:1},[{x:2,y:1},{x:10,y:10}]),false);
- assert.equal(p.accept({x:1,y:1},[{x:2,y:1,hidden:true}]),true,
-  'point payload is copied to public x/y only after upstream ACK validation');
+ assert.equal(p.accept({x:1,y:1},[{x:2,y:1,hidden:true}]),false,
+  'presentation must refuse extra fields even when upstream ACKs are validated');
+ assert.equal(p.accept({x:1,y:1},[{x:2,y:1}]),true);
  assert.deepEqual(p.endpoint,{x:2,y:1});
  assert.equal(p.accept({x:1,y:1},[{x:2,y:2}]),false);
  assert.equal(p.accept({x:2,y:1},[{x:3,y:1}]),true);

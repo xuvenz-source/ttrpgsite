@@ -23,7 +23,8 @@ export function createApprovedPathPresentation({catchupMs=105,maxQueue=96}={}){
   if(!valid(from)||!Array.isArray(cells)||cells.length>24||
    !position||!same(from,endpoint))return false;
   let at=from;
-  for(const p of cells){if(!valid(p)||!adjacent(at,p))return false;at=p}
+  for(const p of cells){if(!valid(p)||Object.keys(p).some(key=>!['x','y'].includes(key))||
+    !adjacent(at,p))return false;at=p}
   if(!cells.length)return true;
   if(queue.length+cells.length>maxQueue){
    // Drop only cosmetic backlog at an already verified waypoint.

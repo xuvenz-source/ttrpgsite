@@ -765,7 +765,16 @@ test('Phase 4 prediction is held for older ACK and released when authority passe
 
 test('Phase 4 remote burst never jumps more than 2.5 authorized cells per RAF',()=>{
  const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
- const route=[[2,2],...Array.from({length:24},(_,i)=>[3+i,2])];
+ // Twenty-four server-approved cells remain within the 10x10 visible
+ // mask, with bends so a direct chord would cut across unapproved cells.
+ const route=[[2,2]];
+ for(let x=3;x<=8;x++)route.push([x,2]);
+ route.push([8,3]);
+ for(let x=7;x>=2;x--)route.push([x,3]);
+ route.push([2,4]);
+ for(let x=3;x<=8;x++)route.push([x,4]);
+ route.push([8,5]);
+ for(let x=7;x>=5;x--)route.push([x,5]);
  assert.equal(ctx.renderer.applyObserverPath(path(hero,route),{mapId,seq:6}),true);
  ctx.clock.flush(1000);ctx.clock.flush(1120);
  const x=parseFloat(position(ctx.renderer.getSpriteElement('token',hero.id)));
