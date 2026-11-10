@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B09",
+  "nextStep": "B10",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -272,7 +272,37 @@
       "b07HidePriorityAmendment": "Same nonapplied B07 candidate now prioritizes certified hide ahead of stale queued paths for that piece; tested under 25-point deferred FIFO and exhausted budget. Real end-to-end hiding/sight revocation remains B10 gated."
     },
     "B09": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-b09-input-parity-2026-11-11",
+      "basedOnStagingHead": "eb1af274a1be6d0c48233a4d29b73d92c4545967",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "docs": "docs/architecture/world-v2-b09-input-parity.md",
+      "tests": [
+        "tests/world-v2-b09-input-parity-2026-11-11.test.mjs"
+      ],
+      "expectedFiles": [
+        "src/engine/v2/KeyboardStepper.js",
+        "src/engine/v2/InputController.js",
+        "src/engine/v2/WorldV2Board.jsx",
+        "src/engine/v2/PreviewAuthority.js",
+        "tests/world-v2-b09-input-parity-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b09-input-parity.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene.",
+      "mode": "Frontend/testing only; existing B05/B06/B08 opt-in flags unchanged and OFF by default; no Supabase SQL or public endpoint touched.",
+      "verification": "Initial source-head GitHub Actions #42847563283 passed 816/816 tests, zero dependency vulnerabilities, critical lint, Vite build and Deno Edge checks; final exact PR SHA revalidation pending.",
+      "security": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement.",
+      "knownGaps": [
+        "A06/Gate A real authenticated DM+two-player browser parity, fog collision/visibility, mobile touch, multi-tab and p95 tests not run",
+        "PR #71 amendments pending; B07/B08 budgeted observer terminal delivery/LOS integration still unqualified",
+        "B03-B09 source-integration, SQL migration provenance and CodeQL need B10 release review",
+        "No live device, Supabase or production deployment testing in B09; 816 tests are fixture/controlled checks"
+      ],
+      "gateA": "NOT PASSED",
+      "next": "B10 only after designer instruction",
+      "pullRequest": null
     },
     "B10": {
       "status": "NOT STARTED"
@@ -775,6 +805,36 @@
       "next": "B09 subject to B08 exact-head CI",
       "pullRequest": 83,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/83"
+    },
+    "B09": {
+      "date": "2026-11-11",
+      "step": "B09",
+      "status": "STAGED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b09-input-parity-2026-11-11",
+      "stackedOnPullRequest": 83,
+      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene.",
+      "expectedFiles": [
+        "src/engine/v2/KeyboardStepper.js",
+        "src/engine/v2/InputController.js",
+        "src/engine/v2/WorldV2Board.jsx",
+        "src/engine/v2/PreviewAuthority.js",
+        "tests/world-v2-b09-input-parity-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b09-input-parity.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Initial source-head GitHub Actions #42847563283 passed 816/816 tests, zero dependency vulnerabilities, critical lint, Vite build and Deno Edge checks; final exact PR SHA revalidation pending.",
+      "securityParity": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement.",
+      "sqlDeployment": "NONE — frontend/tests only; no SQL/migrations/Edge/production",
+      "blockers": [
+        "A06/Gate A real authenticated DM+two-player browser parity, fog collision/visibility, mobile touch, multi-tab and p95 tests not run",
+        "PR #71 amendments pending; B07/B08 budgeted observer terminal delivery/LOS integration still unqualified",
+        "B03-B09 source-integration, SQL migration provenance and CodeQL need B10 release review",
+        "No live device, Supabase or production deployment testing in B09; 816 tests are fixture/controlled checks"
+      ],
+      "next": "B10 only",
+      "pullRequest": null
     }
   },
   "pendingWork": [
@@ -856,6 +916,13 @@
       "status": "STAGED_CANDIDATE_NOT_RELEASED",
       "ownerStep": "B08",
       "notes": "B08 amends nonapplied B07 queue for urgent hide preemption and removal of all same-piece unsent paths, isolated PostgreSQL P11/H07/P12 tests passed #42845242094. Still requires real multi-user LOS/revoke tests and priority budget eventual-delivery/resync in B10; no production fix."
+    },
+    {
+      "id": "B09-AUTHENTICATED-INPUT-PARITY",
+      "category": "B10-release-acceptance",
+      "status": "BLOCKED",
+      "ownerStep": "B10",
+      "notes": "B09 controlled unit tests show parity/guarding, but real DM/P1/P2 group, touch/pinch, keyboard on focus, player preview and collision/fog must be run and timed. A06/Gate A blocked. No live activation."
     }
   ],
   "sourceOfTruthRules": [
