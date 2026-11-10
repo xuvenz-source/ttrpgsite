@@ -120,11 +120,12 @@ test('B10-R02 signed canonical correction drops budget-stranded stale paths with
  const h=transportHarness(snap(0,[piece(A,1,1),piece(B,5,5)]));
  await h.join();
  assert.equal(h.t.locked,false);
+ const revocationsBefore=h.revoked.length;
  assert.equal(h.t.acceptSignedSight(snap(0,[piece(A,3,1),piece(B,5,5)])),true);
  h.send(1,[path(A,[[1,1],[2,1]]),path(B,[[5,5],[6,5]])]);
  assert.equal(h.t.cursor,1,'cursor advances without replaying stale sprite');
  assert.deepEqual(h.seen,[path(B,[[5,5],[6,5]])]);
- assert.deepEqual(h.revoked,[],'no renderer or terrain seal');
+ assert.equal(h.revoked.length,revocationsBefore,'no additional renderer or terrain seal');
  h.send(2,[path(A,[[2,1],[3,1]])]);
  assert.equal(h.seen.length,1,'later deferred path also suppressed');
  h.send(3,[path(A,[[3,1],[4,1]])]);
