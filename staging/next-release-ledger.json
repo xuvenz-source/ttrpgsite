@@ -1,16 +1,23 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
-  "releaseBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
+  "productionBaseSha": "572c9565377752b89c963cedcff23e7cd145fdcf",
+  "releaseBranch": "fix/world-v2-dm-sight-recovery-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
-      "name": "stage/world-v2-live-regression-integrated-2026-11-10",
+      "name": "fix/world-v2-dm-sight-recovery-2026-11-10",
       "status": "staged",
+      "productionBaseSha": "572c9565377752b89c963cedcff23e7cd145fdcf",
+      "note": "Fail-closed DM/private observer sight recovery after scene subscription invalidation. Frontend only: scene-current observer resync and two bounded retries. Includes regression tests and acceptance guide. No SQL, preview or deployment. Await CI and designer release approval."
+    },
+    {
+      "name": "stage/world-v2-live-regression-integrated-2026-11-10",
+      "status": "released",
       "linkedPullRequest": 61,
       "productionBaseSha": "7fb2c04fe4ca85721e08772e936265a649784bda",
-      "note": "Frontend-only V2 live repair plus memory diagnostics and optional separately-approved Nano 128MB shared_buffers trial. Memory trial is NOT applied or triggered by merge/deployment. See docs/supabase-nano-memory-trial-2026-11-10.md."
+      "note": "Frontend-only V2 live repair plus memory diagnostics and optional separately-approved Nano 128MB shared_buffers trial. Memory trial is NOT applied or triggered by merge/deployment. See docs/supabase-nano-memory-trial-2026-11-10.md. Released in designer-approved PR #61 as 572c9565377752b89c963cedcff23e7cd145fdcf; Nano trial remains unexecuted and separately approval-gated. Browser DM observer-sight issue reported afterward.",
+      "productionCommit": "572c9565377752b89c963cedcff23e7cd145fdcf"
     },
     {
       "name": "stage/account-settings-map-measurements",
@@ -952,12 +959,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
-    "releaseBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
+    "productionBaseSha": "572c9565377752b89c963cedcff23e7cd145fdcf",
+    "releaseBranch": "fix/world-v2-dm-sight-recovery-2026-11-10",
     "outstandingBranches": [
-      "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08"
+      "fix/world-v2-dm-sight-recovery-2026-11-10"
     ],
-    "stagePolicy": "Consolidated full fix attempt only. Do not apply SQL or deploy without explicit designer authorization. All outstanding staged changes must be conflict reconciled into one release and verified by GitHub tests/build/CodeQL. No paid Supabase branches. Live two-player collision/fog stress after approved rollout.",
+    "stagePolicy": "One consolidated release after explicit approval. Include and verify every outstanding release-ready staged component. This V2 observer recovery is frontend only and requires authenticated DM/player live validation; the optional Supabase Nano memory trial is deferred and needs separate maintenance approval.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
