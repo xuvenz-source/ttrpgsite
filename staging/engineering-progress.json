@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10-R03",
+  "nextStep": "B10-R04",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -480,6 +480,43 @@
       "noProductionChanges": true,
       "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction",
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/87"
+    },
+    "B10_R03": {
+      "status": "STAGED",
+      "releaseReady": false,
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
+      "pullRequest": 88,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/88",
+      "basedOnHead": "4837f6a61ccbc1fab94226f5b22c2c48a16aa65f",
+      "basePullRequest": 87,
+      "documentation": "docs/architecture/world-v2-b10-r03-terminal-queue-retirement.md",
+      "sqlCandidate": "supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql",
+        "tests/world-v2-b10-postgres/terminal-r03.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-r03-terminal-retirement.test.mjs",
+        "docs/architecture/world-v2-b10-r03-terminal-queue-retirement.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "Postcommit private observer queue retirement for B07/B08: bounded source-real in-commit terminal flush, then discard all remaining stale coordinate frames; retain only certified private hide frames for exact replay, no new public RPC, table, Realtime topic or paid worker.",
+      "automatedEvidence": "Source-real isolated PG17 #42867963625 succeeded 14 R03 assertions and historical B04/B07/B08/R01 hostile tests; pending exact-head CI after source and ledgers.",
+      "security": "Authenticated actor-locked private SECURITY INVOKER, no browser grants; certified hide-only survivor rechecked by B07 viewer on map/permission/LOS and budget. R02 signed sight must be enabled in matching release, not here.",
+      "knownGaps": [
+        "Default-OFF B10-R02 signed sight catch-up MUST be co-enabled with R03 if authorized; retiring terminal paths alone strands quiet observers on saturated Realtime.",
+        "No instant hide delivery guarantee when B07 priority budget is saturated and authenticated viewers are offline/hidden; 6-second foreground recovery is a best-effort canonical check.",
+        "Exceptional DB failures aborting terminal pruning may leave old private queues despite scoped publish exceptions; test fault injection and source-real rollback.",
+        "PR #71 sight continuity recovery/security amendments still draft and unmerged; runtime/trace source conflicts require reviewed reconciliation.",
+        "A06 Gate A 24 protected real authenticated DM/P1/P2 cases and human measured observer p95, fog/collision, 2×2/multi-tab and terrain no-flashing have NOT RUN.",
+        "No versioned forward-only B03→B07→B08→R01→R03 migration or rollback rehearsal against exact live schema; B10 release decision NO_GO."
+      ],
+      "sqlApplied": false,
+      "featureFlagsActivated": false,
+      "productionDeployed": false,
+      "next": "B10-R04 source conflict resolution PR71 and version-safe migration/rollback rehearsal, then A06 real signed multi-account QA before release."
     }
   },
   "handoffs": {
@@ -1061,6 +1098,39 @@
       "noDeployment": true,
       "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction",
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/87"
+    },
+    "B10_R03": {
+      "date": "2026-11-11",
+      "step": "B10-R03",
+      "status": "STAGED — RELEASE NO_GO",
+      "branch": "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
+      "basePullRequest": 87,
+      "pullRequest": 88,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/88",
+      "parentHead": "4837f6a61ccbc1fab94226f5b22c2c48a16aa65f",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql",
+        "tests/world-v2-b10-postgres/terminal-r03.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-r03-terminal-retirement.test.mjs",
+        "docs/architecture/world-v2-b10-r03-terminal-queue-retirement.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "Postcommit private observer queue retirement for B07/B08: bounded source-real in-commit terminal flush, then discard all remaining stale coordinate frames; retain only certified private hide frames for exact replay, no new public RPC, table, Realtime topic or paid worker.",
+      "verification": "Source-real isolated PG17 #42867963625 succeeded 14 R03 assertions and historical B04/B07/B08/R01 hostile tests; pending exact-head CI after source and ledgers.",
+      "security": "Authenticated actor-locked private SECURITY INVOKER, no browser grants; certified hide-only survivor rechecked by B07 viewer on map/permission/LOS and budget. R02 signed sight must be enabled in matching release, not here.",
+      "blockers": [
+        "Default-OFF B10-R02 signed sight catch-up MUST be co-enabled with R03 if authorized; retiring terminal paths alone strands quiet observers on saturated Realtime.",
+        "No instant hide delivery guarantee when B07 priority budget is saturated and authenticated viewers are offline/hidden; 6-second foreground recovery is a best-effort canonical check.",
+        "Exceptional DB failures aborting terminal pruning may leave old private queues despite scoped publish exceptions; test fault injection and source-real rollback.",
+        "PR #71 sight continuity recovery/security amendments still draft and unmerged; runtime/trace source conflicts require reviewed reconciliation.",
+        "A06 Gate A 24 protected real authenticated DM/P1/P2 cases and human measured observer p95, fog/collision, 2×2/multi-tab and terrain no-flashing have NOT RUN.",
+        "No versioned forward-only B03→B07→B08→R01→R03 migration or rollback rehearsal against exact live schema; B10 release decision NO_GO."
+      ],
+      "next": "B10-R04 source conflict resolution PR71 and version-safe migration/rollback rehearsal, then A06 real signed multi-account QA before release.",
+      "productionUnchanged": true
     }
   },
   "pendingWork": [
@@ -1201,10 +1271,17 @@
     },
     {
       "id": "B10-R02-EQUAL-ORIGIN-DEFERRED-RACE",
-      "status": "BLOCKED",
+      "status": "STAGED_SERVER_RETIREMENT_NOT_INSTALLED",
       "ownerStep": "B10-R03",
       "category": "security-recovery",
-      "notes": "After a new signed canonical sight, an older B07 queued packet with the same starting coordinate remains indistinguishable from a fresh session without extra trusted epoch/queue retirement; do not activate fallback until adversarial multi-account tests."
+      "notes": "R03 private terminal queue candidate removes all unsent postcommit paths even when exact ACK retries after a new gesture, retaining certified hides. Isolated PG17 R03 hostile tests verify exhausted budget/equal-origin case; not live installed, source fault injection and real client R02 parity remain required."
+    },
+    {
+      "id": "B10-R03-COUPLED-R02-ROLLOUT",
+      "status": "BLOCKED",
+      "ownerStep": "B10-R04",
+      "category": "release-gate",
+      "notes": "Never install R03 server terminal queue path retirement with R02 signed observer recovery OFF; versioned migration/flags compatibility and live Auth/LOS/fog/fanout must be rehearsed."
     }
   ],
   "sourceOfTruthRules": [
