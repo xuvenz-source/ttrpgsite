@@ -165,11 +165,14 @@
       "grantCallChecks": "authenticated/anon denied private; anon denied public; authenticated direct public Begin and Advance verified",
       "knownGap": "Current public advance_core_v2 caches same-seq reply even when retry payload differs. No new movement or rebroadcast observed, but exact payload denial is not enforced; must remediate before Gate B.",
       "fixturesLimit": "Membership and auth.uid are isolated test stubs, recipient-private realtime publisher is a test sink, no real Supabase Auth/RLS/LOS or production database; B04 does not prove p95 or live UX.",
-      "verification": "PostgreSQL actual function compile and 61 SQL assertions + direct role negative/positive tests PASS on isolated runner; standard staged CI passed on inspected SHA; exact PR head recheck pending.",
+      "verification": "Actual source + isolated SQL, test and documentation head b31f3f10e51fed519ba0e8d21857071484ccf94d: isolated PostgreSQL job #42824746094 SUCCESS (61 assertions, direct role checks); general CI #42824745105 SUCCESS. Subsequent handoff-only JSON updates do not modify SQL/tests; exact final commit CI to recheck. NOT real Supabase Auth/Realtime or live DM/P1/P2.",
       "security": "B03 candidate unchanged/nonapplied; no live schema/permissions; H39 replay exact-match policy gap explicitly not claimed as denied",
       "gateA": "NOT PASSED",
       "next": "B05 subject to Gate A or a new, explicitly recorded staging-only exception",
-      "pullRequest": 79
+      "pullRequest": 79,
+      "latestPassingCISha": "b31f3f10e51fed519ba0e8d21857071484ccf94d",
+      "latestPassingSQLRun": 42824746094,
+      "latestPassingGeneralRun": 42824745105
     },
     "B05": {
       "status": "NOT STARTED"
@@ -524,7 +527,7 @@
         "staging/engineering-progress.json",
         "staging/next-release-ledger.json"
       ],
-      "evidence": "61 PostgreSQL assertions passed; actual public Begin/Advance source imported; authenticated and anon SQL role invocations exercised; isolated PG run #42824086455 succeeded; role and SQL gaps documented.",
+      "evidence": "61 PostgreSQL assertions passed; actual public Begin/Advance source imported; authenticated and anon SQL role invocations exercised; isolated PG run #42824086455 succeeded; role and SQL gaps documented. Exact pre-handoff head b31f3f10e51fed519ba0e8d21857071484ccf94d passed both isolated SQL CI #42824746094 and standard CI #42824745105.",
       "securityParity": "B03 SQL private candidate compiles under real Postgres; bearer actor, session expiry, stale generation, wall, door, group and grants tested. H39 public altered payload same-seq replies cached ACK, no extra movement/broadcast; fails strict same-payload denial until hardening.",
       "sqlDeployment": "NONE; B04 ephemeral PostgreSQL ONLY; no production DB writes",
       "blockers": [
@@ -536,7 +539,14 @@
       ],
       "next": "B05 only, with explicit Gate A completion or separately recorded staging-only sequencing decision; no production release",
       "pullRequest": 79,
-      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/79"
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/79",
+      "ciEvidence": {
+        "testedSha": "b31f3f10e51fed519ba0e8d21857071484ccf94d",
+        "isolatedSqlRun": 42824746094,
+        "standardRun": 42824745105,
+        "conclusion": "SUCCESS",
+        "headClassification": "pre-handoff metadata update"
+      }
     }
   },
   "pendingWork": [
