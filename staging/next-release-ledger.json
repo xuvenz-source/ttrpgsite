@@ -247,7 +247,7 @@
       "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
       "status": "staged",
       "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-      "note": "Integrated Phases 1–3: bounded local traces, safe same-authority visibility recovery, shared pointer ownership/hit test/editor gate and single V2 preview keyboard path. Headless Chromium DOM gesture suite passed with real capture and overlay cases; authenticated DM/player/preview production acceptance still outstanding. No SQL or deployment.",
+      "note": "Integrated phases 1–4: bounded trace, same-authority visibility reconciliation, shared input, server-approved local path interpolation, predictive ACK handoff, capped remote catch-up. No authorization/collision/SQL/deploy changes. Testing pending.",
       "linkedPullRequest": 68
     }
   ],
@@ -1008,7 +1008,7 @@
     "outstandingBranches": [
       "stage/world-v2-phase1-instrumentation-2026-11-10"
     ],
-    "stagePolicy": "Integrated Phases 1–3 draft staging. Headless Chromium DOM capture + full frontend/build + isolated V2 SQL authority passed at f59a662e. CodeQL and authenticated live DM/player/preview drag and fog acceptance remain release gates. No deployment without approval.",
+    "stagePolicy": "Integrated phases 1–4 staging only; full CI, authenticated live multiplayer drag and fog stress acceptance pending; Phases 5–6 not yet staged.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },

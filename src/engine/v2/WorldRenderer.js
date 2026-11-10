@@ -14,6 +14,7 @@
 import {worldV2Trace} from './WorldTrace.js';
 import {createWorldFrameScheduler} from './WorldFrameScheduler.js';
 import {createObserverPathBuffer} from './ObserverPathBuffer.js';
+import {createApprovedPathPresentation} from './ApprovedPathPresentation.js';
 import {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
  from './SceneSnapshot.js';
 import {normalizeWorldVisibilityFrame,makeWorldFogMask}
@@ -264,11 +265,17 @@ export function createWorldRenderer({
   }
   if(authorized){
    const advanced=observer.tick(now);
-   for(const p of advanced)dirtySprites.add(key(p));
-   for(const id of dirtySprites)paintSprite(id);
+    for(const p of advanced)dirtySprites.add(key(p));
+    if(local?.route?.pendingCount&&!local.predicted&&!local.handoff){
+     const pos=local.route.tick(now);
+     if(pos){local.display=pos;
+      for(const id of local.anchors.keys())dirtySprites.add(id)}
+    }
+    for(const id of dirtySprites)paintSprite(id);
    dirtySprites.clear();
   }else dirtySprites.clear();
-  return authorized&&observer.pendingCount>0;
+  return authorized&&(observer.pendingCount>0||
+    (local?.route?.pendingCount>0&&!local.predicted&&!local.handoff));
  }
  const scheduler=createWorldFrameScheduler({
   ...(requestFrame?{requestFrame}:{}),
@@ -532,7 +539,9 @@ export function createWorldRenderer({
     }
     local={gestureId:event.gestureId,origin:copyPoint(event.approved),
      approved:copyPoint(event.approved),display:copyPoint(event.approved),
-     predicted:false,handoff:false,anchors};
+     predicted:false,handoff:false,anchors,
+      route:createApprovedPathPresentation()};
+     local.route.reset(event.approved);
     for(const id of anchors.keys()){
      const node=sprites.get(id).node;
      node.style.outline='2px solid rgba(145,211,255,0.95)';
@@ -547,17 +556,40 @@ export function createWorldRenderer({
     if(event.predicted!==true||!validMotionPoint(event.presented))
      return false;
     local.display=copyPoint(event.presented);local.predicted=true;
-   }else if(event.type==='approved'||event.type==='blocked'){
-    if(!validMotionPoint(event.approved))return false;
-    local.approved=copyPoint(event.approved);
-    if(event.type==='blocked'||!local.predicted){
-     local.display=copyPoint(event.approved);local.predicted=false;
-    }else if(same(local.display,local.approved))local.predicted=false;
+     local.route.reset(event.presented);
+    }else if(event.type==='approved'||event.type==='blocked'){
+     if(!validMotionPoint(event.approved))return false;
+     const before=copyPoint(local.approved);
+     local.approved=copyPoint(event.approved);
+     if(event.type==='blocked'){
+      local.predicted=false;local.display=copyPoint(local.approved);
+      local.route.reset(local.approved);
+     }else if(local.predicted){
+      const dx=local.display.x-local.origin.x,dy=local.display.y-local.origin.y;
+      const distance=dx*dx+dy*dy;
+      const progress=(local.approved.x-local.origin.x)*dx+
+       (local.approved.y-local.origin.y)*dy;
+      if(distance<=1e-9||progress>=distance-1e-7){
+       local.predicted=false;local.display=copyPoint(local.approved);
+       local.route.reset(local.approved);
+      }
+     }else{
+      const accepted=event.accepted;
+      const valid=Array.isArray(accepted)&&event.from&&
+       same(event.from,before)&&
+       local.route.accept(before,accepted)&&
+       same(local.route.endpoint,local.approved);
+      if(!valid){
+       local.display=copyPoint(local.approved);
+       local.route.reset(local.approved);
+      }
+     }
    }else if(event.type==='committed'){
     if(!validMotionPoint(event.approved))return false;
     local.approved=copyPoint(event.approved);
     local.display=copyPoint(event.approved);
     local.predicted=false;local.handoff=true;
+     local.route.reset(local.approved);
     // Phase 9 MUST fetch an authorized canonical roster after commit.
     safe(onNeedResync,'canonical-commit');
    }else if(event.type==='cancelled'||event.type==='rejected'){
@@ -568,10 +600,13 @@ export function createWorldRenderer({
    }
    // sampled and released retain their last known-authorized presentation.
    for(const id of local?.anchors.keys()??[])dirtySprites.add(id);
-   scheduler.invalidate();return true;
-  },
-  /**
-   * Phase 9 supplies dimensions only from RLS-authorized token/tool rows
+   if(local?.route?.pendingCount&&!local.predicted&&!local.handoff)
+     scheduler.wake();
+    else scheduler.invalidate();
+    return true;
+   },
+   /**
+    * Phase 9 supplies dimensions only from RLS-authorized token/tool rows
    * AFTER Phase 7 grants the piece ID. Metadata never creates a sprite,
    * reveals fog, changes movement physics or remounts a token.
    */
