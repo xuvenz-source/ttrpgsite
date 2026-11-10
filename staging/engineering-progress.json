@@ -308,7 +308,53 @@
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/84"
     },
     "B10": {
-      "status": "NOT STARTED"
+      "status": "BLOCKED",
+      "stageArtifacts": "STAGED",
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "pullRequest": 85,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/85",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "stackedOnPullRequest": 84,
+      "stackedOnHead": "21de65468a013fed7bf59c7803a5089e9b2201b8",
+      "docs": "docs/architecture/world-v2-b10-integrated-release-qualification.md",
+      "machineGate": "staging/world-v2-b10-release-qualification.json",
+      "expectedFiles": [
+        ".github/workflows/codeql.yml",
+        ".github/workflows/verify-staged.yml",
+        ".github/workflows/world-v2-b10-integrated.yml",
+        "package.json",
+        "tests/world-v2-b10-postgres/integrated.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-release-qualification.test.mjs",
+        "docs/architecture/world-v2-b10-integrated-release-qualification.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO.",
+      "checks": {
+        "combinedSql": "PASS: all B03/B07/B08 candidate source-real hostile fixtures plus seven B10 integration assertions in disposable PG17, source run 42852430736",
+        "codeQL": "PASS at earlier B10 source SHA 46c5aa8df, run 42853736555; final exact-head scan pending",
+        "frontend": "previous source run 42853530344 passed; serial npm test candidate head pending",
+        "audit": "0 high vulnerabilities at previous passing standard CI; final exact-head pending",
+        "live": "READ-ONLY PostgreSQL catalog: 83 applied migrations, no B03/B07/B08 installed, B03 uncalled, private schema denied to browser",
+        "realQA": "NOT RUN: A06 authenticated multi-account 24-case matrix, browser p95 and image flash metrics"
+      },
+      "security": "No new direct browser RPC/private schema privileges; PostgreSQL cross-candidate RLS/ACL tests passed isolated. Unresolved branch PR71, masked Realtime budget recovery, and true multi-user LOS remain blockers.",
+      "knownGaps": [
+        "B03 candidate is not called by actual live forge_world_v2.advance_core_v2; separate reviewed integration or retirement decision required",
+        "B07/B08 terminal progress and priority hides lack a guaranteed immediate authorized delivery when all Realtime budget is saturated; no verified new resync trigger",
+        "A06/Gate A 24 real authenticated DM/Player1/Player2 campaign acceptance scenarios and browser p95/map flashing tests NOT RUN",
+        "PR #71 sight continuity and metadata refresh security/recovery amendments are DRAFT/BLOCKED; conflicts with stacked runtime unreviewed",
+        "Forward-only reviewed B03→B07→B08 production migration, failure recovery/rollback and exact combined main+SQL parity NOT PREPARED",
+        "Integrated free-tier Realtime fanout/RAM and real LOS, group 2x2 collision, door, map switch, preview/multi-tab QA unverified",
+        "No designer production release or campaign fixture permission"
+      ],
+      "gateA": "NOT PASSED",
+      "gateB": "NOT PASSED",
+      "noProductionChanges": true,
+      "next": "B10 remains BLOCKED; resolve release blockers and obtain explicit new instruction before continuing to C01 or attempting release"
     },
     "C01": {
       "status": "NOT STARTED"
@@ -841,6 +887,45 @@
       "next": "B10 only",
       "pullRequest": 84,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/84"
+    },
+    "B10": {
+      "step": "B10",
+      "date": "2026-11-11",
+      "status": "BLOCKED — stage integration completed, release NO-GO",
+      "branch": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "pullRequest": 85,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/85",
+      "parentPullRequest": 84,
+      "exactParentHead": "21de65468a013fed7bf59c7803a5089e9b2201b8",
+      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO.",
+      "expectedFiles": [
+        ".github/workflows/codeql.yml",
+        ".github/workflows/verify-staged.yml",
+        ".github/workflows/world-v2-b10-integrated.yml",
+        "package.json",
+        "tests/world-v2-b10-postgres/integrated.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-release-qualification.test.mjs",
+        "docs/architecture/world-v2-b10-integrated-release-qualification.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Combined isolated PG17 green #42852430736; security-extended CodeQL green #42853736555; direct read-only Supabase catalog verified absent candidates; final-head standard CI pending. 24 live Auth scenarios NOT RUN.",
+      "securityParity": "No new direct browser RPC/private schema privileges; PostgreSQL cross-candidate RLS/ACL tests passed isolated. Unresolved branch PR71, masked Realtime budget recovery, and true multi-user LOS remain blockers.",
+      "sqlDeployment": "NONE — no B03/B07/B08 source candidates applied and no production migration file or live feature flag",
+      "blockers": [
+        "B03 candidate is not called by actual live forge_world_v2.advance_core_v2; separate reviewed integration or retirement decision required",
+        "B07/B08 terminal progress and priority hides lack a guaranteed immediate authorized delivery when all Realtime budget is saturated; no verified new resync trigger",
+        "A06/Gate A 24 real authenticated DM/Player1/Player2 campaign acceptance scenarios and browser p95/map flashing tests NOT RUN",
+        "PR #71 sight continuity and metadata refresh security/recovery amendments are DRAFT/BLOCKED; conflicts with stacked runtime unreviewed",
+        "Forward-only reviewed B03→B07→B08 production migration, failure recovery/rollback and exact combined main+SQL parity NOT PREPARED",
+        "Integrated free-tier Realtime fanout/RAM and real LOS, group 2x2 collision, door, map switch, preview/multi-tab QA unverified",
+        "No designer production release or campaign fixture permission"
+      ],
+      "releaseDecision": "NO_GO",
+      "next": "B10 remediation with new designer instruction; gate B blocked; do not start C01 or production release automatically"
     }
   },
   "pendingWork": [
@@ -929,6 +1014,48 @@
       "status": "BLOCKED",
       "ownerStep": "B10",
       "notes": "B09 controlled unit tests show parity/guarding, but real DM/P1/P2 group, touch/pinch, keyboard on focus, player preview and collision/fog must be run and timed. A06/Gate A blocked. No live activation."
+    },
+    {
+      "id": "B10-B03-AUTHORITY-WIRING",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "B03 private validator absent from actual advance_core_v2; choose audited secure integration or remove redundant candidate and demonstrate equivalent path validation under test."
+    },
+    {
+      "id": "B10-OBSERVER-TERMINAL-RECOVERY",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "Under exhausted Realtime/hide budget and no actor retry, observers can stay stale; require safe authorization-triggered resync and adversarial multi-tab tests."
+    },
+    {
+      "id": "B10-PR71-RECONCILIATION",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "PR #71 still draft with outstanding viewer scope/lock deadline/metadata safety amendments. Analyze conflicts on WorldV2TabletopRuntime and WorldTrace before any combined merge."
+    },
+    {
+      "id": "B10-AUTHENTICATED-QA",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "A06 fixture must be populated with proper fog/collision/door, 2x2, held tool and hidden NPC under consent; run all 24 DM/P1/P2 scenarios with sanitized trace p50/p95."
+    },
+    {
+      "id": "B10-FORWARD-MIGRATION",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "Package valid forward-only B03/B07/B08 migration in safe order, verify installed function signatures/RLS/grants and recovery strategy; no SQL apply without release approval."
+    },
+    {
+      "id": "B10-FREE-TIER-SECURITY",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "Audit Realtime billed fanout and 67 project-wide executable SECURITY DEFINER advisor warnings individually; do not blindly revoke legitimate V2 RPCs."
     }
   ],
   "sourceOfTruthRules": [
@@ -1030,6 +1157,19 @@
         "A06/Gate A NOT PASSED, PR #71 still blocked, hidden-piece B07 hide-priority and no-trigger budget drain remain release blockers",
         "B08 source/CI stages don't prove real authenticated group/multi-tab fog/collision or browser presentation acceptance",
         "B09 only in separately requested microstep; final B10 release still requires explicit approval"
+      ]
+    },
+    {
+      "id": "B10-QUALIFICATION-DESPITE-GATE-A-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer said 'Proceed' directly after verified B09 handoff, authorizing B10 staging/qualification only",
+      "appliesTo": "B10 GitHub stage PR #85, disposable CI and read-only database catalog check",
+      "rationale": "Expose integration and free-tier safety blockers without editing live maps, installing SQL, merging PRs or claiming actual performance improvement",
+      "constraints": [
+        "Gate A/A06 and Gate B remain not passed",
+        "No preview/Vercel deployment or live database migration",
+        "No change to PR #71, production repo main or feature env vars",
+        "Do not start C01 or call B10 release-ready without new explicit designer decision"
       ]
     }
   ]
