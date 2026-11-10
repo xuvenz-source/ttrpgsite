@@ -79,6 +79,26 @@ CREATE TABLE forge_world_v2.motion_sessions (
 ALTER TABLE forge_world_v2.motion_sessions ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON forge_world_v2.motion_sessions FROM PUBLIC,anon,authenticated;
 
+-- The authentic public.begin_world_motion_v2 uses this rate-limit table.
+CREATE TABLE forge_world_v2.gesture_budgets(
+ actor_id uuid NOT NULL,map_id uuid NOT NULL,
+ window_started timestamptz NOT NULL,starts integer NOT NULL DEFAULT 0,
+ PRIMARY KEY(actor_id,map_id)
+);
+ALTER TABLE forge_world_v2.gesture_budgets ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON forge_world_v2.gesture_budgets FROM PUBLIC,anon,authenticated;
+
+-- B04 TEST-ONLY publisher sink. The wrapper source is unmodified, but
+-- the *real* recipient-LOS broadcaster is deliberately not invoked here:
+-- full player-visible privacy must still be tested in integrated B10.
+CREATE TABLE forge_world_v2.b04_private_broadcasts(
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ session_id uuid NOT NULL,actor_id uuid NOT NULL,payload jsonb NOT NULL
+);
+ALTER TABLE forge_world_v2.b04_private_broadcasts ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON forge_world_v2.b04_private_broadcasts
+ FROM PUBLIC,anon,authenticated;
+
 CREATE OR REPLACE FUNCTION public.is_campaign_dm(p_campaign uuid)
 RETURNS boolean LANGUAGE sql STABLE SET search_path='' AS $$
  SELECT EXISTS (
