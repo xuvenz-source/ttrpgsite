@@ -16,6 +16,7 @@ export function createWorldKeyboardStepper({
   idleMs<0||idleMs>1000||!Number.isSafeInteger(maxQueued)||
   maxQueued<1||maxQueued>64)throw Error('Invalid V2 keyboard stepper');
  let cursor=null,timer=null,finishing=null,finishingRuntime=null,disposed=false;
+ let gesturePick=null,resumePick=null;
  const queued=[];
  const clearIdle=()=>{
   if(timer!==null)clearTimer(timer);
@@ -35,7 +36,8 @@ export function createWorldKeyboardStepper({
   if(!cursor){
    if(runtime.movement.active)return false;
    onFocus();
-   const picked=makePick(runtime);
+   const picked=resumePick||makePick(runtime);
+   resumePick=null;
    const scene=runtime.sceneManager.displayedScene,frame=runtime.visibility.frame;
    if(!picked?.origin||!scene||!frame)return false;
    if(!runtime.movement.beginGesture({
@@ -44,6 +46,8 @@ export function createWorldKeyboardStepper({
     permissionGeneration:frame.permissionGeneration
    }))return false;
    cursor={...picked.origin};
+   gesturePick={mapId:picked.mapId,mode:picked.mode,
+    selection:picked.selection?.map(p=>({kind:p.kind,id:p.id}))};
   }
   const to={x:cursor.x+dx,y:cursor.y+dy};
   if(!runtime.movement.updateGesture(to)){cursor=null;return false}
@@ -53,6 +57,7 @@ export function createWorldKeyboardStepper({
   clearIdle();
   if(disposed||!cursor)return;
   cursor=null;
+  const previousPick=gesturePick;gesturePick=null;resumePick=null;
   const runtime=getRuntime();
   if(!runtime?.active)return;
   const task=Promise.resolve(runtime.movement.endGesture()).catch(()=>null);
@@ -69,9 +74,25 @@ export function createWorldKeyboardStepper({
     try{ready=await runtime.refreshVisibility?.('keyboard-continuation')===true}
     catch{}
     if(disposed||finishing!==task)return;
-    if(!ready||getRuntime()!==runtime||!runtime.active){
+    // A successful refresh may still be an older signed cursor. Validate
+    // the next canonical actor anchor AND the same group before replaying.
+    onFocus();
+    const pick=ready&&getRuntime()===runtime&&runtime.active?
+     makePick(runtime):null;
+    const endpoint=result.endpoint;
+    const sameGroup=Array.isArray(previousPick?.selection)&&
+     Array.isArray(pick?.selection)&&
+     previousPick.selection.length===pick.selection.length&&
+     previousPick.selection.every((p,i)=>p.kind===pick.selection[i]?.kind&&
+      p.id===pick.selection[i]?.id);
+    if(!ready||!pick?.origin||!Number.isSafeInteger(endpoint?.x)||
+     !Number.isSafeInteger(endpoint?.y)||
+     pick.origin.x!==endpoint.x||pick.origin.y!==endpoint.y||
+     pick.mapId!==previousPick?.mapId||pick.mode!==previousPick.mode||
+     !sameGroup||getRuntime()!==runtime||!runtime.active){
      queued.length=0;finishing=null;finishingRuntime=null;return;
     }
+    resumePick=pick;
    }
    finishing=null;finishingRuntime=null;
    const pending=queued.splice(0);
@@ -92,7 +113,7 @@ export function createWorldKeyboardStepper({
   },
   dispose(){
    disposed=true;clearIdle();queued.length=0;
-   finishingRuntime=null;
+   finishingRuntime=null;gesturePick=null;resumePick=null;
    if(cursor)getRuntime()?.movement.cancelGesture('keyboard-unmount');
    cursor=null;
   },
