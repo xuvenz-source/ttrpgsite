@@ -503,7 +503,7 @@
         "staging/next-release-ledger.json"
       ],
       "scope": "Postcommit private observer queue retirement for B07/B08: bounded source-real in-commit terminal flush, then discard all remaining stale coordinate frames; retain only certified private hide frames for exact replay, no new public RPC, table, Realtime topic or paid worker.",
-      "automatedEvidence": "Source-real isolated PG17 #42867963625 succeeded 14 R03 assertions and historical B04/B07/B08/R01 hostile tests; pending exact-head CI after source and ledgers.",
+      "automatedEvidence": "Source-real isolated PG17 #42867963625 succeeded 16 R03 assertions, including real send-failure and ACK-retry and historical B04/B07/B08/R01 hostile tests; pending exact-head CI after source and ledgers.",
       "security": "Authenticated actor-locked private SECURITY INVOKER, no browser grants; certified hide-only survivor rechecked by B07 viewer on map/permission/LOS and budget. R02 signed sight must be enabled in matching release, not here.",
       "knownGaps": [
         "Default-OFF B10-R02 signed sight catch-up MUST be co-enabled with R03 if authorized; retiring terminal paths alone strands quiet observers on saturated Realtime.",
@@ -1119,7 +1119,7 @@
         "staging/next-release-ledger.json"
       ],
       "scope": "Postcommit private observer queue retirement for B07/B08: bounded source-real in-commit terminal flush, then discard all remaining stale coordinate frames; retain only certified private hide frames for exact replay, no new public RPC, table, Realtime topic or paid worker.",
-      "verification": "Source-real isolated PG17 #42867963625 succeeded 14 R03 assertions and historical B04/B07/B08/R01 hostile tests; pending exact-head CI after source and ledgers.",
+      "verification": "Source-real isolated PG17 #42867963625 succeeded 16 R03 assertions, including real send-failure and ACK-retry and historical B04/B07/B08/R01 hostile tests; pending exact-head CI after source and ledgers.",
       "security": "Authenticated actor-locked private SECURITY INVOKER, no browser grants; certified hide-only survivor rechecked by B07 viewer on map/permission/LOS and budget. R02 signed sight must be enabled in matching release, not here.",
       "blockers": [
         "Default-OFF B10-R02 signed sight catch-up MUST be co-enabled with R03 if authorized; retiring terminal paths alone strands quiet observers on saturated Realtime.",
