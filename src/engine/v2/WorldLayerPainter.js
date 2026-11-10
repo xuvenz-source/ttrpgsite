@@ -71,7 +71,7 @@ function drawFogCell(ctx,mask,w,h,x,y,cellPixels,feather){
  */
 export function paintWorldFogLayer({
  canvas,frame,mask,previousMask=null,forceFull=false,
- pixelsPerCell=8,feather=true,widthPx,heightPx
+  dirty=null,pixelsPerCell=8,feather=true,widthPx,heightPx
 }={}){
  if(!canvas||!integer(pixelsPerCell,2,16)||
   !finite(widthPx)||!finite(heightPx)||widthPx<=0||heightPx<=0)
@@ -108,14 +108,22 @@ export function paintWorldFogLayer({
  if(canvas.style)canvas.style.backgroundColor='transparent';
  const full=forceFull||resized||!previousMask||
   previousMask.length!==mask.length;
- const dirty=full?{full:true,rects:[{x:0,y:0,width,height}]}:
-  diffWorldFogMasks(previousMask,mask,width,height);
- if(!full&&!dirty.rects.length)
-  return {ok:true,cells:0,full:false,resized};
- const indices=new Set();
- for(const rect of dirty.rects){
-  if(!rect||![rect.x,rect.y,rect.width,rect.height].every(Number.isSafeInteger))
-   return paintWorldFogLayer({canvas,frame:null,mask:null,widthPx,heightPx});
+ const changed=full?{full:true,rects:[{x:0,y:0,width,height}]}:
+   dirty??diffWorldFogMasks(previousMask,mask,width,height);
+  // Only the trusted renderer passes precomputed dirty metadata.
+  // Malformed rectangles repaint the current verified mask fully,
+  // instead of leaving old authorized bright pixels exposed.
+  const validDirty=changed&&Array.isArray(changed.rects)&&
+   typeof changed.full==='boolean'&&changed.rects.length<=256&&
+   changed.rects.every(rect=>rect&&
+    [rect.x,rect.y,rect.width,rect.height].every(Number.isSafeInteger)&&
+    rect.x>=0&&rect.y>=0&&rect.width>=1&&rect.height>=1&&
+    rect.x+rect.width<=width&&rect.y+rect.height<=height);
+  const regions=validDirty?changed.rects:[{x:0,y:0,width,height}];
+  if(!full&&validDirty&&!regions.length)
+   return {ok:true,cells:0,full:false,resized};
+  const indices=new Set();
+  for(const rect of regions){
   // Feather edge changes when a neighbour's visibility changes. Redraw
   // those visible cells as well, but NEVER expand authorization.
   for(let y=Math.max(0,rect.y-1);y<Math.min(height,rect.y+rect.height+1);y++)
@@ -126,7 +134,7 @@ export function paintWorldFogLayer({
   const x=idx%width,y=Math.floor(idx/width);
   drawFogCell(ctx,mask,width,height,x,y,pixelsPerCell,feather);
  }
- return {ok:true,cells:indices.size,full,resized};
+ return {ok:true,cells:indices.size,full:full||!validDirty,resized};
 }
 
 /**

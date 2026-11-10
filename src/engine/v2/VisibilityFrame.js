@@ -145,36 +145,40 @@ export function makeWorldFogMask(frame){
  for(const cell of frame.visible)mask[cell]=2;
  return mask;
 }
-/** Bounded dirty rectangles; no canvas replacement for unchanged masks.
- * At most 128 row runs before falling back to the affected bounding box.
+/** Dirty rectangles: fragmented large diffs are bounded into 8x8 tiles
+ * rather than expanding to a large, unrelated bounding rectangle.
  */
 export function diffWorldFogMasks(before,after,width,height){
  if(!after||!validInt(width,1,128)||!validInt(height,1,128)||
   after.length!==width*height)return {full:true,rects:[]};
  if(!before||before.length!==after.length)
   return {full:true,rects:[{x:0,y:0,width,height}]};
- const rects=[];let first=width*height,last=-1;let minX=width,maxX=-1;
+ const rects=[];
  for(let y=0;y<height;y++){
   let start=-1;
   for(let x=0;x<=width;x++){
    const changed=x<width&&before[y*width+x]!==after[y*width+x];
-   if(changed){
-    const idx=y*width+x;
-    first=Math.min(first,idx);last=Math.max(last,idx);
-    minX=Math.min(minX,x);maxX=Math.max(maxX,x);
-    if(start<0)start=x;
-   }else if(start>=0){
+   if(changed){if(start<0)start=x}
+   else if(start>=0){
     rects.push({x:start,y,width:x-start,height:1});
     start=-1;
    }
   }
  }
- if(!rects.length)return {full:false,rects:[]};
- if(rects.length>128){
-  return {full:false,rects:[{x:minX,y:Math.floor(first/width),
-   width:maxX-minX+1,height:Math.floor(last/width)-Math.floor(first/width)+1}]};
+ if(rects.length<=128)return {full:false,rects};
+ // A bounding box of highly fragmented differences can cover the entire
+ // dungeon despite only a few cells changing. Paint bounded 8x8 tiles
+ // instead: max 256 tiles for the 128x128 authorized fog limit.
+ const across=Math.ceil(width/8),tiles=new Set();
+ for(let i=0;i<after.length;i++){
+  if(before[i]===after[i])continue;
+  const x=i%width,y=Math.floor(i/width);
+  tiles.add(Math.floor(y/8)*across+Math.floor(x/8));
  }
- return {full:false,rects};
+ return {full:false,rects:[...tiles].map(tile=>{
+  const x=(tile%across)*8,y=Math.floor(tile/across)*8;
+  return {x,y,width:Math.min(8,width-x),height:Math.min(8,height-y)};
+ })};
 }
 /**
  * Presentation-only soft edge weights for the Phase 8 renderer.
@@ -191,6 +195,24 @@ export function fogEdgeWeight(mask,width,height,x,y){
    mask[yy*width+xx]===2)covered++;
  }
  return covered/9;
+}
+/** Cursor-only and roster-only updates may retain the same fog raster.
+ * Identity is valid only under the SAME server-certified authority.
+ */
+export function sameWorldFogCells(before,after){
+ if(!before||!after||before.mapId!==after.mapId||
+  before.viewerId!==after.viewerId||before.scope!==after.scope||
+  before.environmentRevision!==after.environmentRevision||
+  before.sceneGeneration!==after.sceneGeneration||
+  before.permissionGeneration!==after.permissionGeneration||
+  before.enabled!==after.enabled||
+  before.width!==after.width||before.height!==after.height)
+  return false;
+ if(!after.enabled)return true;
+ return before.visible.length===after.visible.length&&
+  before.explored.length===after.explored.length&&
+  before.visible.every((value,i)=>value===after.visible[i])&&
+  before.explored.every((value,i)=>value===after.explored[i]);
 }
 export function diffWorldVisiblePieces(before=[],after=[]){
  const old=new Map(before.map(p=>[pieceKey(p),p]));

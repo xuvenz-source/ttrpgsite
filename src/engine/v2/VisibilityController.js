@@ -9,7 +9,7 @@
 import {worldV2Trace} from './WorldTrace.js';
 import {
   normalizeWorldVisibilityFrame,makeWorldFogMask,
- diffWorldFogMasks,diffWorldVisiblePieces
+ diffWorldFogMasks,diffWorldVisiblePieces,sameWorldFogCells
 } from './VisibilityFrame.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -69,8 +69,12 @@ export function createVisibilityController({
    next.environmentRevision<current.environmentRevision||
    next.permissionGeneration<current.permissionGeneration
   ))throw Error('Stale V2 authorized sight');
-  const nextMask=makeWorldFogMask(next);
-  const changes=diffWorldFogMasks(mask,nextMask,next.width,next.height);
+  const nextMask=sameWorldFogCells(current,next)?mask:makeWorldFogMask(next);
+   // A fog-disabled large map has no raster. A new cursor is not a
+   // reason to report a full blackout/redraw every movement packet.
+   const changes=!next.enabled?
+    {full:!current||current.enabled!==next.enabled,rects:[]}:
+    diffWorldFogMasks(mask,nextMask,next.width,next.height);
   const pieces=diffWorldVisiblePieces(current?.visiblePieces,next.visiblePieces);
   const shouldUpdateFog=changes.full||changes.rects.length>0;
   const shouldUpdateRoster=pieces.added.length||pieces.removed.length||
