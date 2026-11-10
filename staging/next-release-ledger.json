@@ -247,7 +247,7 @@
       "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
       "status": "staged",
       "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-      "note": "Phase 1 only: bounded opt-in V2 input/RPC/observer/visibility/fog/sprite/terrain instrumentation, test and capture protocol. No movement policy, SQL or deployment change; authenticated trace/reproduction pending.",
+      "note": "Phases 1 and 2 integrated staging: opt-in bounded tracing; safe same-authority stale sight/cursor reconciliation preserving server-authorized fog, sprite nodes and terrain. Hard permission/scope/scene revocations remain fail-closed. New 100-frame and security regression tests. No SQL/Realtime/deployment. Authenticated browser gate pending.",
       "linkedPullRequest": 68
     }
   ],
@@ -1008,7 +1008,7 @@
     "outstandingBranches": [
       "stage/world-v2-phase1-instrumentation-2026-11-10"
     ],
-    "stagePolicy": "Phase 1 diagnostic instrumentation only. Do not deploy until separately authorized. Require CI, then authenticated DM/player/preview and observer trace captures to identify the exact flash/drag failure trigger before Phase 2.",
+    "stagePolicy": "Integrate Phases 1-2 in one staged update, no deployment. Require frontend/build, CodeQL and isolated SQL checks; authenticated player/DM browser movement and observer traces before asserting live no-flash gate.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },

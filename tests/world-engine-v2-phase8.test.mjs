@@ -304,7 +304,9 @@ test('hide immediately removes known sprite and old cursor cannot revive it',()=
  assert.equal(original.parentNode,null);
  assert.equal(ctx.renderer.adoptVisibility(sight({
   cursor:5,visiblePieces:[hero]})),false);
- assert.equal(ctx.renderer.authorized,false);
+ assert.equal(ctx.renderer.authorized,true,
+  'same-authority stale sight does not undo an authorized hide');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),null);
  assert.equal(ctx.renderer.adoptVisibility(sight({
   cursor:6,visionEpoch:7,visiblePieces:[]})),true);
  assert.equal(ctx.renderer.stats.sprites,0);ctx.renderer.dispose();
@@ -664,5 +666,53 @@ test('unconfigured fogless maps boot renderer with server-authorized roster, not
   published:false,collisionEnabled:true,fogEnabled:false,
   environment:null
  })),false,'unpublished collision-protected map must remain blocked');
+ ctx.renderer.dispose();
+});
+
+test('100 late same-authority sight frames never blacken or remount',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ const before=ctx.renderer.stats,oldFog=ctx.surfaces.fogCanvas.style.backgroundColor;
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ for(let i=0;i<100;i++){
+  const cursor=6+i;
+  assert.equal(ctx.renderer.adoptVisibility(sight({
+   cursor,visionEpoch:7+i,visiblePieces:[hero]
+  })),true);
+  assert.equal(ctx.renderer.adoptVisibility(sight({
+   cursor:cursor-1,visionEpoch:7+i,visiblePieces:[hero,ally]
+  })),false);
+  assert.equal(ctx.renderer.authorized,true);
+  assert.equal(ctx.renderer.getSpriteElement('token',ally.id),null);
+ }
+ ctx.clock.flush(1001);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.stats.spriteCreates,1);
+ assert.equal(ctx.renderer.stats.spriteRemoves,0);
+ assert.equal(ctx.renderer.stats.staticDraws,before.staticDraws);
+ assert.equal(ctx.renderer.stats.fogDraws,before.fogDraws);
+ assert.equal(ctx.renderer.stats.fullFogDraws,before.fullFogDraws);
+ assert.equal(ctx.renderer.stats.terrainAssignments,1);
+ assert.equal(ctx.surfaces.fogCanvas.style.backgroundColor,oldFog);
+ ctx.renderer.dispose();
+});
+test('late sight after private motion retains authorized sprite and fog',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ const before=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2]]),{
+  mapId,seq:6}),true);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:5,visionEpoch:7,visiblePieces:[hero,ally]
+ })),false);
+ assert.equal(ctx.renderer.lastSightRejection,'observer-cursor-regression');
+ assert.equal(ctx.renderer.authorized,true);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.getSpriteElement('token',ally.id),null);
+ assert.equal(ctx.renderer.stats.spriteRemoves,before.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,before.fullFogDraws);
+ assert.equal(ctx.renderer.stats.staticDraws,before.staticDraws);
+ assert.equal(ctx.renderer.stats.terrainAssignments,1);
  ctx.renderer.dispose();
 });

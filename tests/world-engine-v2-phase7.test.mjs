@@ -315,3 +315,65 @@ test('overlapping sight refresh waits for queued authorized result, not null',as
  assert.equal(count,2);
  ctl.dispose();
 });
+
+test('late same-authority sight keeps last authorized fog and roster',async()=>{
+ const {db,put}=fakeDb(),revoke=[],errors=[],rosters=[];
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onRevoke:r=>revoke.push(r.reason),onError:e=>errors.push(e),
+  onRoster:diff=>rosters.push(diff)
+ });
+ try{
+  assert.equal((await ctl.refresh()).cursor,5);
+  put(frame({cursor:8,visionEpoch:10,visiblePieces:[hero]}));
+  assert.equal((await ctl.refresh()).cursor,8);
+  const stable=ctl.frame,mask=ctl.mask;
+  put(frame({cursor:6,visionEpoch:8,visiblePieces:[hero,torch]}));
+  assert.equal(await ctl.refresh(),null);
+  assert.equal(ctl.frame,stable);assert.equal(ctl.mask,mask);
+  assert.equal(ctl.authorized,true);
+  assert.equal(ctl.visiblePieces.length,1);
+  assert.equal(rosters.length,2);
+  assert.deepEqual(revoke,[]);assert.deepEqual(errors,[]);
+ }finally{ctl.dispose()}
+});
+test('older dirty notice cannot revoke new sight; future permission still does',async()=>{
+ const {db,put}=fakeDb(),revoke=[];
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onRevoke:r=>revoke.push(r.reason)
+ });
+ try{
+  await ctl.refresh();
+  put(frame({cursor:9,visionEpoch:10,permissionGeneration:5}));
+  assert.equal(ctl.onVisionDirty({version:2,mapId,viewerId,
+   visionEpoch:10,environmentRevision:9,
+   permissionGeneration:5,sceneGeneration:6}),true);
+  await tick();await tick();
+  assert.equal(ctl.frame.permissionGeneration,5);
+  assert.equal(ctl.onVisionDirty({version:2,mapId,viewerId,
+   visionEpoch:8,environmentRevision:9,
+   permissionGeneration:4,sceneGeneration:6}),false);
+  assert.equal(ctl.authorized,true);
+  assert.equal(revoke.filter(r=>r==='vision-version-change').length,1);
+  assert.equal(ctl.onVisionDirty({version:2,mapId,viewerId,
+   visionEpoch:11,environmentRevision:9,
+   permissionGeneration:6,sceneGeneration:6}),true);
+  assert.equal(ctl.authorized,false);
+ }finally{ctl.dispose()}
+});
+test('renderer stale sentinel rolls back provisional controller state',async()=>{
+ const {db,put}=fakeDb(),revoke=[],errors=[];
+ let calls=0;
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onSnapshot:()=>++calls===1?true:'stale',
+  onRevoke:r=>revoke.push(r.reason),onError:error=>errors.push(error)
+ });
+ try{
+  await ctl.refresh();
+  const prior=ctl.frame,mask=ctl.mask;
+  put(frame({cursor:6,visionEpoch:8,visiblePieces:[]}));
+  assert.equal(await ctl.refresh(),null);
+  assert.equal(ctl.frame,prior);assert.equal(ctl.mask,mask);
+  assert.equal(ctl.authorized,true);
+  assert.deepEqual(revoke,[]);assert.deepEqual(errors,[]);
+ }finally{ctl.dispose()}
+});
