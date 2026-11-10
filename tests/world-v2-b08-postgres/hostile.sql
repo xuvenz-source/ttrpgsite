@@ -10,7 +10,7 @@ DECLARE
  token uuid:='00000000-0000-4000-8000-000000000101';
  sid uuid;sid2 uuid;sid3 uuid;
  ack jsonb;duplicate jsonb;body jsonb;long_route jsonb;
- count_before integer;cursor_before bigint;j integer;
+ count_before integer;cursor_before bigint;j integer;hide_sent integer;
  session_row forge_world_v2.motion_sessions%ROWTYPE;
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
@@ -168,8 +168,16 @@ BEGIN
  UPDATE forge_world_v2.observer_budget_b07
  SET emitted=0,window_started=clock_timestamp()-interval '2 seconds'
  WHERE id=1;
+ hide_sent:=forge_world_v2.flush_recipient_observer_b07(session_row,player);
+ RAISE NOTICE 'B08 hide diagnostic sent %, cursor now %, was %, last %',
+  hide_sent,
+  (SELECT seq FROM forge_world_v2.viewer_streams
+   WHERE map_id=map_uuid AND viewer_id=player),
+  cursor_before,
+  (SELECT message->'items' FROM realtime.b07_outbox
+   WHERE (message->>'viewerId')=player::text ORDER BY id DESC LIMIT 1);
  PERFORM public.b08_assert(
-  forge_world_v2.flush_recipient_observer_b07(session_row,player)=1 AND
+  hide_sent=1 AND
   (SELECT message->'items'->0->>'action'='hide' AND
    NOT (message->'items'->0 ? 'path') FROM realtime.b07_outbox
    WHERE (message->>'viewerId')=player::text
