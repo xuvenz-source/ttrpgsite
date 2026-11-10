@@ -6,6 +6,7 @@ on:
       - main
       - stage/complete-predictive-navigation-and-fog-2026-11-09
       - stage/unified-realtime-movement-2026-11-09
+      - 'stage/world-v2-b10-*'
   pull_request:
     branches:
       - main
