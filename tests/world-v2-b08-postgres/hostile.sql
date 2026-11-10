@@ -6,7 +6,7 @@ DECLARE
  actor uuid:='00000000-0000-4000-8000-000000000011';
  player uuid:='00000000-0000-4000-8000-000000000012';
  dm uuid:='00000000-0000-4000-8000-000000000013';
- map_id uuid:='00000000-0000-4000-8000-000000000021';
+ map_uuid uuid:='00000000-0000-4000-8000-000000000021';
  token uuid:='00000000-0000-4000-8000-000000000101';
  sid uuid;sid2 uuid;
  ack jsonb;duplicate jsonb;body jsonb;
@@ -14,7 +14,7 @@ DECLARE
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  -- Real server Begin, source-real validated Advance and B08 Commit.
- body:=public.begin_world_motion_v2(map_id,
+ body:=public.begin_world_motion_v2(map_uuid,
   jsonb_build_array(jsonb_build_object('kind','token','id',token)),
   '{"x":1,"y":1}'::jsonb,'drag',1,1,false);
  PERFORM public.b08_assert(body ? 'sessionId','P01 actor-owned real Begin');
@@ -72,7 +72,7 @@ BEGIN
    '[{"x":4,"y":1}]'::jsonb,1,1) IS NULL,
   'H04 committed session cannot accept another Advance');
  -- Simulate all Realtime movement budget consumed: commit remains canonical.
- body:=public.begin_world_motion_v2(map_id,
+ body:=public.begin_world_motion_v2(map_uuid,
   jsonb_build_array(jsonb_build_object('kind','token','id',token)),
   '{"x":3,"y":1}'::jsonb,'drag',1,1,false);
  sid2:=(body->>'sessionId')::uuid;
@@ -84,7 +84,7 @@ BEGIN
   (SELECT count(*)=2 FROM forge_world_v2.observer_pending_b07 WHERE session_id=sid2),
   'P08 capped Realtime budget preserves full approved pending queues');
  cursor_before:=(SELECT seq FROM forge_world_v2.viewer_streams
-  WHERE map_id=map_id AND viewer_id=player);
+  WHERE map_id=map_uuid AND viewer_id=player);
  ack:=public.commit_world_motion_v2(sid2,2,'{"x":4,"y":1}'::jsonb,1,1);
  PERFORM public.b08_assert(
   ack->'endpoint'='{"x":4,"y":1}'::jsonb AND
@@ -98,10 +98,10 @@ BEGIN
  PERFORM public.b08_assert(duplicate=ack AND
   (SELECT count(*)=0 FROM forge_world_v2.observer_pending_b07 WHERE session_id=sid2) AND
   (SELECT seq=cursor_before+1 FROM forge_world_v2.viewer_streams
-    WHERE map_id=map_id AND viewer_id=player),
+    WHERE map_id=map_uuid AND viewer_id=player),
   'P10 exact replay resumes deferred private drain, no canonical double-write');
  -- A recipient loses current map access; stale queued path must NOT publish.
- body:=public.begin_world_motion_v2(map_id,
+ body:=public.begin_world_motion_v2(map_uuid,
   jsonb_build_array(jsonb_build_object('kind','token','id',token)),
   '{"x":4,"y":1}'::jsonb,'drag',1,1,false);
  sid2:=(body->>'sessionId')::uuid;
