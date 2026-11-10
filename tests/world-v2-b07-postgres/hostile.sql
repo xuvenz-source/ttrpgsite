@@ -13,7 +13,7 @@ DECLARE
  session_uuid uuid;second_uuid uuid;hidden_uuid uuid;
  body jsonb;next_body jsonb;merged jsonb;response jsonb;
  overflow_path jsonb;overflow_item jsonb;
- old_cursor bigint;old_sent integer;rows_count integer;j integer;
+ old_cursor bigint;old_sent integer;rows_count integer;j integer;terminal_sent integer;
  s forge_world_v2.motion_sessions%ROWTYPE;
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
@@ -203,8 +203,15 @@ BEGIN
   FROM forge_world_v2.observer_pending_b07 WHERE session_id=session_uuid);
  RAISE NOTICE 'B07 terminal outbox before: %, budget: %',
   old_sent,(SELECT emitted FROM forge_world_v2.observer_budget_b07 WHERE id=1);
+ terminal_sent:=forge_world_v2.flush_session_observers_b07(session_uuid);
+ RAISE NOTICE 'B07 terminal sent %, outbox count %, queue %',
+  terminal_sent,(SELECT count(*) FROM realtime.b07_outbox),
+  (SELECT jsonb_agg(jsonb_build_object('viewer',viewer_id,
+   'pending',pending,'deferred',deferred))
+   FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=session_uuid);
  PERFORM public.b07_assert(
-  forge_world_v2.flush_session_observers_b07(session_uuid)=1 AND
+  terminal_sent=1 AND
   (SELECT count(*)=old_sent+1 FROM realtime.b07_outbox),
   'P14 terminal flush drains only genuinely pending authorized recipients');
  PERFORM set_config('request.jwt.claim.sub',player::text,true);
