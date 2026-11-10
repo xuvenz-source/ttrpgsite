@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B02",
+  "nextStep": "B03",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -113,7 +113,21 @@
       "pullRequest": 76
     },
     "B02": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-transport-decision-b02-2026-11-10",
+      "basedOnStagingHead": "f84743986a380e2d6ec5bfda8deea697d7f0e3e1",
+      "designDocument": "docs/architecture/world-v2-transport-evaluation-b02.md",
+      "decision": "SELECT EXISTING SUPABASE RPC WITH ORDERED COALESCING; DEFER DEDICATED EDGE WEBSOCKET",
+      "designOnly": true,
+      "modeledRttMs": [
+        0,
+        100,
+        200
+      ],
+      "scenario": "4 advances to 1 advance, historical SQL means; not measured p95",
+      "verification": "Current production V2 JS/SQL reviewed, project + 83 migrations and historical pg_stat_statements read-only verified, official Free quotas checked; live browser QA NOT RUN",
+      "gateA": "NOT PASSED",
+      "next": "B03 candidate requires Gate A or new documented, staging-only sequencing exception"
     },
     "B03": {
       "status": "NOT STARTED"
@@ -402,6 +416,29 @@
       "next": "B02 design/read-only only",
       "pullRequest": 76,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/76"
+    },
+    "B02": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "B02",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-transport-decision-b02-2026-11-10",
+      "stackedOnPullRequest": 76,
+      "scope": "Compare existing coalesced RPC vs Supabase Edge Function WebSocket authority, source-based tradeoffs, modeled 0/100/200 ms RTT and Realtime quotas, select RPC; documentation only",
+      "expectedFiles": [
+        "docs/architecture/world-v2-transport-evaluation-b02.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Source-checked current V2 authority, GesturePath and private observer SQL; Supabase ACTIVE_HEALTHY, 83 migrations, historical SQL means 24.30/53.20/135.74 ms with 2026-11-05 reset; official free limits; no live testing or prototype deployment.",
+      "securityParity": "Keep server auth.uid/RLS, swept collision, client safe grants and per-viewer private Realtime filtering; no runtime or security change.",
+      "sqlDeployment": "NONE; no live SQL writes, migrations or deployment",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED; real DM/P1/P2 p95 missing",
+        "PR #71 A02 security amendments pending",
+        "Dedicated transport latency gain unmeasured; B03 cannot proceed under current design-only exception without a separate boundary decision"
+      ],
+      "next": "B03 — staged SQL candidate ONLY after Gate A or a newly documented, narrow staging-only sequencing exception"
     }
   },
   "pendingWork": [
@@ -448,6 +485,13 @@
       "status": "BLOCKED",
       "ownerStep": "A06",
       "notes": "Live 24-case A04 browser QA cannot run with current tools, non-deployed A05 telemetry and incomplete protected map setup. Need explicit designer release/fixture approval and 3 authenticated independent sessions. No further work promised asynchronously."
+    },
+    {
+      "id": "B02-TRANSPORT-DECISION",
+      "category": "architecture",
+      "status": "STAGED",
+      "ownerStep": "B02",
+      "notes": "Select the existing Supabase RPC coalescing protocol, retain private server-authorized progress. No dedicated WebSocket service. Design/estimates only: A06 Gate A remains NOT PASSED."
     }
   ],
   "sourceOfTruthRules": [
