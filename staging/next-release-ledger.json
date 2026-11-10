@@ -460,6 +460,31 @@
         "initialFrontendTests": 816,
         "finalExactHeadStatus": "PENDING final after B09 canonical-anchor test refinement"
       }
+    },
+    {
+      "name": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "status": "staged",
+      "documentationOnly": false,
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "21de65468a013fed7bf59c7803a5089e9b2201b8",
+      "basePullRequest": 84,
+      "linkedPullRequest": 85,
+      "releaseReady": false,
+      "sqlApplied": false,
+      "productionDeployed": false,
+      "gateDecision": "NO_GO",
+      "featureFlagsActivated": false,
+      "docs": "docs/architecture/world-v2-b10-integrated-release-qualification.md",
+      "noDeployment": true,
+      "note": "B10 staging-only release-qualification gates: combined B03+B07+B08 source/hostile PostgreSQL tests, CodeQL, serialized npm test, 24 Auth scenario matrix, safe release ordering. B03 not wired, PR71 blocked, observer-budget recovery and Gate A/real browser data missing. No SQL migration applied. CI hardening: actual Chromium DOM harness may restart a nonresponsive headless launch once; no test skip or behavioral retry.",
+      "testEvidence": {
+        "combinedPG17Run": 42852430736,
+        "codeQLPreviousRun": 42853736555,
+        "frontendPreviousRun": 42853530344,
+        "finalExactPRHead": "PENDING after CI-hardening source update; no live deployment",
+        "liveAuthScenarioCount": 0,
+        "liveAuthScenarioRequired": 24
+      }
     }
   ],
   "features": [
@@ -992,6 +1017,18 @@
       "databaseDependencies": [],
       "verification": "Controlled automated tests and standard CI only; authenticated DM/player browser, mobile touch and fog/collision acceptance not run.",
       "nextAcceptanceStep": "B10"
+    },
+    {
+      "id": "world-v2-b10-integrated-qualification-no-go",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Nondeployable combined movement integration/security qualification artifact, full gate matrix and CodeQL/isolated PG17 tests; no-go by design until blockers are resolved.",
+      "sources": [
+        "stage/world-v2-b10-integrated-release-qualification-2026-11-11"
+      ],
+      "databaseDependencies": [],
+      "verification": "CI and read-only live catalog only; NOT live movement/LOS or security release acceptance. CodeQL pass is a scan execution, not zero findings.",
+      "nextAcceptanceStep": "B10 remediation and explicit release-approval request"
     }
   ],
   "databaseDependencies": [
@@ -1350,7 +1387,10 @@
     "A06: no role/permission/visibility regression was directly tested with authenticated players, and the current test map's fog/collision are disabled. Database historical execution figures cannot establish observer confidentiality or renderer flash root cause.",
     "B08: nonapplied Commit SQL preserves canonical write authority; no paid services or new public grants. Hide-priority under saturated B07 FIFO and no-trigger terminal drain remain release blockers; no real fog/Auth test.",
     "B08 B07-FIFO amendment: private hidden-piece queues preempt old unsent paths with a certified hide, preserving other-piece FIFO. Isolated SQL pass only; free-tier budget delay and real LOS revocation still B10 blockers.",
-    "B09 staged frontend only: mixed-group selection is fail-closed; keyboard continuation requires new authorized sight; second touch cancels drag; DM player preview stays nonpersistent. No live browser or Auth/LOS verification."
+    "B09 staged frontend only: mixed-group selection is fail-closed; keyboard continuation requires new authorized sight; second touch cancels drag; DM player preview stays nonpersistent. No live browser or Auth/LOS verification.",
+    "B10 NO-GO: live catalog confirms B03 validator not installed/wired, B07/B08 queues absent; public advance authenticated-only and private forge_world_v2 usage denied. Source-real PG17 coexistence is not a production migration.",
+    "B10: PR #71 unamended, budget exhaustion eventual private observer recovery unproven; CodeQL staging scan successful on earlier head, 24 authenticated DM/P1/P2 scenarios NOT RUN. No merge/deploy/SQL approval.",
+    "B10 CI: serial 823-test npm test suite and single startup-only Chrome CDP retry; a failed browser assertion remains failed. This is not live authenticated UX validation."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1368,6 +1408,7 @@
       "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
       "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
       "stage/world-v2-b09-input-parity-2026-11-11",
+      "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10"
     ],

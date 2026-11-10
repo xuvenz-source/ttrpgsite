@@ -29,6 +29,7 @@ jobs:
       - name: Catch undeclared variables in safety-critical interactive components
         run: npm run lint:critical
       - name: Run staged frontend unit tests
+        # npm test explicitly limits browser worker fanout on free CI runners.
         run: npm test
       - name: Audit production dependencies for high-severity issues
         run: npm audit --omit=dev --audit-level=high
