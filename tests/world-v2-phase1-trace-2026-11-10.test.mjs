@@ -50,3 +50,85 @@ test('snapshot is detached, and RPC error latency is tracked',()=>{
  assert.equal(t.snapshot().counts['visibility.rpc.error'],1);
  assert.equal(t.snapshot().durations['visibility.rpc'].p50Ms,15);
 });
+
+test('A05 records first visible position paint only after a motion actually paints',()=>{
+ let time=100;
+ const t=createWorldV2Trace({enabled:true,now:()=>time});
+ t.startMotion('local');
+ t.event('movement.grabbed','drag');
+ time=106;
+ // An initial sprite mount, selection highlight or an unrelated observer
+ // paint must not prematurely satisfy a local motion metric.
+ t.positionPaint('remote');
+ assert.equal(t.snapshot().durations['movement.local-first-position-paint'],undefined);
+ time=137;
+ t.positionPaint('local');
+ let snap=t.snapshot();
+ assert.equal(snap.durations['movement.local-first-position-paint'].samples,1);
+ assert.equal(snap.durations['movement.local-first-position-paint'].p50Ms,37);
+ assert.equal(snap.counts['renderer.position-local'],1);
+ time=200;
+ t.positionPaint('local');
+ snap=t.snapshot();
+ assert.equal(snap.durations['movement.local-first-position-paint'].samples,1);
+ t.startMotion('local');time=220;t.endMotion('local');time=260;
+ t.positionPaint('local');
+ assert.equal(t.snapshot().durations['movement.local-first-position-paint'].samples,1,
+  'cancelled gesture cannot be attributed to future unrelated movement');
+});
+test('A05 measures scoped remote path-to-position paint without exposing packet IDs',()=>{
+ let time=0;
+ const t=createWorldV2Trace({enabled:true,limit:16,now:()=>time});
+ const secret='d2fe006f-a627-4b27-b5c0-4ae462d531bd';
+ t.event('observer.sight-hold',secret);
+ t.event('renderer.observer-await-vision',secret);
+ for(let i=0;i<100;i++){
+  t.startMotion('remote');
+  time+=i%5+1;
+  t.positionPaint('remote');
+ }
+ const snap=t.snapshot();
+ assert.equal(snap.durations['movement.remote-first-position-paint'].samples,16);
+ assert.equal(snap.counts['renderer.position-remote'],100);
+ assert.equal(snap.counts['observer.sight-hold'],1);
+ assert.equal(snap.counts['renderer.observer-await-vision'],1);
+ assert.ok(snap.events.length<=16);
+ assert.ok(!JSON.stringify(snap).includes(secret));
+ assert.ok(snap.events.every(e=>e.detail===''||e.detail==='other'));
+});
+test('A05 distinguishes renderer work from frame spacing and skips background suspensions',()=>{
+ const t=createWorldV2Trace({enabled:true,now:()=>0});
+ const render=t.begin('render.frame');render('ok');
+ for(const frame of [100,116,148,227,5227,5243,5242,5259])
+  t.frameTick(frame);
+ const snap=t.snapshot();
+ assert.equal(snap.durations['render.frame'].samples,1);
+ assert.equal(snap.durations['render.frame-interval'].samples,5);
+ assert.equal(snap.durations['render.frame-interval'].p95Ms,79);
+ assert.equal(snap.counts['render.frame-gap'],1);
+ t.clear();
+ assert.equal(t.snapshot().durations['render.frame-interval'],undefined);
+ t.frameTick(999);
+ assert.equal(t.snapshot().durations['render.frame-interval'],undefined,
+  'clear resets the previous RAF timestamp');
+});
+test('A05 ignores disabled, malformed, and non-enumerated motion records',()=>{
+ let time=0;
+ const off=createWorldV2Trace({now:()=>time});
+ off.startMotion('local');off.frameTick(10);time=10;
+ off.positionPaint('local');
+ assert.deepEqual(off.snapshot().durations,{});
+ const t=createWorldV2Trace({enabled:true,limit:16,now:()=>time});
+ t.startMotion('secret token ID');
+ t.positionPaint('secret token ID');
+ t.frameTick(NaN);
+ t.frameTick(Infinity);
+ t.frameTick(-Infinity);
+ t.positionPaint('remote');
+ t.event('renderer.mount','private user data');
+ t.event('renderer.unmount','private map data');
+ assert.deepEqual(t.snapshot().durations,{});
+ assert.equal(t.snapshot().counts['renderer.mount'],1);
+ assert.equal(t.snapshot().counts['renderer.unmount'],1);
+ assert.ok(t.snapshot().events.every(e=>e.detail==='other'));
+});
