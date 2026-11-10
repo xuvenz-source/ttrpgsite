@@ -190,7 +190,8 @@
       "security": "Server-authorized accepted-prefix validation preserved, no speculative geometry, blocked route clears pending, hard local timeout, late responses ignored, DM preview local-only; no SQL/Realtime changes",
       "knownGap": "B04-H39 cached ACK on altered same-seq payload still a server-side security contract blocker for B08; A06/Gate A not passed",
       "gateA": "NOT PASSED",
-      "next": "B06 is next design/implementation step; requires another explicit staging-only exception or Gate A"
+      "next": "B06 is next design/implementation step; requires another explicit staging-only exception or Gate A",
+      "pullRequest": 80
     },
     "B06": {
       "status": "NOT STARTED"
@@ -589,7 +590,9 @@
         "B06 certified rendering and B07 observer budget not yet built",
         "Real 3-account DM/P1/P2 browser latency and flash measurements unavailable"
       ],
-      "next": "B06 ONLY (fresh sequencing authorization while Gate A blocked); separate review required before enabling flag or merging"
+      "next": "B06 ONLY (fresh sequencing authorization while Gate A blocked); separate review required before enabling flag or merging",
+      "pullRequest": 80,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/80"
     }
   },
   "pendingWork": [
