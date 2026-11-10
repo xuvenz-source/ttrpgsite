@@ -18,11 +18,15 @@ const second='40000000-0000-4000-8000-000000000002';
 const unavailable='40000000-0000-4000-8000-000000000003';
 
 test('DM preview offers only current-map visible actors owned by campaign players',()=>{
- const members=[{user_id:DM},{user_id:PLAYER},{user_id:OTHER}];
+ const members=[{user_id:DM,role:'dm'},{user_id:PLAYER,role:'player'},
+  {user_id:OTHER,role:'player'},
+  {user_id:'30000000-0000-4000-8000-000000000004',role:'dm'}];
  const tokens=[
   token('dm',DM),token('unassigned',null),token(actor,PLAYER),
   token('hidden',PLAYER,MAP,false),token('other-map',PLAYER,OTHER_MAP),
-  token(second,OTHER),token('outsider',unavailable)
+  token(second,OTHER),
+  token('co-dm','30000000-0000-4000-8000-000000000004'),
+  token('outsider',unavailable)
  ];
  const options=eligiblePlayerPreviewTokens({tokens,members,mapId:MAP,dmUserId:DM});
  assert.deepEqual(options.map(t=>t.id),[actor,second]);
@@ -32,6 +36,8 @@ test('DM preview offers only current-map visible actors owned by campaign player
  assert.equal(chosenPlayerPreviewTokenId([],second),'');
  assert.deepEqual(eligiblePlayerPreviewTokens({tokens,members:[],
   mapId:MAP,dmUserId:DM}),[]);
+ assert.deepEqual(eligiblePlayerPreviewTokens({tokens,
+  members:[{user_id:PLAYER,role:'dm'}],mapId:MAP,dmUserId:DM}),[]);
 });
 
 const manifest=(overrides={})=>({
