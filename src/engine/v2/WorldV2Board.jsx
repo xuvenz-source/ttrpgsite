@@ -26,7 +26,8 @@ import {TokenStatusBadges,normalizedEffects,statusTitle}
  * Props deliberately mirror BattlemapBoard so the app's sheet, DM editor,
  * tool distribution, map drop, handout and combat commands remain reachable.
  * No legacy MapFogOverlay/TokenMotionRuntime/ConcealedGestureBatch/MapCollision
- * is imported or mounted here. Active app routing remains OFF until Phase 10.
+ * is imported or mounted here. Routing uses the application's explicit
+ * two-flag V2 cutover and remains mutually exclusive with the legacy board.
  */
 // App keybindings route into V2 explicitly; never attach a second
 // hard-coded arrow handler that could race a custom shortcut.

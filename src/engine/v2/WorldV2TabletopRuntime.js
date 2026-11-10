@@ -5,9 +5,9 @@
  * for a mounted campaign map. It never imports/calls any legacy movement,
  * fog, navigation or broadcast implementations.
  *
- * IMPORTANT: Phase 9 is staged behind an OFF-by-default cutover. The Phase 4–7
- * migrations must be applied together, and Phase 10 must remove the active
- * legacy subscriptions before V2 is allowed to run in production.
+ * The application activates this runtime only through its two-flag V2
+ * cutover. Scene, sight and private observer streams stay independent of
+ * the still-available but never co-mounted legacy board fallback.
  */
 import {createMovementController} from './MovementController.js';
 import {createInputController} from './InputController.js';

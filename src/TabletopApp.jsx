@@ -88,8 +88,9 @@ import {AuthGate,CampaignHub} from './Welcome.jsx';
 
 
 /**
- * Phase 9: not enabled in any current deployment. Requires both explicit
- * release controls plus Phase 10 retirement and approved V2 SQL cutover.
+ * World Engine V2 is an explicit two-flag production cutover. Only one
+ * board component is loaded for a session; legacy movement observers
+ * remain guarded off when the V2 route is selected.
  */
 const WORLD_V2_CUTOVER=import.meta.env.VITE_WORLD_ENGINE_V2==='integrated'&&
  import.meta.env.VITE_WORLD_ENGINE_V2_READY==='true';
