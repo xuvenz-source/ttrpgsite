@@ -338,7 +338,8 @@
       "candidateSql": [
         "supabase/candidates/world_v2_b03_path_validation.sql"
       ],
-      "note": "B03 ONLY: private, nonapplied, no-public-EXECUTE swept path validator SQL under supabase/candidates, static contract tests and explicit designer-authorized staging-only Gate-A exception. No live SQL or application change. Isolated PostgreSQL compilation and B04 role/hostile tests required."
+      "note": "B03 ONLY: private, nonapplied, no-public-EXECUTE swept path validator SQL under supabase/candidates, static contract tests and explicit designer-authorized staging-only Gate-A exception. No live SQL or application change. Isolated PostgreSQL compilation and B04 role/hostile tests required.",
+      "linkedPullRequest": 78
     }
   ],
   "features": [
