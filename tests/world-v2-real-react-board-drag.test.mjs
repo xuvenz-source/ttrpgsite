@@ -82,7 +82,7 @@ test('integrated actual React board drags owned player, DM and preview token',as
   await b.send('Runtime.enable');
   for(const mode of ['player','dm','unlocked','preview']){
    await b.send('Page.navigate',{url:
-    'http://127.0.0.1:'+port+'/tests/browser/world-v2-real-board.html?mode='+mode});
+    'http://127.0.0.1:'+port+'/tests/browser/world-v2-real-board.html?mode='+mode+'&worldV2Trace=1'});
    let ready=false;
    for(let i=0;i<160;i++){
     try{ready=await b.evaluate('Boolean(window.__v2Integrated?.ready())')}catch{}

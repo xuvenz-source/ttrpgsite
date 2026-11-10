@@ -13,6 +13,15 @@ const isDM=mode!=='player',preview=mode==='preview';
 const user=isDM?DM:PLAYER;
 let position={x:2,y:2},nextSession=0,cursor=5,visionEpoch=6;
 const rpc=[],errors=[],channelTopics=[],channelEvents=[];
+const pointerEvents=[];
+document.addEventListener('pointerdown',event=>{
+ pointerEvents.push({target:event.target?.tagName,
+  className:String(event.target?.className||'').slice(0,80),
+  kind:event.target?.closest?.('[data-world-kind]')?.dataset.worldKind,
+  inViewport:Boolean(event.target?.closest?.('.mapscroll')),
+  phase:event.eventPhase});
+},true);
+
 const objects=[{id:'light-1',type:'light',x:7,y:7,
  bright:2,dim:3,intensity:100,color:'#ffce7a',effect:'steady',enabled:true}];
 const editor={enabled:mode==='unlocked'||preview,layer:'light',
@@ -106,7 +115,8 @@ window.__v2Integrated={
   const sprite=document.querySelector('[data-world-kind="token"]');
   const elem=sprite?.getBoundingClientRect();
   return {mode,rpc:[...rpc],errors:[...errors],
-   committed,channelTopics:[...channelTopics],
+   committed,channelTopics:[...channelTopics],pointerEvents:[...pointerEvents],
+   trace:window.__worldV2Trace?.snapshot(),
    position:{...position},spriteVisible:sprite?.style.visibility,
    spriteTransform:sprite?.style.translate,
    spriteCount:document.querySelectorAll('[data-world-kind="token"]').length,
