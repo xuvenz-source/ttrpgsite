@@ -120,6 +120,15 @@ BEGIN
    FROM forge_world_v2.observer_pending_b07
    WHERE session_id=sid3 AND viewer_id=player),
   'R03-10 certified private hide buffered under saturated budget');
+ -- Adversarial fixture: simulate an old deferred coordinate frame that
+ -- survived an interrupted earlier publisher operation behind that hide.
+ -- It is not client-writable: private-schema RLS/ACL is enforced separately.
+ -- R03 must retire this route without retiring the certified hide.
+ UPDATE forge_world_v2.observer_pending_b07
+ SET deferred=jsonb_build_array(jsonb_build_array(jsonb_build_object(
+  'kind','token','id',token,'action','path',
+  'path','[{"x":4,"y":1},{"x":5,"y":1}]'::jsonb)))
+ WHERE session_id=sid3 AND viewer_id=player;
  ack:=public.commit_world_motion_v2(
   sid3,2,'{"x":5,"y":1}'::jsonb,1,1);
  PERFORM public.b08_assert(
