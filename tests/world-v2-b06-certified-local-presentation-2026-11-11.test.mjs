@@ -46,6 +46,13 @@ const req=(pointer,selection=sel,from=point(2,2))=>({
 const certify=(pointer,selection=sel,frame=sight(),from=point(2,2))=>
  certifyViewerMotion({frame,scene:baseScene(),request:req(pointer,selection,from)});
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
+function assertTranslate(sprite,x,y){
+ const parts=String(sprite.style.translate||'').split(' ');
+ assert.equal(parts.length,2,'sprite uses 2D CSS translate');
+ const [actualX,actualY]=parts.map(v=>Number.parseFloat(v));
+ assert.ok(Math.abs(actualX-x)<1e-6&&Math.abs(actualY-y)<1e-6,
+  'translate mismatch: '+JSON.stringify({actualX,actualY,x,y}));
+}
 function surfaces(){
  const canvas=()=>({
   width:0,height:0,style:{},
@@ -178,7 +185,7 @@ test('B06 renderer validates source sight before moving an existing sprite, neve
  assert.equal(r.applyLocalMovement(grabbed()),true);
  assert.equal(r.applyLocalMovement(predicted(c)),true);
  flush(1100);
- assert.equal(sprite.style.translate,'250px 240px');
+ assertTranslate(sprite,250,240);
  assert.equal(r.getSpriteElement('token',OTHER),null);
  assert.equal(r.stats.spriteCreates,old.spriteCreates);
  assert.equal(r.stats.terrainAssignments,old.terrainAssignments);
@@ -197,11 +204,11 @@ test('B06 renderer rejects forged grant, wrong viewer and wrong approved anchor'
  }),true,
   'the renderer validates local.approved against certificate, not caller-reported approved');
  flush(1100);
- assert.equal(sprite.style.translate,'280px 220px');
+ assertTranslate(sprite,280,220);
  assert.equal(r.applyLocalMovement({type:'presentation-reset',mapId:MAP,
   gestureId:1,approved:point(2,2),selection:sel}),true);
  flush(1120);
- assert.equal(sprite.style.translate,'200px 200px');
+ assertTranslate(sprite,200,200);
  r.dispose();
 });
 
@@ -210,10 +217,10 @@ test('B06 renderer immediately retracts predicted sprite on newer sight epoch/cu
  const c=certify(point(2.5,2.2));
  r.applyLocalMovement(grabbed());r.applyLocalMovement(predicted(c));
  flush(1100);
- assert.equal(sprite.style.translate,'250px 220px');
+ assertTranslate(sprite,250,220);
  assert.equal(r.adoptVisibility(sight({cursor:5,visionEpoch:6})),true);
  flush(1110);
- assert.equal(sprite.style.translate,'200px 200px');
+ assertTranslate(sprite,200,200);
  assert.equal(r.stats.spriteCreates,1,'no remount while the sight changes');
  r.dispose();
 });
@@ -223,10 +230,10 @@ test('B06 renderer retracts position even if grant disappears with same sight cu
  const c=certify(point(2.5,2.5));
  r.applyLocalMovement(grabbed());r.applyLocalMovement(predicted(c));
  flush(1100);
- assert.equal(sprite.style.translate,'250px 250px');
+ assertTranslate(sprite,250,250);
  assert.equal(r.adoptVisibility(sight({predictionGrants:[]})),true);
  flush(1110);
- assert.equal(sprite.style.translate,'200px 200px');
+ assertTranslate(sprite,200,200);
  r.dispose();
 });
 
@@ -240,7 +247,7 @@ test('B06 blocked crossing cannot retain speculative position after server ACK',
   approved:point(2,2),from:point(2,2),accepted:[]
  }),true);
  flush(1120);
- assert.equal(sprite.style.translate,'200px 200px');
+ assertTranslate(sprite,200,200);
  r.dispose();
 });
 
