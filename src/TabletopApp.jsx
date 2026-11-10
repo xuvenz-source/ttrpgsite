@@ -3174,7 +3174,7 @@ export default function TabletopApp(){
     }:null):fog.published}
      onMapCalibrationPreview={setMapCalibrationPreview}
      onSaveMapCalibration={saveMapCalibration}
-     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens}
+     template={camp?.sheet_template} saveStatus={mapEnvironmentStatus} tokens={tokens} members={members} dmUserId={user}
      handouts={campaignHandouts.handouts} pins={campaignHandouts.pins}
      onUpdatePin={updateMapHandoutPin} onDeletePin={deleteMapHandoutPin}/>
    </div>
