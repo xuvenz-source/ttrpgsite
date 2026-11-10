@@ -716,3 +716,60 @@ test('late sight after private motion retains authorized sprite and fog',()=>{
  assert.equal(ctx.renderer.stats.terrainAssignments,1);
  ctx.renderer.dispose();
 });
+
+test('Phase 4 multi-tile local ACK follows approved corners, not a teleport',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.applyLocalMovement(motion('grabbed',{x:2,y:2}));
+ const baseline=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyLocalMovement(motion('approved',{x:4,y:4},{
+  blocked:false,from:{x:2,y:2},
+  accepted:[{x:3,y:2},{x:4,y:2},{x:4,y:3},{x:4,y:4}]
+ })),true);
+ ctx.clock.flush(1020);
+ ctx.clock.flush(1050);
+ const first=position(node).split(' ').map(parseFloat);
+ assert.ok(first[0]>200&&first[0]<400);
+ assert.equal(first[1],200,'local motion must follow authorized first leg');
+ ctx.clock.run(1080,30);
+ assert.equal(position(node),'400px 400px');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.stats.spriteCreates,baseline.spriteCreates);
+ assert.equal(ctx.renderer.stats.spriteRemoves,baseline.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fogDraws,baseline.fogDraws);
+ assert.equal(ctx.renderer.stats.staticDraws,baseline.staticDraws);
+ assert.equal(ctx.clock.queued,0);
+ ctx.renderer.dispose();
+});
+
+test('Phase 4 prediction is held for older ACK and released when authority passes it',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.applyLocalMovement(motion('grabbed',{x:2,y:2}));
+ ctx.renderer.applyLocalMovement(motion('presented',{x:3.7,y:2},{
+  approved:{x:2,y:2},predicted:true
+ }));
+ ctx.clock.flush(1016);
+ ctx.renderer.applyLocalMovement(motion('approved',{x:3,y:2}));
+ ctx.clock.flush(1032);
+ assert.ok(parseFloat(position(node))>369);
+ ctx.renderer.applyLocalMovement(motion('approved',{x:4,y:2}));
+ ctx.clock.flush(1048);
+ assert.equal(position(node),'400px 200px',
+  'authority reaching/passing the pointer must release stale prediction');
+ ctx.renderer.applyLocalMovement(motion('blocked',{x:4,y:2},{blocked:true}));
+ ctx.clock.flush(1064);
+ assert.equal(position(node),'400px 200px');
+ ctx.renderer.dispose();
+});
+
+test('Phase 4 remote burst never jumps more than 2.5 authorized cells per RAF',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const route=[[2,2],...Array.from({length:24},(_,i)=>[3+i,2])];
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,route),{mapId,seq:6}),true);
+ ctx.clock.flush(1000);ctx.clock.flush(1120);
+ const x=parseFloat(position(ctx.renderer.getSpriteElement('token',hero.id)));
+ assert.ok(x>200&&x<=450.001,'bounded visual catchup, no 24-cell jump');
+ assert.equal(ctx.renderer.stats.spriteCreates,1);
+ ctx.renderer.dispose();
+});
