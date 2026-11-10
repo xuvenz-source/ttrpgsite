@@ -233,7 +233,7 @@
       "status": "staged",
       "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
       "linkedPullRequest": null,
-      "note": "Recover signed map terrain loading independently of scene and correct displayed map URL; capture viewport pointer interactions and display safe drag denial status. No migration or deployment."
+      "note": "Recover late signed map URLs; capture V2 pointer input at viewport, handle lost capture/browser blur, prevent native sprite drag, and enforce a single player-owned actor in DM preview. Add gesture lifecycle and authority regression tests. No migration or deployment."
     }
   ],
   "features": [
@@ -993,7 +993,7 @@
     "outstandingBranches": [
       "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10"
     ],
-    "stagePolicy": "Consolidated tested release after designer approval. Map URL and pointer handoff diagnostics only; no SQL changes or additional Realtime streams.",
+    "stagePolicy": "Consolidated release only after designer approval, green frontend/build, isolated V2 PostgreSQL authority tests, CodeQL, and authenticated DM/player browser drag acceptance. No SQL changes or extra Realtime streams.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
