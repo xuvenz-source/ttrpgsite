@@ -43,7 +43,8 @@
     "hiddenEntityAndLOSProof": "NOT_RUN",
     "groupAndPreviewParityLive": "NOT_RUN",
     "rollbackMigrationDryRun": "NOT_RUN",
-    "observerRecovery": "STAGED_SOURCE_CANDIDATE__UNIT_AND_FINAL_CI_PENDING"
+    "observerRecovery": "STAGED_SOURCE_CANDIDATE__UNIT_AND_FINAL_CI_PENDING",
+    "terminalQueueR03": "STAGED_ISOLATED_PG17_14_ASSERTIONS_PASS_EARLIER_HEAD__FINAL_HEAD_PENDING"
   },
   "sourceLimitations": {
     "B03Installed": false,
@@ -58,7 +59,7 @@
   },
   "noGoReasons": [
     "B03 is now wired into a **nonapplied B10-R01 private Core candidate**. Actual production forge_world_v2.advance_core_v2 remains unchanged and has no B03 validator; forward-only migration/rollout and live Auth/permission QA not approved.",
-    "B10-R02 stages an OFF-by-default six-second authenticated canonical sight recovery that bypasses Realtime message exhaustion; however no hard time bound under offline/background browsers, no guaranteed delivery of intermediate uncommitted paths, and ambiguous deferred frames remain. Real multi-account LOS and budget-saturation tests must pass before release.",
+    "B10-R03 now stages a private nonapplied terminal queue scrub so old committed-session paths are retired and certified hides are retained. This must be co-released with default-OFF B10-R02 authenticated canonical sight recovery. Offline/background deadlines, abnormal DB faults, 24-case real Auth/LOS testing and free-tier load remain unverified.",
     "PR #71 renderer/observer sight continuity remains a separate blocked draft with recovery and security amendments; no safe reconciliation/merge decision.",
     "No A06 authenticated DM/Player1/Player2 prepared fog/collision/door/2x2/hidden NPC/torch/test map fixture or 24-case live browser evidence.",
     "No browser/device p95 first paint, observer lag, terrain reassignment/flash, sprite remount, reconnect/multi-tab or Supabase free-tier stress measurements for B03–B09.",
@@ -153,7 +154,44 @@
       "liveInstalled": false,
       "releaseQualified": false,
       "authenticatedMultiplayerTested": false
+    },
+    "B10_R03": {
+      "status": "STAGED_NONAPPLIED",
+      "parentPullRequest": 87,
+      "pullRequest": 88,
+      "branch": "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
+      "candidate": "supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql",
+      "candidateOrder": [
+        "supabase/candidates/world_v2_b03_path_validation.sql",
+        "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+        "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+        "supabase/candidates/world_v2_b10_r01_core_path_integration.sql",
+        "supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql"
+      ],
+      "scope": "Only private B08 drain. Preserve initial four-frame commit broadcast; retire unsent coordinate paths on terminal Commit; retain certified hides for safe exact retry.",
+      "newPublicRPC": false,
+      "newRealtimeTopic": false,
+      "additionalTables": false,
+      "browserPrivateSchemaGrant": false,
+      "newMigration": false,
+      "liveInstalled": false,
+      "featureFlagsActivated": false,
+      "coupledClientRequirement": "B10-R02 VITE_WORLD_V2_OBSERVER_RECOVERY must be tested and enabled in the same authorized release; do not ship R03 alone.",
+      "automatedEvidence": {
+        "isolatedPg17": "Run 42867963625 passed 14 positive and hostile R03 cases before final hardening/test source; exact-head rerun pending",
+        "nodeTests": "pending exact-head",
+        "codeQL": "pending exact-head"
+      },
+      "remainingRisks": [
+        "Signed private sight must replace terminal path backlog to prevent stale observer view when R03 drops unsent paths.",
+        "No hard realtime concealment deadline during offline/background client or exhausted hide budget; R02 foreground recovery is best effort.",
+        "Rare DB errors preventing terminal queue retirement can leave paths from a completed session despite attempted catch; test failure handling with real Auth before release.",
+        "R03 must not deploy independently of the R02 frontend fallback, B03/R01 path authority and B07/B08 private publisher.",
+        "PR71 security conflict, 24-case A06 authenticated fixture, p95/fog/flash/memory and versioned migration gate remain incomplete."
+      ],
+      "authenticatedQA": "NOT_RUN",
+      "releaseDecision": "NO_GO"
     }
   },
-  "nextRemediation": "B10-R03: close deferred same-origin frame race and prepare versioned migration/PR71 conflicts; separate instruction required."
+  "nextRemediation": "B10-R04: resolve PR #71 source and sight-recovery security conflicts, rehearse forward-only migration and recovery on disposable live-shape SQL with complete A06 protected multi-user acceptance before release."
 }
