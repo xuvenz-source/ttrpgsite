@@ -19,6 +19,7 @@ import {createWorldRealtimeTransport} from './RealtimeTransport.js';
 import {collisionAllowsStep} from './CollisionSolver.js';
 import {createPreviewAuthority} from './PreviewAuthority.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
+import {certifyViewerMotion} from './CertifiedMotionPresentation.js';
 import {worldV2Trace} from './WorldTrace.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -130,6 +131,11 @@ export function createWorldV2TabletopRuntime({
       (renderer.lastSightRejection||'unclassified'));
     }
    privateReady=true;
+   // Any newer signed sight epoch/cursor invalidates a previously displayed
+   // fractional cell even if no new mouse/keyboard input has occurred.
+   movement?.syncCertifiedSight({
+    frame:vision.frame,scene:manager.displayedScene
+   });
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');
    return true;
@@ -157,6 +163,16 @@ export function createWorldV2TabletopRuntime({
   // Staged B05 opt-in only. All normal builds retain the current adapter.
   // No public runtime or production deployment is enabled by this branch.
   coalesceMotion:import.meta.env?.VITE_WORLD_V2_COALESCE_MOTION==='1',
+  // B06 affects only server-certified player viewer presentation. DM's
+  // known-geometry local preview remains the existing separate path.
+  certifiedMotion:!isDM&&!dmPreview&&
+   import.meta.env?.VITE_WORLD_V2_CERTIFIED_MOTION==='1',
+  certifyPresentation:request=>{
+   if(disposed||!authorized()||isDM||dmPreview)return null;
+   return certifyViewerMotion({
+    frame:vision.frame,scene:manager.displayedScene,request
+   });
+  },
   canPredict:request=>{
     if(disposed||!authorized())return false;
     if(!isDM)return canPredictWithinWorldGrants({
