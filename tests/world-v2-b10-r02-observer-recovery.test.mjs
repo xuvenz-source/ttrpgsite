@@ -137,7 +137,9 @@ test('B10-R02 lost hide is reconciled by signed roster, never by a forged packet
  const h=transportHarness(snap(0,[piece(A,1,1),piece(C,3,3)]));
  await h.join();
  assert.equal(h.t.acceptSignedSight(snap(0,[piece(A,1,1)])),true);
+ h.setSnapshot(snap(1,[piece(A,1,1)]));
  h.send(1,[path(C,[[3,3],[4,3]])]);
+ await flush(); // Unknown-piece requests fresh authorized roster; never grants C.
  assert.equal(h.seen.length,0,'hidden piece has no approved roster membership');
  assert.equal(h.t.cursor,1);
  assert.equal(h.hidden.length,0,'no guessed hidden ID sent to renderer');
