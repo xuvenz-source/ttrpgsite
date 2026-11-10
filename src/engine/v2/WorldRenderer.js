@@ -15,6 +15,8 @@ import {worldV2Trace} from './WorldTrace.js';
 import {createWorldFrameScheduler} from './WorldFrameScheduler.js';
 import {createObserverPathBuffer} from './ObserverPathBuffer.js';
 import {createApprovedPathPresentation} from './ApprovedPathPresentation.js';
+import {certifiedMotionMatchesSight,certifiedMotionPaintAllowed}
+ from './CertifiedMotionPresentation.js';
 import {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
  from './SceneSnapshot.js';
 import {normalizeWorldVisibilityFrame,makeWorldFogMask,
@@ -30,7 +32,8 @@ const finite=x=>typeof x==='number'&&Number.isFinite(x);
 const key=p=>p.kind+':'+p.id;
 const same=(a,b)=>a?.x===b?.x&&a?.y===b?.y;
 const noop=()=>{};
-const STATES=new Set(['grabbed','sampled','presented','approved',
+const STATES=new Set(['grabbed','sampled','presented',
+ 'presentation-reset','approved',
  'blocked','released','committed','cancelled','rejected','revoked']);
 const validMotionPoint=p=>p&&finite(p.x)&&finite(p.y)&&
  p.x>=0&&p.y>=0&&p.x<=10000&&p.y<=10000;
@@ -437,6 +440,15 @@ export function createWorldRenderer({
     previousPositions.set(id,observer.getPosition(kind,pieceId));
    }
    visibility=next;fogMask=nextMask;authorized=true;
+   // B06 cannot carry a cosmetic certificate across sight cursor/epoch
+   // updates or changed environment/permission generations.
+   if(local?.certificate&&
+    !certifiedMotionMatchesSight(local.certificate,next,scene)){
+    local.certificate=null;local.predicted=false;
+    local.display=copyPoint(local.approved);
+    local.route.reset(local.approved);
+    for(const id of local.anchors.keys())dirtySprites.add(id);
+   }
    latestSeq=next.cursor;seqItems.clear();awaitingFreshVision=false;
     pendingVisionPieces.clear();
    if(rosterChanged){
@@ -597,7 +609,7 @@ export function createWorldRenderer({
     }
     local={gestureId:event.gestureId,origin:copyPoint(event.approved),
      approved:copyPoint(event.approved),display:copyPoint(event.approved),
-     predicted:false,handoff:false,anchors,
+     predicted:false,handoff:false,anchors,certificate:null,
       route:createApprovedPathPresentation()};
      local.route.reset(event.approved);
     worldV2Trace.startMotion('local');
@@ -614,13 +626,30 @@ export function createWorldRenderer({
    if(event.type==='presented'){
     if(event.predicted!==true||!validMotionPoint(event.presented))
      return false;
+    // A B06 event must pass the exact signed sight and active group
+    // validation again at the renderer boundary, not just in controller.
+    if(event.certificate&&!certifiedMotionPaintAllowed({
+      certificate:event.certificate,frame:visibility,scene,
+      mapId:currentMap,selection:event.selection,
+      approved:local.approved,presented:event.presented
+     }))return false;
+    local.certificate=event.certificate??null;
     local.display=copyPoint(event.presented);local.predicted=true;
-     local.route.reset(event.presented);
-    }else if(event.type==='approved'||event.type==='blocked'){
+    local.route.reset(event.presented);
+   }else if(event.type==='presentation-reset'){
+    if(!same(event.approved,local.approved))return false;
+    local.certificate=null;local.predicted=false;
+    local.display=copyPoint(local.approved);
+    local.route.reset(local.approved);
+   }else if(event.type==='approved'||event.type==='blocked'){
      if(!validMotionPoint(event.approved))return false;
      const before=copyPoint(local.approved);
      local.approved=copyPoint(event.approved);
-     if(event.type==='blocked'){
+     const wasCertified=Boolean(local.certificate);
+     if(wasCertified)local.certificate=null;
+     if(event.type==='blocked'||wasCertified){
+      // A server ACK is a new absolute frontier: never retain a prior
+      // one-cell prediction across this gesture's turns/reversals.
       local.predicted=false;local.display=copyPoint(local.approved);
       local.route.reset(local.approved);
      }else if(local.predicted){
@@ -648,7 +677,7 @@ export function createWorldRenderer({
     worldV2Trace.endMotion('local');
     local.approved=copyPoint(event.approved);
     local.display=copyPoint(event.approved);
-    local.predicted=false;local.handoff=true;
+    local.predicted=false;local.handoff=true;local.certificate=null;
      local.route.reset(local.approved);
     // Phase 9 MUST fetch an authorized canonical roster after commit.
     safe(onNeedResync,'canonical-commit');
