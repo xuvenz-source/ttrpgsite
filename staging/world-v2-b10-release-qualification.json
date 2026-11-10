@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "workflowStep": "B10",
+  "decision": "NO_GO",
+  "sourceBranch": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+  "sourceParent": "stage/world-v2-b09-input-parity-2026-11-11",
+  "parentSha": "21de65468a013fed7bf59c7803a5089e9b2201b8",
+  "productionMainSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+  "sourceRange": "B03–B09 stacked staging branches on A03–A06; excludes separately blocked PR #71",
+  "status": "STAGED_INTEGRATION_WITH_BLOCKED_GATE",
+  "sqlOrder": [
+    "supabase/candidates/world_v2_b03_path_validation.sql",
+    "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+    "supabase/candidates/world_v2_b08_commit_reconciliation.sql"
+  ],
+  "featureFlags": [
+    {
+      "name": "VITE_WORLD_V2_COALESCE_MOTION",
+      "default": "OFF",
+      "activation": "requires approved matching backend and frontend release"
+    },
+    {
+      "name": "VITE_WORLD_V2_CERTIFIED_MOTION",
+      "default": "OFF",
+      "activation": "requires signed scene/vision browser acceptance"
+    },
+    {
+      "name": "VITE_WORLD_V2_COMMIT_RECONCILE",
+      "default": "OFF",
+      "activation": "requires B08 SQL candidate installed and verified"
+    }
+  ],
+  "currentChecks": {
+    "sourceIntegrity": "IN_PROGRESS",
+    "combinedSql": "IN_PROGRESS",
+    "codeQL": "IN_PROGRESS",
+    "frontendBuildAndTests": "IN_PROGRESS",
+    "npmAudit": "IN_PROGRESS",
+    "denoEdgeTypechecks": "IN_PROGRESS",
+    "liveDMPlayer1Player2QA": "NOT_RUN",
+    "browserLatencyP95": "NOT_MEASURED",
+    "mapFlashAndTerrainRemount": "NOT_MEASURED",
+    "hiddenEntityAndLOSProof": "NOT_RUN",
+    "groupAndPreviewParityLive": "NOT_RUN",
+    "rollbackMigrationDryRun": "NOT_RUN"
+  },
+  "sourceLimitations": {
+    "B03Installed": false,
+    "B03CalledFromActiveAdvanceCore": false,
+    "B07Installed": false,
+    "B08Installed": false,
+    "A06GateA": "BLOCKED",
+    "PR71": "DRAFT_AMEND_BEFORE_MERGE",
+    "manualFixtureStatus": "NOT_RUN",
+    "manualScenarioCount": 24,
+    "releaseApproval": false
+  },
+  "noGoReasons": [
+    "B03 private swept-path validator is not wired to the production-derived forge_world_v2.advance_core_v2; combined SQL coexistence is not a complete path-authority replacement.",
+    "B07/B08 observer budget can preserve deferred private progress after commit without a guaranteed future authorized delivery/resync trigger; priority hides may be delayed when the budget itself is exhausted.",
+    "PR #71 renderer/observer sight continuity remains a separate blocked draft with recovery and security amendments; no safe reconciliation/merge decision.",
+    "No A06 authenticated DM/Player1/Player2 prepared fog/collision/door/2x2/hidden NPC/torch/test map fixture or 24-case live browser evidence.",
+    "No browser/device p95 first paint, observer lag, terrain reassignment/flash, sprite remount, reconnect/multi-tab or Supabase free-tier stress measurements for B03–B09.",
+    "No reviewed, forward-only production migration or compatible rollback/downgrade strategy for installed B03+B07+B08 and active versioned RPCs.",
+    "No merged consolidated release, main+Vercel+database build parity or separate designer deployment approval."
+  ],
+  "expectedNextAction": "Do not merge, apply SQL or deploy. Preserve draft B10 PR and blockers; designer must explicitly authorize release remediation/test fixture or a future release step.",
+  "secretsPolicy": "No user IDs, JWTs, hidden map data, raw private Realtime payloads or signed URLs in this ledger."
+}
