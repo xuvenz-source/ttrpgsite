@@ -75,11 +75,6 @@ BEGIN
  PERFORM public.b07_assert(response->'accepted'=
   '[{"x":2,"y":1}]'::jsonb,
   'P05 actual protected Advance approves first one-cell route');
- IF (SELECT count(*) FROM realtime.b07_outbox)=0 THEN
-  -- Diagnostic only: source-real public wrapper suppresses publisher errors.
-  PERFORM forge_world_v2.publish_approved_observers(
-   s,'{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb);
- END IF;
  PERFORM public.b07_assert(
   (SELECT count(*)=2 FROM realtime.b07_outbox) AND
   (SELECT bool_and(is_private AND event='world-motion-v2' AND
@@ -201,9 +196,9 @@ BEGIN
  WHERE id=session_uuid;
  old_sent:=(SELECT count(*) FROM realtime.b07_outbox);
  PERFORM public.b07_assert(
-  forge_world_v2.flush_session_observers_b07(session_uuid)=2 AND
-  (SELECT count(*)=old_sent+2 FROM realtime.b07_outbox),
-  'P14 explicit terminal flush drains pending authorized progress');
+  forge_world_v2.flush_session_observers_b07(session_uuid)=1 AND
+  (SELECT count(*)=old_sent+1 FROM realtime.b07_outbox),
+  'P14 terminal flush drains only genuinely pending authorized recipients');
  PERFORM set_config('request.jwt.claim.sub',player::text,true);
  PERFORM public.b07_assert(
   forge_world_v2.flush_session_observers_b07(session_uuid)=0,
