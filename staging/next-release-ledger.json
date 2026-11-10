@@ -493,7 +493,7 @@
       "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
       "basedOnStagingHead": "70a5b40fdd878f100037532373783f280c743ac5",
       "basePullRequest": 85,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 86,
       "releaseReady": false,
       "sqlApplied": false,
       "productionDeployed": false,
