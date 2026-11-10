@@ -229,7 +229,7 @@
       ],
       "scope": "Nonapplied private server-side per-recipient ordered observer queue, 200ms normal coalescing, bounded 64-frame FIFO, 20/s movement broadcasts plus up to 10/s priority hides, private cursor increment on actual send, auth/LOS recheck and expired queue cleanup",
       "mode": "SQL CANDIDATE NONAPPLIED; active public V2 Advance/Commit/Realtime unchanged until separately reviewed migration/integration",
-      "verification": "Source+test exact head b5eaf6f9a6a11730120db1f708881db036ed312a passed isolated PG17 CI #42837859102: 35 SQL assertions and 2 direct denied role calls; standard CI #42837858900: 803/803 tests, npm audit zero vulnerabilities, Vite build, Edge Deno checks. Final PR-head CI recheck pending.",
+      "verification": "Final PR #82 pre-handoff metadata exact source head 254799d5281e6165b9b1fba4186978d029536c59 passed isolated PostgreSQL #42838560260: 35/35 SQL assertions, 2 direct privilege-denial probes, and standard CI #42838547542: 803/803 unit/integration tests, audit zero vulnerabilities, Vite build, critical lint and Deno Edge checks. Nonapplied candidate only; real DM/P1/P2/Auth/Realtme/p95 NOT RUN.",
       "security": "Only current server-authorized recipient IDs and private LOS-filtered accepted contiguous paths; no client broadcaster, no hidden geometry, no public grants, observer cursor only after successful private send; queued segments retained across Realtime outages and budget throttling.",
       "knownGaps": [
         "Terminal flush NOT wired into public commit; requires B08 and must succeed only after canonical commit",
@@ -241,7 +241,10 @@
       ],
       "gateA": "NOT PASSED",
       "next": "B08, independently authorized staging-only or complete Gate A",
-      "pullRequest": 82
+      "pullRequest": 82,
+      "latestPassingSourceSha": "254799d5281e6165b9b1fba4186978d029536c59",
+      "latestPassingPostgresRun": 42838560260,
+      "latestPassingStandardRun": 42838547542
     },
     "B08": {
       "status": "NOT STARTED"
@@ -689,7 +692,7 @@
         "staging/engineering-progress.json",
         "staging/next-release-ledger.json"
       ],
-      "evidence": "Isolated PostgreSQL 17 PG #42837859102 at b5eaf6f9a6a11730120db1f708881db036ed312a: 35 passed SQL assertions, anon+authenticated denied direct private helper. Full standard CI #42837858900: 803/803 tests, 0 dependency vulnerabilities, Vite build and Deno checks succeeded.",
+      "evidence": "Isolated PostgreSQL 17 PG #42837859102 at b5eaf6f9a6a11730120db1f708881db036ed312a: 35 passed SQL assertions, anon+authenticated denied direct private helper. Full standard CI #42837858900: 803/803 tests, 0 dependency vulnerabilities, Vite build and Deno checks succeeded. Exact source/PR head 254799d5281e6165b9b1fba4186978d029536c59 after PR registration passed PG #42838560260 and standard CI #42838547542. Final future metadata-only CI separately required if SHA changes.",
       "securityParity": "Verifies source-real viewer_on_map/observer_path_status (controlled deeper LOS fixture), private topics, monotonic per-recipient cursors, no duplicate sends, no unseen route leak, abort/ACL revocation, global budget and overflow FIFO preserving accepted segments. No live Auth/fog or performance certification.",
       "sqlDeployment": "NONE — candidate outside migration discovery; no production SQL",
       "blockers": [
@@ -702,7 +705,17 @@
       ],
       "next": "B08 ONLY, with separate staging-only instruction or successful Gate A",
       "pullRequest": 82,
-      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/82"
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/82",
+      "ciEvidence": {
+        "testedSha": "254799d5281e6165b9b1fba4186978d029536c59",
+        "sqlRun": 42838560260,
+        "standardRun": 42838547542,
+        "sqlAssertions": 35,
+        "deniedRoles": 2,
+        "frontendTests": 803,
+        "conclusion": "SUCCESS",
+        "note": "pre-handoff metadata-only update"
+      }
     }
   },
   "pendingWork": [
