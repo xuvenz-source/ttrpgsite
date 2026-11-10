@@ -10,7 +10,7 @@ import {spawn,spawnSync} from 'node:child_process';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const chromium=()=>{
- for(const name of ['chromium','chromium-browser','google-chrome','google-chrome-stable']){
+ for(const name of ['google-chrome','google-chrome-stable','chromium','chromium-browser']){
   const r=spawnSync('which',[name],{encoding:'utf8'});
   if(r.status===0&&r.stdout.trim())return r.stdout.trim();
  }
@@ -37,18 +37,22 @@ async function browserPage(path){
  const child=spawn(path,['--headless=new','--no-sandbox','--disable-gpu',
   '--disable-dev-shm-usage','--no-first-run','--no-default-browser-check',
   '--user-data-dir='+dir,'--remote-debugging-port=0','about:blank'],
-  {stdio:'ignore'});
+  {stdio:['ignore','ignore','pipe']});
+ let browserErrors='';
+ child.stderr.on('data',data=>{
+  browserErrors=(browserErrors+String(data)).slice(-1500);
+ });
  let port=null,ws=null;
  try{
-  for(let attempt=0;attempt<80;attempt++){
-   if(child.exitCode!==null)throw Error('Chromium terminated before DevTools connected');
+  for(let attempt=0;attempt<180;attempt++){
+   if(child.exitCode!==null)throw Error('Chromium terminated before DevTools connected: '+browserErrors);
    try{
     const raw=await readFile(join(dir,'DevToolsActivePort'),'utf8');
     port=Number(raw.split('\n')[0]);if(port>0)break;
    }catch{}
-   await delay(75);
+   await delay(100);
   }
-  if(!port)throw Error('Chromium DevTools port unavailable');
+  if(!port)throw Error('Chromium DevTools port unavailable: '+browserErrors);
   let page=null;
   for(let attempt=0;attempt<40;attempt++){
    try{
@@ -56,7 +60,7 @@ async function browserPage(path){
     page=list.find(item=>item.type==='page');
     if(page?.webSocketDebuggerUrl)break;
    }catch{}
-   await delay(75);
+   await delay(100);
   }
   if(!page?.webSocketDebuggerUrl)throw Error('Chromium page endpoint unavailable');
   ws=new WebSocket(page.webSocketDebuggerUrl);
@@ -107,7 +111,7 @@ test('actual Chromium DOM pointer capture: player, DM unlocked, preview, locked 
   for(let i=0;i<100;i++){
    try{ready=await browser.evaluate('Boolean(window.__v2Probe)')}catch{}
    if(ready)break;
-   await delay(75);
+   await delay(100);
   }
   assert.ok(ready,'actual browser fixture should load ES modules');
   const bounds=await browser.evaluate('window.__v2Probe.bounds()');
