@@ -545,6 +545,28 @@
         "frontend": "PENDING exact-head",
         "liveDMPlayer1Player2": "NOT_RUN"
       }
+    },
+    {
+      "name": "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
+      "status": "staged",
+      "documentationOnly": false,
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "c66148971a75f65503bcd3140e3acaecc7be05c6",
+      "basePullRequest": 88,
+      "linkedPullRequest": 89,
+      "releaseReady": false,
+      "sqlApplied": false,
+      "productionDeployed": false,
+      "gateDecision": "NO_GO",
+      "featureFlagsActivated": false,
+      "docs": "docs/architecture/world-v2-b10-r04-pr71-migration-rehearsal.md",
+      "note": "R04 safe subset PR71: 280ms burst-level token/tool canonical refresh, cancelled on map change; reject PR71 unbounded sight hold and stream-connection gesture gate. One-transaction ephemeral PG17 install of 5 candidate SQL files, private ACL assertions and exact rollback digests. Test campaign disposable but Auth/LOS gates still blocked.",
+      "testEvidence": {
+        "atomicDryRun": "PENDING exact-head",
+        "frontend": "PENDING exact-head",
+        "codeQL": "PENDING exact-head",
+        "realAuthMatrix": "NOT_RUN"
+      }
     }
   ],
   "features": [
@@ -1140,6 +1162,25 @@
       ],
       "verification": "PostgreSQL 17 isolated hostile tests only; no real Auth/LOS/fanout, no live SQL apply.",
       "nextAcceptanceStep": "B10-R04 PR71 conflict and versioned migration/rollback rehearsal followed by distinct authenticated user tests."
+    },
+    {
+      "id": "world-v2-b10-r04-pr71-safe-reconciliation-and-sql-dry-run",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Port coalesced V2 committed row reads without unsafe soft sight retention and prove reversible atomic B03/B07/B08/R01/R03 candidate SQL install in disposable source-real PG17.",
+      "sources": [
+        "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11"
+      ],
+      "databaseDependencies": [
+        "B03",
+        "B07",
+        "B08",
+        "B10-R01",
+        "B10-R03",
+        "B10-R02 client opt-in"
+      ],
+      "verification": "Read-only live signature preflight and isolated PG17 transactional rollback, no live RLS/LOS or deployment validation.",
+      "nextAcceptanceStep": "B10-R05 versioned forward-only migration with live-compatible rollforward and 24-case test-campaign authentication"
     }
   ],
   "databaseDependencies": [
@@ -1504,7 +1545,8 @@
     "B10 CI: serial 823-test npm test suite and single startup-only Chrome CDP retry; a failed browser assertion remains failed. This is not live authenticated UX validation.",
     "B10-R01 candidate routes fresh private Core advances through B03, preserving B08 exact replay and restricted private function grants. Source-real isolated tests passed; live RPC remains ORIGINAL and unmodified.",
     "B10-R02: default-off authenticated six-second vision fallback can recover canonical visible positions/hides when private Realtime budget loses all packets, with signed roster/cursor gates; browser offline/background and ambiguous same-origin deferred frames prevent hard guarantees. Gate B NO-GO.",
-    "B10-R03 nonapplied private terminal queue candidate retires unsent coordinate paths after canonical Commit so exact replay cannot reanimate old coordinates; certified hides only survive. DO NOT apply without B10-R02 signed sight fallback and A06/PR71/real migration gates. Release NO_GO."
+    "B10-R03 nonapplied private terminal queue candidate retires unsent coordinate paths after canonical Commit so exact replay cannot reanimate old coordinates; certified hides only survive. DO NOT apply without B10-R02 signed sight fallback and A06/PR71/real migration gates. Release NO_GO.",
+    "B10-R04: never deploy PR71 sight-hold; it has no hard deadline during private stream lock. Existing renderer revoke preserves fail-closed sight; 3 existing DM grab tests vetoed an over-restrictive connection guard. Safe trailing 280ms app reads ported. Atomic five-candidate migration source rehearsal rolls back in isolated PG17. No live production changes."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1526,6 +1568,7 @@
       "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
       "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
       "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
+      "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10"
     ],
