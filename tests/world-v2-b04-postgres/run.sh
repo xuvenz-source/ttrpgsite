@@ -41,4 +41,46 @@ if ! grep -iq "permission denied" /tmp/world_v2_b04_anon_denied.log; then
   exit 1
 fi
 echo "PASS: anonymous direct SQL call denied by database permissions"
+# Real browser-role execution through the ACTUAL public V2 SECURITY DEFINER
+# functions. This is isolated SQL role behavior, not live PostgREST middleware.
+psql -X -v ON_ERROR_STOP=1 <<'SQL_B04_DIRECT'
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000011',false);
+DO $b04_direct$
+DECLARE
+ r jsonb; sid uuid;
+BEGIN
+ r:=public.begin_world_motion_v2(
+  '00000000-0000-4000-8000-000000000021',
+  '[{"kind":"token","id":"00000000-0000-4000-8000-000000000102"}]',
+  '{"x":1,"y":9}', 'drag',1,1,false);
+ PERFORM public.b04_assert(r IS NULL,
+  'H40 actual authenticated role cannot begin moving foreign player token');
+ r:=public.begin_world_motion_v2(
+  '00000000-0000-4000-8000-000000000021',
+  '[{"kind":"token","id":"00000000-0000-4000-8000-000000000101"}]',
+  '{"x":1,"y":1}', 'drag',1,1,false);
+ PERFORM public.b04_assert(r->>'version'='2' AND r ? 'sessionId',
+  'P15 actual authenticated role receives only its actor-bound begin ACK');
+ sid:=(r->>'sessionId')::uuid;
+ r:=public.advance_world_motion_v2(
+  sid,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
+ PERFORM public.b04_assert(
+  r->'accepted'='[{"x":2,"y":1}]'::jsonb AND
+  r ? 'routeSteps'=false AND r ? 'wallGeometry'=false,
+  'P16 actual authenticated role accepts private server-validated prefix only');
+END
+$b04_direct$;
+SQL_B04_DIRECT
+echo "PASS: authenticated REAL public Begin/Advance direct invocation bounded by JWT ownership"
+if psql -X -v ON_ERROR_STOP=1 -c "SET ROLE anon; SELECT public.begin_world_motion_v2('00000000-0000-4000-8000-000000000021','[]','{}','drag',1,1,false);" > /tmp/world_v2_b04_anon_rpc.log 2>&1; then
+  echo "SECURITY FAILURE: anon invoked public Begin" >&2
+  exit 1
+fi
+if ! grep -iq "permission denied" /tmp/world_v2_b04_anon_rpc.log; then
+  echo "SECURITY FAILURE: anonymous public Begin failed for an unexpected reason" >&2
+  cat /tmp/world_v2_b04_anon_rpc.log >&2
+  exit 1
+fi
+echo "PASS: anon public Begin denied by actual DB function ACL"
 echo "B04: real PostgreSQL source-compatible V2 geometry, session authorization and SQL candidate checks completed."
