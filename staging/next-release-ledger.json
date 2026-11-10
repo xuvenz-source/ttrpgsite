@@ -485,6 +485,21 @@
         "liveAuthScenarioCount": 0,
         "liveAuthScenarioRequired": 24
       }
+    },
+    {
+      "name": "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
+      "status": "staged",
+      "documentationOnly": false,
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "70a5b40fdd878f100037532373783f280c743ac5",
+      "basePullRequest": 85,
+      "linkedPullRequest": null,
+      "releaseReady": false,
+      "sqlApplied": false,
+      "productionDeployed": false,
+      "gateDecision": "NO_GO",
+      "note": "B10-R01: Nonapplied private V2 Core replacement with B03 swept batch, no browser grant or public API change; prior B04/B07 and post-R01 B08 hostile regression + 11 new role/replay tests in disposable PG17. Does not remove B10 live blockers.",
+      "verification": "B10 SQL combined PG17 #42858948356 success; final exact PR head pending."
     }
   ],
   "features": [
@@ -1029,6 +1044,22 @@
       "databaseDependencies": [],
       "verification": "CI and read-only live catalog only; NOT live movement/LOS or security release acceptance. CodeQL pass is a scan execution, not zero findings.",
       "nextAcceptanceStep": "B10 remediation and explicit release-approval request"
+    },
+    {
+      "id": "world-v2-b10-r01-private-advance-core-b03-wiring",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Private V2 Advance Core delegates one bounded swept batch to B03, updating same actor session and wire response, retaining B07/B08 public/recipient contract. Nonapplied.",
+      "sources": [
+        "stage/world-v2-b10-r01-core-path-wiring-2026-11-11"
+      ],
+      "databaseDependencies": [
+        "B03",
+        "B07",
+        "B08"
+      ],
+      "verification": "Disposable postgres 17 only; no live Supabase install/3-account QA",
+      "nextAcceptanceStep": "B10-R02 observer recovery and full B10 release qualifications"
     }
   ],
   "databaseDependencies": [
@@ -1390,7 +1421,8 @@
     "B09 staged frontend only: mixed-group selection is fail-closed; keyboard continuation requires new authorized sight; second touch cancels drag; DM player preview stays nonpersistent. No live browser or Auth/LOS verification.",
     "B10 NO-GO: live catalog confirms B03 validator not installed/wired, B07/B08 queues absent; public advance authenticated-only and private forge_world_v2 usage denied. Source-real PG17 coexistence is not a production migration.",
     "B10: PR #71 unamended, budget exhaustion eventual private observer recovery unproven; CodeQL staging scan successful on earlier head, 24 authenticated DM/P1/P2 scenarios NOT RUN. No merge/deploy/SQL approval.",
-    "B10 CI: serial 823-test npm test suite and single startup-only Chrome CDP retry; a failed browser assertion remains failed. This is not live authenticated UX validation."
+    "B10 CI: serial 823-test npm test suite and single startup-only Chrome CDP retry; a failed browser assertion remains failed. This is not live authenticated UX validation.",
+    "B10-R01 candidate routes fresh private Core advances through B03, preserving B08 exact replay and restricted private function grants. Source-real isolated tests passed; live RPC remains ORIGINAL and unmodified."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1409,6 +1441,7 @@
       "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
       "stage/world-v2-b09-input-parity-2026-11-11",
       "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10"
     ],
