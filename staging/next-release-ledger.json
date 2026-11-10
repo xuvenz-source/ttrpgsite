@@ -1185,7 +1185,8 @@
       "stage/engineering-workflow-and-ledger-a03-2026-11-10",
       "stage/world-v2-authenticated-fixture-a04-2026-11-10",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
-      "stage/world-v2-a06-readonly-baseline-2026-11-10"
+      "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "stage/world-v2-authority-contract-b01-2026-11-10"
     ],
     "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06. PR #75 documents the partial A06 baseline; authenticated DM/P1/P2 browser measurements and protected fixture prep remain BLOCKED. No approval for deployment or SQL is implied. Do not advance to Gate A or B01 before completing A06 or separately approved deviation.",
     "databaseReleaseVersion": null,
