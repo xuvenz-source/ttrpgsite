@@ -905,6 +905,7 @@ export default function WorldV2Board(props){
       mapId={map.id} viewerId={identity}
       mapWidth={map.width} mapHeight={map.height}
       playerPreview={dmPreview}
+      tokensAboveEditor={Boolean(isDM&&!dmPreview&&editor?.enabled&&editor.lockTokens===false)}
       createSpriteElement={createSpriteElement}
       onRemoveSprite={onRemoveSprite}
       onRendererReady={renderer=>rendererReady.current(renderer)}
