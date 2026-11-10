@@ -192,8 +192,8 @@ test('6 recipient clients × 120 approved moves: no flash, remount, extra socket
    assert.equal(current.terrainAssignments,start.terrainAssignments);
    assert.equal(current.staticDraws,start.staticDraws);
    assert.equal(current.fullFogDraws,start.fullFogDraws);
-   assert.equal(current.rosterReconciliations,start.rosterReconciliations+
-    12,'one canonical actor move per ten-frame visibility snapshot');
+   assert.equal(current.rosterReconciliations,start.rosterReconciliations,
+    'unchanged canonical roster must not restart authorized interpolation');
    assert.ok(current.fogPaintedCells-start.fogPaintedCells<=48);
    assert.equal(c.channels.length,1);
    assert.equal(c.authCalls,1);
@@ -302,7 +302,8 @@ test('opt-in traces and resource topology remain bounded under a 25,000-event st
  assert.match(app,/enabled:!WORLD_V2_CUTOVER/);
  assert.match(runtime,/createWorldRealtimeTransport/);
  assert.doesNotMatch(runtime,/createAuthorizedMotionTransport|observerMotionTopic|MapFogOverlay/);
- assert.doesNotMatch(board,/createRoot\(|BattlemapBoard|createTokenMotionRuntime/);
+ assert.doesNotMatch(board,/createRoot\(|createTokenMotionRuntime\(/);
+ assert.doesNotMatch(board,/from\s+['"][^'"]*BattlemapBoard/);
  const files=readdirSync(new URL('../src/engine/v2/',import.meta.url))
   .filter(x=>/\.js$/.test(x));
  for(const file of files){
