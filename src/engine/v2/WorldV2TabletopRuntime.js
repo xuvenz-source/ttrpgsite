@@ -122,7 +122,7 @@ export function createWorldV2TabletopRuntime({
       activeScene.sceneGeneration===snapshot.sceneGeneration)
       return 'stale';
      throw Error('V2 renderer rejected authorized sight: '+
-      (code||'unclassified'));
+      (renderer.lastSightRejection||'unclassified'));
     }
    privateReady=true;
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
