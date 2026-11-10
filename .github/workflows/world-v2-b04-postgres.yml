@@ -1,0 +1,51 @@
+name: World V2 B04 isolated PostgreSQL hostile-authority tests
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b04-*'
+  pull_request:
+    branches:
+      - 'stage/**'
+    paths:
+      - 'supabase/candidates/world_v2_b03_path_validation.sql'
+      - 'tests/world-v2-b04-postgres/**'
+      - '.github/workflows/world-v2-b04-postgres.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-postgres-b04:
+    name: Compile V2 candidate and run denied/allowed SQL tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: b04_ephemeral_ci_only
+          POSTGRES_DB: world_v2_b04
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_b04"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: world_v2_b04
+      PGUSER: postgres
+      PGPASSWORD: b04_ephemeral_ci_only
+      WORLD_V2_B04_ISOLATED: 'yes'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check isolated PostgreSQL availability
+        run: |
+          psql --version
+          psql -X -v ON_ERROR_STOP=1 -c 'SELECT version()'
+      - name: Compile real V2 collision + authorization helpers and B03 SQL
+        run: bash tests/world-v2-b04-postgres/run.sh
