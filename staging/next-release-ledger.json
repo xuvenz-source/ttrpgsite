@@ -452,7 +452,7 @@
       "basePullRequest": 83,
       "releaseReady": false,
       "documentationOnly": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 84,
       "note": "B09 only: keyboard queued keys resume exclusively from fresh authorized canonical sight, multi-finger touch cancels motion, mixed group refuses unauthorized members, preview progress anchored to last authorized local step/revision. No schema, production, feature activation or Vercel release.",
       "testEvidence": {
         "initialSourceHead": "3055ec302f151f3ea980d3d820d0c31d2a114c36",
