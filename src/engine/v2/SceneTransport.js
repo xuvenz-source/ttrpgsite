@@ -36,7 +36,11 @@ export function createSceneTransport({
     needsRefresh=false;attempts++;
     result=await sceneManager.load();
     if(!result&&sceneManager.stale){
-     // Do not spin forever on invalid permissions or a DB outage.
+     // A discarded in-flight scene load must be retried even when an
+     // old retained scene already has the required generation.
+     // Retained display metadata is not current authorization.
+     needsRefresh=true;
+     // Never spin indefinitely on denied permissions or an outage.
      if(attempts>=4)break;
     }
     if(sceneManager.sceneGeneration===null||

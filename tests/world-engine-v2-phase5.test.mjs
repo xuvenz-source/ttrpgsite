@@ -212,7 +212,9 @@ test('invalid resync result keeps channel fail-closed and never shows paths',asy
  assert.equal(t.locked,true);
  emit(frame(6,[path()]));
  assert.equal(seen.length,0);
- assert.equal(errors.length,1);
+ assert.equal(errors.length,0,'recoverable errors are not terminal yet');
+ await new Promise(resolve=>setTimeout(resolve,750));
+ assert.equal(errors.length,1,'persistent invalid snapshots are reported');
  await t.dispose();
 });
 

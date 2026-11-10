@@ -403,6 +403,13 @@ export default function WorldV2Board(props){
     setIssue(error?.message||'World Engine V2 authorization unavailable.');
     latest.current.onV2Error?.(error);
    },
+   onState:report=>{
+    // A prior transient observer failure must not remain displayed after
+    // the same actor has regained a complete, server-authorized snapshot.
+    if(report.authorized&&(dmPreview||!report.streamLocked))
+     setIssue(previous=>previous&&/^(No authorized V2 observer sight|V2 viewer sight unavailable|V2 renderer rejected authorized sight|World Engine V2 unavailable)/.test(previous)?
+      null:previous);
+   },
    onScene:snapshot=>{
     if(latest.current.url)renderer.setTerrainSource(latest.current.url);
     latest.current.onV2SceneSnapshot?.(snapshot);

@@ -46,7 +46,8 @@ test('scene-current reauthorizes a private observer after a failed sight bootstr
   h.subscribed();
   await delay(20);
   assert.equal(h.transport.locked,true);
-  assert.deepEqual(h.errors,['No authorized V2 observer sight']);
+  assert.deepEqual(h.errors,[],
+   'a recoverable first failure should not be shown as a terminal error');
   ready=true;
   assert.equal(await h.transport.resync('scene-current'),true);
   assert.equal(h.transport.locked,false);
@@ -69,6 +70,8 @@ test('rejected or unavailable sight stays locked and retries terminate',async()=
   assert.equal(requests,3,'one original request plus two bounded retries');
   assert.equal(h.transport.locked,true);
   assert.ok(!h.statuses.includes('authorized'));
+  assert.deepEqual(h.errors,['Invalid authorized V2 observer snapshot'],
+   'persistent invalid sight still reports a terminal error');
  }finally{
   await h.transport.dispose();
  }
@@ -77,8 +80,9 @@ test('rejected or unavailable sight stays locked and retries terminate',async()=
 test('scene-current runtime route reconciles the observer stream, not just local sight',()=>{
  const runtime=readFileSync(new URL('../src/engine/v2/WorldV2TabletopRuntime.js',
   import.meta.url),'utf8');
- assert.match(runtime,
-  /if\(sceneState\.reason==='scene-current'\)\{[\s\S]*?if\(stream\?\.connected\)[\s\S]*?stream\.resync\('scene-current'\)/);
+ assert.match(runtime,/if\(sceneState\.reason==='scene-current'\)[\s\S]*?reconcileSceneCurrent\(\)/);
+ assert.match(runtime,/await observer\.whenSettled\(\)/);
+ assert.match(runtime,/observer\.resync\('scene-current'\)/);
  assert.match(runtime,/if\(!dmPreview\)stream=createWorldRealtimeTransport/);
  const transport=readFileSync(new URL('../src/engine/v2/RealtimeTransport.js',
   import.meta.url),'utf8');

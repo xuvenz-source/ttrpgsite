@@ -1,15 +1,16 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "572c9565377752b89c963cedcff23e7cd145fdcf",
-  "releaseBranch": "fix/world-v2-dm-sight-recovery-2026-11-10",
+  "productionBaseSha": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
+  "releaseBranch": "fix/world-v2-serialized-sight-recovery-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
       "name": "fix/world-v2-dm-sight-recovery-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "572c9565377752b89c963cedcff23e7cd145fdcf",
-      "note": "Fail-closed DM/private observer sight recovery after scene subscription invalidation. Frontend only: scene-current observer resync and two bounded retries. Includes regression tests and acceptance guide. No SQL, preview or deployment. Await CI and designer release approval."
+      "note": "Released on production as commit e314b879 (PR #62); live DM observer race regression persists. Superseded by serialized recovery staging.",
+      "linkedPullRequest": 62
     },
     {
       "name": "stage/world-v2-live-regression-integrated-2026-11-10",
@@ -205,6 +206,13 @@
       "productionBaseSha": "bb7d058b504a960965b393d8c4e506bab2c946db",
       "note": "PR #60 released to production as 7fb2c04fe4ca85721e08772e936265a649784bda, including free_tier_rls_initplan_optimization_20261110050000 applied on production. Manual free-tier resource measurements remain outstanding.",
       "productionCommit": "7fb2c04fe4ca85721e08772e936265a649784bda"
+    },
+    {
+      "name": "fix/world-v2-serialized-sight-recovery-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
+      "linkedPullRequest": null,
+      "note": "Production incident follow-up. Stage serialized scene/observer recovery, stale-load retry, fail-closed renderer sight handshake, recovered UI state, integration regression coverage. No SQL or deployment. Await authenticated DM/player acceptance and designer release approval."
     }
   ],
   "features": [
@@ -959,10 +967,10 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "572c9565377752b89c963cedcff23e7cd145fdcf",
-    "releaseBranch": "fix/world-v2-dm-sight-recovery-2026-11-10",
+    "productionBaseSha": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
+    "releaseBranch": "fix/world-v2-serialized-sight-recovery-2026-11-10",
     "outstandingBranches": [
-      "fix/world-v2-dm-sight-recovery-2026-11-10"
+      "fix/world-v2-serialized-sight-recovery-2026-11-10"
     ],
     "stagePolicy": "One consolidated release after explicit approval. Include and verify every outstanding release-ready staged component. This V2 observer recovery is frontend only and requires authenticated DM/player live validation; the optional Supabase Nano memory trial is deferred and needs separate maintenance approval.",
     "databaseReleaseVersion": null,
