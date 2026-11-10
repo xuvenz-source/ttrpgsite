@@ -5,6 +5,7 @@
  */
 const EVENTS=new Set([
  'input.pointer.status','input.pointer.start','input.pointer.end',
+ 'input.pick',
  'input.pointer.cancel','input.pointer.blur','input.keyboard.start','input.keyboard.end',
  'movement.grabbed','movement.approved','movement.blocked','movement.released',
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
@@ -39,6 +40,7 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'observer-cursor-regression','stale-visibility-frame',
  'gesture-revoked','viewer-map-switch','permission-revoked',
  'authorization-revoked','resync-error','authorized','permission','stale',
+ 'gate','hit','owner','roster','current','origin','runtime-inactive','runtime-roster',
  'user','tool-handoff','scene','visibility','input','network',
  'authority','sequence','sprite']);
 const clock=()=>typeof performance!=='undefined'&&

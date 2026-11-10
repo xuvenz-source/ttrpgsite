@@ -6,6 +6,7 @@ import {pickWorldPointerTarget,worldMovementInputAllowed}
  from './PointerHitTest.js';
 import {wasWorldPointerDownClaimed} from './WorldPointerOwnership.js';
 import {worldGestureSelection} from './GestureSelection.js';
+import {worldV2Trace} from './WorldTrace.js';
 import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
@@ -288,6 +289,8 @@ export default function WorldV2Board(props){
   return selection.every(piece=>granted.some(v=>idOf(v)===idOf(piece)));
  };
  function resolveSelection(event,point,{keyboard=false}={}){
+  // Bounded, opt-in diagnostics: allowlisted reasons only, no token IDs.
+  const denied=reason=>{worldV2Trace.event('input.pick',reason);return null};
   // Arrow keys control the world only while the map viewport owns focus.
   // Campaign sheets, hotbar settings and other noneditable controls
   // must not accidentally move a selected token.
@@ -297,10 +300,10 @@ export default function WorldV2Board(props){
   // One editor/preview/measurement gate for pointer and keyboard.
   if(!worldMovementInputAllowed({
    active,activeMeasure,previewRequested,dmPreview,environmentEditor
-  }))return null;
+  }))return denied('gate');
   const hit=keyboard?null:pointerPieceAt(event,point);
   const kind=hit?.kind,id=hit?.id;
-  if(!keyboard&&(!id||!['token','tool'].includes(kind)))return null;
+  if(!keyboard&&(!id||!['token','tool'].includes(kind)))return denied('hit');
   const picked=keyboard?
    [...selectedRef.current.tokens.map(id=>({kind:'token',id})),
     ...selectedRef.current.tools.map(id=>({kind:'tool',id}))][0]:
@@ -314,7 +317,7 @@ export default function WorldV2Board(props){
    Boolean(t&&canControlMapToken(t,user,isDM,map.id)):
    Boolean(p&&!p.held_by_token_id&&toolCanControl(own,user,isDM));
   if(!movable||dmPreview&&(
-   picked.kind!=='token'||picked.id!==previewToken?.id))return null;
+   picked.kind!=='token'||picked.id!==previewToken?.id))return denied('owner');
   if(!keyboard){
    const prev=selectedRef.current;
    if(dmPreview&&(event.shiftKey||event.altKey||
@@ -347,19 +350,20 @@ export default function WorldV2Board(props){
    const issued=inputs.toolIssued.find(item=>item.id===piece.id);
    return row&&!row.held_by_token_id&&toolCanControl(issued,user,isDM);
   });
-  if(!selection.length||!authorizeSelection(selection))return null;
+  if(!selection.length||!authorizeSelection(selection))return denied('roster');
   if(!keyboard)setSelection(selection.filter(p=>p.kind==='token').map(p=>p.id),
    selection.filter(p=>p.kind==='tool').map(p=>p.id));
   const current=runtimeRef.current?.visibility.visiblePieces.find(
    part=>part.kind===picked.kind&&part.id===picked.id);
-  if(!current)return null;
+  if(!current)return denied('current');
   const virtual=dmPreview?runtimeRef.current?.previewPosition:null;
   const origin=virtual&&virtual.tokenId===picked.id?
    {x:virtual.x,y:virtual.y}:
    {x:current.x,y:current.y};
   if(!Number.isSafeInteger(origin.x)||!Number.isSafeInteger(origin.y))
-   return null;
+   return denied('origin');
   if(!keyboard)viewport.current?.focus?.({preventScroll:true});
+  worldV2Trace.event('input.pick','ok');
   return {mapId:map.id,origin,selection,
    mode:dmPreview?'preview':undefined,
    collisionOverride:Boolean(isDM&&!dmPreview&&

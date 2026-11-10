@@ -19,6 +19,7 @@ import {createWorldRealtimeTransport} from './RealtimeTransport.js';
 import {collisionAllowsStep} from './CollisionSolver.js';
 import {createPreviewAuthority} from './PreviewAuthority.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
+import {worldV2Trace} from './WorldTrace.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -329,13 +330,19 @@ export function createWorldV2TabletopRuntime({
    keyboardTarget,keyboardIdleMs=90}={}){
    if(disposed||input||!target)return false;
    const choose=(event,p,context)=>{
-    if(!authorized())return null;
+    if(!authorized()){
+     worldV2Trace.event('input.pick','runtime-inactive');return null;
+    }
     let picked;
-    try{picked=resolveSelection(event,p,context)}catch{return null}
+    try{picked=resolveSelection(event,p,context)}catch{
+     worldV2Trace.event('input.pick','error');return null;
+    }
     if(!picked||picked.mapId!==mapId||
      !Array.isArray(picked.selection)||!picked.selection.length||
      !picked.selection.every(piece=>vision.visiblePieces.some(
-      row=>key(row)===key(piece))))return null;
+      row=>key(row)===key(piece)))){
+     worldV2Trace.event('input.pick','runtime-roster');return null;
+    }
     if(dmPreview&&picked.mode!=='preview')return null;
     return {...picked,
      environmentRevision:manager.displayedScene.revision,
