@@ -94,7 +94,7 @@ CREATE OR REPLACE FUNCTION forge_world_v2.merge_observer_items_b07(
 RETURNS jsonb LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=''
 AS $b07$
 DECLARE old jsonb;incoming jsonb;result jsonb:='[]'::jsonb;
- merged jsonb;path jsonb;found boolean;new_ids text[]:=ARRAY[]::text[];
+ merged jsonb;path jsonb;found boolean;idx integer;
 BEGIN
  IF NOT forge_world_v2.valid_observer_items_b07(p_next) OR
   (p_pending<>'[]'::jsonb AND
@@ -376,6 +376,79 @@ BEGIN
  END LOOP;
  RETURN sent;
 END $b07$;
+
+-- Replacement of the existing private server-side recipient-LOS publisher.
+-- Exact source-derived V2 selection, visibility, membership and fog checks
+-- retained; ONLY the final realtime.send is replaced by bounded queueing.
+CREATE OR REPLACE FUNCTION forge_world_v2.publish_approved_observers(
+ p_session forge_world_v2.motion_sessions,p_from jsonb,p_accepted jsonb)
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $
+DECLARE audience record;part jsonb;waypoint jsonb;
+ viewer_role text;scene jsonb;grid record;
+ path jsonb;items jsonb;world_x integer;world_y integer;
+ start_x integer;start_y integer;status integer;
+ piece_kind text;piece_id uuid;cursor bigint;sent integer:=0;
+BEGIN
+ IF p_session.actor_id<>auth.uid() OR p_session.status<>'active' OR
+  p_session.mode='preview' OR NOT forge_world_v2.session_valid(p_session) OR
+  jsonb_typeof(p_accepted)<>'array' OR
+  jsonb_array_length(p_accepted) NOT BETWEEN 1 AND 24 OR
+  NOT forge_world_v2.valid_point(p_from)
+ THEN RETURN 0;END IF;
+ SELECT env.live INTO scene FROM public.map_environments env
+ WHERE env.map_id=p_session.map_id AND
+  env.campaign_id=p_session.campaign_id;
+ SELECT m.grid_size,
+  floor(m.width/m.grid_size)::integer AS width_cells,
+  floor(m.height/m.grid_size)::integer AS height_cells
+ INTO grid FROM public.battle_maps m
+ WHERE m.id=p_session.map_id AND m.campaign_id=p_session.campaign_id
+  AND m.grid_size>0;
+ IF NOT FOUND THEN RETURN 0;END IF;
+ FOR audience IN
+  SELECT m.user_id FROM public.campaign_members m
+  WHERE m.campaign_id=p_session.campaign_id
+   AND m.user_id<>p_session.actor_id AND m.role IN ('player','dm')
+  ORDER BY CASE WHEN m.role='dm' THEN 0 ELSE 1 END,
+   m.user_id LIMIT 32
+ LOOP
+  viewer_role:=forge_world_v2.viewer_on_map(
+   p_session.campaign_id,p_session.map_id,audience.user_id);
+  IF viewer_role IS NULL THEN CONTINUE;END IF;
+  items:='[]'::jsonb;
+  FOR part IN SELECT value FROM jsonb_array_elements(p_session.selection) LOOP
+   piece_kind:=part->>'kind';piece_id:=(part->>'id')::uuid;
+   start_x:=(part->>'x')::integer+(p_from->>'x')::integer-
+    p_session.origin_x;
+   start_y:=(part->>'y')::integer+(p_from->>'y')::integer-
+    p_session.origin_y;
+   path:=jsonb_build_array(jsonb_build_object('x',start_x,'y',start_y));
+   FOR waypoint IN SELECT value FROM jsonb_array_elements(p_accepted) LOOP
+    world_x:=(part->>'x')::integer+(waypoint->>'x')::integer-
+      p_session.origin_x;
+    world_y:=(part->>'y')::integer+(waypoint->>'y')::integer-
+      p_session.origin_y;
+    path:=path||jsonb_build_array(
+     jsonb_build_object('x',world_x,'y',world_y));
+   END LOOP;
+   status:=forge_world_v2.observer_path_status(
+    p_session,audience.user_id,piece_kind,piece_id,path,scene,
+    grid.grid_size,grid.width_cells,grid.height_cells);
+   IF status=1 THEN
+    items:=items||jsonb_build_array(jsonb_build_object(
+     'kind',piece_kind,'id',piece_id,'action','path','path',path));
+   ELSIF status=2 THEN
+    items:=items||jsonb_build_array(jsonb_build_object(
+     'kind',piece_kind,'id',piece_id,'action','hide'));
+   END IF;
+  END LOOP;
+  IF jsonb_array_length(items)=0 THEN CONTINUE;END IF;
+  sent:=sent+forge_world_v2.queue_recipient_observer_b07(
+   p_session,audience.user_id,items);
+ END LOOP;
+ RETURN sent;
+END $;
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA forge_world_v2
  FROM PUBLIC,anon,authenticated;
