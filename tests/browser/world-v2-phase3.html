@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>World V2 Phase 3 Browser Pointer Fixture</title>
+<style>
+ *{box-sizing:border-box}body{margin:0;background:#111}
+ #viewport{width:480px;height:440px;overflow:hidden;position:relative}
+ #board{position:absolute;left:0;top:0;width:400px;height:400px;background:#304056}
+ #sprites{position:absolute;inset:0;z-index:2;pointer-events:none}
+ #token{position:absolute;left:80px;top:80px;width:80px;height:80px;
+  pointer-events:auto;touch-action:none;user-select:none;background:#739ed5;
+  border:2px solid white}
+ #art{position:absolute;inset:0;pointer-events:auto;display:grid;place-items:center}
+ #status{position:absolute;right:0;top:0;width:18px;height:18px;z-index:4}
+ #editor{position:absolute;inset:0;z-index:24;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="viewport" tabindex="0"><div id="board">
+ <div id="sprites"><div id="token" data-world-kind="token"
+  data-world-id="40000000-0000-4000-8000-000000000001">
+  <div id="art">TOKEN</div><button id="status" type="button">!</button>
+ </div></div>
+ <svg id="editor" class="map-env-overlay map-env-editing"
+  viewBox="0 0 400 400"></svg>
+</div></div>
+<script type="module">
+import {createInputController} from '/src/engine/v2/InputController.js';
+import {pickWorldPointerTarget,worldMovementInputAllowed}
+ from '/src/engine/v2/PointerHitTest.js';
+import {wasWorldPointerDownClaimed}
+ from '/src/engine/v2/WorldPointerOwnership.js';
+const viewport=document.getElementById('viewport');
+const board=document.getElementById('board');
+const sprites=document.getElementById('sprites');
+const editor=document.getElementById('editor');
+const status=document.getElementById('status');
+const MAP='10000000-0000-4000-8000-000000000001';
+const TOKEN='40000000-0000-4000-8000-000000000001';
+const PLAYER='30000000-0000-4000-8000-000000000001';
+const DM='30000000-0000-4000-8000-000000000002';
+let mode='player',active=false;
+let starts=[],moves=[],ends=0,cancellations=[],marquees=0,claims=0;
+let editorDown=0,statusClicks=0,captures=0;
+const token={id:TOKEN,map_id:MAP,owner_id:PLAYER,visible:true,span_x:2,span_y:2};
+const visiblePieces=[{kind:'token',id:TOKEN,x:2,y:2}];
+viewport.addEventListener('gotpointercapture',()=>{captures++});
+board.addEventListener('pointerdown',event=>{
+ if(wasWorldPointerDownClaimed(event)){claims++;return}
+ if(event.target.closest?.('.map-env-editing')){editorDown++;return}
+ if(event.target.closest?.('[data-world-id],button'))return;
+ marquees++;
+},true);
+status.addEventListener('click',()=>{statusClicks++});
+const controller={
+ get active(){return active},
+ beginGesture(request){active=true;starts.push(request.mode);return true},
+ updateGesture(point){moves.push({x:point.x,y:point.y});return true},
+ endGesture(){active=false;ends++;return Promise.resolve({status:'committed'})},
+ cancelGesture(reason){active=false;cancellations.push(reason)}
+};
+const pointFromEvent=event=>{
+ const rect=board.getBoundingClientRect();
+ return {x:(event.clientX-rect.left)/40,y:(event.clientY-rect.top)/40};
+};
+const input=createInputController({
+ target:viewport,controller,pointFromEvent,
+ resolveSelection:(event,point)=>{
+  const isDM=mode!=='player',preview=mode==='preview';
+  if(!worldMovementInputAllowed({
+   active:true,previewRequested:preview,dmPreview:preview,
+   environmentEditor:{enabled:mode==='locked'||mode==='unlocked',
+    lockTokens:mode==='locked'}
+  }))return null;
+  const hit=pickWorldPointerTarget({event,point,visiblePieces,tokens:[token],
+   user:isDM?DM:PLAYER,isDM,mapId:MAP});
+  return hit?{mapId:MAP,selection:[hit],origin:{x:2,y:2},
+   mode:preview?'preview':undefined}:null;
+ }
+});
+input.mount();
+function reset(){
+ starts=[];moves=[];ends=0;cancellations=[];marquees=0;claims=0;
+ editorDown=0;statusClicks=0;captures=0;
+}
+function setMode(next){
+ mode=next;reset();
+ const editing=mode==='locked'||mode==='unlocked';
+ editor.style.pointerEvents=editing?'auto':'none';
+ sprites.style.zIndex=mode==='unlocked'?'1002':'2';
+}
+window.__v2Probe={
+ setMode,snapshot:()=>({mode,starts:[...starts],moves:[...moves],
+  ends,cancellations:[...cancellations],marquees,claims,editorDown,
+  statusClicks,captures,active}),
+ bounds:()=>{const b=document.getElementById('art').getBoundingClientRect(),
+  statusRect=status.getBoundingClientRect();
+  return {x:b.left+20,y:b.top+35,statusX:statusRect.left+7,
+   statusY:statusRect.top+7}},
+ dispose:()=>input.unmount()
+};
+setMode('player');
+</script>
+</body>
+</html>
