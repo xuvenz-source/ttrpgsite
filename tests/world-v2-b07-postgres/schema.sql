@@ -1,5 +1,13 @@
 -- B07 fixture extension for disposable postgres:17 only.
 -- Base tests/world-v2-b04-postgres/schema.sql is loaded first.
+-- Reconcile the minimal B04 fixture's numeric map dimensions with
+-- actual live production types (read-only pg_catalog checked 11 Nov 2026).
+-- The original V2 observer_path_status signature requires integer gridSize.
+ALTER TABLE public.battle_maps
+ ALTER COLUMN grid_size TYPE integer USING grid_size::integer,
+ ALTER COLUMN width TYPE integer USING width::integer,
+ ALTER COLUMN height TYPE integer USING height::integer;
+
 CREATE SCHEMA realtime;
 CREATE TABLE realtime.b07_outbox(
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
