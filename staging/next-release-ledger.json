@@ -453,12 +453,12 @@
       "releaseReady": false,
       "documentationOnly": false,
       "linkedPullRequest": 84,
-      "note": "B09 only: keyboard queued keys resume exclusively from fresh authorized canonical sight, multi-finger touch cancels motion, mixed group refuses unauthorized members, preview progress anchored to last authorized local step/revision. No schema, production, feature activation or Vercel release.",
+      "note": "B09 only: keyboard queued keys resume exclusively from fresh authorized canonical sight, multi-finger touch cancels motion, mixed group refuses unauthorized members, preview progress anchored to last authorized local step/revision. No schema, production, feature activation or Vercel release. Exact canonical endpoint and unchanged mixed selection are verified before any backlog replay. Preview terminal reply now carries its local approved endpoint.",
       "testEvidence": {
         "initialSourceHead": "3055ec302f151f3ea980d3d820d0c31d2a114c36",
         "initialGeneralCiRun": 42847563283,
         "initialFrontendTests": 816,
-        "finalExactHeadStatus": "PENDING"
+        "finalExactHeadStatus": "PENDING final after B09 canonical-anchor test refinement"
       }
     }
   ],
@@ -985,7 +985,7 @@
       "id": "world-v2-b09-keyboard-touch-group-preview-parity",
       "status": "staged-unreleased",
       "releaseReady": false,
-      "description": "B09 V2 keyboard queued input fail-closed, multi-touch/pinch gesture cancellation, mixed-group all-or-none security, nonpersistent preview anchored to approved point.",
+      "description": "B09 V2 keyboard queued input fail-closed, multi-touch/pinch gesture cancellation, mixed-group all-or-none security, nonpersistent preview anchored to approved point. Includes exact postcommit signed-sight anchor and ordered group matching against buffered keyboard input.",
       "sources": [
         "stage/world-v2-b09-input-parity-2026-11-11"
       ],
