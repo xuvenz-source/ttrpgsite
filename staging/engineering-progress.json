@@ -58,7 +58,20 @@
         "tests/world-v2-phase1-trace-2026-11-10.test.mjs",
         "tests/world-v2-real-react-board-drag.test.mjs"
       ],
-      "measurementsCollected": "NONE — staged instrumentation is not live authenticated user telemetry"
+      "measurementsCollected": "NONE — staged instrumentation is not live authenticated user telemetry",
+      "verification": {
+        "referenceImplementationCommit": "8c716305f61c8217c98debd35a2a70d4cfe56ed2",
+        "exactHeadBuildRuns": [
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804010423",
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804000457"
+        ],
+        "status": "SUCCESS",
+        "tests": 772,
+        "failed": 0,
+        "skipped": 0,
+        "includes": "Node trace and headless actual React drag harness; npm audit, Vite build and Deno Edge checks",
+        "excluded": "Real authenticated DM/P1/P2 browser sessions and production latency measurements were not run. A05 stacked PR CodeQL/isolated Postgres checks not independently established on this head."
+      }
     },
     "A06": {
       "status": "NOT STARTED"
@@ -269,9 +282,15 @@
       ],
       "securityParity": "No user IDs, token IDs, positions or RPC payloads stored; allowlisted constant categories; client-memory-only and opt-in. No change to rendering/sight/collision authority or movement RPC protocol.",
       "evidence": {
-        "unitTests": "Written; final CI check on PR head pending",
-        "browserHarness": "Existing isolated headless real React browser drag test extended with trace assertions; not authenticated live users",
-        "authenticatedLiveResults": "NOT RUN"
+        "unitTests": "Both exact implementation-head GitHub staged verification runs succeeded at 8c716305..., 772 pass / 0 fail / 0 skip. Includes four new A05 trace checks.",
+        "browserHarness": "Headless Chromium real React board drag passed (owned player, DM, unlocked-editor DM, DM player preview) with opt-in trace assertions. This uses fake authority, NOT authenticated live Supabase.",
+        "authenticatedLiveResults": "NOT RUN",
+        "productionBuild": "Vite build and Deno username Edge Function checks successful; npm audit --omit=dev --audit-level=high found 0 vulnerabilities.",
+        "movementMeasurements": "NOT RUN. A06 to capture DM/P1/P2 actual traces after authorized live testing.",
+        "ciLinks": [
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804010423",
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804000457"
+        ]
       },
       "sqlDeployment": "NONE",
       "blockers": [
