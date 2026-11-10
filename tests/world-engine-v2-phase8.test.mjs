@@ -888,3 +888,39 @@ test('Phase 5 dirty rectangles are bounded and cannot leave older bright pixels'
  assert.equal(bad.cells,100);
  assert.equal(canvas.style.backgroundColor,'transparent');
 });
+
+test('Phase 5 500-sprite fog change paints only affected authorized piece',()=>{
+ const ctx=make();
+ const rows=Array.from({length:500},(_,i)=>({
+  kind:'token',id:'40000000-0000-4000-8000-'+String(i).padStart(12,'0'),
+  x:i===0?8:1,y:i===0?8:1
+ }));
+ assert.equal(ctx.renderer.adoptScene(scene()),true);
+ assert.equal(ctx.renderer.adoptVisibility(sight({visiblePieces:rows})),true);
+ ctx.clock.flush(1000);
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ const watched=ctx.renderer.getSpriteElement('token',rows[0].id);
+ const unaffected=ctx.renderer.getSpriteElement('token',rows[1].id);
+ const before=ctx.renderer.stats;
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:6,visionEpoch:7,visiblePieces:rows,
+  visible:allCells.filter(cell=>cell!==88)
+ })),true);
+ ctx.clock.flush(1040);
+ const after=ctx.renderer.stats;
+ assert.equal(watched.style.visibility,'hidden',
+  'server-concealed cell must hide the affected token immediately at RAF');
+ assert.equal(unaffected.style.visibility,'visible');
+ assert.equal(ctx.renderer.getSpriteElement('token',rows[0].id),watched);
+ assert.equal(ctx.renderer.getSpriteElement('token',rows[1].id),unaffected);
+ assert.equal(after.spritePaints-before.spritePaints,1,
+  '499 unchanged sprites must never repaint on a distant fog change');
+ assert.equal(after.rosterReconciliations,before.rosterReconciliations);
+ assert.equal(after.spriteCreates,500);
+ assert.equal(after.spriteRemoves,0);
+ assert.equal(after.fullFogDraws,before.fullFogDraws);
+ assert.equal(after.staticDraws,before.staticDraws);
+ assert.equal(after.terrainAssignments,1);
+ assert.ok(after.fogPaintedCells-before.fogPaintedCells<=9);
+ ctx.renderer.dispose();
+});
