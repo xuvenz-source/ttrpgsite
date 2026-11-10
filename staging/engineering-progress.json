@@ -211,7 +211,8 @@
       "security": "Uses only normalized server predictionGrants; requires current scope/viewer/map/scene/permission/visionEpoch/cursor and all selected-piece quadrants, denies >one-cell, resets on server ACK, sight revocation, missing grant, blocked first step, no private geometry, no writes or sockets",
       "knownGap": "A06/Gate A remain blocked; PR #71 security/recovery amendments pending; B04-H39 altered same-seq public Advance retry returns cached ACK; B07 observer budget and B08–B10 integration not staged",
       "gateA": "NOT PASSED",
-      "next": "B07 recipient-aware observer frequency/budget; separately authorize any B07 staging or complete Gate A"
+      "next": "B07 recipient-aware observer frequency/budget; separately authorize any B07 staging or complete Gate A",
+      "pullRequest": 81
     },
     "B07": {
       "status": "NOT STARTED"
@@ -639,7 +640,9 @@
         "B07 recipient emission budget and B08–B10 integration unverified",
         "No measured E2E p95 or player map flash/terrain/sprite remount evidence on staging production"
       ],
-      "next": "B07 ONLY with new narrow staging authorization or Gate A completion; flag OFF until approved QA build"
+      "next": "B07 ONLY with new narrow staging authorization or Gate A completion; flag OFF until approved QA build",
+      "pullRequest": 81,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/81"
     }
   },
   "pendingWork": [
