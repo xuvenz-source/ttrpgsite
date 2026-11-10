@@ -19,12 +19,18 @@ CREATE TABLE forge_world_v2.observer_pending_b07(
  environment_revision bigint NOT NULL,
  permission_generation bigint NOT NULL,
  pending jsonb NOT NULL DEFAULT '[]'::jsonb,
+ -- Accepted batches are bounded at 64 per session and 128 attempted cells;
+ -- backlog entries retain entire contiguous batches when a 25-point frame
+ -- is full or the global movement message budget is exhausted.
+ deferred jsonb NOT NULL DEFAULT '[]'::jsonb,
  last_sent_at timestamptz,
  updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  expires_at timestamptz NOT NULL,
  PRIMARY KEY(session_id,viewer_id),
  CHECK(jsonb_typeof(pending)='array'),
- CHECK(jsonb_array_length(pending)<=48)
+ CHECK(jsonb_array_length(pending)<=48),
+ CHECK(jsonb_typeof(deferred)='array'),
+ CHECK(jsonb_array_length(deferred)<=63)
 );
 ALTER TABLE forge_world_v2.observer_pending_b07 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE forge_world_v2.observer_pending_b07
@@ -241,8 +247,13 @@ BEGIN
  filtered:=forge_world_v2.filter_pending_observer_b07(
   p_session,p_viewer,q.pending);
  IF jsonb_array_length(filtered)=0 THEN
+  -- Even filtered-out stale/hidden paths must retire in queue order.
   UPDATE forge_world_v2.observer_pending_b07
-   SET pending='[]'::jsonb,updated_at=p_now
+   SET pending=CASE WHEN jsonb_array_length(q.deferred)>0
+      THEN q.deferred->0 ELSE '[]'::jsonb END,
+    deferred=CASE WHEN jsonb_array_length(q.deferred)>0
+      THEN q.deferred-0 ELSE '[]'::jsonb END,
+    updated_at=p_now
    WHERE session_id=p_session.id AND viewer_id=p_viewer;
   RETURN 0;
  END IF;
@@ -276,7 +287,11 @@ BEGIN
   UPDATE forge_world_v2.observer_budget_b07
   SET emitted=emitted+1 WHERE id=1;
   UPDATE forge_world_v2.observer_pending_b07
-  SET pending='[]'::jsonb,last_sent_at=p_now,updated_at=p_now
+  SET pending=CASE WHEN jsonb_array_length(q.deferred)>0
+      THEN q.deferred->0 ELSE '[]'::jsonb END,
+    deferred=CASE WHEN jsonb_array_length(q.deferred)>0
+      THEN q.deferred-0 ELSE '[]'::jsonb END,
+    last_sent_at=p_now,updated_at=p_now
   WHERE session_id=p_session.id AND viewer_id=p_viewer;
   outcome:=1;
  EXCEPTION WHEN others THEN
@@ -296,7 +311,8 @@ CREATE OR REPLACE FUNCTION forge_world_v2.queue_recipient_observer_b07(
 RETURNS integer LANGUAGE plpgsql VOLATILE SECURITY INVOKER SET search_path=''
 AS $b07$
 DECLARE q forge_world_v2.observer_pending_b07%ROWTYPE;
- merged jsonb;count_sent integer:=0;has_hide boolean;
+ merged jsonb;new_deferred jsonb;
+ count_sent integer:=0;has_hide boolean;last_index integer;
 BEGIN
  IF auth.uid() IS NULL OR p_session.actor_id IS DISTINCT FROM auth.uid() OR
   p_session.status<>'active' OR
@@ -322,20 +338,37 @@ BEGIN
   q.environment_revision<>p_session.environment_revision OR
   q.permission_generation<>p_session.permission_generation
  THEN RETURN 0;END IF;
- merged:=forge_world_v2.merge_observer_items_b07(q.pending,p_items);
- IF merged IS NULL THEN
-  -- The receiver supports max 25 points per piece; never truncate or
-  -- replace a turn with an endpoint. Flush old safe prefix first.
-  IF q.pending<>'[]'::jsonb THEN
-   count_sent:=forge_world_v2.flush_recipient_observer_b07(
-    p_session,p_viewer,p_now);
-   IF count_sent<>1 THEN RETURN 0;END IF;
+ -- Never drop an accepted batch just because a previous 25-point
+ -- recipient frame is full or no Realtime budget is currently available.
+ -- The V2 session itself admits max 64 advances; first frame + 63 extra
+ -- frames is a deterministic, bounded backlog. Pop in FIFO order.
+ new_deferred:=q.deferred;
+ IF q.deferred='[]'::jsonb THEN
+  merged:=forge_world_v2.merge_observer_items_b07(q.pending,p_items);
+  IF merged IS NULL THEN
+   IF jsonb_array_length(new_deferred)>=63 THEN
+    RAISE EXCEPTION 'B07 bounded pending queue exhausted';
+   END IF;
+   merged:=q.pending;
+   new_deferred:=jsonb_build_array(p_items);
   END IF;
-  merged:=forge_world_v2.merge_observer_items_b07('[]'::jsonb,p_items);
-  IF merged IS NULL THEN RETURN count_sent;END IF;
+ ELSE
+  last_index:=jsonb_array_length(q.deferred)-1;
+  merged:=forge_world_v2.merge_observer_items_b07(
+   q.deferred->last_index,p_items);
+  IF merged IS NULL THEN
+   IF jsonb_array_length(new_deferred)>=63 THEN
+    RAISE EXCEPTION 'B07 bounded pending queue exhausted';
+   END IF;
+   new_deferred:=new_deferred||jsonb_build_array(p_items);
+  ELSE
+   new_deferred:=jsonb_set(new_deferred,
+    array[last_index::text],merged);
+  END IF;
+  merged:=q.pending;
  END IF;
  UPDATE forge_world_v2.observer_pending_b07
- SET pending=merged,updated_at=p_now
+ SET pending=merged,deferred=new_deferred,updated_at=p_now
  WHERE session_id=p_session.id AND viewer_id=p_viewer;
  SELECT EXISTS(SELECT 1 FROM jsonb_array_elements(merged) i
   WHERE i->>'action'='hide') INTO has_hide;
