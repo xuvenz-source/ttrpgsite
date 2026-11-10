@@ -97,7 +97,7 @@ The published candidate fixture lacked protected fog/collision, door, one-way vi
 
 ## 6. Gate decision and outstanding work
 
-**Source-integrated static/isolated checks**: evidence from B10 exact-head GitHub Actions, not a live deployment. CodeQL security-extended scan enabled for this staging branch without switching off Vercel preview protection.
+**Source-integrated static/isolated checks**: evidence from B10 GitHub Actions, not a live deployment. CodeQL security-extended scan enabled for this staging branch without switching off Vercel preview protection. The project's two headless Chromium browser harnesses intermittently failed to open a DevTools port when `node --test` ran many worker processes concurrently. B10 retains the protected `run: npm test` workflow policy and changes only `package.json`'s `test` script to `node --test --test-concurrency=1 tests/*.test.mjs`, running the **same complete suite without skipping browser cases**. This stabilizes the free GitHub runner and does not establish real authenticated multiplayer acceptance.
 
 **Gate A:** BLOCKED; real latency/flash and fixture acceptance not executed.  
 **Gate B:** **NO-GO**; no measured responsive multiplayer improvement, missing B03 on active call path and unresolved budget/sight recovery.  
