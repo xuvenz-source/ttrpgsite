@@ -256,12 +256,15 @@
     },
     {
       "name": "fix/world-v2-live-authority-continuity-2026-11-10",
-      "status": "staged",
+      "status": "closed-superseded",
       "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
       "linkedPullRequest": 71,
       "releaseReady": false,
       "documentationOnly": false,
-      "note": "Narrow signed-sight hold + trailing commit reads. A02 decision: AMEND BEFORE MERGE; release blocked pending hard timeout, stream-locked input gating, recovery tests, selective reconciliation and final CI."
+      "note": "PR #71 CLOSED UNMERGED after B10-R04 direct diff/security review. Safe trailing V2 token/tool reconciliation ported to draft PR #89; unsafe sight hold rejected. Retain historical record but exclude from outstanding release branch set.",
+      "productionDeployed": false,
+      "closedOn": "2026-11-11",
+      "supersededByPullRequest": 89
     },
     {
       "name": "stage/engineering-workflow-and-ledger-a03-2026-11-10",
@@ -560,11 +563,11 @@
       "gateDecision": "NO_GO",
       "featureFlagsActivated": false,
       "docs": "docs/architecture/world-v2-b10-r04-pr71-migration-rehearsal.md",
-      "note": "R04 safe subset PR71: 280ms burst-level token/tool canonical refresh, cancelled on map change; reject PR71 unbounded sight hold and stream-connection gesture gate. One-transaction ephemeral PG17 install of 5 candidate SQL files, private ACL assertions and exact rollback digests. Test campaign disposable but Auth/LOS gates still blocked.",
+      "note": "R04 safe subset PR71: 280ms burst-level token/tool canonical refresh, cancelled on map change; reject PR71 unbounded sight hold and stream-connection gesture gate. One-transaction ephemeral PG17 install of 5 candidate SQL files, private ACL assertions and exact rollback digests. Test campaign disposable but Auth/LOS gates still blocked. PR #71 was closed unmerged; R04 retains its safe coalescing only. SQL atomic install+rollback, full 841 test suite and CodeQL passed before this ledger reconciliation.",
       "testEvidence": {
-        "atomicDryRun": "PENDING exact-head",
-        "frontend": "PENDING exact-head",
-        "codeQL": "PENDING exact-head",
+        "atomicDryRun": "PASS #42879039106",
+        "frontend": "PASS 841/841 #42879038586",
+        "codeQL": "PASS #42879038807",
         "realAuthMatrix": "NOT_RUN"
       }
     }
@@ -1546,13 +1549,13 @@
     "B10-R01 candidate routes fresh private Core advances through B03, preserving B08 exact replay and restricted private function grants. Source-real isolated tests passed; live RPC remains ORIGINAL and unmodified.",
     "B10-R02: default-off authenticated six-second vision fallback can recover canonical visible positions/hides when private Realtime budget loses all packets, with signed roster/cursor gates; browser offline/background and ambiguous same-origin deferred frames prevent hard guarantees. Gate B NO-GO.",
     "B10-R03 nonapplied private terminal queue candidate retires unsent coordinate paths after canonical Commit so exact replay cannot reanimate old coordinates; certified hides only survive. DO NOT apply without B10-R02 signed sight fallback and A06/PR71/real migration gates. Release NO_GO.",
-    "B10-R04: never deploy PR71 sight-hold; it has no hard deadline during private stream lock. Existing renderer revoke preserves fail-closed sight; 3 existing DM grab tests vetoed an over-restrictive connection guard. Safe trailing 280ms app reads ported. Atomic five-candidate migration source rehearsal rolls back in isolated PG17. No live production changes."
+    "B10-R04: never deploy PR71 sight-hold; it has no hard deadline during private stream lock. Existing renderer revoke preserves fail-closed sight; 3 existing DM grab tests vetoed an over-restrictive connection guard. Safe trailing 280ms app reads ported. Atomic five-candidate migration source rehearsal rolls back in isolated PG17. No live production changes.",
+    "11 Nov 2026 PR #71 closed unmerged and marked superseded; do not restore its unlimited certified sight hold. B10-R04 source/SQL/CodeQL tests passed; permission-secure C02 bounded continuity still release-blocked."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
     "releaseBranch": null,
     "outstandingBranches": [
-      "fix/world-v2-live-authority-continuity-2026-11-10",
       "stage/engineering-workflow-and-ledger-a03-2026-11-10",
       "stage/world-v2-a06-readonly-baseline-2026-11-10",
       "stage/world-v2-authenticated-fixture-a04-2026-11-10",
