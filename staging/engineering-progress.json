@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B07",
+  "nextStep": "B08",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -215,7 +215,32 @@
       "pullRequest": 81
     },
     "B07": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
+      "basedOnStagingHead": "9aac3b0cfacf3131a5438fc34e8badb31b9b42e7",
+      "designDocument": "docs/architecture/world-v2-b07-private-observer-cadence.md",
+      "sqlCandidate": "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+      "postgresWorkflow": ".github/workflows/world-v2-b07-postgres.yml",
+      "tests": [
+        "tests/world-v2-b07-postgres/schema.sql",
+        "tests/world-v2-b07-postgres/extract_viewer_authority.py",
+        "tests/world-v2-b07-postgres/hostile.sql",
+        "tests/world-v2-b07-postgres/run.sh"
+      ],
+      "scope": "Nonapplied private server-side per-recipient ordered observer queue, 200ms normal coalescing, bounded 64-frame FIFO, 20/s movement broadcasts plus up to 10/s priority hides, private cursor increment on actual send, auth/LOS recheck and expired queue cleanup",
+      "mode": "SQL CANDIDATE NONAPPLIED; active public V2 Advance/Commit/Realtime unchanged until separately reviewed migration/integration",
+      "verification": "Source+test exact head b5eaf6f9a6a11730120db1f708881db036ed312a passed isolated PG17 CI #42837859102: 35 SQL assertions and 2 direct denied role calls; standard CI #42837858900: 803/803 tests, npm audit zero vulnerabilities, Vite build, Edge Deno checks. Final PR-head CI recheck pending.",
+      "security": "Only current server-authorized recipient IDs and private LOS-filtered accepted contiguous paths; no client broadcaster, no hidden geometry, no public grants, observer cursor only after successful private send; queued segments retained across Realtime outages and budget throttling.",
+      "knownGaps": [
+        "Terminal flush NOT wired into public commit; requires B08 and must succeed only after canonical commit",
+        "Urgent hide ordering under saturated FIFO and recipient map/fog changes must be tested end-to-end before release",
+        "A06/Gate A real DM/P1/P2 staging fixture, latency p95/flash counts not run",
+        "B04 H39 altered same-sequence payload receives cached prior ACK",
+        "PR #71 observer/recovery amendments still AMEND BEFORE MERGE",
+        "No full Supabase JWT/Realtime LOS integration, free-tier quota or concurrency stress test"
+      ],
+      "gateA": "NOT PASSED",
+      "next": "B08, independently authorized staging-only or complete Gate A"
     },
     "B08": {
       "status": "NOT STARTED"
@@ -643,6 +668,38 @@
       "next": "B07 ONLY with new narrow staging authorization or Gate A completion; flag OFF until approved QA build",
       "pullRequest": 81,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/81"
+    },
+    "B07": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B07",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
+      "stackedOnPullRequest": 81,
+      "scope": "Stage original V2 private per-viewer LOS publisher with bounded recipient message queue/transactional budget and isolated source-real PostgreSQL acceptance, no live schema or runtime activation",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+        ".github/workflows/world-v2-b07-postgres.yml",
+        "tests/world-v2-b07-postgres/schema.sql",
+        "tests/world-v2-b07-postgres/extract_viewer_authority.py",
+        "tests/world-v2-b07-postgres/hostile.sql",
+        "tests/world-v2-b07-postgres/run.sh",
+        "docs/architecture/world-v2-b07-private-observer-cadence.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Isolated PostgreSQL 17 PG #42837859102 at b5eaf6f9a6a11730120db1f708881db036ed312a: 35 passed SQL assertions, anon+authenticated denied direct private helper. Full standard CI #42837858900: 803/803 tests, 0 dependency vulnerabilities, Vite build and Deno checks succeeded.",
+      "securityParity": "Verifies source-real viewer_on_map/observer_path_status (controlled deeper LOS fixture), private topics, monotonic per-recipient cursors, no duplicate sends, no unseen route leak, abort/ACL revocation, global budget and overflow FIFO preserving accepted segments. No live Auth/fog or performance certification.",
+      "sqlDeployment": "NONE — candidate outside migration discovery; no production SQL",
+      "blockers": [
+        "Gate A NOT PASSED; A06 BLOCKED",
+        "B08 post-commit terminal flush is not wired into public API; integration/release blocker",
+        "Priority hide delayed behind saturated FIFO requires B08/B10 adversarial acceptance",
+        "B04 H39 current public Advance same-seq changed payload not denied",
+        "PR #71 security/recovery amendment blockers",
+        "Real DM/P1/P2 protected sight, end-to-end p95, flashing and Realtime quota measurements not run"
+      ],
+      "next": "B08 ONLY, with separate staging-only instruction or successful Gate A"
     }
   },
   "pendingWork": [
@@ -710,6 +767,20 @@
       "status": "BLOCKED",
       "ownerStep": "B08",
       "notes": "Source-real public.advance_world_motion_v2 same sequence with different targets returns previously cached ACK rather than a generic denial; B04 H39 verified no new motion/broadcast. Record strict same-payload retry hash/compare and hostile test before Gate B. Do not confuse harmless replay side effects with contract compliance."
+    },
+    {
+      "id": "B07-TERMINAL-FLUSH-B08",
+      "category": "security-integration",
+      "status": "BLOCKED",
+      "ownerStep": "B08",
+      "notes": "B07 private buffered paths must be drained only after an authenticated successful V2 atomic commit; budget exhaustion, cancel/expiry, hidden viewer and lost-ACK recovery require adversarial tests. B07 SQL is nonapplied."
+    },
+    {
+      "id": "B07-HIDE-PRIORITY-B08",
+      "category": "security-integration",
+      "status": "BLOCKED",
+      "ownerStep": "B08",
+      "notes": "Priority hide while 25-point FIFO and project Realtime cap are saturated must avoid revealing hidden continuation and bound retention of a previously visible sprite; verify private per-recipient resync, no silent disclosure."
     }
   ],
   "sourceOfTruthRules": [
@@ -784,6 +855,20 @@
         "Do not stage B07 or assume Gate B passage from deterministic CI",
         "Keep B04-H39 altered same-sequence replay as security blocker; PR #71 still AMEND BEFORE MERGE",
         "No live p95, fog exposure or real authenticated three-account UX claims"
+      ]
+    },
+    {
+      "id": "B07-PRIVATE-OBSERVER-STAGING-ONLY-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly said 'Alright proceed' immediately after B06 handoff naming B07 as the next step",
+      "appliesTo": "B07 only: nonapplied private recipient observer coalescing SQL candidate, isolated PostgreSQL role/traffic tests, documentation and engineering ledgers",
+      "rationale": "A private, server-filtered and bounded staging candidate can be tested against source-real SQL without deploying or changing live campaign state while A06 authenticated three-account Gate A remains blocked.",
+      "constraints": [
+        "A06 BLOCKED, Gate A NOT PASSED; no waiver of release qualification",
+        "Candidate remains under supabase/candidates, not migrations: no live Supabase DDL/DML, migrations, public grants, Edge changes or Vercel deployment",
+        "B08 MUST integrate verified post-successful-commit terminal flush, own idempotent reconciliation and review hide priority; B07 is not release ready",
+        "B04 H39 same-seq changed-payload cached ACK and PR #71 security/recovery amendments remain blockers",
+        "No staging flag activation, PR merge, live DM/P1/P2 test or B08 implementation authorized by this one microstep"
       ]
     }
   ]
