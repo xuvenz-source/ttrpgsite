@@ -196,6 +196,13 @@ BEGIN
  UPDATE forge_world_v2.motion_sessions SET status='committed'
  WHERE id=session_uuid;
  old_sent:=(SELECT count(*) FROM realtime.b07_outbox);
+ RAISE NOTICE 'B07 terminal pending: %',(
+  SELECT jsonb_agg(jsonb_build_object('viewer',viewer_id,
+   'pending',jsonb_array_length(pending),'deferred',jsonb_array_length(deferred),
+   'last_sent_at',last_sent_at,'expires_at',expires_at))
+  FROM forge_world_v2.observer_pending_b07 WHERE session_id=session_uuid);
+ RAISE NOTICE 'B07 terminal outbox before: %, budget: %',
+  old_sent,(SELECT emitted FROM forge_world_v2.observer_budget_b07 WHERE id=1);
  PERFORM public.b07_assert(
   forge_world_v2.flush_session_observers_b07(session_uuid)=1 AND
   (SELECT count(*)=old_sent+1 FROM realtime.b07_outbox),
