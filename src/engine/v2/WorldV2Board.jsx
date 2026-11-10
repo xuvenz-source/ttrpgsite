@@ -794,7 +794,7 @@ export default function WorldV2Board(props){
    onMove={onMoveHandoutPin} onRead={onReadHandoutPin}
    onCollect={onCollectHandoutPin} onDelete={onDeleteHandoutPin}
    onSelect={onSelectHandoutPin}/>
-  {isDM&&!dmPreview&&environment&&<MapEnvironmentOverlay
+  {isDM&&!dmPreview&&editor?.enabled&&environment&&<MapEnvironmentOverlay
    map={map} scale={1} objects={environment.objects}
    editor={editor} onAdd={onAddEnvironmentObject}
    onSelect={onSelectEnvironmentObject}
@@ -894,7 +894,12 @@ export default function WorldV2Board(props){
        // interaction or create a recursive revocation loop.
        if(['canonical-commit','gesture-rejected',
         'gesture-cancelled'].includes(reason))return;
-       if(['observer-sequence-gap','observer-path-discontinuity',
+       if(reason==='observer-path-await-vision'){
+         // A non-destructive sight refresh, not a full scene resync.
+         // Genuine permission/scene changes continue to conceal immediately.
+         void r.refreshVisibility('observer-path-await-vision');return;
+        }
+        if(['observer-sequence-gap','observer-path-discontinuity',
         'observer-path-not-in-authorized-fog',
         'invalid-or-stale-visibility','invalid-fog-mask',
         'bad-roster','sprite-factory-error',
