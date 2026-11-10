@@ -2,6 +2,8 @@ import React,{useMemo} from 'react';
 import MapCalibration from './MapCalibration.jsx';
 import {normalizeEnvironment,patchObject,removeObject,lightRadii} from './MapEnvironment.js';
 import {PIN_ICONS} from './CampaignHandouts.js';
+import {eligiblePlayerPreviewTokens,chosenPlayerPreviewTokenId}
+ from './engine/v2/PlayerPreviewSelection.js';
 
 const drawTools=[
  {id:'select',label:'Select / edit'},
@@ -40,12 +42,11 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
  const fields=fieldOptions(template);
  // A player-effective sight RPC cannot preview a DM-owned or unassigned
  // token. Never silently select one as the default preview viewpoint.
- const playerIds=new Set(members.map(member=>member.user_id)
-  .filter(id=>typeof id==='string'&&id&&id!==dmUserId));
- const previewTokens=tokens.filter(t=>t.map_id===map?.id&&
-  t.visible!==false&&playerIds.has(t.owner_id));
- const previewTokenId=previewTokens.some(t=>t.id===editor.previewTokenId)?
-  editor.previewTokenId:previewTokens[0]?.id||'';
+ const previewTokens=eligiblePlayerPreviewTokens({
+  tokens,members,mapId:map?.id,dmUserId
+ });
+ const previewTokenId=chosenPlayerPreviewTokenId(
+  previewTokens,editor.previewTokenId);
  const activeLayer=editor.layer||'light';
  const locked=activeLayer==='background'?editor.lockBackground:editor.lockLight;
  const canDraw=editor.enabled&&activeLayer==='light'&&!editor.lockLight;
