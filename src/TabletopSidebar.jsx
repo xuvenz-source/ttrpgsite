@@ -442,7 +442,7 @@ export default function TabletopSidebar({
        onResetExploration={onResetExploration}
        publishedEnvironment={publishedEnvironment}
        onMapCalibrationPreview={onMapCalibrationPreview}
-       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens}
+       onSaveMapCalibration={onSaveMapCalibration} template={template} tokens={tokens} members={members} dmUserId={user}
        handouts={handoutsForMap} pins={pinsForMap}
        onUpdatePin={onUpdateHandoutPin} onDeletePin={onDeleteHandoutPin}/>
      </>}
