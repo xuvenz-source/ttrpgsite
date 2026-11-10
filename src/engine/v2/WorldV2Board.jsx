@@ -3,6 +3,7 @@ import {createPortal} from 'react-dom';
 import WorldCanvasStack from './WorldCanvasStack.jsx';
 import {createWorldV2TabletopRuntime} from './WorldV2TabletopRuntime.js';
 import {pickAuthorizedWorldPiece} from './PointerHitTest.js';
+import {worldGestureSelection} from './GestureSelection.js';
 import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
@@ -348,17 +349,10 @@ export default function WorldV2Board(props){
    }
   }
   const previous=selectedRef.current;
-  const grouped=previous.tokens.includes(picked.id)||
-   previous.tools.includes(picked.id);
-  // Preview authority authorizes exactly one player-owned token, never
-  // a DM's previously selected group of tokens or tools.
-  const selected=dmPreview?[picked]:keyboard?[
-   ...previous.tokens.map(id=>({kind:'token',id})),
-   ...previous.tools.map(id=>({kind:'tool',id}))
-  ]:grouped?[
-   ...previous.tokens.map(id=>({kind:'token',id})),
-   ...previous.tools.map(id=>({kind:'tool',id}))
-  ]:[picked];
+  const selected=worldGestureSelection({
+   picked,selectedTokens:previous.tokens,selectedTools:previous.tools,
+   keyboard,preview:dmPreview
+  });
   const selection=selected.filter(piece=>{
    if(piece.kind==='token'){
     const row=inputs.tokens.find(item=>item.id===piece.id);
@@ -496,8 +490,6 @@ export default function WorldV2Board(props){
     const editor=latest.current.environmentEditor;
     if(code==='lost-capture')
      setDragIssue('Drag interrupted: pointer capture was lost.');
-    else if(!runtimeRef.current?.active)
-     setDragIssue('Drag blocked: map sight is not yet authorized.');
     else if(activeMeasureRef.current)
      setDragIssue('Drag blocked: exit the measurement tool first.');
     else if(!dmPreview&&editor?.enabled&&editor.lockTokens!==false)
