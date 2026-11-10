@@ -573,7 +573,7 @@ export function createWorldRenderer({
   setTerrainSource(source){
    if(disposed||!scene||typeof source!=='string'||
     source.length>4096||
-    (source!==''&&!/^(https?:\\/\\/|blob:|\\/)/i.test(source)))
+    (source!==''&&!/^(https?:\/\/|blob:|\/)/i.test(source)))
     return false;
    if(terrainUrl===source||!terrainUrl&&source==='')return true;
    terrainUrl=source||null;
