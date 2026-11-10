@@ -19,6 +19,7 @@ DECLARE
  sg uuid:='00000000-0000-4000-8000-000000000305';
  sc uuid:='00000000-0000-4000-8000-000000000306';
  r jsonb; initial_s jsonb; later_s jsonb; original_scene jsonb;
+ public_session uuid; public_ack jsonb;
  call_count integer:=0;
 BEGIN
  -- Baseline legitimate user, authoritative session creation fixture.
@@ -291,6 +292,74 @@ BEGIN
   '{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
  PERFORM public.b04_assert(r->>'blocked'='false',
   'P11 valid linked-character ownership permitted');
+
+ -- Actual production PUBLIC RPC source under fixture JWT (not a mock
+ -- wrapper). This is the pre-B03-integration baseline, not a B03 integration.
+ -- The private observer publisher ONLY is replaced with an inert test sink.
+ r:=public.begin_world_motion_v2(
+  '00000000-0000-4000-8000-000000000021',jsonb_build_array(
+   jsonb_build_object('kind','token','id',token2)),
+  '{"x":1,"y":9}','drag',1,1,false);
+ PERFORM public.b04_assert(r IS NULL,
+  'H36 direct public Begin refuses another player token');
+ r:=public.begin_world_motion_v2(
+  '00000000-0000-4000-8000-000000000021',jsonb_build_array(
+   jsonb_build_object('kind','token','id',npc)),
+  '{"x":5,"y":5}','drag',1,1,false);
+ PERFORM public.b04_assert(r IS NULL,
+  'H37 direct public Begin refuses concealed NPC');
+ r:=public.begin_world_motion_v2(
+  '00000000-0000-4000-8000-000000000021',jsonb_build_array(
+   jsonb_build_object('kind','token','id',token1)),
+  '{"x":1,"y":1}','drag',1,1,false);
+ PERFORM public.b04_assert(r->>'version'='2' AND
+  r ? 'sessionId',
+  'P12 direct authenticated Begin returns legitimate session');
+ public_session:=(r->>'sessionId')::uuid;
+ PERFORM set_config('request.jwt.claim.sub',p2::text,true);
+ r:=public.advance_world_motion_v2(
+  public_session,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
+ PERFORM public.b04_assert(r IS NULL,
+  'H38 direct public Advance rejects a foreign actor session');
+ PERFORM set_config('request.jwt.claim.sub',p1::text,true);
+ public_ack:=public.advance_world_motion_v2(
+  public_session,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
+ PERFORM public.b04_assert(
+  public_ack->>'version'='2' AND
+  public_ack->'accepted'='[{"x":2,"y":1}]'::jsonb AND
+  (SELECT count(*)=1 FROM forge_world_v2.b04_private_broadcasts
+   WHERE session_id=public_session),
+  'P13 real public Advance accepts one approved cell and emits once');
+ r:=public.advance_world_motion_v2(
+  public_session,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
+ PERFORM public.b04_assert(
+  r=public_ack AND
+  (SELECT count(*)=1 FROM forge_world_v2.b04_private_broadcasts
+   WHERE session_id=public_session),
+  'P14 identical public Advance retry does not rebroadcast');
+ r:=public.advance_world_motion_v2(
+  public_session,1,'{"x":1,"y":1}','[{"x":3,"y":1}]',1,1);
+ -- KNOWN LIMITATION in current production core: same-seq DIFFERENT payload
+ -- returns the prior cached ACK instead of refusing mismatched payload.
+ -- No new approved path is committed/broadcast, but B01 requires exact-payload
+ -- equality. Do NOT assert this attack is DENIED; carry it to B08.
+ PERFORM public.b04_assert(
+  r=public_ack AND
+  (SELECT count(*)=1 FROM forge_world_v2.b04_private_broadcasts
+   WHERE session_id=public_session) AND
+  (SELECT last_x=2 AND last_seq=1 FROM forge_world_v2.motion_sessions
+   WHERE id=public_session),
+  'H39 changed replay payload cannot extend accepted path/broadcast (KNOWN GAP: cached ACK not denied)');
+ PERFORM public.b04_assert(
+  NOT has_function_privilege('anon',
+   'public.begin_world_motion_v2(uuid,jsonb,jsonb,text,bigint,bigint,boolean)','EXECUTE')
+  AND NOT has_function_privilege('anon',
+   'public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)','EXECUTE')
+  AND has_function_privilege('authenticated',
+   'public.begin_world_motion_v2(uuid,jsonb,jsonb,text,bigint,bigint,boolean)','EXECUTE')
+  AND has_function_privilege('authenticated',
+   'public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)','EXECUTE'),
+  'G05 real public RPCs permit authenticated only');
 
  -- Privilege/metadata assertions must inspect role grants, not source text.
  PERFORM public.b04_assert(
