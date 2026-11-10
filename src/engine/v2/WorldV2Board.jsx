@@ -119,7 +119,11 @@ export default function WorldV2Board(props){
  }=props;
  const viewport=useRef(null),board=useRef(null);
  const rendererRef=useRef(null),runtimeRef=useRef(null),roots=useRef(new Map());
- const latest=useRef(props);latest.current=props;
+ // Native pointer listeners can run before a parent supplies every optional
+ // prop. Keep the callback ref aligned with the normalized board defaults,
+ // not raw props (undefined tools/characters otherwise break token drag).
+ const latest=useRef(props);
+ latest.current={...props,tokens,toolPlacements,toolIssued,characters};
  const rosterMetadata=useMemo(()=>JSON.stringify({
   // Only roster/permission/appearance changes, never x/y cell positions.
   // Remote motion uses V2 private paths, not token row React state.
