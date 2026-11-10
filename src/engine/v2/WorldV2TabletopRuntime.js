@@ -280,8 +280,18 @@ export function createWorldV2TabletopRuntime({
     db,mapId,sceneManager:manager,
     onState:sceneState=>{
      state('scene-'+sceneState.reason);
-     if(sceneState.reason==='scene-current')
-      void refreshVisibility('scene-current');
+     if(sceneState.reason==='scene-current'){
+      // A scene subscription invalidates the previous sight even when its
+      // published revision is unchanged. The private observer might already
+      // have failed its initial resync while the scene was stale. Reconcile
+      // that stream from a new authorized sight instead of leaving it locked
+      // until the DM toggles player preview (which remounts this runtime).
+      // Never unlock a stream or reuse a roster without its own RPC.
+      if(stream?.connected)
+       void stream.resync('scene-current');
+      else
+       void refreshVisibility('scene-current');
+    }
     },
     onError:error=>signal(onError,error)
    });
