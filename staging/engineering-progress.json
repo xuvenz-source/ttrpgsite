@@ -109,7 +109,8 @@
       "designOnly": true,
       "gateA": "NOT PASSED",
       "verification": "Source-grounded review against current main V2 JS and migration contracts; document/static review, no real authenticated QA",
-      "next": "B02 design/read-only comparison only"
+      "next": "B02 design/read-only comparison only",
+      "pullRequest": 76
     },
     "B02": {
       "status": "NOT STARTED"
@@ -398,7 +399,9 @@
         "PR #71 retention/recovery safety fixes outstanding",
         "B02 must measure and compare transports; no protocol implementation in B01"
       ],
-      "next": "B02 design/read-only only"
+      "next": "B02 design/read-only only",
+      "pullRequest": 76,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/76"
     }
   },
   "pendingWork": [
