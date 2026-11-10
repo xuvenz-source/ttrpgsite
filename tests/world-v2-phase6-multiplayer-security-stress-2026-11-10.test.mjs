@@ -13,6 +13,8 @@ import {createWorldRealtimeTransport,WORLD_MOTION_EVENT,worldObserverTopic}
 import {compileCollisionScene,collisionAllowsStep,solveCollisionPath}
  from '../src/engine/v2/CollisionSolver.js';
 import {createWorldV2Trace} from '../src/engine/v2/WorldTrace.js';
+import {createMovementController} from '../src/engine/v2/MovementController.js';
+import {createPreviewAuthority} from '../src/engine/v2/PreviewAuthority.js';
 
 const MAP='10000000-0000-4000-8000-000000000001';
 const viewer=n=>'30000000-0000-4000-8000-'+String(n).padStart(12,'0');
@@ -311,4 +313,58 @@ test('opt-in traces and resource topology remain bounded under a 25,000-event st
   assert.doesNotMatch(source,/from\s+['"][^'"]*(BattlemapBoard|useAuthorizedMapFog|MapMovementPath|MapMotionRuntime)/,
    'V2 module must not import the retired active movement/fog path: '+file);
  }
+});
+
+test('DM player preview withstands 120 rapid sessions with solid wall and zero database writes',async()=>{
+ const wall={type:'wall',points:[{x:4,y:0},{x:4,y:10}],
+  blocksMovement:true};
+ const geometry=compileCollisionScene({
+  map:{id:MAP,width:1000,height:1000,grid_size:100},
+  environment:{objects:[wall]},scope:'dm',revision:7,collisionEnabled:true
+ });
+ const actor={kind:'token',id:token(500),x:2,y:2,spanX:1,spanY:1};
+ let virtual={tokenId:actor.id,x:2,y:2},writes=0,approved=0;
+ const local=createPreviewAuthority({
+  getScene:()=>geometry,getPieces:()=>[actor],
+  getPosition:()=>virtual
+ });
+ const movement=createMovementController({
+  authority:{...local,commit:async()=>{writes++;throw Error('Forbidden preview commit')}},
+  onEvent:event=>{
+   if(event.type==='approved'||event.type==='blocked'){
+    virtual={tokenId:actor.id,x:event.approved.x,y:event.approved.y};
+    approved++;
+   }
+  }
+ });
+ try{
+  for(let i=0;i<120;i++){
+   const from={x:virtual.x,y:virtual.y};
+   const to={x:from.x===2?3:2,y:2};
+   assert.equal(movement.beginGesture({
+    mapId:MAP,mode:'preview',selection:[{kind:'token',id:actor.id}],
+    pointer:from,origin:from,environmentRevision:7,
+    permissionGeneration:4
+   }),true);
+   assert.equal(movement.updateGesture(to),true);
+   const outcome=await movement.endGesture();
+   assert.equal(outcome.status,'committed');
+   assert.equal(outcome.preview,true);
+   assert.equal(virtual.x,to.x);
+  }
+  // An attempted two-cell push from x=3 must stop at the wall at x=4.
+  assert.equal(virtual.x,2);
+  assert.equal(movement.beginGesture({
+   mapId:MAP,mode:'preview',selection:[{kind:'token',id:actor.id}],
+   origin:{x:2,y:2},pointer:{x:2,y:2},
+   environmentRevision:7,permissionGeneration:4
+  }),true);
+  assert.equal(movement.updateGesture({x:6,y:2}),true);
+  const result=await movement.endGesture();
+  assert.equal(result.status,'committed');
+  assert.ok(virtual.x<=3,'solid wall never allows preview crossing');
+  assert.equal(writes,0,'no preview session ever invokes persistent commit');
+  assert.ok(approved>=120);
+  assert.equal(movement.active,false);
+ }finally{movement.dispose();local.dispose()}
 });
