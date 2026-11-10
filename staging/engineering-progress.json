@@ -142,7 +142,8 @@
       "sqlStatus": "NOT APPLIED — intentionally outside supabase/migrations",
       "security": "SECURITY INVOKER, no browser EXECUTE grants, auth.uid session locking and unchanged existing public RPCs",
       "gateA": "NOT PASSED",
-      "next": "B04 hostile-authority regressions; isolated PostgreSQL compilation required"
+      "next": "B04 hostile-authority regressions; isolated PostgreSQL compilation required",
+      "pullRequest": 78
     },
     "B04": {
       "status": "NOT STARTED"
@@ -478,7 +479,9 @@
         "B04 must compile candidate against isolated real Postgres and run denial/positive and grants tests",
         "No integrated live performance, security or migration verification"
       ],
-      "next": "B04 ONLY (separate authorization); no production SQL or release"
+      "next": "B04 ONLY (separate authorization); no production SQL or release",
+      "pullRequest": 78,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/78"
     }
   },
   "pendingWork": [
