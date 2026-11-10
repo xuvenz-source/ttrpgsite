@@ -28,7 +28,8 @@ function emitter(){
 }
 
 function harness({capture=false}={}){
- const documentTarget=emitter(),target=emitter(),keyboard=emitter();
+ const documentTarget=emitter(),target=emitter(),keyboard=emitter(),
+  blurTarget=emitter();
  const events=[],status=[];
  let active=false,held=null;
  target.ownerDocument=documentTarget;
@@ -46,7 +47,7 @@ function harness({capture=false}={}){
   cancelGesture(reason){active=false;events.push(['cancel',reason])}
  };
  const input=createInputController({
-  target,keyboardTarget:keyboard,controller,
+  target,keyboardTarget:keyboard,blurTarget,controller,
   pointFromEvent:event=>event.point,
   resolveSelection:()=>({mapId:'10000000-0000-4000-8000-000000000001',
    selection:[piece('token',TOKEN)],origin:{x:2,y:2},mode:'preview'}),
@@ -58,7 +59,7 @@ function harness({capture=false}={}){
    point,preventDefault(){this.defaultPrevented=true},
    target:{closest:()=>null}};
  }
- return {documentTarget,target,events,status,input,event};
+ return {documentTarget,target,blurTarget,events,status,input,event};
 }
 
 test('no pointer capture: document fallback keeps drag alive outside board',()=>{
@@ -97,6 +98,19 @@ test('document fallback is removed even when a drag is unmounted',()=>{
  assert.equal(h.documentTarget.count('pointermove'),0);
  assert.equal(h.documentTarget.count('pointerup'),0);
  assert.equal(h.documentTarget.count('pointercancel'),0);
+});
+
+test('a real window blur cancels the gesture despite no-op arrow listener',()=>{
+ const h=harness();
+ h.target.emit('pointerdown',h.event());
+ assert.equal(h.blurTarget.count('blur'),1);
+ h.blurTarget.emit('blur');
+ assert.ok(h.events.some(e=>e[0]==='cancel'&&e[1]==='blur'));
+ assert.equal(h.documentTarget.count('pointermove'),0);
+ h.documentTarget.emit('pointerup',h.event({x:3.25,y:2.25}));
+ assert.ok(!h.events.some(e=>e[0]==='end'));
+ h.input.unmount();
+ assert.equal(h.blurTarget.count('blur'),0);
 });
 
 test('native HTML drag is suppressed only for tokens and tools on the map',()=>{
