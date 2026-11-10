@@ -59,7 +59,7 @@
   },
   "noGoReasons": [
     "B03 is now wired into a **nonapplied B10-R01 private Core candidate**. Actual production forge_world_v2.advance_core_v2 remains unchanged and has no B03 validator; forward-only migration/rollout and live Auth/permission QA not approved.",
-    "B10-R03 now stages a private nonapplied terminal queue scrub so old committed-session paths are retired and certified hides are retained. This must be co-released with default-OFF B10-R02 authenticated canonical sight recovery. Offline/background deadlines, abnormal DB faults, 24-case real Auth/LOS testing and free-tier load remain unverified.",
+    "B10-R03 now stages a private nonapplied terminal queue scrub so old committed-session paths are retired and certified hides are retained. This must be co-released with default-OFF B10-R02 authenticated canonical sight recovery. Offline/background deadlines, abnormal DB faults, 24-case real Auth/LOS testing and free-tier load remain unverified. Realtime budget exhaustion still delays certified hides and leaves B10-R02 signed sight as a CPU-consuming eventual recovery; these are active release blockers.",
     "PR #71 renderer/observer sight continuity remains a separate blocked draft with recovery and security amendments; no safe reconciliation/merge decision.",
     "No A06 authenticated DM/Player1/Player2 prepared fog/collision/door/2x2/hidden NPC/torch/test map fixture or 24-case live browser evidence.",
     "No browser/device p95 first paint, observer lag, terrain reassignment/flash, sprite remount, reconnect/multi-tab or Supabase free-tier stress measurements for B03–B09.",
