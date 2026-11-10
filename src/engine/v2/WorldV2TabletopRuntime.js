@@ -21,6 +21,7 @@ import {createPreviewAuthority} from './PreviewAuthority.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {certifyViewerMotion} from './CertifiedMotionPresentation.js';
 import {worldV2Trace} from './WorldTrace.js';
+import {createObserverRecoveryWatch} from './ObserverRecoveryWatch.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -60,10 +61,17 @@ export function createWorldV2TabletopRuntime({
    .some(callback=>typeof callback!=='function'))
   throw Error('Invalid V2 tabletop integration');
  const identity=dmPreview?previewViewerId:viewerId;
+ // Explicit B10-R02 source-only opt-in, OFF in every existing environment.
+ // Budget recovery never invents or publishes coordinates. A normal
+ // authenticated sight refresh reconciles committed canonical motion even
+ // if a B07 private path/hide was stranded by exhausted Realtime budget.
+ const budgetRecoveryEnabled=!dmPreview&&
+  import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY==='1';
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
  let sceneRecovery=null;
+ let observerWatch=null,foregroundListener=null;
  let previewPosition=null,dmLightRefreshTimer=null;
  function scheduleDmLightRefresh(){
   if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
@@ -131,6 +139,11 @@ export function createWorldV2TabletopRuntime({
       (renderer.lastSightRejection||'unclassified'));
     }
    privateReady=true;
+   // The authoritative sight was accepted by BOTH Phase 7 and Phase 8.
+   // Reconcile the private stream's roster/cursor without sealing terrain;
+   // a late buffered old path cannot override a newer canonical endpoint.
+   if(budgetRecoveryEnabled)
+    stream?.acceptSignedSight(snapshot);
    // Any newer signed sight epoch/cursor invalidates a previously displayed
    // fractional cell even if no new mouse/keyboard input has occurred.
    movement?.syncCertifiedSight({
@@ -347,7 +360,31 @@ export function createWorldV2TabletopRuntime({
    });
    if(stream&&(!await stream.start()||disposed))return false;
    if(!await sceneTransport.start()||disposed)return false;
-   started=true;state('started');return true;
+   started=true;
+   if(budgetRecoveryEnabled&&!observerWatch){
+    const foreground=()=>typeof document==='undefined'||
+     document.visibilityState!=='hidden';
+    observerWatch=createObserverRecoveryWatch({
+     isForeground:foreground,
+     canCheck:()=>!disposed&&started&&stream?.connected===true&&
+      stream?.locked===false&&authorized(),
+     check:async()=>{
+      const frame=await vision.refresh('observer-budget-recovery');
+      if(!frame&&!authorized()&&!disposed&&stream?.connected)
+       void stream.resync('observer-budget-recovery-denied');
+      return !!frame&&authorized();
+     },
+     onError:error=>signal(onError,error)
+    });
+    if(typeof document!=='undefined'&&document.addEventListener){
+     foregroundListener=()=>{
+      if(foreground())void observerWatch?.resume();
+     };
+     document.addEventListener('visibilitychange',foregroundListener);
+    }
+    observerWatch.start();
+   }
+   state('started');return true;
    })().finally(()=>{if(starting===task)starting=null});
    starting=task;
    return task;
@@ -394,6 +431,11 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
+   observerWatch?.dispose();observerWatch=null;
+   if(foregroundListener&&typeof document!=='undefined'&&
+    document.removeEventListener)
+    document.removeEventListener('visibilitychange',foregroundListener);
+   foregroundListener=null;
    ++refreshRevision;
     if(dmLightRefreshTimer!==null){
      clearTimeout(dmLightRefreshTimer);dmLightRefreshTimer=null;
