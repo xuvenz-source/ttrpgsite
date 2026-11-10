@@ -37,17 +37,24 @@ BEGIN
  -- a live Realtime budget can still finish at most four real approved frames
  -- per recipient. Nothing is ever sent until B07 independently checks
  -- current recipient membership, map, environment, generation and LOS.
- FOR recipient IN
-  SELECT viewer_id FROM forge_world_v2.observer_pending_b07
-  WHERE session_id=p_session ORDER BY viewer_id LIMIT 32
- LOOP
-  FOR i IN 1..4 LOOP
-   result:=forge_world_v2.flush_recipient_observer_b07(
-    s,recipient.viewer_id,p_now);
-   sent:=sent+result;
-   EXIT WHEN result<>1;
+ BEGIN
+  FOR recipient IN
+   SELECT viewer_id FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=p_session ORDER BY viewer_id LIMIT 32
+  LOOP
+   FOR i IN 1..4 LOOP
+    result:=forge_world_v2.flush_recipient_observer_b07(
+     s,recipient.viewer_id,p_now);
+    sent:=sent+result;
+    EXIT WHEN result<>1;
+   END LOOP;
   END LOOP;
- END LOOP;
+ EXCEPTION WHEN OTHERS THEN
+  -- B08's public Commit intentionally does NOT roll back canonical data
+  -- for broadcaster outages. Even if terminal flushing fails unexpectedly,
+  -- continue retiring unsent old paths before returning to that wrapper.
+  RAISE WARNING 'B10-R03 terminal path publication deferred';
+ END;
 
  -- Terminal canonical sight must supersede remaining old unsent routes.
  -- This loop covers ALL rows, not just the 32 direct recipients, so an
@@ -107,8 +114,14 @@ BEGIN
   -- Best effort for certified hides under B07's separate priority budget.
   -- If the budget is exhausted, retain *hides only* until actor exact retry;
   -- R02 signed canonical sight will independently revoke hidden pieces.
-  sent:=sent+forge_world_v2.flush_recipient_observer_b07(
-   s,pending_row.viewer_id,p_now);
+  BEGIN
+   sent:=sent+forge_world_v2.flush_recipient_observer_b07(
+    s,pending_row.viewer_id,p_now);
+  EXCEPTION WHEN OTHERS THEN
+   -- Only certified coordinate-free hides remain, so a failed send may
+   -- safely wait for a future signed sight/identical ACK retry.
+   RAISE WARNING 'B10-R03 certified hide dispatch deferred';
+  END;
  END LOOP;
  DELETE FROM forge_world_v2.observer_pending_b07
  WHERE session_id=p_session AND pending='[]'::jsonb
