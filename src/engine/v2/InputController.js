@@ -2,6 +2,7 @@
  * Does not import React, Supabase, or any existing movement engine.
  */
 import {worldV2Trace} from './WorldTrace.js';
+import {claimWorldPointerDown} from './WorldPointerOwnership.js';
 const arrows={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
 const editable=target=>!!target&&(target.isContentEditable===true||
  /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName||'')||
@@ -74,6 +75,7 @@ export function createInputController({
     event.pointerType==='touch'?'touch':'drag'})){
    status(event,'begin');return;
   }
+  claimWorldPointerDown(event);
   status(event,'grabbed');
   worldV2Trace.event('input.pointer.start',picked.mode==='preview'?'preview':
    event.pointerType==='touch'?'touch':'drag');

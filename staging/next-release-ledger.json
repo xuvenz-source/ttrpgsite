@@ -247,7 +247,7 @@
       "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
       "status": "staged",
       "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-      "note": "Phases 1 and 2 integrated staging: opt-in bounded tracing; safe same-authority stale sight/cursor reconciliation preserving server-authorized fog, sprite nodes and terrain. Hard permission/scope/scene revocations remain fail-closed. New 100-frame and security regression tests. No SQL/Realtime/deployment. Authenticated browser gate pending.",
+      "note": "Integrated Phases 1-3 staging: bounded traces, stale sight recovery and single claimed document-capture gesture path, authorized DOM hit-tests, preview/editor gate consistency, one V2 preview keyboard stepper. Browser DOM test and live acceptance pending.",
       "linkedPullRequest": 68
     }
   ],
@@ -1008,7 +1008,7 @@
     "outstandingBranches": [
       "stage/world-v2-phase1-instrumentation-2026-11-10"
     ],
-    "stagePolicy": "Integrate Phases 1-2 in one staged update, no deployment. Require frontend/build, CodeQL and isolated SQL checks; authenticated player/DM browser movement and observer traces before asserting live no-flash gate.",
+    "stagePolicy": "Phases 1–3 draft staging only: CI, browser DOM gestures and authenticated DM/player/preview + observer verification required before deployment.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
