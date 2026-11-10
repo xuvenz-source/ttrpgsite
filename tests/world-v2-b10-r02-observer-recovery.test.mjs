@@ -151,14 +151,27 @@ test('B10-R02 fail-closed observer revisions and no fabricated visible roster',a
  const h=transportHarness();await h.join();
  const before=h.t.cursor;
  assert.equal(h.t.acceptSignedSight(snap(1,[piece(A,1,1)],{viewerId:C})),false);
- assert.equal(h.t.acceptSignedSight(snap(1,[piece(A,1,1)],{permissionGeneration:5})),false);
  assert.equal(h.t.acceptSignedSight(snap(1,[piece(A,-1,1)])),false);
- assert.equal(h.t.acceptSignedSight(snap(1,[piece(A,1,1)],{scope:'dm'})),false);
  assert.equal(h.t.cursor,before);
  assert.equal(h.t.acceptSignedSight(snap(1,[piece(A,1,1)])),true);
  assert.equal(h.t.acceptSignedSight(snap(0,[piece(A,1,1)])),false);
  h.send(2,[{kind:'token',id:C,action:'hide'}]);
  assert.equal(h.hidden.length,0,'unknown hide never reveals actor ID');
+ await h.t.dispose();
+});
+
+test('B10-R02 new signed permission/scope seals old stream before accepting old movement',async()=>{
+ const h=transportHarness();await h.join();
+ const oldSealCount=h.revoked.length;
+ h.setSnapshot(snap(2,[piece(A,1,1)],{permissionGeneration:5}));
+ assert.equal(h.t.acceptSignedSight(snap(2,[piece(A,1,1)],{permissionGeneration:5})),false);
+ assert.equal(h.t.locked,true,'old permission generation sealed synchronously');
+ assert.equal(h.revoked.length,oldSealCount+1);
+ h.send(1,[path(A,[[1,1],[2,1]])]);
+ assert.equal(h.seen.length,0,'no old generation path may animate while locked');
+ await flush();
+ assert.equal(h.t.locked,false,'new authenticated sight restores observer');
+ assert.equal(h.t.cursor,2);
  await h.t.dispose();
 });
 
