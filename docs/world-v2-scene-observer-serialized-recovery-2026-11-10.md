@@ -3,7 +3,7 @@
 Status: **staged only**, 10 November 2026. Production remains at PR #62 (commit `e314b879`). No deployment or database modification is part of this branch.
 
 ## Confirmed evidence
-The DM reports an immediate `No authorized V2 observer sight` after PR #62, with movement failing both in and out of preview. A production, read-only Supabase diagnostic of the map with six tokens independently generated a valid DM-scoped `get_world_visibility_v2` frame with six roster entries. The SQL visibility service and DM authorization can therefore supply a valid frame for that map, but authenticated browser traces have not been captured.
+The DM reports an immediate `No authorized V2 observer sight` after PR #62, with movement failing both in and out of preview. A production, read-only Supabase diagnostic of the map with six tokens independently generated a valid DM-scoped `get_world_visibility_v2` frame with six roster entries. A second read-only check also returned a valid player-effective DM preview frame for an assigned player on that map. The SQL visibility service and DM preview authorization can therefore supply valid frames; authenticated browser traces have not been captured.
 
 ## Failure modes
 1. `SceneTransport.pump` previously did **not** requeue a failed stale scene load if an earlier retained scene's generation was already at the requested target. This could leave a live scene subscription stale and with no subsequent `scene-current` event.
@@ -16,7 +16,7 @@ The DM reports an immediate `No authorized V2 observer sight` after PR #62, with
 - Serialize scene-current observer recovery behind an already-running observer resync; obtain fresh sight only if still locked or not authorized after the prior attempt.
 - Treat renderer rejection as a failed sight adoption, revoke the frame, and report only a bounded rejection code.
 - Defer transport's user-visible error until the bounded recovery attempts are exhausted, and clear relevant transient V2 sight messages once both sight and the stream are authorized.
-- Add integration tests covering canceled-in-flight sight, scene load retry with retained generation, permanent sight denial, and renderer rejection.
+- Add integration tests covering canceled-in-flight sight, scene load retry with retained generation, player-preview scene rejoin, permanent sight denial, and renderer rejection.
 
 No SQL migrations, authorization shortcuts, new Realtime channels or persistent polling. Existing movement and fog authority remain server-owned.
 

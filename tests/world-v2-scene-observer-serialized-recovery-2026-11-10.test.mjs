@@ -6,6 +6,7 @@ import {createWorldV2TabletopRuntime} from '../src/engine/v2/WorldV2TabletopRunt
 
 const MAP='11111111-1111-4111-8111-111111111111';
 const DM='22222222-2222-4222-8222-222222222222';
+const PLAYER='44444444-4444-4444-8444-444444444444';
 const TOKEN='33333333-3333-4333-8333-333333333333';
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -17,8 +18,9 @@ const scene=()=>({
  dimensions:{width:1400,height:1400,gridSize:100},
  environment:{version:1,objects:[]}
 });
-const sight=()=>({
- version:2,mapId:MAP,viewerId:DM,scope:'dm',cursor:0,
+const sight=(preview=false)=>({
+ version:2,mapId:MAP,viewerId:preview?PLAYER:DM,
+ scope:preview?'viewer':'dm',cursor:0,
  environmentRevision:38,permissionGeneration:0,
  sceneGeneration:6,visionEpoch:0,enabled:false,width:14,height:14,
  partyShared:false,visible:[],explored:[],visiblePieces:[
@@ -26,7 +28,7 @@ const sight=()=>({
  ],predictionGrants:[],lightCells:[],dmMovingLights:[]
 });
 
-function harness({delaySecond=null,denyAfterBootstrap=false}={}){
+function harness({delaySecond=null,denyAfterBootstrap=false,preview=false}={}){
  const channels=new Map(),errors=[],states=[];
  let sightRequests=0,sceneRequests=0;
  const renderer={
@@ -34,7 +36,8 @@ function harness({delaySecond=null,denyAfterBootstrap=false}={}){
   adoptScene(s){this.currentScene=s;return true},
   adoptVisibility(s){
    if(!this.currentScene||this.currentScene.revision!==s.environmentRevision||
-    this.currentScene.sceneGeneration!==s.sceneGeneration)return false;
+    this.currentScene.sceneGeneration!==s.sceneGeneration||
+    s.scope!==(preview?'viewer':'dm'))return false;
    this.currentVisibility=s;this.authorized=true;return true
   },
   revoke(_reason,hard=false){
@@ -48,10 +51,11 @@ function harness({delaySecond=null,denyAfterBootstrap=false}={}){
  const db={
   rpc:async name=>{
    if(name==='get_world_scene_v2'){sceneRequests++;return {data:scene(),error:null}}
-   if(name==='get_world_visibility_v2'){
+   if(name==='get_world_visibility_v2'||
+      name==='preview_world_visibility_v2'){
     sightRequests++;
     if(delaySecond&&sightRequests===2)return delaySecond.promise;
-    return {data:denyAfterBootstrap&&sightRequests>1?null:sight(),error:null}
+    return {data:denyAfterBootstrap&&sightRequests>1?null:sight(preview),error:null}
    }
    throw Error('Unexpected RPC '+name);
   },
@@ -71,6 +75,7 @@ function harness({delaySecond=null,denyAfterBootstrap=false}={}){
  };
  const runtime=createWorldV2TabletopRuntime({
   db,mapId:MAP,viewerId:DM,renderer,isDM:true,
+  dmPreview:preview,previewViewerId:preview?PLAYER:null,
   getAuthorizedPieces:()=>[{kind:'token',id:TOKEN,x:2,y:2,spanX:1,spanY:1}],
   onError:error=>errors.push(error.message),
   onState:state=>states.push(state)
@@ -145,6 +150,24 @@ test('permanently unavailable DM sight is never unlocked or silently bypassed',a
   assert.equal(h.runtime.stream.locked,true);
   assert.equal(h.runtime.active,false);
   assert.ok(h.errors.length>=1,'permanent sight errors must remain observable');
+ }finally{await h.runtime.dispose()}
+});
+
+test('DM player-preview scene resubscription restores player-effective sight with no player stream',async()=>{
+ const h=harness({preview:true});
+ try{
+  assert.equal(await h.runtime.start(),true);
+  assert.equal(h.runtime.active,true);
+  assert.equal(h.runtime.effectiveViewer,PLAYER);
+  assert.equal(h.channels.size,1,'DM preview never joins the player observer topic');
+  h.sceneChannel().status('SUBSCRIBED');
+  await tick();await tick();await tick();
+  assert.equal(h.runtime.sceneManager.stale,false);
+  assert.equal(h.runtime.active,true);
+  assert.equal(h.runtime.visibility.frame.scope,'viewer');
+  assert.equal(h.runtime.visibility.frame.viewerId,PLAYER);
+  assert.equal(h.sightRequests,2,'preview refetches authorized player-effective sight after scene join');
+  assert.deepEqual(h.errors,[]);
  }finally{await h.runtime.dispose()}
 });
 
