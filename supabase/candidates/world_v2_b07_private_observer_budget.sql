@@ -32,6 +32,8 @@ CREATE TABLE forge_world_v2.observer_pending_b07(
  CHECK(jsonb_typeof(deferred)='array'),
  CHECK(jsonb_array_length(deferred)<=63)
 );
+CREATE INDEX observer_pending_b07_expiry ON
+ forge_world_v2.observer_pending_b07(expires_at);
 ALTER TABLE forge_world_v2.observer_pending_b07 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE forge_world_v2.observer_pending_b07
  FROM PUBLIC,anon,authenticated;
@@ -321,6 +323,18 @@ BEGIN
   forge_world_v2.viewer_on_map(p_session.campaign_id,p_session.map_id,p_viewer) IS NULL OR
   NOT forge_world_v2.valid_observer_items_b07(p_items)
  THEN RETURN 0;END IF;
+ -- Opportunistic, bounded TTL garbage collection: a stale/abandoned
+ -- session cannot retain per-recipient accepted-path JSON forever.
+ -- The session itself is already bounded to 60 seconds absolute TTL.
+ IF NOT EXISTS(SELECT 1 FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=p_session.id AND viewer_id=p_viewer) THEN
+  DELETE FROM forge_world_v2.observer_pending_b07
+  WHERE (session_id,viewer_id) IN (
+   SELECT expired.session_id,expired.viewer_id
+   FROM forge_world_v2.observer_pending_b07 expired
+   WHERE expired.expires_at<p_now ORDER BY expired.expires_at
+   LIMIT 8);
+ END IF;
  INSERT INTO forge_world_v2.observer_pending_b07(
   session_id,viewer_id,map_id,campaign_id,actor_id,
   environment_revision,permission_generation,pending,
@@ -407,6 +421,12 @@ BEGIN
   sent:=sent+forge_world_v2.flush_recipient_observer_b07(
    s,recipient.viewer_id,p_now);
  END LOOP;
+ -- Once the successful canonical commit has flushed every queued path,
+ -- these private rows have no purpose; reclaim them immediately.
+ -- A failed/budget-deferred packet stays queued and is NOT deleted.
+ DELETE FROM forge_world_v2.observer_pending_b07
+ WHERE session_id=p_session AND pending='[]'::jsonb
+  AND deferred='[]'::jsonb;
  RETURN sent;
 END $b07$;
 
