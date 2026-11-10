@@ -247,7 +247,7 @@
       "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
       "status": "staged",
       "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-      "note": "Integrated phases 1–4: bounded trace, same-authority visibility reconciliation, shared input, server-approved local path interpolation, predictive ACK handoff, capped remote catch-up. No authorization/collision/SQL/deploy changes. Testing pending.",
+      "note": "Integrated Phases 1–5 staging: bounded trace, no-flash same-authority sight, unified input, crisp certified movement, plus incremental fog. Mask identity reuse within same authority, tile-based fragmented diffs, coalesced last-painted mask deltas and per-sprite visibility invalidation. No migrations/channels/deployment; authenticated acceptance pending.",
       "linkedPullRequest": 68
     }
   ],
@@ -1008,7 +1008,7 @@
     "outstandingBranches": [
       "stage/world-v2-phase1-instrumentation-2026-11-10"
     ],
-    "stagePolicy": "Integrated phases 1–4 staging only; full CI, authenticated live multiplayer drag and fog stress acceptance pending; Phases 5–6 not yet staged.",
+    "stagePolicy": "Phases 1–5 integrated staging only; Phase 6 and authenticated live fog/collision/multiplayer/stress and permission tests required before merge/deployment.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },

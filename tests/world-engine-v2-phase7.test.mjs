@@ -377,3 +377,39 @@ test('renderer stale sentinel rolls back provisional controller state',async()=>
   assert.deepEqual(revoke,[]);assert.deepEqual(errors,[]);
  }finally{ctl.dispose()}
 });
+
+test('Phase 5 fragmented changes use bounded dirty tiles rather than whole-board bounding box',()=>{
+ const width=128,height=128;
+ const old=new Uint8Array(width*height),current=new Uint8Array(width*height);
+ for(let y=0;y<128;y++){
+  current[y*width]=2;
+  current[y*width+127]=1;
+ }
+ const diff=diffWorldFogMasks(old,current,width,height);
+ assert.equal(diff.full,false);
+ assert.ok(diff.rects.length>0&&diff.rects.length<=256);
+ assert.ok(diff.rects.every(rect=>rect.width<=8&&rect.height<=8));
+ const dirtyArea=diff.rects.reduce((total,r)=>total+r.width*r.height,0);
+ assert.ok(dirtyArea<width*height/4,
+  'two thin distant columns must not repaint the whole 128x128 map');
+ for(let y=0;y<128;y++)for(const x of [0,127])
+  assert.ok(diff.rects.some(r=>x>=r.x&&x<r.x+r.width&&
+   y>=r.y&&y<r.y+r.height));
+});
+test('Phase 5 large fogless map triggers onFog only at initial authorization',async()=>{
+ const base=frame({enabled:false,width:5000,height:4000,
+  visible:[],explored:[],visiblePieces:[hero]});
+ const {db,put}=fakeDb(base);
+ let fog=0,roster=0;
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onFog:()=>fog++,onRoster:()=>roster++});
+ try{
+  assert.equal((await ctl.refresh()).enabled,false);
+  for(let i=0;i<100;i++){
+   put({...base,cursor:6+i,visionEpoch:8+i});
+   assert.ok(await ctl.refresh());
+  }
+  assert.equal(fog,1,'no repeated full fog redraw on a fogless map');
+  assert.equal(roster,1);
+ }finally{ctl.dispose()}
+});
