@@ -3,6 +3,7 @@ import {createPortal} from 'react-dom';
 import WorldCanvasStack from './WorldCanvasStack.jsx';
 import {createWorldV2TabletopRuntime} from './WorldV2TabletopRuntime.js';
 import {pickAuthorizedWorldPiece} from './PointerHitTest.js';
+import {worldGestureSelection} from './GestureSelection.js';
 import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
@@ -60,7 +61,8 @@ function SpriteContent({piece,token,tool,issued,selected,isDM,user,
  const effects=normalizedEffects(token.status_effects);
  const dead=effects.some(item=>item.id==='dead');
  const canEdit=isDM||token.owner_id===user;
- return <div className="world-v2-token-content"
+ return <div className="world-v2-token-content" draggable={false}
+  onDragStart={event=>event.preventDefault()}
   style={{position:'relative',width:'100%',height:'100%',pointerEvents:'auto'}}
   onDoubleClick={e=>{
    if(e.altKey&&!preview&&canEdit){
@@ -129,6 +131,7 @@ export default function WorldV2Board(props){
  const [selectedToolIds,setSelectedToolIds]=useState([]);
  const selectedRef=useRef({tokens:[],tools:[]});
  const [roster,setRoster]=useState([]),[issue,setIssue]=useState(null);
+ const [dragIssue,setDragIssue]=useState(null);
  const [authorizedSight,setAuthorizedSight]=useState(null);
  const [activeMeasure,setActiveMeasure]=useState(null);
  const [localMeasures,setLocalMeasures]=useState([]);
@@ -329,6 +332,8 @@ export default function WorldV2Board(props){
    picked.kind!=='token'||picked.id!==previewToken?.id))return null;
   if(!keyboard){
    const prev=selectedRef.current;
+   if(dmPreview&&(event.shiftKey||event.altKey||
+    event.ctrlKey||event.metaKey))return null;
    if(event.shiftKey){
     const item=picked.kind==='token'?prev.tokens:prev.tools;
     const next=item.includes(picked.id)?
@@ -344,15 +349,10 @@ export default function WorldV2Board(props){
    }
   }
   const previous=selectedRef.current;
-  const grouped=previous.tokens.includes(picked.id)||
-   previous.tools.includes(picked.id);
-  const selected=keyboard?[
-   ...previous.tokens.map(id=>({kind:'token',id})),
-   ...previous.tools.map(id=>({kind:'tool',id}))
-  ]:grouped?[
-   ...previous.tokens.map(id=>({kind:'token',id})),
-   ...previous.tools.map(id=>({kind:'tool',id}))
-  ]:[picked];
+  const selected=worldGestureSelection({
+   picked,selectedTokens:previous.tokens,selectedTools:previous.tools,
+   keyboard,preview:dmPreview
+  });
   const selection=selected.filter(piece=>{
    if(piece.kind==='token'){
     const row=inputs.tokens.find(item=>item.id===piece.id);
@@ -444,6 +444,12 @@ export default function WorldV2Board(props){
    onCommit:()=>{
     latest.current.onMovementCommitted?.();
    },
+   onGesture:event=>{
+    // Never expose private movement payloads or coordinates.
+    if(event.type==='grabbed'||event.type==='approved')setDragIssue(null);
+    else if(event.type==='rejected')
+     setDragIssue('Movement rejected: verify collision rules and token permissions.');
+   },
    onError:error=>{
     setIssue(error?.message||'World Engine V2 authorization unavailable.');
     latest.current.onV2Error?.(error);
@@ -462,12 +468,36 @@ export default function WorldV2Board(props){
   });
   runtimeRef.current=runtime;
   runtime.attachInput({
-   target:board.current,
+   // Capture from the map viewport across all portal and overlay layers.
+   target:viewport.current,
    keyboardTarget:noDuplicateKeyboard,
    pointFromEvent:event=>mapGridRef.current(event),
    resolveSelection:(event,point,context)=>resolveRef.current(event,point,context),
    onPointerRelease:(event,pick,point)=>
-    releaseRef.current(event,pick,point)
+    releaseRef.current(event,pick,point),
+   onPointerStatus:(event,code)=>{
+    if(code==='grabbed'){setDragIssue(null);return}
+    const point=mapGridRef.current(event);
+    if(!point)return;
+    // No sprite lookup is needed for this generic authorization state:
+    // hidden IDs and coordinates must never reach diagnostics. When sight
+    // is unavailable, the visible roster itself may be empty.
+    if(!runtimeRef.current?.active){
+     setDragIssue('Drag blocked: map sight is not yet authorized.');
+     return;
+    }
+    if(!pointerPieceAt(event,point))return;
+    const editor=latest.current.environmentEditor;
+    if(code==='lost-capture')
+     setDragIssue('Drag interrupted: pointer capture was lost.');
+    else if(activeMeasureRef.current)
+     setDragIssue('Drag blocked: exit the measurement tool first.');
+    else if(!dmPreview&&editor?.enabled&&editor.lockTokens!==false)
+     setDragIssue('Drag blocked: turn off Lock Tokens in the DM map editor.');
+    else if(code==='busy')
+     setDragIssue('Drag blocked: another movement is finishing.');
+    else setDragIssue('Drag could not start: check token or player-preview selection.');
+   }
   });
   void runtime.start().then(ok=>{
    if(!ok&&runtimeRef.current===runtime)
@@ -478,6 +508,14 @@ export default function WorldV2Board(props){
  const rendererReady=useRef(onRendererReady);
  rendererReady.current=onRendererReady;
  const mapGridRef=useRef(mapGridPoint);mapGridRef.current=mapGridPoint;
+ const activeMeasureRef=useRef(activeMeasure);activeMeasureRef.current=activeMeasure;
+ // The authorized scene may exist before the signed map URL arrives.
+ // Asset URL refreshes update only the persistent <img>, never remount fog.
+ useLayoutEffect(()=>{
+  const renderer=rendererRef.current;
+  if(renderer?.currentScene)
+   renderer.setTerrainSource(typeof url==='string'?url:'');
+ },[url,map.id,boardIdentity]);
  useLayoutEffect(()=>{
   rendererRef.current?.setCamera({zoom:scale});
   const anchor=zoomAnchor.current;
@@ -604,7 +642,8 @@ export default function WorldV2Board(props){
  }
  function onBoardDown(event){
   if(event.button===1||
-   event.pointerType==='touch'&&!event.target.closest?.('[data-world-id]')){
+   event.pointerType==='touch'&&
+    !pointerPieceAt(event,mapGridPoint(event))){
    panRef.current={id:event.pointerId,x:event.clientX,y:event.clientY,
     left:viewport.current?.scrollLeft||0,top:viewport.current?.scrollTop||0};
    setPanning(true);event.preventDefault();
@@ -749,6 +788,7 @@ export default function WorldV2Board(props){
  useEffect(()=>{
   setSelection([]);setLocalMeasures([]);setActiveMeasure(null);
  },[map.id]);
+ useEffect(()=>setDragIssue(null),[map.id,dmPreview]);
  useEffect(()=>{
   for(const item of roster)if(item.kind==='token'){
    const t=tokens.find(row=>row.id===item.id);
@@ -825,6 +865,8 @@ export default function WorldV2Board(props){
    onClearPins={()=>{setLocalMeasures(old=>old.filter(m=>!m.pinned));
     onMeasurementPreview?.(null,'clear')}}/>
   {issue&&<div role="alert" className="world-v2-engine-error">{issue}</div>}
+  {dragIssue&&<div role="status" className="world-v2-engine-error"
+   style={{pointerEvents:'none'}}>{dragIssue}</div>}
   {dmPreview&&<div role="status" className="world-v2-preview-note">
    DM preview movement is simulated. Player positions and explored fog are not saved.
   </div>}

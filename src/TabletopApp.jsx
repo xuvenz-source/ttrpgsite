@@ -2977,7 +2977,7 @@ export default function TabletopApp(){
   aria-hidden={tab!=='tabletop'&&tab!=='sheet'}>
   {displayedMap?<><React.Suspense fallback={
     <div className="empty-tabletop" role="status">Loading tabletop…</div>
-   }><BoardComponent db={db} map={displayedMap} url={urls[activeMap.id]} tokens={tokens}
+   }><BoardComponent db={db} map={displayedMap} url={urls[displayedMap.id]} tokens={tokens}
    environment={mapEnvironmentMapId===selectedMap?mapEnvironment:null}
    publishedEnvironment={mapEnvironmentMapId===selectedMap?publishedMapEnvironment:null}
    active={tab==='tabletop'||tab==='sheet'} combatActiveTokenId={combatActiveTokenId}
