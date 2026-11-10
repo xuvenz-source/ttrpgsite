@@ -361,6 +361,22 @@
         "conclusion": "BOTH SUCCESS; actual SQL/auth/LOS limits documented and A06 blocked"
       },
       "linkedPullRequest": 79
+    },
+    {
+      "name": "stage/world-v2-b05-ordered-coalescing-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "53f20ce5bb779092db7c654057270b93e6a8a0e4",
+      "basePullRequest": 79,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "featureFlag": "VITE_WORLD_V2_COALESCE_MOTION=1; OFF by default",
+      "note": "B05 only: opt-in coalesced immutable in-flight gestures, 16ms bounded flush, 8000ms local deadline, 13 deterministic tests. No live or database changes; A06/Gate A blocked, H39 existing server replay hardening outstanding.",
+      "testEvidence": {
+        "initialHead": "927d71a3bc46acb4418c6e7d882ab926e05a1a38",
+        "generalCiRun": 42826832604,
+        "testsPassed": 790
+      }
     }
   ],
   "features": [
@@ -1235,7 +1251,8 @@
       "stage/world-v2-authority-contract-b01-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10",
       "stage/world-v2-b03-private-path-validation-2026-11-10",
-      "stage/world-v2-b04-hostile-authority-tests-2026-11-11"
+      "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "stage/world-v2-b05-ordered-coalescing-2026-11-11"
     ],
     "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06. PR #75 documents the partial A06 baseline; authenticated DM/P1/P2 browser measurements and protected fixture prep remain BLOCKED. No approval for deployment or SQL is implied. Do not advance to Gate A or B01 before completing A06 or separately approved deviation.",
     "databaseReleaseVersion": null,
