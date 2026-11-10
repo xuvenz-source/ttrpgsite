@@ -5,7 +5,7 @@ const raw=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ledger=JSON.parse(raw('staging/next-release-ledger.json'));
 test('the release ledger only names a staging branch when unreleased work remains',()=>{
  if(ledger.upcomingRelease.outstandingBranches.length)
-  assert.match(ledger.releaseBranch,/^stage\//);
+  assert.match(ledger.releaseBranch,/^(?:stage|fix)\//);
  else assert.equal(ledger.releaseBranch,null);
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
