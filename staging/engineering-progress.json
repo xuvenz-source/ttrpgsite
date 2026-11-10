@@ -330,13 +330,14 @@
         "docs/architecture/world-v2-b10-integrated-release-qualification.md",
         "staging/world-v2-b10-release-qualification.json",
         "staging/engineering-progress.json",
-        "staging/next-release-ledger.json"
+        "staging/next-release-ledger.json",
+        "tests/world-v2-phase3-real-dom.test.mjs"
       ],
-      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO.",
+      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO. Bounded fresh-profile Chromium DevTools startup retry only (no skipped browser assertions).",
       "checks": {
         "combinedSql": "PASS: all B03/B07/B08 candidate source-real hostile fixtures plus seven B10 integration assertions in disposable PG17, source run 42852430736",
         "codeQL": "PASS at earlier B10 source SHA 46c5aa8df, run 42853736555; final exact-head scan pending",
-        "frontend": "previous source run 42853530344 passed; serial npm test candidate head pending",
+        "frontend": "Earlier 823-test head had intermittent real Chromium DevTools startup failure; one bounded launch-only retry staged, exact-head CI PENDING",
         "audit": "0 high vulnerabilities at previous passing standard CI; final exact-head pending",
         "live": "READ-ONLY PostgreSQL catalog: 83 applied migrations, no B03/B07/B08 installed, B03 uncalled, private schema denied to browser",
         "realQA": "NOT RUN: A06 authenticated multi-account 24-case matrix, browser p95 and image flash metrics"
@@ -898,7 +899,7 @@
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/85",
       "parentPullRequest": 84,
       "exactParentHead": "21de65468a013fed7bf59c7803a5089e9b2201b8",
-      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO.",
+      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO. Bounded fresh-profile Chromium DevTools startup retry only (no skipped browser assertions).",
       "expectedFiles": [
         ".github/workflows/codeql.yml",
         ".github/workflows/verify-staged.yml",
@@ -910,9 +911,10 @@
         "docs/architecture/world-v2-b10-integrated-release-qualification.md",
         "staging/world-v2-b10-release-qualification.json",
         "staging/engineering-progress.json",
-        "staging/next-release-ledger.json"
+        "staging/next-release-ledger.json",
+        "tests/world-v2-phase3-real-dom.test.mjs"
       ],
-      "evidence": "Combined isolated PG17 green #42852430736; security-extended CodeQL green #42853736555; direct read-only Supabase catalog verified absent candidates; final-head standard CI pending. 24 live Auth scenarios NOT RUN.",
+      "evidence": "Source-real combined PG17 and CodeQL previously passed; final B10 head still pending full unskipped npm test with bounded Chrome startup retry. Authenticated 24-case matrix NOT RUN.",
       "securityParity": "No new direct browser RPC/private schema privileges; PostgreSQL cross-candidate RLS/ACL tests passed isolated. Unresolved branch PR71, masked Realtime budget recovery, and true multi-user LOS remain blockers.",
       "sqlDeployment": "NONE — no B03/B07/B08 source candidates applied and no production migration file or live feature flag",
       "blockers": [
