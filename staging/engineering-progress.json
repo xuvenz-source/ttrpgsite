@@ -2,7 +2,7 @@
   "schema": 1,
   "workflowVersion": "1.0",
   "workflowApprovedOn": "2026-11-10",
-  "updatedOn": "2026-11-10",
+  "updatedOn": "2026-11-11",
   "repository": "xuvenz-source/ttrpgsite",
   "workflowPath": "docs/engineering-workflow.md",
   "releaseLedgerPath": "staging/next-release-ledger.json",
@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B04",
+  "nextStep": "B05",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -146,7 +146,33 @@
       "pullRequest": 78
     },
     "B04": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "basedOnStagingHead": "012a368a1ce62ed21637bee3eb6597b8930336ef",
+      "designDocument": "docs/testing/world-v2-b04-hostile-authority-regression-2026-11-11.md",
+      "postgresWorkflow": ".github/workflows/world-v2-b04-postgres.yml",
+      "tests": [
+        "tests/world-v2-b04-postgres/schema.sql",
+        "tests/world-v2-b04-postgres/extract_real_v2_functions.py",
+        "tests/world-v2-b04-postgres/hostile.sql",
+        "tests/world-v2-b04-postgres/run.sh"
+      ],
+      "scope": "Isolated PostgreSQL 17 tests for B03 private path validator and source-extracted current production public V2 Begin/Advance, including 40 hostile, 16 positive/no-write, 5 metadata/role assertions; 4 extra direct-role checks.",
+      "isolatedPostgresRun": 42824086455,
+      "exactTestSourceSha": "69d8d8bb8c9943f780d27844456e7f3d6bf7fbab",
+      "assertionCount": 61,
+      "assertionFailures": 0,
+      "grantCallChecks": "authenticated/anon denied private; anon denied public; authenticated direct public Begin and Advance verified",
+      "knownGap": "Current public advance_core_v2 caches same-seq reply even when retry payload differs. No new movement or rebroadcast observed, but exact payload denial is not enforced; must remediate before Gate B.",
+      "fixturesLimit": "Membership and auth.uid are isolated test stubs, recipient-private realtime publisher is a test sink, no real Supabase Auth/RLS/LOS or production database; B04 does not prove p95 or live UX.",
+      "verification": "Actual source + isolated SQL, test and documentation head b31f3f10e51fed519ba0e8d21857071484ccf94d: isolated PostgreSQL job #42824746094 SUCCESS (61 assertions, direct role checks); general CI #42824745105 SUCCESS. Subsequent handoff-only JSON updates do not modify SQL/tests; exact final commit CI to recheck. NOT real Supabase Auth/Realtime or live DM/P1/P2.",
+      "security": "B03 candidate unchanged/nonapplied; no live schema/permissions; H39 replay exact-match policy gap explicitly not claimed as denied",
+      "gateA": "NOT PASSED",
+      "next": "B05 subject to Gate A or a new, explicitly recorded staging-only exception",
+      "pullRequest": 79,
+      "latestPassingCISha": "b31f3f10e51fed519ba0e8d21857071484ccf94d",
+      "latestPassingSQLRun": 42824746094,
+      "latestPassingGeneralRun": 42824745105
     },
     "B05": {
       "status": "NOT STARTED"
@@ -482,6 +508,45 @@
       "next": "B04 ONLY (separate authorization); no production SQL or release",
       "pullRequest": 78,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/78"
+    },
+    "B04": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B04",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "stackedOnPullRequest": 78,
+      "scope": "Add isolated PostgreSQL 17 CI service and actual V2 source-based hostile-authority regression suite; nonapplied, no runtime changes",
+      "expectedFiles": [
+        ".github/workflows/world-v2-b04-postgres.yml",
+        "tests/world-v2-b04-postgres/schema.sql",
+        "tests/world-v2-b04-postgres/extract_real_v2_functions.py",
+        "tests/world-v2-b04-postgres/hostile.sql",
+        "tests/world-v2-b04-postgres/run.sh",
+        "docs/testing/world-v2-b04-hostile-authority-regression-2026-11-11.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "61 PostgreSQL assertions passed; actual public Begin/Advance source imported; authenticated and anon SQL role invocations exercised; isolated PG run #42824086455 succeeded; role and SQL gaps documented. Exact pre-handoff head b31f3f10e51fed519ba0e8d21857071484ccf94d passed both isolated SQL CI #42824746094 and standard CI #42824745105.",
+      "securityParity": "B03 SQL private candidate compiles under real Postgres; bearer actor, session expiry, stale generation, wall, door, group and grants tested. H39 public altered payload same-seq replies cached ACK, no extra movement/broadcast; fails strict same-payload denial until hardening.",
+      "sqlDeployment": "NONE; B04 ephemeral PostgreSQL ONLY; no production DB writes",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED and real DM/P1/P2 QA unavailable",
+        "B04-H39 existing advance_core_v2 altered same-seq replay not denied (must fix before B10/Gate B)",
+        "PR #71 security/recovery amendments remain pending",
+        "Real Supabase Auth, PostgREST JWT, private LOS observer and commit checkpoint integration not exercised in isolated fixture",
+        "No free-tier headroom / browser p95 proof"
+      ],
+      "next": "B05 only, with explicit Gate A completion or separately recorded staging-only sequencing decision; no production release",
+      "pullRequest": 79,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/79",
+      "ciEvidence": {
+        "testedSha": "b31f3f10e51fed519ba0e8d21857071484ccf94d",
+        "isolatedSqlRun": 42824746094,
+        "standardRun": 42824745105,
+        "conclusion": "SUCCESS",
+        "headClassification": "pre-handoff metadata update"
+      }
     }
   },
   "pendingWork": [
@@ -542,6 +607,13 @@
       "status": "NOT STARTED",
       "ownerStep": "B04",
       "notes": "B03 new private SECURITY INVOKER candidate is outside migrations, NOT INSTALLED; real PG compilation, permission audits and transaction-safe positive/negative testing are required before wiring into advance_core_v2."
+    },
+    {
+      "id": "B04-H39-EXACT-PAYLOAD-REPLAY",
+      "category": "security-contract",
+      "status": "BLOCKED",
+      "ownerStep": "B08",
+      "notes": "Source-real public.advance_world_motion_v2 same sequence with different targets returns previously cached ACK rather than a generic denial; B04 H39 verified no new motion/broadcast. Record strict same-payload retry hash/compare and hostile test before Gate B. Do not confuse harmless replay side effects with contract compliance."
     }
   ],
   "sourceOfTruthRules": [
@@ -575,6 +647,19 @@
         "Candidate must stay outside deployed migration directory with no new public grants; no live SQL/Edge changes or test campaign edits",
         "No PR merge/production deploy under this exception",
         "Actual isolated PostgreSQL compilation, role-adversarial tests and full integration remain B04/B10 blockers"
+      ]
+    },
+    {
+      "id": "B04-ISOLATED-SQL-REGRESSION-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly directed 'Please proceed with B04' after B03 staging; staging-only delegated engineering execution",
+      "appliesTo": "B04 hostile-authority regression SQL fixture, CI, documentation, and persistent release records only",
+      "rationale": "An ephemeral PostgreSQL 17 CI database enables direct verified SQL function and role checks while A06 live DM/P1/P2 browser gate remains blocked; this safe test work does not affect production gameplay.",
+      "constraints": [
+        "A06 BLOCKED / Gate A NOT PASSED; staging-only testing is not a waiver of production release qualification",
+        "No live Supabase SQL operations, public grants, campaign changes, Vercel/Edge deploy or PR merge",
+        "All fixture database roles, passwords, and private observer sink exist only in disposable GitHub Actions PostgreSQL",
+        "A discovered same-seq altered replay returns cached ACK rather than denial; carry blocker to B08/B10; don't claim complete security certification"
       ]
     }
   ]
