@@ -994,6 +994,62 @@ test('live regression: burst of 100 ahead-of-sight paths triggers one sight refr
  assert.equal(position(sprite),'300px 200px');
  ctx.renderer.dispose();
 });
+test('live regression: one delayed-fog token does not freeze independently authorized allies',()=>{
+ const ctx=make();activate(ctx,scene(),sight({
+  visible:[22,23,33,34],explored:[22,23,33,34],
+  visiblePieces:[hero,ally]
+ }));
+ const heroNode=ctx.renderer.getSpriteElement('token',hero.id);
+ const allyNode=ctx.renderer.getSpriteElement('token',ally.id);
+ const before=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2],[4,2]]),
+  {mapId,seq:6}),true);
+ assert.equal(ctx.renderer.awaitingFreshVision,true);
+ assert.equal(ctx.renderer.applyObserverPath(path(ally,[[3,3],[4,3]]),
+  {mapId,seq:7}),true);
+ ctx.clock.run(1040,40,30);
+ assert.equal(position(heroNode),'200px 200px',
+  'unapproved hero destination is still concealed');
+ assert.equal(position(allyNode),'400px 300px',
+  'independent ally motion in certified cells remains smooth');
+ assert.deepEqual(ctx.resync,['observer-path-await-vision'],
+  'one sight refresh covers the whole observer burst');
+ assert.equal(ctx.renderer.stats.fullFogDraws,before.fullFogDraws);
+ assert.equal(ctx.renderer.stats.spriteRemoves,before.spriteRemoves);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:7,visionEpoch:7,
+  visible:[22,23,24,33,34],explored:[22,23,24,33,34],
+  visiblePieces:[{...hero,x:4,y:2},{...ally,x:4,y:3}]
+ })),true);
+ ctx.clock.flush(2200);
+ assert.equal(position(heroNode),'400px 200px');
+ assert.equal(ctx.renderer.getSpriteElement('token',ally.id),allyNode);
+ assert.equal(ctx.renderer.stats.spriteCreates,before.spriteCreates);
+ ctx.renderer.dispose();
+});
+test('live regression: one deferred sprite cannot replay a broken route before fresh sight',()=>{
+ const ctx=make();activate(ctx,scene(),sight({
+  visible:[22,23],explored:[22,23],visiblePieces:[hero]
+ }));
+ const heroNode=ctx.renderer.getSpriteElement('token',hero.id);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2],[4,2]]),
+  {mapId,seq:6}),true);
+ // This second packet lies in the OLD mask but may no longer start at the
+ // sprite's last true server position. Keep the existing authorized sprite.
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[3,2],[2,2]]),
+  {mapId,seq:7}),true);
+ ctx.clock.run(1040,40,30);
+ assert.equal(position(heroNode),'200px 200px');
+ assert.equal(ctx.renderer.authorized,true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision']);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:7,visionEpoch:7,visible:[22,23,24],explored:[22,23,24],
+  visiblePieces:[{...hero,x:2,y:2}]
+ })),true);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),heroNode);
+ ctx.renderer.dispose();
+});
 test('live regression: waiting for vision never bypasses a genuine permission revoke',()=>{
  const ctx=make();activate(ctx,scene(),sight({
   visible:[22],explored:[22],visiblePieces:[hero]
