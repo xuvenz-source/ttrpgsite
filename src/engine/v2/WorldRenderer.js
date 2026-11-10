@@ -445,7 +445,9 @@ export function createWorldRenderer({
    // Compare the latest validated mask against the last PAINTED mask.
    // Multiple sight RPCs coalesce to one dirty pass on the next RAF.
    if(next.enabled){
-    pendingFogDirty=diffWorldFogMasks(paintedMask,nextMask,next.width,next.height);
+    pendingFogDirty=paintedMask===nextMask?
+     {full:false,rects:[]}:
+     diffWorldFogMasks(paintedMask,nextMask,next.width,next.height);
     fogPending=pendingFogDirty.full||pendingFogDirty.rects.length>0;
    }else{
     pendingFogDirty=null;
@@ -463,7 +465,7 @@ export function createWorldRenderer({
    if(changedPlayerLights||changedDmLights)lightPending=true;
    // Redraw only affected visible/hidden sprite footprints; a moving
    // player's fog does not repaint all 500 unrelated sprites.
-   for(const piece of next.visiblePieces){
+   if(rosterChanged||!reuse)for(const piece of next.visiblePieces){
     const id=key(piece),sprite=sprites.get(id);
     if(!sprite)continue;
     const current=observer.getPosition(piece.kind,piece.id);

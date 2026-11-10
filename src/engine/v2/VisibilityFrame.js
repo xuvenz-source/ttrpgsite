@@ -205,6 +205,7 @@ export function sameWorldFogCells(before,after){
   before.environmentRevision!==after.environmentRevision||
   before.sceneGeneration!==after.sceneGeneration||
   before.permissionGeneration!==after.permissionGeneration||
+  before.partyShared!==after.partyShared||
   before.enabled!==after.enabled||
   before.width!==after.width||before.height!==after.height)
   return false;

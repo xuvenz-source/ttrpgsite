@@ -413,3 +413,25 @@ test('Phase 5 large fogless map triggers onFog only at initial authorization',as
   assert.equal(roster,1);
  }finally{ctl.dispose()}
 });
+
+test('Phase 5 fog raster reuse stops at every authorization boundary',async()=>{
+ const {sameWorldFogCells}=await import('../src/engine/v2/VisibilityFrame.js');
+ const normalized=normalizeWorldVisibilityFrame(frame(),mapId,viewerId);
+ const next=normalizeWorldVisibilityFrame(frame({
+  cursor:8,visionEpoch:10,visiblePieces:[{...hero,x:3,y:2},torch]
+ }),mapId,viewerId);
+ assert.equal(sameWorldFogCells(normalized,next),true);
+ for(const variant of [
+  {permissionGeneration:5},
+  {sceneGeneration:7},
+  {environmentRevision:10},
+  {partyShared:true},
+  {visible:[11,12,21,22,23,31]},
+  {explored:[11,12,21,22,23,31,32]},
+  {enabled:false,visible:[],explored:[]}
+ ]){
+  const different=normalizeWorldVisibilityFrame(frame(variant),mapId,viewerId);
+  assert.ok(different,'test frame should be valid');
+  assert.equal(sameWorldFogCells(normalized,different),false);
+ }
+});
