@@ -62,8 +62,9 @@ export function createInputController({
   }catch{}
  };
  const down=event=>{
-  if(!withinMap(event))return;
-  if(event.pointerType==='touch'){
+  // A second finger on the owning document cancels a map drag even if it
+  // begins just outside the viewport (pinch and page-pan remain browser UI).
+  if(event.pointerType==='touch'&&(withinMap(event)||touchIds.size>0)){
    // A second finger changes the interaction to pan/pinch. No world path
    // can continue from just one finger while another touch is active.
    touchIds.add(event.pointerId);
@@ -77,6 +78,7 @@ export function createInputController({
    }
    if(multiTouch)return;
   }
+  if(!withinMap(event))return;
   if(event.button!==0||event.isPrimary===false)return;
   if(activePointer!==null||controller.active){
    status(event,'busy');return;
