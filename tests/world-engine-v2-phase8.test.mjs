@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {
  createWorldFrameScheduler,createObserverPathBuffer,
@@ -923,4 +924,92 @@ test('Phase 5 500-sprite fog change paints only affected authorized piece',()=>{
  assert.equal(after.terrainAssignments,1);
  assert.ok(after.fogPaintedCells-before.fogPaintedCells<=9);
  ctx.renderer.dispose();
+});
+
+test('live regression: observer walks into new vision before sight arrives; keep map fully mounted',()=>{
+ const ctx=make();
+ const old=sight({visible:[22,23],explored:[22,23],visiblePieces:[hero]});
+ activate(ctx,scene(),old);
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ const sprite=ctx.renderer.getSpriteElement('token',hero.id);
+ const start=ctx.renderer.stats;
+ assert.equal(sprite.style.visibility,'visible');
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2],[4,2]]),
+  {mapId,seq:6}),true);
+ assert.equal(ctx.renderer.awaitingFreshVision,true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision']);
+ assert.equal(ctx.renderer.authorized,true,'no security revocation on ordinary fog latency');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),sprite);
+ assert.equal(position(sprite),'200px 200px','never reveal new cell before server sight');
+ assert.equal(ctx.renderer.stats.fullFogDraws,start.fullFogDraws);
+ assert.equal(ctx.renderer.stats.spriteRemoves,start.spriteRemoves);
+ assert.equal(ctx.renderer.stats.terrainAssignments,start.terrainAssignments);
+ assert.equal(ctx.surfaces.fogCanvas.style.backgroundColor,'transparent');
+ const fresh=sight({cursor:6,visionEpoch:7,
+  visible:[22,23,24],explored:[22,23,24],
+  visiblePieces:[{...hero,x:4,y:2}]});
+ assert.equal(ctx.renderer.adoptVisibility(fresh),true);
+ ctx.clock.flush(1060);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),sprite);
+ assert.equal(position(sprite),'400px 200px','new canonical position comes only from signed sight');
+ assert.equal(ctx.renderer.stats.staticDraws,start.staticDraws);
+ assert.equal(ctx.renderer.stats.spriteCreates,start.spriteCreates);
+ assert.equal(ctx.renderer.stats.spriteRemoves,start.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,start.fullFogDraws);
+ assert.equal(ctx.renderer.stats.terrainAssignments,start.terrainAssignments);
+ ctx.renderer.dispose();
+});
+test('live regression: burst of 100 ahead-of-sight paths triggers one sight refresh, never blacks the map',()=>{
+ const ctx=make();activate(ctx,scene(),
+  sight({visible:[22],explored:[22],visiblePieces:[hero]}));
+ const sprite=ctx.renderer.getSpriteElement('token',hero.id);
+ const base=ctx.renderer.stats;
+ for(let i=0;i<100;i++){
+  const route=i%2?[[3,2],[4,2]]:[[2,2],[3,2]];
+  assert.equal(ctx.renderer.applyObserverPath(path(hero,route),
+   {mapId,seq:6+i}),true);
+ }
+ ctx.clock.flush(1100);
+ assert.equal(ctx.renderer.awaitingFreshVision,true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision']);
+ assert.equal(ctx.renderer.authorized,true);
+ assert.equal(position(sprite),'200px 200px');
+ assert.equal(ctx.renderer.stats.fullFogDraws,base.fullFogDraws);
+ assert.equal(ctx.renderer.stats.spriteRemoves,base.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fogDraws,base.fogDraws);
+ assert.equal(ctx.clock.queued,0);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:105,visionEpoch:106,visible:[22,23],
+  explored:[22,23],visiblePieces:[{...hero,x:3,y:2}]
+ })),true);
+ ctx.clock.flush(1160);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(ctx.renderer.authorized,true);
+ assert.equal(position(sprite),'300px 200px');
+ ctx.renderer.dispose();
+});
+test('live regression: waiting for vision never bypasses a genuine permission revoke',()=>{
+ const ctx=make();activate(ctx,scene(),sight({
+  visible:[22],explored:[22],visiblePieces:[hero]
+ }));
+ const sprite=ctx.renderer.getSpriteElement('token',hero.id);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2]]),
+  {mapId,seq:6}),true);
+ assert.equal(ctx.renderer.awaitingFreshVision,true);
+ ctx.renderer.revoke('disconnected',true);
+ assert.equal(ctx.renderer.authorized,false);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(sprite.parentNode,null);
+ assert.equal(ctx.surfaces.fogCanvas.style.backgroundColor,'#040914');
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:6,visionEpoch:7,visiblePieces:[hero]
+ })),false,'sight alone cannot grant access without a new published scene');
+ ctx.renderer.dispose();
+});
+test('live regression: DM editor overlay is mounted only in explicit edit mode',()=>{
+ const source=readFileSync(new URL('../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
+ assert.match(source,/isDM&&!dmPreview&&editor\?\.enabled&&environment&&<MapEnvironmentOverlay/);
+ assert.match(source,/if\(reason==='observer-path-await-vision'\)/);
+ assert.match(source,/refreshVisibility\('observer-path-await-vision'\)/);
 });
