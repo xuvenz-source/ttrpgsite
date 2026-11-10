@@ -70,7 +70,11 @@ export function createVisibilityController({
   // Phase 8's single presentation owner needs EVERY accepted cursor,
   // including snapshots with no fog/roster delta. It may update its stream
   // gate without scheduling a redraw of otherwise unchanged sprites.
-  safe(onSnapshot,next);
+  // A presentation rejection is not an authorized sight. Propagate it
+  // into the existing fail-closed refresh handler instead of reporting
+  // a successful frame that the renderer never accepted.
+  if(onSnapshot(next)===false)
+   throw Error('V2 renderer rejected authorized sight');
   if(shouldUpdateFog)safe(onFog,{
    frame:next,mask:nextMask,dirty:changes
   });

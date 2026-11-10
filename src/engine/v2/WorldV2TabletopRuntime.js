@@ -61,6 +61,7 @@ export function createWorldV2TabletopRuntime({
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
+ let sceneRecovery=null;
  let previewPosition=null,dmLightRefreshTimer=null;
  function scheduleDmLightRefresh(){
   if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
@@ -105,15 +106,15 @@ export function createWorldV2TabletopRuntime({
   onSnapshot:snapshot=>{
    if(disposed)return;
    if(!renderer.adoptVisibility(snapshot)){
-    // Report only a bounded reason code: never expose scene cells,
-    // private coordinates, hidden entity IDs, or raw RPC payloads.
-    signal(onError,Error('V2 renderer rejected authorized sight: '+
-     (renderer.lastSightRejection||'unclassified')));
-    return;
+    // Rejection must fail the sight refresh itself, not leave a
+    // visibility controller authorized without an authorized renderer.
+    throw Error('V2 renderer rejected authorized sight: '+
+     (renderer.lastSightRejection||'unclassified'));
    }
    privateReady=true;
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');
+   return true;
   },
   onRevoke:({reason})=>{
    if(disposed)return;
@@ -212,6 +213,24 @@ export function createWorldV2TabletopRuntime({
   }).finally(()=>{if(reloading===task)reloading=null});
   reloading=task;return task;
  }
+ function reconcileSceneCurrent(){
+  if(disposed)return Promise.resolve(false);
+  if(sceneRecovery)return sceneRecovery;
+  const task=(async()=>{
+   const observer=stream;
+   if(!observer?.connected)
+    return authorized()?true:refreshVisibility('scene-current');
+   // A scene-ready callback can fire during the observer's initial sight
+   // request. Let it settle before deciding whether a NEW sight is needed.
+   // Two overlapping resyncs used to cancel each other's authorization.
+   await observer.whenSettled();
+   if(disposed||!observer.connected||manager.stale)return false;
+   return observer.locked||!authorized()
+    ?observer.resync('scene-current'):true;
+  })().finally(()=>{if(sceneRecovery===task)sceneRecovery=null});
+  sceneRecovery=task;
+  return task;
+ }
  function revoke(reason,hard=true){
   if(disposed)return;
   ++refreshRevision;privateReady=false;previewPosition=null;
@@ -280,18 +299,8 @@ export function createWorldV2TabletopRuntime({
     db,mapId,sceneManager:manager,
     onState:sceneState=>{
      state('scene-'+sceneState.reason);
-     if(sceneState.reason==='scene-current'){
-      // A scene subscription invalidates the previous sight even when its
-      // published revision is unchanged. The private observer might already
-      // have failed its initial resync while the scene was stale. Reconcile
-      // that stream from a new authorized sight instead of leaving it locked
-      // until the DM toggles player preview (which remounts this runtime).
-      // Never unlock a stream or reuse a roster without its own RPC.
-      if(stream?.connected)
-       void stream.resync('scene-current');
-      else
-       void refreshVisibility('scene-current');
-    }
+     if(sceneState.reason==='scene-current')
+      void reconcileSceneCurrent();
     },
     onError:error=>signal(onError,error)
    });

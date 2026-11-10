@@ -138,7 +138,7 @@ export function createWorldRealtimeTransport({
    return true;
   }).catch(error=>{
    if(!disposed&&current===generation){
-    locked=true;onError(error);state('resync-error');
+    locked=true;state('resync-error');
     // Never loop indefinitely on revoked permissions or a database outage.
     // A short bounded retry covers an in-flight scene/subscription refresh;
     // the channel remains locked until the server returns an authorized
@@ -150,7 +150,7 @@ export function createWorldRealtimeTransport({
       if(!disposed&&started&&connected&&locked)
        void resync('sight-retry');
      },150*retryAttempts);
-    }
+    }else onError(error);
    }
    return false;
   }).finally(()=>{if(pending===task)pending=null});
@@ -222,6 +222,9 @@ export function createWorldRealtimeTransport({
    return true;
   },
   resync,
+  // Scene recovery awaits an existing observer snapshot rather than
+  // invalidating it with another concurrent generation.
+  whenSettled(){return pending||Promise.resolve(!locked)},
   // No send/broadcast method. All accepted motion is published by Postgres.
   async dispose(){
    if(disposed)return;

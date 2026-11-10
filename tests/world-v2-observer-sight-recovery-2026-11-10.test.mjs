@@ -46,7 +46,8 @@ test('scene-current reauthorizes a private observer after a failed sight bootstr
   h.subscribed();
   await delay(20);
   assert.equal(h.transport.locked,true);
-  assert.deepEqual(h.errors,['No authorized V2 observer sight']);
+  assert.deepEqual(h.errors,[],
+   'a recoverable first failure should not be shown as a terminal error');
   ready=true;
   assert.equal(await h.transport.resync('scene-current'),true);
   assert.equal(h.transport.locked,false);
@@ -69,6 +70,8 @@ test('rejected or unavailable sight stays locked and retries terminate',async()=
   assert.equal(requests,3,'one original request plus two bounded retries');
   assert.equal(h.transport.locked,true);
   assert.ok(!h.statuses.includes('authorized'));
+  assert.deepEqual(h.errors,['Invalid authorized V2 observer snapshot'],
+   'persistent invalid sight still reports a terminal error');
  }finally{
   await h.transport.dispose();
  }
