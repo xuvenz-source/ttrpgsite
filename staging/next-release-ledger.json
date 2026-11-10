@@ -247,7 +247,7 @@
       "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
       "status": "staged",
       "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-      "note": "Integrated Phases 1–5 staging: bounded trace, no-flash same-authority sight, unified input, crisp certified movement, plus incremental fog. Mask identity reuse within same authority, tile-based fragmented diffs, coalesced last-painted mask deltas and per-sprite visibility invalidation. No migrations/channels/deployment; authenticated acceptance pending.",
+      "note": "World Engine V2 Phases 1–6 integrated in draft PR #68: bounded trace, safe same-authority sight, unified input, certified smooth motion, incremental fog, and Phase 6 multi-client/collision/preview/security stress (720 private frames, 120 previews, 1k wall checks, 25k bounded traces). No SQL/Edge changes or deploy. Authenticated post-release acceptance and advisor follow-up pending.",
       "linkedPullRequest": 68
     }
   ],
@@ -1008,7 +1008,7 @@
     "outstandingBranches": [
       "stage/world-v2-phase1-instrumentation-2026-11-10"
     ],
-    "stagePolicy": "Phases 1–5 integrated staging only; Phase 6 and authenticated live fog/collision/multiplayer/stress and permission tests required before merge/deployment.",
+    "stagePolicy": "All six V2 phases integrated in PR #68. Require green CI on exact head, final reconcile of other open drafts #20/#21/#32/#33 and old staging branches, and explicit designer merge/deploy approval. Authenticated DM/player/preview full React/Supabase tests, 100 live moves no blackout, fog/collision/permission/reconnect, Supabase RAM and RPC p95 remain live release acceptance gates.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
