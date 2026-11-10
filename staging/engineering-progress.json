@@ -259,15 +259,17 @@
       "statusDetail": "STAGED SOURCE AND TESTS; exact-head CI pending; no live DB or real authenticated DM/P1/P2 QA.",
       "security": "No new public RPC, private transport topic or grants; generic denial for changed replay; final canonical write independent of private budget; sight authority required for unknown commit.",
       "knownGaps": [
-        "Existing B07 saturated FIFO hide priority/retention remains release-blocking and requires fix/review",
+        "B07 FIFO hide priority now staged/tested in isolation; real Auth/LOS multi-piece/multi-tab revocation and budget-saturated eventual hiding NOT RUN",
         "No retry=no guarantee of terminal drain when message budget exhausted; B10 must test eventual resync",
         "Original isolated fixture does not include full production update triggers/real Auth/LOS or multi-tab Realtime",
         "A06/Gate A blocked; PR #71 security amendments pending; no real browser p95/map flashing evidence",
         "A final reviewed migration and integrated SQL + flags release require separate approval"
       ],
-      "pullRequest": null,
+      "pullRequest": 83,
       "gateA": "NOT PASSED",
-      "next": "B09 after exact-head CI; no production rollout"
+      "next": "B09 after exact-head CI; no production rollout",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/83",
+      "b07HidePriorityAmendment": "Same nonapplied B07 candidate now prioritizes certified hide ahead of stale queued paths for that piece; tested under 25-point deferred FIFO and exhausted budget. Real end-to-end hiding/sight revocation remains B10 gated."
     },
     "B09": {
       "status": "NOT STARTED"
@@ -760,18 +762,19 @@
         "staging/engineering-progress.json",
         "staging/next-release-ledger.json"
       ],
-      "evidence": "GitHub exact-head CI pending on B08 draft PR; isolated PostgreSQL and JS tests authored but not yet claimed passing.",
+      "evidence": "B08 source-real PG17 tested, including exact Advance+Commit replay, real canonical write, budget outage and saturated FIFO hide preemption at #42845242094; source/final PR head CI pending. See PR #83.",
       "securityParity": "No new public RPC, private transport topic or grants; generic denial for changed replay; final canonical write independent of private budget; sight authority required for unknown commit.",
       "sqlDeployment": "NONE — candidate only in supabase/candidates, no migration, no production apply",
       "blockers": [
-        "Existing B07 saturated FIFO hide priority/retention remains release-blocking and requires fix/review",
+        "B07 FIFO hide priority now staged/tested in isolation; real Auth/LOS multi-piece/multi-tab revocation and budget-saturated eventual hiding NOT RUN",
         "No retry=no guarantee of terminal drain when message budget exhausted; B10 must test eventual resync",
         "Original isolated fixture does not include full production update triggers/real Auth/LOS or multi-tab Realtime",
         "A06/Gate A blocked; PR #71 security amendments pending; no real browser p95/map flashing evidence",
         "A final reviewed migration and integrated SQL + flags release require separate approval"
       ],
       "next": "B09 subject to B08 exact-head CI",
-      "pullRequest": null
+      "pullRequest": 83,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/83"
     }
   },
   "pendingWork": [
@@ -850,9 +853,9 @@
     {
       "id": "B07-HIDE-PRIORITY-B08",
       "category": "security-integration",
-      "status": "BLOCKED",
+      "status": "STAGED_CANDIDATE_NOT_RELEASED",
       "ownerStep": "B08",
-      "notes": "Priority hide while 25-point FIFO and project Realtime cap are saturated must avoid revealing hidden continuation and bound retention of a previously visible sprite; verify private per-recipient resync, no silent disclosure."
+      "notes": "B08 amends nonapplied B07 queue for urgent hide preemption and removal of all same-piece unsent paths, isolated PostgreSQL P11/H07/P12 tests passed #42845242094. Still requires real multi-user LOS/revoke tests and priority budget eventual-delivery/resync in B10; no production fix."
     }
   ],
   "sourceOfTruthRules": [
