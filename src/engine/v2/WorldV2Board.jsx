@@ -540,7 +540,9 @@ export default function WorldV2Board(props){
   if(!runtime)return;
   if(active){
    rendererRef.current?.resume();
-   void runtime.refreshVisibility('board-active');
+   // Runtime.start() owns the first authorized sight request. Avoid a
+   // second mount-time request racing scene and observer bootstrap.
+   if(runtime.started)void runtime.refreshVisibility('board-active');
   }else rendererRef.current?.pause();
  },[active]);
  useEffect(()=>{
