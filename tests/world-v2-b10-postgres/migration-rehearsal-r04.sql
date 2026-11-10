@@ -13,9 +13,9 @@ SELECT md5(pg_get_functiondef(
  md5(pg_get_functiondef(
  'public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)'::regprocedure
 )) AS original_advance,
- md5(pg_get_functiondef(
- 'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)'::regprocedure
-)) AS original_commit;
+ md5(pg_get_functiondef(to_regprocedure(
+ 'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)'
+))) AS original_commit;
 
 DO $r04_pre$
 BEGIN
@@ -81,6 +81,10 @@ BEGIN
 END $r04_inside$;
 ROLLBACK;
 
+-- The isolated B04 fixture does not install the original public Commit
+-- wrapper before B08, while actual Supabase live already has it. Record
+-- the pre-existing absence as NULL rather than invent a dummy RPC. Both
+-- present and absent original source must be restored exactly.
 -- Validate rollback in the SAME connection after the transaction ends.
 DO $r04_after$
 DECLARE before_values world_v2_r04_before%ROWTYPE;
@@ -92,9 +96,9 @@ BEGIN
  md5(pg_get_functiondef(
  'public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)'::regprocedure
  )) IS DISTINCT FROM before_values.original_advance OR
- md5(pg_get_functiondef(
- 'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)'::regprocedure
- )) IS DISTINCT FROM before_values.original_commit
+ md5(pg_get_functiondef(to_regprocedure(
+ 'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)'
+ ))) IS DISTINCT FROM before_values.original_commit
  THEN RAISE EXCEPTION 'R04 rollback did not restore exact V2 function source';END IF;
  IF to_regclass('forge_world_v2.observer_pending_b07') IS NOT NULL OR
   to_regclass('forge_world_v2.observer_budget_b07') IS NOT NULL OR
