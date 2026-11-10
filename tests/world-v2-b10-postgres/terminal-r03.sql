@@ -172,6 +172,39 @@ BEGIN
  PERFORM public.b08_assert(
   public.commit_world_motion_v2(sid3,2,'{"x":5,"y":1}'::jsonb,1,1) IS NULL,
   'R03-14 foreign observer cannot recover actor ACK');
+
+ -- R03-15/16: the source-real ephemeral realtime.send deliberately throws.
+ -- Canonical Commit must succeed despite the outage, and the terminal
+ -- private path must be deleted so later ACK retry never replays old motion.
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ UPDATE forge_world_v2.observer_budget_b07
+  SET emitted=0,window_started=clock_timestamp()-interval '2 seconds'
+ WHERE id=1;
+ PERFORM set_config('b07.fail_broadcast','1',true);
+ first:=public.begin_world_motion_v2(map_id,
+  jsonb_build_array(jsonb_build_object('kind','token','id',token)),
+  '{"x":5,"y":1}'::jsonb,'drag',1,1,false);
+ sid3:=(first->>'sessionId')::uuid;
+ before_broadcast:=(SELECT count(*) FROM realtime.b07_outbox);
+ PERFORM public.advance_world_motion_v2(sid3,1,
+  '{"x":5,"y":1}'::jsonb,'[{"x":6,"y":1}]'::jsonb,1,1);
+ ack:=public.commit_world_motion_v2(
+  sid3,2,'{"x":6,"y":1}'::jsonb,1,1);
+ PERFORM public.b08_assert(
+  ack->'endpoint'='{"x":6,"y":1}'::jsonb AND
+  (SELECT x=6 FROM public.map_tokens WHERE id=token) AND
+  (SELECT count(*)=0 FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=sid3) AND
+  (SELECT count(*) FROM realtime.b07_outbox)=before_broadcast,
+  'R03-15 failed Realtime send cannot strand old postcommit coordinate queue');
+ PERFORM set_config('b07.fail_broadcast','0',true);
+ duplicate:=public.commit_world_motion_v2(
+  sid3,2,'{"x":6,"y":1}'::jsonb,1,1);
+ PERFORM public.b08_assert(duplicate=ack AND
+  (SELECT count(*) FROM realtime.b07_outbox)=before_broadcast AND
+  (SELECT count(*)=0 FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=sid3),
+  'R03-16 retry after recovering from failed publish cannot broadcast old path');
  RAISE NOTICE 'B10-R03 terminal queue retirement and no stale postcommit path PASS';
 END $r03$;
 ROLLBACK;
