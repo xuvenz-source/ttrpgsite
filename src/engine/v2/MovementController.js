@@ -187,7 +187,8 @@ export function createMovementController({
     if(!g.closing)break;
     if(!g.hadMotion||g.mode==='preview'){
      cancelSession(g);
-     finish(g,{status:'committed',preview:g.mode==='preview',noMotion:!g.hadMotion});
+     finish(g,{status:'committed',preview:g.mode==='preview',
+      noMotion:!g.hadMotion,endpoint:{...g.approved}});
      break;
     }
     const seq=++g.seq;

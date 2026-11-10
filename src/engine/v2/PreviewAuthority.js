@@ -25,16 +25,22 @@ export function createPreviewAuthority({getScene,getPieces,getPosition}={}){
    if(!integer(pos)||pos.x!==req.origin.x||pos.y!==req.origin.y)
     throw Error('Stale preview origin');
    const id='v2-preview-'+(++sequence);
-   active={id,mapId:req.mapId,selection:req.selection,origin:{...pos},seq:0};
+   active={id,mapId:req.mapId,selection:req.selection,
+    origin:{...pos},last:{...pos},sceneRevision:getScene()?.revision,seq:0};
    return {version:2,sessionId:id};
   },
   async advance(req){
    const s=active,scene=getScene();
    if(!valid()||!s||req?.sessionId!==s.id||
     req.mapId!==s.mapId||req.seq!==s.seq+1||
-    !integer(req.from)||!Array.isArray(req.targets))
+    scene?.revision!==s.sceneRevision||
+    (req.environmentRevision!==undefined&&
+     req.environmentRevision!==s.sceneRevision)||
+    !integer(req.from)||req.from.x!==s.last.x||
+    req.from.y!==s.last.y||!Array.isArray(req.targets)||
+    req.targets.length<1||req.targets.length>8)
     throw Error('Preview session revoked');
-   const requested=expandGestureRoute(req.from,req.targets);
+   const requested=expandGestureRoute(req.from,req.targets,{maxCells:24});
    if(!requested)throw Error('Invalid preview route');
    const rows=getPieces(s.selection);
    if(rows?.length!==1||key(rows[0])!==key(s.selection[0]))
@@ -49,6 +55,7 @@ export function createPreviewAuthority({getScene,getPieces,getPosition}={}){
     accepted.push(point);previous=point;
    }
    s.seq=req.seq;
+   if(accepted.length)s.last={...accepted.at(-1)};
    return {version:2,sessionId:s.id,seq:req.seq,
     blocked,accepted,revision:scene.revision};
   },

@@ -345,7 +345,11 @@ export default function WorldV2Board(props){
    picked,selectedTokens:previous.tokens,selectedTools:previous.tools,
    keyboard,preview:dmPreview
   });
-  const selection=selected.filter(piece=>{
+  // Selected groups are all-or-nothing: moving a quietly filtered subset
+  // would violate user intent. Backend still independently checks ownership,
+  // fog scope, swept collisions and every selected actor.
+  const selection=selected;
+  if(!selection.length||selection.length>48||!selection.every(piece=>{
    if(piece.kind==='token'){
     const row=inputs.tokens.find(item=>item.id===piece.id);
     return row&&canControlMapToken(row,user,isDM,map.id);
@@ -353,8 +357,7 @@ export default function WorldV2Board(props){
    const row=inputs.toolPlacements.find(item=>item.issue_id===piece.id);
    const issued=inputs.toolIssued.find(item=>item.id===piece.id);
    return row&&!row.held_by_token_id&&toolCanControl(issued,user,isDM);
-  });
-  if(!selection.length||!authorizeSelection(selection))return denied('roster');
+  })||!authorizeSelection(selection))return denied('roster');
   if(!keyboard)setSelection(selection.filter(p=>p.kind==='token').map(p=>p.id),
    selection.filter(p=>p.kind==='tool').map(p=>p.id));
   const current=runtimeRef.current?.visibility.visiblePieces.find(

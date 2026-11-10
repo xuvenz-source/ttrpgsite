@@ -23,6 +23,7 @@ export function createInputController({
   typeof onPointerRelease!=='function'||
   typeof onPointerStatus!=='function')throw Error('Invalid V2 input adapter');
  let mounted=false,activePointer=null,keyboardCursor=null,keyboardTimer=null;
+ const touchIds=new Set();let multiTouch=false;
  let pointerOffset=null,activePick=null,lastMoveEvent=null;
  // Listen on the owning document in capture phase. React delegates events
  // above the map viewport, so a child portal/editor can stop propagation
@@ -61,7 +62,24 @@ export function createInputController({
   }catch{}
  };
  const down=event=>{
-  if(event.button!==0||event.isPrimary===false||!withinMap(event))return;
+  // A second finger on the owning document cancels a map drag even if it
+  // begins just outside the viewport (pinch and page-pan remain browser UI).
+  if(event.pointerType==='touch'&&(withinMap(event)||touchIds.size>0)){
+   // A second finger changes the interaction to pan/pinch. No world path
+   // can continue from just one finger while another touch is active.
+   touchIds.add(event.pointerId);
+   if(touchIds.size>1){
+    multiTouch=true;
+    if(activePointer!==null){
+     release();controller.cancelGesture('multi-touch');
+     status(event,'multi-touch');
+    }
+    return;
+   }
+   if(multiTouch)return;
+  }
+  if(!withinMap(event))return;
+  if(event.button!==0||event.isPrimary===false)return;
   if(activePointer!==null||controller.active){
    status(event,'busy');return;
   }
@@ -105,6 +123,10 @@ export function createInputController({
   event.preventDefault?.();
  };
  const up=event=>{
+  if(event?.pointerType==='touch'){
+   touchIds.delete(event.pointerId);
+   if(!touchIds.size)multiTouch=false;
+  }
   if(activePointer===null||event.pointerId!==activePointer)return;
   worldV2Trace.event('input.pointer.end');
   const p=point(event);
@@ -122,6 +144,10 @@ export function createInputController({
   event.preventDefault?.();
  };
  const cancel=event=>{
+  if(event?.pointerType==='touch'){
+   touchIds.delete(event.pointerId);
+   if(!touchIds.size)multiTouch=false;
+  }
   if(activePointer===null||event?.pointerId!==activePointer)return;
   worldV2Trace.event('input.pointer.cancel');
   release();controller.cancelGesture('pointer-cancel');
@@ -143,6 +169,7 @@ export function createInputController({
  const blur=()=>{
   if(activePointer!==null)worldV2Trace.event('input.pointer.blur');
   clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
+  touchIds.clear();multiTouch=false;
   if(activePointer!==null)release();
   if(controller.active)controller.cancelGesture('blur');
  };
@@ -201,6 +228,7 @@ export function createInputController({
   unmount(){
    if(!mounted)return;
    mounted=false;release();clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
+   touchIds.clear();multiTouch=false;
    controller.cancelGesture('unmount');
    root.removeEventListener('pointerdown',down,true);
    root.removeEventListener('pointermove',move,true);

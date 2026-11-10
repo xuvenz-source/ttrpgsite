@@ -45,6 +45,7 @@ test('pointer fallback checks held tools, ownership and authorization',()=>{
 
 function harness(mode='keyboard'){
  let onTimer=null,finishResolve=null,active=false,commits=0,updates=[];
+ let canonicalOrigin={x:1,y:1};
  const scene={revision:4},frame={permissionGeneration:2};
  const runtime={
   active:true,sceneManager:{displayedScene:scene},
@@ -54,13 +55,14 @@ function harness(mode='keyboard'){
    beginGesture(req){assert.equal(req.mode,mode);active=true;return true},
    updateGesture(point){updates.push({...point});return true},
    endGesture(){commits++;return new Promise(resolve=>{finishResolve=()=>{
-    active=false;resolve({status:'committed'})}})},
+    active=false;canonicalOrigin={...(updates.at(-1)||canonicalOrigin)};
+    resolve({status:'committed',endpoint:{...canonicalOrigin}})}})},
    cancelGesture(){active=false}
   }
  };
  const stepper=createWorldKeyboardStepper({
   getRuntime:()=>runtime,
-  makePick:()=>({mapId:MAP,origin:{x:1,y:1},
+  makePick:()=>({mapId:MAP,origin:{...canonicalOrigin},
    selection:[{kind:'token',id:TOKEN}],mode}),
   setTimer:fn=>{onTimer=fn;return 1},
   clearTimer:()=>{onTimer=null}
@@ -92,7 +94,8 @@ test('arrow press while previous commit finishes is buffered, not dropped',async
  assert.equal(h.stepper.queueLength,1);
  h.finishCommit();
  await tick();await tick();
- assert.deepEqual(h.updates.at(-1),{x:1,y:2});
+ assert.deepEqual(h.updates.at(-1),{x:2,y:2},
+  'queued key begins from refreshed canonical endpoint, not stale origin');
  assert.equal(h.stepper.queueLength,0);
  h.stepper.dispose();
 });
