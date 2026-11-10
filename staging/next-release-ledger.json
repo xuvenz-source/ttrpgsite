@@ -326,6 +326,20 @@
       "documentationOnly": true,
       "note": "B02 transport design selects ordered/coalesced Supabase RPC + authorized Realtime over new Edge/WebSocket. No SQL/runtime/Edge Function changes, real p95 or authenticated QA; A06 still BLOCKED, Gate A not passed. B03 gate unresolved.",
       "linkedPullRequest": 77
+    },
+    {
+      "name": "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "4401e4d1de36dfd9ca5c8693a16778e64b6ebda4",
+      "basePullRequest": 77,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "candidateSql": [
+        "supabase/candidates/world_v2_b03_path_validation.sql"
+      ],
+      "note": "B03 ONLY: private, nonapplied, no-public-EXECUTE swept path validator SQL under supabase/candidates, static contract tests and explicit designer-authorized staging-only Gate-A exception. No live SQL or application change. Isolated PostgreSQL compilation and B04 role/hostile tests required.",
+      "linkedPullRequest": 78
     }
   ],
   "features": [
@@ -1198,7 +1212,8 @@
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-a06-readonly-baseline-2026-11-10",
       "stage/world-v2-authority-contract-b01-2026-11-10",
-      "stage/world-v2-transport-decision-b02-2026-11-10"
+      "stage/world-v2-transport-decision-b02-2026-11-10",
+      "stage/world-v2-b03-private-path-validation-2026-11-10"
     ],
     "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06. PR #75 documents the partial A06 baseline; authenticated DM/P1/P2 browser measurements and protected fixture prep remain BLOCKED. No approval for deployment or SQL is implied. Do not advance to Gate A or B01 before completing A06 or separately approved deviation.",
     "databaseReleaseVersion": null,

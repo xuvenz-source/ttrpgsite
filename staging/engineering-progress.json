@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B03",
+  "nextStep": "B04",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -131,7 +131,19 @@
       "pullRequest": 77
     },
     "B03": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "basedOnStagingHead": "4401e4d1de36dfd9ca5c8693a16778e64b6ebda4",
+      "sqlCandidate": "supabase/candidates/world_v2_b03_path_validation.sql",
+      "test": "tests/world-v2-b03-path-validator-contract.test.mjs",
+      "designDocument": "docs/architecture/world-v2-b03-path-validation.md",
+      "scope": "Actor-bound, sequence- and revision-scoped, bounded ordered route validation; per-cell swept collision for rigid mixed token/tool groups; private nonapplied SQL candidate only",
+      "verification": "Code/static review and targeted source-contract regression test staged; isolated PostgreSQL execution, privilege validation and authenticated multiplayer acceptance NOT RUN",
+      "sqlStatus": "NOT APPLIED — intentionally outside supabase/migrations",
+      "security": "SECURITY INVOKER, no browser EXECUTE grants, auth.uid session locking and unchanged existing public RPCs",
+      "gateA": "NOT PASSED",
+      "next": "B04 hostile-authority regressions; isolated PostgreSQL compilation required",
+      "pullRequest": 78
     },
     "B04": {
       "status": "NOT STARTED"
@@ -442,6 +454,34 @@
       "next": "B03 — staged SQL candidate ONLY after Gate A or a newly documented, narrow staging-only sequencing exception",
       "pullRequest": 77,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/77"
+    },
+    "B03": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "B03",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "stackedOnPullRequest": 77,
+      "scope": "Staged-only private path validator, static JS contract tests, documentation and release tracking. No public entry point or production DDL.",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b03_path_validation.sql",
+        "tests/world-v2-b03-path-validator-contract.test.mjs",
+        "docs/architecture/world-v2-b03-path-validation.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Reviewed main V2 movement/scene/collision/observer and read-only production Supabase pg_proc; live project ACTIVE_HEALTHY / 83 applied migrations; exact SQL not compiled in Postgres.",
+      "securityParity": "No runtime or grants changed. New helper explicitly binds auth.uid, locked session, permission/map revision and selected immutable footprints; denied blocked-first-cell does not reveal obstacles; oneWay remains vision-only.",
+      "sqlDeployment": "NONE, NONAPPLIED SQL CANDIDATE ONLY",
+      "blockers": [
+        "A06 still BLOCKED / Gate A NOT PASSED",
+        "PR #71 exact security amendments pending",
+        "B04 must compile candidate against isolated real Postgres and run denial/positive and grants tests",
+        "No integrated live performance, security or migration verification"
+      ],
+      "next": "B04 ONLY (separate authorization); no production SQL or release",
+      "pullRequest": 78,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/78"
     }
   },
   "pendingWork": [
@@ -495,6 +535,13 @@
       "status": "STAGED",
       "ownerStep": "B02",
       "notes": "Select the existing Supabase RPC coalescing protocol, retain private server-authorized progress. No dedicated WebSocket service. Design/estimates only: A06 Gate A remains NOT PASSED."
+    },
+    {
+      "id": "B03-SQL-COMPILATION-AND-PRIVILEGES",
+      "category": "security-validation",
+      "status": "NOT STARTED",
+      "ownerStep": "B04",
+      "notes": "B03 new private SECURITY INVOKER candidate is outside migrations, NOT INSTALLED; real PG compilation, permission audits and transaction-safe positive/negative testing are required before wiring into advance_core_v2."
     }
   ],
   "sourceOfTruthRules": [
@@ -515,6 +562,19 @@
         "A06 remains BLOCKED and Gate A NOT PASSED",
         "No production merge/deployment, SQL/Edge apply, campaign changes or PR #71 merge under this exception",
         "No movement runtime B03-B10 release until the real protected multiplayer fixture is verified"
+      ]
+    },
+    {
+      "id": "B03-ONLY-STAGING-SQL-CANDIDATE-2026-11-10",
+      "approvedOn": "2026-11-10",
+      "authority": "Designer explicitly instructed 'Proceed with B03' after delegating free-tier engineering decisions",
+      "appliesTo": "B03 only: create nonapplied private SQL candidate, static contracts, docs and staging records",
+      "rationale": "Existing Gate A live three-account fixture remains inaccessible; a private, noninstalled SQL candidate can be audited without affecting live user movement or authorization.",
+      "constraints": [
+        "A06 BLOCKED and Gate A NOT PASSED; this is not a blanket B03–B10 release waiver",
+        "Candidate must stay outside deployed migration directory with no new public grants; no live SQL/Edge changes or test campaign edits",
+        "No PR merge/production deploy under this exception",
+        "Actual isolated PostgreSQL compilation, role-adversarial tests and full integration remain B04/B10 blockers"
       ]
     }
   ]
