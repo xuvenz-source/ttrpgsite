@@ -75,6 +75,11 @@ BEGIN
  PERFORM public.b07_assert(response->'accepted'=
   '[{"x":2,"y":1}]'::jsonb,
   'P05 actual protected Advance approves first one-cell route');
+ IF (SELECT count(*) FROM realtime.b07_outbox)=0 THEN
+  -- Diagnostic only: source-real public wrapper suppresses publisher errors.
+  PERFORM forge_world_v2.publish_approved_observers(
+   s,'{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb);
+ END IF;
  PERFORM public.b07_assert(
   (SELECT count(*)=2 FROM realtime.b07_outbox) AND
   (SELECT bool_and(is_private AND event='world-motion-v2' AND
