@@ -7,7 +7,7 @@ const editable=target=>!!target&&(target.isContentEditable===true||
  typeof target.closest==='function'&&!!target.closest('[contenteditable="true"],[role="textbox"]'));
 export function createInputController({
  target,controller,pointFromEvent,resolveSelection,
- onPointerRelease=()=>false,
+ onPointerRelease=()=>false,onPointerStatus=()=>{},
  keyboardTarget=typeof window==='undefined'?target:window,
  setTimer=(fn,delay)=>setTimeout(fn,delay),
  clearTimer=handle=>clearTimeout(handle),keyboardIdleMs=90
@@ -16,7 +16,8 @@ export function createInputController({
   !keyboardTarget?.addEventListener||!keyboardTarget?.removeEventListener||
   !controller||typeof pointFromEvent!=='function'||
   typeof resolveSelection!=='function'||
-  typeof onPointerRelease!=='function')throw Error('Invalid V2 input adapter');
+  typeof onPointerRelease!=='function'||
+  typeof onPointerStatus!=='function')throw Error('Invalid V2 input adapter');
  let mounted=false,activePointer=null,keyboardCursor=null,keyboardTimer=null;
  let pointerOffset=null,activePick=null;
  const heldArrows=new Set();
@@ -41,14 +42,21 @@ export function createInputController({
   }catch{}
  };
  const down=event=>{
-  if(activePointer!==null||controller.active||event.button!==0)return;
-  const p=point(event);if(!p)return;
+  if(event.button!==0)return;
+  if(activePointer!==null||controller.active){
+   onPointerStatus(event,'busy');return;
+  }
+  const p=point(event);
+  if(!p){onPointerStatus(event,'point');return}
   const picked=resolveSelection(event,p);
-  if(!picked?.origin)return;
+  if(!picked?.origin){onPointerStatus(event,'selection');return}
   const originPoint=Object.freeze({x:picked.origin.x,y:picked.origin.y});
   if(!controller.beginGesture({...picked,pointer:originPoint,
    mode:picked.mode==='preview'?'preview':
-    event.pointerType==='touch'?'touch':'drag'}))return;
+    event.pointerType==='touch'?'touch':'drag'})){
+   onPointerStatus(event,'begin');return;
+  }
+  onPointerStatus(event,'grabbed');
   // Grab offset is fixed at pointer-down. Without it, clicking the middle
   // of a wide token snaps the anchor to the cursor's top-left grid cell.
   pointerOffset={x:originPoint.x-p.x,y:originPoint.y-p.y};

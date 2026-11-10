@@ -129,6 +129,7 @@ export default function WorldV2Board(props){
  const [selectedToolIds,setSelectedToolIds]=useState([]);
  const selectedRef=useRef({tokens:[],tools:[]});
  const [roster,setRoster]=useState([]),[issue,setIssue]=useState(null);
+ const [dragIssue,setDragIssue]=useState(null);
  const [authorizedSight,setAuthorizedSight]=useState(null);
  const [activeMeasure,setActiveMeasure]=useState(null);
  const [localMeasures,setLocalMeasures]=useState([]);
@@ -444,6 +445,12 @@ export default function WorldV2Board(props){
    onCommit:()=>{
     latest.current.onMovementCommitted?.();
    },
+   onGesture:event=>{
+    // Never expose private movement payloads or coordinates.
+    if(event.type==='grabbed'||event.type==='approved')setDragIssue(null);
+    else if(event.type==='rejected')
+     setDragIssue('Movement rejected: verify collision rules and token permissions.');
+   },
    onError:error=>{
     setIssue(error?.message||'World Engine V2 authorization unavailable.');
     latest.current.onV2Error?.(error);
@@ -462,12 +469,28 @@ export default function WorldV2Board(props){
   });
   runtimeRef.current=runtime;
   runtime.attachInput({
-   target:board.current,
+   // Capture from the map viewport across all portal and overlay layers.
+   target:viewport.current,
    keyboardTarget:noDuplicateKeyboard,
    pointFromEvent:event=>mapGridRef.current(event),
    resolveSelection:(event,point,context)=>resolveRef.current(event,point,context),
    onPointerRelease:(event,pick,point)=>
-    releaseRef.current(event,pick,point)
+    releaseRef.current(event,pick,point),
+   onPointerStatus:(event,code)=>{
+    if(code==='grabbed'){setDragIssue(null);return}
+    const point=mapGridRef.current(event);
+    if(!point||!pointerPieceAt(event,point))return;
+    const editor=latest.current.environmentEditor;
+    if(!runtimeRef.current?.active)
+     setDragIssue('Drag blocked: map sight is not yet authorized.');
+    else if(activeMeasureRef.current)
+     setDragIssue('Drag blocked: exit the measurement tool first.');
+    else if(!dmPreview&&editor?.enabled&&editor.lockTokens!==false)
+     setDragIssue('Drag blocked: turn off Lock Tokens in the DM map editor.');
+    else if(code==='busy')
+     setDragIssue('Drag blocked: another movement is finishing.');
+    else setDragIssue('Drag could not start: check token or player-preview selection.');
+   }
   });
   void runtime.start().then(ok=>{
    if(!ok&&runtimeRef.current===runtime)
@@ -478,6 +501,14 @@ export default function WorldV2Board(props){
  const rendererReady=useRef(onRendererReady);
  rendererReady.current=onRendererReady;
  const mapGridRef=useRef(mapGridPoint);mapGridRef.current=mapGridPoint;
+ const activeMeasureRef=useRef(activeMeasure);activeMeasureRef.current=activeMeasure;
+ // The authorized scene may exist before the signed map URL arrives.
+ // Asset URL refreshes update only the persistent <img>, never remount fog.
+ useLayoutEffect(()=>{
+  const renderer=rendererRef.current;
+  if(renderer?.currentScene)
+   renderer.setTerrainSource(typeof url==='string'?url:'');
+ },[url,map.id,boardIdentity]);
  useLayoutEffect(()=>{
   rendererRef.current?.setCamera({zoom:scale});
   const anchor=zoomAnchor.current;
@@ -604,7 +635,8 @@ export default function WorldV2Board(props){
  }
  function onBoardDown(event){
   if(event.button===1||
-   event.pointerType==='touch'&&!event.target.closest?.('[data-world-id]')){
+   event.pointerType==='touch'&&
+    !pointerPieceAt(event,mapGridPoint(event))){
    panRef.current={id:event.pointerId,x:event.clientX,y:event.clientY,
     left:viewport.current?.scrollLeft||0,top:viewport.current?.scrollTop||0};
    setPanning(true);event.preventDefault();
@@ -749,6 +781,7 @@ export default function WorldV2Board(props){
  useEffect(()=>{
   setSelection([]);setLocalMeasures([]);setActiveMeasure(null);
  },[map.id]);
+ useEffect(()=>setDragIssue(null),[map.id,dmPreview]);
  useEffect(()=>{
   for(const item of roster)if(item.kind==='token'){
    const t=tokens.find(row=>row.id===item.id);
@@ -825,6 +858,8 @@ export default function WorldV2Board(props){
    onClearPins={()=>{setLocalMeasures(old=>old.filter(m=>!m.pinned));
     onMeasurementPreview?.(null,'clear')}}/>
   {issue&&<div role="alert" className="world-v2-engine-error">{issue}</div>}
+  {dragIssue&&<div role="status" className="world-v2-engine-error"
+   style={{pointerEvents:'none'}}>{dragIssue}</div>}
   {dmPreview&&<div role="status" className="world-v2-preview-note">
    DM preview movement is simulated. Player positions and explored fog are not saved.
   </div>}

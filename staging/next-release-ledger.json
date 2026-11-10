@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "131252bab88435568adb6d892e5fe4c1b510ddf4",
-  "releaseBranch": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
+  "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
+  "releaseBranch": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -223,10 +223,17 @@
     },
     {
       "name": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "131252bab88435568adb6d892e5fe4c1b510ddf4",
+      "linkedPullRequest": 65,
+      "note": "Released as production commit 737d64998266f7c8a097ccc48b1377cce5b56b0d (PR #65); map image missing and dragging still fails in live browser."
+    },
+    {
+      "name": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
       "linkedPullRequest": null,
-      "note": "Restores V2 pointerdown capture and valid DM preview exemption from editor token lock; includes no-write preview drag tests. Frontend only."
+      "note": "Recover signed map terrain loading independently of scene and correct displayed map URL; capture viewport pointer interactions and display safe drag denial status. No migration or deployment."
     }
   ],
   "features": [
@@ -981,12 +988,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "131252bab88435568adb6d892e5fe4c1b510ddf4",
-    "releaseBranch": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
+    "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
+    "releaseBranch": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
     "outstandingBranches": [
-      "fix/world-v2-drag-preview-gesture-handoff-2026-11-10"
+      "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10"
     ],
-    "stagePolicy": "One consolidated release after explicit approval. Include and verify every outstanding release-ready staged component. This V2 observer recovery is frontend only and requires authenticated DM/player live validation; the optional Supabase Nano memory trial is deferred and needs separate maintenance approval.",
+    "stagePolicy": "Consolidated tested release after designer approval. Map URL and pointer handoff diagnostics only; no SQL changes or additional Realtime streams.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },

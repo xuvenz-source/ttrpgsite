@@ -572,10 +572,15 @@ export function createWorldRenderer({
   },
   setTerrainSource(source){
    if(disposed||!scene||typeof source!=='string'||
-    !/^(https?:\/\/|blob:|\/)/i.test(source)||
-    source.length>4096)return false;
-   if(terrainUrl===source)return true;
-   terrainUrl=source;surfaces.terrain.src=source;
+    source.length>4096||
+    (source!==''&&!/^(https?:\\/\\/|blob:|\\/)/i.test(source)))
+    return false;
+   if(terrainUrl===source||!terrainUrl&&source==='')return true;
+   terrainUrl=source||null;
+   if(source)surfaces.terrain.src=source;
+   else if(typeof surfaces.terrain.removeAttribute==='function')
+    surfaces.terrain.removeAttribute('src');
+   else surfaces.terrain.src='';
    stats.terrainAssignments++;return true;
   },
   /** Camera is CSS-only, independent of canvas or sprite recalculation. */
