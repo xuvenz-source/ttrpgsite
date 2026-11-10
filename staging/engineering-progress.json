@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B06",
+  "nextStep": "B07",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -194,7 +194,25 @@
       "pullRequest": 80
     },
     "B06": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-b06-certified-local-presentation-2026-11-11",
+      "basedOnStagingHead": "62d92eae16fc8b886c8c62f68cd62f0ca356bbb5",
+      "designDocument": "docs/architecture/world-v2-b06-certified-motion-presentation.md",
+      "sourceFiles": [
+        "src/engine/v2/CertifiedMotionPresentation.js",
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "src/engine/v2/WorldRenderer.js"
+      ],
+      "test": "tests/world-v2-b06-certified-local-presentation-2026-11-11.test.mjs",
+      "scope": "Feature-gated, sight-snapshot-bound one-cell local cosmetic motion for ordinary player viewers; strict renderer verification and revocation, no API/SQL changes",
+      "mode": "VITE_WORLD_V2_CERTIFIED_MOTION=1 at explicitly authorized future build time only; default false, DM local path and DM preview unchanged",
+      "verification": "Exact implementation/tests SHA 22faa7dac646459efaafb9443d31af0af3d07bb8 succeeded GitHub CI #42831444455: 803/803 tests, npm audit no vulnerabilities, Vite build and Deno typechecks. Final ledger metadata HEAD recheck pending; real protected multiplayer browser QA NOT RUN.",
+      "security": "Uses only normalized server predictionGrants; requires current scope/viewer/map/scene/permission/visionEpoch/cursor and all selected-piece quadrants, denies >one-cell, resets on server ACK, sight revocation, missing grant, blocked first step, no private geometry, no writes or sockets",
+      "knownGap": "A06/Gate A remain blocked; PR #71 security/recovery amendments pending; B04-H39 altered same-seq public Advance retry returns cached ACK; B07 observer budget and B08–B10 integration not staged",
+      "gateA": "NOT PASSED",
+      "next": "B07 recipient-aware observer frequency/budget; separately authorize any B07 staging or complete Gate A",
+      "pullRequest": 81
     },
     "B07": {
       "status": "NOT STARTED"
@@ -593,6 +611,38 @@
       "next": "B06 ONLY (fresh sequencing authorization while Gate A blocked); separate review required before enabling flag or merging",
       "pullRequest": 80,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/80"
+    },
+    "B06": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B06",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b06-certified-local-presentation-2026-11-11",
+      "stackedOnPullRequest": 80,
+      "scope": "Server-issued one-cell viewer predictions become first-class, per-frame-scoped cosmetic certificates; controller and renderer revalidate grants and discard on refreshed sight/blocked ACK; disabled by default",
+      "expectedFiles": [
+        "src/engine/v2/CertifiedMotionPresentation.js",
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "src/engine/v2/WorldRenderer.js",
+        "tests/world-v2-b06-certified-local-presentation-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b06-certified-motion-presentation.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "13 B06 deterministic tests + 790 prior tests succeeded (803/803) on #42831444455, tested head 22faa7dac646459efaafb9443d31af0af3d07bb8. No live DM/P1/P2 simulation or true networking; exact final PR head CI to be verified.",
+      "securityParity": "No new grants, no hidden geometry; all group members require existing signed current safe-quadrant grant, renderer rechecks active sight each paint event and revokes stale predicted position. DM fallback unchanged.",
+      "sqlDeployment": "NONE; no SQL/Edge applies, no Vercel deployment, no migrations, no PR merge",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED; real protected DM/P1/P2 test not run",
+        "PR #71 AMEND BEFORE MERGE",
+        "B04-H39 existing public RPC exact altered-payload replay not denied",
+        "B07 recipient emission budget and B08–B10 integration unverified",
+        "No measured E2E p95 or player map flash/terrain/sprite remount evidence on staging production"
+      ],
+      "next": "B07 ONLY with new narrow staging authorization or Gate A completion; flag OFF until approved QA build",
+      "pullRequest": 81,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/81"
     }
   },
   "pendingWork": [
@@ -720,6 +770,20 @@
         "B05 coalescing flag disabled by default; separate release authorization required before enabling QA/production build",
         "No B06 implementation or Gate B waiver under this microstep",
         "B04 H39 altered same-sequence replay remains a release security blocker"
+      ]
+    },
+    {
+      "id": "B06-STAGING-ONLY-CERTIFIED-PRESENTATION-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly instructed 'Proceed with B06'; delegated lead engineering under existing staged-only workflow",
+      "appliesTo": "B06 only: disabled-by-default client-sprite presentation using existing server-issued private one-cell prediction grants, deterministic security tests, documentation and ledgers",
+      "rationale": "Safe reviewable client-only feature can be staged and tested while A06 protected DM/P1/P2 browser fixture remains unavailable; no real server authority or production behavior is changed.",
+      "constraints": [
+        "A06 remains BLOCKED and Gate A NOT PASSED",
+        "B06 flag OFF by default; no live Vercel flags, DNS, SQL/Edge migrations, public grants, campaigns, deployment or merge",
+        "Do not stage B07 or assume Gate B passage from deterministic CI",
+        "Keep B04-H39 altered same-sequence replay as security blocker; PR #71 still AMEND BEFORE MERGE",
+        "No live p95, fog exposure or real authenticated three-account UX claims"
       ]
     }
   ]

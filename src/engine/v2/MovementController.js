@@ -1,5 +1,6 @@
 import {worldV2Trace} from './WorldTrace.js';
 import {appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from './GesturePath.js';
+import {certifiedMotionPaintAllowed} from './CertifiedMotionPresentation.js';
 
 /** V2 gesture orchestration. This is deliberately isolated from live RPCs.
  * Authority adapter MUST be backed by server validation in later phases.
@@ -36,6 +37,8 @@ const predictionReached=(origin,predicted,approved)=>{
 };
 export function createMovementController({
  authority,onEvent=noop,canPredict=()=>false,
+ // B06 is independent of B05 and stays OFF until explicitly enabled.
+ certifiedMotion=false,certifyPresentation=()=>null,
  // B05 staged opt-in. The existing adapter stays the default until Gate B.
  coalesceMotion=false,coalesceWindowMs=16,authorityTimeoutMs=8000,
  setTimer=(callback,ms)=>setTimeout(callback,ms),
@@ -43,6 +46,7 @@ export function createMovementController({
 }={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
   typeof onEvent!=='function'||typeof canPredict!=='function'||
+  typeof certifiedMotion!=='boolean'||typeof certifyPresentation!=='function'||
   typeof coalesceMotion!=='boolean'||
   !Number.isSafeInteger(coalesceWindowMs)||coalesceWindowMs<0||coalesceWindowMs>32||
   !Number.isSafeInteger(authorityTimeoutMs)||
@@ -154,6 +158,13 @@ export function createMovementController({
       g.pending.length=0;
       if(coalesceMotion)g.queueFrom={...g.approved};
      }
+     // Never carry a one-cell snapshot grant across a newly approved
+     // server waypoint. A new prediction requires a current signed sight.
+     if(certifiedMotion){
+      g.certificate=null;
+      g.predicted=false;
+      g.presented={...g.approved};
+     }
      if(response.blocked||!g.predicted||
        predictionReached(g.origin,g.presented,g.approved)){
        g.presented={...g.approved};g.predicted=false;
@@ -212,6 +223,7 @@ export function createMovementController({
     seq:0,mode,sessionId:null,closing:false,
      predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
+    certificate:null,
     environmentRevision,permissionGeneration};
    active=g;state='Grabbed';
    emit(g,'grabbed'); // immediate, before any asynchronous permission operation
@@ -241,18 +253,41 @@ export function createMovementController({
    }
    g.pointer={...pointer};
    if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}
-   // A synchronous caller-supplied grant check must approve the *entire*
-   // displacement. Default is false: no speculative hidden-wall travel.
-   let approvedPrediction=false;
-   try{approvedPrediction=canPredict({
+   // B06 accepts only a current frame-bound one-cell certificate from the
+   // trusted visibility adapter. Old clients keep the original predictor.
+   const request={
     mapId:g.mapId,selection:g.selection,from:{...g.approved},
     to:cell,pointer:{...pointer},mode:g.mode,
     environmentRevision:g.environmentRevision,
     permissionGeneration:g.permissionGeneration
-   })===true}catch{}
+   };
+   let certificate=null,approvedPrediction=false;
+   if(certifiedMotion){
+    try{certificate=certifyPresentation(request)}catch{}
+    approvedPrediction=certificate?.scope==='viewer'&&
+     certificate.mapId===g.mapId&&
+     certificate.environmentRevision===g.environmentRevision&&
+     certificate.permissionGeneration===g.permissionGeneration&&
+     Number.isSafeInteger(certificate.cursor)&&certificate.cursor>=0&&
+     Number.isSafeInteger(certificate.visionEpoch)&&certificate.visionEpoch>=0&&
+     Number.isSafeInteger(certificate.sceneGeneration)&&certificate.sceneGeneration>=0&&
+     certificate.from?.x===g.approved.x&&certificate.from?.y===g.approved.y&&
+     certificate.position?.x===pointer.x&&certificate.position?.y===pointer.y;
+   }else{
+    try{approvedPrediction=canPredict(request)===true}catch{}
+   }
    if(approvedPrediction){
     g.presented={...pointer};g.predicted=true;
-     emit(g,'presented',{predicted:true});
+    if(certifiedMotion)g.certificate=certificate;
+    emit(g,'presented',{predicted:true,
+     ...(certifiedMotion?{certificate}:{}),
+     from:{...g.approved}});
+   }else if(certifiedMotion&&g.certificate){
+    // Pointer left the ONLY certified square; do not retain a stale
+    // cosmetic position while later packets travel toward unknown walls.
+    g.certificate=null;g.predicted=false;
+    g.presented={...g.approved};
+    emit(g,'presentation-reset');
    }
    if(g.sessionId)scheduleDrain(g);
    return true;
@@ -274,6 +309,20 @@ export function createMovementController({
    finish(g,{status:reason==='permission'?'revoked':'cancelled',reason});
    cancelSession(g);
    return true;
+  },
+  // A refreshed signed sight (including cursor/vision epoch changes) is
+  // not interchangeable with the one that certified a speculative sprite.
+  // Reconcile immediately, even with no additional pointermove event.
+  syncCertifiedSight({frame,scene}={}){
+   const g=active;
+   if(!certifiedMotion||!g||!g.certificate)return false;
+   if(certifiedMotionPaintAllowed({
+    certificate:g.certificate,frame,scene,mapId:g.mapId,
+    selection:g.selection,approved:g.approved,presented:g.presented
+   }))return true;
+   g.certificate=null;g.predicted=false;g.presented={...g.approved};
+   emit(g,'presentation-reset');
+   return false;
   },
   updateContext({mapId,environmentRevision,permissionGeneration}={}){
    const g=active;if(!g)return;
