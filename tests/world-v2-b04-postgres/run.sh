@@ -67,7 +67,7 @@ BEGIN
   sid,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
  PERFORM public.b04_assert(
   r->'accepted'='[{"x":2,"y":1}]'::jsonb AND
-  r ? 'routeSteps'=false AND r ? 'wallGeometry'=false,
+  NOT (r ? 'routeSteps') AND NOT (r ? 'wallGeometry'),
   'P16 actual authenticated role accepts private server-validated prefix only');
 END
 $b04_direct$;
