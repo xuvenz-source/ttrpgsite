@@ -8,9 +8,10 @@ DECLARE
  dm uuid:='00000000-0000-4000-8000-000000000013';
  map_uuid uuid:='00000000-0000-4000-8000-000000000021';
  token uuid:='00000000-0000-4000-8000-000000000101';
- sid uuid;sid2 uuid;
- ack jsonb;duplicate jsonb;body jsonb;
- count_before integer;cursor_before bigint;
+ sid uuid;sid2 uuid;sid3 uuid;
+ ack jsonb;duplicate jsonb;body jsonb;long_route jsonb;
+ count_before integer;cursor_before bigint;j integer;
+ session_row forge_world_v2.motion_sessions%ROWTYPE;
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  -- Real server Begin, source-real validated Advance and B08 Commit.
@@ -126,6 +127,56 @@ BEGIN
  PERFORM public.b08_assert(public.commit_world_motion_v2(
    sid,3,'{"x":3,"y":1}'::jsonb,1,1) IS NULL,
    'H06 foreign actor cannot read canonical cached ACK');
- RAISE NOTICE 'B08 source-real commit replay and authorized private recovery PASS';
+ -- B08 hide priority: queued stale paths must never overtake a certified
+ -- hide, even when the first 25-point frame AND deferred FIFO were occupied.
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ INSERT INTO public.campaign_members(campaign_id,user_id,role) VALUES
+  ('00000000-0000-4000-8000-000000000001',player,'player');
+ sid3:='00000000-0000-4000-8000-000000000399';
+ PERFORM public.b04_issue_token_session(sid3,actor,token);
+ SELECT * INTO session_row FROM forge_world_v2.motion_sessions WHERE id=sid3;
+ long_route:='[]'::jsonb;
+ FOR j IN 0..24 LOOP
+  long_route:=long_route||jsonb_build_array(
+    jsonb_build_object('x',5+(j%2),'y',1));
+ END LOOP;
+ UPDATE forge_world_v2.observer_budget_b07
+ SET emitted=30,window_started=clock_timestamp() WHERE id=1;
+ PERFORM forge_world_v2.queue_recipient_observer_b07(session_row,player,
+  jsonb_build_array(jsonb_build_object('kind','token','id',token,
+   'action','path','path',long_route)));
+ PERFORM forge_world_v2.queue_recipient_observer_b07(session_row,player,
+  jsonb_build_array(jsonb_build_object('kind','token','id',token,
+   'action','path','path','[{"x":5,"y":1},{"x":6,"y":1}]'::jsonb)));
+ PERFORM public.b08_assert(
+  (SELECT jsonb_array_length(pending->0->'path')=25 AND
+   jsonb_array_length(deferred)=1 FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=sid3 AND viewer_id=player),
+  'P11 saturated 25-point head and deferred paths retained before hide');
+ cursor_before:=(SELECT seq FROM forge_world_v2.viewer_streams
+  WHERE map_id=map_uuid AND viewer_id=player);
+ PERFORM forge_world_v2.queue_recipient_observer_b07(session_row,player,
+  jsonb_build_array(jsonb_build_object('kind','token','id',token,
+   'action','hide')));
+ PERFORM public.b08_assert(
+  (SELECT pending->0->>'action'='hide' AND
+   jsonb_array_length(deferred)=0 FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=sid3 AND viewer_id=player) AND
+  (SELECT seq=cursor_before FROM forge_world_v2.viewer_streams
+   WHERE map_id=map_uuid AND viewer_id=player),
+  'H07 urgent hide preempts and deletes every older unsent concealed path');
+ UPDATE forge_world_v2.observer_budget_b07
+ SET emitted=0,window_started=clock_timestamp()-interval '2 seconds'
+ WHERE id=1;
+ PERFORM public.b08_assert(
+  forge_world_v2.flush_recipient_observer_b07(session_row,player)=1 AND
+  (SELECT message->'items'->0->>'action'='hide' AND
+   NOT (message->'items'->0 ? 'path') FROM realtime.b07_outbox
+   WHERE (message->>'viewerId')=player::text
+   ORDER BY id DESC LIMIT 1) AND
+  (SELECT seq=cursor_before+1 FROM forge_world_v2.viewer_streams
+   WHERE map_id=map_uuid AND viewer_id=player),
+  'P12 recovered priority broadcast contains hide only and advances cursor once');
+  RAISE NOTICE 'B08 source-real commit replay and authorized private recovery PASS';
 END $b08_test$;
 ROLLBACK;
