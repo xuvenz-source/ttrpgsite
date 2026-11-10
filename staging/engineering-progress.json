@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B05",
+  "nextStep": "B06",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -175,7 +175,23 @@
       "latestPassingGeneralRun": 42824745105
     },
     "B05": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-b05-ordered-coalescing-2026-11-11",
+      "basedOnStagingHead": "53f20ce5bb779092db7c654057270b93e6a8a0e4",
+      "designDocument": "docs/architecture/world-v2-b05-gesture-coalescing.md",
+      "sourceFiles": [
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js"
+      ],
+      "test": "tests/world-v2-b05-ordered-coalescing-2026-11-11.test.mjs",
+      "scope": "Disabled-by-default opt-in coalescing controller; immutable in-flight batch detachment, ordered pending route and 16ms flush, 8000ms bounded RPC deadline; current V2 authority untouched",
+      "mode": "VITE_WORLD_V2_COALESCE_MOTION=1 at authorized build time only; default false",
+      "verification": "Initial exact implementation/test head 927d71a3bc46acb4418c6e7d882ab926e05a1a38 passed CI #42826832604 with 790/790 tests; final metadata-only HEAD CI pending; real DM/P1/P2 QA NOT RUN",
+      "security": "Server-authorized accepted-prefix validation preserved, no speculative geometry, blocked route clears pending, hard local timeout, late responses ignored, DM preview local-only; no SQL/Realtime changes",
+      "knownGap": "B04-H39 cached ACK on altered same-seq payload still a server-side security contract blocker for B08; A06/Gate A not passed",
+      "gateA": "NOT PASSED",
+      "next": "B06 is next design/implementation step; requires another explicit staging-only exception or Gate A",
+      "pullRequest": 80
     },
     "B06": {
       "status": "NOT STARTED"
@@ -547,6 +563,36 @@
         "conclusion": "SUCCESS",
         "headClassification": "pre-handoff metadata update"
       }
+    },
+    "B05": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B05",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b05-ordered-coalescing-2026-11-11",
+      "stackedOnPullRequest": 79,
+      "scope": "Feature-gated immutable bounded V2 gesture queue and finite local authority deadline; 13 deterministic controller tests; documentation and ledger only",
+      "expectedFiles": [
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "tests/world-v2-b05-ordered-coalescing-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b05-gesture-coalescing.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "13 deterministic behavior tests passed in standard GitHub CI #42826832604 at 927d71a3bc46acb4418c6e7d882ab926e05a1a38; total 790 tests, 0 failures, Vite build, lint and Deno typechecks success. No real authenticated live QA.",
+      "securityParity": "Legacy code path default; new opt-in never broadcasts client paths or grants arbitrary movement; canonical SQL unchanged; per-advance seq validated and bounded with local deadline.",
+      "sqlDeployment": "NONE; no SQL/Edge applies, Vercel deployments, campaign writes, merges, public grants",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED",
+        "PR #71 AMEND BEFORE MERGE",
+        "B04-H39 existing altered same-sequence replay not rejected by public RPC",
+        "B06 certified rendering and B07 observer budget not yet built",
+        "Real 3-account DM/P1/P2 browser latency and flash measurements unavailable"
+      ],
+      "next": "B06 ONLY (fresh sequencing authorization while Gate A blocked); separate review required before enabling flag or merging",
+      "pullRequest": 80,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/80"
     }
   },
   "pendingWork": [
@@ -660,6 +706,20 @@
         "No live Supabase SQL operations, public grants, campaign changes, Vercel/Edge deploy or PR merge",
         "All fixture database roles, passwords, and private observer sink exist only in disposable GitHub Actions PostgreSQL",
         "A discovered same-seq altered replay returns cached ACK rather than denial; carry blocker to B08/B10; don't claim complete security certification"
+      ]
+    },
+    {
+      "id": "B05-STAGING-ONLY-FRONTEND-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly instructed 'Proceed with B05' with previous authority delegated for free-tier engineering",
+      "appliesTo": "B05 opt-in, disabled-by-default frontend queue coalescing, deterministic tests and documentation only",
+      "rationale": "Safe, reviewable staging implementation can address a real race in the in-flight gesture queue without enabling changes for players while A06/Gate A awaits authenticated live browser QA.",
+      "constraints": [
+        "A06 remains BLOCKED and Gate A NOT PASSED",
+        "No live production release, SQL/migration/Edge apply, public grants or campaign changes",
+        "B05 coalescing flag disabled by default; separate release authorization required before enabling QA/production build",
+        "No B06 implementation or Gate B waiver under this microstep",
+        "B04 H39 altered same-sequence replay remains a release security blocker"
       ]
     }
   ]
