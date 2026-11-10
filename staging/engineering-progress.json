@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "A04",
+  "nextStep": "A05",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -29,7 +29,17 @@
       "status": "STAGED"
     },
     "A04": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "pullRequest": 73,
+      "dependsOnPullRequest": 72,
+      "baseSha": "5864e64df1f8c3003e365eeb6282c5200a3a52e8",
+      "acceptanceDocument": "docs/testing/world-v2-authenticated-multiplayer-fixture.md",
+      "manifest": "tests/fixtures/world-v2-multiplayer-manifest.json",
+      "validationTest": "tests/world-v2-multiplayer-manifest.test.mjs",
+      "scenarioCount": 24,
+      "executionStatus": "NOT_RUN",
+      "note": "Documentation/test contract is staged. Existing active test map is not fully configured: fog/collision off, no door/one-way vision/2x2 token. Authenticated browser tests are future A06 work requiring controlled test preparation; do not claim PASS."
     },
     "A05": {
       "status": "NOT STARTED"
@@ -185,6 +195,40 @@
       "noDeployment": true,
       "verification": "Final branch diff / CI to be verified before considering review complete",
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/72"
+    },
+    "A04": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "A04",
+      "baseSha": "5864e64df1f8c3003e365eeb6282c5200a3a52e8",
+      "branch": "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "pullRequest": 73,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/73",
+      "stackedOnPullRequest": 72,
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "scope": "Reproducible manual authenticated three-role fixture, 24-case JSON matrix and structural contract test, current test-campaign readiness audit; no live execution or data setup.",
+      "expectedFiles": [
+        "docs/testing/world-v2-authenticated-multiplayer-fixture.md",
+        "tests/fixtures/world-v2-multiplayer-manifest.json",
+        "tests/world-v2-multiplayer-manifest.test.mjs",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": {
+        "readOnlySupabase": "Existing TestCampaign has 1 DM and 8 other members, two maps, five distinct owned token actors; active map has published fog=false and collision=false, one wall, two static lights, zero doors, zero one-way vision barriers and zero 2x2 tokens.",
+        "scenarioCount": 24,
+        "testExecution": "NO AUTHENTICATED MULTIPLAYER BROWSER TEST EXECUTED",
+        "staticValidation": "Pending final read-only structural verification and exact-head CI."
+      },
+      "securityParity": "No runtime, RLS, Realtime, SQL or auth changes; NPC hiding and RLS remain unchanged.",
+      "sqlDeployment": "NONE",
+      "blockers": [
+        "Live fixture still needs authorized setup before A06 testing",
+        "PR #71 A02 amendments still required",
+        "PR #72 A03 parent is unmerged; PR #73 stacked on it",
+        "Final CI on A04 head must be checked"
+      ],
+      "next": "A05 — Baseline tracing (bounded staging)"
     }
   },
   "pendingWork": [
@@ -210,6 +254,13 @@
       "category": "acceptance",
       "status": "NOT STARTED",
       "notes": "Authenticated DM/player browser movement/fog regression and measured baseline remain outstanding; CI does not prove live gameplay quality."
+    },
+    {
+      "id": "A04-FIXTURE-SETUP",
+      "category": "QA",
+      "status": "NOT_RUN",
+      "ownerStep": "A06",
+      "notes": "Fixture spec only; do not claim live 3-account acceptance. Before running, use approved test campaign to configure published fog/collision, door, one-way vision wall, 2x2 footprint, NPC LOS, torch and map switch, without any unapproved database writes."
     }
   ],
   "sourceOfTruthRules": [
