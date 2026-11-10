@@ -2,6 +2,8 @@ import React,{useMemo} from 'react';
 import MapCalibration from './MapCalibration.jsx';
 import {normalizeEnvironment,patchObject,removeObject,lightRadii} from './MapEnvironment.js';
 import {PIN_ICONS} from './CampaignHandouts.js';
+import {eligiblePlayerPreviewTokens,chosenPlayerPreviewTokenId}
+ from './engine/v2/PlayerPreviewSelection.js';
 
 const drawTools=[
  {id:'select',label:'Select / edit'},
@@ -27,7 +29,7 @@ function Check({title,value,onChange}){
   onChange={e=>onChange(e.target.checked)}/>{title}</label>;
 }
 export default function MapSettingPanel({map,environment,editor,onEditorChange,
- onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],handouts=[],
+ onEnvironmentChange,onMapCalibrationPreview,onSaveMapCalibration,template,saveStatus,tokens=[],members=[],dmUserId=null,handouts=[],
  pins=[],onUpdatePin,onDeletePin,onPublishEnvironment,onDisablePublished,onResetExploration}){
  const env=useMemo(()=>normalizeEnvironment(environment),[environment]);
  const selectedIds=(editor.selectedIds?.length?editor.selectedIds:
@@ -38,22 +40,28 @@ export default function MapSettingPanel({map,environment,editor,onEditorChange,
  const updateEnv=change=>onEnvironmentChange({...env,...change});
  const updateSelected=change=>selected&&onEnvironmentChange(patchObject(env,selected.id,change));
  const fields=fieldOptions(template);
- const previewTokens=tokens.filter(t=>t.visible!==false);
- const previewTokenId=editor.previewTokenId||previewTokens[0]?.id||'';
+ // A player-effective sight RPC cannot preview a DM-owned or unassigned
+ // token. Never silently select one as the default preview viewpoint.
+ const previewTokens=eligiblePlayerPreviewTokens({
+  tokens,members,mapId:map?.id,dmUserId
+ });
+ const previewTokenId=chosenPlayerPreviewTokenId(
+  previewTokens,editor.previewTokenId);
  const activeLayer=editor.layer||'light';
  const locked=activeLayer==='background'?editor.lockBackground:editor.lockLight;
  const canDraw=editor.enabled&&activeLayer==='light'&&!editor.lockLight;
  return <div className="side-form map-setting-panel">
   <div className="map-setting-preview-controls">
    <strong>Player perspective</strong>
+   {!previewTokens.length&&<p className="muted small">Assign a visible map token to a campaign player before entering player preview.</p>}
    <label>View from token<select aria-label="Preview token" disabled={editor.previewing||!previewTokens.length}
     value={previewTokenId} onChange={e=>updateEditor({previewTokenId:e.target.value})}>
     {previewTokens.length===0&&<option value="">Place a visible token first</option>}
     {previewTokens.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
    </select></label>
-   <button className={editor.previewing?'':'secondary'} disabled={!previewTokens.length}
+   <button className={editor.previewing?'':'secondary'} disabled={!editor.previewing&&!previewTokens.length}
     type="button" onClick={()=>updateEditor({previewing:!editor.previewing,
-     previewTokenId,enabled:false,selectedId:null,selectedIds:[]})}>
+     previewTokenId:editor.previewing?editor.previewTokenId:previewTokenId,enabled:false,selectedId:null,selectedIds:[]})}>
     {editor.previewing?'Exit player preview':'Preview as player'}</button>
   </div>
   {!editor.previewing&&<>

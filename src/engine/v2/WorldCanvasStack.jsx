@@ -16,7 +16,7 @@ export default function WorldCanvasStack({
  mapId,viewerId,onRendererReady,createSpriteElement,
  onRemoveSprite,onNeedResync,onRendererError,
  mapLayers=null,foregroundLayers=null,mapWidth=null,mapHeight=null,
- playerPreview=false,className='',style={},children
+ playerPreview=false,tokensAboveEditor=false,className='',style={},children
 }){
  const root=useRef(null),stage=useRef(null),terrain=useRef(null);
  const statics=useRef(null),moving=useRef(null),fog=useRef(null),sprites=useRef(null);
@@ -84,7 +84,8 @@ export default function WorldCanvasStack({
      style={{position:'absolute',left:0,top:0,zIndex:1,
       pointerEvents:'none'}}/>
     <div ref={sprites} className="world-v2-sprites"
-     style={{position:'absolute',left:0,top:0,zIndex:2,
+     style={{position:'absolute',left:0,top:0,
+      zIndex:tokensAboveEditor&&!playerPreview?1002:2,
       pointerEvents:'none'}}/>
     {mapLayers}
     <canvas ref={fog} aria-hidden="true"
