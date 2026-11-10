@@ -1,0 +1,649 @@
+{
+  "schemaVersion": 1,
+  "step": "A04",
+  "mode": "MANUAL_AUTHENTICATED_MULTIPLAYER",
+  "executionStatus": "NOT_RUN",
+  "created": "2026-11-10",
+  "description": "Future manual browser matrix; source and CI validation do not constitute live acceptance.",
+  "roles": {
+    "DM": "true DM account in normal tabletop",
+    "P1": "different authenticated owning player",
+    "P2": "another distinct authenticated owning player"
+  },
+  "suggestedCampaign": "TestCampaign",
+  "suggestedMap": "GumfordGarden",
+  "confidentialFieldsProhibited": [
+    "credentials",
+    "invite codes",
+    "user identifiers",
+    "authorization tokens",
+    "raw Realtime packets",
+    "unrevealed NPC identities"
+  ],
+  "preflightGapsAtAudit": [
+    "fog currently disabled",
+    "collision currently disabled",
+    "door missing",
+    "one-way vision barrier missing",
+    "2x2 token missing",
+    "held torch and placed tool missing",
+    "second map not prepared with token fixture",
+    "three sessions not live-confirmed"
+  ],
+  "requiredFixtureTags": [
+    "three-sessions",
+    "owned-tokens",
+    "open-corridor",
+    "preview-player-token",
+    "published-fog",
+    "published-collision",
+    "solid-wall",
+    "door",
+    "oneway-vision",
+    "2x2-token",
+    "narrow-gap",
+    "multi-token-group",
+    "hidden-npc",
+    "static-light",
+    "carried-torch",
+    "secondary-map",
+    "consented-revocation",
+    "sheet-linked-token",
+    "placed-tool",
+    "sanitized-telemetry"
+  ],
+  "evidenceTags": [
+    "screenshots",
+    "stream-state",
+    "viewer-roster",
+    "first-paint",
+    "rpc-counts",
+    "observer-lag",
+    "commit-count",
+    "terrain-assignments",
+    "sprite-remounts",
+    "blackout-count",
+    "server-denial",
+    "endpoints",
+    "scene-generation",
+    "fog-repaint",
+    "preview-write-count",
+    "frame-duration",
+    "realtime-gaps",
+    "resource-snapshots"
+  ],
+  "caseStatusVocabulary": [
+    "PASS",
+    "FAIL",
+    "BLOCKED",
+    "NOT_RUN"
+  ],
+  "scenarios": [
+    {
+      "id": "AUTH-01",
+      "category": "AUTH",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens"
+      ],
+      "action": "Join same active map in separate authenticated profiles.",
+      "mustObserve": [
+        "Correct current map and server-authorized roster for each actor",
+        "No false first-load movement block"
+      ],
+      "evidence": [
+        "screenshots",
+        "stream-state"
+      ]
+    },
+    {
+      "id": "AUTH-02",
+      "category": "AUTH",
+      "actors": [
+        "P1",
+        "P2",
+        "DM"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "hidden-npc"
+      ],
+      "action": "Try to control a foreign token and verify concealed NPC is not accessible to player view.",
+      "mustObserve": [
+        "Foreign movement is refused",
+        "No undisclosed NPC identity through player DOM, accessible assets or authorized API responses"
+      ],
+      "evidence": [
+        "server-denial",
+        "viewer-roster"
+      ]
+    },
+    {
+      "id": "INPUT-01",
+      "category": "INPUT",
+      "actors": [
+        "DM"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "open-corridor"
+      ],
+      "action": "On first normal DM entry drag an owned or controllable token without entering preview.",
+      "mustObserve": [
+        "Drag starts on first interaction",
+        "One approved commit; no terrain reload"
+      ],
+      "evidence": [
+        "first-paint",
+        "commit-count",
+        "terrain-assignments"
+      ]
+    },
+    {
+      "id": "INPUT-02",
+      "category": "INPUT",
+      "actors": [
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "open-corridor"
+      ],
+      "action": "Each player drags own token on first entry.",
+      "mustObserve": [
+        "Local drag begins immediately within certified path",
+        "Final position is authorized and observed by all"
+      ],
+      "evidence": [
+        "first-paint",
+        "commit-count",
+        "observer-lag"
+      ]
+    },
+    {
+      "id": "INPUT-03",
+      "category": "INPUT",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "open-corridor"
+      ],
+      "action": "Press and hold rapid arrow keys through safe corridor.",
+      "mustObserve": [
+        "No dropped input or per-cell freeze",
+        "Collision and ownership remain server-validated"
+      ],
+      "evidence": [
+        "first-paint",
+        "rpc-counts"
+      ]
+    },
+    {
+      "id": "INPUT-04",
+      "category": "INPUT",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "open-corridor"
+      ],
+      "action": "P1 and P2 drag concurrently while DM watches.",
+      "mustObserve": [
+        "Remote movement observed during gestures",
+        "Existing sprites remain mounted without whole-map flash"
+      ],
+      "evidence": [
+        "observer-lag",
+        "sprite-remounts",
+        "blackout-count"
+      ]
+    },
+    {
+      "id": "INPUT-05",
+      "category": "INPUT",
+      "actors": [
+        "DM"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "preview-player-token"
+      ],
+      "action": "Enter DM player preview based on real player-owned token and move; then exit.",
+      "mustObserve": [
+        "Player-effective sight only",
+        "Zero canonical token writes from preview",
+        "Normal DM movement still works on exit"
+      ],
+      "evidence": [
+        "preview-write-count",
+        "viewer-roster",
+        "first-paint"
+      ]
+    },
+    {
+      "id": "COLL-01",
+      "category": "COLL",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "solid-wall",
+        "published-collision"
+      ],
+      "action": "Attempt wall passage by fast drag, arrow keys, diagonal and large pointer jump.",
+      "mustObserve": [
+        "No painted or persisted wall pass",
+        "No corner bypass"
+      ],
+      "evidence": [
+        "server-denial",
+        "endpoints"
+      ]
+    },
+    {
+      "id": "COLL-02",
+      "category": "COLL",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "door",
+        "published-collision"
+      ],
+      "action": "Try closed door, then have DM open and publish; retry.",
+      "mustObserve": [
+        "Closed door blocks",
+        "Published open door permits authorized path"
+      ],
+      "evidence": [
+        "scene-generation",
+        "endpoints"
+      ]
+    },
+    {
+      "id": "COLL-03",
+      "category": "COLL",
+      "actors": [
+        "DM",
+        "P1"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "2x2-token",
+        "narrow-gap",
+        "published-collision"
+      ],
+      "action": "Move 2x2 token through one-cell narrow passage then wider corridor.",
+      "mustObserve": [
+        "Footprint cannot clip wall or fit gap",
+        "Valid large-token movement works"
+      ],
+      "evidence": [
+        "endpoints",
+        "server-denial"
+      ]
+    },
+    {
+      "id": "COLL-04",
+      "category": "COLL",
+      "actors": [
+        "DM"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "multi-token-group",
+        "solid-wall",
+        "published-collision"
+      ],
+      "action": "Move group against a wall then through clear corridor.",
+      "mustObserve": [
+        "Denied group does not leave partial canonical writes",
+        "Authorized group position is atomic"
+      ],
+      "evidence": [
+        "endpoints",
+        "server-denial"
+      ]
+    },
+    {
+      "id": "FOG-01",
+      "category": "FOG",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "published-fog"
+      ],
+      "action": "Move player tokens across visibility boundary.",
+      "mustObserve": [
+        "Explored cells remain appropriately dim",
+        "No full-map blackout or terrain reassignment",
+        "New sight comes from authorized server frame"
+      ],
+      "evidence": [
+        "fog-repaint",
+        "blackout-count",
+        "terrain-assignments"
+      ]
+    },
+    {
+      "id": "FOG-02",
+      "category": "FOG",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "published-fog",
+        "hidden-npc",
+        "solid-wall"
+      ],
+      "action": "Move in and out of LOS of hidden NPC.",
+      "mustObserve": [
+        "No early NPC reveal from motion packet",
+        "Only signed sight permits reveal",
+        "Conceal on leaving sight"
+      ],
+      "evidence": [
+        "viewer-roster",
+        "server-denial"
+      ]
+    },
+    {
+      "id": "FOG-03",
+      "category": "FOG",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "oneway-vision",
+        "published-fog",
+        "published-collision"
+      ],
+      "action": "View directional barrier from each side and attempt crossing.",
+      "mustObserve": [
+        "Vision follows one-way direction",
+        "Movement remains blocked on both sides when barrier has blocksMovement=true"
+      ],
+      "evidence": [
+        "viewer-roster",
+        "endpoints"
+      ]
+    },
+    {
+      "id": "FOG-04",
+      "category": "FOG",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "static-light",
+        "carried-torch",
+        "published-fog"
+      ],
+      "action": "Change static and carried torch lighting while moving.",
+      "mustObserve": [
+        "Only authorized lit cells appear",
+        "Dynamic light follows carrier consistently"
+      ],
+      "evidence": [
+        "fog-repaint",
+        "viewer-roster"
+      ]
+    },
+    {
+      "id": "FOG-05",
+      "category": "FOG",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "published-fog"
+      ],
+      "action": "DM publishes changed scene revision while players connected.",
+      "mustObserve": [
+        "Real publication reauthorizes changed sight",
+        "Ordinary token movement does not reload map bitmap"
+      ],
+      "evidence": [
+        "scene-generation",
+        "terrain-assignments"
+      ]
+    },
+    {
+      "id": "REC-01",
+      "category": "REC",
+      "actors": [
+        "P1",
+        "DM"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "published-fog"
+      ],
+      "action": "Briefly disconnect P1 then restore network.",
+      "mustObserve": [
+        "Private observer locks and fails closed when necessary",
+        "Fresh viewer authorization restores safe motion"
+      ],
+      "evidence": [
+        "stream-state",
+        "viewer-roster"
+      ]
+    },
+    {
+      "id": "REC-02",
+      "category": "REC",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "secondary-map"
+      ],
+      "action": "DM switches active map; players follow and return.",
+      "mustObserve": [
+        "No stale token/fog from previous map",
+        "All players route to correct map"
+      ],
+      "evidence": [
+        "screenshots",
+        "viewer-roster"
+      ]
+    },
+    {
+      "id": "REC-03",
+      "category": "REC",
+      "actors": [
+        "DM",
+        "P1"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "consented-revocation"
+      ],
+      "action": "Under approved controlled test, revoke P1 access to designated temporary token.",
+      "mustObserve": [
+        "Old content/input is revoked promptly",
+        "No stale control or unauthorized persisted movement"
+      ],
+      "evidence": [
+        "server-denial",
+        "stream-state"
+      ]
+    },
+    {
+      "id": "REC-04",
+      "category": "REC",
+      "actors": [
+        "P1",
+        "DM"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "published-fog"
+      ],
+      "action": "Take P1 offline during active drag then reconnect.",
+      "mustObserve": [
+        "No forged/stale commit",
+        "Final displayed position matches server authorization"
+      ],
+      "evidence": [
+        "endpoints",
+        "stream-state"
+      ]
+    },
+    {
+      "id": "META-01",
+      "category": "META",
+      "actors": [
+        "DM",
+        "P1"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "sheet-linked-token"
+      ],
+      "action": "Edit permitted sheet/status metadata during active or recently committed movement.",
+      "mustObserve": [
+        "Authorized metadata refreshes correctly",
+        "No full sprite/map remount"
+      ],
+      "evidence": [
+        "sprite-remounts",
+        "screenshots"
+      ]
+    },
+    {
+      "id": "TOOL-01",
+      "category": "TOOL",
+      "actors": [
+        "DM",
+        "P1"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "placed-tool",
+        "carried-torch",
+        "published-fog"
+      ],
+      "action": "Move placed tool and carry torch on an authorized token.",
+      "mustObserve": [
+        "Tool permissions respected",
+        "Carrier light follows and never reveals unauthorized sight"
+      ],
+      "evidence": [
+        "viewer-roster",
+        "fog-repaint"
+      ]
+    },
+    {
+      "id": "PERF-01",
+      "category": "PERF",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "open-corridor",
+        "sanitized-telemetry"
+      ],
+      "action": "Measure repeatable gesture first response, RPC, observer and frame timings.",
+      "mustObserve": [
+        "Separate latency phases measured with counts and p50/p95",
+        "No fabricated latency claims"
+      ],
+      "evidence": [
+        "first-paint",
+        "rpc-counts",
+        "observer-lag",
+        "frame-duration"
+      ]
+    },
+    {
+      "id": "PERF-02",
+      "category": "PERF",
+      "actors": [
+        "DM",
+        "P1",
+        "P2"
+      ],
+      "requiredFixture": [
+        "three-sessions",
+        "owned-tokens",
+        "open-corridor",
+        "sanitized-telemetry"
+      ],
+      "action": "Perform 20 short traversals per role and 10 overlapping P1/P2 traversals; repeat under defined network emulation if available.",
+      "mustObserve": [
+        "Report p50/p95, full-map blackout count, RPC counts and Realtime gaps",
+        "No absolute confidentiality or collision failures"
+      ],
+      "evidence": [
+        "rpc-counts",
+        "blackout-count",
+        "realtime-gaps",
+        "resource-snapshots"
+      ]
+    }
+  ]
+}
