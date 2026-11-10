@@ -5,12 +5,19 @@ import {certifiedMotionPaintAllowed} from './CertifiedMotionPresentation.js';
 /** V2 gesture orchestration. This is deliberately isolated from live RPCs.
  * Authority adapter MUST be backed by server validation in later phases.
  */
-const terminal=new Set(['Committed','Cancelled','Rejected','Revoked']);
+const terminal=new Set(['Committed','Cancelled','Rejected','Revoked','Uncertain']);
 const validPoint=p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)&&Math.abs(p.x)<=100000&&Math.abs(p.y)<=100000;
 const validSelection=selection=>Array.isArray(selection)&&selection.length>0&&selection.length<=48&&
  selection.every(p=>['token','tool'].includes(p?.kind)&&typeof p.id==='string'&&p.id.length>0)&&
  new Set(selection.map(p=>p.kind+':'+p.id)).size===selection.length;
 const validSession=r=>r?.version===2&&typeof r.sessionId==='string'&&r.sessionId.length>0;
+const validCommitAck=(reply,sessionId,seq,approved)=>
+ validSession(reply)&&reply.sessionId===sessionId&&reply.seq===seq&&
+ Number.isSafeInteger(reply.endpoint?.x)&&Number.isSafeInteger(reply.endpoint?.y)&&
+ Object.keys(reply.endpoint).length===2&&
+ Object.keys(reply).length===4&&
+ ['version','sessionId','seq','endpoint'].every(k=>Object.hasOwn(reply,k))&&
+ reply.endpoint.x===approved.x&&reply.endpoint.y===approved.y;
 const validAck=(reply,sessionId,seq,from,targets)=>{
  if(!reply||reply.version!==2||reply.sessionId!==sessionId||reply.seq!==seq||
   typeof reply.blocked!=='boolean'||!Array.isArray(reply.accepted)||
@@ -40,14 +47,14 @@ export function createMovementController({
  // B06 is independent of B05 and stays OFF until explicitly enabled.
  certifiedMotion=false,certifyPresentation=()=>null,
  // B05 staged opt-in. The existing adapter stays the default until Gate B.
- coalesceMotion=false,coalesceWindowMs=16,authorityTimeoutMs=8000,
+ coalesceMotion=false,commitReconciliation=false,coalesceWindowMs=16,authorityTimeoutMs=8000,
  setTimer=(callback,ms)=>setTimeout(callback,ms),
  clearTimer=timer=>clearTimeout(timer)
 }={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
   typeof onEvent!=='function'||typeof canPredict!=='function'||
   typeof certifiedMotion!=='boolean'||typeof certifyPresentation!=='function'||
-  typeof coalesceMotion!=='boolean'||
+  typeof coalesceMotion!=='boolean'||typeof commitReconciliation!=='boolean'||
   !Number.isSafeInteger(coalesceWindowMs)||coalesceWindowMs<0||coalesceWindowMs>32||
   !Number.isSafeInteger(authorityTimeoutMs)||
   authorityTimeoutMs<1000||authorityTimeoutMs>9000||
@@ -91,6 +98,7 @@ export function createMovementController({
   clearFlush(g);
   if(active===g)active=null;
   state=result.status==='committed'?'Committed':
+   result.status==='uncertain'?'Uncertain':
    result.status==='revoked'?'Revoked':
    result.status==='cancelled'?'Cancelled':'Rejected';
   emit(g,result.status,{reason:result.reason||null});
@@ -183,22 +191,27 @@ export function createMovementController({
      break;
     }
     const seq=++g.seq;
+    g.committing=true;
     const reply=await bounded(authority.commit({
      version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
      seq,endpoint:{...g.approved},selection:g.selection,
      environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
     }));
     if(active!==g)break;
-    if(!validSession(reply)||reply.sessionId!==g.sessionId||reply.seq!==seq||
-     !Number.isSafeInteger(reply.endpoint?.x)||!Number.isSafeInteger(reply.endpoint?.y)||
-     reply.endpoint.x!==g.approved.x||reply.endpoint.y!==g.approved.y){
+    if(!validCommitAck(reply,g.sessionId,seq,g.approved)){
      reject(g,'invalid-commit');break;
     }
     finish(g,{status:'committed',endpoint:{...g.approved}});
     break;
    }
   }catch(error){
-   if(active===g)reject(g,error?.message||'authority-error');
+   if(active===g){
+    if(commitReconciliation&&g.committing){
+     // Unknown Commit ACK is neither success nor proof of failure.
+     // Await an independently authorized canonical snapshot.
+     finish(g,{status:'uncertain',reason:'commit-ack-unknown'});
+    }else reject(g,error?.message||'authority-error');
+   }
   }finally{
    g.draining=false;
    if(active===g&&g.sessionId&&(g.pending.length||g.closing))
@@ -220,7 +233,7 @@ export function createMovementController({
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
     pending:[],queueFrom:{...origin},flushTimer:null,
-    seq:0,mode,sessionId:null,closing:false,
+    seq:0,mode,sessionId:null,closing:false,committing:false,
      predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
     certificate:null,
