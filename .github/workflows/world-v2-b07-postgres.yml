@@ -1,0 +1,49 @@
+name: World V2 B07 isolated private observer-budget tests
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b07-*'
+  pull_request:
+    branches:
+      - 'stage/**'
+    paths:
+      - 'supabase/candidates/world_v2_b07_private_observer_budget.sql'
+      - 'tests/world-v2-b07-postgres/**'
+      - '.github/workflows/world-v2-b07-postgres.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-pg17-b07:
+    name: Exercise actual V2 viewer authority with isolated recipient budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: b07_ephemeral_ci_only
+          POSTGRES_DB: world_v2_b07
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_b07"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: world_v2_b07
+      PGUSER: postgres
+      PGPASSWORD: b07_ephemeral_ci_only
+      WORLD_V2_B07_ISOLATED: 'yes'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert disposable PostgreSQL 17
+        run: |
+          psql --version
+          psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), version()'
+      - name: Compile private B07 candidate and run real V2 RPC/ACL tests
+        run: bash tests/world-v2-b07-postgres/run.sh

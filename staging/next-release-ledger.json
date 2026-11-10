@@ -395,6 +395,33 @@
         "testsPassed": 803
       },
       "linkedPullRequest": 81
+    },
+    {
+      "name": "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "9aac3b0cfacf3131a5438fc34e8badb31b9b42e7",
+      "basePullRequest": 81,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "candidateSql": [
+        "supabase/candidates/world_v2_b07_private_observer_budget.sql"
+      ],
+      "sqlApplied": false,
+      "note": "B07 only: nonapplied private recipient approved-path FIFO and budget SQL candidate, 35 isolated PG17 SQL assertions, 2 denied role invocations, standard CI 803/803. No SQL apply, public RPC wiring or release; requires B08 terminal flush + hide priority and Gate A.",
+      "testEvidence": {
+        "sourceHead": "b5eaf6f9a6a11730120db1f708881db036ed312a",
+        "postgresRun": 42837859102,
+        "postgresAssertions": 35,
+        "negativeSqlRoleChecks": 2,
+        "standardRun": 42837858900,
+        "standardTests": 803,
+        "latestPassingHeadBeforeHandoffUpdate": "254799d5281e6165b9b1fba4186978d029536c59",
+        "latestSqlRun": 42838560260,
+        "latestStandardRun": 42838547542,
+        "conclusion": "Both SQL and standard CI succeeded on exact source head; no live SQL or production release"
+      },
+      "linkedPullRequest": 82
     }
   ],
   "features": [
@@ -1271,7 +1298,8 @@
       "stage/world-v2-b03-private-path-validation-2026-11-10",
       "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
       "stage/world-v2-b05-ordered-coalescing-2026-11-11",
-      "stage/world-v2-b06-certified-local-presentation-2026-11-11"
+      "stage/world-v2-b06-certified-local-presentation-2026-11-11",
+      "stage/world-v2-b07-recipient-observer-budget-2026-11-11"
     ],
     "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06. PR #75 documents the partial A06 baseline; authenticated DM/P1/P2 browser measurements and protected fixture prep remain BLOCKED. No approval for deployment or SQL is implied. Do not advance to Gate A or B01 before completing A06 or separately approved deviation.",
     "databaseReleaseVersion": null,
