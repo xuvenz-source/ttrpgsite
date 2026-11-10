@@ -452,6 +452,23 @@ export default function WorldV2Board(props){
    }
   });
   runtimeRef.current=runtime;
+  void runtime.start().then(ok=>{
+   if(!ok&&runtimeRef.current===runtime)
+    setIssue(previous=>previous||
+     'World Engine V2 unavailable; movement is safely disabled.');
+  }).catch(error=>setIssue(error?.message||String(error)));
+ }
+ const rendererReady=useRef(onRendererReady);
+ rendererReady.current=onRendererReady;
+ const mapGridRef=useRef(mapGridPoint);mapGridRef.current=mapGridPoint;
+ const activeMeasureRef=useRef(activeMeasure);activeMeasureRef.current=activeMeasure;
+ // WorldCanvasStack reports its new renderer from a child layout effect,
+ // before React necessarily attaches the parent's viewport ref. Attaching
+ // input there silently fails for player/DM on first mount. Only after the
+ // parent layout effect are both viewport and renderer reliably available.
+ useLayoutEffect(()=>{
+  const runtime=runtimeRef.current;
+  if(!runtime||!viewport.current)return;
   runtime.attachInput({
    // Capture from the map viewport across all portal and overlay layers.
    target:viewport.current,
@@ -492,16 +509,8 @@ export default function WorldV2Board(props){
     else setDragIssue('Drag could not start: check token or player-preview selection.');
    }
   });
-  void runtime.start().then(ok=>{
-   if(!ok&&runtimeRef.current===runtime)
-    setIssue(previous=>previous||
-     'World Engine V2 unavailable; movement is safely disabled.');
-  }).catch(error=>setIssue(error?.message||String(error)));
- }
- const rendererReady=useRef(onRendererReady);
- rendererReady.current=onRendererReady;
- const mapGridRef=useRef(mapGridPoint);mapGridRef.current=mapGridPoint;
- const activeMeasureRef=useRef(activeMeasure);activeMeasureRef.current=activeMeasure;
+ },[boardIdentity]);
+
  // The authorized scene may exist before the signed map URL arrives.
  // Asset URL refreshes update only the persistent <img>, never remount fog.
  useLayoutEffect(()=>{
