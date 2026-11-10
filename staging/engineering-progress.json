@@ -288,12 +288,14 @@
         "tests/world-v2-b09-input-parity-2026-11-11.test.mjs",
         "docs/architecture/world-v2-b09-input-parity.md",
         "staging/engineering-progress.json",
-        "staging/next-release-ledger.json"
+        "staging/next-release-ledger.json",
+        "src/engine/v2/MovementController.js",
+        "tests/world-v2-pointer-keyboard-preview-2026-11-10.test.mjs"
       ],
-      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene.",
+      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene. Certified final endpoint is included for preview returns; queued keys require same canonical endpoint/selection across latest sight to prevent stale snapback.",
       "mode": "Frontend/testing only; existing B05/B06/B08 opt-in flags unchanged and OFF by default; no Supabase SQL or public endpoint touched.",
-      "verification": "Initial source-head GitHub Actions #42847563283 passed 816/816 tests, zero dependency vulnerabilities, critical lint, Vite build and Deno Edge checks; final exact PR SHA revalidation pending.",
-      "security": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement.",
+      "verification": "B09 authored 11 deterministic tests including stale-cursor rejection; original keyboard fixture updated to use refreshed canonical endpoint. Final exact PR-head CI pending (prior 816/816 initial source check #42847563283).",
+      "security": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement. Exact previous committed endpoint and unchanged ordered group must match current signed sight before replaying keyboard backlog.",
       "knownGaps": [
         "A06/Gate A real authenticated DM+two-player browser parity, fog collision/visibility, mobile touch, multi-tab and p95 tests not run",
         "PR #71 amendments pending; B07/B08 budgeted observer terminal delivery/LOS integration still unqualified",
@@ -814,7 +816,7 @@
       "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
       "branch": "stage/world-v2-b09-input-parity-2026-11-11",
       "stackedOnPullRequest": 83,
-      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene.",
+      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene. Certified final endpoint is included for preview returns; queued keys require same canonical endpoint/selection across latest sight to prevent stale snapback.",
       "expectedFiles": [
         "src/engine/v2/KeyboardStepper.js",
         "src/engine/v2/InputController.js",
@@ -823,10 +825,12 @@
         "tests/world-v2-b09-input-parity-2026-11-11.test.mjs",
         "docs/architecture/world-v2-b09-input-parity.md",
         "staging/engineering-progress.json",
-        "staging/next-release-ledger.json"
+        "staging/next-release-ledger.json",
+        "src/engine/v2/MovementController.js",
+        "tests/world-v2-pointer-keyboard-preview-2026-11-10.test.mjs"
       ],
-      "evidence": "Initial source-head GitHub Actions #42847563283 passed 816/816 tests, zero dependency vulnerabilities, critical lint, Vite build and Deno Edge checks; final exact PR SHA revalidation pending.",
-      "securityParity": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement.",
+      "evidence": "B09 authored 11 deterministic tests including stale-cursor rejection; original keyboard fixture updated to use refreshed canonical endpoint. Final exact PR-head CI pending (prior 816/816 initial source check #42847563283).",
+      "securityParity": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement. Exact previous committed endpoint and unchanged ordered group must match current signed sight before replaying keyboard backlog.",
       "sqlDeployment": "NONE — frontend/tests only; no SQL/migrations/Edge/production",
       "blockers": [
         "A06/Gate A real authenticated DM+two-player browser parity, fog collision/visibility, mobile touch, multi-tab and p95 tests not run",
