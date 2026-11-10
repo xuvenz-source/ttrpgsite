@@ -29,10 +29,8 @@ jobs:
       - name: Catch undeclared variables in safety-critical interactive components
         run: npm run lint:critical
       - name: Run staged frontend unit tests
-        # Two real Chromium integration files start headless browsers. Node's
-        # default worker fanout can starve both before DevToolsActivePort
-        # exists on free runners. Run the SAME unskipped suite serially.
-        run: node --test --test-concurrency=1 tests/*.test.mjs
+        # npm test explicitly limits browser worker fanout on free CI runners.
+        run: npm test
       - name: Audit production dependencies for high-severity issues
         run: npm audit --omit=dev --audit-level=high
       - name: Validate Vite production build (no Vercel deployment)
