@@ -6,6 +6,7 @@ import {pickWorldPointerTarget,worldMovementInputAllowed}
  from './PointerHitTest.js';
 import {wasWorldPointerDownClaimed} from './WorldPointerOwnership.js';
 import {worldGestureSelection} from './GestureSelection.js';
+import {worldV2Trace} from './WorldTrace.js';
 import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
@@ -118,7 +119,11 @@ export default function WorldV2Board(props){
  }=props;
  const viewport=useRef(null),board=useRef(null);
  const rendererRef=useRef(null),runtimeRef=useRef(null),roots=useRef(new Map());
- const latest=useRef(props);latest.current=props;
+ // Native pointer listeners can run before a parent supplies every optional
+ // prop. Keep the callback ref aligned with the normalized board defaults,
+ // not raw props (undefined tools/characters otherwise break token drag).
+ const latest=useRef(props);
+ latest.current={...props,tokens,toolPlacements,toolIssued,characters};
  const rosterMetadata=useMemo(()=>JSON.stringify({
   // Only roster/permission/appearance changes, never x/y cell positions.
   // Remote motion uses V2 private paths, not token row React state.
@@ -288,6 +293,8 @@ export default function WorldV2Board(props){
   return selection.every(piece=>granted.some(v=>idOf(v)===idOf(piece)));
  };
  function resolveSelection(event,point,{keyboard=false}={}){
+  // Bounded, opt-in diagnostics: allowlisted reasons only, no token IDs.
+  const denied=reason=>{worldV2Trace.event('input.pick',reason);return null};
   // Arrow keys control the world only while the map viewport owns focus.
   // Campaign sheets, hotbar settings and other noneditable controls
   // must not accidentally move a selected token.
@@ -297,10 +304,10 @@ export default function WorldV2Board(props){
   // One editor/preview/measurement gate for pointer and keyboard.
   if(!worldMovementInputAllowed({
    active,activeMeasure,previewRequested,dmPreview,environmentEditor
-  }))return null;
+  }))return denied('gate');
   const hit=keyboard?null:pointerPieceAt(event,point);
   const kind=hit?.kind,id=hit?.id;
-  if(!keyboard&&(!id||!['token','tool'].includes(kind)))return null;
+  if(!keyboard&&(!id||!['token','tool'].includes(kind)))return denied('hit');
   const picked=keyboard?
    [...selectedRef.current.tokens.map(id=>({kind:'token',id})),
     ...selectedRef.current.tools.map(id=>({kind:'tool',id}))][0]:
@@ -314,7 +321,7 @@ export default function WorldV2Board(props){
    Boolean(t&&canControlMapToken(t,user,isDM,map.id)):
    Boolean(p&&!p.held_by_token_id&&toolCanControl(own,user,isDM));
   if(!movable||dmPreview&&(
-   picked.kind!=='token'||picked.id!==previewToken?.id))return null;
+   picked.kind!=='token'||picked.id!==previewToken?.id))return denied('owner');
   if(!keyboard){
    const prev=selectedRef.current;
    if(dmPreview&&(event.shiftKey||event.altKey||
@@ -347,19 +354,20 @@ export default function WorldV2Board(props){
    const issued=inputs.toolIssued.find(item=>item.id===piece.id);
    return row&&!row.held_by_token_id&&toolCanControl(issued,user,isDM);
   });
-  if(!selection.length||!authorizeSelection(selection))return null;
+  if(!selection.length||!authorizeSelection(selection))return denied('roster');
   if(!keyboard)setSelection(selection.filter(p=>p.kind==='token').map(p=>p.id),
    selection.filter(p=>p.kind==='tool').map(p=>p.id));
   const current=runtimeRef.current?.visibility.visiblePieces.find(
    part=>part.kind===picked.kind&&part.id===picked.id);
-  if(!current)return null;
+  if(!current)return denied('current');
   const virtual=dmPreview?runtimeRef.current?.previewPosition:null;
   const origin=virtual&&virtual.tokenId===picked.id?
    {x:virtual.x,y:virtual.y}:
    {x:current.x,y:current.y};
   if(!Number.isSafeInteger(origin.x)||!Number.isSafeInteger(origin.y))
-   return null;
+   return denied('origin');
   if(!keyboard)viewport.current?.focus?.({preventScroll:true});
+  worldV2Trace.event('input.pick','ok');
   return {mapId:map.id,origin,selection,
    mode:dmPreview?'preview':undefined,
    collisionOverride:Boolean(isDM&&!dmPreview&&
@@ -452,6 +460,23 @@ export default function WorldV2Board(props){
    }
   });
   runtimeRef.current=runtime;
+  void runtime.start().then(ok=>{
+   if(!ok&&runtimeRef.current===runtime)
+    setIssue(previous=>previous||
+     'World Engine V2 unavailable; movement is safely disabled.');
+  }).catch(error=>setIssue(error?.message||String(error)));
+ }
+ const rendererReady=useRef(onRendererReady);
+ rendererReady.current=onRendererReady;
+ const mapGridRef=useRef(mapGridPoint);mapGridRef.current=mapGridPoint;
+ const activeMeasureRef=useRef(activeMeasure);activeMeasureRef.current=activeMeasure;
+ // WorldCanvasStack reports its new renderer from a child layout effect,
+ // before React necessarily attaches the parent's viewport ref. Attaching
+ // input there silently fails for player/DM on first mount. Only after the
+ // parent layout effect are both viewport and renderer reliably available.
+ useLayoutEffect(()=>{
+  const runtime=runtimeRef.current;
+  if(!runtime||!viewport.current)return;
   runtime.attachInput({
    // Capture from the map viewport across all portal and overlay layers.
    target:viewport.current,
@@ -492,16 +517,8 @@ export default function WorldV2Board(props){
     else setDragIssue('Drag could not start: check token or player-preview selection.');
    }
   });
-  void runtime.start().then(ok=>{
-   if(!ok&&runtimeRef.current===runtime)
-    setIssue(previous=>previous||
-     'World Engine V2 unavailable; movement is safely disabled.');
-  }).catch(error=>setIssue(error?.message||String(error)));
- }
- const rendererReady=useRef(onRendererReady);
- rendererReady.current=onRendererReady;
- const mapGridRef=useRef(mapGridPoint);mapGridRef.current=mapGridPoint;
- const activeMeasureRef=useRef(activeMeasure);activeMeasureRef.current=activeMeasure;
+ },[boardIdentity]);
+
  // The authorized scene may exist before the signed map URL arrives.
  // Asset URL refreshes update only the persistent <img>, never remount fog.
  useLayoutEffect(()=>{
@@ -523,7 +540,9 @@ export default function WorldV2Board(props){
   if(!runtime)return;
   if(active){
    rendererRef.current?.resume();
-   void runtime.refreshVisibility('board-active');
+   // Runtime.start() owns the first authorized sight request. Avoid a
+   // second mount-time request racing scene and observer bootstrap.
+   if(runtime.started)void runtime.refreshVisibility('board-active');
   }else rendererRef.current?.pause();
  },[active]);
  useEffect(()=>{
@@ -794,7 +813,7 @@ export default function WorldV2Board(props){
    onMove={onMoveHandoutPin} onRead={onReadHandoutPin}
    onCollect={onCollectHandoutPin} onDelete={onDeleteHandoutPin}
    onSelect={onSelectHandoutPin}/>
-  {isDM&&!dmPreview&&environment&&<MapEnvironmentOverlay
+  {isDM&&!dmPreview&&editor?.enabled&&environment&&<MapEnvironmentOverlay
    map={map} scale={1} objects={environment.objects}
    editor={editor} onAdd={onAddEnvironmentObject}
    onSelect={onSelectEnvironmentObject}
@@ -894,7 +913,12 @@ export default function WorldV2Board(props){
        // interaction or create a recursive revocation loop.
        if(['canonical-commit','gesture-rejected',
         'gesture-cancelled'].includes(reason))return;
-       if(['observer-sequence-gap','observer-path-discontinuity',
+       if(reason==='observer-path-await-vision'){
+         // A non-destructive sight refresh, not a full scene resync.
+         // Genuine permission/scene changes continue to conceal immediately.
+         void r.refreshVisibility('observer-path-await-vision');return;
+        }
+        if(['observer-sequence-gap','observer-path-discontinuity',
         'observer-path-not-in-authorized-fog',
         'invalid-or-stale-visibility','invalid-fog-mask',
         'bad-roster','sprite-factory-error',

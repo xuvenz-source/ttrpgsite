@@ -84,6 +84,12 @@ export function createWorldRenderer({
  let staticPending=null,fogPending=false,terrainUrl=null;
  let pendingFogDirty=null;
  let latestSeq=0,seqItems=new Set(),lastSceneRevision=null;
+  // A valid private motion event can race ahead of its signed sight RPC.
+  // Defer cosmetic motion without clearing the previously authorized map.
+  let awaitingFreshVision=false;
+ // Defer only uncertified sprites; unrelated already-authorized motion
+ // must stay smooth while the private sight RPC catches up.
+ const pendingVisionPieces=new Set();
  let stats={frames:0,spritePaints:0,spriteCreates:0,spriteRemoves:0,
   fogPaintedCells:0,fogDraws:0,staticDraws:0,terrainAssignments:0,
   rejectedPackets:0,fullFogDraws:0,
@@ -152,7 +158,8 @@ export function createWorldRenderer({
   worldV2Trace.event('renderer.seal',reason);
   authorized=false;visibility=null;fogMask=null;paintedMask=null;
   observer.authorizePieces([]);clearLocal();clearSprites();
-  latestSeq=0;seqItems.clear();setOpaque();
+  latestSeq=0;seqItems.clear();awaitingFreshVision=false;
+   pendingVisionPieces.clear();setOpaque();
   if(forgetScene){
    // A role/map revocation must immediately erase any DM-only guide layer.
    surfaces.staticCanvas.width=1;surfaces.staticCanvas.height=1;
@@ -424,7 +431,8 @@ export function createWorldRenderer({
     previousPositions.set(id,observer.getPosition(kind,pieceId));
    }
    visibility=next;fogMask=nextMask;authorized=true;
-   latestSeq=next.cursor;seqItems.clear();
+   latestSeq=next.cursor;seqItems.clear();awaitingFreshVision=false;
+    pendingVisionPieces.clear();
    if(rosterChanged){
     stats.rosterReconciliations++;
     if(!observer.reconcilePieces(next.visiblePieces)){
@@ -502,13 +510,28 @@ export function createWorldRenderer({
    if(meta.seq>latestSeq+1){
     seal('observer-sequence-gap');return false;
    }
-   if(!Array.isArray(item.path)||!item.path.length||
-    item.path.some(point=>{
-     const sprite=sprites.get(key(item));
-     return !masked(point,sprite?.spanX??1,sprite?.spanY??1);
-    })){
-    stats.rejectedPackets++;
-    seal('observer-path-not-in-authorized-fog');return false;
+   if(!Array.isArray(item.path)||item.path.length<2||
+    item.path.some(point=>!validMotionPoint(point))){
+    stats.rejectedPackets++;seal('invalid-observer-path');return false;
+   }
+   const id=key(item),sprite=sprites.get(id);
+   const coveredBySight=item.path.every(point=>
+    masked(point,sprite.spanX,sprite.spanY));
+   // A later in-mask route from a deferred piece cannot be applied against
+   // the old origin. Other pieces may continue within their certified fog.
+   if(!coveredBySight||pendingVisionPieces.has(id)){
+    pendingVisionPieces.add(id);
+    // This motion is server-authored but the previous fog frame does not
+    // certify the destination. Keep the old authorized sprite and terrain
+    // stable, never draw unrevealed positions, and fetch newer sight.
+    if(meta.seq>latestSeq){latestSeq=meta.seq;seqItems.clear()}
+    seqItems.add(id);
+    if(!awaitingFreshVision){
+     awaitingFreshVision=true;
+     worldV2Trace.event('renderer.observer-await-vision');
+     safe(onNeedResync,'observer-path-await-vision');
+    }
+    return true;
    }
    if(!observer.applyPath(item)){
     stats.rejectedPackets++;seal('observer-path-discontinuity');return false;
@@ -532,6 +555,7 @@ export function createWorldRenderer({
     seqItems.add(key(item));
    }
    if(observer.applyHide(item)){
+    pendingVisionPieces.delete(key(item));
     removeSprite(key(item));return true;
    }
    return false;
@@ -706,6 +730,7 @@ export function createWorldRenderer({
   get currentScene(){return scene},
   get currentVisibility(){return visibility},
   get lastSightRejection(){return lastSightRejection},
+   get awaitingFreshVision(){return awaitingFreshVision},
   get authorized(){return authorized},
   get mapId(){return currentMap},
   get viewerId(){return currentViewer}

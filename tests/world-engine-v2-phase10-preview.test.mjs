@@ -115,7 +115,7 @@ test('preview SQL is player-token bounded and does not persist exploration',asyn
  assert.match(sql,/GRANT EXECUTE ON FUNCTION public.preview_world_visibility_at_v2/);
  const board=await readFile(new URL(
   '../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
- assert.match(board,/isDM&&!dmPreview&&environment&&<MapEnvironmentOverlay/);
+ assert.match(board,/isDM&&!dmPreview&&editor\?\.enabled&&environment&&<MapEnvironmentOverlay/);
  assert.match(board,/isDM&&!dmPreview&&editor\?\.enabled/);
 });
 
