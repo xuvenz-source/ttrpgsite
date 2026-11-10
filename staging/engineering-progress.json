@@ -302,7 +302,8 @@
       ],
       "gateA": "NOT PASSED",
       "next": "B10 only after designer instruction",
-      "pullRequest": null
+      "pullRequest": 84,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/84"
     },
     "B10": {
       "status": "NOT STARTED"
@@ -834,7 +835,8 @@
         "No live device, Supabase or production deployment testing in B09; 816 tests are fixture/controlled checks"
       ],
       "next": "B10 only",
-      "pullRequest": null
+      "pullRequest": 84,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/84"
     }
   },
   "pendingWork": [
