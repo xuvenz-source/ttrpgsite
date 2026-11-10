@@ -139,7 +139,7 @@
       "flag": "VITE_WORLD_V2_OBSERVER_RECOVERY",
       "default": "OFF",
       "recoveryIntervalMs": 6000,
-      "mechanism": "Existing authenticated get_world_visibility_v2 RPC supplies authoritative canonical roster/position even if Realtime budget suppresses all packets; transport fences older deferred origins.",
+      "mechanism": "Existing authenticated get_world_visibility_v2 RPC supplies authoritative canonical roster/position even if Realtime budget suppresses all packets; transport fences older deferred origins. On signed permission/scene/scope change the older private observer is immediately sealed and a new authorized sight is required.",
       "newPublicRpc": false,
       "newRealtimeTopic": false,
       "newSupabaseMigration": false,
