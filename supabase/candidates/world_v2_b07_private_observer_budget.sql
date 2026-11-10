@@ -205,6 +205,7 @@ AS $b07$
 DECLARE q forge_world_v2.observer_pending_b07%ROWTYPE;
  filtered jsonb;budget forge_world_v2.observer_budget_b07%ROWTYPE;
  cursor bigint;outcome integer:=0;current_status text;
+ max_sent integer:=20;
  current_permission bigint;current_revision bigint;
 BEGIN
  IF auth.uid() IS NULL OR p_session.actor_id IS DISTINCT FROM auth.uid() OR
@@ -256,10 +257,9 @@ BEGIN
   END IF;
   -- Reserve 20 movement broadcasts/sec, plus 10 priority hides/sec.
   -- This is NOT a full per-account Realtime billing quota guarantee.
-  IF budget.emitted>=CASE
-   WHEN EXISTS(SELECT 1 FROM jsonb_array_elements(filtered) e
-      WHERE e->>'action'='hide') THEN 30 ELSE 20 END
-  THEN RETURN 0;END IF;
+  IF EXISTS(SELECT 1 FROM jsonb_array_elements(filtered) e
+    WHERE e->>'action'='hide') THEN max_sent:=30;END IF;
+  IF budget.emitted>=max_sent THEN RETURN 0;END IF;
   INSERT INTO forge_world_v2.viewer_streams(
    map_id,viewer_id,campaign_id,seq,updated_at)
   VALUES(p_session.map_id,p_viewer,p_session.campaign_id,1,p_now)
