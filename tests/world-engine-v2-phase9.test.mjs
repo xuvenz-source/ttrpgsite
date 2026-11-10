@@ -198,6 +198,49 @@ test('movement on a hidden NPC packet cannot create new renderer artwork',async(
  assert.equal(x.renderer.events.some(e=>e[0]==='path'&&e[1]===hiddenId),false);
  await r.dispose();
 });
+test('V2 unknown-piece reauthorization preserves prior certified map, not unknown token',async()=>{
+ const x=fakeClient(),r=createWorldV2TabletopRuntime({
+  ...x.config,getAuthorizedPieces:pieceData
+ });
+ await r.start();
+ const channel=x.channels.get('forge-world-v2:'+mapId+':'+viewerId);
+ channel.status('SUBSCRIBED');
+ await nextTick();await nextTick();await nextTick();
+ assert.equal(r.stream.locked,false);
+ const beforeRevokes=x.renderer.events.filter(e=>e[0]==='revoke').length;
+ // The private movement event can precede the fresh server sight. Its
+ // unknown piece must not appear before the server's next roster.
+ channel.emit('world-motion-v2',{
+  version:2,mapId,viewerId,seq:6,
+  environmentRevision:9,permissionGeneration:4,items:[
+   {kind:'token',id:hiddenId,action:'path',
+    path:[{x:2,y:2},{x:3,y:2}]}
+  ]
+ });
+ assert.equal(r.stream.locked,true);
+ assert.equal(x.renderer.authorized,true,
+  'the old certified terrain remains mounted during transient roster recovery');
+ assert.equal(x.renderer.events.filter(e=>e[0]==='revoke').length,beforeRevokes);
+ assert.equal(x.renderer.events.some(e=>e[0]==='path'&&e[1]===hiddenId),false);
+ x.updateSight(frame('viewer',{
+  cursor:6,visionEpoch:8,visiblePieces:[hero,{kind:'token',id:hiddenId,x:3,y:2}]
+ }));
+ assert.equal(await r.stream.whenSettled(),true);
+ assert.equal(r.stream.locked,false);
+ assert.equal(x.renderer.authorized,true);
+ assert.equal(x.renderer.events.some(e=>e[0]==='path'&&e[1]===hiddenId),false,
+  'only a fresh signed sight may introduce the new sprite');
+ // A genuine new permission generation is never a cosmetic recovery.
+ channel.emit('world-motion-v2',{
+  version:2,mapId,viewerId,seq:7,
+  environmentRevision:9,permissionGeneration:5,items:[
+   {kind:'token',id:heroId,action:'path',
+    path:[{x:2,y:2},{x:3,y:2}]}
+  ]
+ });
+ assert.equal(x.renderer.authorized,false,'permission changes conceal immediately');
+ await r.dispose();
+});
 test('approved server path reaches the renderer with exact private sequence',async()=>{
  const x=fakeClient(),r=createWorldV2TabletopRuntime({
   ...x.config,getAuthorizedPieces:pieceData
