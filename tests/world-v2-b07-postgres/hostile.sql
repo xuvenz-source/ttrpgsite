@@ -196,20 +196,7 @@ BEGIN
  UPDATE forge_world_v2.motion_sessions SET status='committed'
  WHERE id=session_uuid;
  old_sent:=(SELECT count(*) FROM realtime.b07_outbox);
- RAISE NOTICE 'B07 terminal pending: %',(
-  SELECT jsonb_agg(jsonb_build_object('viewer',viewer_id,
-   'pending',jsonb_array_length(pending),'deferred',jsonb_array_length(deferred),
-   'last_sent_at',last_sent_at,'expires_at',expires_at))
-  FROM forge_world_v2.observer_pending_b07 WHERE session_id=session_uuid);
- RAISE NOTICE 'B07 terminal outbox before: %, budget: %',
-  old_sent,(SELECT emitted FROM forge_world_v2.observer_budget_b07 WHERE id=1);
  terminal_sent:=forge_world_v2.flush_session_observers_b07(session_uuid);
- RAISE NOTICE 'B07 terminal sent %, outbox count %, queue %',
-  terminal_sent,(SELECT count(*) FROM realtime.b07_outbox),
-  (SELECT jsonb_agg(jsonb_build_object('viewer',viewer_id,
-   'pending',pending,'deferred',deferred))
-   FROM forge_world_v2.observer_pending_b07
-   WHERE session_id=session_uuid);
  PERFORM public.b07_assert(
   terminal_sent=1 AND
   (SELECT count(*)=old_sent+1 FROM realtime.b07_outbox),
@@ -245,7 +232,7 @@ BEGIN
   s,player,overflow_item);
  PERFORM forge_world_v2.queue_recipient_observer_b07(
   s,player,jsonb_build_array(jsonb_build_object(
-   'kind','token','id',token,'action','path',jsonb_build_array(
+   'kind','token','id',token,'action','path','path',jsonb_build_array(
    '{"x":14,"y":12}'::jsonb,'{"x":13,"y":12}'::jsonb))));
  PERFORM public.b07_assert(
   (SELECT jsonb_array_length(pending->0->'path')=25 AND
