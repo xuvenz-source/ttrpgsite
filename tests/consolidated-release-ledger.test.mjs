@@ -4,9 +4,18 @@ import {readFileSync} from 'node:fs';
 const raw=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const ledger=JSON.parse(raw('staging/next-release-ledger.json'));
 test('the release ledger only names a staging branch when unreleased work remains',()=>{
- if(ledger.upcomingRelease.outstandingBranches.length)
+ const outstanding=ledger.upcomingRelease.outstandingBranches;
+ assert.ok(outstanding.length>0,'unreleased draft branches must remain registered');
+ assert.equal(ledger.upcomingRelease.releaseBranch,ledger.releaseBranch);
+ if(ledger.releaseBranch===null){
+  // A03/A04 have separate draft PRs; no consolidated release candidate yet.
+  for(const name of outstanding)
+   assert.ok(ledger.branches.some(b=>b.name===name&&
+    b.status==='staged'&&b.releaseReady===false),name);
+ }else{
   assert.match(ledger.releaseBranch,/^(?:stage|fix)\//);
- else assert.equal(ledger.releaseBranch,null);
+  assert.ok(outstanding.includes(ledger.releaseBranch));
+ }
  assert.match(ledger.policy,/every previously staged/);
  assert.ok(ledger.branches.length>=20);
  const ready=ledger.features.filter(x=>['included','released'].includes(x.status));
