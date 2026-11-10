@@ -12,8 +12,10 @@ export function createWorldKeyboardStepper({
 }={}){
  if(typeof getRuntime!=='function'||typeof makePick!=='function'||
   typeof onFocus!=='function'||typeof setTimer!=='function'||
-  typeof clearTimer!=='function')throw Error('Invalid V2 keyboard stepper');
- let cursor=null,timer=null,finishing=null,disposed=false;
+  typeof clearTimer!=='function'||!Number.isSafeInteger(idleMs)||
+  idleMs<0||idleMs>1000||!Number.isSafeInteger(maxQueued)||
+  maxQueued<1||maxQueued>64)throw Error('Invalid V2 keyboard stepper');
+ let cursor=null,timer=null,finishing=null,finishingRuntime=null,disposed=false;
  const queued=[];
  const clearIdle=()=>{
   if(timer!==null)clearTimer(timer);
@@ -25,7 +27,8 @@ export function createWorldKeyboardStepper({
   const runtime=getRuntime();
   if(!runtime?.active)return false;
   if(finishing){
-   if(queued.length>=maxQueued)return false;
+   // Never replay a prior map/viewer's input through a replacement runtime.
+   if(runtime!==finishingRuntime||queued.length>=maxQueued)return false;
    queued.push([dx,dy]);return true;
   }
   if(cursor&&!runtime.movement.active)cursor=null;
@@ -51,18 +54,26 @@ export function createWorldKeyboardStepper({
   if(disposed||!cursor)return;
   cursor=null;
   const runtime=getRuntime();
-  if(!runtime)return;
+  if(!runtime?.active)return;
   const task=Promise.resolve(runtime.movement.endGesture()).catch(()=>null);
-  finishing=task;
-  void task.then(async()=>{
+  finishing=task;finishingRuntime=runtime;
+  void task.then(async result=>{
    if(disposed||finishing!==task)return;
-   // The next movement starts from a new server-authorized canonical
-   // position after the previous one commits (or preview virtual position).
-   if(queued.length)try{
-    await runtime.refreshVisibility?.('keyboard-continuation');
-   }catch{}
-   if(disposed||finishing!==task)return;
-   finishing=null;
+   // No queued arrow may start from a failed, revoked, uncertain or
+   // different-map commit. The next anchor MUST come from fresh sight.
+   if(result?.status!=='committed'||getRuntime()!==runtime||!runtime.active){
+    queued.length=0;finishing=null;finishingRuntime=null;return;
+   }
+   if(queued.length){
+    let ready=false;
+    try{ready=await runtime.refreshVisibility?.('keyboard-continuation')===true}
+    catch{}
+    if(disposed||finishing!==task)return;
+    if(!ready||getRuntime()!==runtime||!runtime.active){
+     queued.length=0;finishing=null;finishingRuntime=null;return;
+    }
+   }
+   finishing=null;finishingRuntime=null;
    const pending=queued.splice(0);
    for(const [dx,dy] of pending)if(!send(dx,dy))break;
    if(cursor)timer=setTimer(finish,idleMs);
@@ -81,6 +92,7 @@ export function createWorldKeyboardStepper({
   },
   dispose(){
    disposed=true;clearIdle();queued.length=0;
+   finishingRuntime=null;
    if(cursor)getRuntime()?.movement.cancelGesture('keyboard-unmount');
    cursor=null;
   },
