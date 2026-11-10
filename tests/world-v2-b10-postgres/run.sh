@@ -15,6 +15,11 @@ python3 tests/world-v2-b04-postgres/extract_real_v2_functions.py > /tmp/world_v2
 python3 tests/world-v2-b07-postgres/extract_viewer_authority.py > /tmp/world_v2_b10_viewers.sql
 psql -X -v ON_ERROR_STOP=1 -f /tmp/world_v2_b10_core.sql
 psql -X -v ON_ERROR_STOP=1 -f /tmp/world_v2_b10_viewers.sql
+# R04 PRODUCTION-ORDER REHEARSAL: all five staged SQL candidates are installed
+# atomically, ACL/security/source signatures checked, then ROLLED BACK in
+# the same disposable postgres:17 connection. Existing source-real hostile
+# suites below must still pass when the candidates are installed normally.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/migration-rehearsal-r04.sql
 psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b03_path_validation.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b04-postgres/hostile.sql
 psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b07_private_observer_budget.sql
