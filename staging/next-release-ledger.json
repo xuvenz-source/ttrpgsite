@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
-  "releaseBranch": "fix/world-v2-serialized-sight-recovery-2026-11-10",
+  "productionBaseSha": "bab5286189f2d83a287a804ce383e9e574525fcf",
+  "releaseBranch": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -209,10 +209,17 @@
     },
     {
       "name": "fix/world-v2-serialized-sight-recovery-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
+      "linkedPullRequest": 63,
+      "note": "Released as production commit bab5286189f2d83a287a804ce383e9e574525fcf (PR #63). DM sight error no longer reported; remaining V2 pointer and keyboard regressions staged separately."
+    },
+    {
+      "name": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "bab5286189f2d83a287a804ce383e9e574525fcf",
       "linkedPullRequest": null,
-      "note": "Production incident follow-up. Stage serialized scene/observer recovery, stale-load retry, fail-closed renderer sight handshake, recovered UI state, integration regression coverage. No SQL or deployment. Await authenticated DM/player acceptance and designer release approval."
+      "note": "Integrated V2 pointer selection/drag, buffered keyboard movement and DM player-preview input repair. Frontend only, not deployed. Requires CI, CodeQL and authenticated multiplayer acceptance."
     }
   ],
   "features": [
@@ -967,10 +974,10 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
-    "releaseBranch": "fix/world-v2-serialized-sight-recovery-2026-11-10",
+    "productionBaseSha": "bab5286189f2d83a287a804ce383e9e574525fcf",
+    "releaseBranch": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
     "outstandingBranches": [
-      "fix/world-v2-serialized-sight-recovery-2026-11-10"
+      "fix/world-v2-pointer-keyboard-preview-input-2026-11-10"
     ],
     "stagePolicy": "One consolidated release after explicit approval. Include and verify every outstanding release-ready staged component. This V2 observer recovery is frontend only and requires authenticated DM/player live validation; the optional Supabase Nano memory trial is deferred and needs separate maintenance approval.",
     "databaseReleaseVersion": null,

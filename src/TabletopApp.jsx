@@ -1719,19 +1719,19 @@ export default function TabletopApp(){
     const simulated=isDM&&mapSettingEditor.previewing;
     if(!WORLD_V2_CUTOVER&&!simulated&&
      (!selectedToken||(!isDM&&selectedToken.owner_id!==user)))return;
-    // V2 handles held keys as one buffered gesture. Only the legacy
-    // single-step path retains the old repeat throttle.
-    if((!WORLD_V2_CUTOVER||simulated)&&
+    // V2 uses the same buffered key gesture for real and DM-preview motion.
+    // The old 115ms throttle and per-tile preview sessions belong only to
+    // the legacy board.
+    if(!WORLD_V2_CUTOVER&&
       e.repeat&&performance.now()-lastKeyboardMove.current<115){
      e.preventDefault();return;
     }
-    if(!WORLD_V2_CUTOVER||simulated)
-     lastKeyboardMove.current=performance.now();
-    else v2HeldMovementKeys.current.add(e.code);
+    if(WORLD_V2_CUTOVER)v2HeldMovementKeys.current.add(e.code);
+    else lastKeyboardMove.current=performance.now();
     e.preventDefault();
     const delta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[action];
-    if(simulated)previewStepHandler.current?.(delta[0],delta[1]);
-    else if(WORLD_V2_CUTOVER)v2StepHandler.current?.(delta[0],delta[1]);
+    if(WORLD_V2_CUTOVER)v2StepHandler.current?.(delta[0],delta[1]);
+    else if(simulated)previewStepHandler.current?.(delta[0],delta[1]);
     else moveSelectedByKey(delta[0],delta[1]);
    }else if(action==='sheet'){
     e.preventDefault();

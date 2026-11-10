@@ -2,6 +2,8 @@ import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} fro
 import {createPortal} from 'react-dom';
 import WorldCanvasStack from './WorldCanvasStack.jsx';
 import {createWorldV2TabletopRuntime} from './WorldV2TabletopRuntime.js';
+import {pickAuthorizedWorldPiece} from './PointerHitTest.js';
+import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
 import MapPinLayer from '../../MapPinLayer.jsx';
@@ -41,14 +43,16 @@ const ignoreTags=el=>!!el?.closest?.(
 const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
 function SpriteContent({piece,token,tool,issued,selected,isDM,user,
  preview,db,display,values,badge,statusCatalog,onTokenEdit,onTokenQuick,
- onTokenStatus,onToolOpen,onResize}){
+ onTokenStatus,onToolOpen,onResize,onSelect}){
  if(piece.kind==='tool'){
   return <button type="button" className="campaign-tool-map-token"
    style={{position:'absolute',inset:0,width:'100%',height:'100%'}}
    title={(tool?.name||'Tool')+' · Double-click for its sheet'}
    aria-label={(tool?.name||'Tool')+' tool token'}
    onDoubleClick={e=>{e.preventDefault();e.stopPropagation();
-    if(issued)onToolOpen?.(piece.id)}}>
+    if(issued)onToolOpen?.(piece.id)}}
+   onClick={e=>{if(!e.altKey&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)
+    onSelect?.(piece)}}>
    <span aria-hidden="true">{tool?.icon||'🧰'}</span>
   </button>;
  }
@@ -64,12 +68,16 @@ function SpriteContent({piece,token,tool,issued,selected,isDM,user,
    }
   }}
   onClick={e=>{
-   if(preview)return;
+   if(preview){
+    if(!e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.metaKey)onSelect?.(piece);
+    return;
+   }
    if(e.shiftKey&&!e.ctrlKey&&!e.altKey){
     e.preventDefault();e.stopPropagation();onTokenStatus?.(token);
    }else if(e.ctrlKey&&!e.altKey&&canEdit){
     e.preventDefault();e.stopPropagation();onTokenQuick?.(token);
-   }
+   }else if(!e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.metaKey)
+    onSelect?.(piece);
   }}>
   {token.image_path?<Artwork db={db} path={token.image_path}
    alt={token.name} className="token-art" loading="eager"/>:
@@ -222,6 +230,36 @@ export default function WorldV2Board(props){
    }
   }
  },[spriteContent,isDM,user]);
+ function pointerPieceAt(event,point){
+  const source=event?.target?.closest?.('[data-world-kind][data-world-id]');
+  if(source)return {kind:source.dataset.worldKind,id:source.dataset.worldId};
+  // Use only the server-authorized visible roster as a fallback hit test.
+  // Canvas, fog and editor overlays can otherwise intercept the native
+  // sprite target and make both click-select and drag impossible.
+  if(event?.target?.closest?.(
+   'button,a,input,select,textarea,[role="dialog"],.map-env-marker,'+
+   '.map-handout-pin,.token-resize-handle'))return null;
+  return pickAuthorizedWorldPiece({
+   point,visiblePieces:runtimeRef.current?.visibility.visiblePieces,
+   tokens:latest.current.tokens,toolPlacements:latest.current.toolPlacements,
+   toolIssued:latest.current.toolIssued,user,isDM,mapId:map.id
+  });
+ }
+ function selectVisiblePiece(piece){
+  if(!piece||!runtimeRef.current?.visibility.visiblePieces.some(
+   row=>idOf(row)===idOf(piece)))return;
+  const src=latest.current;
+  if(piece.kind==='token'){
+   const token=src.tokens.find(t=>t.id===piece.id);
+   if(!canControlMapToken(token,user,isDM,map.id)||
+    dmPreview&&piece.id!==previewToken?.id)return;
+   setSelection([piece.id],[]);
+  }else if(piece.kind==='tool'&&!previewRequested){
+   const issue=src.toolIssued.find(t=>t.id===piece.id);
+   if(!toolCanControl(issue,user,isDM))return;
+   setSelection([], [piece.id]);
+  }
+ }
  const spritePortals=useMemo(()=>spriteContent.map(entry=>createPortal(
   <SpriteContent piece={entry.piece} token={entry.token}
    tool={entry.tool} issued={entry.own} selected={entry.selected}
@@ -234,10 +272,10 @@ export default function WorldV2Board(props){
    onTokenEdit={item=>latest.current.onTokenEdit?.(item)}
    onTokenQuick={item=>latest.current.onTokenQuick?.(item)}
    onTokenStatus={item=>latest.current.onTokenStatus?.(item)}
-   onResize={startResize}/>,
+   onResize={startResize} onSelect={selectVisiblePiece}/>,
   entry.node,idOf(entry.piece)
  )),[spriteContent,monitorValues,encumbranceBadges,statusCatalog,
-  db,user,isDM,previewRequested]);
+  db,user,isDM,previewRequested,dmPreview,previewToken?.id]);
  function mapGridPoint(event){
   const rect=board.current?.getBoundingClientRect();
   if(!rect||!rect.width||!rect.height)return null;
@@ -263,10 +301,8 @@ export default function WorldV2Board(props){
   if(!active||activeMeasure||
    environmentEditor?.enabled&&environmentEditor.lockTokens!==false)
    return null;
-  const source=keyboard?null:event.target?.closest?.(
-   '[data-world-kind][data-world-id]');
-  const kind=source?.dataset.worldKind,
-   id=source?.dataset.worldId;
+  const hit=keyboard?null:pointerPieceAt(event,point);
+  const kind=hit?.kind,id=hit?.id;
   if(!keyboard&&(!id||!['token','tool'].includes(kind)))return null;
   const picked=keyboard?
    [...selectedRef.current.tokens.map(id=>({kind:'token',id})),
@@ -484,61 +520,30 @@ export default function WorldV2Board(props){
  },[registerPreviewStep,map.id,dmPreview,previewToken?.id]);
  useEffect(()=>{
   if(!registerV2Step)return;
-  const keyboard={cursor:null,timer:null};
-  const clearIdle=()=>{
-   if(keyboard.timer!==null)clearTimeout(keyboard.timer);
-   keyboard.timer=null;
-  };
-  const finish=()=>{
-   clearIdle();
-   if(!keyboard.cursor)return;
-   keyboard.cursor=null;
-   void runtimeRef.current?.movement.endGesture();
-  };
-  const moveOne=(dx,dy,{release=false}={})=>{
-   if(release){
-    if(!keyboard.cursor)return false;
-    clearIdle();
-    // Rapid taps join the same authority session. Held-key repeats do
-    // not wait on an individual server commit per tile.
-    keyboard.timer=setTimeout(finish,90);
-    return true;
+  // The same real/preview stepper owns one held gesture, including rapid
+  // taps while the previous server commit is still finishing.
+  const stepper=createWorldKeyboardStepper({
+   getRuntime:()=>runtimeRef.current,
+   onFocus:()=>viewport.current?.focus?.({preventScroll:true}),
+   makePick:runtime=>{
+    if(previewRequested&&!dmPreview)return null;
+    if(dmPreview){
+     const actor=latest.current.tokens.find(t=>t.id===previewToken?.id);
+     const sight=runtime.visibility.frame;
+     const approved=runtime.previewPosition||
+      sight?.visiblePieces.find(p=>p.kind==='token'&&p.id===actor?.id);
+     if(!actor||!approved||
+      !canControlMapToken(actor,user,true,map.id))return null;
+     return {mapId:map.id,origin:{x:approved.x,y:approved.y},
+      selection:[{kind:'token',id:actor.id}],mode:'preview'};
+    }
+    return resolveRef.current({target:board.current},null,{keyboard:true});
    }
-   const runtime=runtimeRef.current;
-   if(dmPreview||!runtime?.active||
-    !Number.isSafeInteger(dx)||!Number.isSafeInteger(dy)||
-    Math.abs(dx)+Math.abs(dy)!==1)return false;
-   clearIdle();
-   if(keyboard.cursor&&!runtime.movement.active)keyboard.cursor=null;
-   if(!keyboard.cursor){
-    if(runtime.movement.active)return false;
-    viewport.current?.focus?.({preventScroll:true});
-    const picked=resolveRef.current({target:board.current},null,{keyboard:true});
-    const scene=runtime.sceneManager.displayedScene;
-    const frame=runtime.visibility.frame;
-    if(!picked||!scene||!frame)return false;
-    if(!runtime.movement.beginGesture({
-     ...picked,pointer:picked.origin,mode:'keyboard',
-     environmentRevision:scene.revision,
-     permissionGeneration:frame.permissionGeneration
-    }))return false;
-    keyboard.cursor={...picked.origin};
-   }
-   const to={x:keyboard.cursor.x+dx,y:keyboard.cursor.y+dy};
-   if(!runtime.movement.updateGesture(to)){
-    keyboard.cursor=null;
-    return false;
-   }
-   keyboard.cursor=to;
-   return true;
-  };
-  registerV2Step(moveOne);
-  return()=>{
-   clearIdle();
-   if(keyboard.cursor)runtimeRef.current?.movement.cancelGesture('keyboard-unmount');
-   registerV2Step(null);
-  };
- },[registerV2Step,map.id,dmPreview]);
+  });
+  registerV2Step((dx,dy,options)=>stepper.step(dx,dy,options));
+  return()=>{stepper.dispose();registerV2Step(null)};
+ },[registerV2Step,map.id,dmPreview,previewRequested,previewToken?.id,user]);
+
  function startResize(event,token){
   if(!isDM||previewRequested||event.button!==0)return;
   event.preventDefault();event.stopPropagation();
@@ -599,9 +604,12 @@ export default function WorldV2Board(props){
   if(activeMeasure&&(event.button===0||event.button===2)){
    startMeasure(event,activeMeasure);return;
   }
-  if(event.button!==0||activeMeasure||environmentEditor?.enabled||
-   previewRequested||event.target.closest?.(
-    '[data-world-id],.map-handout-pin,.map-measure-tool,.map-editor-svg'))
+  if(event.button!==0||activeMeasure||
+   previewRequested||
+   environmentEditor?.enabled&&environmentEditor.lockTokens!==false||
+   event.target.closest?.(
+    '[data-world-id],.map-handout-pin,.map-measure-tool,.map-editor-svg')||
+   pointerPieceAt(event,mapGridPoint(event)))
    return;
   const p=viewportPoint(event);
   if(!p)return;
