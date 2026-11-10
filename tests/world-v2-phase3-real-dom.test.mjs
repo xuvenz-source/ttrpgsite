@@ -96,13 +96,28 @@ async function browserPage(path){
   await rm(dir,{recursive:true,force:true});throw error;
  }
 }
+// GitHub-hosted Chrome can occasionally delay writing DevToolsActivePort.
+// Retry a fresh local profile once on STARTUP ONLY; never skip a browser
+// assertion, retry failed movement logic, or mask an authorization failure.
+async function browserPageWithStartupRetry(path){
+ let last;
+ for(let attempt=0;attempt<2;attempt++){
+  try{return await browserPage(path)}
+  catch(error){
+   if(!/Chromium DevTools port unavailable/.test(error?.message||''))
+    throw error;
+   last=error;
+  }
+ }
+ throw last;
+}
 test('actual Chromium DOM pointer capture: player, DM unlocked, preview, locked editor',async t=>{
  const executable=chromium();
  if(!executable){t.skip('Chromium not installed; require authenticated browser gate');return}
  const {server,port}=await serve();
  let browser;
  try{
-  browser=await browserPage(executable);
+  browser=await browserPageWithStartupRetry(executable);
   await browser.send('Page.enable');
   await browser.send('Runtime.enable');
   await browser.send('Page.navigate',{
