@@ -10,10 +10,12 @@ const EVENTS=new Set([
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
- 'observer.unknown-piece','visibility.revoke','visibility.refresh','visibility.snapshot',
+ 'observer.unknown-piece','visibility.revoke','visibility.refresh',
+ 'visibility.snapshot','visibility.stale-snapshot',
  'visibility.reject','visibility.notice','renderer.seal','renderer.scene-adopt',
  'renderer.visibility-reject','renderer.static-draw','renderer.fog-full',
- 'renderer.fog-partial','renderer.opaque','renderer.sprite-create',
+ 'renderer.fog-partial','renderer.opaque','renderer.visibility-stale',
+ 'renderer.sprite-create',
  'renderer.sprite-remove','renderer.terrain-assign'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
@@ -36,7 +38,7 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'environment-revision-mismatch','scene-generation-mismatch',
  'observer-cursor-regression','stale-visibility-frame',
  'gesture-revoked','viewer-map-switch','permission-revoked',
- 'authorization-revoked','resync-error','authorized','permission',
+ 'authorization-revoked','resync-error','authorized','permission','stale',
  'user','tool-handoff','scene','visibility','input','network',
  'authority','sequence','sprite']);
 const clock=()=>typeof performance!=='undefined'&&

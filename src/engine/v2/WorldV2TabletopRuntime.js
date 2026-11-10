@@ -106,11 +106,24 @@ export function createWorldV2TabletopRuntime({
   onSnapshot:snapshot=>{
    if(disposed)return;
    if(!renderer.adoptVisibility(snapshot)){
-    // Rejection must fail the sight refresh itself, not leave a
-    // visibility controller authorized without an authorized renderer.
-    throw Error('V2 renderer rejected authorized sight: '+
-     (renderer.lastSightRejection||'unclassified'));
-   }
+     // Distinguish a proven same-authority stale cursor from actual
+     // authorization loss; do not let a lagged sight RPC clear the map.
+     const code=renderer.lastSightRejection;
+     const painted=renderer.currentVisibility;
+     const activeScene=renderer.currentScene;
+     if(renderer.authorized&&painted&&activeScene&&
+      (code==='observer-cursor-regression'||code==='stale-visibility-frame')&&
+      painted.viewerId===snapshot.viewerId&&
+      painted.scope===snapshot.scope&&
+      painted.permissionGeneration===snapshot.permissionGeneration&&
+      painted.environmentRevision===snapshot.environmentRevision&&
+      painted.sceneGeneration===snapshot.sceneGeneration&&
+      activeScene.revision===snapshot.environmentRevision&&
+      activeScene.sceneGeneration===snapshot.sceneGeneration)
+      return 'stale';
+     throw Error('V2 renderer rejected authorized sight: '+
+      (code||'unclassified'));
+    }
    privateReady=true;
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');

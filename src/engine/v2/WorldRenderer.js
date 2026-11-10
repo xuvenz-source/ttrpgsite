@@ -353,22 +353,34 @@ export function createWorldRenderer({
     scene.scope==='dm'&&next.scope==='viewer':
     scene.scope===next.scope);
    if(!next||!scoped||next.environmentRevision!==scene.revision||
-    next.sceneGeneration!==scene.sceneGeneration||
-    next.cursor<latestSeq){
+    next.sceneGeneration!==scene.sceneGeneration){
     lastSightRejection=!next?'invalid-frame':
      !scoped?'viewer-scope-mismatch':
      next.environmentRevision!==scene.revision?'environment-revision-mismatch':
-     next.sceneGeneration!==scene.sceneGeneration?'scene-generation-mismatch':
-     'observer-cursor-regression';
+     'scene-generation-mismatch';
     stats.rejectedPackets++;
     worldV2Trace.event('renderer.visibility-reject',lastSightRejection);
     // A role/scope mismatch or malformed frame is a hard authorization
     // revocation: erase the cached DM scene, guide pixels and map bitmap.
-    // A same-scope older cursor still cannot revive a hidden sprite.
-    seal('invalid-or-stale-visibility',{forgetScene:!next||!scoped});
-    return false;
-   }
-   if(visibility&&(
+    // A genuine scope/scene mismatch keeps the fail-closed clear.
+     seal('invalid-or-stale-visibility',{forgetScene:!next||!scoped});
+     return false;
+    }
+    if(visibility&&next.permissionGeneration!==visibility.permissionGeneration){
+     lastSightRejection='permission-generation-changed';
+     stats.rejectedPackets++;
+     seal('permission-generation-changed',{forgetScene:true});
+     return false;
+    }
+    if(next.cursor<latestSeq){
+     // A signed RPC can trail a newer private observer path/hide.
+     // Drop ONLY same-authority late responses; never re-grant its roster.
+     lastSightRejection='observer-cursor-regression';
+     stats.rejectedPackets++;
+     worldV2Trace.event('renderer.visibility-stale');
+     return false;
+    }
+    if(visibility&&(
     next.environmentRevision<visibility.environmentRevision||
     next.sceneGeneration<visibility.sceneGeneration||
     next.permissionGeneration<visibility.permissionGeneration||
@@ -378,15 +390,6 @@ export function createWorldRenderer({
     next.cursor<visibility.cursor)){
     lastSightRejection='stale-visibility-frame';
     stats.rejectedPackets++;return false;
-   }
-   if(visibility&&next.permissionGeneration!==visibility.permissionGeneration){
-    // An authenticated role/assignment change may turn a DM into a
-    // regular player. Never reuse a DM-full environment after a new
-    // permission generation, even when the published revision is identical.
-    lastSightRejection='permission-generation-changed';
-    stats.rejectedPackets++;
-    seal('permission-generation-changed',{forgetScene:true});
-    return false;
    }
    const nextMask=makeWorldFogMask(next);
    if(next.enabled&&!nextMask){
