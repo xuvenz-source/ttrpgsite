@@ -240,7 +240,8 @@
         "No full Supabase JWT/Realtime LOS integration, free-tier quota or concurrency stress test"
       ],
       "gateA": "NOT PASSED",
-      "next": "B08, independently authorized staging-only or complete Gate A"
+      "next": "B08, independently authorized staging-only or complete Gate A",
+      "pullRequest": 82
     },
     "B08": {
       "status": "NOT STARTED"
@@ -699,7 +700,9 @@
         "PR #71 security/recovery amendment blockers",
         "Real DM/P1/P2 protected sight, end-to-end p95, flashing and Realtime quota measurements not run"
       ],
-      "next": "B08 ONLY, with separate staging-only instruction or successful Gate A"
+      "next": "B08 ONLY, with separate staging-only instruction or successful Gate A",
+      "pullRequest": 82,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/82"
     }
   },
   "pendingWork": [
