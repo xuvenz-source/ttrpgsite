@@ -7,7 +7,7 @@ import {join,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawn,spawnSync} from 'node:child_process';
 
-const ROOT=fileURLToPath(new URL('../',import.meta.url));
+const ROOT=resolve(fileURLToPath(new URL('../',import.meta.url)));
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const chromium=()=>{
  for(const name of ['google-chrome','google-chrome-stable','chromium','chromium-browser']){
