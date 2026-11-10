@@ -354,7 +354,11 @@
       "testEvidence": {
         "postgresRun": 42824086455,
         "assertionsPassed": 61,
-        "sourceSha": "69d8d8bb8c9943f780d27844456e7f3d6bf7fbab"
+        "sourceSha": "69d8d8bb8c9943f780d27844456e7f3d6bf7fbab",
+        "latestPassingHeadBeforeHandoffUpdate": "b31f3f10e51fed519ba0e8d21857071484ccf94d",
+        "latestIsolatedPostgresRun": 42824746094,
+        "latestGeneralCiRun": 42824745105,
+        "conclusion": "BOTH SUCCESS; actual SQL/auth/LOS limits documented and A06 blocked"
       },
       "linkedPullRequest": 79
     }
