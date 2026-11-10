@@ -110,6 +110,16 @@ test('integrated actual React board drags owned player, DM and preview token',{t
    await move('mouseReleased',rect.x+120,rect.y);
    await delay(240);
    const after=await b.evaluate('window.__v2Integrated.snapshot()');
+   const trace=await b.evaluate('window.__worldV2Trace?.snapshot()');
+   assert.equal(trace?.enabled,true,'opt-in browser diagnostics must be available');
+   assert.ok((trace.counts['renderer.mount']??0)>=1,
+    'actual React renderer mount should be counted');
+   assert.ok((trace.durations['render.frame']?.samples??0)>=1,
+    'renderer drawing time should be measured');
+   assert.equal(trace.durations['movement.local-first-position-paint']?.samples,1,
+    'one complete drag should record one first visible token position paint');
+   assert.equal(trace.counts['renderer.terrain-assign']??0,0,
+    'test image source is not reassigned by movement');
    assert.equal(after.spriteCount,1,'no portal remount: '+JSON.stringify(after));
    assert.equal(after.canvasCount,1,'no fog remount: '+JSON.stringify(after));
    assert.deepEqual(after.errors,[],'runtime error: '+JSON.stringify(after));
