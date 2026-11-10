@@ -66,6 +66,10 @@ export function createWorldV2TabletopRuntime({
  let previewPosition=null,dmLightRefreshTimer=null;
  function scheduleDmLightRefresh(){
   if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
+  // Most maps have no moving DM lights. Ordinary token paths already have
+  // private observer updates; avoid an extra sight RPC for each such burst.
+  // A scene/light publication or dirty-vision notice still refreshes sight.
+  if(!vision.frame?.dmMovingLights?.length)return;
   dmLightRefreshTimer=setTimeout(()=>{
    dmLightRefreshTimer=null;
    if(!disposed)void refreshVisibility('dm-approved-motion-light');
