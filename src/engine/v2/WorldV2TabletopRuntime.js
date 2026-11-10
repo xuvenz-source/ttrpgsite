@@ -154,6 +154,9 @@ export function createWorldV2TabletopRuntime({
   }):createWorldAuthorityClient({db});
  const movement=createMovementController({
   authority,
+  // Staged B05 opt-in only. All normal builds retain the current adapter.
+  // No public runtime or production deployment is enabled by this branch.
+  coalesceMotion:import.meta.env?.VITE_WORLD_V2_COALESCE_MOTION==='1',
   canPredict:request=>{
     if(disposed||!authorized())return false;
     if(!isDM)return canPredictWithinWorldGrants({
