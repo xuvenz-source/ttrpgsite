@@ -1,6 +1,7 @@
 /** Browser input adapter for a single V2 movement controller.
  * Does not import React, Supabase, or any existing movement engine.
  */
+import {worldV2Trace} from './WorldTrace.js';
 const arrows={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]};
 const editable=target=>!!target&&(target.isContentEditable===true||
  /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName||'')||
@@ -33,6 +34,10 @@ export function createInputController({
   target.contains?.(event.target)===true||
   (typeof event.composedPath==='function'&&event.composedPath().includes(target));
  const heldArrows=new Set();
+ const status=(event,code)=>{
+  worldV2Trace.event('input.pointer.status',code);
+  onPointerStatus(event,code);
+ };
  const clearKeyboardTimer=()=>{
   if(keyboardTimer!==null)clearTimer(keyboardTimer);
   keyboardTimer=null;
@@ -41,6 +46,7 @@ export function createInputController({
   clearKeyboardTimer();
   if(!keyboardCursor)return;
   keyboardCursor=null;heldArrows.clear();
+  worldV2Trace.event('input.keyboard.end');
   void controller.endGesture();
  };
  const point=event=>{
@@ -56,19 +62,21 @@ export function createInputController({
  const down=event=>{
   if(event.button!==0||event.isPrimary===false||!withinMap(event))return;
   if(activePointer!==null||controller.active){
-   onPointerStatus(event,'busy');return;
+   status(event,'busy');return;
   }
   const p=point(event);
-  if(!p){onPointerStatus(event,'point');return}
+  if(!p){status(event,'point');return}
   const picked=resolveSelection(event,p);
-  if(!picked?.origin){onPointerStatus(event,'selection');return}
+  if(!picked?.origin){status(event,'selection');return}
   const originPoint=Object.freeze({x:picked.origin.x,y:picked.origin.y});
   if(!controller.beginGesture({...picked,pointer:originPoint,
    mode:picked.mode==='preview'?'preview':
     event.pointerType==='touch'?'touch':'drag'})){
-   onPointerStatus(event,'begin');return;
+   status(event,'begin');return;
   }
-  onPointerStatus(event,'grabbed');
+  status(event,'grabbed');
+  worldV2Trace.event('input.pointer.start',picked.mode==='preview'?'preview':
+   event.pointerType==='touch'?'touch':'drag');
   // Grab offset is fixed at pointer-down. Without it, clicking the middle
   // of a wide token snaps the anchor to the cursor's top-left grid cell.
   pointerOffset={x:originPoint.x-p.x,y:originPoint.y-p.y};
@@ -96,6 +104,7 @@ export function createInputController({
  };
  const up=event=>{
   if(activePointer===null||event.pointerId!==activePointer)return;
+  worldV2Trace.event('input.pointer.end');
   const p=point(event);
   let intercepted=false;
   try{intercepted=onPointerRelease(event,activePick,p)===true}catch{}
@@ -112,6 +121,7 @@ export function createInputController({
  };
  const cancel=event=>{
   if(activePointer===null||event?.pointerId!==activePointer)return;
+  worldV2Trace.event('input.pointer.cancel');
   release();controller.cancelGesture('pointer-cancel');
  };
  const lost=event=>{
@@ -119,7 +129,7 @@ export function createInputController({
   // The document listener continues a gesture after capture migrates.
   if(root!==target)return;
   release();controller.cancelGesture('lost-capture');
-  onPointerStatus(event,'lost-capture');
+  status(event,'lost-capture');
  };
  const nativeDragStart=event=>{
   // Map sprites move through Pointer Events, not the browser HTML5 DnD
@@ -129,6 +139,7 @@ export function createInputController({
    event.preventDefault?.();
  };
  const blur=()=>{
+  if(activePointer!==null)worldV2Trace.event('input.pointer.blur');
   clearKeyboardTimer();heldArrows.clear();keyboardCursor=null;
   if(activePointer!==null)release();
   if(controller.active)controller.cancelGesture('blur');
@@ -147,6 +158,7 @@ export function createInputController({
    if(!origin||!controller.beginGesture({...picked,pointer:origin,
     mode:picked.mode==='preview'?'preview':'keyboard'}))return;
    keyboardCursor={x:origin.x,y:origin.y};
+   worldV2Trace.event('input.keyboard.start',picked.mode==='preview'?'preview':'keyboard');
   }
   clearKeyboardTimer();heldArrows.add(event.key);
   keyboardCursor={x:keyboardCursor.x+delta[0],y:keyboardCursor.y+delta[1]};

@@ -5,6 +5,7 @@
  * The Phase 4 SQL is staged independently and is NOT installed on production.
  * Do not connect this adapter to the live map until the integrated release.
  */
+import {worldV2Trace} from './WorldTrace.js';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const int=Number.isSafeInteger;
 const point=p=>int(p?.x)&&int(p?.y)&&Math.abs(p.x)<=100000&&Math.abs(p.y)<=100000;
@@ -18,6 +19,12 @@ function requireReply(data,error){
  if(error)throw Error('World movement server unavailable');
  if(!data||data.version!==2)throw Error('Invalid world movement response');
  return data;
+}
+async function traceRpc(db,name,params,metric){
+ const done=worldV2Trace.begin(metric);let result='error';
+ try{const response=await db.rpc(name,params);
+  result=response?.error?'error':'ok';return response;
+ }finally{done(result)}
 }
 export function createWorldAuthorityClient({db}={}){
  if(!db||typeof db.rpc!=='function')throw Error('V2 requires an RPC client');
@@ -35,12 +42,12 @@ export function createWorldAuthorityClient({db}={}){
     !int(permissionGeneration)||permissionGeneration<0||
     typeof collisionOverride!=='boolean')
     throw Error('Invalid V2 begin request');
-   const {data,error}=await db.rpc('begin_world_motion_v2',{
+   const {data,error}=await traceRpc(db,'begin_world_motion_v2',{
     p_map:mapId,p_selection:selection,p_origin:origin,p_mode:mode,
     p_environment_revision:environmentRevision,
     p_permission_generation:permissionGeneration,
     p_collision_override:collisionOverride
-   });
+   },'authority.begin');
    const reply=requireReply(data,error);
    if(!id(reply.sessionId)||disposed){
     throw Error('Invalid V2 movement session');
@@ -59,11 +66,11 @@ export function createWorldAuthorityClient({db}={}){
     !int(permissionGeneration))
     throw Error('Invalid V2 movement batch');
    current.seq=seq; // reject local repeats even if the RPC fails
-   const {data,error}=await db.rpc('advance_world_motion_v2',{
+   const {data,error}=await traceRpc(db,'advance_world_motion_v2',{
     p_session:sessionId,p_seq:seq,p_from:from,
     p_targets:targets,p_environment_revision:environmentRevision,
     p_permission_generation:permissionGeneration
-   });
+   },'authority.advance');
    const reply=requireReply(data,error);
    if(disposed||sessions.get(sessionId)!==current)
     throw Error('V2 movement cancelled');
@@ -79,11 +86,11 @@ export function createWorldAuthorityClient({db}={}){
     throw Error('Invalid V2 commit');
    current.seq=seq;
    try{
-    const {data,error}=await db.rpc('commit_world_motion_v2',{
+    const {data,error}=await traceRpc(db,'commit_world_motion_v2',{
      p_session:sessionId,p_seq:seq,p_endpoint:endpoint,
      p_environment_revision:environmentRevision,
      p_permission_generation:permissionGeneration
-    });
+    },'authority.commit');
     const reply=requireReply(data,error);
     if(disposed||sessions.get(sessionId)!==current)
      throw Error('V2 movement cancelled');
@@ -98,7 +105,7 @@ export function createWorldAuthorityClient({db}={}){
    sessions.delete(sessionId);
    if(disposed)return false;
    // The server checks actor and session ownership on cancellation.
-   const {error}=await db.rpc('cancel_world_motion_v2',{p_session:sessionId});
+   const {error}=await traceRpc(db,'cancel_world_motion_v2',{p_session:sessionId},'authority.cancel');
    return !error;
   },
   dispose(){disposed=true;sessions.clear()},

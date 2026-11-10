@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
+  "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
   "releaseBranch": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
@@ -241,6 +241,12 @@
       "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
       "linkedPullRequest": 67,
       "note": "Replace viewport-native pointer event pipeline with scoped document capture before React; repair DM editor unlocked token layering, player-preview actor eligibility, and safe unpublished scene collision cache. Add regression tests. No SQL or deployment."
+    },
+    {
+      "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
+      "note": "Phase 1 only: bounded opt-in V2 input/RPC/observer/visibility/fog/sprite/terrain instrumentation, test and capture protocol. No movement policy, SQL or deployment change; authenticated trace/reproduction pending."
     }
   ],
   "features": [

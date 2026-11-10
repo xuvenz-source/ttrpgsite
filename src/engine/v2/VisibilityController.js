@@ -6,8 +6,9 @@
  * renderer receives only dirty masks and keyed sprite differences; no React
  * tree remount, fog canvas rebuild or independent frame timers.
  */
+import {worldV2Trace} from './WorldTrace.js';
 import {
- normalizeWorldVisibilityFrame,makeWorldFogMask,
+  normalizeWorldVisibilityFrame,makeWorldFogMask,
  diffWorldFogMasks,diffWorldVisiblePieces
 } from './VisibilityFrame.js';
 
@@ -31,6 +32,7 @@ export function createVisibilityController({
  let current=null,mask=null,inFlight=null,queued=false,authorized=false;
  const safe=(fn,...args)=>{try{fn(...args)}catch{}};
  function revoke(reason='revoked'){
+  worldV2Trace.event('visibility.revoke',reason);
   epoch++;current=null;mask=null;authorized=false;queued=false;
   safe(onRevoke,{mapId:currentMap,viewerId:currentViewer,reason});
  }
@@ -66,6 +68,7 @@ export function createVisibilityController({
   const shouldUpdateFog=changes.full||changes.rects.length>0;
   const shouldUpdateRoster=pieces.added.length||pieces.removed.length||
    pieces.moved.length;
+  worldV2Trace.event('visibility.snapshot',changes.full?'full':changes.rects.length?'partial':'none');
   current=next;mask=nextMask;authorized=true;
   // Phase 8's single presentation owner needs EVERY accepted cursor,
   // including snapshots with no fog/roster delta. It may update its stream
@@ -98,12 +101,17 @@ export function createVisibilityController({
   }:{
    name:'get_world_visibility_v2',params:{p_map:currentMap}
   };
-  const {data,error}=await db.rpc(args.name,args.params);
+  const done=worldV2Trace.begin('visibility.rpc');
+  let result='error',data,error;
+  try{({data,error}=await db.rpc(args.name,args.params));
+   if(!error&&data)result='ok';
+  }finally{done(result)}
   if(error||!data)throw Error('V2 viewer sight unavailable');
   return data;
  }
  function refresh(reason='manual'){
   if(disposed)return Promise.resolve(null);
+  worldV2Trace.event('visibility.refresh',reason);
   if(inFlight){
    queued=true;
    const pending=inFlight;
@@ -116,6 +124,7 @@ export function createVisibilityController({
    adopt(raw,requestEpoch)
   ).catch(error=>{
    if(!disposed&&epoch===requestEpoch){
+    worldV2Trace.event('visibility.reject');
     revoke('invalid-snapshot');safe(onError,error);
    }
    return null;
@@ -145,7 +154,10 @@ export function createVisibilityController({
      'version','mapId','viewerId','visionEpoch',
      'environmentRevision','permissionGeneration','sceneGeneration'
     ].includes(k))){
-    if(!disposed)revoke('invalid-vision-notice');
+    if(!disposed){
+     worldV2Trace.event('visibility.notice','invalid-vision-notice');
+     revoke('invalid-vision-notice');
+    }
     return false;
    }
    if(current&&(
@@ -153,6 +165,7 @@ export function createVisibilityController({
     notice.permissionGeneration!==current.permissionGeneration||
     notice.sceneGeneration!==current.sceneGeneration
    )){
+    worldV2Trace.event('visibility.notice','vision-version-change');
     revoke('vision-version-change');
     void refresh('vision-version-change');return true;
    }

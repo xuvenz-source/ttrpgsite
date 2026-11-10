@@ -1,3 +1,4 @@
+import {worldV2Trace} from './WorldTrace.js';
 import {appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from './GesturePath.js';
 
 /** V2 gesture orchestration. This is deliberately isolated from live RPCs.
@@ -33,6 +34,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   throw Error('V2 movement requires a complete authority interface');
  let active=null,disposed=false,state='Idle',generation=0;
  const emit=(gesture,type,extra={})=>{
+  if(type!=='sampled'&&type!=='presented')
+   worldV2Trace.event('movement.'+type,gesture.mode);
   onEvent({type,state,gestureId:gesture.generation,mapId:gesture.mapId,
    selection:gesture.selection,pointer:{...gesture.pointer},
    approved:{...gesture.approved},presented:{...gesture.presented},...extra});

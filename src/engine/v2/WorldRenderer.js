@@ -11,6 +11,7 @@
  * remove sprites and conceal the fog canvas. Interpolation is restricted to
  * bounded server-approved adjacent waypoints (ObserverPathBuffer).
  */
+import {worldV2Trace} from './WorldTrace.js';
 import {createWorldFrameScheduler} from './WorldFrameScheduler.js';
 import {createObserverPathBuffer} from './ObserverPathBuffer.js';
 import {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
@@ -105,6 +106,7 @@ export function createWorldRenderer({
   else if(entry.node?.parentNode?.removeChild)
    entry.node.parentNode.removeChild(entry.node);
   stats.spriteRemoves++;
+  worldV2Trace.event('renderer.sprite-remove');
   safe(onRemoveSprite,{kind:id.split(':')[0],id:id.split(':')[1],
    node:entry.node});
  }
@@ -131,6 +133,7 @@ export function createWorldRenderer({
    canvas:surfaces.fogCanvas,frame:null,mask:null,
    widthPx:d?.width??1,heightPx:d?.height??1
   });
+  worldV2Trace.event('renderer.opaque');
   paintedMask=null;fogPending=false;
    paintedLightFrame=null;lightPending=false;
    if(surfaces.movingCanvas){
@@ -141,6 +144,7 @@ export function createWorldRenderer({
  function seal(reason='authorization-revoked',{
   forgetScene=false,requestResync=true
  }={}){
+  worldV2Trace.event('renderer.seal',reason);
   authorized=false;visibility=null;fogMask=null;paintedMask=null;
   observer.authorizePieces([]);clearLocal();clearSprites();
   latestSeq=0;seqItems.clear();setOpaque();
@@ -182,6 +186,7 @@ export function createWorldRenderer({
   sprites.set(id,{node,x:null,y:null,visible:false,
    spanX:1,spanY:1});
   dirtySprites.add(id);stats.spriteCreates++;
+  worldV2Trace.event('renderer.sprite-create');
   return true;
  }
  function paintSprite(id){
@@ -221,7 +226,9 @@ export function createWorldRenderer({
    const d=playerPreview?{...scene,scope:'viewer',environment:null}:scene;
    const result=paintWorldStaticLayer({canvas:surfaces.staticCanvas,
     scene:d,dirty:snapshot.dirty,forceFull:snapshot.forceFull});
-   if(result.ok&&result.objects>=0)stats.staticDraws++;
+   if(result.ok&&result.objects>=0){
+    stats.staticDraws++;worldV2Trace.event('renderer.static-draw');
+   }
    else safe(onError,Error('V2 static painter failed'));
   }
   if(lightPending&&scene){
@@ -252,6 +259,7 @@ export function createWorldRenderer({
     stats.fogPaintedCells+=result.cells;
     stats.fogDraws++;
     if(result.full)stats.fullFogDraws++;
+    worldV2Trace.event(result.full?'renderer.fog-full':'renderer.fog-partial');
    }else safe(onError,Error('V2 fog painter failed'));
   }
   if(authorized){
@@ -265,7 +273,10 @@ export function createWorldRenderer({
  const scheduler=createWorldFrameScheduler({
   ...(requestFrame?{requestFrame}:{}),
   ...(cancelFrame?{cancelFrame}:{}),
-  onFrame:draw,onError
+  onFrame:frame=>{
+   const done=worldV2Trace.begin('render.frame');
+   try{return draw(frame)}finally{done('ok')}
+  },onError
  });
  function reconcileLocal(frame){
   if(!local||!local.handoff)return;
@@ -313,6 +324,7 @@ export function createWorldRenderer({
     prior.dimensions.height===next.dimensions.height&&
     prior.dimensions.gridSize===next.dimensions.gridSize;
    if(sameScene)return true;
+   worldV2Trace.event('renderer.scene-adopt',prior?'revision':'initial');
    if(prior){
     // A real publication invalidates prior sight and observer authorization.
     seal('scene-publication');
@@ -349,6 +361,7 @@ export function createWorldRenderer({
      next.sceneGeneration!==scene.sceneGeneration?'scene-generation-mismatch':
      'observer-cursor-regression';
     stats.rejectedPackets++;
+    worldV2Trace.event('renderer.visibility-reject',lastSightRejection);
     // A role/scope mismatch or malformed frame is a hard authorization
     // revocation: erase the cached DM scene, guide pixels and map bitmap.
     // A same-scope older cursor still cannot revive a hidden sprite.
@@ -585,7 +598,8 @@ export function createWorldRenderer({
    else if(typeof surfaces.terrain.removeAttribute==='function')
     surfaces.terrain.removeAttribute('src');
    else surfaces.terrain.src='';
-   stats.terrainAssignments++;return true;
+   stats.terrainAssignments++;
+   worldV2Trace.event('renderer.terrain-assign');return true;
   },
   /** Camera is CSS-only, independent of canvas or sprite recalculation. */
   setCamera({x=0,y=0,zoom=1}={}){

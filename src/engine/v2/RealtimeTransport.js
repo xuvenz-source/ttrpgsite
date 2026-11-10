@@ -8,6 +8,7 @@
  * Do not mount until Phase 7 supplies an atomic authorized sight/roster
  * refresh and Phase 9 wires this to the single V2 rendering store.
  */
+import {worldV2Trace} from './WorldTrace.js';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const int=Number.isSafeInteger;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -113,6 +114,7 @@ export function createWorldRealtimeTransport({
  const state=reason=>onState({reason,connected,locked,cursor});
  const seal=reason=>{
   if(disposed)return;
+  worldV2Trace.event('observer.seal',reason);
   locked=true;roster.clear();cursor=null;revision=null;permission=null;
   generation++;
   onRevoke(reason);state(reason);
@@ -120,6 +122,7 @@ export function createWorldRealtimeTransport({
  async function resync(reason='manual'){
   if(disposed||!started||!connected)return false;
   cancelRetry();
+  worldV2Trace.event('observer.resync',reason);
   if(reason!=='sight-retry')retryAttempts=0;
   seal(reason);
   const current=generation;
@@ -134,7 +137,8 @@ export function createWorldRealtimeTransport({
    revision=snapshot.environmentRevision;
    permission=snapshot.permissionGeneration;
    roster=new Set(snapshot.visiblePieces.map(key));
-   locked=false;retryAttempts=0;state('authorized');
+   locked=false;retryAttempts=0;
+   worldV2Trace.event('observer.authorized');state('authorized');
    return true;
   }).catch(error=>{
    if(!disposed&&current===generation){
@@ -161,15 +165,20 @@ export function createWorldRealtimeTransport({
   if(disposed||locked||!connected)return;
   const frame=payload?.payload;
   if(!validWorldMotionFrame(frame,mapId,viewerId)){
+   worldV2Trace.event('observer.invalid-frame');
    void resync('invalid-packet');
    return;
   }
   if(frame.environmentRevision!==revision||
    frame.permissionGeneration!==permission){
+   worldV2Trace.event('observer.version-change');
    void resync('version-change');return;
   }
-  if(frame.seq<=cursor)return;
-  if(frame.seq!==cursor+1){void resync('sequence-gap');return}
+  if(frame.seq<=cursor){worldV2Trace.event('observer.late-frame');return}
+  if(frame.seq!==cursor+1){
+   worldV2Trace.event('observer.sequence-gap');
+   void resync('sequence-gap');return
+  }
   cursor=frame.seq;
   const pendingPaths=[];
   let needRoster=false;
@@ -189,7 +198,10 @@ export function createWorldRealtimeTransport({
     needRoster=true;
    }
   }
-  if(needRoster){void resync('unknown-piece');return}
+  if(needRoster){
+   worldV2Trace.event('observer.unknown-piece');
+   void resync('unknown-piece');return
+  }
   for(const item of pendingPaths)onPath(item,{seq:frame.seq,mapId});
  }
  return {
