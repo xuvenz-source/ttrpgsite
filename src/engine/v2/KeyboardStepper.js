@@ -77,8 +77,10 @@ export function createWorldKeyboardStepper({
     // A successful refresh may still be an older signed cursor. Validate
     // the next canonical actor anchor AND the same group before replaying.
     onFocus();
-    const pick=ready&&getRuntime()===runtime&&runtime.active?
-     makePick(runtime):null;
+    let pick=null;
+    try{if(ready&&getRuntime()===runtime&&runtime.active)
+     pick=makePick(runtime)}
+    catch{};
     const endpoint=result.endpoint;
     const sameGroup=Array.isArray(previousPick?.selection)&&
      Array.isArray(pick?.selection)&&
@@ -88,7 +90,7 @@ export function createWorldKeyboardStepper({
     if(!ready||!pick?.origin||!Number.isSafeInteger(endpoint?.x)||
      !Number.isSafeInteger(endpoint?.y)||
      pick.origin.x!==endpoint.x||pick.origin.y!==endpoint.y||
-     pick.mapId!==previousPick?.mapId||pick.mode!==previousPick.mode||
+     pick.mapId!==previousPick?.mapId||pick.mode!==previousPick?.mode||
      !sameGroup||getRuntime()!==runtime||!runtime.active){
      queued.length=0;finishing=null;finishingRuntime=null;return;
     }
