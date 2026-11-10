@@ -46,7 +46,11 @@ const token={id:TOKEN,map_id:MAP,owner_id:PLAYER,visible:true,span_x:2,span_y:2}
 const visiblePieces=[{kind:'token',id:TOKEN,x:2,y:2}];
 viewport.addEventListener('gotpointercapture',()=>{captures++});
 board.addEventListener('pointerdown',event=>{
- if(wasWorldPointerDownClaimed(event)){claims++;return}
+ if(wasWorldPointerDownClaimed(event)){
+  claims++;
+  if(viewport.hasPointerCapture(event.pointerId))captures++;
+  return;
+ }
  if(event.target.closest?.('.map-env-editing')){editorDown++;return}
  if(event.target.closest?.('[data-world-id],button'))return;
  marquees++;

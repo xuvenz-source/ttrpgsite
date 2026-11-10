@@ -139,7 +139,7 @@ test('actual Chromium DOM pointer capture: player, DM unlocked, preview, locked 
    assert.equal(result.ends,1,mode+' should release cleanly');
    assert.equal(result.marquees,0,mode+' must not also start a marquee');
    assert.ok(result.claims>=1,mode+' board must observe native document ownership');
-   assert.ok(result.captures>=1,mode+' must use real browser pointer capture');
+   assert.ok(result.captures>=1,mode+' browser capture was not confirmed: '+JSON.stringify(result));
    assert.deepEqual(result.cancellations,[]);
   }
   const locked=await drag('locked');
