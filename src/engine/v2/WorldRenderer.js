@@ -166,6 +166,10 @@ export function createWorldRenderer({
   node.style.position='absolute';
   node.style.left='0px';node.style.top='0px';
   node.style.pointerEvents='auto';
+  // Native text selection and touch panning compete with V2 pointer drag.
+  // Restrict the gesture surface only; the surrounding viewport can pan.
+  node.style.userSelect='none';
+  node.style.touchAction='none';
   node.style.transition='none';
   node.style.visibility='hidden';
   node.style.willChange='translate';
