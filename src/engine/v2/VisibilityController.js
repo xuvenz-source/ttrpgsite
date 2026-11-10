@@ -102,7 +102,10 @@ export function createVisibilityController({
   if(disposed)return Promise.resolve(null);
   if(inFlight){
    queued=true;
-   return inFlight.then(()=>inFlight?null:current);
+   const pending=inFlight;
+   // A queued newer refresh is not failure of the current authorized frame.
+   return pending.then(()=>inFlight&&inFlight!==pending?inFlight:current)
+    .then(()=>current);
   }
   const requestEpoch=epoch;
   const task=Promise.resolve().then(fetchFrame).then(raw=>

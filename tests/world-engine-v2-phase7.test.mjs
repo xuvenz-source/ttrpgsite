@@ -294,3 +294,24 @@ test('unpublished map with explicitly disabled rules allows authorized sight, pr
  assert.equal(invalid.authorized,false);
  invalid.dispose();
 });
+
+test('overlapping sight refresh waits for queued authorized result, not null',async()=>{
+ const started=deferred();
+ let count=0;
+ const db={rpc:async()=>{
+  count++;
+  if(count===1)await started.promise;
+  return {data:frame({cursor:count+5}),error:null};
+ }};
+ const ctl=createVisibilityController({db,mapId,viewerId});
+ const first=ctl.refresh('initial');
+ await tick();
+ const second=ctl.refresh('queued');
+ started.resolve();
+ const [oldResult,newResult]=await Promise.all([first,second]);
+ assert.ok(oldResult);
+ assert.ok(newResult,'queued refresh must not resemble an engine failure');
+ assert.equal(newResult.cursor,7);
+ assert.equal(count,2);
+ ctl.dispose();
+});

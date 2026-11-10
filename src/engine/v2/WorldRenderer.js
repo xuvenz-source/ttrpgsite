@@ -77,6 +77,7 @@ export function createWorldRenderer({
  let scene=null,visibility=null,fogMask=null,paintedMask=null;
   let paintedLightFrame=null,lightPending=false;
  let authorized=false,disposed=false,local=null;
+ let lastSightRejection=null;
  let staticPending=null,fogPending=false,terrainUrl=null;
  let latestSeq=0,seqItems=new Set(),lastSceneRevision=null;
  let stats={frames:0,spritePaints:0,spriteCreates:0,spriteRemoves:0,
@@ -328,7 +329,9 @@ export function createWorldRenderer({
    * An older cursor cannot resurrect a sprite concealed by a newer packet.
    */
   adoptVisibility(raw){
-   if(disposed||!scene)return false;
+   if(disposed||!scene){
+    lastSightRejection='no-active-scene';return false;
+   }
    const next=normalizeWorldVisibilityFrame(raw,currentMap,currentViewer);
    const scoped=next&&(playerPreview?
     scene.scope==='dm'&&next.scope==='viewer':
@@ -336,6 +339,11 @@ export function createWorldRenderer({
    if(!next||!scoped||next.environmentRevision!==scene.revision||
     next.sceneGeneration!==scene.sceneGeneration||
     next.cursor<latestSeq){
+    lastSightRejection=!next?'invalid-frame':
+     !scoped?'viewer-scope-mismatch':
+     next.environmentRevision!==scene.revision?'environment-revision-mismatch':
+     next.sceneGeneration!==scene.sceneGeneration?'scene-generation-mismatch':
+     'observer-cursor-regression';
     stats.rejectedPackets++;
     // A role/scope mismatch or malformed frame is a hard authorization
     // revocation: erase the cached DM scene, guide pixels and map bitmap.
@@ -351,18 +359,21 @@ export function createWorldRenderer({
      next.sceneGeneration===visibility.sceneGeneration&&
      next.visionEpoch<visibility.visionEpoch)||
     next.cursor<visibility.cursor)){
+    lastSightRejection='stale-visibility-frame';
     stats.rejectedPackets++;return false;
    }
    if(visibility&&next.permissionGeneration!==visibility.permissionGeneration){
     // An authenticated role/assignment change may turn a DM into a
     // regular player. Never reuse a DM-full environment after a new
     // permission generation, even when the published revision is identical.
+    lastSightRejection='permission-generation-changed';
     stats.rejectedPackets++;
     seal('permission-generation-changed',{forgetScene:true});
     return false;
    }
    const nextMask=makeWorldFogMask(next);
    if(next.enabled&&!nextMask){
+    lastSightRejection='invalid-fog-mask';
     stats.rejectedPackets++;seal('invalid-fog-mask');return false;
    }
    const previously=visibility;
@@ -375,6 +386,7 @@ export function createWorldRenderer({
    visibility=next;fogMask=nextMask;authorized=true;
    latestSeq=next.cursor;seqItems.clear();
    if(!observer.reconcilePieces(next.visiblePieces)){
+    lastSightRejection='invalid-authorized-roster';
     seal('bad-roster');return false;
    }
    const permitted=new Set(next.visiblePieces.map(key));
@@ -385,6 +397,7 @@ export function createWorldRenderer({
    if(local&&[...local.anchors.keys()].some(id=>!permitted.has(id)))
     clearLocal();
    for(const piece of next.visiblePieces)if(!installSprite(piece)){
+    lastSightRejection='sprite-factory-error';
     seal('sprite-factory-error');return false;
    }
    reconcileLocal(next);
@@ -414,6 +427,7 @@ export function createWorldRenderer({
    }
    if(fogPending||lightPending||dirtySprites.size||staticPending)
     scheduler.invalidate();
+   lastSightRejection=null;
    return true;
   },
   /**
@@ -605,6 +619,7 @@ export function createWorldRenderer({
   getSpriteElement(kind,id){return sprites.get(kind+':'+id)?.node??null},
   get currentScene(){return scene},
   get currentVisibility(){return visibility},
+  get lastSightRejection(){return lastSightRejection},
   get authorized(){return authorized},
   get mapId(){return currentMap},
   get viewerId(){return currentViewer}

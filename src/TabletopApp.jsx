@@ -210,6 +210,7 @@ export default function TabletopApp(){
  const movementPending=useRef(new Map()),toolMovementPending=useRef(new Set()),
   tokenRefreshSeq=useRef(0),lastKeyboardMove=useRef(0);
  const previewStepHandler=useRef(null),v2StepHandler=useRef(null);
+ const v2HeldMovementKeys=useRef(new Set());
  const registerPreviewStep=useCallback(handler=>{previewStepHandler.current=handler},[]);
  const registerV2Step=useCallback(handler=>{v2StepHandler.current=handler},[]);
  const tokenContextRef=useRef({mapId:'',campaignId:''});
@@ -1718,8 +1719,15 @@ export default function TabletopApp(){
     const simulated=isDM&&mapSettingEditor.previewing;
     if(!WORLD_V2_CUTOVER&&!simulated&&
      (!selectedToken||(!isDM&&selectedToken.owner_id!==user)))return;
-    if(e.repeat&&performance.now()-lastKeyboardMove.current<115){e.preventDefault();return}
-    lastKeyboardMove.current=performance.now();
+    // V2 handles held keys as one buffered gesture. Only the legacy
+    // single-step path retains the old repeat throttle.
+    if((!WORLD_V2_CUTOVER||simulated)&&
+      e.repeat&&performance.now()-lastKeyboardMove.current<115){
+     e.preventDefault();return;
+    }
+    if(!WORLD_V2_CUTOVER||simulated)
+     lastKeyboardMove.current=performance.now();
+    else v2HeldMovementKeys.current.add(e.code);
     e.preventDefault();
     const delta={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[action];
     if(simulated)previewStepHandler.current?.(delta[0],delta[1]);
@@ -1736,8 +1744,24 @@ export default function TabletopApp(){
     e.preventDefault();useHotbarSlot(Number(action.slice(4))-1);
    }
   }
+  function onKeyUp(e){
+   if(!v2HeldMovementKeys.current.delete(e.code))return;
+   if(v2HeldMovementKeys.current.size===0)
+    v2StepHandler.current?.(0,0,{release:true});
+  }
+  function onBlur(){
+   if(!v2HeldMovementKeys.current.size)return;
+   v2HeldMovementKeys.current.clear();
+   v2StepHandler.current?.(0,0,{release:true});
+  }
   document.addEventListener('keydown',onKey);
-  return()=>document.removeEventListener('keydown',onKey);
+  document.addEventListener('keyup',onKeyUp);
+  window.addEventListener('blur',onBlur);
+  return()=>{
+   document.removeEventListener('keydown',onKey);
+   document.removeEventListener('keyup',onKeyUp);
+   window.removeEventListener('blur',onBlur);
+  };
  },[user,activeId,selectedMap,tab,camp,bindings,hotbarSlots,hotbarVisible,selectedTokenId,tokens,isDM,character,mapSettingEditor.previewing]);
  useEffect(()=>()=>clearTimeout(saveTimer.current),[]);
  useEffect(()=>{
