@@ -61,7 +61,7 @@
   "noGoReasons": [
     "B03 is now wired into a **nonapplied B10-R01 private Core candidate**. Actual production forge_world_v2.advance_core_v2 remains unchanged and has no B03 validator; forward-only migration/rollout and live Auth/permission QA not approved.",
     "B10-R03 now stages a private nonapplied terminal queue scrub so old committed-session paths are retired and certified hides are retained. This must be co-released with default-OFF B10-R02 authenticated canonical sight recovery. Offline/background deadlines, abnormal DB faults, 24-case real Auth/LOS testing and free-tier load remain unverified. Realtime budget exhaustion still delays certified hides and leaves B10-R02 signed sight as a CPU-consuming eventual recovery; these are active release blockers.",
-    "PR #71 is an unmerged draft; B10-R04 ports its safe trailing movement-commit read coalescing but rejects unbounded unknown-piece sight retention and adds a stream-locked input guard. Treat PR71 as superseded only after final R04 verification; genuine renderer/fog continuity still needs bounded security review.",
+    "PR #71 remains an unmerged draft; B10-R04 ports only safe 280ms movement-commit row reconciliation and rejects unbounded sight hold. Existing onRevoke hides renderer and cancels gestures; strict stream-subscription input guard was rejected after three real input tests showed false-negative grabbing. Renderer continuity stays gated for C02.",
     "A06 authenticated DM/Player1/Player2 24-case protected fog/collision/door/2x2/hidden NPC/browser test is NOT RUN. Only test campaigns exist, so test data may be reset, but real Auth/LOS/access and revocation proof remains necessary.",
     "B10-R04 rehearses atomic B03→B07→B08→R01→R03 candidate SQL in disposable PG17 and exact transactional rollback. No production versioned forward migration, operational rollback or client/backend flag synchronization has yet been approved.",
     "No reviewed, forward-only production migration or compatible rollback/downgrade strategy for installed B03+B07+B08 and active versioned RPCs.",
@@ -200,7 +200,7 @@
       "safePR71Scope": {
         "retained": "Port trailing 280ms canonical token+tool read coalescing after V2 committed movement, cancel on map/actor change; default non-V2 immediate fallback preserved.",
         "explicitlyRejected": "Do not cherry-pick PR71 unknown-piece certified-sight hold while private observer stream is locked; missing hard deadline, potential stale fog/permission retention.",
-        "safetyHardening": "Prevent new gestures whenever the normal player/DM private stream is locked/disconnected or prior sight not certified.",
+        "safetyHardening": "Reject PR71 soft sight retention; original observer onRevoke synchronously revokes renderer and cancels the gesture. The proposed new stream-connection input guard was rolled back because it broke otherwise-authorized early DM grabbing in 3 existing tests.",
         "supersession": "PR #71 should be closed as superseded after R04 source CI and reviewer handoff; its unbounded sight hold is not part of release."
       },
       "rehearsal": {
