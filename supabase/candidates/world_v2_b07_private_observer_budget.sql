@@ -383,7 +383,7 @@ END $b07$;
 CREATE OR REPLACE FUNCTION forge_world_v2.publish_approved_observers(
  p_session forge_world_v2.motion_sessions,p_from jsonb,p_accepted jsonb)
 RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
-AS $
+AS $b07_pub$
 DECLARE audience record;part jsonb;waypoint jsonb;
  viewer_role text;scene jsonb;grid record;
  path jsonb;items jsonb;world_x integer;world_y integer;
@@ -448,7 +448,7 @@ BEGIN
    p_session,audience.user_id,items);
  END LOOP;
  RETURN sent;
-END $;
+END $b07_pub$;
 
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA forge_world_v2
  FROM PUBLIC,anon,authenticated;
