@@ -443,6 +443,23 @@
       },
       "linkedPullRequest": 83,
       "b07HidePriorityAmendment": "candidate now preempts old queued paths for pieces receiving a certified hide; isolated PG17 regression added"
+    },
+    {
+      "name": "stage/world-v2-b09-input-parity-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "eb1af274a1be6d0c48233a4d29b73d92c4545967",
+      "basePullRequest": 83,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "linkedPullRequest": null,
+      "note": "B09 only: keyboard queued keys resume exclusively from fresh authorized canonical sight, multi-finger touch cancels motion, mixed group refuses unauthorized members, preview progress anchored to last authorized local step/revision. No schema, production, feature activation or Vercel release.",
+      "testEvidence": {
+        "initialSourceHead": "3055ec302f151f3ea980d3d820d0c31d2a114c36",
+        "initialGeneralCiRun": 42847563283,
+        "initialFrontendTests": 816,
+        "finalExactHeadStatus": "PENDING"
+      }
     }
   ],
   "features": [
@@ -963,6 +980,18 @@
       ],
       "verification": "CI and real authenticated three-user tests outstanding; do not activate flag or apply standalone SQL.",
       "nextAcceptanceStep": "B10"
+    },
+    {
+      "id": "world-v2-b09-keyboard-touch-group-preview-parity",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "B09 V2 keyboard queued input fail-closed, multi-touch/pinch gesture cancellation, mixed-group all-or-none security, nonpersistent preview anchored to approved point.",
+      "sources": [
+        "stage/world-v2-b09-input-parity-2026-11-11"
+      ],
+      "databaseDependencies": [],
+      "verification": "Controlled automated tests and standard CI only; authenticated DM/player browser, mobile touch and fog/collision acceptance not run.",
+      "nextAcceptanceStep": "B10"
     }
   ],
   "databaseDependencies": [
@@ -1320,7 +1349,8 @@
     "A05: browser trace opt-in ?worldV2Trace=1 keeps only 256 bounded allowlisted events/duration samples per metric and no secret IDs, RPC payloads or coordinates. No extra network logging or telemetry service. Counter results are not substitute for RLS security acceptance.",
     "A06: no role/permission/visibility regression was directly tested with authenticated players, and the current test map's fog/collision are disabled. Database historical execution figures cannot establish observer confidentiality or renderer flash root cause.",
     "B08: nonapplied Commit SQL preserves canonical write authority; no paid services or new public grants. Hide-priority under saturated B07 FIFO and no-trigger terminal drain remain release blockers; no real fog/Auth test.",
-    "B08 B07-FIFO amendment: private hidden-piece queues preempt old unsent paths with a certified hide, preserving other-piece FIFO. Isolated SQL pass only; free-tier budget delay and real LOS revocation still B10 blockers."
+    "B08 B07-FIFO amendment: private hidden-piece queues preempt old unsent paths with a certified hide, preserving other-piece FIFO. Isolated SQL pass only; free-tier budget delay and real LOS revocation still B10 blockers.",
+    "B09 staged frontend only: mixed-group selection is fail-closed; keyboard continuation requires new authorized sight; second touch cancels drag; DM player preview stays nonpersistent. No live browser or Auth/LOS verification."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1337,6 +1367,7 @@
       "stage/world-v2-b06-certified-local-presentation-2026-11-11",
       "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
       "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "stage/world-v2-b09-input-parity-2026-11-11",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10"
     ],
