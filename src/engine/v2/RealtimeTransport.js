@@ -106,7 +106,10 @@ export function createWorldRealtimeTransport({
   throw Error('Invalid V2 private observer transport');
  let channel=null,disposed=false,started=false,connected=false,locked=true;
  let generation=0,cursor=null,revision=null,permission=null;
- let roster=new Set(),pending=null;
+ let roster=new Set(),pending=null,retryTimer=null,retryAttempts=0;
+ const cancelRetry=()=>{
+  if(retryTimer!==null){clearTimeout(retryTimer);retryTimer=null}
+ };
  const state=reason=>onState({reason,connected,locked,cursor});
  const seal=reason=>{
   if(disposed)return;
@@ -116,6 +119,8 @@ export function createWorldRealtimeTransport({
  };
  async function resync(reason='manual'){
   if(disposed||!started||!connected)return false;
+  cancelRetry();
+  if(reason!=='sight-retry')retryAttempts=0;
   seal(reason);
   const current=generation;
   if(pending) {
@@ -129,11 +134,23 @@ export function createWorldRealtimeTransport({
    revision=snapshot.environmentRevision;
    permission=snapshot.permissionGeneration;
    roster=new Set(snapshot.visiblePieces.map(key));
-   locked=false;state('authorized');
+   locked=false;retryAttempts=0;state('authorized');
    return true;
   }).catch(error=>{
    if(!disposed&&current===generation){
     locked=true;onError(error);state('resync-error');
+    // Never loop indefinitely on revoked permissions or a database outage.
+    // A short bounded retry covers an in-flight scene/subscription refresh;
+    // the channel remains locked until the server returns an authorized
+    // snapshot. A later scene-current event can independently reauthorize.
+    if(retryAttempts<2){
+     retryAttempts++;
+     retryTimer=setTimeout(()=>{
+      retryTimer=null;
+      if(!disposed&&started&&connected&&locked)
+       void resync('sight-retry');
+     },150*retryAttempts);
+    }
    }
    return false;
   }).finally(()=>{if(pending===task)pending=null});
@@ -198,7 +215,8 @@ export function createWorldRealtimeTransport({
     if(status==='SUBSCRIBED'){
      connected=true;void resync('subscribed');
     }else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
-     connected=false;seal('disconnected');
+     connected=false;cancelRetry();retryAttempts=0;
+     seal('disconnected');
     }
    });
    return true;
@@ -208,6 +226,7 @@ export function createWorldRealtimeTransport({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;locked=true;
+   cancelRetry();retryAttempts=0;
    generation++;roster.clear();cursor=null;revision=null;permission=null;
    const old=channel;channel=null;
    if(old)await db.removeChannel(old);
