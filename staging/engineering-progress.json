@@ -452,7 +452,7 @@
       "releaseReady": false,
       "releaseDecision": "NO_GO",
       "branch": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
-      "pullRequest": null,
+      "pullRequest": 87,
       "basedOnHead": "a7275ec1f7103ccb0dc87dd2437b2857c0334533",
       "basePullRequest": 86,
       "documentation": "docs/architecture/world-v2-b10-r02-budget-independent-recovery.md",
@@ -478,7 +478,8 @@
         "A06/Gate A 24-case distinct DM/P1/P2 authenticated fog/collision/hidden NPC/door/2x2 matrix, observer p95, terrain flashing and group/preview security NOT RUN; B10 release remains NO-GO."
       ],
       "noProductionChanges": true,
-      "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction"
+      "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/87"
     }
   },
   "handoffs": {
@@ -1033,7 +1034,7 @@
       "status": "STAGED — release NO-GO",
       "date": "2026-11-11",
       "branch": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
-      "pullRequest": null,
+      "pullRequest": 87,
       "stackedOnPR": 86,
       "stackedOnHead": "a7275ec1f7103ccb0dc87dd2437b2857c0334533",
       "expectedFiles": [
@@ -1058,7 +1059,8 @@
       ],
       "noAppliedSql": true,
       "noDeployment": true,
-      "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction"
+      "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/87"
     }
   },
   "pendingWork": [
