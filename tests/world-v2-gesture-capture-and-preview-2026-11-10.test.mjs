@@ -168,6 +168,6 @@ test('board keeps server control checks and player-effective preview identity',(
  assert.match(board,/picked\.id!==previewToken\?\.id/);
  assert.match(board,/!authorizeSelection\(selection\)/);
  assert.match(runtime,/picked\.selection\.every\(piece=>vision\.visiblePieces\.some/);
- assert.match(panel,/playerIds\.has\(t\.owner_id\)/);
+ assert.match(panel,/eligiblePlayerPreviewTokens\(/);
  assert.doesNotMatch(runtime,/db\.channel\('drag-debug'/);
 });
