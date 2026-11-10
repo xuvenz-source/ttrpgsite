@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-10",
+  "updated": "2026-11-11",
   "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
   "releaseBranch": null,
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
@@ -340,6 +340,22 @@
       ],
       "note": "B03 ONLY: private, nonapplied, no-public-EXECUTE swept path validator SQL under supabase/candidates, static contract tests and explicit designer-authorized staging-only Gate-A exception. No live SQL or application change. Isolated PostgreSQL compilation and B04 role/hostile tests required.",
       "linkedPullRequest": 78
+    },
+    {
+      "name": "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "012a368a1ce62ed21637bee3eb6597b8930336ef",
+      "basePullRequest": 78,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "changedSqlCandidate": false,
+      "note": "B04 only: ephemeral PostgreSQL 17 test workflow and 61 source-extracted V2 SQL/role assertions, no production SQL/migrations/runtime modifications. H39 altered same-seq payload yields cached ACK (no motion/broadcast) and remains a B08 hardening blocker; Gate A not passed.",
+      "testEvidence": {
+        "postgresRun": 42824086455,
+        "assertionsPassed": 61,
+        "sourceSha": "69d8d8bb8c9943f780d27844456e7f3d6bf7fbab"
+      }
     }
   ],
   "features": [
@@ -1213,7 +1229,8 @@
       "stage/world-v2-a06-readonly-baseline-2026-11-10",
       "stage/world-v2-authority-contract-b01-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10",
-      "stage/world-v2-b03-private-path-validation-2026-11-10"
+      "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "stage/world-v2-b04-hostile-authority-tests-2026-11-11"
     ],
     "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06. PR #75 documents the partial A06 baseline; authenticated DM/P1/P2 browser measurements and protected fixture prep remain BLOCKED. No approval for deployment or SQL is implied. Do not advance to Gate A or B01 before completing A06 or separately approved deviation.",
     "databaseReleaseVersion": null,
