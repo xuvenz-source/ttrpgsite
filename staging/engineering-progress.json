@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "A06",
+  "nextStep": "B02",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -98,10 +98,19 @@
         "viewerVisibility": 49.16
       },
       "liveBrowserTestStatus": "NOT_RUN",
-      "nextStepRemains": "A06"
+      "nextStepRemains": "A06 blocked for authenticated QA; active design-only next microstep B02 is an explicit delegated exception (not Gate A clearance)."
     },
     "B01": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-authority-contract-b01-2026-11-10",
+      "basedOnStagingHead": "ba816658ff26a91c4c1563ef99ecb5f243aaa0ad",
+      "designDocument": "docs/architecture/world-v2-authority-contract-b01.md",
+      "scope": "World Engine V2 movement and security protocol contract, state diagrams, grant/recovery rules, and 20 hostile/latency cases; no code or SQL",
+      "designOnly": true,
+      "gateA": "NOT PASSED",
+      "verification": "Source-grounded review against current main V2 JS and migration contracts; document/static review, no real authenticated QA",
+      "next": "B02 design/read-only comparison only",
+      "pullRequest": 76
     },
     "B02": {
       "status": "NOT STARTED"
@@ -368,6 +377,31 @@
         "Gate A cannot be claimed from historical SQL means and owner's prior subjective reports"
       ],
       "next": "A06 remains open: collect live authenticated baseline after explicitly approved setup. Do not start B01 without Gate A or documented designer-approved plan deviation."
+    },
+    "B01": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "B01",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-authority-contract-b01-2026-11-10",
+      "stackedOnPullRequest": 75,
+      "scope": "Document design-only authoritative movement session, bounded ordered waypoint validation, prediction grants, private observer progress, commit/recovery/cancellation, state diagrams and hostile-input matrix.",
+      "expectedFiles": [
+        "docs/architecture/world-v2-authority-contract-b01.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Reviewed live main MovementController, AuthorityClient, PredictionGrants, PreviewAuthority, RealtimeTransport, VisibilityController and V2 SQL migrations; no runtime/SQL test executed.",
+      "securityParity": "Security invariants explicitly preserved; PR #71 independently blocked and A06 authenticated QA NOT RUN.",
+      "sqlDeployment": "NONE",
+      "blockers": [
+        "A06 still BLOCKED and Gate A NOT PASSED",
+        "PR #71 retention/recovery safety fixes outstanding",
+        "B02 must measure and compare transports; no protocol implementation in B01"
+      ],
+      "next": "B02 design/read-only only",
+      "pullRequest": 76,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/76"
     }
   },
   "pendingWork": [
@@ -422,5 +456,19 @@
     "Open and draft PRs are unmerged staging work. Historical diverged branches are not automatically outstanding work; inspect PR/merge ancestry and semantic diff.",
     "Progress STAGED means changes exist in a draft PR only; future chats must load PR #72 head until approved merge.",
     "No deployment, SQL, Vercel setting or Supabase mutation without explicit designer release approval."
+  ],
+  "planDeviations": [
+    {
+      "id": "B01-EARLY-DESIGN-2026-11-10",
+      "approvedOn": "2026-11-10",
+      "authority": "Designer delegated free-tier engineering decisions; lead developer accepts a B01 design-only sequencing exception",
+      "appliesTo": "B01 design and B02 transport design only; no production release",
+      "rationale": "A06 is blocked by unavailable DM/P1/P2 browser access and undeployed A05 telemetry. A non-executable movement/security protocol can be reviewed while authenticated baseline awaits a suitable test session.",
+      "constraints": [
+        "A06 remains BLOCKED and Gate A NOT PASSED",
+        "No production merge/deployment, SQL/Edge apply, campaign changes or PR #71 merge under this exception",
+        "No movement runtime B03-B10 release until the real protected multiplayer fixture is verified"
+      ]
+    }
   ]
 }
