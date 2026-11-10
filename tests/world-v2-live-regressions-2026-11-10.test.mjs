@@ -35,11 +35,14 @@ test('custom V2 keybinds use held gesture and keyup idle flush',()=>{
  assert.match(app,/v2HeldMovementKeys\.current\.add\(e\.code\)/);
  assert.match(app,/document\.addEventListener\('keyup',onKeyUp\)/);
  assert.match(app,/v2StepHandler\.current\?\.\(0,0,\{release:true\}\)/);
- assert.match(board,/keyboard\.cursor=to/);
- assert.match(board,/keyboard\.timer=setTimeout\(finish,90\)/);
- assert.match(board,/runtime\.movement\.updateGesture\(to\)/);
- assert.doesNotMatch(board,/runtime\.movement\.updateGesture\(to\);\s*void runtime\.movement\.endGesture\(\)/);
- assert.match(board,/cancelGesture\('keyboard-unmount'\)/);
+ const stepper=file('src/engine/v2/KeyboardStepper.js');
+ assert.match(board,/createWorldKeyboardStepper\(/);
+ assert.match(stepper,/cursor=to/);
+ assert.match(stepper,/timer=setTimer\(finish,idleMs\)/);
+ assert.match(stepper,/runtime\.movement\.updateGesture\(to\)/);
+ assert.match(stepper,/queued\.push\(\[dx,dy\]\)/);
+ assert.doesNotMatch(stepper,/runtime\.movement\.updateGesture\(to\);\s*void runtime\.movement\.endGesture\(\)/);
+ assert.match(stepper,/cancelGesture\('keyboard-unmount'\)/);
 });
 
 test('preview cannot use DM-owned identity, and rejection shows safe reason only',()=>{
