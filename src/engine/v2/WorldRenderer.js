@@ -156,6 +156,7 @@ export function createWorldRenderer({
   forgetScene=false,requestResync=true
  }={}){
   worldV2Trace.event('renderer.seal',reason);
+  worldV2Trace.endMotion('local');worldV2Trace.endMotion('remote');
   authorized=false;visibility=null;fogMask=null;paintedMask=null;
   observer.authorizePieces([]);clearLocal();clearSprites();
   latestSeq=0;seqItems.clear();awaitingFreshVision=false;
@@ -224,10 +225,14 @@ export function createWorldRenderer({
   const x=position.x*scene.dimensions.gridSize;
   const y=position.y*scene.dimensions.gridSize;
   if(sprite.x!==x||sprite.y!==y||!sprite.visible){
+   const moved=sprite.visible&&(sprite.x!==x||sprite.y!==y);
    sprite.node.style.translate=x+'px '+y+'px';
    sprite.node.style.visibility='visible';
    sprite.x=x;sprite.y=y;sprite.visible=true;
    stats.spritePaints++;
+   // Measure a visible position style update, not an initial sprite mount,
+   // selection outline or proof of browser compositing.
+   if(moved)worldV2Trace.positionPaint(isLocal?'local':'remote');
   }
  }
  function draw({now}){
@@ -294,6 +299,7 @@ export function createWorldRenderer({
   ...(requestFrame?{requestFrame}:{}),
   ...(cancelFrame?{cancelFrame}:{}),
   onFrame:frame=>{
+   worldV2Trace.frameTick(frame.now);
    const done=worldV2Trace.begin('render.frame');
    try{return draw(frame)}finally{done('ok')}
   },onError
@@ -536,6 +542,9 @@ export function createWorldRenderer({
    if(!observer.applyPath(item)){
     stats.rejectedPackets++;seal('observer-path-discontinuity');return false;
    }
+   // Only a server-approved path for an already-authorized sprite qualifies.
+   // Deferred, unknown and hidden actors never start a paint timer.
+   worldV2Trace.startMotion('remote');
    if(meta.seq>latestSeq){latestSeq=meta.seq;seqItems.clear()}
    seqItems.add(key(item));
    dirtySprites.add(key(item));scheduler.wake();
@@ -591,6 +600,7 @@ export function createWorldRenderer({
      predicted:false,handoff:false,anchors,
       route:createApprovedPathPresentation()};
      local.route.reset(event.approved);
+    worldV2Trace.startMotion('local');
     for(const id of anchors.keys()){
      const node=sprites.get(id).node;
      node.style.outline='2px solid rgba(145,211,255,0.95)';
@@ -635,6 +645,7 @@ export function createWorldRenderer({
      }
    }else if(event.type==='committed'){
     if(!validMotionPoint(event.approved))return false;
+    worldV2Trace.endMotion('local');
     local.approved=copyPoint(event.approved);
     local.display=copyPoint(event.approved);
     local.predicted=false;local.handoff=true;
@@ -642,6 +653,7 @@ export function createWorldRenderer({
     // Phase 9 MUST fetch an authorized canonical roster after commit.
     safe(onNeedResync,'canonical-commit');
    }else if(event.type==='cancelled'||event.type==='rejected'){
+    worldV2Trace.endMotion('local');
     clearLocal();
     safe(onNeedResync,'gesture-'+event.type);
    }else if(event.type==='revoked'){
@@ -717,6 +729,7 @@ export function createWorldRenderer({
   dispose(){
    if(disposed)return;
    disposed=true;scheduler.dispose();
+   worldV2Trace.endMotion('local');worldV2Trace.endMotion('remote');
    observer.dispose();clearLocal();clearSprites();
    scene=null;visibility=null;fogMask=null;paintedMask=null;
    staticPending=null;fogPending=false;
