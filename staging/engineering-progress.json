@@ -467,8 +467,8 @@
         "staging/next-release-ledger.json"
       ],
       "scope": "Bounded independent, foreground-only 6s signed sight reconciliation after lost/delayed B07/B08 Realtime, per-piece canonical origin fences and private cursor/roster alignment; no extra broadcast/channel or new SQL. Default OFF under VITE_WORLD_V2_OBSERVER_RECOVERY.",
-      "tests": "New 7 deterministic tests for bounded timer/foreground, single-flight, no hot retry, stale buffered paths, unknown/hidden actors, malformed signed sight, and default-off preview. Existing 826 tests and SQL regression retained. CI final-head pending.",
-      "stageSecurity": "Visibility RPC supplies JWT scoped canonical sight; transport only aligns after renderer authorization. Old deferred paths starting behind signed endpoint are skipped with cursor advancing; no browser publish or fog bypass.",
+      "tests": "New 8 deterministic tests for bounded timer/foreground, single-flight, no hot retry, stale buffered paths, unknown/hidden actors, malformed signed sight, and default-off preview. Existing 826 tests and SQL regression retained. CI final-head pending.",
+      "stageSecurity": "Visibility RPC supplies JWT scoped canonical sight; transport only aligns after renderer authorization. Old deferred paths starting behind signed endpoint are skipped with cursor advancing; no browser publish or fog bypass. A newer server-signed permission/environment/scope seals the old stream synchronously before any motion.",
       "stageLimitations": [
         "Opt-in 6s authenticated sight polling is not a strict deadline when offline, backgrounded or when browser scheduling stalls; no independent guaranteed server push if B07 budget remains exhausted.",
         "Uncommitted intermediate drag frames cannot be reconstructed from final canonical sight; latest signed snapshot only reconciles committed state.",
@@ -1048,7 +1048,7 @@
         "staging/next-release-ledger.json"
       ],
       "evidence": "Source test and CodeQL final-head pending; PostgreSQL candidate nonapplied and unchanged. No DM/P1/P2 sessions.",
-      "security": "Visibility RPC supplies JWT scoped canonical sight; transport only aligns after renderer authorization. Old deferred paths starting behind signed endpoint are skipped with cursor advancing; no browser publish or fog bypass.",
+      "security": "Visibility RPC supplies JWT scoped canonical sight; transport only aligns after renderer authorization. Old deferred paths starting behind signed endpoint are skipped with cursor advancing; no browser publish or fog bypass. A newer server-signed permission/environment/scope seals the old stream synchronously before any motion.",
       "blockers": [
         "Opt-in 6s authenticated sight polling is not a strict deadline when offline, backgrounded or when browser scheduling stalls; no independent guaranteed server push if B07 budget remains exhausted.",
         "Uncommitted intermediate drag frames cannot be reconstructed from final canonical sight; latest signed snapshot only reconciles committed state.",
