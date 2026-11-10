@@ -56,7 +56,7 @@ BEGIN
   approved->>'version'='2' AND
   approved->'accepted'='[{"x":2,"y":1},{"x":3,"y":1}]'::jsonb AND
   approved->>'blocked'='false' AND
-  jsonb_object_length(approved)=5 AND
+  (SELECT count(*) FROM jsonb_object_keys(approved))=5 AND
   NOT (approved ? 'routeSteps') AND
   NOT (approved ? 'attemptedCells') AND
   NOT (approved ? 'acceptedCells') AND
