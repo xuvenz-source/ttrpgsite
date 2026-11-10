@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "A05",
+  "nextStep": "A06",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -42,7 +42,36 @@
       "note": "Documentation/test contract is staged. Existing active test map is not fully configured: fog/collision off, no door/one-way vision/2x2 token. Authenticated browser tests are future A06 work requiring controlled test preparation; do not claim PASS."
     },
     "A05": {
-      "status": "NOT STARTED"
+      "status": "STAGED",
+      "branch": "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "pullRequest": 74,
+      "dependsOnPullRequest": 73,
+      "baseSha": "718067e58a252ef9ab98e317b349fb0e77914ca4",
+      "description": "Opt-in bounded trace extensions for first visible local/remote position update, RAF spacing, renderer mounts and sight-recovery diagnostics; no gameplay behavior changes.",
+      "changedImplementationFiles": [
+        "src/engine/v2/WorldTrace.js",
+        "src/engine/v2/WorldRenderer.js",
+        "src/engine/v2/WorldCanvasStack.jsx"
+      ],
+      "documentation": "docs/testing/world-v2-bounded-tracing.md",
+      "regressionTests": [
+        "tests/world-v2-phase1-trace-2026-11-10.test.mjs",
+        "tests/world-v2-real-react-board-drag.test.mjs"
+      ],
+      "measurementsCollected": "NONE — staged instrumentation is not live authenticated user telemetry",
+      "verification": {
+        "referenceImplementationCommit": "8c716305f61c8217c98debd35a2a70d4cfe56ed2",
+        "exactHeadBuildRuns": [
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804010423",
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804000457"
+        ],
+        "status": "SUCCESS",
+        "tests": 772,
+        "failed": 0,
+        "skipped": 0,
+        "includes": "Node trace and headless actual React drag harness; npm audit, Vite build and Deno Edge checks",
+        "excluded": "Real authenticated DM/P1/P2 browser sessions and production latency measurements were not run. A05 stacked PR CodeQL/isolated Postgres checks not independently established on this head."
+      }
     },
     "A06": {
       "status": "NOT STARTED"
@@ -218,7 +247,7 @@
         "readOnlySupabase": "Existing TestCampaign has 1 DM and 8 other members, two maps, five distinct owned token actors; active map has published fog=false and collision=false, one wall, two static lights, zero doors, zero one-way vision barriers and zero 2x2 tokens.",
         "scenarioCount": 24,
         "testExecution": "NO AUTHENTICATED MULTIPLAYER BROWSER TEST EXECUTED",
-        "staticValidation": "Pending final read-only structural verification and exact-head CI."
+        "staticValidation": "Two exact-head A04 GitHub staged verification runs succeeded at 718067e58a252ef9ab98e317b349fb0e77914ca4; authenticated test runs NOT RUN."
       },
       "securityParity": "No runtime, RLS, Realtime, SQL or auth changes; NPC hiding and RLS remain unchanged.",
       "sqlDeployment": "NONE",
@@ -229,6 +258,48 @@
         "Final CI on A04 head must be checked"
       ],
       "next": "A05 — Baseline tracing (bounded staging)"
+    },
+    "A05": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "A05",
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "baseSha": "718067e58a252ef9ab98e317b349fb0e77914ca4",
+      "branch": "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "pullRequest": 74,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/74",
+      "stackedOnPullRequest": 73,
+      "scope": "Bounded opt-in trace: local gesture renderer first changed position, authorized remote path first changed position, requestAnimationFrame interval and stalls, actual React renderer mount/unmount; existing RPC/fog/terrain/observer counters preserved.",
+      "expectedFiles": [
+        "src/engine/v2/WorldTrace.js",
+        "src/engine/v2/WorldRenderer.js",
+        "src/engine/v2/WorldCanvasStack.jsx",
+        "tests/world-v2-phase1-trace-2026-11-10.test.mjs",
+        "tests/world-v2-real-react-board-drag.test.mjs",
+        "docs/testing/world-v2-bounded-tracing.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "securityParity": "No user IDs, token IDs, positions or RPC payloads stored; allowlisted constant categories; client-memory-only and opt-in. No change to rendering/sight/collision authority or movement RPC protocol.",
+      "evidence": {
+        "unitTests": "Both exact implementation-head GitHub staged verification runs succeeded at 8c716305..., 772 pass / 0 fail / 0 skip. Includes four new A05 trace checks.",
+        "browserHarness": "Headless Chromium real React board drag passed (owned player, DM, unlocked-editor DM, DM player preview) with opt-in trace assertions. This uses fake authority, NOT authenticated live Supabase.",
+        "authenticatedLiveResults": "NOT RUN",
+        "productionBuild": "Vite build and Deno username Edge Function checks successful; npm audit --omit=dev --audit-level=high found 0 vulnerabilities.",
+        "movementMeasurements": "NOT RUN. A06 to capture DM/P1/P2 actual traces after authorized live testing.",
+        "ciLinks": [
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804010423",
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804000457"
+        ]
+      },
+      "sqlDeployment": "NONE",
+      "blockers": [
+        "A06 requires real authenticated DM/P1/P2 tests and may require separately approved campaign setup/deployment",
+        "PR #71 A02 permission/recovery security amendments still blocked",
+        "PR #72/#73/#74 are stacked drafts and cannot release independently",
+        "A05 exact head CI and combined release security gate must be checked"
+      ],
+      "next": "A06 — Baseline capture and actual multi-user measurement; read-only/approved QA only"
     }
   },
   "pendingWork": [
@@ -261,6 +332,13 @@
       "status": "NOT_RUN",
       "ownerStep": "A06",
       "notes": "Fixture spec only; do not claim live 3-account acceptance. Before running, use approved test campaign to configure published fog/collision, door, one-way vision wall, 2x2 footprint, NPC LOS, torch and map switch, without any unapproved database writes."
+    },
+    {
+      "id": "A05-LIVE-BASELINE",
+      "status": "NOT_RUN",
+      "category": "QA",
+      "ownerStep": "A06",
+      "notes": "A05 traces are staged only. Need approved release/testing context and three independently authenticated DM/P1/P2 sessions to gather real end-to-end latency and flash counts. Do not treat CI fixture as live QA."
     }
   ],
   "sourceOfTruthRules": [
