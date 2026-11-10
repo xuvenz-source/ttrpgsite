@@ -96,11 +96,13 @@ BEGIN
  -- Avoid a legacy NULL-scene behavior: SQL IF NULL does not enter a THEN.
  -- A collision-enforced published map MUST have a valid object array;
  -- otherwise wall iteration could be skipped and a route approved.
- IF s.collision_on AND NOT s.dm_override AND (
-    scene IS NULL OR
-    jsonb_typeof(scene->'objects') IS DISTINCT FROM 'array' OR
-    jsonb_array_length(scene->'objects')>120
- ) THEN RETURN NULL; END IF;
+ IF s.collision_on AND NOT s.dm_override THEN
+  IF scene IS NULL OR
+     jsonb_typeof(scene->'objects') IS DISTINCT FROM 'array'
+  THEN RETURN NULL; END IF;
+  IF jsonb_array_length(scene->'objects')>120
+  THEN RETURN NULL; END IF;
+ END IF;
 
  -- Load only the selected, server-recorded pieces. Current attrs come from
  -- private authoritative rows, never from p_targets, caller JSON or visible
