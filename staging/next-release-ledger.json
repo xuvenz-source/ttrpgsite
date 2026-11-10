@@ -476,12 +476,12 @@
       "featureFlagsActivated": false,
       "docs": "docs/architecture/world-v2-b10-integrated-release-qualification.md",
       "noDeployment": true,
-      "note": "B10 staging-only release-qualification gates: combined B03+B07+B08 source/hostile PostgreSQL tests, CodeQL, serialized npm test, 24 Auth scenario matrix, safe release ordering. B03 not wired, PR71 blocked, observer-budget recovery and Gate A/real browser data missing. No SQL migration applied.",
+      "note": "B10 staging-only release-qualification gates: combined B03+B07+B08 source/hostile PostgreSQL tests, CodeQL, serialized npm test, 24 Auth scenario matrix, safe release ordering. B03 not wired, PR71 blocked, observer-budget recovery and Gate A/real browser data missing. No SQL migration applied. CI hardening: actual Chromium DOM harness may restart a nonresponsive headless launch once; no test skip or behavioral retry.",
       "testEvidence": {
         "combinedPG17Run": 42852430736,
         "codeQLPreviousRun": 42853736555,
         "frontendPreviousRun": 42853530344,
-        "finalExactPRHead": "PENDING after release ledger records",
+        "finalExactPRHead": "PENDING after CI-hardening source update; no live deployment",
         "liveAuthScenarioCount": 0,
         "liveAuthScenarioRequired": 24
       }
@@ -1389,7 +1389,8 @@
     "B08 B07-FIFO amendment: private hidden-piece queues preempt old unsent paths with a certified hide, preserving other-piece FIFO. Isolated SQL pass only; free-tier budget delay and real LOS revocation still B10 blockers.",
     "B09 staged frontend only: mixed-group selection is fail-closed; keyboard continuation requires new authorized sight; second touch cancels drag; DM player preview stays nonpersistent. No live browser or Auth/LOS verification.",
     "B10 NO-GO: live catalog confirms B03 validator not installed/wired, B07/B08 queues absent; public advance authenticated-only and private forge_world_v2 usage denied. Source-real PG17 coexistence is not a production migration.",
-    "B10: PR #71 unamended, budget exhaustion eventual private observer recovery unproven; CodeQL staging scan successful on earlier head, 24 authenticated DM/P1/P2 scenarios NOT RUN. No merge/deploy/SQL approval."
+    "B10: PR #71 unamended, budget exhaustion eventual private observer recovery unproven; CodeQL staging scan successful on earlier head, 24 authenticated DM/P1/P2 scenarios NOT RUN. No merge/deploy/SQL approval.",
+    "B10 CI: serial 823-test npm test suite and single startup-only Chrome CDP retry; a failed browser assertion remains failed. This is not live authenticated UX validation."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
