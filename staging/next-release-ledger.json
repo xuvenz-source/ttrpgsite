@@ -522,6 +522,29 @@
         "sqlCi": "Existing source-real PG17 candidate unchanged",
         "liveAuthMatrix": "NOT_RUN"
       }
+    },
+    {
+      "name": "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
+      "status": "staged",
+      "documentationOnly": false,
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "4837f6a61ccbc1fab94226f5b22c2c48a16aa65f",
+      "basePullRequest": 87,
+      "linkedPullRequest": 88,
+      "releaseReady": false,
+      "sqlApplied": false,
+      "productionDeployed": false,
+      "gateDecision": "NO_GO",
+      "featureFlagsActivated": false,
+      "docs": "docs/architecture/world-v2-b10-r03-terminal-queue-retirement.md",
+      "note": "B10-R03: private nonapplied B08 drain replacement bounds initial in-commit flush then retires ALL remaining old private coordinate paths; only certified hide survives for exact ACK retry. Coupled R02 opt-in required at authorized release, and PR71/real Auth/migration gates are blocked. Isolated source-real transient realtime.send failure and successful exact retry are covered.",
+      "testEvidence": {
+        "isolatedPg17Initial": 42867963625,
+        "isolatedNewR03Assertions": 16,
+        "codeQL": "PENDING exact-head",
+        "frontend": "PENDING exact-head",
+        "liveDMPlayer1Player2": "NOT_RUN"
+      }
     }
   ],
   "features": [
@@ -1099,6 +1122,24 @@
       ],
       "verification": "Deterministic Node tests and ordinary build/CodeQL/PG17 CI only, not live Auth, LOS or free-tier performance",
       "nextAcceptanceStep": "B10-R03 bounded equal-origin ambiguity / code-integrity and actual authenticated free-tier release qualifications"
+    },
+    {
+      "id": "world-v2-b10-r03-postcommit-terminal-queue-retirement",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Nonapplied private B08 terminal drain replacement: bound first Commit flush, retire all unsent coordinate-bearing paths, preserve only certified hide priority under per-recipient scope. Prevent equal-origin replay after new signed sight.",
+      "sources": [
+        "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11"
+      ],
+      "databaseDependencies": [
+        "B03",
+        "B07",
+        "B08",
+        "B10-R01",
+        "B10-R02 client flag"
+      ],
+      "verification": "PostgreSQL 17 isolated hostile tests only; no real Auth/LOS/fanout, no live SQL apply.",
+      "nextAcceptanceStep": "B10-R04 PR71 conflict and versioned migration/rollback rehearsal followed by distinct authenticated user tests."
     }
   ],
   "databaseDependencies": [
@@ -1462,7 +1503,8 @@
     "B10: PR #71 unamended, budget exhaustion eventual private observer recovery unproven; CodeQL staging scan successful on earlier head, 24 authenticated DM/P1/P2 scenarios NOT RUN. No merge/deploy/SQL approval.",
     "B10 CI: serial 823-test npm test suite and single startup-only Chrome CDP retry; a failed browser assertion remains failed. This is not live authenticated UX validation.",
     "B10-R01 candidate routes fresh private Core advances through B03, preserving B08 exact replay and restricted private function grants. Source-real isolated tests passed; live RPC remains ORIGINAL and unmodified.",
-    "B10-R02: default-off authenticated six-second vision fallback can recover canonical visible positions/hides when private Realtime budget loses all packets, with signed roster/cursor gates; browser offline/background and ambiguous same-origin deferred frames prevent hard guarantees. Gate B NO-GO."
+    "B10-R02: default-off authenticated six-second vision fallback can recover canonical visible positions/hides when private Realtime budget loses all packets, with signed roster/cursor gates; browser offline/background and ambiguous same-origin deferred frames prevent hard guarantees. Gate B NO-GO.",
+    "B10-R03 nonapplied private terminal queue candidate retires unsent coordinate paths after canonical Commit so exact replay cannot reanimate old coordinates; certified hides only survive. DO NOT apply without B10-R02 signed sight fallback and A06/PR71/real migration gates. Release NO_GO."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1483,6 +1525,7 @@
       "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
       "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
       "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
+      "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10"
     ],

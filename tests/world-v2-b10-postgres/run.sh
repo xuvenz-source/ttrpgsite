@@ -30,6 +30,12 @@ psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b10_r01_core_path_int
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b08-postgres/hostile.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/integrated.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/core-path-r01.sql
+# R03 changes the B08 terminal-queue disposition, so keep the historical B08
+# suite BEFORE this explicit replacement. A fresh cross-layer R03 hostile
+# suite below verifies exact retry cannot replay old pending paths after a
+# canonical commit (including the equal-origin stale frame case).
+psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/terminal-r03.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
@@ -41,4 +47,5 @@ for role in anon authenticated;do
  }
 done
 echo 'B10-R01 PASS: source-real B03+B07+B08 integrated private-core and hostile regressions'
+echo 'B10-R03 PASS: B03+B07+B08+R01 canonical core and terminal queue-retirement hostile regressions'
 echo 'B10 RELEASE GATE STILL BLOCKED: nonapplied candidate, observer-budget recovery and live Auth/LOS QA remain.'
