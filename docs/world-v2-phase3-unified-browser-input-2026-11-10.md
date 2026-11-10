@@ -11,3 +11,6 @@ DOM hit-testing validates direct sprite candidates against the authorized viewer
 Staged unit tests cover pointer claim/re-entrant React capture, unauthorized and nested control hit tests, player vs DM identity, and lock policy. Browser-level fixture tests with actual Chromium pointer capture are separately prepared. No previous client-side mock can substitute for an authenticated player/DM/preview acceptance test at several zoom levels. The goal is first-gesture selection and dragging without switching modes, with no second map action claiming that pointer, while keeping map-editor tools intact.
 
 No deployment, SQL, RLS, Realtime subscription, or paid service.
+
+## Completed automated browser validation
+On Phase 3 staging commit `f59a662e`, the Chromium headless DOM fixture passed with actual browser-dispatched pointerdown/move/up, native pointer capture, document-capture before board capture, editor overlay hit testing, player/DM unlocked/preview first-gesture drag, editor-locked denial and nested token status controls. This is an executable DOM fixture, **not** a logged-in full React/Supabase campaign session. Release acceptance remains open pending authenticated multi-client drag at multiple zoom levels and manual editor interaction checks.
