@@ -168,14 +168,9 @@ BEGIN
  UPDATE forge_world_v2.observer_budget_b07
  SET emitted=0,window_started=clock_timestamp()-interval '2 seconds'
  WHERE id=1;
+ -- Execute the stateful flush BEFORE evaluating its outbox/cursor
+ -- assertions. PostgreSQL does not guarantee SQL AND evaluation order.
  hide_sent:=forge_world_v2.flush_recipient_observer_b07(session_row,player);
- RAISE NOTICE 'B08 hide diagnostic sent %, cursor now %, was %, last %',
-  hide_sent,
-  (SELECT seq FROM forge_world_v2.viewer_streams
-   WHERE map_id=map_uuid AND viewer_id=player),
-  cursor_before,
-  (SELECT message->'items' FROM realtime.b07_outbox
-   WHERE (message->>'viewerId')=player::text ORDER BY id DESC LIMIT 1);
  PERFORM public.b08_assert(
   hide_sent=1 AND
   (SELECT message->'items'->0->>'action'='hide' AND
