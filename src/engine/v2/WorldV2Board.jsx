@@ -231,6 +231,12 @@ export default function WorldV2Board(props){
   }
  },[spriteContent,isDM,user]);
  function pointerPieceAt(event,point){
+  // Board capture precedes child widget handlers: never steal resize,
+  // map editing, measuring, or handout pointer gestures.
+  if(event?.target?.closest?.(
+   '.token-resize-handle,.map-env-editing,.map-env-marker,'+
+   '.map-handout-placement,.map-handout-pin,.map-measure-tool,'+
+   '.map-handout-bubble,[role="dialog"]'))return null;
   const source=event?.target?.closest?.('[data-world-kind][data-world-id]');
   if(source)return {kind:source.dataset.worldKind,id:source.dataset.worldId};
   // Use only the server-authorized visible roster as a fallback hit test.
@@ -298,8 +304,11 @@ export default function WorldV2Board(props){
    !viewport.current?.contains(document.activeElement))return null;
   // Preview gestures are virtual; only this player's token may move.
   if(previewRequested&&!dmPreview)return null;
+  // Player-effective DM preview is virtual and never writes a live
+  // token. Real editor locking still blocks all non-preview movement.
   if(!active||activeMeasure||
-   environmentEditor?.enabled&&environmentEditor.lockTokens!==false)
+   !dmPreview&&environmentEditor?.enabled&&
+    environmentEditor.lockTokens!==false)
    return null;
   const hit=keyboard?null:pointerPieceAt(event,point);
   const kind=hit?.kind,id=hit?.id;
