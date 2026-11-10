@@ -39,7 +39,11 @@ test('R04 does not import PR71 unsafe unbounded sight retention',()=>{
  assert.doesNotMatch(runtime,/mayRetainCertifiedSightOnObserverRecovery/);
  assert.doesNotMatch(runtime,/retainingObserverSight/);
  assert.match(runtime,/onRevoke:reason=>\{\s*connected=false;privateReady=false;\s*renderer\.revoke\(reason,false\)/);
- assert.match(runtime,/!dmPreview&&\(!privateReady\|\|!stream\?\.connected\|\|stream\?\.locked\)/);
+ // There is no soft sight hold: the renderer is revoked as soon as the
+ // observer loses authorization, so the original gesture guard is sufficient.
+ // Never gate otherwise-authorized DM input merely on a delayed subscription.
+ assert.match(runtime,/if\(!authorized\(\)\)\{/);
+ assert.doesNotMatch(runtime,/!dmPreview&&\(!privateReady\|\|!stream\?\.connected\|\|stream\?\.locked\)/);
  assert.match(runtime,/movement\.cancelGesture\('disconnected'\)/);
  assert.match(runtime,/worldV2Trace\.event\('input\.pick','runtime-inactive'\)/);
 });
