@@ -48,7 +48,7 @@ BEGIN
   RAISE EXCEPTION 'R04 B03 authority not wired';END IF;
  IF NOT (SELECT pg_get_functiondef(
  'forge_world_v2.drain_committed_observers_b08(uuid,timestamptz)'::regprocedure)
- LIKE '%Retain only%') THEN
+ LIKE '%jsonb_agg%') THEN
   RAISE EXCEPTION 'R04 B08 private terminal retirement not installed';END IF;
  IF (SELECT pg_get_functiondef(
  'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)'::regprocedure)
