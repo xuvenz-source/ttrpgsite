@@ -11,11 +11,14 @@
  * remove sprites and conceal the fog canvas. Interpolation is restricted to
  * bounded server-approved adjacent waypoints (ObserverPathBuffer).
  */
+import {worldV2Trace} from './WorldTrace.js';
 import {createWorldFrameScheduler} from './WorldFrameScheduler.js';
 import {createObserverPathBuffer} from './ObserverPathBuffer.js';
+import {createApprovedPathPresentation} from './ApprovedPathPresentation.js';
 import {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
  from './SceneSnapshot.js';
-import {normalizeWorldVisibilityFrame,makeWorldFogMask}
+import {normalizeWorldVisibilityFrame,makeWorldFogMask,
+ diffWorldFogMasks,diffWorldVisiblePieces,sameWorldFogCells}
  from './VisibilityFrame.js';
 import {paintWorldFogLayer,paintWorldStaticLayer,
  paintWorldMovingLightLayer}
@@ -79,23 +82,26 @@ export function createWorldRenderer({
  let authorized=false,disposed=false,local=null;
  let lastSightRejection=null;
  let staticPending=null,fogPending=false,terrainUrl=null;
+ let pendingFogDirty=null;
  let latestSeq=0,seqItems=new Set(),lastSceneRevision=null;
  let stats={frames:0,spritePaints:0,spriteCreates:0,spriteRemoves:0,
   fogPaintedCells:0,fogDraws:0,staticDraws:0,terrainAssignments:0,
   rejectedPackets:0,fullFogDraws:0,
+  fogMaskReuses:0,rosterReconciliations:0,
    movingLightDraws:0,movingLightCells:0};
  const safe=(fn,...args)=>{try{fn(...args)}catch{}};
  const present=p=>validMotionPoint(p)&&
   p.x<(scene?.dimensions.width??0)/(scene?.dimensions.gridSize??1)&&
   p.y<(scene?.dimensions.height??0)/(scene?.dimensions.gridSize??1);
- function masked(p,spanX=1,spanY=1){
-  if(!visibility||!present(p))return false;
-  if(!visibility.enabled)return true;
-  // Match the server's centre-based current visibility for a footprint.
+ function maskedFor(frame,mask,p,spanX=1,spanY=1){
+  if(!frame||!present(p))return false;
+  if(!frame.enabled)return true;
   const x=Math.floor(p.x+spanX/2),y=Math.floor(p.y+spanY/2);
-  if(x<0||y<0||x>=visibility.width||y>=visibility.height)return false;
-  return fogMask?.[y*visibility.width+x]===2;
+  if(x<0||y<0||x>=frame.width||y>=frame.height)return false;
+  return mask?.[y*frame.width+x]===2;
  }
+ const masked=(p,spanX=1,spanY=1)=>
+  maskedFor(visibility,fogMask,p,spanX,spanY);
  function removeSprite(id){
   const entry=sprites.get(id);
   if(!entry)return;
@@ -105,6 +111,7 @@ export function createWorldRenderer({
   else if(entry.node?.parentNode?.removeChild)
    entry.node.parentNode.removeChild(entry.node);
   stats.spriteRemoves++;
+  worldV2Trace.event('renderer.sprite-remove');
   safe(onRemoveSprite,{kind:id.split(':')[0],id:id.split(':')[1],
    node:entry.node});
  }
@@ -131,7 +138,8 @@ export function createWorldRenderer({
    canvas:surfaces.fogCanvas,frame:null,mask:null,
    widthPx:d?.width??1,heightPx:d?.height??1
   });
-  paintedMask=null;fogPending=false;
+  worldV2Trace.event('renderer.opaque');
+  paintedMask=null;fogPending=false;pendingFogDirty=null;
    paintedLightFrame=null;lightPending=false;
    if(surfaces.movingCanvas){
     surfaces.movingCanvas.width=1;surfaces.movingCanvas.height=1;
@@ -141,6 +149,7 @@ export function createWorldRenderer({
  function seal(reason='authorization-revoked',{
   forgetScene=false,requestResync=true
  }={}){
+  worldV2Trace.event('renderer.seal',reason);
   authorized=false;visibility=null;fogMask=null;paintedMask=null;
   observer.authorizePieces([]);clearLocal();clearSprites();
   latestSeq=0;seqItems.clear();setOpaque();
@@ -182,6 +191,7 @@ export function createWorldRenderer({
   sprites.set(id,{node,x:null,y:null,visible:false,
    spanX:1,spanY:1});
   dirtySprites.add(id);stats.spriteCreates++;
+  worldV2Trace.event('renderer.sprite-create');
   return true;
  }
  function paintSprite(id){
@@ -221,7 +231,9 @@ export function createWorldRenderer({
    const d=playerPreview?{...scene,scope:'viewer',environment:null}:scene;
    const result=paintWorldStaticLayer({canvas:surfaces.staticCanvas,
     scene:d,dirty:snapshot.dirty,forceFull:snapshot.forceFull});
-   if(result.ok&&result.objects>=0)stats.staticDraws++;
+   if(result.ok&&result.objects>=0){
+    stats.staticDraws++;worldV2Trace.event('renderer.static-draw');
+   }
    else safe(onError,Error('V2 static painter failed'));
   }
   if(lightPending&&scene){
@@ -244,28 +256,40 @@ export function createWorldRenderer({
    const result=paintWorldFogLayer({
     canvas:surfaces.fogCanvas,frame:authorized?visibility:null,
     mask:authorized?fogMask:null,previousMask:paintedMask,
-    widthPx:scene.dimensions.width,heightPx:scene.dimensions.height,
-    pixelsPerCell
+     dirty:pendingFogDirty,
+     widthPx:scene.dimensions.width,heightPx:scene.dimensions.height,
+     pixelsPerCell
    });
    if(result.ok){
-    paintedMask=authorized?fogMask:null;
+     paintedMask=authorized?fogMask:null;
+     pendingFogDirty=null;
     stats.fogPaintedCells+=result.cells;
     stats.fogDraws++;
     if(result.full)stats.fullFogDraws++;
+    worldV2Trace.event(result.full?'renderer.fog-full':'renderer.fog-partial');
    }else safe(onError,Error('V2 fog painter failed'));
   }
   if(authorized){
    const advanced=observer.tick(now);
-   for(const p of advanced)dirtySprites.add(key(p));
-   for(const id of dirtySprites)paintSprite(id);
+    for(const p of advanced)dirtySprites.add(key(p));
+    if(local?.route?.pendingCount&&!local.predicted&&!local.handoff){
+     const pos=local.route.tick(now);
+     if(pos){local.display=pos;
+      for(const id of local.anchors.keys())dirtySprites.add(id)}
+    }
+    for(const id of dirtySprites)paintSprite(id);
    dirtySprites.clear();
   }else dirtySprites.clear();
-  return authorized&&observer.pendingCount>0;
+  return authorized&&(observer.pendingCount>0||
+    (local?.route?.pendingCount>0&&!local.predicted&&!local.handoff));
  }
  const scheduler=createWorldFrameScheduler({
   ...(requestFrame?{requestFrame}:{}),
   ...(cancelFrame?{cancelFrame}:{}),
-  onFrame:draw,onError
+  onFrame:frame=>{
+   const done=worldV2Trace.begin('render.frame');
+   try{return draw(frame)}finally{done('ok')}
+  },onError
  });
  function reconcileLocal(frame){
   if(!local||!local.handoff)return;
@@ -313,6 +337,7 @@ export function createWorldRenderer({
     prior.dimensions.height===next.dimensions.height&&
     prior.dimensions.gridSize===next.dimensions.gridSize;
    if(sameScene)return true;
+   worldV2Trace.event('renderer.scene-adopt',prior?'revision':'initial');
    if(prior){
     // A real publication invalidates prior sight and observer authorization.
     seal('scene-publication');
@@ -341,21 +366,34 @@ export function createWorldRenderer({
     scene.scope==='dm'&&next.scope==='viewer':
     scene.scope===next.scope);
    if(!next||!scoped||next.environmentRevision!==scene.revision||
-    next.sceneGeneration!==scene.sceneGeneration||
-    next.cursor<latestSeq){
+    next.sceneGeneration!==scene.sceneGeneration){
     lastSightRejection=!next?'invalid-frame':
      !scoped?'viewer-scope-mismatch':
      next.environmentRevision!==scene.revision?'environment-revision-mismatch':
-     next.sceneGeneration!==scene.sceneGeneration?'scene-generation-mismatch':
-     'observer-cursor-regression';
+     'scene-generation-mismatch';
     stats.rejectedPackets++;
+    worldV2Trace.event('renderer.visibility-reject',lastSightRejection);
     // A role/scope mismatch or malformed frame is a hard authorization
     // revocation: erase the cached DM scene, guide pixels and map bitmap.
-    // A same-scope older cursor still cannot revive a hidden sprite.
-    seal('invalid-or-stale-visibility',{forgetScene:!next||!scoped});
-    return false;
-   }
-   if(visibility&&(
+    // A genuine scope/scene mismatch keeps the fail-closed clear.
+     seal('invalid-or-stale-visibility',{forgetScene:!next||!scoped});
+     return false;
+    }
+    if(visibility&&next.permissionGeneration!==visibility.permissionGeneration){
+     lastSightRejection='permission-generation-changed';
+     stats.rejectedPackets++;
+     seal('permission-generation-changed',{forgetScene:true});
+     return false;
+    }
+    if(next.cursor<latestSeq){
+     // A signed RPC can trail a newer private observer path/hide.
+     // Drop ONLY same-authority late responses; never re-grant its roster.
+     lastSightRejection='observer-cursor-regression';
+     stats.rejectedPackets++;
+     worldV2Trace.event('renderer.visibility-stale');
+     return false;
+    }
+    if(visibility&&(
     next.environmentRevision<visibility.environmentRevision||
     next.sceneGeneration<visibility.sceneGeneration||
     next.permissionGeneration<visibility.permissionGeneration||
@@ -366,68 +404,78 @@ export function createWorldRenderer({
     lastSightRejection='stale-visibility-frame';
     stats.rejectedPackets++;return false;
    }
-   if(visibility&&next.permissionGeneration!==visibility.permissionGeneration){
-    // An authenticated role/assignment change may turn a DM into a
-    // regular player. Never reuse a DM-full environment after a new
-    // permission generation, even when the published revision is identical.
-    lastSightRejection='permission-generation-changed';
-    stats.rejectedPackets++;
-    seal('permission-generation-changed',{forgetScene:true});
-    return false;
-   }
-   const nextMask=makeWorldFogMask(next);
+   const previously=visibility,prevMask=fogMask;
+   const reuse=sameWorldFogCells(previously,next);
+   const nextMask=reuse?prevMask:makeWorldFogMask(next);
    if(next.enabled&&!nextMask){
     lastSightRejection='invalid-fog-mask';
     stats.rejectedPackets++;seal('invalid-fog-mask');return false;
    }
-   const previously=visibility;
-   const prevMask=fogMask;
-   const priorPositions=new Map();
-   for(const id of sprites.keys()){
+   if(reuse)stats.fogMaskReuses++;
+   const delta=diffWorldVisiblePieces(previously?.visiblePieces,next.visiblePieces);
+   // A cursor-only or fog-only snapshot must not reset in-flight paths
+   // or recreate existing nodes.
+   const rosterChanged=!previously||Boolean(
+    delta.added.length||delta.removed.length||delta.moved.length)||
+    next.visiblePieces.some(piece=>!sprites.has(key(piece)));
+   const previousPositions=new Map();
+   if(rosterChanged)for(const id of sprites.keys()){
     const [kind,pieceId]=id.split(':');
-    priorPositions.set(id,observer.getPosition(kind,pieceId));
+    previousPositions.set(id,observer.getPosition(kind,pieceId));
    }
    visibility=next;fogMask=nextMask;authorized=true;
    latestSeq=next.cursor;seqItems.clear();
-   if(!observer.reconcilePieces(next.visiblePieces)){
-    lastSightRejection='invalid-authorized-roster';
-    seal('bad-roster');return false;
-   }
-   const permitted=new Set(next.visiblePieces.map(key));
-   for(const id of [...sprites.keys()])if(!permitted.has(id))
-    removeSprite(id);
-   // Remove an in-progress drag when its selection disappears from the
-   // server-authorized roster. Never let an old local overlay reveal it.
-   if(local&&[...local.anchors.keys()].some(id=>!permitted.has(id)))
-    clearLocal();
-   for(const piece of next.visiblePieces)if(!installSprite(piece)){
-    lastSightRejection='sprite-factory-error';
-    seal('sprite-factory-error');return false;
+   if(rosterChanged){
+    stats.rosterReconciliations++;
+    if(!observer.reconcilePieces(next.visiblePieces)){
+     lastSightRejection='invalid-authorized-roster';
+     seal('bad-roster');return false;
+    }
+    const permitted=new Set(next.visiblePieces.map(key));
+    for(const id of [...sprites.keys()])if(!permitted.has(id))
+     removeSprite(id);
+    if(local&&[...local.anchors.keys()].some(id=>!permitted.has(id)))
+     clearLocal();
+    for(const piece of next.visiblePieces)if(!installSprite(piece)){
+     lastSightRejection='sprite-factory-error';
+     seal('sprite-factory-error');return false;
+    }
    }
    reconcileLocal(next);
-   const maskChanged=Boolean(prevMask)!==Boolean(nextMask)||
-    Boolean(prevMask&&nextMask&&(
-     prevMask.length!==nextMask.length||
-     prevMask.some((value,i)=>value!==nextMask[i])));
-   if(!previously||maskChanged)fogPending=true;
-    const changedPlayerLights=(previously?.lightCells?.length??-1)!==
-     next.lightCells.length||next.lightCells.some((entry,i)=>
-      entry[0]!==previously.lightCells[i]?.[0]||
-      entry[1]!==previously.lightCells[i]?.[1]);
-    const changedDmLights=(previously?.dmMovingLights?.length??-1)!==
-     next.dmMovingLights.length||next.dmMovingLights.some((entry,i)=>
-      entry.x!==previously.dmMovingLights[i]?.x||
-      entry.y!==previously.dmMovingLights[i]?.y||
-      entry.reach!==previously.dmMovingLights[i]?.reach);
-    if(changedPlayerLights||changedDmLights)lightPending=true;
-   // Compare old and newly authorized cosmetic positions. Cursor-only
-   // advances update stream authorization without painting 500 idle sprites.
-   for(const piece of next.visiblePieces){
-    const id=key(piece);
-    if(maskChanged||!previously||!priorPositions.has(id)||
-     !same(priorPositions.get(id),
-      observer.getPosition(piece.kind,piece.id)))
-     dirtySprites.add(id);
+   // Compare the latest validated mask against the last PAINTED mask.
+   // Multiple sight RPCs coalesce to one dirty pass on the next RAF.
+   if(next.enabled){
+    pendingFogDirty=paintedMask===nextMask?
+     {full:false,rects:[]}:
+     diffWorldFogMasks(paintedMask,nextMask,next.width,next.height);
+    fogPending=pendingFogDirty.full||pendingFogDirty.rects.length>0;
+   }else{
+    pendingFogDirty=null;
+    if(!previously||previously.enabled)fogPending=true;
+   }
+   const changedPlayerLights=(previously?.lightCells?.length??-1)!==
+    next.lightCells.length||next.lightCells.some((entry,i)=>
+     entry[0]!==previously.lightCells[i]?.[0]||
+     entry[1]!==previously.lightCells[i]?.[1]);
+   const changedDmLights=(previously?.dmMovingLights?.length??-1)!==
+    next.dmMovingLights.length||next.dmMovingLights.some((entry,i)=>
+     entry.x!==previously.dmMovingLights[i]?.x||
+     entry.y!==previously.dmMovingLights[i]?.y||
+     entry.reach!==previously.dmMovingLights[i]?.reach);
+   if(changedPlayerLights||changedDmLights)lightPending=true;
+   // Redraw only affected visible/hidden sprite footprints; a moving
+   // player's fog does not repaint all 500 unrelated sprites.
+   if(rosterChanged||!reuse)for(const piece of next.visiblePieces){
+    const id=key(piece),sprite=sprites.get(id);
+    if(!sprite)continue;
+    const current=observer.getPosition(piece.kind,piece.id);
+    const before=rosterChanged?previousPositions.get(id):current;
+    const moved=!before||!same(before,current);
+    const beforeVisible=maskedFor(previously,prevMask,before,
+     sprite.spanX,sprite.spanY);
+    const nowVisible=maskedFor(next,nextMask,current,
+     sprite.spanX,sprite.spanY);
+    if(!previously||moved||beforeVisible!==nowVisible)dirtySprites.add(id);
    }
    if(fogPending||lightPending||dirtySprites.size||staticPending)
     scheduler.invalidate();
@@ -516,7 +564,9 @@ export function createWorldRenderer({
     }
     local={gestureId:event.gestureId,origin:copyPoint(event.approved),
      approved:copyPoint(event.approved),display:copyPoint(event.approved),
-     predicted:false,handoff:false,anchors};
+     predicted:false,handoff:false,anchors,
+      route:createApprovedPathPresentation()};
+     local.route.reset(event.approved);
     for(const id of anchors.keys()){
      const node=sprites.get(id).node;
      node.style.outline='2px solid rgba(145,211,255,0.95)';
@@ -531,17 +581,40 @@ export function createWorldRenderer({
     if(event.predicted!==true||!validMotionPoint(event.presented))
      return false;
     local.display=copyPoint(event.presented);local.predicted=true;
-   }else if(event.type==='approved'||event.type==='blocked'){
-    if(!validMotionPoint(event.approved))return false;
-    local.approved=copyPoint(event.approved);
-    if(event.type==='blocked'||!local.predicted){
-     local.display=copyPoint(event.approved);local.predicted=false;
-    }else if(same(local.display,local.approved))local.predicted=false;
+     local.route.reset(event.presented);
+    }else if(event.type==='approved'||event.type==='blocked'){
+     if(!validMotionPoint(event.approved))return false;
+     const before=copyPoint(local.approved);
+     local.approved=copyPoint(event.approved);
+     if(event.type==='blocked'){
+      local.predicted=false;local.display=copyPoint(local.approved);
+      local.route.reset(local.approved);
+     }else if(local.predicted){
+      const dx=local.display.x-local.origin.x,dy=local.display.y-local.origin.y;
+      const distance=dx*dx+dy*dy;
+      const progress=(local.approved.x-local.origin.x)*dx+
+       (local.approved.y-local.origin.y)*dy;
+      if(distance<=1e-9||progress>=distance-1e-7){
+       local.predicted=false;local.display=copyPoint(local.approved);
+       local.route.reset(local.approved);
+      }
+     }else{
+      const accepted=event.accepted;
+      const valid=Array.isArray(accepted)&&event.from&&
+       same(event.from,before)&&
+       local.route.accept(before,accepted)&&
+       same(local.route.endpoint,local.approved);
+      if(!valid){
+       local.display=copyPoint(local.approved);
+       local.route.reset(local.approved);
+      }
+     }
    }else if(event.type==='committed'){
     if(!validMotionPoint(event.approved))return false;
     local.approved=copyPoint(event.approved);
     local.display=copyPoint(event.approved);
     local.predicted=false;local.handoff=true;
+     local.route.reset(local.approved);
     // Phase 9 MUST fetch an authorized canonical roster after commit.
     safe(onNeedResync,'canonical-commit');
    }else if(event.type==='cancelled'||event.type==='rejected'){
@@ -552,10 +625,13 @@ export function createWorldRenderer({
    }
    // sampled and released retain their last known-authorized presentation.
    for(const id of local?.anchors.keys()??[])dirtySprites.add(id);
-   scheduler.invalidate();return true;
-  },
-  /**
-   * Phase 9 supplies dimensions only from RLS-authorized token/tool rows
+   if(local?.route?.pendingCount&&!local.predicted&&!local.handoff)
+     scheduler.wake();
+    else scheduler.invalidate();
+    return true;
+   },
+   /**
+    * Phase 9 supplies dimensions only from RLS-authorized token/tool rows
    * AFTER Phase 7 grants the piece ID. Metadata never creates a sprite,
    * reveals fog, changes movement physics or remounts a token.
    */
@@ -585,7 +661,8 @@ export function createWorldRenderer({
    else if(typeof surfaces.terrain.removeAttribute==='function')
     surfaces.terrain.removeAttribute('src');
    else surfaces.terrain.src='';
-   stats.terrainAssignments++;return true;
+   stats.terrainAssignments++;
+   worldV2Trace.event('renderer.terrain-assign');return true;
   },
   /** Camera is CSS-only, independent of canvas or sprite recalculation. */
   setCamera({x=0,y=0,zoom=1}={}){

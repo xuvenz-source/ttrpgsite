@@ -112,7 +112,7 @@ test('V2 app routes preview arrows before legacy simulated shortcut and no V2 th
  const board=readFileSync(new URL('../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
  assert.match(app,/if\(WORLD_V2_CUTOVER\)v2StepHandler\.current\?\.\(delta\[0\],delta\[1\]\);\s*else if\(simulated\)/);
  assert.match(app,/if\(!WORLD_V2_CUTOVER&&\s*e\.repeat/);
- assert.match(board,/pickAuthorizedWorldPiece\(/);
+ assert.match(board,/pickWorldPointerTarget\(/);
  assert.match(board,/createWorldKeyboardStepper\(/);
  assert.match(board,/selection:\[\{kind:'token',id:actor\.id\}\],mode:'preview'/);
  assert.match(board,/onSelect=\{selectVisiblePiece\}/);

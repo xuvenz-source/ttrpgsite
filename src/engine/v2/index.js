@@ -1,4 +1,4 @@
-/** V2 Phase 2 public interfaces; no legacy imports or live activation. */
+/** World Engine V2 exports. No legacy movement/fog imports. */
 export {createMovementController} from './MovementController.js';
 export {createInputController} from './InputController.js';
 export {gridPoint,appendGestureBend,takeGestureBatch,expandGestureRoute,

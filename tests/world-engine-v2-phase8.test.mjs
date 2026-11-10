@@ -304,7 +304,9 @@ test('hide immediately removes known sprite and old cursor cannot revive it',()=
  assert.equal(original.parentNode,null);
  assert.equal(ctx.renderer.adoptVisibility(sight({
   cursor:5,visiblePieces:[hero]})),false);
- assert.equal(ctx.renderer.authorized,false);
+ assert.equal(ctx.renderer.authorized,true,
+  'same-authority stale sight does not undo an authorized hide');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),null);
  assert.equal(ctx.renderer.adoptVisibility(sight({
   cursor:6,visionEpoch:7,visiblePieces:[]})),true);
  assert.equal(ctx.renderer.stats.sprites,0);ctx.renderer.dispose();
@@ -664,5 +666,261 @@ test('unconfigured fogless maps boot renderer with server-authorized roster, not
   published:false,collisionEnabled:true,fogEnabled:false,
   environment:null
  })),false,'unpublished collision-protected map must remain blocked');
+ ctx.renderer.dispose();
+});
+
+test('100 late same-authority sight frames never blacken or remount',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ const before=ctx.renderer.stats,oldFog=ctx.surfaces.fogCanvas.style.backgroundColor;
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ for(let i=0;i<100;i++){
+  const cursor=6+i;
+  assert.equal(ctx.renderer.adoptVisibility(sight({
+   cursor,visionEpoch:7+i,visiblePieces:[hero]
+  })),true);
+  assert.equal(ctx.renderer.adoptVisibility(sight({
+   cursor:cursor-1,visionEpoch:7+i,visiblePieces:[hero,ally]
+  })),false);
+  assert.equal(ctx.renderer.authorized,true);
+  assert.equal(ctx.renderer.getSpriteElement('token',ally.id),null);
+ }
+ ctx.clock.flush(1001);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.stats.spriteCreates,1);
+ assert.equal(ctx.renderer.stats.spriteRemoves,0);
+ assert.equal(ctx.renderer.stats.staticDraws,before.staticDraws);
+ assert.equal(ctx.renderer.stats.fogDraws,before.fogDraws);
+ assert.equal(ctx.renderer.stats.fullFogDraws,before.fullFogDraws);
+ assert.equal(ctx.renderer.stats.terrainAssignments,1);
+ assert.equal(ctx.surfaces.fogCanvas.style.backgroundColor,oldFog);
+ ctx.renderer.dispose();
+});
+test('late sight after private motion retains authorized sprite and fog',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ const before=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2]]),{
+  mapId,seq:6}),true);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:5,visionEpoch:7,visiblePieces:[hero,ally]
+ })),false);
+ assert.equal(ctx.renderer.lastSightRejection,'observer-cursor-regression');
+ assert.equal(ctx.renderer.authorized,true);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.getSpriteElement('token',ally.id),null);
+ assert.equal(ctx.renderer.stats.spriteRemoves,before.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,before.fullFogDraws);
+ assert.equal(ctx.renderer.stats.staticDraws,before.staticDraws);
+ assert.equal(ctx.renderer.stats.terrainAssignments,1);
+ ctx.renderer.dispose();
+});
+
+test('Phase 4 multi-tile local ACK follows approved corners, not a teleport',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.applyLocalMovement(motion('grabbed',{x:2,y:2}));
+ const baseline=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyLocalMovement(motion('approved',{x:4,y:4},{
+  blocked:false,from:{x:2,y:2},
+  accepted:[{x:3,y:2},{x:4,y:2},{x:4,y:3},{x:4,y:4}]
+ })),true);
+ ctx.clock.flush(1020);
+ ctx.clock.flush(1050);
+ const first=position(node).split(' ').map(parseFloat);
+ assert.ok(first[0]>200&&first[0]<400);
+ assert.equal(first[1],200,'local motion must follow authorized first leg');
+ ctx.clock.run(1080,30);
+ assert.equal(position(node),'400px 400px');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.stats.spriteCreates,baseline.spriteCreates);
+ assert.equal(ctx.renderer.stats.spriteRemoves,baseline.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fogDraws,baseline.fogDraws);
+ assert.equal(ctx.renderer.stats.staticDraws,baseline.staticDraws);
+ assert.equal(ctx.clock.queued,0);
+ ctx.renderer.dispose();
+});
+
+test('Phase 4 prediction is held for older ACK and released when authority passes it',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.applyLocalMovement(motion('grabbed',{x:2,y:2}));
+ ctx.renderer.applyLocalMovement(motion('presented',{x:3.7,y:2},{
+  approved:{x:2,y:2},predicted:true
+ }));
+ ctx.clock.flush(1016);
+ ctx.renderer.applyLocalMovement(motion('approved',{x:3,y:2}));
+ ctx.clock.flush(1032);
+ assert.ok(parseFloat(position(node))>369);
+ ctx.renderer.applyLocalMovement(motion('approved',{x:4,y:2}));
+ ctx.clock.flush(1048);
+ assert.equal(position(node),'400px 200px',
+  'authority reaching/passing the pointer must release stale prediction');
+ ctx.renderer.applyLocalMovement(motion('blocked',{x:4,y:2},{blocked:true}));
+ ctx.clock.flush(1064);
+ assert.equal(position(node),'400px 200px');
+ ctx.renderer.dispose();
+});
+
+test('Phase 4 remote burst never jumps more than 2.5 authorized cells per RAF',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ // Twenty-four server-approved cells remain within the 10x10 visible
+ // mask, with bends so a direct chord would cut across unapproved cells.
+ const route=[[2,2]];
+ for(let x=3;x<=8;x++)route.push([x,2]);
+ route.push([8,3]);
+ for(let x=7;x>=2;x--)route.push([x,3]);
+ route.push([2,4]);
+ for(let x=3;x<=8;x++)route.push([x,4]);
+ route.push([8,5]);
+ for(let x=7;x>=5;x--)route.push([x,5]);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,route),{mapId,seq:6}),true);
+ ctx.clock.flush(1000);ctx.clock.flush(1120);
+ const x=parseFloat(position(ctx.renderer.getSpriteElement('token',hero.id)));
+ assert.ok(x>200&&x<=450.001,'bounded visual catchup, no 24-cell jump');
+ assert.equal(ctx.renderer.stats.spriteCreates,1);
+ ctx.renderer.dispose();
+});
+
+test('Phase 5 100 token-vision revisions repaint only local fog and no unrelated sprite',()=>{
+ const ctx=make();activate(ctx);
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ const token=ctx.renderer.getSpriteElement('token',hero.id);
+ const original=ctx.renderer.stats;
+ for(let i=0;i<100;i++){
+  const visible=i%2?allCells:allCells.filter(v=>v!==99);
+  assert.equal(ctx.renderer.adoptVisibility(sight({
+   cursor:6+i,visionEpoch:7+i,visible
+  })),true);
+  ctx.clock.flush(1020+i*16);
+  assert.equal(ctx.renderer.authorized,true);
+  assert.equal(ctx.renderer.getSpriteElement('token',hero.id),token);
+ }
+ const after=ctx.renderer.stats;
+ assert.equal(after.fullFogDraws,original.fullFogDraws);
+ assert.equal(after.staticDraws,original.staticDraws);
+ assert.equal(after.spriteCreates,original.spriteCreates);
+ assert.equal(after.spriteRemoves,original.spriteRemoves);
+ assert.equal(after.spritePaints,original.spritePaints);
+ assert.equal(after.rosterReconciliations,original.rosterReconciliations);
+ assert.equal(after.terrainAssignments,1);
+ assert.ok(after.fogPaintedCells-original.fogPaintedCells<=400,
+  'single changed corner and feather may repaint at most 4 cells per update');
+ ctx.renderer.dispose();
+});
+test('Phase 5 same roster may still hide and reveal a token only from certified fog',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ assert.equal(node.style.visibility,'visible');
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:6,visionEpoch:7,visiblePieces:[hero],
+  visible:allCells.filter(x=>x!==22)
+ })),true);
+ ctx.clock.flush(1030);
+ assert.equal(node.style.visibility,'hidden',
+  'hidden centre must remain concealed even with unchanged roster');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:7,visionEpoch:8,visiblePieces:[hero]
+ })),true);
+ ctx.clock.flush(1060);
+ assert.equal(node.style.visibility,'visible');
+ assert.equal(ctx.renderer.stats.spriteCreates,1);
+ assert.equal(ctx.renderer.stats.spriteRemoves,0);
+ assert.equal(ctx.renderer.stats.staticDraws,1);
+ ctx.renderer.dispose();
+});
+test('Phase 5 multiple fog updates coalesce before RAF without stale pixels',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const before=ctx.renderer.stats,requested=ctx.clock.requests;
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:6,visionEpoch:7,visiblePieces:[hero],
+  visible:allCells.filter(x=>x!==99)
+ })),true);
+ assert.equal(ctx.clock.queued,1);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:7,visionEpoch:8,visiblePieces:[hero]
+ })),true);
+ ctx.clock.flush(1040);
+ assert.equal(ctx.renderer.stats.fogDraws,before.fogDraws,
+  'only the net difference from the already painted raster matters');
+ assert.equal(ctx.renderer.stats.spritePaints,before.spritePaints);
+ assert.equal(ctx.clock.queued,0);
+ assert.equal(ctx.clock.requests,requested+1);
+ ctx.renderer.dispose();
+});
+test('Phase 5 cursor-only and fog-only sight avoid observer roster reconciling',()=>{
+ const ctx=make();activate(ctx);
+ const base=ctx.renderer.stats;
+ for(let i=0;i<100;i++){
+  assert.equal(ctx.renderer.adoptVisibility(sight({
+   cursor:6+i,visionEpoch:7+i
+  })),true);
+ }
+ assert.equal(ctx.renderer.stats.rosterReconciliations,base.rosterReconciliations);
+ assert.equal(ctx.renderer.stats.fogMaskReuses-base.fogMaskReuses,100);
+ assert.equal(ctx.clock.queued,0);
+ ctx.renderer.dispose();
+});
+test('Phase 5 dirty rectangles are bounded and cannot leave older bright pixels',()=>{
+ const a=normalizeWorldVisibilityFrame(sight({
+  visible:[22],explored:[22],visiblePieces:[]
+ }),mapId,viewerId);
+ const b=normalizeWorldVisibilityFrame(sight({
+  visible:[],explored:[22],visiblePieces:[]
+ }),mapId,viewerId);
+ const canvas=fakeCanvas(),oldMask=makeWorldFogMask(a),mask=makeWorldFogMask(b);
+ assert.equal(paintWorldFogLayer({canvas,frame:a,mask:oldMask,
+  widthPx:1000,heightPx:1000}).full,true);
+ const start=canvas.calls.length;
+ const diff={full:false,rects:[{x:2,y:2,width:1,height:1}]};
+ const result=paintWorldFogLayer({canvas,frame:b,mask,
+  previousMask:oldMask,dirty:diff,widthPx:1000,heightPx:1000});
+ assert.equal(result.cells,9);
+ assert.equal(result.full,false);
+ assert.ok(!canvas.calls.slice(start).some(call=>call[0]==='clear'&&
+  call[1]===0&&call[2]===0),'unrelated pixels remain cached');
+ const bad=paintWorldFogLayer({canvas,frame:b,mask,
+  previousMask:oldMask,dirty:{full:false,rects:[{x:-1,y:0,width:1,height:1}]},
+  widthPx:1000,heightPx:1000});
+ assert.equal(bad.full,true,'invalid dirty metadata must repaint all known mask');
+ assert.equal(bad.cells,100);
+ assert.equal(canvas.style.backgroundColor,'transparent');
+});
+
+test('Phase 5 500-sprite fog change paints only affected authorized piece',()=>{
+ const ctx=make();
+ const rows=Array.from({length:500},(_,i)=>({
+  kind:'token',id:'40000000-0000-4000-8000-'+String(i).padStart(12,'0'),
+  x:i===0?8:1,y:i===0?8:1
+ }));
+ assert.equal(ctx.renderer.adoptScene(scene()),true);
+ assert.equal(ctx.renderer.adoptVisibility(sight({visiblePieces:rows})),true);
+ ctx.clock.flush(1000);
+ ctx.renderer.setTerrainSource('https://example.test/map.png');
+ const watched=ctx.renderer.getSpriteElement('token',rows[0].id);
+ const unaffected=ctx.renderer.getSpriteElement('token',rows[1].id);
+ const before=ctx.renderer.stats;
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:6,visionEpoch:7,visiblePieces:rows,
+  visible:allCells.filter(cell=>cell!==88)
+ })),true);
+ ctx.clock.flush(1040);
+ const after=ctx.renderer.stats;
+ assert.equal(watched.style.visibility,'hidden',
+  'server-concealed cell must hide the affected token immediately at RAF');
+ assert.equal(unaffected.style.visibility,'visible');
+ assert.equal(ctx.renderer.getSpriteElement('token',rows[0].id),watched);
+ assert.equal(ctx.renderer.getSpriteElement('token',rows[1].id),unaffected);
+ assert.equal(after.spritePaints-before.spritePaints,1,
+  '499 unchanged sprites must never repaint on a distant fog change');
+ assert.equal(after.rosterReconciliations,before.rosterReconciliations);
+ assert.equal(after.spriteCreates,500);
+ assert.equal(after.spriteRemoves,0);
+ assert.equal(after.fullFogDraws,before.fullFogDraws);
+ assert.equal(after.staticDraws,before.staticDraws);
+ assert.equal(after.terrainAssignments,1);
+ assert.ok(after.fogPaintedCells-before.fogPaintedCells<=9);
  ctx.renderer.dispose();
 });

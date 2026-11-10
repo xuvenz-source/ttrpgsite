@@ -6,9 +6,10 @@
  * renderer receives only dirty masks and keyed sprite differences; no React
  * tree remount, fog canvas rebuild or independent frame timers.
  */
+import {worldV2Trace} from './WorldTrace.js';
 import {
- normalizeWorldVisibilityFrame,makeWorldFogMask,
- diffWorldFogMasks,diffWorldVisiblePieces
+  normalizeWorldVisibilityFrame,makeWorldFogMask,
+ diffWorldFogMasks,diffWorldVisiblePieces,sameWorldFogCells
 } from './VisibilityFrame.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -31,6 +32,7 @@ export function createVisibilityController({
  let current=null,mask=null,inFlight=null,queued=false,authorized=false;
  const safe=(fn,...args)=>{try{fn(...args)}catch{}};
  function revoke(reason='revoked'){
+  worldV2Trace.event('visibility.revoke',reason);
   epoch++;current=null;mask=null;authorized=false;queued=false;
   safe(onRevoke,{mapId:currentMap,viewerId:currentViewer,reason});
  }
@@ -50,22 +52,34 @@ export function createVisibilityController({
   if(disposed||epoch!==requestEpoch)return null;
   const next=normalizeWorldVisibilityFrame(raw,currentMap,currentViewer);
   if(!next||!validateScene(next))throw Error('Invalid V2 authorized sight');
+  // A delayed, valid RPC within the SAME scope/permission/scene cannot
+  // replace newer server-authorized sight. Keep existing sprites/masks.
+  const sameAuthority=current&&next.scope===current.scope&&
+   next.environmentRevision===current.environmentRevision&&
+   next.sceneGeneration===current.sceneGeneration&&
+   next.permissionGeneration===current.permissionGeneration;
+  if(sameAuthority&&(
+   next.visionEpoch<current.visionEpoch||next.cursor<current.cursor
+  )){
+   worldV2Trace.event('visibility.stale-snapshot');
+   return null;
+  }
   if(current&&(
    next.sceneGeneration<current.sceneGeneration||
    next.environmentRevision<current.environmentRevision||
-   next.permissionGeneration<current.permissionGeneration||
-   (next.sceneGeneration===current.sceneGeneration&&
-    next.environmentRevision===current.environmentRevision&&
-    next.permissionGeneration===current.permissionGeneration&&
-    next.visionEpoch<current.visionEpoch)||
-   next.cursor<current.cursor
+   next.permissionGeneration<current.permissionGeneration
   ))throw Error('Stale V2 authorized sight');
-  const nextMask=makeWorldFogMask(next);
-  const changes=diffWorldFogMasks(mask,nextMask,next.width,next.height);
+  const nextMask=sameWorldFogCells(current,next)?mask:makeWorldFogMask(next);
+   // A fog-disabled large map has no raster. A new cursor is not a
+   // reason to report a full blackout/redraw every movement packet.
+   const changes=!next.enabled?
+    {full:!current||current.enabled!==next.enabled,rects:[]}:
+    diffWorldFogMasks(mask,nextMask,next.width,next.height);
   const pieces=diffWorldVisiblePieces(current?.visiblePieces,next.visiblePieces);
   const shouldUpdateFog=changes.full||changes.rects.length>0;
   const shouldUpdateRoster=pieces.added.length||pieces.removed.length||
    pieces.moved.length;
+  const priorFrame=current,priorMask=mask,priorAuthorized=authorized;
   current=next;mask=nextMask;authorized=true;
   // Phase 8's single presentation owner needs EVERY accepted cursor,
   // including snapshots with no fog/roster delta. It may update its stream
@@ -73,8 +87,16 @@ export function createVisibilityController({
   // A presentation rejection is not an authorized sight. Propagate it
   // into the existing fail-closed refresh handler instead of reporting
   // a successful frame that the renderer never accepted.
-  if(onSnapshot(next)===false)
+  const decision=onSnapshot(next);
+  if(decision==='stale'){
+   current=priorFrame;mask=priorMask;authorized=priorAuthorized;
+   worldV2Trace.event('visibility.stale-snapshot');
+   return null;
+  }
+  if(decision===false)
    throw Error('V2 renderer rejected authorized sight');
+  worldV2Trace.event('visibility.snapshot',
+   changes.full?'full':changes.rects.length?'partial':'none');
   if(shouldUpdateFog)safe(onFog,{
    frame:next,mask:nextMask,dirty:changes
   });
@@ -98,12 +120,17 @@ export function createVisibilityController({
   }:{
    name:'get_world_visibility_v2',params:{p_map:currentMap}
   };
-  const {data,error}=await db.rpc(args.name,args.params);
+  const done=worldV2Trace.begin('visibility.rpc');
+  let result='error',data,error;
+  try{({data,error}=await db.rpc(args.name,args.params));
+   if(!error&&data)result='ok';
+  }finally{done(result)}
   if(error||!data)throw Error('V2 viewer sight unavailable');
   return data;
  }
  function refresh(reason='manual'){
   if(disposed)return Promise.resolve(null);
+  worldV2Trace.event('visibility.refresh',reason);
   if(inFlight){
    queued=true;
    const pending=inFlight;
@@ -116,6 +143,7 @@ export function createVisibilityController({
    adopt(raw,requestEpoch)
   ).catch(error=>{
    if(!disposed&&epoch===requestEpoch){
+    worldV2Trace.event('visibility.reject');
     revoke('invalid-snapshot');safe(onError,error);
    }
    return null;
@@ -145,7 +173,24 @@ export function createVisibilityController({
      'version','mapId','viewerId','visionEpoch',
      'environmentRevision','permissionGeneration','sceneGeneration'
     ].includes(k))){
-    if(!disposed)revoke('invalid-vision-notice');
+    if(!disposed){
+     worldV2Trace.event('visibility.notice','invalid-vision-notice');
+     revoke('invalid-vision-notice');
+    }
+    return false;
+   }
+   // Older private dirty notices cannot invalidate newer authorized sight.
+   // Incomparable or newer permission/scene generations still fail closed.
+   if(current&&
+    notice.environmentRevision<=current.environmentRevision&&
+    notice.permissionGeneration<=current.permissionGeneration&&
+    notice.sceneGeneration<=current.sceneGeneration&&
+    notice.visionEpoch<=current.visionEpoch&&(
+     notice.environmentRevision<current.environmentRevision||
+     notice.permissionGeneration<current.permissionGeneration||
+     notice.sceneGeneration<current.sceneGeneration
+    )){
+    worldV2Trace.event('visibility.notice','stale');
     return false;
    }
    if(current&&(
@@ -153,6 +198,7 @@ export function createVisibilityController({
     notice.permissionGeneration!==current.permissionGeneration||
     notice.sceneGeneration!==current.sceneGeneration
    )){
+    worldV2Trace.event('visibility.notice','vision-version-change');
     revoke('vision-version-change');
     void refresh('vision-version-change');return true;
    }
@@ -167,9 +213,14 @@ export function createVisibilityController({
    * authorized snapshot returns cursor + visible roster in one RPC.
    */
   async observerSnapshot(){
-   const frame=await refresh('observer-resync');
-   if(!frame)throw Error('No authorized V2 observer sight');
-   return frame;
+   // Never unlock the stream from an ignored response. Bounded retry
+   // addresses sight RPCs that raced already-accepted private motion.
+   for(let attempt=0;attempt<3;attempt++){
+    const frame=await refresh('observer-resync');
+    if(frame)return frame;
+    if(!authorized)break;
+   }
+   throw Error('No authorized V2 observer sight');
   },
   changeContext({mapId:nextMap,viewerId:nextViewer}={}){
    if(disposed||!validId(nextMap)||!validId(nextViewer))return false;

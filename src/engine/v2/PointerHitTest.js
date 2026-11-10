@@ -38,3 +38,50 @@ export function pickAuthorizedWorldPiece({
  }
  return null;
 }
+
+// A DOM hit is only a candidate. Viewer roster and token/tool ownership are
+// still required, even if a stale or forged node claims a token ID.
+const BLOCKED='[role="dialog"],[role="textbox"],[contenteditable="true"],'+
+ '.token-resize-handle,.map-env-editing,.map-env-marker,.map-handout-pin,'+
+ '.map-handout-placement,.map-handout-bubble,.map-measure-tool,'+
+ '.map-object-quick-adjust,input,select,textarea,a';
+export function isWorldPointerTargetBlocked(target){
+ if(typeof target?.closest!=='function')return false;
+ if(target.closest(BLOCKED))return true;
+ const button=target.closest('button');
+ return Boolean(button&&!button.matches?.('.campaign-tool-map-token'));
+}
+export function pickWorldPointerTarget({
+ event,point,visiblePieces=[],tokens=[],toolPlacements=[],toolIssued=[],
+ user,isDM=false,mapId
+}={}){
+ const target=event?.target;
+ if(isWorldPointerTargetBlocked(target))return null;
+ const direct=target?.closest?.('[data-world-kind][data-world-id]');
+ if(direct){
+  const kind=direct.dataset?.worldKind,id=direct.dataset?.worldId;
+  if(!['token','tool'].includes(kind)||!id||
+   !visiblePieces.some(p=>p.kind===kind&&p.id===id))return null;
+  if(kind==='token'){
+   const token=tokens.find(p=>p.id===id);
+   return canControlMapToken(token,user,isDM,mapId)?{kind,id}:null;
+  }
+  const placement=toolPlacements.find(p=>p.issue_id===id);
+  const issued=toolIssued.find(p=>p.id===id);
+  return placement?.map_id===mapId&&!placement.held_by_token_id&&
+   toolCanControl(issued,user,isDM)?{kind,id}:null;
+ }
+ return pickAuthorizedWorldPiece({point,visiblePieces,tokens,
+  toolPlacements,toolIssued,user,isDM,mapId});
+}
+// One policy for both pointer and keyboard gesture entry. Role, roster,
+// collision and preview actor permission are checked separately by runtime.
+export function worldMovementInputAllowed({
+ active=true,activeMeasure=null,previewRequested=false,dmPreview=false,
+ environmentEditor=null
+}={}){
+ return Boolean(active&&!activeMeasure&&
+  (!previewRequested||dmPreview)&&
+  (dmPreview||!environmentEditor?.enabled||
+   environmentEditor.lockTokens===false));
+}

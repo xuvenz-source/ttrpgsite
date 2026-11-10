@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
-  "releaseBranch": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
+  "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
+  "releaseBranch": "stage/world-v2-phase1-instrumentation-2026-11-10",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -237,10 +237,18 @@
     },
     {
       "name": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
       "linkedPullRequest": 67,
-      "note": "Replace viewport-native pointer event pipeline with scoped document capture before React; repair DM editor unlocked token layering, player-preview actor eligibility, and safe unpublished scene collision cache. Add regression tests. No SQL or deployment."
+      "note": "Replace viewport-native pointer event pipeline with scoped document capture before React; repair DM editor unlocked token layering, player-preview actor eligibility, and safe unpublished scene collision cache. Add regression tests. No SQL or deployment. Released as PR #67 production commit 14c0fa6f2daa88c4214f8bc314463db06112d3e2; live drag and player flash remain unresolved.",
+      "productionCommit": "14c0fa6f2daa88c4214f8bc314463db06112d3e2"
+    },
+    {
+      "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
+      "note": "World Engine V2 Phases 1–6 integrated in draft PR #68: bounded trace, safe same-authority sight, unified input, certified smooth motion, incremental fog, and Phase 6 multi-client/collision/preview/security stress (720 private frames, 120 previews, 1k wall checks, 25k bounded traces). No SQL/Edge changes or deploy. Authenticated post-release acceptance and advisor follow-up pending.",
+      "linkedPullRequest": 68
     }
   ],
   "features": [
@@ -995,12 +1003,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
-    "releaseBranch": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
+    "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
+    "releaseBranch": "stage/world-v2-phase1-instrumentation-2026-11-10",
     "outstandingBranches": [
-      "fix/world-v2-document-pointer-preview-unassigned-2026-11-10"
+      "stage/world-v2-phase1-instrumentation-2026-11-10"
     ],
-    "stagePolicy": "One consolidated designer-approved release after green frontend/build, isolated PostgreSQL V2 authority suites, CodeQL, and authenticated DM/player drag and preview acceptance. No SQL changes or extra Realtime streams.",
+    "stagePolicy": "All six V2 phases integrated in PR #68. Require green CI on exact head, final reconcile of other open drafts #20/#21/#32/#33 and old staging branches, and explicit designer merge/deploy approval. Authenticated DM/player/preview full React/Supabase tests, 100 live moves no blackout, fog/collision/permission/reconnect, Supabase RAM and RPC p95 remain live release acceptance gates.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },

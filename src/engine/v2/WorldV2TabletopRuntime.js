@@ -5,9 +5,9 @@
  * for a mounted campaign map. It never imports/calls any legacy movement,
  * fog, navigation or broadcast implementations.
  *
- * IMPORTANT: Phase 9 is staged behind an OFF-by-default cutover. The Phase 4–7
- * migrations must be applied together, and Phase 10 must remove the active
- * legacy subscriptions before V2 is allowed to run in production.
+ * The application activates this runtime only through its two-flag V2
+ * cutover. Scene, sight and private observer streams stay independent of
+ * the still-available but never co-mounted legacy board fallback.
  */
 import {createMovementController} from './MovementController.js';
 import {createInputController} from './InputController.js';
@@ -106,11 +106,24 @@ export function createWorldV2TabletopRuntime({
   onSnapshot:snapshot=>{
    if(disposed)return;
    if(!renderer.adoptVisibility(snapshot)){
-    // Rejection must fail the sight refresh itself, not leave a
-    // visibility controller authorized without an authorized renderer.
-    throw Error('V2 renderer rejected authorized sight: '+
-     (renderer.lastSightRejection||'unclassified'));
-   }
+     // Distinguish a proven same-authority stale cursor from actual
+     // authorization loss; do not let a lagged sight RPC clear the map.
+     const code=renderer.lastSightRejection;
+     const painted=renderer.currentVisibility;
+     const activeScene=renderer.currentScene;
+     if(renderer.authorized&&painted&&activeScene&&
+      (code==='observer-cursor-regression'||code==='stale-visibility-frame')&&
+      painted.viewerId===snapshot.viewerId&&
+      painted.scope===snapshot.scope&&
+      painted.permissionGeneration===snapshot.permissionGeneration&&
+      painted.environmentRevision===snapshot.environmentRevision&&
+      painted.sceneGeneration===snapshot.sceneGeneration&&
+      activeScene.revision===snapshot.environmentRevision&&
+      activeScene.sceneGeneration===snapshot.sceneGeneration)
+      return 'stale';
+     throw Error('V2 renderer rejected authorized sight: '+
+      (renderer.lastSightRejection||'unclassified'));
+    }
    privateReady=true;
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');

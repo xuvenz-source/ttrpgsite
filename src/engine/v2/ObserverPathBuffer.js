@@ -135,7 +135,7 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
      entry.pending.length=0;entry.pathStart=null;continue
     }
     const speed=Math.max(1/28,distanceLeft/catchupMs);
-    let advance=elapsed*speed,modified=false;
+    let advance=Math.min(elapsed*speed,2.5),modified=false;
     while(advance>1e-9&&entry.pending.length){
      const to=entry.pending[0],length=distance(entry.position,to);
      if(length<1e-9){entry.pending.shift();continue}

@@ -315,3 +315,123 @@ test('overlapping sight refresh waits for queued authorized result, not null',as
  assert.equal(count,2);
  ctl.dispose();
 });
+
+test('late same-authority sight keeps last authorized fog and roster',async()=>{
+ const {db,put}=fakeDb(),revoke=[],errors=[],rosters=[];
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onRevoke:r=>revoke.push(r.reason),onError:e=>errors.push(e),
+  onRoster:diff=>rosters.push(diff)
+ });
+ try{
+  assert.equal((await ctl.refresh()).cursor,5);
+  put(frame({cursor:8,visionEpoch:10,visiblePieces:[hero]}));
+  assert.equal((await ctl.refresh()).cursor,8);
+  const stable=ctl.frame,mask=ctl.mask;
+  put(frame({cursor:6,visionEpoch:8,visiblePieces:[hero,torch]}));
+  assert.equal(await ctl.refresh(),null);
+  assert.equal(ctl.frame,stable);assert.equal(ctl.mask,mask);
+  assert.equal(ctl.authorized,true);
+  assert.equal(ctl.visiblePieces.length,1);
+  assert.equal(rosters.length,2);
+  assert.deepEqual(revoke,[]);assert.deepEqual(errors,[]);
+ }finally{ctl.dispose()}
+});
+test('older dirty notice cannot revoke new sight; future permission still does',async()=>{
+ const {db,put}=fakeDb(),revoke=[];
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onRevoke:r=>revoke.push(r.reason)
+ });
+ try{
+  await ctl.refresh();
+  put(frame({cursor:9,visionEpoch:10,permissionGeneration:5}));
+  assert.equal(ctl.onVisionDirty({version:2,mapId,viewerId,
+   visionEpoch:10,environmentRevision:9,
+   permissionGeneration:5,sceneGeneration:6}),true);
+  await tick();await tick();
+  assert.equal(ctl.frame.permissionGeneration,5);
+  assert.equal(ctl.onVisionDirty({version:2,mapId,viewerId,
+   visionEpoch:8,environmentRevision:9,
+   permissionGeneration:4,sceneGeneration:6}),false);
+  assert.equal(ctl.authorized,true);
+  assert.equal(revoke.filter(r=>r==='vision-version-change').length,1);
+  assert.equal(ctl.onVisionDirty({version:2,mapId,viewerId,
+   visionEpoch:11,environmentRevision:9,
+   permissionGeneration:6,sceneGeneration:6}),true);
+  assert.equal(ctl.authorized,false);
+ }finally{ctl.dispose()}
+});
+test('renderer stale sentinel rolls back provisional controller state',async()=>{
+ const {db,put}=fakeDb(),revoke=[],errors=[];
+ let calls=0;
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onSnapshot:()=>++calls===1?true:'stale',
+  onRevoke:r=>revoke.push(r.reason),onError:error=>errors.push(error)
+ });
+ try{
+  await ctl.refresh();
+  const prior=ctl.frame,mask=ctl.mask;
+  put(frame({cursor:6,visionEpoch:8,visiblePieces:[]}));
+  assert.equal(await ctl.refresh(),null);
+  assert.equal(ctl.frame,prior);assert.equal(ctl.mask,mask);
+  assert.equal(ctl.authorized,true);
+  assert.deepEqual(revoke,[]);assert.deepEqual(errors,[]);
+ }finally{ctl.dispose()}
+});
+
+test('Phase 5 fragmented changes use bounded dirty tiles rather than whole-board bounding box',()=>{
+ const width=128,height=128;
+ const old=new Uint8Array(width*height),current=new Uint8Array(width*height);
+ for(let y=0;y<128;y++){
+  current[y*width]=2;
+  current[y*width+127]=1;
+ }
+ const diff=diffWorldFogMasks(old,current,width,height);
+ assert.equal(diff.full,false);
+ assert.ok(diff.rects.length>0&&diff.rects.length<=256);
+ assert.ok(diff.rects.every(rect=>rect.width<=8&&rect.height<=8));
+ const dirtyArea=diff.rects.reduce((total,r)=>total+r.width*r.height,0);
+ assert.ok(dirtyArea<width*height/4,
+  'two thin distant columns must not repaint the whole 128x128 map');
+ for(let y=0;y<128;y++)for(const x of [0,127])
+  assert.ok(diff.rects.some(r=>x>=r.x&&x<r.x+r.width&&
+   y>=r.y&&y<r.y+r.height));
+});
+test('Phase 5 large fogless map triggers onFog only at initial authorization',async()=>{
+ const base=frame({enabled:false,width:5000,height:4000,
+  visible:[],explored:[],visiblePieces:[hero]});
+ const {db,put}=fakeDb(base);
+ let fog=0,roster=0;
+ const ctl=createVisibilityController({db,mapId,viewerId,
+  onFog:()=>fog++,onRoster:()=>roster++});
+ try{
+  assert.equal((await ctl.refresh()).enabled,false);
+  for(let i=0;i<100;i++){
+   put({...base,cursor:6+i,visionEpoch:8+i});
+   assert.ok(await ctl.refresh());
+  }
+  assert.equal(fog,1,'no repeated full fog redraw on a fogless map');
+  assert.equal(roster,1);
+ }finally{ctl.dispose()}
+});
+
+test('Phase 5 fog raster reuse stops at every authorization boundary',async()=>{
+ const {sameWorldFogCells}=await import('../src/engine/v2/VisibilityFrame.js');
+ const normalized=normalizeWorldVisibilityFrame(frame(),mapId,viewerId);
+ const next=normalizeWorldVisibilityFrame(frame({
+  cursor:8,visionEpoch:10,visiblePieces:[{...hero,x:3,y:2},torch]
+ }),mapId,viewerId);
+ assert.equal(sameWorldFogCells(normalized,next),true);
+ for(const variant of [
+  {permissionGeneration:5},
+  {sceneGeneration:7},
+  {environmentRevision:10},
+  {partyShared:true},
+  {visible:[11,12,21,22,23,31]},
+  {explored:[11,12,21,22,23,31,32]},
+  {enabled:false,visible:[],explored:[]}
+ ]){
+  const different=normalizeWorldVisibilityFrame(frame(variant),mapId,viewerId);
+  assert.ok(different,'test frame should be valid');
+  assert.equal(sameWorldFogCells(normalized,different),false);
+ }
+});

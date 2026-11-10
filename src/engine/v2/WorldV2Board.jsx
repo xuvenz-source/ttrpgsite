@@ -2,7 +2,9 @@ import React,{useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} fro
 import {createPortal} from 'react-dom';
 import WorldCanvasStack from './WorldCanvasStack.jsx';
 import {createWorldV2TabletopRuntime} from './WorldV2TabletopRuntime.js';
-import {pickAuthorizedWorldPiece} from './PointerHitTest.js';
+import {pickWorldPointerTarget,worldMovementInputAllowed}
+ from './PointerHitTest.js';
+import {wasWorldPointerDownClaimed} from './WorldPointerOwnership.js';
 import {worldGestureSelection} from './GestureSelection.js';
 import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
@@ -24,7 +26,8 @@ import {TokenStatusBadges,normalizedEffects,statusTitle}
  * Props deliberately mirror BattlemapBoard so the app's sheet, DM editor,
  * tool distribution, map drop, handout and combat commands remain reachable.
  * No legacy MapFogOverlay/TokenMotionRuntime/ConcealedGestureBatch/MapCollision
- * is imported or mounted here. Active app routing remains OFF until Phase 10.
+ * is imported or mounted here. Routing uses the application's explicit
+ * two-flag V2 cutover and remains mutually exclusive with the legacy board.
  */
 // App keybindings route into V2 explicitly; never attach a second
 // hard-coded arrow handler that could race a custom shortcut.
@@ -110,7 +113,7 @@ export default function WorldV2Board(props){
   onCreateHandoutPin,onOpenHandoutPin,onMoveHandoutPin,onReadHandoutPin,
   onCollectHandoutPin,onDeleteHandoutPin,onSelectHandoutPin,
   onAddEnvironmentObject,onSelectEnvironmentObject,onPatchEnvironmentObject,
-  onDeleteEnvironmentObject,registerPreviewStep,registerV2Step,resize,
+  onDeleteEnvironmentObject,registerV2Step,resize,
   onMovementCommitted,onV2Error,remove,hotbarInset=false
  }=props;
  const viewport=useRef(null),board=useRef(null);
@@ -234,22 +237,8 @@ export default function WorldV2Board(props){
   }
  },[spriteContent,isDM,user]);
  function pointerPieceAt(event,point){
-  // Board capture precedes child widget handlers: never steal resize,
-  // map editing, measuring, or handout pointer gestures.
-  if(event?.target?.closest?.(
-   '.token-resize-handle,.map-env-editing,.map-env-marker,'+
-   '.map-handout-placement,.map-handout-pin,.map-measure-tool,'+
-   '.map-handout-bubble,[role="dialog"]'))return null;
-  const source=event?.target?.closest?.('[data-world-kind][data-world-id]');
-  if(source)return {kind:source.dataset.worldKind,id:source.dataset.worldId};
-  // Use only the server-authorized visible roster as a fallback hit test.
-  // Canvas, fog and editor overlays can otherwise intercept the native
-  // sprite target and make both click-select and drag impossible.
-  if(event?.target?.closest?.(
-   'button,a,input,select,textarea,[role="dialog"],.map-env-marker,'+
-   '.map-handout-pin,.token-resize-handle'))return null;
-  return pickAuthorizedWorldPiece({
-   point,visiblePieces:runtimeRef.current?.visibility.visiblePieces,
+  return pickWorldPointerTarget({
+   event,point,visiblePieces:runtimeRef.current?.visibility.visiblePieces??[],
    tokens:latest.current.tokens,toolPlacements:latest.current.toolPlacements,
    toolIssued:latest.current.toolIssued,user,isDM,mapId:map.id
   });
@@ -305,14 +294,10 @@ export default function WorldV2Board(props){
   if(keyboard&&typeof document!=='undefined'&&
    document.activeElement!==viewport.current&&
    !viewport.current?.contains(document.activeElement))return null;
-  // Preview gestures are virtual; only this player's token may move.
-  if(previewRequested&&!dmPreview)return null;
-  // Player-effective DM preview is virtual and never writes a live
-  // token. Real editor locking still blocks all non-preview movement.
-  if(!active||activeMeasure||
-   !dmPreview&&environmentEditor?.enabled&&
-    environmentEditor.lockTokens!==false)
-   return null;
+  // One editor/preview/measurement gate for pointer and keyboard.
+  if(!worldMovementInputAllowed({
+   active,activeMeasure,previewRequested,dmPreview,environmentEditor
+  }))return null;
   const hit=keyboard?null:pointerPieceAt(event,point);
   const kind=hit?.kind,id=hit?.id;
   if(!keyboard&&(!id||!['token','tool'].includes(kind)))return null;
@@ -546,33 +531,8 @@ export default function WorldV2Board(props){
   if(runtime?.started&&runtime.currentMap===map.id)
    void runtime.refreshVisibility('map-roster-metadata-changed');
  },[rosterMetadata,map.id]);
- useEffect(()=>{
-  if(!registerPreviewStep)return;
-  const moveVirtual=(dx,dy)=>{
-   const runtime=runtimeRef.current,token=previewToken;
-   if(!dmPreview||!runtime?.active||runtime.movement.active||
-    !token||![dx,dy].every(Number.isSafeInteger)||
-    Math.abs(dx)+Math.abs(dy)!==1)return false;
-   const current=runtime.previewPosition||
-    runtime.visibility.visiblePieces.find(p=>
-     p.kind==='token'&&p.id===token.id);
-   const frame=runtime.visibility.frame,scene=runtime.sceneManager.displayedScene;
-   if(!current||!frame||!scene)return false;
-   const origin={x:current.x,y:current.y};
-   const to={x:origin.x+dx,y:origin.y+dy};
-   if(!runtime.movement.beginGesture({
-    mapId:map.id,selection:[{kind:'token',id:token.id}],
-    origin,pointer:origin,mode:'preview',
-    environmentRevision:scene.revision,
-    permissionGeneration:frame.permissionGeneration
-   }))return false;
-   runtime.movement.updateGesture(to);
-   void runtime.movement.endGesture(to);
-   return true;
-  };
-  registerPreviewStep(moveVirtual);
-  return()=>registerPreviewStep(null);
- },[registerPreviewStep,map.id,dmPreview,previewToken?.id]);
+ // V2 preview uses only the KeyboardStepper below. The legacy preview
+ // step handler remains in BattlemapBoard and never runs under V2 cutover.
  useEffect(()=>{
   if(!registerV2Step)return;
   // The same real/preview stepper owns one held gesture, including rapid
@@ -581,7 +541,9 @@ export default function WorldV2Board(props){
    getRuntime:()=>runtimeRef.current,
    onFocus:()=>viewport.current?.focus?.({preventScroll:true}),
    makePick:runtime=>{
-    if(previewRequested&&!dmPreview)return null;
+    if(!worldMovementInputAllowed({
+     active,activeMeasure,previewRequested,dmPreview,environmentEditor
+    }))return null;
     if(dmPreview){
      const actor=latest.current.tokens.find(t=>t.id===previewToken?.id);
      const sight=runtime.visibility.frame;
@@ -649,6 +611,9 @@ export default function WorldV2Board(props){
   }
  }
  function onBoardDown(event){
+  // A document-capture V2 movement claim owns this pointerdown before
+  // React can begin a competing marquee or pan.
+  if(wasWorldPointerDownClaimed(event))return;
   if(event.button===1||
    event.pointerType==='touch'&&
     !pointerPieceAt(event,mapGridPoint(event))){
@@ -662,9 +627,13 @@ export default function WorldV2Board(props){
   }
   if(event.button!==0||activeMeasure||
    previewRequested||
-   environmentEditor?.enabled&&environmentEditor.lockTokens!==false||
+   !worldMovementInputAllowed({
+    active,activeMeasure,previewRequested,dmPreview,environmentEditor
+   })||
    event.target.closest?.(
-    '[data-world-id],.map-handout-pin,.map-measure-tool,.map-editor-svg')||
+    '[data-world-id],.map-handout-pin,.map-handout-placement,'+
+    '.map-measure-tool,.map-env-overlay,.map-env-marker,'+
+    '.map-object-quick-adjust')||
    pointerPieceAt(event,mapGridPoint(event)))
    return;
   const p=viewportPoint(event);

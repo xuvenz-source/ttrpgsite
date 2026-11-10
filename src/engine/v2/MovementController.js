@@ -1,3 +1,4 @@
+import {worldV2Trace} from './WorldTrace.js';
 import {appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from './GesturePath.js';
 
 /** V2 gesture orchestration. This is deliberately isolated from live RPCs.
@@ -27,12 +28,20 @@ const validAck=(reply,sessionId,seq,from,targets)=>{
  return true;
 };
 const noop=()=>{};
+const predictionReached=(origin,predicted,approved)=>{
+ const dx=predicted.x-origin.x,dy=predicted.y-origin.y;
+ const d=dx*dx+dy*dy;
+ return d<=1e-9||(approved.x-origin.x)*dx+
+  (approved.y-origin.y)*dy>=d-1e-7;
+};
 export function createMovementController({authority,onEvent=noop,canPredict=()=>false}={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
   typeof onEvent!=='function'||typeof canPredict!=='function')
   throw Error('V2 movement requires a complete authority interface');
  let active=null,disposed=false,state='Idle',generation=0;
  const emit=(gesture,type,extra={})=>{
+  if(type!=='sampled'&&type!=='presented')
+   worldV2Trace.event('movement.'+type,gesture.mode);
   onEvent({type,state,gestureId:gesture.generation,mapId:gesture.mapId,
    selection:gesture.selection,pointer:{...gesture.pointer},
    approved:{...gesture.approved},presented:{...gesture.presented},...extra});
@@ -83,9 +92,15 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      }
      // A denied crossing invalidates the entire unapproved route.
      if(response.blocked)g.pending.length=0;
-     g.presented={...g.approved};
-     state=g.closing?'Finishing':'Moving';
-     emit(g,response.blocked?'blocked':'approved',{seq,blocked:response.blocked});
+     if(response.blocked||!g.predicted||
+       predictionReached(g.origin,g.presented,g.approved)){
+       g.presented={...g.approved};g.predicted=false;
+      }
+      state=g.closing?'Finishing':'Moving';
+      emit(g,response.blocked?'blocked':'approved',{
+       seq,blocked:response.blocked,from:before,
+       accepted:response.accepted.map(p=>({...p}))
+      });
      continue;
     }
     if(!g.closing)break;
@@ -132,6 +147,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
     pending:[],seq:0,mode,sessionId:null,closing:false,
+     predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
     environmentRevision,permissionGeneration};
    active=g;state='Grabbed';
@@ -169,8 +185,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     permissionGeneration:g.permissionGeneration
    })===true}catch{}
    if(approvedPrediction){
-    g.presented={...pointer};
-    emit(g,'presented',{predicted:true});
+    g.presented={...pointer};g.predicted=true;
+     emit(g,'presented',{predicted:true});
    }
    if(g.sessionId)void drain(g);
    return true;
