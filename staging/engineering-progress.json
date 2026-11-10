@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10",
+  "nextStep": "B10-R02",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -413,6 +413,38 @@
     },
     "F03": {
       "status": "NOT STARTED"
+    },
+    "B10_R01": {
+      "status": "STAGED",
+      "releaseReady": false,
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
+      "base": "B10 PR #85",
+      "basedOnHead": "70a5b40fdd878f100037532373783f280c743ac5",
+      "documentation": "docs/architecture/world-v2-b10-r01-core-path-integration.md",
+      "sqlCandidate": "supabase/candidates/world_v2_b10_r01_core_path_integration.sql",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b10_r01_core_path_integration.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-postgres/core-path-r01.sql",
+        "tests/world-v2-b10-r01-core-path-wiring.test.mjs",
+        "docs/architecture/world-v2-b10-r01-core-path-integration.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "Replace nonpublic V2 advance_core with B03's bounded server-authorized swept path, keep B08 wrapper exact retry, atomic canonical Commit and B07 private LOS send. No additional RPC, no public grants, no source migration.",
+      "security": "Original source-real B04 before B07, B07 before B08 and B08 hostile suites after private Core replacement; 7 combined B10 assertions and 11 new R01 hostile positive/negative tests passed on disposable PG17 at source run #42858948356. Exact final PR head tests pending.",
+      "live": "No SQL applied; production main, Vercel, 83 migration Supabase unchanged",
+      "knownGaps": [
+        "B03/R01 Core is nonapplied; needs reviewed forward-only migration and tested rollback/roll-forward on exact live schema",
+        "B07/B08 budget-deferred observer terminal/hide cannot guarantee prompt authorized resync without retry/trigger (B10-R02 next)",
+        "A06/Gate A 24 authenticated DM/P1/P2 tests, performance p95, flash/collision/LOS QA NOT RUN",
+        "PR #71 source/security amendments still separate and blocked",
+        "B10 release gate NO_GO; no production deployment authorization"
+      ],
+      "pullRequest": null,
+      "next": "B10-R02 observer terminal/hide recovery under free-tier budget only with next designer instruction"
     }
   },
   "handoffs": {
@@ -928,6 +960,38 @@
       ],
       "releaseDecision": "NO_GO",
       "next": "B10 remediation with new designer instruction; gate B blocked; do not start C01 or production release automatically"
+    },
+    "B10_R01": {
+      "date": "2026-11-11",
+      "step": "B10-R01",
+      "status": "STAGED — NO-GO for production",
+      "stackedOnPR": 85,
+      "stackedOnHead": "70a5b40fdd878f100037532373783f280c743ac5",
+      "branch": "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b10_r01_core_path_integration.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-postgres/core-path-r01.sql",
+        "tests/world-v2-b10-r01-core-path-wiring.test.mjs",
+        "docs/architecture/world-v2-b10-r01-core-path-integration.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "Replace nonpublic V2 advance_core with B03's bounded server-authorized swept path, keep B08 wrapper exact retry, atomic canonical Commit and B07 private LOS send. No additional RPC, no public grants, no source migration.",
+      "verification": "Isolated postgres 17 crosslayer source #42858948356 successful (incl. 11 B10-R01 hostile checks); final exact PR SHA pending. Standard Node/CodeQL source #42858946153/#42858946050 succeeded before documentation edits.",
+      "sqlDeployment": "NONE",
+      "blockers": [
+        "B03/R01 Core is nonapplied; needs reviewed forward-only migration and tested rollback/roll-forward on exact live schema",
+        "B07/B08 budget-deferred observer terminal/hide cannot guarantee prompt authorized resync without retry/trigger (B10-R02 next)",
+        "A06/Gate A 24 authenticated DM/P1/P2 tests, performance p95, flash/collision/LOS QA NOT RUN",
+        "PR #71 source/security amendments still separate and blocked",
+        "B10 release gate NO_GO; no production deployment authorization"
+      ],
+      "gateA": "BLOCKED",
+      "gateB": "BLOCKED",
+      "next": "B10-R02 observer terminal/hide recovery under free-tier budget only with next designer instruction",
+      "pullRequest": null
     }
   },
   "pendingWork": [
@@ -1019,10 +1083,10 @@
     },
     {
       "id": "B10-B03-AUTHORITY-WIRING",
-      "status": "BLOCKED",
+      "status": "STAGED_CANDIDATE_NOT_INSTALLED",
       "ownerStep": "B10-remediation",
       "category": "release-gate",
-      "notes": "B03 private validator absent from actual advance_core_v2; choose audited secure integration or remove redundant candidate and demonstrate equivalent path validation under test."
+      "notes": "B10-R01 nonapplied candidate replaces private advance_core_v2 with B03 server-authored swept-prefix authority. Isolated PG17 B08 hostile rerun and 11 dedicated R01 assertions passed; unapproved live migration/rollback/3-account acceptance still needed."
     },
     {
       "id": "B10-OBSERVER-TERMINAL-RECOVERY",
@@ -1058,6 +1122,13 @@
       "ownerStep": "B10-remediation",
       "category": "release-gate",
       "notes": "Audit Realtime billed fanout and 67 project-wide executable SECURITY DEFINER advisor warnings individually; do not blindly revoke legitimate V2 RPCs."
+    },
+    {
+      "id": "B10-R01-PRODUCTION-SCHEMA-GATE",
+      "ownerStep": "B10-release",
+      "category": "release-gate",
+      "status": "BLOCKED",
+      "notes": "Do not run source candidate as an automatically applied migration; versioned install and rollback/roll-forward plus real Auth/LOS/performance checks required."
     }
   ],
   "sourceOfTruthRules": [
