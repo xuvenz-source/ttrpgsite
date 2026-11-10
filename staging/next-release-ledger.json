@@ -436,11 +436,13 @@
       ],
       "sqlApplied": false,
       "featureFlag": "VITE_WORLD_V2_COMMIT_RECONCILE=1 (OFF by default)",
-      "note": "B08 atomic final Commit/Advance request-binding, bounded recipient postcommit drain, opt-in canonical uncertainty handoff; no production behavior change. Pending exact-head CI, B07 hide priority, Gate A and B10.",
+      "note": "B08 atomic final Commit/Advance request-binding, bounded recipient postcommit drain, opt-in canonical uncertainty handoff; no production behavior change. Pending exact-head CI, real B07 hide/resync acceptance, Gate A and B10.",
       "testEvidence": {
-        "conclusion": "PENDING exact-head PostgreSQL 17 + standard CI"
+        "conclusion": "SQL source/isolated PostgreSQL #42845242094 success at prior source; final exact-head SQL and normal CI pending",
+        "initialSqlRun": 42845242094
       },
-      "linkedPullRequest": 83
+      "linkedPullRequest": 83,
+      "b07HidePriorityAmendment": "candidate now preempts old queued paths for pieces receiving a certified hide; isolated PG17 regression added"
     }
   ],
   "features": [
@@ -1317,7 +1319,8 @@
     "A04: manual authenticated DM+two-player fixture contract staged only. Do not run live fixture writes or record player identities, invite codes, JWTs, signed media URLs or unrevealed NPC data in public test evidence.",
     "A05: browser trace opt-in ?worldV2Trace=1 keeps only 256 bounded allowlisted events/duration samples per metric and no secret IDs, RPC payloads or coordinates. No extra network logging or telemetry service. Counter results are not substitute for RLS security acceptance.",
     "A06: no role/permission/visibility regression was directly tested with authenticated players, and the current test map's fog/collision are disabled. Database historical execution figures cannot establish observer confidentiality or renderer flash root cause.",
-    "B08: nonapplied Commit SQL preserves canonical write authority; no paid services or new public grants. Hide-priority under saturated B07 FIFO and no-trigger terminal drain remain release blockers; no real fog/Auth test."
+    "B08: nonapplied Commit SQL preserves canonical write authority; no paid services or new public grants. Hide-priority under saturated B07 FIFO and no-trigger terminal drain remain release blockers; no real fog/Auth test.",
+    "B08 B07-FIFO amendment: private hidden-piece queues preempt old unsent paths with a certified hide, preserving other-piece FIFO. Isolated SQL pass only; free-tier budget delay and real LOS revocation still B10 blockers."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
