@@ -123,9 +123,12 @@ test('V2 keybindings never dispatch the legacy movement writer',async()=>{
  const app=await readFile(new URL('../src/TabletopApp.jsx',import.meta.url),'utf8');
  const board=await readFile(new URL(
   '../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
- assert.match(app,/else if\(WORLD_V2_CUTOVER\)v2StepHandler\.current/);
+ assert.match(app,/if\(WORLD_V2_CUTOVER\)v2StepHandler\.current/);
+ assert.match(app,/else if\(simulated\)previewStepHandler\.current/);
  assert.match(app,/registerV2Step=useCallback/);
  assert.match(board,/keyboardTarget:noDuplicateKeyboard/);
- assert.match(board,/registerV2Step\(moveOne\)/);
- assert.match(board,/current=runtimeRef\.current\?\.visibility\.visiblePieces/);
+ assert.match(board,/registerV2Step\(\(dx,dy,options\)=>stepper\.step/);
+ assert.match(board,/createWorldKeyboardStepper\(/);
+ assert.match(board,/runtime\.visibility\.frame/);
+ assert.match(board,/selection:\[\{kind:'token',id:actor\.id\}\],mode:'preview'/);
 });
