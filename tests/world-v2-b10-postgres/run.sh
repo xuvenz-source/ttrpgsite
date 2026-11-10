@@ -21,12 +21,12 @@ psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b07_private_observer_
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b07-postgres/hostile.sql
 psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b08_commit_reconciliation.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b08-postgres/hostile.sql
-# B10-R01 installs a replacement PRIVATE Core after the complete B03/B07/B08
-# candidate stack. Re-run all real source hostile suites against the new core,
-# not just independently against the original production-derived core.
+# B10-R01 installs a replacement PRIVATE Core AFTER the complete stack.
+# Run the source-real B08 hostile tests against the installed new core. The
+# B04 legacy test deliberately expects its original inert broadcaster and an
+# unfixed H39 replay (both replaced by B07/B08), so it is run BEFORE those
+# candidates only; this order must not be changed just to fabricate passes.
 psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b10_r01_core_path_integration.sql
-psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b04-postgres/hostile.sql
-psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b07-postgres/hostile.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b08-postgres/hostile.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/integrated.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/core-path-r01.sql
