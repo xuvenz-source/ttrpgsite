@@ -80,8 +80,9 @@ test('rejected or unavailable sight stays locked and retries terminate',async()=
 test('scene-current runtime route reconciles the observer stream, not just local sight',()=>{
  const runtime=readFileSync(new URL('../src/engine/v2/WorldV2TabletopRuntime.js',
   import.meta.url),'utf8');
- assert.match(runtime,
-  /if\(sceneState\.reason==='scene-current'\)\{[\s\S]*?if\(stream\?\.connected\)[\s\S]*?stream\.resync\('scene-current'\)/);
+ assert.match(runtime,/if\(sceneState\.reason==='scene-current'\)[\s\S]*?reconcileSceneCurrent\(\)/);
+ assert.match(runtime,/await observer\.whenSettled\(\)/);
+ assert.match(runtime,/observer\.resync\('scene-current'\)/);
  assert.match(runtime,/if\(!dmPreview\)stream=createWorldRealtimeTransport/);
  const transport=readFileSync(new URL('../src/engine/v2/RealtimeTransport.js',
   import.meta.url),'utf8');

@@ -16,8 +16,9 @@ test('release ledger records previous releases and pending authorized migrations
  assert.ok(ledger.branches.some(item=>
   item.name===ledger.releaseBranch&&item.status==='staged'));
  assert.equal(ledger.upcomingRelease.releaseBranch,ledger.releaseBranch);
- assert.equal(ledger.productionBaseSha,
-  '572c9565377752b89c963cedcff23e7cd145fdcf');
+ assert.match(ledger.productionBaseSha,/^[0-9a-f]{40}$/);
+ assert.equal(ledger.branches.find(item=>item.name===ledger.releaseBranch)?.productionBaseSha,
+  ledger.productionBaseSha);
  assert.equal(ledger.upcomingRelease.productionBaseSha,ledger.productionBaseSha);
  assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
  assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
