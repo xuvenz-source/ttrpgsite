@@ -239,7 +239,7 @@
       "name": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
       "status": "staged",
       "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 67,
       "note": "Replace viewport-native pointer event pipeline with scoped document capture before React; repair DM editor unlocked token layering, player-preview actor eligibility, and safe unpublished scene collision cache. Add regression tests. No SQL or deployment."
     }
   ],
