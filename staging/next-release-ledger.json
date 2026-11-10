@@ -422,6 +422,25 @@
         "conclusion": "Both SQL and standard CI succeeded on exact source head; no live SQL or production release"
       },
       "linkedPullRequest": 82
+    },
+    {
+      "name": "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "48ae888b54682d141a6ec000f450663b1a93362f",
+      "basePullRequest": 82,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "candidateSql": [
+        "supabase/candidates/world_v2_b08_commit_reconciliation.sql"
+      ],
+      "sqlApplied": false,
+      "featureFlag": "VITE_WORLD_V2_COMMIT_RECONCILE=1 (OFF by default)",
+      "note": "B08 atomic final Commit/Advance request-binding, bounded recipient postcommit drain, opt-in canonical uncertainty handoff; no production behavior change. Pending exact-head CI, B07 hide priority, Gate A and B10.",
+      "testEvidence": {
+        "conclusion": "PENDING exact-head PostgreSQL 17 + standard CI"
+      },
+      "linkedPullRequest": null
     }
   ],
   "features": [
@@ -927,6 +946,21 @@
       "databaseDependencies": [],
       "verification": "Live Supabase read-only pg_stat_statements and Vercel/GitHub metadata; complete A04 multiuser test matrix NOT RUN and Gate A BLOCKED.",
       "nextAcceptanceStep": "A06"
+    },
+    {
+      "id": "world-v2-b08-final-commit-reconciliation",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Source-real atomic commit/replay validation, bounded B07 terminal draining and disabled-by-default client lost-ACK/signed-sight reconciliation.",
+      "sources": [
+        "stage/world-v2-b08-final-commit-reconciliation-2026-11-11"
+      ],
+      "databaseDependencies": [
+        "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+        "supabase/candidates/world_v2_b08_commit_reconciliation.sql"
+      ],
+      "verification": "CI and real authenticated three-user tests outstanding; do not activate flag or apply standalone SQL.",
+      "nextAcceptanceStep": "B10"
     }
   ],
   "databaseDependencies": [
@@ -1282,7 +1316,8 @@
     "A02: PR #71 may retain previously authorized renderer sight during indefinitely pending observer resync; require bounded deadline, stream-locked movement input gating, tests, targeted metadata refresh and final green CI before merge.",
     "A04: manual authenticated DM+two-player fixture contract staged only. Do not run live fixture writes or record player identities, invite codes, JWTs, signed media URLs or unrevealed NPC data in public test evidence.",
     "A05: browser trace opt-in ?worldV2Trace=1 keeps only 256 bounded allowlisted events/duration samples per metric and no secret IDs, RPC payloads or coordinates. No extra network logging or telemetry service. Counter results are not substitute for RLS security acceptance.",
-    "A06: no role/permission/visibility regression was directly tested with authenticated players, and the current test map's fog/collision are disabled. Database historical execution figures cannot establish observer confidentiality or renderer flash root cause."
+    "A06: no role/permission/visibility regression was directly tested with authenticated players, and the current test map's fog/collision are disabled. Database historical execution figures cannot establish observer confidentiality or renderer flash root cause.",
+    "B08: nonapplied Commit SQL preserves canonical write authority; no paid services or new public grants. Hide-priority under saturated B07 FIFO and no-trigger terminal drain remain release blockers; no real fog/Auth test."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
