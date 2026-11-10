@@ -537,10 +537,10 @@
       "gateDecision": "NO_GO",
       "featureFlagsActivated": false,
       "docs": "docs/architecture/world-v2-b10-r03-terminal-queue-retirement.md",
-      "note": "B10-R03: private nonapplied B08 drain replacement bounds initial in-commit flush then retires ALL remaining old private coordinate paths; only certified hide survives for exact ACK retry. Coupled R02 opt-in required at authorized release, and PR71/real Auth/migration gates are blocked.",
+      "note": "B10-R03: private nonapplied B08 drain replacement bounds initial in-commit flush then retires ALL remaining old private coordinate paths; only certified hide survives for exact ACK retry. Coupled R02 opt-in required at authorized release, and PR71/real Auth/migration gates are blocked. Isolated source-real transient realtime.send failure and successful exact retry are covered.",
       "testEvidence": {
         "isolatedPg17Initial": 42867963625,
-        "isolatedNewR03Assertions": 14,
+        "isolatedNewR03Assertions": 16,
         "codeQL": "PENDING exact-head",
         "frontend": "PENDING exact-head",
         "liveDMPlayer1Player2": "NOT_RUN"
