@@ -178,7 +178,7 @@
       "featureFlagsActivated": false,
       "coupledClientRequirement": "B10-R02 VITE_WORLD_V2_OBSERVER_RECOVERY must be tested and enabled in the same authorized release; do not ship R03 alone.",
       "automatedEvidence": {
-        "isolatedPg17": "Run 42867963625 passed 14 positive and hostile R03 cases before final hardening/test source; exact-head rerun pending",
+        "isolatedPg17": "Earlier run #42867963625 passed 14 cases; a later source-real broadcast outage fault-injection adds cases R03-15 and R03-16 (16 total); exact-head CI pending",
         "nodeTests": "pending exact-head",
         "codeQL": "pending exact-head"
       },
