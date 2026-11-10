@@ -120,7 +120,7 @@ BEGIN
   s1,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,2);
  PERFORM public.b04_assert(r IS NULL,'H17 stale requested permission generation');
  UPDATE forge_visibility.navigation_permission_generations SET generation=2
- WHERE map_id=map_id;
+ WHERE map_id='00000000-0000-4000-8000-000000000021'::uuid;
  r:=forge_world_v2.validate_motion_path_batch_b03(
   s1,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
  PERFORM public.b04_assert(r IS NULL,'H18 changed database permission generation');
@@ -163,7 +163,7 @@ BEGIN
  r:=forge_world_v2.validate_motion_path_batch_b03(
   s1,1,'{"x":1,"y":1}','[{"x":2,"y":1}]',1,1);
  PERFORM public.b04_assert(r IS NULL,'H25 selected token transferred to another map');
- UPDATE public.map_tokens SET map_id=map_id WHERE id=token1;
+ UPDATE public.map_tokens SET map_id='00000000-0000-4000-8000-000000000021'::uuid WHERE id=token1;
 
  -- An untrusted player cannot turn on DM collision override.
  PERFORM public.b04_issue_token_session(sc,p1,token1,true);
