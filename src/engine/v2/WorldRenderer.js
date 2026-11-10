@@ -34,7 +34,7 @@ const same=(a,b)=>a?.x===b?.x&&a?.y===b?.y;
 const noop=()=>{};
 const STATES=new Set(['grabbed','sampled','presented',
  'presentation-reset','approved',
- 'blocked','released','committed','cancelled','rejected','revoked']);
+ 'blocked','released','committed','uncertain','cancelled','rejected','revoked']);
 const validMotionPoint=p=>p&&finite(p.x)&&finite(p.y)&&
  p.x>=0&&p.y>=0&&p.x<=10000&&p.y<=10000;
 const copyPoint=p=>({x:p.x,y:p.y});
@@ -309,6 +309,9 @@ export function createWorldRenderer({
  });
  function reconcileLocal(frame){
   if(!local||!local.handoff)return;
+  // After a lost ACK, only an independently authorized snapshot can say
+  // whether the final database write happened. Never pin stale imagery.
+  if(local.uncertain){clearLocal();return}
   let settled=true;
   for(const [id,anchor] of local.anchors){
    const piece=frame.visiblePieces.find(row=>key(row)===id);
@@ -685,6 +688,14 @@ export function createWorldRenderer({
      local.route.reset(local.approved);
     // Phase 9 MUST fetch an authorized canonical roster after commit.
     safe(onNeedResync,'canonical-commit');
+   }else if(event.type==='uncertain'){
+    if(!validMotionPoint(event.approved))return false;
+    worldV2Trace.endMotion('local');
+    local.approved=copyPoint(event.approved);
+    local.display=copyPoint(event.approved);
+    local.predicted=false;local.handoff=true;local.uncertain=true;
+    local.certificate=null;local.route.reset(local.approved);
+    safe(onNeedResync,'canonical-commit-uncertain');
    }else if(event.type==='cancelled'||event.type==='rejected'){
     worldV2Trace.endMotion('local');
     clearLocal();
