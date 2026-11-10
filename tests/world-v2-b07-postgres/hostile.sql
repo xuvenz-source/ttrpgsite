@@ -12,7 +12,8 @@ DECLARE
  npc uuid:='00000000-0000-4000-8000-000000000103';
  session_uuid uuid;second_uuid uuid;hidden_uuid uuid;
  body jsonb;next_body jsonb;merged jsonb;response jsonb;
- old_cursor bigint;old_sent integer;rows_count integer;
+ overflow_path jsonb;overflow_item jsonb;
+ old_cursor bigint;old_sent integer;rows_count integer;j integer;
  s forge_world_v2.motion_sessions%ROWTYPE;
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
@@ -204,6 +205,59 @@ BEGIN
   forge_world_v2.flush_session_observers_b07(session_uuid)=0,
   'H12 a foreign actor cannot terminal-flush another session');
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ -- Prove that capacity pressure NEVER discards the next accepted
+ -- contiguous frame, even when a 25-point recipient packet is full.
+ PERFORM public.b04_issue_token_session(
+  '00000000-0000-4000-8000-000000000388',actor,token);
+ second_uuid:='00000000-0000-4000-8000-000000000388';
+ SELECT * INTO s FROM forge_world_v2.motion_sessions
+ WHERE id=second_uuid;
+ overflow_path:=jsonb_build_array('{"x":1,"y":1}'::jsonb);
+ FOR j IN 2..14 LOOP
+  overflow_path:=overflow_path||jsonb_build_array(
+   jsonb_build_object('x',j,'y',1));
+ END LOOP;
+ FOR j IN 2..12 LOOP
+  overflow_path:=overflow_path||jsonb_build_array(
+   jsonb_build_object('x',14,'y',j));
+ END LOOP;
+ overflow_item:=jsonb_build_array(jsonb_build_object(
+  'kind','token','id',token,'action','path','path',overflow_path));
+ UPDATE forge_world_v2.observer_budget_b07
+ SET emitted=20,window_started=clock_timestamp() WHERE id=1;
+ old_cursor:=(SELECT seq FROM forge_world_v2.viewer_streams
+  WHERE map_id=map_uuid AND viewer_id=player);
+ PERFORM forge_world_v2.queue_recipient_observer_b07(
+  s,player,overflow_item);
+ PERFORM forge_world_v2.queue_recipient_observer_b07(
+  s,player,jsonb_build_array(jsonb_build_object(
+   'kind','token','id',token,'action','path',jsonb_build_array(
+   '{"x":14,"y":12}'::jsonb,'{"x":13,"y":12}'::jsonb))));
+ PERFORM public.b07_assert(
+  (SELECT jsonb_array_length(pending->0->'path')=25 AND
+    jsonb_array_length(deferred)=1
+   FROM forge_world_v2.observer_pending_b07
+   WHERE session_id=second_uuid AND viewer_id=player) AND
+  (SELECT seq=old_cursor FROM forge_world_v2.viewer_streams
+   WHERE map_id=map_uuid AND viewer_id=player),
+  'H13 overflow while globally throttled retains FIFO frames and unchanged cursor');
+ UPDATE forge_world_v2.observer_budget_b07
+ SET emitted=0,window_started=clock_timestamp()-interval '2 seconds'
+ WHERE id=1;
+ PERFORM public.b07_assert(
+  forge_world_v2.flush_recipient_observer_b07(s,player)=1,
+  'P15 first permitted recovery flush delivers oldest 24-step prefix');
+ PERFORM public.b07_assert(
+  forge_world_v2.flush_recipient_observer_b07(s,player)=1,
+  'P16 second recovery flush delivers the exact next step');
+ PERFORM public.b07_assert(
+  (SELECT seq=old_cursor+2 FROM forge_world_v2.viewer_streams
+   WHERE map_id=map_uuid AND viewer_id=player) AND
+  (SELECT count(*)=2 FROM realtime.b07_outbox
+   WHERE (message->>'viewerId')=player::text AND
+    (message->>'seq')::bigint>old_cursor),
+  'P17 receiver order and cursor continuity survive overflow/recovery');
+
  PERFORM public.b07_assert(
   NOT has_schema_privilege('authenticated','forge_world_v2','USAGE') AND
   NOT has_schema_privilege('anon','forge_world_v2','USAGE') AND
