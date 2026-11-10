@@ -12,15 +12,22 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.match(ledger.releaseBranch,/^(?:stage|fix)\//);
- assert.ok(ledger.branches.some(item=>
-  item.name===ledger.releaseBranch&&item.status==='staged'));
- assert.equal(ledger.upcomingRelease.releaseBranch,ledger.releaseBranch);
  assert.match(ledger.productionBaseSha,/^[0-9a-f]{40}$/);
- assert.equal(ledger.branches.find(item=>item.name===ledger.releaseBranch)?.productionBaseSha,
-  ledger.productionBaseSha);
  assert.equal(ledger.upcomingRelease.productionBaseSha,ledger.productionBaseSha);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
+ assert.equal(ledger.upcomingRelease.releaseBranch,ledger.releaseBranch);
+ // Multiple draft branches can exist before a consolidated release candidate.
+ const staged=ledger.branches.filter(item=>item.status==='staged');
+ assert.deepEqual([...ledger.upcomingRelease.outstandingBranches].sort(),
+  staged.map(item=>item.name).sort());
+ assert.ok(staged.length>=1);
+ assert.ok(staged.every(item=>item.productionBaseSha===ledger.productionBaseSha&&
+  item.releaseReady===false));
+ if(ledger.releaseBranch){
+  assert.match(ledger.releaseBranch,/^(?:stage|fix)\//);
+  assert.ok(staged.some(item=>item.name===ledger.releaseBranch));
+ }else assert.ok(staged.every(item=>Number.isInteger(item.linkedPullRequest)));
+ assert.ok(ledger.branches.some(item=>item.linkedPullRequest===71&&
+  item.releaseReady===false),'blocked PR #71 cannot be silently published');
  assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
@@ -42,23 +49,38 @@ test('release ledger records previous releases and pending authorized migrations
   dep.status==='applied-production' && dep.appliedVersion==='20261108055943' &&
   dep.mustApplyBeforeFrontend===true &&
   dep.releaseApprovalRequired===true));
- assert.deepEqual(ledger.lastRelease.approvedPullRequests,[53]);
- assert.deepEqual(ledger.lastRelease.includedStagedPullRequests,[]);
- assert.equal(ledger.lastRelease.productionBaseSha,'9c66bde70fcf021ea1499adb52cd52fe77712e33');
- assert.equal(ledger.lastRelease.productionCommit,'55d5d704c47c60f04100ce13fb81a5d4357b999e','the last release SHA must match verified Vercel production');
+ assert.ok(ledger.releaseHistory.length>0);
+ const latestHistory=ledger.releaseHistory.at(-1);
+ assert.deepEqual(ledger.lastRelease.approvedPullRequests,latestHistory.pullRequests);
+ assert.equal(ledger.lastRelease.productionCommit,ledger.productionBaseSha,
+  'last release SHA must match the recorded verified production main');
+ assert.equal(latestHistory.productionCommit,ledger.productionBaseSha);
+ assert.match(ledger.lastRelease.productionBaseSha,/^[0-9a-f]{40}$/);
+ // The earlier PR #53 release is historical: keep evidence, never call it latest.
+ const release53=ledger.releaseHistory.find(x=>x.pullRequests?.includes(53));
+ assert.ok(release53);
+ assert.equal(release53.productionCommit,'55d5d704c47c60f04100ce13fb81a5d4357b999e');
+ assert.deepEqual(release53.databaseDependencies,
+  ['20261108111759','20261108112135','20261108112252','20261108112544']);
  assert.ok(ledger.releaseHistory.some(x=>x.pullRequests?.includes(51)&&x.includedStagedPullRequests?.includes(50)));
- assert.deepEqual(ledger.lastRelease.databaseDependencies,['20261108111759','20261108112135','20261108112252','20261108112544']);
+ assert.ok(Array.isArray(ledger.lastRelease.databaseDependencies));
  assert.ok(ledger.features.some(x=>x.id==='movement-fog-phase1-rendering-and-visibility-parity'&&x.status==='released'&&x.releaseReady===true));
  for(const id of ['movement-fog-phase2-authorized-sessions','movement-fog-phase3-viewer-visibility-deltas','movement-fog-phase4-supabase-query-memory'])
   assert.ok(ledger.features.some(x=>x.id===id&&x.status==='released'&&x.releaseReady===true),id);
- assert.ok(ledger.branches.some(x=>x.name==='stage/solid-wall-drag-and-player-token-no-flash-2026-11-08'&&x.status==='included'));
+ assert.ok(ledger.branches.some(x=>x.name==='stage/solid-wall-drag-and-player-token-no-flash-2026-11-08'&&x.status==='released'));
  for(const id of ['solid-wall-input-and-final-movement-gating','no-flash-player-token-sprite-lifecycle'])
-  assert.ok(ledger.features.some(x=>x.id===id&&x.releaseReady===true&&x.status==='included'));
+  assert.ok(ledger.features.some(x=>x.id===id&&x.releaseReady===true&&x.status==='released'));
  assert.ok(ledger.releaseHistory.some(x=>x.pullRequests?.includes(53)&&x.productionCommit==='55d5d704c47c60f04100ce13fb81a5d4357b999e'));
  assert.ok(ledger.databaseDependencies.some(x=>x.name==='viewer_light_masks_v2'&&x.status==='applied-production'&&x.appliedVersion==='20261108111759'&&x.mustApplyBeforeFrontend===true));
  for(const name of ['observer_path_cached_scene','movement_sessions_and_visibility_delta'])
   assert.ok(ledger.databaseDependencies.some(x=>x.name===name&&x.status==='applied-production'&&x.appliedVersion==='20261108111759'));
  assert.ok(ledger.lastRelease.paidInfrastructure===false);
+ assert.equal(ledger.appliedMigrationAudit?.v2VersionAliases?.length,8);
+ assert.ok(ledger.appliedMigrationAudit.v2VersionAliases.every(alias=>
+  ledger.databaseDependencies.some(dep=>dep.appliedName===alias.name&&
+   dep.status==='applied-production'&&dep.appliedVersion===alias.applied)));
+ assert.ok(ledger.migrationProvenanceGaps?.some(issue=>issue.issue===69&&
+  issue.noLiveSqlAction===true));
  assert.ok(ledger.releaseHistory.some(x=>x.pullRequests?.includes(52)&&x.databaseDependencies?.includes('20261108091818')));
  for(const name of ['observer_path_visibility_single_snapshot','per_viewer_visibility_v2']){
   const dep=ledger.databaseDependencies.find(x=>x.name===name);
@@ -74,7 +96,8 @@ test('release ledger records previous releases and pending authorized migrations
   /revoke all on function forge_visibility\.validate_piece_trajectory/);
  assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
   /^begin;|^commit;/m);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
+ assert.deepEqual([...ledger.upcomingRelease.outstandingBranches].sort(),
+  ledger.branches.filter(x=>x.status==='staged').map(x=>x.name).sort());
  assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&

@@ -271,6 +271,17 @@
       "releaseReady": false,
       "documentationOnly": true,
       "note": "Documentation-only A03 workflow/tracker/ledger source-of-truth reconciliation; separate draft PR. No runtime, SQL or Edge changes."
+    },
+    {
+      "name": "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "5864e64df1f8c3003e365eeb6282c5200a3a52e8",
+      "linkedPullRequest": 73,
+      "basePullRequest": 72,
+      "releaseReady": false,
+      "documentationOnly": true,
+      "note": "A04-only authenticated 3-account fixture guide, 24-case JSON manifest and local validation test. It is stacked on draft A03 PR #72; no live campaign setup or actual browser testing performed, and no runtime/SQL/Vercel changes. Future A06 testing requires separately authorized test fixture setup."
     }
   ],
   "features": [
@@ -740,6 +751,18 @@
       ],
       "databaseDependencies": [],
       "verification": "Draft PR #72, no runtime or SQL code; final JSON/diff and CI validation required."
+    },
+    {
+      "id": "authenticated-world-v2-multiplayer-fixture-a04",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Machine-readable 24-case DM/P1/P2 real-browser acceptance matrix, secure fixture setup plan, reproducible evidence and static schema contract; does not assert live tests passed.",
+      "sources": [
+        "stage/world-v2-authenticated-fixture-a04-2026-11-10"
+      ],
+      "databaseDependencies": [],
+      "verification": "Read-only Supabase test campaign audit verified enough distinct roles and tokens, but published fog/collision disabled and doors, one-way wall and large token missing. Node contract test must pass CI on final head; no authenticated live testing has been run.",
+      "nextAcceptanceStep": "A06"
     }
   ],
   "databaseDependencies": [
@@ -1092,16 +1115,18 @@
     "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged.",
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release.",
     "A03: historical applied anon GRANT cleanup has missing source migration parity (issue #69); this is documentation follow-up E05, NOT permission to reapply SQL.",
-    "A02: PR #71 may retain previously authorized renderer sight during indefinitely pending observer resync; require bounded deadline, stream-locked movement input gating, tests, targeted metadata refresh and final green CI before merge."
+    "A02: PR #71 may retain previously authorized renderer sight during indefinitely pending observer resync; require bounded deadline, stream-locked movement input gating, tests, targeted metadata refresh and final green CI before merge.",
+    "A04: manual authenticated DM+two-player fixture contract staged only. Do not run live fixture writes or record player identities, invite codes, JWTs, signed media URLs or unrevealed NPC data in public test evidence."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
     "releaseBranch": null,
     "outstandingBranches": [
       "fix/world-v2-live-authority-continuity-2026-11-10",
-      "stage/engineering-workflow-and-ledger-a03-2026-11-10"
+      "stage/engineering-workflow-and-ledger-a03-2026-11-10",
+      "stage/world-v2-authenticated-fixture-a04-2026-11-10"
     ],
-    "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate.",
+    "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": [],
     "blockedPullRequests": [
@@ -1109,10 +1134,18 @@
     ],
     "draftPullRequests": [
       71,
-      72
+      72,
+      73
     ],
-    "nextMicrostep": "A04",
-    "manualAcceptancePending": true
+    "nextMicrostep": "A05",
+    "manualAcceptancePending": true,
+    "stackedPullRequests": [
+      {
+        "number": 73,
+        "basePullRequest": 72,
+        "reason": "Depends on PR72 persistent A03 tracker and ledger; staging only"
+      }
+    ]
   },
   "lastRelease": {
     "name": "V2 player/DM dragging and fog continuity refinements",
