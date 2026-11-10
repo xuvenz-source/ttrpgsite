@@ -96,6 +96,25 @@ export function createSceneManager({
     candidate=Object.freeze({...base,querySegments:lookup.query});
     builds++;
    }
+   // A map with no published environment is explicitly safe only when the
+   // server disables BOTH fog and collision. It still needs a bounded,
+   // wall-free local collision scene for non-persistent DM preview movement.
+   // Never synthesize geometry for a protected/unpublished scene.
+   if(!candidate&&accepted.scope==='dm'&&!accepted.published&&
+    !accepted.fogEnabled&&!accepted.collisionEnabled&&
+    accepted.environment===null){
+    const base=compileCollisionScene({
+     map:{id:requestMap,width:accepted.dimensions.width,
+      height:accepted.dimensions.height,
+      grid_size:accepted.dimensions.gridSize},
+     environment:{objects:[]},revision:accepted.revision,
+     collisionEnabled:false,scope:'dm'
+    });
+    if(!base)throw Error('Invalid safe unconfigured DM movement geometry');
+    lookup=createSceneSpatialIndex(base);
+    candidate=Object.freeze({...base,querySegments:lookup.query});
+    builds++;
+   }
    const previous=manifest;
    manifest=unchanged?manifest:accepted;
    collision=candidate;spatial=lookup;
