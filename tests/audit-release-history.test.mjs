@@ -12,9 +12,14 @@ test('audit migration manifest is documentary and keeps live records separate fr
 });
 test('release ledger records previous releases and pending authorized migrations',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/solid-wall-drag-and-player-token-no-flash-2026-11-08');
- assert.equal(ledger.productionBaseSha,'55d5d704c47c60f04100ce13fb81a5d4357b999e');
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,['stage/solid-wall-drag-and-player-token-no-flash-2026-11-08']);
+ assert.match(ledger.releaseBranch,/^(?:stage|fix)\//);
+ assert.ok(ledger.branches.some(item=>
+  item.name===ledger.releaseBranch&&item.status==='staged'));
+ assert.equal(ledger.upcomingRelease.releaseBranch,ledger.releaseBranch);
+ assert.equal(ledger.productionBaseSha,
+  '572c9565377752b89c963cedcff23e7cd145fdcf');
+ assert.equal(ledger.upcomingRelease.productionBaseSha,ledger.productionBaseSha);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
  assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
@@ -68,7 +73,7 @@ test('release ledger records previous releases and pending authorized migrations
   /revoke all on function forge_visibility\.validate_piece_trajectory/);
  assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
   /^begin;|^commit;/m);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,['stage/solid-wall-drag-and-player-token-no-flash-2026-11-08']);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
  assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
