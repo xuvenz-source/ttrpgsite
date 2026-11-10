@@ -540,7 +540,7 @@
         "staging/next-release-ledger.json"
       ],
       "scope": "Safely supersede PR71's unbounded sight hold, port scoped 280ms trailing V2 token/tool canonical read reconciliation, preserve early authorized DM token grab, and rehearse five SQL candidates in one disposable PostgreSQL 17 transaction with exact rollback source digests and private role guards.",
-      "verification": "Source-real PostgreSQL 17 migration rehearsal + all original hostile SQL, full 841 application tests, lint/build/Edge/audit/CodeQL gated at final PR head (pending after release records). Source previously passed SQL after fixture absent-Commit and SQL body assertions corrected.",
+      "verification": "PASS at pre-handoff head b9b291385db04da46dc92287cf887f3de50032d3: 841/841 full frontend tests, ESLint, Vite production build, Deno Edge checks, zero npm audit vulnerabilities (Actions #42879038586); atomic B03→B07→B08→R01→R03 installation+ROLLBACK and full hostile suite (Actions #42879039106); CodeQL security scan (Actions #42879038807). Exact subsequent ledger-head CI will be checked.",
       "security": "No retained sight without independent current authority. Original V2 renderer revokes on observer lock and cancels gesture; guard that blocked valid early DM grabbing was rejected based on three existing tests. Private RLS, public function grants, rollback and no new channels asserted in PG17.",
       "blockers": [
         "PR71 unsafe unbounded soft sight hold is rejected; accepted 280ms commit row coalescing still needs live p95/React/map-flash measurements and future C02 renderer scoped retention.",
@@ -554,7 +554,9 @@
       "featureFlagsActivated": false,
       "productionDeployed": false,
       "note": "Designer confirmed live campaigns are disposable test-only; this allows controlled live acceptance when the coupled migration/permission gates pass, but is not an authorization leak waiver.",
-      "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight."
+      "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight.",
+      "pr71Status": "CLOSED_UNMERGED_SUPERSEDED",
+      "pr71ClosureComment": "https://github.com/xuvenz-source/ttrpgsite/pull/71#issuecomment-6776267305"
     }
   },
   "handoffs": {
@@ -1190,7 +1192,7 @@
         "staging/next-release-ledger.json"
       ],
       "scope": "Safely supersede PR71's unbounded sight hold, port scoped 280ms trailing V2 token/tool canonical read reconciliation, preserve early authorized DM token grab, and rehearse five SQL candidates in one disposable PostgreSQL 17 transaction with exact rollback source digests and private role guards.",
-      "evidence": "Source-real PostgreSQL 17 migration rehearsal + all original hostile SQL, full 841 application tests, lint/build/Edge/audit/CodeQL gated at final PR head (pending after release records). Source previously passed SQL after fixture absent-Commit and SQL body assertions corrected.",
+      "evidence": "PASS at pre-handoff head b9b291385db04da46dc92287cf887f3de50032d3: 841/841 full frontend tests, ESLint, Vite production build, Deno Edge checks, zero npm audit vulnerabilities (Actions #42879038586); atomic B03→B07→B08→R01→R03 installation+ROLLBACK and full hostile suite (Actions #42879039106); CodeQL security scan (Actions #42879038807). Exact subsequent ledger-head CI will be checked.",
       "security": "No retained sight without independent current authority. Original V2 renderer revokes on observer lock and cancels gesture; guard that blocked valid early DM grabbing was rejected based on three existing tests. Private RLS, public function grants, rollback and no new channels asserted in PG17.",
       "blockers": [
         "PR71 unsafe unbounded soft sight hold is rejected; accepted 280ms commit row coalescing still needs live p95/React/map-flash measurements and future C02 renderer scoped retention.",
@@ -1202,7 +1204,8 @@
       ],
       "noAppliedSql": true,
       "noDeployment": true,
-      "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight."
+      "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight.",
+      "pr71Status": "CLOSED_UNMERGED_SUPERSEDED"
     }
   },
   "pendingWork": [
@@ -1210,10 +1213,10 @@
       "id": "PR71-A02",
       "pr": 71,
       "category": "movement-security",
-      "status": "SUPERSEDED_BY_STAGED_R04",
-      "decision": "AMEND BEFORE MERGE",
+      "status": "CLOSED_UNMERGED_SUPERSEDED",
+      "decision": "REJECT_UNBOUNDED_SIGHT_HOLD",
       "ownerStep": "A02-review-followup",
-      "notes": "PR #71's safe 280ms V2 commit coalescer ported in R04; unbounded unknown-piece sight hold rejected (no deadline/stale permission risk); original renderer fail closed preserved. Close old draft after R04 CI; C02 owns bounded sight continuity."
+      "notes": "PR #71 closed without merge, 11 Nov 2026, after source-level comparison. Safe 280ms V2 commit coalescing ported in R04 PR #89; unsafe unbounded unknown-piece retention rejected. Renderer scoped continuity remains separate C02/C03 design; no live deployment."
     },
     {
       "id": "ISSUE69",
@@ -1308,10 +1311,11 @@
     },
     {
       "id": "B10-PR71-RECONCILIATION",
-      "status": "SUPERSEDED_BY_STAGED_R04",
+      "status": "CLOSED_UNMERGED_SUPERSEDED",
       "ownerStep": "B10-remediation",
       "category": "release-gate",
-      "notes": "PR #71's safe 280ms V2 commit coalescer ported in R04; unbounded unknown-piece sight hold rejected (no deadline/stale permission risk); original renderer fail closed preserved. Close old draft after R04 CI; C02 owns bounded sight continuity."
+      "notes": "PR #71 closed without merge, 11 Nov 2026, after source-level comparison. Safe 280ms V2 commit coalescing ported in R04 PR #89; unsafe unbounded unknown-piece retention rejected. Renderer scoped continuity remains separate C02/C03 design; no live deployment.",
+      "decision": "REJECT_UNBOUNDED_SIGHT_HOLD"
     },
     {
       "id": "B10-AUTHENTICATED-QA",
