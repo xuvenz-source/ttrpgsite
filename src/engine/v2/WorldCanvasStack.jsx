@@ -1,5 +1,6 @@
 import React,{useLayoutEffect,useRef} from 'react';
 import {createWorldRenderer} from './WorldRenderer.js';
+import {worldV2Trace} from './WorldTrace.js';
 
 /**
  * Phase 8 mount contract for the eventual Phase 9 TabletopAdapter.
@@ -50,8 +51,10 @@ export default function WorldCanvasStack({
    playerPreview
   });
   rendererRef.current=renderer;
+  worldV2Trace.event('renderer.mount');
   callback.current?.(renderer);
   return ()=>{
+   worldV2Trace.event('renderer.unmount');
    callback.current?.(null);
    renderer.dispose();
    rendererRef.current=null;
