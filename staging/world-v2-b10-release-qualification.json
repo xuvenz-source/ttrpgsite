@@ -32,7 +32,7 @@
   ],
   "currentChecks": {
     "sourceIntegrity": "PASSED_STATIC_CANDIDATE_CONTRACT",
-    "combinedSql": "PASSED_DISPOSABLE_PG17_RUN_42852430736_PLUS_SUBSEQUENT_GREEN_RERUNS",
+    "combinedSql": "PASS in disposable PG17 #42858948356: source-real B04/B07/B08 regressions, post-B10-R01 B08 replay/observer tests, B10 seven integration cases and R01 eleven new hostile checks; later exact-head CI must revalidate",
     "codeQL": "PASSED_SOURCE_SCAN_42853736555__FINAL_SHA_PENDING",
     "frontendBuildAndTests": "PASSED_INITIAL_SOURCE_42853530344__FINAL_SERIAL_TEST_PENDING",
     "npmAudit": "PASSED_INITIAL_SOURCE_42853530344__FINAL_SHA_PENDING",
@@ -56,7 +56,7 @@
     "releaseApproval": false
   },
   "noGoReasons": [
-    "B03 private swept-path validator is not wired to the production-derived forge_world_v2.advance_core_v2; combined SQL coexistence is not a complete path-authority replacement.",
+    "B03 is now wired into a **nonapplied B10-R01 private Core candidate**. Actual production forge_world_v2.advance_core_v2 remains unchanged and has no B03 validator; forward-only migration/rollout and live Auth/permission QA not approved.",
     "B07/B08 observer budget can preserve deferred private progress after commit without a guaranteed future authorized delivery/resync trigger; priority hides may be delayed when the budget itself is exhausted.",
     "PR #71 renderer/observer sight continuity remains a separate blocked draft with recovery and security amendments; no safe reconciliation/merge decision.",
     "No A06 authenticated DM/Player1/Player2 prepared fog/collision/door/2x2/hidden NPC/torch/test map fixture or 24-case live browser evidence.",
@@ -100,5 +100,32 @@
     "scope": "headless Chromium DevToolsActivePort creation only",
     "noTestSkipping": true,
     "neverRetryMovementAssertions": true
-  }
+  },
+  "stagedRemediations": {
+    "B10_R01": {
+      "status": "STAGED_NONAPPLIED",
+      "sourceBranch": "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
+      "candidate": "supabase/candidates/world_v2_b10_r01_core_path_integration.sql",
+      "parent": "B10 PR #85, full 70a5b40fdd878f100037532373783f280c743ac5",
+      "intent": "B03 is the sole fresh swept-prefix authority inside replaced private advance_core_v2 after B08; public wrapper, Commit and private viewer publishers stay intact",
+      "candidateOrder": [
+        "supabase/candidates/world_v2_b03_path_validation.sql",
+        "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+        "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+        "supabase/candidates/world_v2_b10_r01_core_path_integration.sql"
+      ],
+      "isolatedEvidence": "B10 PG17 run #42858948356 passed full B04/B07/B08 source-real prior to Core patch, B08 hostile re-run after patch, B10 combined seven invariants and R01 eleven denial/positive assertions",
+      "liveInstalled": false,
+      "releaseQualified": false,
+      "stillBlockedBy": [
+        "live-versioned forward migration and rollback",
+        "B07/B08 observer backlog recovery",
+        "PR #71",
+        "A06 signed multi-account browser matrix",
+        "performance resource acceptance",
+        "separate deployment approval"
+      ]
+    }
+  },
+  "nextRemediation": "B10-R02 observer budget terminal progress/hide delivery and authorized resync; staging only"
 }
