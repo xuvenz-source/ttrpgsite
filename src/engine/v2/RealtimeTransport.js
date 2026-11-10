@@ -108,6 +108,18 @@ export function createWorldRealtimeTransport({
  let channel=null,disposed=false,started=false,connected=false,locked=true;
  let generation=0,cursor=null,revision=null,permission=null;
  let roster=new Set(),pending=null,retryTimer=null,retryAttempts=0;
+ // These origins come ONLY from an accepted, server-authorized sight RPC,
+ // never an unauthenticated broadcast. Buffered old paths may arrive AFTER
+ // the canonical position was reconciled when the B07 budget was exhausted.
+ let sightScope=null,sightPositions=new Map(),sightFences=new Map();
+ const sightPoint=p=>Number.isSafeInteger(p?.x)&&Number.isSafeInteger(p?.y)&&
+  p.x>=0&&p.y>=0&&p.x<=10000&&p.y<=10000;
+ function signedPositions(snapshot){
+  if(!snapshot.visiblePieces.every(sightPoint))return null;
+  return new Map(snapshot.visiblePieces.map(p=>[
+   key(p),{x:p.x,y:p.y}
+  ]));
+ }
  const cancelRetry=()=>{
   if(retryTimer!==null){clearTimeout(retryTimer);retryTimer=null}
  };
@@ -116,6 +128,7 @@ export function createWorldRealtimeTransport({
   if(disposed)return;
   worldV2Trace.event('observer.seal',reason);
   locked=true;roster.clear();cursor=null;revision=null;permission=null;
+  sightScope=null;sightPositions.clear();sightFences.clear();
   generation++;
   onRevoke(reason);state(reason);
  };
@@ -137,6 +150,9 @@ export function createWorldRealtimeTransport({
    revision=snapshot.environmentRevision;
    permission=snapshot.permissionGeneration;
    roster=new Set(snapshot.visiblePieces.map(key));
+   sightScope=snapshot.scope??null;
+   sightPositions=signedPositions(snapshot)??new Map();
+   sightFences=new Map(sightPositions);
    locked=false;retryAttempts=0;
    worldV2Trace.event('observer.authorized');state('authorized');
    return true;
@@ -188,9 +204,20 @@ export function createWorldRealtimeTransport({
     // Never reveal IDs or send hide actions for a piece never in an
     // authorized roster; conceal a known sprite immediately.
     if(roster.has(id)){
-     roster.delete(id);onHide(item,{seq:frame.seq,mapId});
+     roster.delete(id);sightPositions.delete(id);sightFences.delete(id);
+     onHide(item,{seq:frame.seq,mapId});
     }
    }else if(roster.has(id)){
+    const signed=sightFences.get(id);
+    if(signed&&
+     (item.path[0].x!==signed.x||item.path[0].y!==signed.y)){
+     // A late B07 deferred frame starts behind a *newer canonical sight*.
+     // Consume its stream cursor but NEVER rewind the sprite or seal the
+     // terrain. The next legitimate path may start at the signed endpoint.
+     worldV2Trace.event('observer.late-frame');
+     continue;
+    }
+    if(signed)sightFences.delete(id);
     pendingPaths.push(item);
    }else{
     // A piece entering light may require a new authorized roster; do not
@@ -234,6 +261,35 @@ export function createWorldRealtimeTransport({
    return true;
   },
   resync,
+  /**
+   * Align the private cosmetic stream after a *separately authenticated*
+   * canonical sight RPC has already been accepted by the renderer.
+   * The caller must NOT invoke this with a broadcast or guessed roster.
+   * A changed source position fences old deferred frames until a new
+   * adjacent approved path begins at the signed canonical endpoint.
+   */
+  acceptSignedSight(snapshot){
+   if(disposed||!started||!connected||locked||
+    !validWorldObserverSnapshot(snapshot,mapId,viewerId)||
+    snapshot.scope!==sightScope||
+    !['dm','viewer'].includes(snapshot.scope)||
+    snapshot.environmentRevision!==revision||
+    snapshot.permissionGeneration!==permission||
+    snapshot.cursor<cursor)return false;
+   const next=signedPositions(snapshot);
+   if(!next)return false;
+   for(const [id,position] of next){
+    const previous=sightPositions.get(id);
+    if(!previous||previous.x!==position.x||previous.y!==position.y)
+     sightFences.set(id,position);
+   }
+   for(const id of sightFences.keys())if(!next.has(id))
+    sightFences.delete(id);
+   sightPositions=next;
+   roster=new Set(next.keys());
+   cursor=snapshot.cursor;
+   return true;
+  },
   // Scene recovery awaits an existing observer snapshot rather than
   // invalidating it with another concurrent generation.
   whenSettled(){return pending||Promise.resolve(!locked)},
@@ -243,6 +299,7 @@ export function createWorldRealtimeTransport({
    disposed=true;started=false;connected=false;locked=true;
    cancelRetry();retryAttempts=0;
    generation++;roster.clear();cursor=null;revision=null;permission=null;
+   sightScope=null;sightPositions.clear();sightFences.clear();
    const old=channel;channel=null;
    if(old)await db.removeChannel(old);
   },
