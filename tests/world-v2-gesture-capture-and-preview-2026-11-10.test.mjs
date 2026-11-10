@@ -12,7 +12,6 @@ const piece=(kind,id)=>({kind,id});
 function emitter(){
  const handlers=new Map();
  return {
-  handlers,
   addEventListener(name,fn,opts){
    if(!handlers.has(name))handlers.set(name,[]);
    handlers.get(name).push({fn,opts});
@@ -23,16 +22,17 @@ function emitter(){
   emit(name,event={}){
    for(const {fn} of [...(handlers.get(name)||[])])fn(event);
   },
-  count(name){return (handlers.get(name)||[]).length}
+  count(name){return (handlers.get(name)||[]).length},
+  options(name){return (handlers.get(name)||[]).map(v=>v.opts)}
  };
 }
-
 function harness({capture=false}={}){
  const documentTarget=emitter(),target=emitter(),keyboard=emitter(),
   blurTarget=emitter();
  const events=[],status=[];
  let active=false,held=null;
  target.ownerDocument=documentTarget;
+ target.contains=node=>node?.inMap===true;
  target.setPointerCapture=id=>{
   if(!capture)throw Error('capture rejected by browser');
   held=id;
@@ -54,34 +54,49 @@ function harness({capture=false}={}){
   onPointerStatus:(_,code)=>status.push(code)
  });
  input.mount();
- function event(point={x:2.25,y:2.25}){
+ function event(point={x:2.25,y:2.25},inMap=true){
   return {button:0,isPrimary:true,pointerId:9,pointerType:'mouse',
    point,preventDefault(){this.defaultPrevented=true},
-   target:{closest:()=>null}};
+   target:{inMap,closest:()=>null}};
  }
  return {documentTarget,target,blurTarget,events,status,input,event};
 }
 
-test('no pointer capture: document fallback keeps drag alive outside board',()=>{
+test('document capture starts a scoped drag before a React child can stop propagation',()=>{
  const h=harness();
- h.target.emit('pointerdown',h.event());
- assert.equal(h.documentTarget.count('pointermove'),1);
- assert.equal(h.documentTarget.count('pointerup'),1);
+ assert.equal(h.documentTarget.count('pointerdown'),1);
+ assert.equal(h.target.count('pointerdown'),0);
+ assert.equal(h.documentTarget.options('pointerdown')[0].capture,true);
+ // Simulates a React handler stopping propagation beneath document.
+ // No listener below document gets the event; the gesture still begins.
+ h.documentTarget.emit('pointerdown',h.event());
  h.documentTarget.emit('pointermove',h.event({x:4.25,y:2.25}));
  h.documentTarget.emit('pointerup',h.event({x:4.25,y:2.25}));
  assert.deepEqual(h.events.map(e=>e[0]),['begin','move','move','end']);
  assert.equal(h.events[1][1].x,4);
+ h.input.unmount();
+ assert.equal(h.documentTarget.count('pointerdown'),0);
  assert.equal(h.documentTarget.count('pointermove'),0);
  assert.equal(h.documentTarget.count('pointerup'),0);
+});
+
+test('the document adapter cannot initiate a drag from the sidebar',()=>{
+ const h=harness();
+ h.documentTarget.emit('pointerdown',h.event(undefined,false));
+ assert.equal(h.events.length,0);
+ assert.equal(h.status.length,0);
+ h.documentTarget.emit('pointerdown',h.event());
+ h.documentTarget.emit('pointermove',h.event({x:6.25,y:2.25},false));
+ h.documentTarget.emit('pointerup',h.event({x:6.25,y:2.25},false));
+ assert.deepEqual(h.events.map(e=>e[0]),['begin','move','move','end'],
+  'a started map drag must finish when the cursor leaves the viewport');
  h.input.unmount();
 });
 
-test('unexpected lostpointercapture preserves a still-held gesture',()=>{
+test('lost browser capture does not abort a document-owned drag',()=>{
  const h=harness({capture:true});
- h.target.emit('pointerdown',h.event());
- assert.equal(h.documentTarget.count('pointermove'),0);
+ h.documentTarget.emit('pointerdown',h.event());
  h.target.emit('lostpointercapture',h.event());
- assert.equal(h.documentTarget.count('pointermove'),1);
  h.documentTarget.emit('pointermove',h.event({x:3.25,y:2.25}));
  h.documentTarget.emit('pointerup',h.event({x:3.25,y:2.25}));
  assert.ok(h.events.some(e=>e[0]==='move'&&e[1].x===3));
@@ -90,42 +105,44 @@ test('unexpected lostpointercapture preserves a still-held gesture',()=>{
  h.input.unmount();
 });
 
-test('document fallback is removed even when a drag is unmounted',()=>{
- const h=harness();
- h.target.emit('pointerdown',h.event());
- assert.equal(h.documentTarget.count('pointerup'),1);
+test('no browser pointer capture: document capture still completes a movement',()=>{
+ const h=harness({capture:false});
+ h.documentTarget.emit('pointerdown',h.event());
+ h.documentTarget.emit('pointermove',h.event({x:4.25,y:2.25}));
+ h.documentTarget.emit('pointerup',h.event({x:4.25,y:2.25}));
+ assert.deepEqual(h.events.map(e=>e[0]),['begin','move','move','end']);
  h.input.unmount();
- assert.equal(h.documentTarget.count('pointermove'),0);
- assert.equal(h.documentTarget.count('pointerup'),0);
- assert.equal(h.documentTarget.count('pointercancel'),0);
 });
 
-test('a real window blur cancels the gesture despite no-op arrow listener',()=>{
+test('unmount and window blur cancel any held gesture and clean all listeners',()=>{
  const h=harness();
- h.target.emit('pointerdown',h.event());
+ h.documentTarget.emit('pointerdown',h.event());
  assert.equal(h.blurTarget.count('blur'),1);
  h.blurTarget.emit('blur');
  assert.ok(h.events.some(e=>e[0]==='cancel'&&e[1]==='blur'));
- assert.equal(h.documentTarget.count('pointermove'),0);
  h.documentTarget.emit('pointerup',h.event({x:3.25,y:2.25}));
  assert.ok(!h.events.some(e=>e[0]==='end'));
  h.input.unmount();
+ for(const name of ['pointerdown','pointermove','pointerup','pointercancel','dragstart'])
+  assert.equal(h.documentTarget.count(name),0);
  assert.equal(h.blurTarget.count('blur'),0);
 });
 
-test('native HTML drag is suppressed only for tokens and tools on the map',()=>{
+test('native HTML drag is suppressed only for world sprites within the map',()=>{
  const h=harness();
- const sprite=h.event(),palette=h.event();
+ const sprite=h.event(),palette=h.event(undefined,false),blank=h.event();
  sprite.target.closest=selector=>selector.includes('data-world-kind')?{}:null;
- h.target.emit('dragstart',sprite);
- h.target.emit('dragstart',palette);
+ palette.target.closest=selector=>selector.includes('data-world-kind')?{}:null;
+ h.documentTarget.emit('dragstart',sprite);
+ h.documentTarget.emit('dragstart',palette);
+ h.documentTarget.emit('dragstart',blank);
  assert.equal(sprite.defaultPrevented,true);
  assert.equal(palette.defaultPrevented,undefined);
+ assert.equal(blank.defaultPrevented,undefined);
  h.input.unmount();
- assert.equal(h.target.count('dragstart'),0);
 });
 
-test('DM preview gesture is always one token regardless of prior DM selection',()=>{
+test('DM preview gesture always selects exactly one token, never a DM group',()=>{
  const previous={selectedTokens:[TOKEN,SECOND],
   selectedTools:[TOOL],picked:piece('token',TOKEN)};
  assert.deepEqual(worldGestureSelection({...previous,preview:true}),
@@ -140,15 +157,17 @@ test('DM preview gesture is always one token regardless of prior DM selection',(
   [piece('token','new')]);
 });
 
-test('board preserves server control checks before a single preview selection',()=>{
+test('board keeps server control checks and player-effective preview identity',()=>{
  const board=readFileSync(new URL('../src/engine/v2/WorldV2Board.jsx',
   import.meta.url),'utf8');
  const runtime=readFileSync(new URL('../src/engine/v2/WorldV2TabletopRuntime.js',
   import.meta.url),'utf8');
+ const panel=readFileSync(new URL('../src/MapSettingPanel.jsx',import.meta.url),'utf8');
  assert.match(board,/worldGestureSelection\(\{/);
  assert.match(board,/keyboard,preview:dmPreview/);
  assert.match(board,/picked\.id!==previewToken\?\.id/);
  assert.match(board,/!authorizeSelection\(selection\)/);
  assert.match(runtime,/picked\.selection\.every\(piece=>vision\.visiblePieces\.some/);
+ assert.match(panel,/playerIds\.has\(t\.owner_id\)/);
  assert.doesNotMatch(runtime,/db\.channel\('drag-debug'/);
 });
