@@ -293,6 +293,17 @@
       "releaseReady": false,
       "documentationOnly": false,
       "note": "A05 opt-in bounded diagnostics only: client gesture/render first changed sprite position, remote authorized observer path-to-position update, renderer RAF interval/stall and mount/unmount, plus static and headless browser tests. No SQL, movement authority, fog, permissions or deployment changes. Stacked on draft A04 PR #73 (and A03 PR #72). Real user performance measurements deferred to A06."
+    },
+    {
+      "name": "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "50cd4f9bd56e48c4a1d7fdeb64a35bc54241eb70",
+      "linkedPullRequest": 75,
+      "basePullRequest": 74,
+      "releaseReady": false,
+      "documentationOnly": true,
+      "note": "A06 read-only evidence record only, no live authenticated browser testing. The SQL statement statistics aggregate all activity since 5 Nov, not per-gesture current-release p95. Production is still PR #70; A05 tracing remains draft PR #74. BLOCKED pending approved release and DM/P1/P2 sessions plus protected map fixture. No SQL/production changes."
     }
   ],
   "features": [
@@ -786,6 +797,18 @@
       "databaseDependencies": [],
       "verification": "Trace unit tests, isolated React headless drag assertions and exact-head CI required. Timing describes renderer style mutation, not confirmed compositor paint or real authenticated user latency; A06 NOT RUN.",
       "nextAcceptanceStep": "A06"
+    },
+    {
+      "id": "world-v2-a06-historical-live-baseline",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Read-only A06 historical World V2 RPC latency and Supabase resource snapshots, verified current deploy and test fixture gaps; does not assert live 3-account movement acceptance or actual browser p95.",
+      "sources": [
+        "stage/world-v2-a06-readonly-baseline-2026-11-10"
+      ],
+      "databaseDependencies": [],
+      "verification": "Live Supabase read-only pg_stat_statements and Vercel/GitHub metadata; complete A04 multiuser test matrix NOT RUN and Gate A BLOCKED.",
+      "nextAcceptanceStep": "A06"
     }
   ],
   "databaseDependencies": [
@@ -1140,7 +1163,8 @@
     "A03: historical applied anon GRANT cleanup has missing source migration parity (issue #69); this is documentation follow-up E05, NOT permission to reapply SQL.",
     "A02: PR #71 may retain previously authorized renderer sight during indefinitely pending observer resync; require bounded deadline, stream-locked movement input gating, tests, targeted metadata refresh and final green CI before merge.",
     "A04: manual authenticated DM+two-player fixture contract staged only. Do not run live fixture writes or record player identities, invite codes, JWTs, signed media URLs or unrevealed NPC data in public test evidence.",
-    "A05: browser trace opt-in ?worldV2Trace=1 keeps only 256 bounded allowlisted events/duration samples per metric and no secret IDs, RPC payloads or coordinates. No extra network logging or telemetry service. Counter results are not substitute for RLS security acceptance."
+    "A05: browser trace opt-in ?worldV2Trace=1 keeps only 256 bounded allowlisted events/duration samples per metric and no secret IDs, RPC payloads or coordinates. No extra network logging or telemetry service. Counter results are not substitute for RLS security acceptance.",
+    "A06: no role/permission/visibility regression was directly tested with authenticated players, and the current test map's fog/collision are disabled. Database historical execution figures cannot establish observer confidentiality or renderer flash root cause."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1149,9 +1173,10 @@
       "fix/world-v2-live-authority-continuity-2026-11-10",
       "stage/engineering-workflow-and-ledger-a03-2026-11-10",
       "stage/world-v2-authenticated-fixture-a04-2026-11-10",
-      "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10"
+      "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "stage/world-v2-a06-readonly-baseline-2026-11-10"
     ],
-    "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06.",
+    "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate. PR #73 is stacked on PR #72 for documentation only; neither may be merged or deployed without designer approval. Fixture is NOT ready for live execution until a controlled test campaign has required fog/collision/lights/roles prepared. PR #74 is bounded client tracing only, stacked on PR #73 and PR #72. It cannot independently deploy, and runtime performance cannot be inferred from CI until authorized three-session testing in A06. PR #75 documents the partial A06 baseline; authenticated DM/P1/P2 browser measurements and protected fixture prep remain BLOCKED. No approval for deployment or SQL is implied. Do not advance to Gate A or B01 before completing A06 or separately approved deviation.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": [],
     "blockedPullRequests": [
@@ -1161,7 +1186,8 @@
       71,
       72,
       73,
-      74
+      74,
+      75
     ],
     "nextMicrostep": "A06",
     "manualAcceptancePending": true,
@@ -1175,6 +1201,11 @@
         "number": 74,
         "basePullRequest": 73,
         "reason": "A05 instrumentation branch inherits A04 fixture manifest and A03 persistent tracker; all remain draft and unreleased"
+      },
+      {
+        "number": 75,
+        "basePullRequest": 74,
+        "reason": "Read-only A06 baseline documentation carries A05 instrumentation A04 fixture A03 tracker; blocked and not release-ready"
       }
     ]
   },
