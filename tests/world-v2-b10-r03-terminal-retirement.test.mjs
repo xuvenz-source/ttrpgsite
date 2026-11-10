@@ -44,7 +44,7 @@ test('R03 runs only AFTER source-real B03+B07+B08+R01, with prior B08 historical
  assert.ok(run.indexOf('-f '+path)<
    run.indexOf('tests/world-v2-b10-postgres/terminal-r03.sql'));
  const postgresTest=read('tests/world-v2-b10-postgres/terminal-r03.sql');
- for(let i=1;i<=14;i++)assert.match(postgresTest,new RegExp('R03-'+String(i).padStart(2,'0')));
+ for(let i=1;i<=16;i++)assert.match(postgresTest,new RegExp('R03-'+String(i).padStart(2,'0')));
 });
 
 test('R03 never silently marks live B10 release ready or enables signed fallback',()=>{
