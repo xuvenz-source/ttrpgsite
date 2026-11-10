@@ -15,7 +15,7 @@ import {worldV2Trace} from './WorldTrace.js';
 import {createWorldFrameScheduler} from './WorldFrameScheduler.js';
 import {createObserverPathBuffer} from './ObserverPathBuffer.js';
 import {createApprovedPathPresentation} from './ApprovedPathPresentation.js';
-import {certifiedMotionMatchesSight,certifiedMotionPaintAllowed}
+import {certifiedMotionPaintAllowed}
  from './CertifiedMotionPresentation.js';
 import {normalizeWorldSceneSnapshot,worldSceneDirtyRegions}
  from './SceneSnapshot.js';
@@ -442,8 +442,12 @@ export function createWorldRenderer({
    visibility=next;fogMask=nextMask;authorized=true;
    // B06 cannot carry a cosmetic certificate across sight cursor/epoch
    // updates or changed environment/permission generations.
-   if(local?.certificate&&
-    !certifiedMotionMatchesSight(local.certificate,next,scene)){
+   if(local?.certificate&&!certifiedMotionPaintAllowed({
+    certificate:local.certificate,frame:next,scene,
+    mapId:currentMap,
+    selection:[...local.anchors.values()].map(p=>({kind:p.kind,id:p.id})),
+    approved:local.approved,presented:local.display
+   })){
     local.certificate=null;local.predicted=false;
     local.display=copyPoint(local.approved);
     local.route.reset(local.approved);
