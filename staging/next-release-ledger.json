@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-10",
-  "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-  "releaseBranch": "stage/world-v2-phase1-instrumentation-2026-11-10",
+  "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+  "releaseBranch": null,
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -187,10 +187,12 @@
     },
     {
       "name": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
-      "status": "included",
+      "status": "released",
       "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
       "linkedPullRequest": 54,
-      "note": "Complete combined staging fix attempt for player visual wall penetration and all-token fog flash. DM local swept wall checks, server-confirmed player previews/final token/group/tool trajectories, RLS-aware sprite and monitor mount retention, bounded motion paths and stale callback cleanup. No production SQL, no deployment, no paid services. Unit/build/CodeQL and later live multiplayer verification required."
+      "note": "Complete combined staging fix attempt for player visual wall penetration and all-token fog flash. DM local swept wall checks, server-confirmed player previews/final token/group/tool trajectories, RLS-aware sprite and monitor mount retention, bounded motion paths and stale callback cleanup. No production SQL, no deployment, no paid services. Unit/build/CodeQL and later live multiplayer verification required. Reconciled A03: PR #54 merged to main on 8 Nov 2026 (3e844a51); included in currently served PR #70. Historical manual browser acceptance is not claimed.",
+      "productionCommit": "3e844a51e76597c0dd31ac9c831193da91f71d39",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "stage/world-engine-v2-2026-11-09",
@@ -245,10 +247,30 @@
     },
     {
       "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-      "note": "World Engine V2 Phases 1–6 integrated in draft PR #68: bounded trace, safe same-authority sight, unified input, certified smooth motion, incremental fog, and Phase 6 multi-client/collision/preview/security stress (720 private frames, 120 previews, 1k wall checks, 25k bounded traces). No SQL/Edge changes or deploy. Authenticated post-release acceptance and advisor follow-up pending.",
-      "linkedPullRequest": 68
+      "note": "World V2 Phase 1–6 staging PR #68 merged to main on 10 Nov 2026 (1d5041a9); also included in current Vercel READY release #70. Automated checks do not satisfy outstanding live authenticated multiplayer QA.",
+      "linkedPullRequest": 68,
+      "productionCommit": "1d5041a9ad920b72f423dd584afe277b989e317c",
+      "reconciledOn": "2026-11-10"
+    },
+    {
+      "name": "fix/world-v2-live-authority-continuity-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "linkedPullRequest": 71,
+      "releaseReady": false,
+      "documentationOnly": false,
+      "note": "Narrow signed-sight hold + trailing commit reads. A02 decision: AMEND BEFORE MERGE; release blocked pending hard timeout, stream-locked input gating, recovery tests, selective reconciliation and final CI."
+    },
+    {
+      "name": "stage/engineering-workflow-and-ledger-a03-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "linkedPullRequest": 72,
+      "releaseReady": false,
+      "documentationOnly": true,
+      "note": "Documentation-only A03 workflow/tracker/ledger source-of-truth reconciliation; separate draft PR. No runtime, SQL or Edge changes."
     }
   ],
   "features": [
@@ -655,10 +677,12 @@
       "sources": [
         "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [],
-      "verification": "Tests cover fast pointer jumps, wall sliding, common group grants, untrusted rejections and final approved path; GitHub tests/build/CodeQL required. Live manual DMs/players must test walls/doors, collisions, grouping, fast pointer release, network delay and DM overrides."
+      "verification": "Tests cover fast pointer jumps, wall sliding, common group grants, untrusted rejections and final approved path; GitHub tests/build/CodeQL required. Live manual DMs/players must test walls/doors, collisions, grouping, fast pointer release, network delay and DM overrides. A03: PR #54 merged; authenticated player flashing/collision UX acceptance remains unverified.",
+      "productionCommit": "3e844a51e76597c0dd31ac9c831193da91f71d39",
+      "reconciledOn": "2026-11-10"
     },
     {
       "id": "no-flash-player-token-sprite-lifecycle",
@@ -666,10 +690,12 @@
       "sources": [
         "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08"
       ],
-      "status": "included",
+      "status": "released",
       "releaseReady": true,
       "databaseDependencies": [],
-      "verification": "Tests cover stable IDs on fog revoke, hidden + RLS removed entities and monitor concealment. Manual two-player simultaneous movement and token artwork network inspection remain live acceptance."
+      "verification": "Tests cover stable IDs on fog revoke, hidden + RLS removed entities and monitor concealment. Manual two-player simultaneous movement and token artwork network inspection remain live acceptance. A03: PR #54 merged; authenticated player flashing/collision UX acceptance remains unverified.",
+      "productionCommit": "3e844a51e76597c0dd31ac9c831193da91f71d39",
+      "reconciledOn": "2026-11-10"
     },
     {
       "id": "world-engine-v2-phase10-integrated",
@@ -677,8 +703,8 @@
       "sources": [
         "stage/world-engine-v2-2026-11-09"
       ],
-      "status": "staged-unreleased",
-      "releaseReady": false,
+      "status": "released",
+      "releaseReady": true,
       "databaseDependencies": [
         "20261109095000_world_engine_v2_motion_authority",
         "20261109100000_world_engine_v2_private_observer_stream",
@@ -689,7 +715,31 @@
         "20261109102300_world_engine_v2_vision_roster_invalidation",
         "20261109103000_world_engine_v2_legacy_commit_checkpoint"
       ],
-      "verification": "Staged audit corrections: hidden NPC/tool entering authorized sight now issues a private identity-free roster tick; fogless lights clear without errors; owned and party-shared loose tools receive bounded server-certified prediction grants, with withheld/held/unowned cases denied. Frontend/isolated PG17/CodeQL checks must pass at exact final SHA. Production Supabase PG17 schema read-only verified: eight V2 migrations unapplied and original enabled collision trigger bodies preserved in Phase 10 compatibility migration. Real 2/4/8-client movement, visual parity, latency p50/p95, CPU/RSS/WAL and Vercel/Supabase deployment acceptance are NOT performed; releaseReady remains false."
+      "verification": "GitHub PR #58 merged 9 Nov 2026 and its eight V2 migration names/recorded applied versions were verified in Supabase (A03). Included in live production PR #70. Automated/isolated tests passed historically; authenticated sustained DM/player/preview privacy, movement and fog performance acceptance is still outstanding.",
+      "productionCommit": "26841990c53fedef2567a95c8bc0f2e1513ab98c",
+      "reconciledOn": "2026-11-10"
+    },
+    {
+      "id": "world-v2-recovery-and-commit-coalescing-pr71",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Narrow same-scope observer recovery and token/tool commit reconciliation from draft PR #71. Security/lifecycle amendments required; not merged.",
+      "sources": [
+        "fix/world-v2-live-authority-continuity-2026-11-10"
+      ],
+      "databaseDependencies": [],
+      "verification": "A02 six-file review completed. Hard bounded sight hold; stream-lock movement gating; hanging-RPC and real-renderer tests; selection-aware refresh; final CI required before release."
+    },
+    {
+      "id": "approved-incremental-engineering-workflow-a03",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Approved 35-step engineering workflow, machine-readable handoff tracker and release-state reconciliation; documentation only.",
+      "sources": [
+        "stage/engineering-workflow-and-ledger-a03-2026-11-10"
+      ],
+      "databaseDependencies": [],
+      "verification": "Draft PR #72, no runtime or SQL code; final JSON/diff and CI validation required."
     }
   ],
   "databaseDependencies": [
@@ -909,74 +959,114 @@
     {
       "name": "20261109095000_world_engine_v2_motion_authority",
       "file": "supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162313. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162313",
+      "appliedName": "world_engine_v2_motion_authority",
+      "sourceMigrationVersion": "20261109095000",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "20261109100000_world_engine_v2_private_observer_stream",
       "file": "supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162326. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162326",
+      "appliedName": "world_engine_v2_private_observer_stream",
+      "sourceMigrationVersion": "20261109100000",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "20261109101000_world_engine_v2_static_scene_publication",
       "file": "supabase/migrations/20261109101000_world_engine_v2_static_scene_publication.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162330. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162330",
+      "appliedName": "world_engine_v2_static_scene_publication",
+      "sourceMigrationVersion": "20261109101000",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "20261109102000_world_engine_v2_vision_geometry",
       "file": "supabase/migrations/20261109102000_world_engine_v2_vision_geometry.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162334. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162334",
+      "appliedName": "world_engine_v2_vision_geometry",
+      "sourceMigrationVersion": "20261109102000",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "20261109102100_world_engine_v2_visibility_snapshots",
       "file": "supabase/migrations/20261109102100_world_engine_v2_visibility_snapshots.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162343. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162343",
+      "appliedName": "world_engine_v2_visibility_snapshots",
+      "sourceMigrationVersion": "20261109102100",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "20261109102200_world_engine_v2_visibility_invalidation",
       "file": "supabase/migrations/20261109102200_world_engine_v2_visibility_invalidation.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162347. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162347",
+      "appliedName": "world_engine_v2_visibility_invalidation",
+      "sourceMigrationVersion": "20261109102200",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "20261109102300_world_engine_v2_vision_roster_invalidation",
       "file": "supabase/migrations/20261109102300_world_engine_v2_vision_roster_invalidation.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162352. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162352",
+      "appliedName": "world_engine_v2_vision_roster_invalidation",
+      "sourceMigrationVersion": "20261109102300",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     },
     {
       "name": "20261109103000_world_engine_v2_legacy_commit_checkpoint",
       "file": "supabase/migrations/20261109103000_world_engine_v2_legacy_commit_checkpoint.sql",
-      "status": "staged-unapplied",
+      "status": "applied-production",
       "mustApplyBeforeFrontend": true,
-      "releaseApprovalRequired": true,
+      "releaseApprovalRequired": false,
       "dependsOn": "V2 migrations in ascending timestamp order",
-      "note": "Integrated World Engine V2 cutover only; do not apply any V2 migrations to live production before explicit designer release approval and compatible frontend staging acceptance."
+      "note": "A03 source-of-truth correction: V2 already integrated in designer-approved PR #58, and Supabase lists this migration name as applied under 20261109162357. Do not reapply SQL based on repository filename timestamp. Historical source and installed function parity can be examined in E05.",
+      "appliedVersion": "20261109162357",
+      "appliedName": "world_engine_v2_legacy_commit_checkpoint",
+      "sourceMigrationVersion": "20261109103000",
+      "appliedVia": "Live Supabase migration history, name-verified at A03; original committed source filename retains its own version.",
+      "reconciledOn": "2026-11-10"
     }
   ],
   "edgeFunctionDependencies": [
@@ -1000,44 +1090,52 @@
     "Authenticated SQL smoke-tested valid owned token, unauthorized foreign token, denied DM bypass, and reversible DM trajectory; all tests in rollback transactions.",
     "Cross-inventory transfers: SQL candidate (not applied) separately authorizes owned character and shared/owned issued tool, requires active source-item lease and checks contiguous destination space. Staged frontend must not be released before its matching RPC.",
     "Movement continuity: older fog ticks are ignored ONLY when a server-confirmed frame already covers that revision and the fog mode matches; newly invalidated sight remains fail-closed. All RLS, collision, and observer-preview SQL stay unchanged.",
-    "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
+    "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release.",
+    "A03: historical applied anon GRANT cleanup has missing source migration parity (issue #69); this is documentation follow-up E05, NOT permission to reapply SQL.",
+    "A02: PR #71 may retain previously authorized renderer sight during indefinitely pending observer resync; require bounded deadline, stream-locked movement input gating, tests, targeted metadata refresh and final green CI before merge."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-    "releaseBranch": "stage/world-v2-phase1-instrumentation-2026-11-10",
+    "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+    "releaseBranch": null,
     "outstandingBranches": [
-      "stage/world-v2-phase1-instrumentation-2026-11-10"
+      "fix/world-v2-live-authority-continuity-2026-11-10",
+      "stage/engineering-workflow-and-ledger-a03-2026-11-10"
     ],
-    "stagePolicy": "All six V2 phases integrated in PR #68. Require green CI on exact head, final reconcile of other open drafts #20/#21/#32/#33 and old staging branches, and explicit designer merge/deploy approval. Authenticated DM/player/preview full React/Supabase tests, 100 live moves no blackout, fog/collision/permission/reconnect, Supabase RAM and RPC p95 remain live release acceptance gates.",
+    "stagePolicy": "PR #71 must be amended, reviewed and pass exact-head checks. PR #72 is documentation-only and in draft. Reconciling source-of-truth records is not designer authorization to deploy; integrate all genuinely ready staged work only at an approved release gate.",
     "databaseReleaseVersion": null,
-    "additionalDatabaseReleaseVersions": []
+    "additionalDatabaseReleaseVersions": [],
+    "blockedPullRequests": [
+      71
+    ],
+    "draftPullRequests": [
+      71,
+      72
+    ],
+    "nextMicrostep": "A04",
+    "manualAcceptancePending": true
   },
   "lastRelease": {
-    "name": "Unified Movement, Fog, Realtime and Memory Architecture",
-    "date": "2026-11-08",
+    "name": "V2 player/DM dragging and fog continuity refinements",
+    "date": "2026-11-10",
     "approvedPullRequests": [
-      53
+      70
     ],
-    "includedStagedPullRequests": [],
-    "status": "release-approved-for-production",
-    "productionBaseSha": "9c66bde70fcf021ea1499adb52cd52fe77712e33",
-    "productionCommit": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
-    "sourceBranch": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
-    "priorRelease": {
-      "approvedPullRequests": [
-        52
-      ],
-      "productionCommit": "9c66bde70fcf021ea1499adb52cd52fe77712e33"
-    },
-    "databaseDependencies": [
-      "20261108111759",
-      "20261108112135",
-      "20261108112252",
-      "20261108112544"
-    ],
+    "status": "merged-production-verified",
+    "productionBaseSha": "1d5041a9ad920b72f423dd584afe277b989e317c",
+    "productionCommit": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+    "sourceBranch": "fix/world-v2-live-drag-vision-continuity-2026-11-10",
+    "vercelDeploymentId": "dpl_FNwPjVY7o1781dc8Uo6Eizgf8rb4",
+    "vercelState": "READY",
+    "databaseDependencies": [],
     "edgeFunctionDependencies": [],
     "paidInfrastructure": false,
-    "notes": "Vercel deployment dpl_95iB877cDBNXt2zs6K73oNms7LGz READY, production HTTP 200, CodeQL/staged build pass. DM/player post-deploy movement and fog defects reported. PR #54 is next combined staging attempt."
+    "priorRelease": {
+      "approvedPullRequests": [
+        53
+      ],
+      "productionCommit": "55d5d704c47c60f04100ce13fb81a5d4357b999e"
+    },
+    "notes": "Latest production Vercel READY SHA exactly matches PR #70 merge SHA. PR #71 not deployed. Real authenticated multiplayer movement/flashing acceptance still outstanding."
   },
   "releaseHistory": [
     {
@@ -1170,7 +1268,288 @@
       ],
       "paidInfrastructure": false,
       "notes": "Designer-approved single merge and Vercel production deploy VERIFIED READY. Supabase runtime corrected and grants/RLS inspected. Follow-up player QA revealed visual wall knockback and sprite remounts, staged in PR #54."
+    },
+    {
+      "date": "2026-11-08",
+      "name": "[STAGING] Solid wall dragging and stable player token artwork on movement",
+      "pullRequests": [
+        54
+      ],
+      "sourceBranch": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
+      "productionBaseSha": "55d5d704c47c60f04100ce13fb81a5d4357b999e",
+      "productionCommit": "3e844a51e76597c0dd31ac9c831193da91f71d39",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Release consolidated predictive movement, fog and concealed-barrier protection",
+      "pullRequests": [
+        55
+      ],
+      "sourceBranch": "stage/complete-predictive-navigation-and-fog-2026-11-09",
+      "productionBaseSha": "3e844a51e76597c0dd31ac9c831193da91f71d39",
+      "productionCommit": "cae48260b76365b379a2ed6a51ab34817becd23a",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-08",
+      "name": "Hotfix: restore DM token placement with restricted NPC reads",
+      "pullRequests": [
+        56
+      ],
+      "sourceBranch": "fix/map-token-protected-column-2026-11-09",
+      "productionBaseSha": "cae48260b76365b379a2ed6a51ab34817becd23a",
+      "productionCommit": "ab905866306e9a0669287ac4b7e620c4ee33c880",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-09",
+      "name": "Unified real-time movement, collision, fog and observer rendering — integrated live-test release",
+      "pullRequests": [
+        57
+      ],
+      "sourceBranch": "stage/unified-realtime-movement-2026-11-09",
+      "productionBaseSha": "ab905866306e9a0669287ac4b7e620c4ee33c880",
+      "productionCommit": "ab0901f7cbe85f2bf62bccf7c0941c3eec928d04",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-09",
+      "name": "Release integrated World Engine V2 for live multiplayer testing",
+      "pullRequests": [
+        58
+      ],
+      "sourceBranch": "stage/world-engine-v2-2026-11-09",
+      "productionBaseSha": "ab0901f7cbe85f2bf62bccf7c0941c3eec928d04",
+      "productionCommit": "26841990c53fedef2567a95c8bc0f2e1513ab98c",
+      "databaseDependencies": [
+        "20261109162313",
+        "20261109162326",
+        "20261109162330",
+        "20261109162334",
+        "20261109162343",
+        "20261109162347",
+        "20261109162352",
+        "20261109162357"
+      ],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-09",
+      "name": "Fix World V2 startup on unconfigured maps without relaxing fog or collision",
+      "pullRequests": [
+        59
+      ],
+      "sourceBranch": "fix/world-v2-unpublished-map-startup-2026-11-10",
+      "productionBaseSha": "26841990c53fedef2567a95c8bc0f2e1513ab98c",
+      "productionCommit": "bb7d058b504a960965b393d8c4e506bab2c946db",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-09",
+      "name": "[STAGING] Reduce Supabase free-tier memory and Realtime query overhead",
+      "pullRequests": [
+        60
+      ],
+      "sourceBranch": "stage/supabase-free-tier-memory-optimizations-2026-11-10",
+      "productionBaseSha": "bb7d058b504a960965b393d8c4e506bab2c946db",
+      "productionCommit": "7fb2c04fe4ca85721e08772e936265a649784bda",
+      "databaseDependencies": [
+        "20261109171247"
+      ],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Integrated World Engine V2 live regression repair",
+      "pullRequests": [
+        61
+      ],
+      "sourceBranch": "stage/world-v2-live-regression-integrated-2026-11-10",
+      "productionBaseSha": "7fb2c04fe4ca85721e08772e936265a649784bda",
+      "productionCommit": "572c9565377752b89c963cedcff23e7cd145fdcf",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Recover DM V2 observer sight after scene-subscription race",
+      "pullRequests": [
+        62
+      ],
+      "sourceBranch": "fix/world-v2-dm-sight-recovery-2026-11-10",
+      "productionBaseSha": "572c9565377752b89c963cedcff23e7cd145fdcf",
+      "productionCommit": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Serialize V2 DM sight recovery and repair stale scene bootstrap",
+      "pullRequests": [
+        63
+      ],
+      "sourceBranch": "fix/world-v2-serialized-sight-recovery-2026-11-10",
+      "productionBaseSha": "e314b879e5fe9897a3e728c3e1c94e95c7878938",
+      "productionCommit": "bab5286189f2d83a287a804ce383e9e574525fcf",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Restore World V2 token picking, drag and continuous DM/player preview movement",
+      "pullRequests": [
+        64
+      ],
+      "sourceBranch": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
+      "productionBaseSha": "bab5286189f2d83a287a804ce383e9e574525fcf",
+      "productionCommit": "131252bab88435568adb6d892e5fe4c1b510ddf4",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Repair V2 pointer drag handoff and DM player-preview token movement",
+      "pullRequests": [
+        65
+      ],
+      "sourceBranch": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
+      "productionBaseSha": "131252bab88435568adb6d892e5fe4c1b510ddf4",
+      "productionCommit": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Repair V2 terrain loading, token dragging and DM preview",
+      "pullRequests": [
+        66
+      ],
+      "sourceBranch": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
+      "productionBaseSha": "737d64998266f7c8a097ccc48b1377cce5b56b0d",
+      "productionCommit": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Fix V2 drag input before React capture and restore player preview",
+      "pullRequests": [
+        67
+      ],
+      "sourceBranch": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
+      "productionBaseSha": "9b33b0ccd2b2c4f31187b9fe53b2b2aff1bb4ee1",
+      "productionCommit": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] World Engine V2 Phases 1–6 — integrated movement, fog and security",
+      "pullRequests": [
+        68
+      ],
+      "sourceBranch": "stage/world-v2-phase1-instrumentation-2026-11-10",
+      "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
+      "productionCommit": "1d5041a9ad920b72f423dd584afe277b989e317c",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Verified as a merged GitHub main commit and ancestor of the currently deployed main; historical per-merge Vercel deployment status not independently audited. Post-release manual multiplayer acceptance not implied."
+    },
+    {
+      "date": "2026-11-10",
+      "name": "[STAGING] Repair V2 player/DM dragging and fog continuity after PR #68",
+      "pullRequests": [
+        70
+      ],
+      "sourceBranch": "fix/world-v2-live-drag-vision-continuity-2026-11-10",
+      "productionBaseSha": "1d5041a9ad920b72f423dd584afe277b989e317c",
+      "productionCommit": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "databaseDependencies": [],
+      "paidInfrastructure": false,
+      "notes": "Directly verified as active Vercel READY deployment on 10 Nov 2026."
     }
   ],
-  "databaseReleaseVersion": "20261108091818"
+  "databaseReleaseVersion": "20261109171247",
+  "releaseBranchStatus": "not-yet-consolidated",
+  "releaseBranchNote": "No active integrated next-release candidate. Existing PR #71 (blocked) and A03 documentation PR #72 (unmerged) must be reconciled with all ready staging work before any approved production release.",
+  "appliedMigrationAudit": {
+    "observedOn": "2026-11-10",
+    "supabaseProject": "lwhwgqaunxbmvyndswze",
+    "recordedAppliedCount": 83,
+    "highestRecordedVersion": "20261109171247",
+    "v2VersionAliases": [
+      {
+        "name": "world_engine_v2_motion_authority",
+        "source": "20261109095000",
+        "applied": "20261109162313"
+      },
+      {
+        "name": "world_engine_v2_private_observer_stream",
+        "source": "20261109100000",
+        "applied": "20261109162326"
+      },
+      {
+        "name": "world_engine_v2_static_scene_publication",
+        "source": "20261109101000",
+        "applied": "20261109162330"
+      },
+      {
+        "name": "world_engine_v2_vision_geometry",
+        "source": "20261109102000",
+        "applied": "20261109162334"
+      },
+      {
+        "name": "world_engine_v2_visibility_snapshots",
+        "source": "20261109102100",
+        "applied": "20261109162343"
+      },
+      {
+        "name": "world_engine_v2_visibility_invalidation",
+        "source": "20261109102200",
+        "applied": "20261109162347"
+      },
+      {
+        "name": "world_engine_v2_vision_roster_invalidation",
+        "source": "20261109102300",
+        "applied": "20261109162352"
+      },
+      {
+        "name": "world_engine_v2_legacy_commit_checkpoint",
+        "source": "20261109103000",
+        "applied": "20261109162357"
+      }
+    ],
+    "note": "Historical source migration filenames differ from versions in Supabase's applied migration history; never rerun an already applied migration for ledger parity."
+  },
+  "migrationProvenanceGaps": [
+    {
+      "issue": 69,
+      "status": "open",
+      "appliedVersion": "20261107051546",
+      "appliedName": "remove_unused_anon_preference_and_map_grants",
+      "repositorySourceStatus": "exact versioned SQL file absent on main as verified in issue #69",
+      "actionStep": "E05",
+      "noLiveSqlAction": true
+    }
+  ]
 }
