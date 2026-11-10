@@ -42,7 +42,8 @@
     "mapFlashAndTerrainRemount": "NOT_MEASURED",
     "hiddenEntityAndLOSProof": "NOT_RUN",
     "groupAndPreviewParityLive": "NOT_RUN",
-    "rollbackMigrationDryRun": "NOT_RUN"
+    "rollbackMigrationDryRun": "NOT_RUN",
+    "observerRecovery": "STAGED_SOURCE_CANDIDATE__UNIT_AND_FINAL_CI_PENDING"
   },
   "sourceLimitations": {
     "B03Installed": false,
@@ -57,7 +58,7 @@
   },
   "noGoReasons": [
     "B03 is now wired into a **nonapplied B10-R01 private Core candidate**. Actual production forge_world_v2.advance_core_v2 remains unchanged and has no B03 validator; forward-only migration/rollout and live Auth/permission QA not approved.",
-    "B07/B08 observer budget can preserve deferred private progress after commit without a guaranteed future authorized delivery/resync trigger; priority hides may be delayed when the budget itself is exhausted.",
+    "B10-R02 stages an OFF-by-default six-second authenticated canonical sight recovery that bypasses Realtime message exhaustion; however no hard time bound under offline/background browsers, no guaranteed delivery of intermediate uncommitted paths, and ambiguous deferred frames remain. Real multi-account LOS and budget-saturation tests must pass before release.",
     "PR #71 renderer/observer sight continuity remains a separate blocked draft with recovery and security amendments; no safe reconciliation/merge decision.",
     "No A06 authenticated DM/Player1/Player2 prepared fog/collision/door/2x2/hidden NPC/torch/test map fixture or 24-case live browser evidence.",
     "No browser/device p95 first paint, observer lag, terrain reassignment/flash, sprite remount, reconnect/multi-tab or Supabase free-tier stress measurements for B03–B09.",
@@ -125,7 +126,34 @@
         "performance resource acceptance",
         "separate deployment approval"
       ]
+    },
+    "B10_R02": {
+      "status": "STAGED_OPT_IN_NONDEPLOYED",
+      "branch": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
+      "parent": "B10-R01 PR #86 @ a7275ec1f7103ccb0dc87dd2437b2857c0334533",
+      "sourcePaths": [
+        "src/engine/v2/ObserverRecoveryWatch.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "src/engine/v2/RealtimeTransport.js"
+      ],
+      "flag": "VITE_WORLD_V2_OBSERVER_RECOVERY",
+      "default": "OFF",
+      "recoveryIntervalMs": 6000,
+      "mechanism": "Existing authenticated get_world_visibility_v2 RPC supplies authoritative canonical roster/position even if Realtime budget suppresses all packets; transport fences older deferred origins. On signed permission/scene/scope change the older private observer is immediately sealed and a new authorized sight is required.",
+      "newPublicRpc": false,
+      "newRealtimeTopic": false,
+      "newSupabaseMigration": false,
+      "guaranteedPhysicalRealtimeDelivery": false,
+      "residualRisks": [
+        "Browser background/offline scheduling cannot guarantee a fixed visibility deadline.",
+        "Missing uncommitted intermediate drag path cannot be synthesized from canonical position.",
+        "An older deferred packet whose start exactly equals newer canonical sight can still be ambiguous without a signed per-session epoch; reject rollout until real adversarial testing.",
+        "One signed sight RPC per active client per six seconds must be stress measured against Supabase free-tier DB cost."
+      ],
+      "liveInstalled": false,
+      "releaseQualified": false,
+      "authenticatedMultiplayerTested": false
     }
   },
-  "nextRemediation": "B10-R02 observer budget terminal progress/hide delivery and authorized resync; staging only"
+  "nextRemediation": "B10-R03: close deferred same-origin frame race and prepare versioned migration/PR71 conflicts; separate instruction required."
 }

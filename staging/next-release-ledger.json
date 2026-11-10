@@ -500,6 +500,28 @@
       "gateDecision": "NO_GO",
       "note": "B10-R01: Nonapplied private V2 Core replacement with B03 swept batch, no browser grant or public API change; prior B04/B07 and post-R01 B08 hostile regression + 11 new role/replay tests in disposable PG17. Does not remove B10 live blockers.",
       "verification": "B10 SQL combined PG17 #42858948356 success; final exact PR head pending."
+    },
+    {
+      "name": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
+      "status": "staged",
+      "documentationOnly": false,
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "a7275ec1f7103ccb0dc87dd2437b2857c0334533",
+      "basePullRequest": 86,
+      "linkedPullRequest": 87,
+      "releaseReady": false,
+      "sqlApplied": false,
+      "productionDeployed": false,
+      "gateDecision": "NO_GO",
+      "featureFlagsActivated": false,
+      "docs": "docs/architecture/world-v2-b10-r02-budget-independent-recovery.md",
+      "note": "B10-R02 DEFAULT OFF opt-in 6s authorized foreground sight fallback when B07/B08 Realtime exhausted; new canonical roster/cursor aligns private stream and fences late deferred paths. No backend SQL, broadcasts or new RPC. Equal-origin and free-tier p95/security tests remain blocked.",
+      "testEvidence": {
+        "appCi": "PENDING final exact-head",
+        "codeql": "PENDING final exact-head",
+        "sqlCi": "Existing source-real PG17 candidate unchanged",
+        "liveAuthMatrix": "NOT_RUN"
+      }
     }
   ],
   "features": [
@@ -1060,6 +1082,23 @@
       ],
       "verification": "Disposable postgres 17 only; no live Supabase install/3-account QA",
       "nextAcceptanceStep": "B10-R02 observer recovery and full B10 release qualifications"
+    },
+    {
+      "id": "world-v2-b10-r02-signed-recovery-watch",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Default-off independent signed canonical sight polling (6s foreground) with stale private path fencing and no new network channel or DB migration.",
+      "sources": [
+        "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11"
+      ],
+      "databaseDependencies": [
+        "B03",
+        "B07",
+        "B08",
+        "B10-R01"
+      ],
+      "verification": "Deterministic Node tests and ordinary build/CodeQL/PG17 CI only, not live Auth, LOS or free-tier performance",
+      "nextAcceptanceStep": "B10-R03 bounded equal-origin ambiguity / code-integrity and actual authenticated free-tier release qualifications"
     }
   ],
   "databaseDependencies": [
@@ -1422,7 +1461,8 @@
     "B10 NO-GO: live catalog confirms B03 validator not installed/wired, B07/B08 queues absent; public advance authenticated-only and private forge_world_v2 usage denied. Source-real PG17 coexistence is not a production migration.",
     "B10: PR #71 unamended, budget exhaustion eventual private observer recovery unproven; CodeQL staging scan successful on earlier head, 24 authenticated DM/P1/P2 scenarios NOT RUN. No merge/deploy/SQL approval.",
     "B10 CI: serial 823-test npm test suite and single startup-only Chrome CDP retry; a failed browser assertion remains failed. This is not live authenticated UX validation.",
-    "B10-R01 candidate routes fresh private Core advances through B03, preserving B08 exact replay and restricted private function grants. Source-real isolated tests passed; live RPC remains ORIGINAL and unmodified."
+    "B10-R01 candidate routes fresh private Core advances through B03, preserving B08 exact replay and restricted private function grants. Source-real isolated tests passed; live RPC remains ORIGINAL and unmodified.",
+    "B10-R02: default-off authenticated six-second vision fallback can recover canonical visible positions/hides when private Realtime budget loses all packets, with signed roster/cursor gates; browser offline/background and ambiguous same-origin deferred frames prevent hard guarantees. Gate B NO-GO."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1442,6 +1482,7 @@
       "stage/world-v2-b09-input-parity-2026-11-11",
       "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
       "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
+      "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10"
     ],

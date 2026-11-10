@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10-R02",
+  "nextStep": "B10-R03",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -446,6 +446,40 @@
       "pullRequest": 86,
       "next": "B10-R02 observer terminal/hide recovery under free-tier budget only with next designer instruction",
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/86"
+    },
+    "B10_R02": {
+      "status": "STAGED",
+      "releaseReady": false,
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
+      "pullRequest": 87,
+      "basedOnHead": "a7275ec1f7103ccb0dc87dd2437b2857c0334533",
+      "basePullRequest": 86,
+      "documentation": "docs/architecture/world-v2-b10-r02-budget-independent-recovery.md",
+      "expectedFiles": [
+        "src/engine/v2/ObserverRecoveryWatch.js",
+        "src/engine/v2/RealtimeTransport.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "tests/world-v2-b10-r02-observer-recovery.test.mjs",
+        "docs/architecture/world-v2-b10-r02-budget-independent-recovery.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "Bounded independent, foreground-only 6s signed sight reconciliation after lost/delayed B07/B08 Realtime, per-piece canonical origin fences and private cursor/roster alignment; no extra broadcast/channel or new SQL. Default OFF under VITE_WORLD_V2_OBSERVER_RECOVERY.",
+      "tests": "New 8 deterministic tests for bounded timer/foreground, single-flight, no hot retry, stale buffered paths, unknown/hidden actors, malformed signed sight, and default-off preview. Existing 826 tests and SQL regression retained. CI final-head pending.",
+      "stageSecurity": "Visibility RPC supplies JWT scoped canonical sight; transport only aligns after renderer authorization. Old deferred paths starting behind signed endpoint are skipped with cursor advancing; no browser publish or fog bypass. A newer server-signed permission/environment/scope seals the old stream synchronously before any motion.",
+      "stageLimitations": [
+        "Opt-in 6s authenticated sight polling is not a strict deadline when offline, backgrounded or when browser scheduling stalls; no independent guaranteed server push if B07 budget remains exhausted.",
+        "Uncommitted intermediate drag frames cannot be reconstructed from final canonical sight; latest signed snapshot only reconciles committed state.",
+        "Buffered old frame whose origin equals newer canonical point remains ambiguous without an epoch-bound source/session marker; require adversarial end-to-end tests and/or trusted queue retirement before declaring no-rewind guarantee.",
+        "One visibility RPC per six seconds per foreground authenticated viewer needs DB/LOS/fog CPU, memory, multi-tab and free-tier benchmarking; current production flags OFF.",
+        "PR #71 remains security/recovery blocked and unmerged; B03/B07/B08/R01 nonapplied SQL requires reviewed forward migration and recovery plan.",
+        "A06/Gate A 24-case distinct DM/P1/P2 authenticated fog/collision/hidden NPC/door/2x2 matrix, observer p95, terrain flashing and group/preview security NOT RUN; B10 release remains NO-GO."
+      ],
+      "noProductionChanges": true,
+      "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/87"
     }
   },
   "handoffs": {
@@ -994,6 +1028,39 @@
       "next": "B10-R02 observer terminal/hide recovery under free-tier budget only with next designer instruction",
       "pullRequest": 86,
       "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/86"
+    },
+    "B10_R02": {
+      "step": "B10-R02",
+      "status": "STAGED — release NO-GO",
+      "date": "2026-11-11",
+      "branch": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
+      "pullRequest": 87,
+      "stackedOnPR": 86,
+      "stackedOnHead": "a7275ec1f7103ccb0dc87dd2437b2857c0334533",
+      "expectedFiles": [
+        "src/engine/v2/ObserverRecoveryWatch.js",
+        "src/engine/v2/RealtimeTransport.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "tests/world-v2-b10-r02-observer-recovery.test.mjs",
+        "docs/architecture/world-v2-b10-r02-budget-independent-recovery.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Source test and CodeQL final-head pending; PostgreSQL candidate nonapplied and unchanged. No DM/P1/P2 sessions.",
+      "security": "Visibility RPC supplies JWT scoped canonical sight; transport only aligns after renderer authorization. Old deferred paths starting behind signed endpoint are skipped with cursor advancing; no browser publish or fog bypass. A newer server-signed permission/environment/scope seals the old stream synchronously before any motion.",
+      "blockers": [
+        "Opt-in 6s authenticated sight polling is not a strict deadline when offline, backgrounded or when browser scheduling stalls; no independent guaranteed server push if B07 budget remains exhausted.",
+        "Uncommitted intermediate drag frames cannot be reconstructed from final canonical sight; latest signed snapshot only reconciles committed state.",
+        "Buffered old frame whose origin equals newer canonical point remains ambiguous without an epoch-bound source/session marker; require adversarial end-to-end tests and/or trusted queue retirement before declaring no-rewind guarantee.",
+        "One visibility RPC per six seconds per foreground authenticated viewer needs DB/LOS/fog CPU, memory, multi-tab and free-tier benchmarking; current production flags OFF.",
+        "PR #71 remains security/recovery blocked and unmerged; B03/B07/B08/R01 nonapplied SQL requires reviewed forward migration and recovery plan.",
+        "A06/Gate A 24-case distinct DM/P1/P2 authenticated fog/collision/hidden NPC/door/2x2 matrix, observer p95, terrain flashing and group/preview security NOT RUN; B10 release remains NO-GO."
+      ],
+      "noAppliedSql": true,
+      "noDeployment": true,
+      "next": "B10-R03 targeted treatment of ambiguous equal-origin deferred path and versioned migration readiness, one microstep after new designer instruction",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/87"
     }
   },
   "pendingWork": [
@@ -1092,10 +1159,10 @@
     },
     {
       "id": "B10-OBSERVER-TERMINAL-RECOVERY",
-      "status": "BLOCKED",
+      "status": "STAGED_CLIENT_RECOVERY_NOT_RELEASED",
       "ownerStep": "B10-remediation",
       "category": "release-gate",
-      "notes": "Under exhausted Realtime/hide budget and no actor retry, observers can stay stale; require safe authorization-triggered resync and adversarial multi-tab tests."
+      "notes": "B10-R02 stages default-off foreground 6s signed get_world_visibility_v2 recovery after exhausted Realtime budget; no new SQL. Canonical hides/positions can recover without sender, but ambiguous same-origin old frame, offline/hidden timing, real fog/Auth tests and extra sight CPU remain release blockers."
     },
     {
       "id": "B10-PR71-RECONCILIATION",
@@ -1131,6 +1198,13 @@
       "category": "release-gate",
       "status": "BLOCKED",
       "notes": "Do not run source candidate as an automatically applied migration; versioned install and rollback/roll-forward plus real Auth/LOS/performance checks required."
+    },
+    {
+      "id": "B10-R02-EQUAL-ORIGIN-DEFERRED-RACE",
+      "status": "BLOCKED",
+      "ownerStep": "B10-R03",
+      "category": "security-recovery",
+      "notes": "After a new signed canonical sight, an older B07 queued packet with the same starting coordinate remains indistinguishable from a fresh session without extra trusted epoch/queue retirement; do not activate fallback until adversarial multi-account tests."
     }
   ],
   "sourceOfTruthRules": [
