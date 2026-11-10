@@ -50,7 +50,14 @@ async function browser(path){
    if(data.error)item.reject(Error(data.error.message));else item.resolve(data.result);
   });
   const send=(method,params={})=>new Promise((resolve,reject)=>{
-   const key=++id;pending.set(key,{resolve,reject});
+   const key=++id;
+   const timer=setTimeout(()=>{
+    pending.delete(key);reject(Error('CDP timed out: '+method));
+   },8000);
+   pending.set(key,{
+    resolve:value=>{clearTimeout(timer);resolve(value)},
+    reject:error=>{clearTimeout(timer);reject(error)}
+   });
    ws.send(JSON.stringify({id:key,method,params}));
   });
   const evaluate=async expression=>{
@@ -67,7 +74,7 @@ async function browser(path){
   throw e;
  }
 }
-test('integrated actual React board drags owned player, DM and preview token',async t=>{
+test('integrated actual React board drags owned player, DM and preview token',{timeout:90000},async t=>{
  const path=chrome();
  if(!path){t.skip('Chromium unavailable');return}
  const vite=await createViteServer({root:ROOT,configFile:false,
