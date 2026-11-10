@@ -443,8 +443,9 @@
         "PR #71 source/security amendments still separate and blocked",
         "B10 release gate NO_GO; no production deployment authorization"
       ],
-      "pullRequest": null,
-      "next": "B10-R02 observer terminal/hide recovery under free-tier budget only with next designer instruction"
+      "pullRequest": 86,
+      "next": "B10-R02 observer terminal/hide recovery under free-tier budget only with next designer instruction",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/86"
     }
   },
   "handoffs": {
@@ -991,7 +992,8 @@
       "gateA": "BLOCKED",
       "gateB": "BLOCKED",
       "next": "B10-R02 observer terminal/hide recovery under free-tier budget only with next designer instruction",
-      "pullRequest": null
+      "pullRequest": 86,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/86"
     }
   },
   "pendingWork": [
