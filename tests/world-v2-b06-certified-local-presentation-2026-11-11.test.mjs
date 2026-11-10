@@ -214,6 +214,7 @@ test('B06 renderer rejects forged grant, wrong viewer and wrong approved anchor'
 
 test('B06 renderer immediately retracts predicted sprite on newer sight epoch/cursor',()=>{
  const {r,flush,sprite}=rendererFixture();
+ const initialSpriteCreates=r.stats.spriteCreates;
  const c=certify(point(2.5,2.2));
  r.applyLocalMovement(grabbed());r.applyLocalMovement(predicted(c));
  flush(1100);
@@ -221,7 +222,8 @@ test('B06 renderer immediately retracts predicted sprite on newer sight epoch/cu
  assert.equal(r.adoptVisibility(sight({cursor:5,visionEpoch:6})),true);
  flush(1110);
  assertTranslate(sprite,200,200);
- assert.equal(r.stats.spriteCreates,1,'no remount while the sight changes');
+ assert.equal(r.stats.spriteCreates,initialSpriteCreates,
+  'no remount while the sight changes');
  r.dispose();
 });
 
