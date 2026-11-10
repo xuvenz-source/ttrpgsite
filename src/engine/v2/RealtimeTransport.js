@@ -271,11 +271,18 @@ export function createWorldRealtimeTransport({
   acceptSignedSight(snapshot){
    if(disposed||!started||!connected||locked||
     !validWorldObserverSnapshot(snapshot,mapId,viewerId)||
-    snapshot.scope!==sightScope||
     !['dm','viewer'].includes(snapshot.scope)||
-    snapshot.environmentRevision!==revision||
-    snapshot.permissionGeneration!==permission||
     snapshot.cursor<cursor)return false;
+   if(snapshot.scope!==sightScope||
+    snapshot.environmentRevision!==revision||
+    snapshot.permissionGeneration!==permission){
+    // The renderer has independently accepted a signed generation/scope
+    // change. Keeping the OLD stream revision unlocked would accept old
+    // private coordinates against new permissions. Seal synchronously and
+    // reauthorize against the new viewer-scoped sight before any more motion.
+    void resync('signed-sight-version-change');
+    return false;
+   }
    const next=signedPositions(snapshot);
    if(!next)return false;
    for(const [id,position] of next){
