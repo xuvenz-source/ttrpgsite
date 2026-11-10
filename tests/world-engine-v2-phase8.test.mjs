@@ -290,10 +290,15 @@ test('unrostered NPC and hidden-cell routes cannot make new sprites',()=>{
  assert.equal(ctx.renderer.applyObserverPath(path(ally,[[3,3],[4,3]]),{
   mapId,seq:6}),false);
  assert.equal(ctx.renderer.getSpriteElement('token',ally.id),null);
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
  assert.equal(ctx.renderer.applyObserverPath(path(hero,[
-  [2,2],[3,2],[4,2]]),{mapId,seq:6}),false);
- assert.equal(ctx.renderer.stats.sprites,0);
- assert.equal(ctx.renderer.authorized,false);
+  [2,2],[3,2],[4,2]]),{mapId,seq:6}),true);
+ assert.equal(ctx.renderer.stats.sprites,1);
+ assert.equal(ctx.renderer.authorized,true);
+ assert.equal(ctx.renderer.awaitingFreshVision,true);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(position(node),'200px 200px',
+  'unknown region must remain unrevealed until authorized sight arrives');
  ctx.renderer.dispose();
 });
 test('hide immediately removes known sprite and old cursor cannot revive it',()=>{
