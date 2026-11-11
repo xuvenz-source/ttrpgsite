@@ -177,3 +177,24 @@ test('R18-10 guarded client remains default-OFF, no new channels or public visib
  assert.match(runtime,/guardedObserverEnabled=!dmPreview/);
  assert.doesNotMatch(source,/\.send\(|\.broadcast\(/);
 });
+
+test('R18-10 release ledger retains older staged branches with guarded recovery OFF',()=>{
+ const ledger=JSON.parse(readFileSync(new URL('../staging/next-release-ledger.json',import.meta.url),'utf8'));
+ const status=JSON.parse(readFileSync(new URL('../staging/world-v2-b10-r18-10-concealment-readiness.json',import.meta.url),'utf8'));
+ assert.equal(status.releaseDecision,'NO_GO');
+ assert.equal(status.productionApproval,false);
+ assert.equal(status.databaseApproval,false);
+ assert.equal(status.releaseGates.actualLinkedCliDryRunPerformed,false);
+ assert.equal(status.releaseGates.guardedRecoveryEnabled,false);
+ assert.equal(status.releaseGates.backendMigrationApplied,false);
+ assert.equal(ledger.releaseBranch,ledger.upcomingRelease.releaseBranch);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.length>=11);
+ assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,
+  ledger.upcomingRelease.outstandingBranches.length);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(status.stagingBranch));
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(
+  'stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11'));
+ assert.equal(ledger.upcomingRelease.databaseReleaseVersion,null);
+ assert.equal(ledger.features.find(x=>x.id===
+  'world-v2-b10-r18-10-guarded-concealment-priority')?.releaseReady,false);
+});
