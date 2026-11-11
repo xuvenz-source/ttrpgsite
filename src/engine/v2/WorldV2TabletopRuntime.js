@@ -45,7 +45,8 @@ export function createWorldV2TabletopRuntime({
  previewViewerId=null,
  getAuthorizedPieces=()=>[],onAuthorizedRoster=noop,
  onScene=noop,onError=noop,onCommit=noop,onState=noop,
- onGesture=noop
+ onGesture=noop,
+ bootstrapOnPrivateSubscription=import.meta.env?.VITE_WORLD_V2_OBSERVER_FIRST_BOOTSTRAP==='1'
 }={}){
  if(!db?.rpc||!db?.channel||!db?.removeChannel||
   !uuid(mapId)||!uuid(viewerId)||!renderer||
@@ -55,12 +56,16 @@ export function createWorldV2TabletopRuntime({
   typeof renderer.applyObserverPath!=='function'||
   typeof renderer.applyObserverHide!=='function'||
   typeof isDM!=='boolean'||typeof dmPreview!=='boolean'||
+  typeof bootstrapOnPrivateSubscription!=='boolean'||
   (dmPreview&&(!isDM||!uuid(previewViewerId)))||
   typeof getAuthorizedPieces!=='function'||
   [onAuthorizedRoster,onScene,onError,onCommit,onState,onGesture]
    .some(callback=>typeof callback!=='function'))
   throw Error('Invalid V2 tabletop integration');
  const identity=dmPreview?previewViewerId:viewerId;
+ // On opt-in non-preview joins, keep the view sealed until the private
+ // observer has subscribed and obtained its first signed sight.
+ const observerFirstBootstrap=bootstrapOnPrivateSubscription&&!dmPreview;
  // Explicit B10-R02 source-only opt-in, OFF in every existing environment.
  // Budget recovery never invents or publishes coordinates. A normal
  // authenticated sight refresh reconciles committed canonical motion even
@@ -77,6 +82,31 @@ export function createWorldV2TabletopRuntime({
  let sceneRecovery=null;
  let observerWatch=null,foregroundListener=null;
  let previewPosition=null,dmLightRefreshTimer=null;
+ // R09: the initial private observer roster must be signed AFTER the scene
+ // channel finishes its initial subscribe/load. Either channel may connect
+ // first. No provisional sight, cursor, coordinates or public fallback.
+ let initialSceneCurrent=false;
+ const sceneBootstrapWaiters=new Set();
+ function resolveSceneBootstrap(ready){
+  for(const waiter of sceneBootstrapWaiters){
+   clearTimeout(waiter.timer);
+   waiter.resolve(ready);
+  }
+  sceneBootstrapWaiters.clear();
+ }
+ function waitInitialSceneCurrent(){
+  if(!observerFirstBootstrap)return Promise.resolve(true);
+  if(initialSceneCurrent&&!manager.stale)return Promise.resolve(true);
+  if(disposed)return Promise.resolve(false);
+  return new Promise(resolve=>{
+   const waiter={resolve,timer:null};
+   waiter.timer=setTimeout(()=>{
+    sceneBootstrapWaiters.delete(waiter);
+    resolve(false);
+   },8000);
+   sceneBootstrapWaiters.add(waiter);
+  });
+ }
  function scheduleDmLightRefresh(){
   if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
   // Most maps have no moving DM lights. Ordinary token paths already have
@@ -277,7 +307,8 @@ export function createWorldV2TabletopRuntime({
   const task=(async()=>{
    const observer=stream;
    if(!observer?.connected)
-    return authorized()?true:refreshVisibility('scene-current');
+    return observerFirstBootstrap?false:
+     authorized()?true:refreshVisibility('scene-current');
    // A scene-ready callback can fire during the observer's initial sight
    // request. Let it settle before deciding whether a NEW sight is needed.
    // Two overlapping resyncs used to cancel each other's authorization.
@@ -311,9 +342,12 @@ export function createWorldV2TabletopRuntime({
    const task=(async()=>{
    const ok=await manager.load();
    if(!ok||disposed){state('scene-unavailable');return false}
-   if(!(await refreshVisibility('initial'))||disposed){
+   if(!observerFirstBootstrap&&
+    (!(await refreshVisibility('initial'))||disposed)){
     state('sight-unavailable');return false;
    }
+   // Observer-first: no visible roster or movement authority until the
+   // locked private SUBSCRIBED resync obtains server-signed sight.
    // A DM cannot (and must not) join another player's private movement
    // channel using their DM JWT. In player-effective DM preview, use only
    // the DM-authorized preview RPC; a dedicated preview observer feed is a
@@ -321,6 +355,9 @@ export function createWorldV2TabletopRuntime({
    if(!dmPreview)stream=createWorldRealtimeTransport({
     db,mapId,viewerId:identity,
     onResync:async reason=>{
+     if(observerFirstBootstrap&&!await waitInitialSceneCurrent())
+      throw Error('V2 scene subscription not ready for signed sight');
+     if(disposed)throw Error('V2 observer disposed');
      if(manager.stale){
       if(!await manager.load())throw Error('V2 scene resync failed');
      }
@@ -357,6 +394,15 @@ export function createWorldV2TabletopRuntime({
     db,mapId,sceneManager:manager,
     onState:sceneState=>{
      state('scene-'+sceneState.reason);
+     if(observerFirstBootstrap){
+      if(sceneState.reason==='scene-current'&&!manager.stale){
+       initialSceneCurrent=true;
+       resolveSceneBootstrap(true);
+      }else if(sceneState.reason==='disconnected'){
+       initialSceneCurrent=false;
+       resolveSceneBootstrap(false);
+      }
+     }
      if(sceneState.reason==='scene-current')
       void reconcileSceneCurrent();
     },
@@ -435,6 +481,7 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
+   resolveSceneBootstrap(false);
    observerWatch?.dispose();observerWatch=null;
    if(foregroundListener&&typeof document!=='undefined'&&
     document.removeEventListener)

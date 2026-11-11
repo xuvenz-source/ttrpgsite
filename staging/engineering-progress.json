@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10-R09",
+  "nextStep": "B10-R10",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -719,6 +719,28 @@
       "verification": "Source/current live inspection and all six user pass/fail observations; no firsthand browser repro, recording or sanitized trace",
       "next": "B10-R09 — evidence-backed first movement/render repair, after PR70 sanitized trace; no premature client+SQL release",
       "noProductionChanges": true
+    },
+    "B10_R09": {
+      "status": "STAGED",
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-r09-trace-backed-bootstrap-2026-11-11",
+      "baseSha": "49f3e6cd4a5980d3a936c0047e501ba26661e133",
+      "traceEvidence": "staging/world-v2-b10-r09-trace-evidence.json",
+      "report": "docs/testing/world-v2-b10-r09-trace-backed-bootstrap.md",
+      "scope": "Optional private observer-first signed sight bootstrap removes traced initial flash; whitelisted rejection classification for next live capture",
+      "sourceVerified": "first six signed sprites removed on subscribed resync; Begin p95 726.9ms, Advance p95 294ms, Commit p95 308.7ms, small sample",
+      "flag": "VITE_WORLD_V2_OBSERVER_FIRST_BOOTSTRAP",
+      "flagEnabled": false,
+      "sqlApplied": false,
+      "manualProtectedQa": "NOT_RUN",
+      "productionUnchanged": true,
+      "blockers": [
+        "actual P1/P2 remote movement flashing unknown",
+        "keyboard rejection cause unknown",
+        "real signed protected fog/collision fixture untested",
+        "migration history unreconciled"
+      ],
+      "next": "B10-R10 — review opt-in bootstrap CI and three-account secure canary, diagnose remaining RPC and keyboard rejection"
     }
   },
   "handoffs": {
