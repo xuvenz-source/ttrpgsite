@@ -33,9 +33,24 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
   'src/engine/v2/MovementController.js':'a88c26578a23d4da8d06263d04f2789248f1b942',
   'src/engine/v2/WorldV2Board.jsx':'ae0adfa7d02de9f0bbc75a0e1e8972ef860537cb'
  };
- for(const [path,sha] of Object.entries(frozen))
-  assert.equal(blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8')),sha,
-   'R17 reviewed source changed without an amendment: '+path);
+ // R18-15 is an explicit, tested amendment to the original R17
+ // controller; do not rewrite or erase its historical reviewed checksum.
+ // Any further edit requires a NEW work-package hash and test review.
+ const approvedAmendment={
+  path:'src/engine/v2/MovementController.js',
+  originalR17:frozen['src/engine/v2/MovementController.js'],
+  workPackage:'B10-R18-15',
+  reviewedBlobSha:'0603e7b42ebd937a41e2a65e8b13089aa496dfba'
+ };
+ assert.equal(approvedAmendment.originalR17,
+  'a88c26578a23d4da8d06263d04f2789248f1b942');
+ assert.equal(approvedAmendment.workPackage,'B10-R18-15');
+ for(const [path,sha] of Object.entries(frozen)){
+  const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
+  assert.equal(checked,path===approvedAmendment.path?
+   approvedAmendment.reviewedBlobSha:sha,
+   'R17-reviewed source drifted without an exact audited amendment: '+path);
+ }
  const runtime=readFileSync(new URL(
   '../src/engine/v2/WorldV2TabletopRuntime.js',import.meta.url),'utf8');
  assert.match(runtime,/VITE_WORLD_V2_OBSERVER_RECOVERY==='1'/);
