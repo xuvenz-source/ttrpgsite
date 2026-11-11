@@ -127,6 +127,8 @@ export function createMovementController({
  };
  const reject=(g,reason)=>{
   if(active!==g)return;
+  // Only allow the trace's fixed detail whitelist; backend errors become other.
+  worldV2Trace.event('movement.reject-reason',reason);
   finish(g,{status:'rejected',reason});
   cancelSession(g);
  };

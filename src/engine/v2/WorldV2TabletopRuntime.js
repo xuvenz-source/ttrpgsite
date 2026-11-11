@@ -45,7 +45,8 @@ export function createWorldV2TabletopRuntime({
  previewViewerId=null,
  getAuthorizedPieces=()=>[],onAuthorizedRoster=noop,
  onScene=noop,onError=noop,onCommit=noop,onState=noop,
- onGesture=noop
+ onGesture=noop,
+ bootstrapOnPrivateSubscription=import.meta.env?.VITE_WORLD_V2_OBSERVER_FIRST_BOOTSTRAP==='1'
 }={}){
  if(!db?.rpc||!db?.channel||!db?.removeChannel||
   !uuid(mapId)||!uuid(viewerId)||!renderer||
@@ -55,12 +56,16 @@ export function createWorldV2TabletopRuntime({
   typeof renderer.applyObserverPath!=='function'||
   typeof renderer.applyObserverHide!=='function'||
   typeof isDM!=='boolean'||typeof dmPreview!=='boolean'||
+  typeof bootstrapOnPrivateSubscription!=='boolean'||
   (dmPreview&&(!isDM||!uuid(previewViewerId)))||
   typeof getAuthorizedPieces!=='function'||
   [onAuthorizedRoster,onScene,onError,onCommit,onState,onGesture]
    .some(callback=>typeof callback!=='function'))
   throw Error('Invalid V2 tabletop integration');
  const identity=dmPreview?previewViewerId:viewerId;
+ // On opt-in non-preview joins, keep the view sealed until the private
+ // observer has subscribed and obtained its first signed sight.
+ const observerFirstBootstrap=bootstrapOnPrivateSubscription&&!dmPreview;
  // Explicit B10-R02 source-only opt-in, OFF in every existing environment.
  // Budget recovery never invents or publishes coordinates. A normal
  // authenticated sight refresh reconciles committed canonical motion even
@@ -277,7 +282,8 @@ export function createWorldV2TabletopRuntime({
   const task=(async()=>{
    const observer=stream;
    if(!observer?.connected)
-    return authorized()?true:refreshVisibility('scene-current');
+    return observerFirstBootstrap?false:
+     authorized()?true:refreshVisibility('scene-current');
    // A scene-ready callback can fire during the observer's initial sight
    // request. Let it settle before deciding whether a NEW sight is needed.
    // Two overlapping resyncs used to cancel each other's authorization.
@@ -311,9 +317,12 @@ export function createWorldV2TabletopRuntime({
    const task=(async()=>{
    const ok=await manager.load();
    if(!ok||disposed){state('scene-unavailable');return false}
-   if(!(await refreshVisibility('initial'))||disposed){
+   if(!observerFirstBootstrap&&
+    (!(await refreshVisibility('initial'))||disposed)){
     state('sight-unavailable');return false;
    }
+   // Observer-first: no visible roster or movement authority until the
+   // locked private SUBSCRIBED resync obtains server-signed sight.
    // A DM cannot (and must not) join another player's private movement
    // channel using their DM JWT. In player-effective DM preview, use only
    // the DM-authorized preview RPC; a dedicated preview observer feed is a

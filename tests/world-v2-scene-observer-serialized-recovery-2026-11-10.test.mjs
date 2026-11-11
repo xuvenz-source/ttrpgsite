@@ -28,20 +28,22 @@ const sight=(preview=false)=>({
  ],predictionGrants:[],lightCells:[],dmMovingLights:[]
 });
 
-function harness({delaySecond=null,denyAfterBootstrap=false,preview=false}={}){
+function harness({delaySecond=null,denyAfterBootstrap=false,preview=false,
+ bootstrapOnPrivateSubscription=false}={}){
  const channels=new Map(),errors=[],states=[];
  let sightRequests=0,sceneRequests=0;
  const renderer={
   currentScene:null,currentVisibility:null,authorized:false,
+  sightAdoptions:0,revocations:[],
   adoptScene(s){this.currentScene=s;return true},
   adoptVisibility(s){
    if(!this.currentScene||this.currentScene.revision!==s.environmentRevision||
     this.currentScene.sceneGeneration!==s.sceneGeneration||
     s.scope!==(preview?'viewer':'dm'))return false;
-   this.currentVisibility=s;this.authorized=true;return true
+   this.currentVisibility=s;this.authorized=true;this.sightAdoptions++;return true
   },
-  revoke(_reason,hard=false){
-   this.authorized=false;
+  revoke(reason,hard=false){
+   this.revocations.push(reason);this.authorized=false;
    if(hard)this.currentScene=null;
   },
   applyLocalMovement(){return true},
@@ -76,6 +78,7 @@ function harness({delaySecond=null,denyAfterBootstrap=false,preview=false}={}){
  const runtime=createWorldV2TabletopRuntime({
   db,mapId:MAP,viewerId:DM,renderer,isDM:true,
   dmPreview:preview,previewViewerId:preview?PLAYER:null,
+  bootstrapOnPrivateSubscription,
   getAuthorizedPieces:()=>[{kind:'token',id:TOKEN,x:2,y:2,spanX:1,spanY:1}],
   onError:error=>errors.push(error.message),
   onState:state=>states.push(state)
@@ -184,4 +187,46 @@ test('a rejected renderer frame revokes controller sight rather than reporting s
   assert.equal(controller.frame,null);
   assert.ok(errors.some(message=>message.includes('renderer rejected')));
  }finally{controller.dispose()}
+});
+
+test('R09 opt-in first sight waits for private subscribe; scene ready cannot prepaint or resubscribe seal',async()=>{
+ const h=harness({bootstrapOnPrivateSubscription:true});
+ try{
+  assert.equal(await h.runtime.start(),true);
+  assert.equal(h.sightRequests,0);
+  assert.equal(h.renderer.authorized,false);
+  assert.equal(h.runtime.active,false);
+  assert.equal(h.runtime.stream.locked,true);
+  h.sceneChannel().status('SUBSCRIBED');
+  await tick();await tick();await tick();
+  assert.equal(h.sightRequests,0);
+  h.observerChannel().status('SUBSCRIBED');
+  await tick();await tick();await tick();
+  assert.equal(h.runtime.stream.locked,false);
+  assert.equal(h.runtime.active,true);
+  assert.equal(h.renderer.sightAdoptions,1);
+  assert.equal(h.sightRequests,1);
+  const revocations=h.renderer.revocations.length;
+  assert.equal(revocations,1,'initial private seal happens before first visible signed sight');
+  h.sceneChannel().status('SUBSCRIBED');
+  await tick();await tick();await tick();
+  assert.equal(h.renderer.revocations.length,revocations);
+  assert.equal(h.renderer.sightAdoptions,1);
+  assert.deepEqual(h.errors,[]);
+  h.observerChannel().status('CLOSED');
+  assert.equal(h.runtime.stream.locked,true);
+  assert.equal(h.renderer.authorized,false,'disconnect must revoke previous sight');
+ }finally{await h.runtime.dispose()}
+});
+test('R09 DM player preview retains direct signed sight and never joins player channel',async()=>{
+ const h=harness({bootstrapOnPrivateSubscription:true,preview:true});
+ try{
+  assert.equal(await h.runtime.start(),true);
+  assert.equal(h.runtime.active,true);
+  assert.equal(h.sightRequests,1);
+  assert.equal(h.channels.size,1);
+  assert.equal(h.renderer.sightAdoptions,1);
+  assert.equal(h.runtime.effectiveViewer,PLAYER);
+  assert.deepEqual(h.errors,[]);
+ }finally{await h.runtime.dispose()}
 });

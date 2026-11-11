@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "step": "B10-R09",
+  "source": "USER_PASTED_SANITIZED_PR70_WORLD_TRACE",
+  "sourceSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+  "eventCount": 91,
+  "timingMs": {
+    "firstSprites": 820,
+    "subscribeSeal": 1240,
+    "removedSprites": 6,
+    "sceneCurrentSeal": 1637,
+    "recreatedSprites": 1855
+  },
+  "metricsMs": {
+    "beginP95": 726.9,
+    "beginN": 6,
+    "advanceP95": 294,
+    "advanceN": 11,
+    "commitP95": 308.7,
+    "commitN": 3,
+    "visibilityP95": 788.9,
+    "visibilityN": 9,
+    "rendererWorkP95": 0.1,
+    "rendererWorkN": 96
+  },
+  "observed": {
+    "inputPicks": 6,
+    "gesturesGrabbed": 6,
+    "keyboardRejected": 2,
+    "terrainAssignments": 1,
+    "fullFogDraws": 1,
+    "observerResyncs": 2,
+    "rendererSeals": 4,
+    "rendererOpaque": 4
+  },
+  "classification": "INITIAL_SIGHT_PAINT_THEN_PRIVATE_SUBSCRIBE_SEAL_CONFIRMED; LATER_PLAYER_REMOTE_FLASH_NOT_CAPTURED; KEYBOARD_REJECTION_REASON_UNKNOWN; SEQUENTIAL_RPC_LATENCY_CONFIRMED",
+  "limitations": "small one-role trace, no protected fog collision or player observer timings",
+  "release": "STAGING_ONLY_NO_GO"
+}

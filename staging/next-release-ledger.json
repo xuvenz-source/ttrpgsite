@@ -2133,5 +2133,14 @@
     "canaryDecision": "DEFER_R02_AND_R05",
     "diagnosticPlan": "staging/world-v2-b10-r08-trace-plan.json",
     "next": "B10-R09"
+  },
+  "R09TraceBackedBootstrap": {
+    "decision": "NO_GO",
+    "evidence": "staging/world-v2-b10-r09-trace-evidence.json",
+    "newClientFlag": "VITE_WORLD_V2_OBSERVER_FIRST_BOOTSTRAP",
+    "enabled": false,
+    "liveMovementServerLatencyStillUnfixed": true,
+    "liveSqlApplied": false,
+    "next": "B10-R10"
   }
 }

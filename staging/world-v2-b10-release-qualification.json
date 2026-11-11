@@ -308,6 +308,16 @@
       "R02CanaryReleased": false,
       "R05MigrationApplied": false,
       "protectedThreeAccountQa": "NOT_RUN"
+    },
+    "B10_R09": {
+      "status": "STAGED_OPT_IN_INITIAL_OBSERVER_BOOTSTRAP_NO_GO",
+      "sourceSha": "49f3e6cd4a5980d3a936c0047e501ba26661e133",
+      "flag": "VITE_WORLD_V2_OBSERVER_FIRST_BOOTSTRAP",
+      "flagActivated": false,
+      "productionSqlApplied": false,
+      "threeAccountQa": "NOT_RUN",
+      "keyboardRejectionCause": "NOT_YET_CAPTURED",
+      "serverMovementLatencyStillPresent": true
     }
   },
   "nextRemediation": "B10-R06: reconcile history safely for one targeted migration and perform controlled client-first R02 test canary on disposable live campaign; validate real DM/P1/P2 signed fog before server R03 apply."
