@@ -158,8 +158,12 @@ test('R18-07 records only a proposed migration mechanism, never approval or a co
  assert.equal(plan.observed.remoteEmptySqlStatements,0);
  assert.equal(plan.exactTargetVersion,'20261111023204');
  assert.equal(plan.exactGitBlobSha,baseline.targetGitBlobSha);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches.length,8);
- assert.equal(ledger.upcomingRelease.releaseBranch,plan.sourceBranch);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.length>=8);
+ assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,
+  ledger.upcomingRelease.outstandingBranches.length);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(plan.sourceBranch),
+  'later release gates must not drop R18-07 source validation');
+ assert.equal(ledger.branches.find(x=>x.name===plan.sourceBranch)?.status,'staged');
  assert.equal(ledger.features.find(x=>
   x.id==='world-v2-b10-r18-07-isolated-migration-history')?.releaseReady,false);
  assert.equal(ledger.branches.find(x=>x.name===plan.sourceBranch)?.linkedPullRequest,109);
