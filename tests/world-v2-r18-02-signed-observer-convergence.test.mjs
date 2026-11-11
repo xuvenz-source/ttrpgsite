@@ -254,6 +254,8 @@ test('R18-02 hides do not permit a late signed origin or path to reveal a concea
  const h=transportHarness(snap(0,[piece(A,1,1),piece(C,3,3)]));
  await h.join();
  assert.equal(h.t.acceptSignedSight(snap(1,[piece(A,1,1)])),true);
+ // The resync has its own newer, server-signed cursor 2 and still omits C.
+ h.setSnapshot(snap(2,[piece(A,1,1)]));
  h.send(2,[path(C,[[3,3],[4,3]])]);
  await flush();
  assert.equal(h.seen.length,0);
