@@ -22,7 +22,8 @@ const EVENTS=new Set([
  'renderer.visibility-reject','renderer.static-draw','renderer.fog-full',
  'renderer.fog-partial','renderer.opaque','renderer.visibility-stale',
  'renderer.sprite-create',
- 'renderer.sprite-remove','renderer.terrain-assign'
+ 'renderer.sprite-remove','renderer.terrain-assign',
+ 'renderer.observer-discontinuity'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
  'authority.cancel','visibility.rpc','visibility.queue-wait',
@@ -55,7 +56,7 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'session-cancelled','authority-error','reused-commit',
  'keyboard-unmount','map-change','dispose',
  'over-750ms','over-2s','over-5s','coalesced','drained','discarded',
- 'covered','fallback']);
+ 'covered','fallback','origin-mismatch','backlog']);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;
