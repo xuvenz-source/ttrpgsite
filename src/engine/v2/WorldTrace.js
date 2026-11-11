@@ -16,6 +16,7 @@ const EVENTS=new Set([
  'observer.unknown-piece','observer.frame-accepted',
  'visibility.revoke','visibility.refresh',
  'visibility.rpc-call','visibility.rpc-tail','visibility.queue',
+ 'visibility.continuation',
  'visibility.snapshot','visibility.stale-snapshot',
  'visibility.reject','visibility.notice','renderer.seal','renderer.scene-adopt',
  'renderer.visibility-reject','renderer.static-draw','renderer.fog-full',
@@ -53,7 +54,8 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'rpc-unavailable','invalid-server-reply','client-contract',
  'session-cancelled','authority-error','reused-commit',
  'keyboard-unmount','map-change','dispose',
- 'over-750ms','over-2s','over-5s','coalesced','drained','discarded']);
+ 'over-750ms','over-2s','over-5s','coalesced','drained','discarded',
+ 'covered','fallback']);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;

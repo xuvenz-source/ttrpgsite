@@ -9,10 +9,17 @@ const PLAYER='30000000-0000-4000-8000-000000000001';
 const DM='30000000-0000-4000-8000-000000000002';
 const TOKEN='40000000-0000-4000-8000-000000000001';
 const mode=new URLSearchParams(location.search).get('mode')||'player';
-const isDM=mode!=='player'&&mode!=='stale',preview=mode==='preview';
+const keyboardMode=mode==='r15-covered'||mode==='r15-fallback';
+const isDM=!['player','stale','r15-covered','r15-fallback'].includes(mode),
+ preview=mode==='preview';
 const user=isDM?DM:PLAYER;
 let position={x:2,y:2},priorPosition={x:2,y:2},staleUntil=0;
 let nextSession=0,cursor=5,visionEpoch=6;
+let commitStarted=0,postCommitSightCalls=0,firstCommitSightStarted=0;
+let resumeFirstCommit=()=>{},resumeFirstSight=()=>{},stepFn=null;
+const firstCommitGate=new Promise(resolve=>{resumeFirstCommit=resolve});
+const firstSightGate=new Promise(resolve=>{resumeFirstSight=resolve});
+function registerStep(next){stepFn=next}
 const rpc=[],errors=[],channelTopics=[],channelEvents=[];
 const pointerEvents=[];
 document.addEventListener('pointerdown',event=>{
@@ -53,8 +60,22 @@ const db={
   rpc.push(name);
   if(name==='get_world_scene_v2')return {data:scene(),error:null};
   if(name==='get_world_visibility_v2'||name==='preview_world_visibility_v2'||
-   name==='preview_world_visibility_at_v2')
+   name==='preview_world_visibility_at_v2'){
+   if(keyboardMode&&name==='get_world_visibility_v2'&&position.x>2){
+    postCommitSightCalls++;
+    if(postCommitSightCalls===1){
+     firstCommitSightStarted++;
+     await firstSightGate;
+     const frame=sight();
+     if(mode==='r15-fallback'){
+      frame.visiblePieces[0]={...frame.visiblePieces[0],
+       x:priorPosition.x,y:priorPosition.y};
+     }
+     return {data:frame,error:null};
+    }
+   }
    return {data:sight(),error:null};
+  }
   if(name==='begin_world_motion_v2'){
    // Reproduce the live server's strict canonical-origin rule in stale mode.
    if(mode==='stale'&&(args.p_origin?.x!==position.x||
@@ -69,6 +90,8 @@ const db={
     seq:args.p_seq,blocked:false,accepted,revision:7},error:null};
   }
   if(name==='commit_world_motion_v2'){
+   commitStarted++;
+   if(keyboardMode&&commitStarted===1)await firstCommitGate;
    priorPosition={...position};position={...args.p_endpoint};
    if(mode==='stale')staleUntil=performance.now()+1100;
    cursor++;visionEpoch++;
@@ -100,7 +123,8 @@ root.render(<WorldV2Board db={db} map={{
  }} tokens={[token]} user={user} isDM={isDM}
  active={true} environment={{version:1,objects}}
  environmentEditor={editor} scale={1} setScale={()=>{}}
- selectedId={null} setSelectedId={()=>{}}
+ selectedId={keyboardMode?TOKEN:null} setSelectedId={()=>{}}
+ registerV2Step={keyboardMode?registerStep:undefined}
  onMovementCommitted={()=>{committed++}}
  onV2Error={error=>errors.push(error?.message||String(error))}
  />);
@@ -110,7 +134,8 @@ window.__v2Integrated={
   const sprite=document.querySelector('[data-world-kind="token"]');
   return Boolean(sprite&&sprite.style.visibility==='visible'&&
    document.querySelector('.world-v2-token-content')&&
-   rpc.includes(preview?'preview_world_visibility_v2':'get_world_visibility_v2'));
+   rpc.includes(preview?'preview_world_visibility_v2':'get_world_visibility_v2')&&
+   (!keyboardMode||typeof stepFn==='function'));
  },
  bounds(){
   const sprite=document.querySelector('[data-world-kind="token"]');
@@ -119,10 +144,15 @@ window.__v2Integrated={
   return {x:rect.left+rect.width*.42,y:rect.top+rect.height*.52,
    width:rect.width,height:rect.height};
  },
+ step(dx,dy,options){return stepFn?.(dx,dy,options)??false},
+ resumeCommit(){resumeFirstCommit()},
+ resumeSight(){resumeFirstSight()},
  snapshot(){
   const sprite=document.querySelector('[data-world-kind="token"]');
   const elem=sprite?.getBoundingClientRect();
   return {mode,rpc:[...rpc],errors:[...errors],
+   commitStarted,postCommitSightCalls,firstCommitSightStarted,
+   stepReady:typeof stepFn==='function',
    committed,channelTopics:[...channelTopics],pointerEvents:[...pointerEvents],
    trace:window.__worldV2Trace?.snapshot(),
    position:{...position},spriteVisible:sprite?.style.visibility,

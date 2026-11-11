@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "updated": "2026-11-10",
-  "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-  "releaseBranch": "stage/world-v2-phase1-instrumentation-2026-11-10",
+  "updated": "2026-11-11",
+  "productionBaseSha": "61c53f383b87af2d9d72b83e0cf22dce287b89cc",
+  "releaseBranch": "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -245,10 +245,18 @@
     },
     {
       "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-      "note": "World Engine V2 Phases 1–6 integrated in draft PR #68: bounded trace, safe same-authority sight, unified input, certified smooth motion, incremental fog, and Phase 6 multi-client/collision/preview/security stress (720 private frames, 120 previews, 1k wall checks, 25k bounded traces). No SQL/Edge changes or deploy. Authenticated post-release acceptance and advisor follow-up pending.",
-      "linkedPullRequest": 68
+      "note": "PR #68 merged 2026-11-10 as production commit 1d5041a9 (verified GitHub). Later movement follow-ups #95–#99 supersede portions; R15 tracks remaining measured keyboard visibility duplication separately. Historical live acceptance remains distinct.",
+      "linkedPullRequest": 68,
+      "productionCommit": "1d5041a9ad920b72f423dd584afe277b989e317c"
+    },
+    {
+      "name": "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "61c53f383b87af2d9d72b83e0cf22dce287b89cc",
+      "linkedPullRequest": 100,
+      "note": "B10-R15 isolated frontend-only optimization. Reuse a one-use commit signed sight for queued keyboard continuation only when exact ACKed endpoint and scene/permission versions are already authorized; otherwise preserve fresh RPC. Exact-head 4aaca562: 798/798 tests incl Chromium (0 skipped), PostgreSQL17 security workflow and CodeQL SUCCESS. No production merge, SQL or Vercel deploy; designer approval and authenticated live DM/P1/P2 testing pending."
     }
   ],
   "features": [
@@ -690,6 +698,18 @@
         "20261109103000_world_engine_v2_legacy_commit_checkpoint"
       ],
       "verification": "Staged audit corrections: hidden NPC/tool entering authorized sight now issues a private identity-free roster tick; fogless lights clear without errors; owned and party-shared loose tools receive bounded server-certified prediction grants, with withheld/held/unowned cases denied. Frontend/isolated PG17/CodeQL checks must pass at exact final SHA. Production Supabase PG17 schema read-only verified: eight V2 migrations unapplied and original enabled collision trigger bodies preserved in Phase 10 compatibility migration. Real 2/4/8-client movement, visual parity, latency p50/p95, CPU/RSS/WAL and Vercel/Supabase deployment acceptance are NOT performed; releaseReady remains false."
+    },
+    {
+      "id": "world-v2-b10-r15-keyboard-sight-request-coalescing",
+      "description": "Eliminate only exact-equivalent post-commit keyboard visibility calls without changing signed fog, canonical movement, stream authorization or recovery.",
+      "sources": [
+        "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 100,
+      "databaseDependencies": [],
+      "note": "Automated qualification completed at 4aaca562; gated on explicit release approval and paired authenticated live tests before release acceptance."
     }
   ],
   "databaseDependencies": [
@@ -1003,12 +1023,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "14c0fa6f2daa88c4214f8bc314463db06112d3e2",
-    "releaseBranch": "stage/world-v2-phase1-instrumentation-2026-11-10",
+    "productionBaseSha": "61c53f383b87af2d9d72b83e0cf22dce287b89cc",
+    "releaseBranch": "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11",
     "outstandingBranches": [
-      "stage/world-v2-phase1-instrumentation-2026-11-10"
+      "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11"
     ],
-    "stagePolicy": "All six V2 phases integrated in PR #68. Require green CI on exact head, final reconcile of other open drafts #20/#21/#32/#33 and old staging branches, and explicit designer merge/deploy approval. Authenticated DM/player/preview full React/Supabase tests, 100 live moves no blackout, fog/collision/permission/reconnect, Supabase RAM and RPC p95 remain live release acceptance gates.",
+    "stagePolicy": "R15 PR #100 only (frontend/trace/browser regression), based on live 61c53f3. Exact-head browser + Node + PG17 + CodeQL green; draft awaiting designer production approval. Preserve all completed PR #68–99 movement repairs and the authorized test campaign. Do not include unreconciled R05–R09 SQL branches or unrelated unready drafts. Explicitly audit current staged backlog before any single consolidated release; do not silently ship or discard ready work. Authenticated moving player + passive observer, fog, collision, permission changes and Supabase latency remain live acceptance gates.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
