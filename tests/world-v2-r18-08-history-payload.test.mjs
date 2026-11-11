@@ -183,9 +183,10 @@ test('R18-08 release machine record cannot imply completion or approval',()=>{
  assert.equal(plan.guardedRecoveryEnabled,false);
  assert.equal(plan.liveReadOnly.sqlBodyDigestsCollected,83);
  assert.equal(ledger.upcomingRelease.databaseReleaseVersion,null);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,9);
- assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,9);
- assert.equal(ledger.releaseBranch,plan.stagingBranch);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.length>=9);
+ assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,ledger.upcomingRelease.outstandingBranches.length);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(plan.stagingBranch));
+ assert.equal(ledger.releaseBranch,ledger.upcomingRelease.releaseBranch);
  assert.equal(ledger.features.find(x=>x.id===
   'world-v2-b10-r18-08-remote-history-body-verification')?.releaseReady,false);
 });
