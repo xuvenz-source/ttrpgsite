@@ -24,6 +24,42 @@ const COUNTS=Object.freeze([
  'renderer.terrain-assign','renderer.observer-discontinuity'
 ]);
 const fail=message=>{throw new Error(message)};
+const BOUNDED_CADENCE_EVENTS=Object.freeze([
+ 'authority.begin.sample','authority.advance.sample',
+ 'authority.commit.sample','movement.release-to-terminal.sample'
+]);
+const SLOW_BUCKETS=new Set(['over-750ms','over-2s','over-5s']);
+/** Trend only among the last 256 retained and opt-in timing events.
+ * These buckets are *not* a causal performance attribution. Workload mix
+ * (walls/fog/commit) may change between the early/late halves.
+ */
+export function summarizeRetainedCadence(events){
+ if(!Array.isArray(events))throw Error('Invalid cadence events');
+ const result={};
+ for(const name of BOUNDED_CADENCE_EVENTS){
+  const samples=events.filter(event=>event?.event===name&&
+   ['under-250ms','250-750ms','over-750ms','over-2s','over-5s']
+    .includes(event?.detail));
+  if(samples.length<12){
+   result[name]={samples:samples.length,comparison:'insufficient',
+    earlierSlowPct:null,laterSlowPct:null};
+   continue;
+  }
+  const split=Math.floor(samples.length/2);
+  const earlier=samples.slice(0,split),later=samples.slice(split);
+  const pct=part=>Math.round(part.filter(x=>SLOW_BUCKETS.has(x.detail)).length/
+   part.length*100);
+  const a=pct(earlier),b=pct(later);
+  result[name]={
+   samples:samples.length,comparison:
+    b-a>=25?'late-higher-slow-share':
+    a-b>=25?'late-lower-slow-share':'mixed-or-stable',
+   earlierSlowPct:a,laterSlowPct:b
+  };
+ }
+ return result;
+}
+
 const num=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
 export const SOLO_DM_PHASES=PHASES;
 
@@ -101,6 +137,7 @@ export function summarizeSoloDmTrace(raw,{phase}={}){
    notes.some(x=>x.startsWith('No movement acknowledgment')||
     x.startsWith('No blocked-event'))?'inconclusive':'observed',
   counts,durations,notes,reasons,
+  retainedCadence:summarizeRetainedCadence(raw.events),
   limitations:['No independently authenticated player observer telemetry',
    'JavaScript render.frame timing does not measure total browser paint time',
    'Actual token overlap, wall penetration and flashing require DM visual notes']
