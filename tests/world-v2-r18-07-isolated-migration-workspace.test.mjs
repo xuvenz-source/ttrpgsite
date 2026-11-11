@@ -140,3 +140,27 @@ test('R18-07 runnable script never executes SQL, repairs history or authenticate
  assert.equal(baseline.counts.localUniqueVersions,55);
  assert.equal(baseline.counts.remoteNotInLocal,63);
 });
+
+test('R18-07 records only a proposed migration mechanism, never approval or a completed linked dry run',()=>{
+ const plan=JSON.parse(readFileSync(join(root,
+  'staging/world-v2-b10-r18-07-migration-mechanism.json'),'utf8'));
+ const ledger=JSON.parse(readFileSync(join(root,
+  'staging/next-release-ledger.json'),'utf8'));
+ assert.equal(plan.releaseDecision,'NO_GO');
+ assert.equal(plan.safeToApply,false);
+ assert.equal(plan.linkedCliDryRunCompleted,false);
+ assert.equal(plan.exactlyOnePendingLinkedCliDryRun,false);
+ assert.equal(plan.approvedFrontend,false);
+ assert.equal(plan.approvedDatabase,false);
+ assert.equal(plan.sqlApplied,false);
+ assert.equal(plan.historyRepaired,false);
+ assert.equal(plan.observed.remoteRegistered,83);
+ assert.equal(plan.observed.remoteEmptySqlStatements,0);
+ assert.equal(plan.exactTargetVersion,'20261111023204');
+ assert.equal(plan.exactGitBlobSha,baseline.targetGitBlobSha);
+ assert.deepEqual(ledger.upcomingRelease.outstandingBranches.length,8);
+ assert.equal(ledger.upcomingRelease.releaseBranch,plan.sourceBranch);
+ assert.equal(ledger.features.find(x=>
+  x.id==='world-v2-b10-r18-07-isolated-migration-history')?.releaseReady,false);
+ assert.equal(ledger.branches.find(x=>x.name===plan.sourceBranch)?.linkedPullRequest,109);
+});
