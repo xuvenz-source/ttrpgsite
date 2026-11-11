@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-11",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+  "releaseBranch": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -322,6 +322,13 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "linkedPullRequest": 109,
       "note": "R18-07 isolated remote-migration-history SQL release mechanism (READ-ONLY). Live Supabase 83 registered versions vs repository 56 SQL files (55 distinct timestamps, only 20 exact matches), all 83 remote entries have SQL and target 20261111023204 is unused. Supabase MCP apply_migration generates its own version, so NOT acceptable for exact reviewed CLI migration; do not bulk db push or repair history. Candidate: secure isolated CLI 2.81.3 migration fetch, exact 83 version/name match + frozen R05 Git blob, strict validator and one-migration remote dry-run; actual linked CLI dry-run NOT YET RUN. R18-02 signed viewer canary and separate SQL approval still required. No live DB write/deploy/flags/paid infrastructure."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": null,
+      "note": "R18-08 CLI v2.81.3 source-audited FETCH/LIST/DRY-RUN: offline exact 83-body digest comparison from read-only live SQL (no historic SQL exported); validator enforces migrations ENABLED, seed DISABLED, correct linked project ref and frozen R05 blob. 13 new synthetic tamper/config tests. Underlying remote read-only verification only. Linked CLI remote dry-run STILL NOT RUN, no frontend flag/SQL/deploy. NO-GO."
     }
   ],
   "features": [
@@ -909,6 +916,28 @@
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
       "note": "NO-GO. 12 local historical migration files may conflict; repo has 56 migrations/55 unique versions and remote 83 with 20 matching. The CLI isolated-workspace method is prepared but NOT linked dry-run verified; no SQL may be applied via MCP apply_migration (auto version) or bulk db push. Live client R18-02 needs verified ON before separately authorized R05. R18-04 guarded ON remains deferred."
+    },
+    {
+      "id": "world-v2-b10-r18-08-remote-history-body-verification",
+      "description": "Read-only verified 83 source SQL migration body digests and guarded isolated CLI config/project preflight to protect exact R05 one-file dry run",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": null,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO. All 83 applied source hashes observed but actual remote CLI migration fetch+dry-run unperformed; secure linked release auth not available. No remote mutation, env, RLS, Edge or paid service. R18-02 signed client must be separately approved and live before distinct approved R05 SQL; R18-04 guarded recovery stays OFF pending protected revocation/LOS QA."
     }
   ],
   "databaseDependencies": [
@@ -1223,7 +1252,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+    "releaseBranch": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1232,9 +1261,10 @@
       "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
       "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
       "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
-      "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11"
+      "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+      "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11"
     ],
-    "stagePolicy": "R18-07 staging audit ONLY: R17 PR102 and R18 PR103-108 source are carried through R18-05/06; R18-07 adds exact isolated remote history fetch validator. R16 production unchanged. Require actual read-only linked CLI migration fetch + migration list + db push --dry-run against fresh 83-version snapshot; only approved one-file target 20261111023204, no original repo-root db push, Management API/MCP auto-version migration, historical repair or fake placeholders. R18-02 signed sight client must be built ON, deployed and Auth-tested BEFORE any authorized SQL; R18-04 guarded recovery stays OFF until separately approved privacy QA. No production merge, Vercel deployment, SQL, grants, Edge or paid tools without explicit designer approval.",
+    "stagePolicy": "R18-08 readiness ONLY. All original R17/R18 PR #102–109 remain staged/unmerged and source preserved. Live R16 unchanged. Historical 83 remote migration version/name and exact reconstructed 83 SQL body fingerprints collected read-only. Run correct separate secure CLI v2.81.3 migration fetch + local history/body+config validator + migration list and db push --dry-run, only ONE reviewed R05 version; actual linked CLI dry-run not yet done. No migration install with MCP apply_migration (auto version), no manual history repair/bulk repo db push. First approved R18-02 signed sight client frontend must be built ON and Auth-tested before any separate authorized SQL. R18-04 guarded 700ms flag OFF pending dedicated LOS/revoke test. No merges, Vercel env/deploy, SQL/RLS/Edge/Realtime or paid infrastructure by implied proceeding.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
