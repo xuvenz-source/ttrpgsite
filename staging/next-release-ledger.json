@@ -313,7 +313,7 @@
       "name": "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 108,
       "note": "R18-06 explicit release-readiness and protected canary plan layered over exact R18-05 PR107. Live read-only 83-entry catalog, seven fingerprint/grant matches, 0 active sessions and no partial candidate install confirmed 2026-11-11. Vercel READY R16; BOTH recovery build flags absent. First approved client deployment requires R18-02 signed watch ON before any approved R05 SQL, guarded 700ms recovery OFF pending separate security activation. One-file migration registration method and real multi-account privacy acceptance not verified. NO-GO; no deployed changes."
     }
   ],
@@ -876,7 +876,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 108,
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
