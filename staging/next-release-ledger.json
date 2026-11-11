@@ -369,7 +369,8 @@
       "name": "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-14 source-confirmed solo DM preview collision refresh storm: 1352 blocked events, 1580 visibility refresh requests; only refresh when collision-approved preview token identity/cell actually changes, preserve final signed sight. Standalone unit tests; live verification pending. All production gates remain NO_GO."
+      "note": "R18-14 source-confirmed solo DM preview collision refresh storm: 1352 blocked events, 1580 visibility refresh requests; only refresh when collision-approved preview token identity/cell actually changes, preserve final signed sight. Standalone unit tests; live verification pending. All production gates remain NO_GO.",
+      "linkedPullRequest": 116
     }
   ],
   "features": [
@@ -1130,7 +1131,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Designer real R16 traces show DM authority p95 begin 1.31s / advance 2.09s / commit 3.95s; preview 1352 blocked and 1580 sight refresh requests, coalesced to 46 RPCs. No R05 SQL, production frontend deploy, flag enable or real Auth multiplayer acceptance."
+      "note": "Designer real R16 traces show DM authority p95 begin 1.31s / advance 2.09s / commit 3.95s; preview 1352 blocked and 1580 sight refresh requests, coalesced to 46 RPCs. No R05 SQL, production frontend deploy, flag enable or real Auth multiplayer acceptance.",
+      "linkedPullRequest": 116
     }
   ],
   "databaseDependencies": [
