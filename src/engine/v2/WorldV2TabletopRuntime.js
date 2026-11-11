@@ -82,6 +82,31 @@ export function createWorldV2TabletopRuntime({
  let sceneRecovery=null;
  let observerWatch=null,foregroundListener=null;
  let previewPosition=null,dmLightRefreshTimer=null;
+ // R09: the initial private observer roster must be signed AFTER the scene
+ // channel finishes its initial subscribe/load. Either channel may connect
+ // first. No provisional sight, cursor, coordinates or public fallback.
+ let initialSceneCurrent=false;
+ const sceneBootstrapWaiters=new Set();
+ function resolveSceneBootstrap(ready){
+  for(const waiter of sceneBootstrapWaiters){
+   clearTimeout(waiter.timer);
+   waiter.resolve(ready);
+  }
+  sceneBootstrapWaiters.clear();
+ }
+ function waitInitialSceneCurrent(){
+  if(!observerFirstBootstrap)return Promise.resolve(true);
+  if(initialSceneCurrent&&!manager.stale)return Promise.resolve(true);
+  if(disposed)return Promise.resolve(false);
+  return new Promise(resolve=>{
+   const waiter={resolve,timer:null};
+   waiter.timer=setTimeout(()=>{
+    sceneBootstrapWaiters.delete(waiter);
+    resolve(false);
+   },8000);
+   sceneBootstrapWaiters.add(waiter);
+  });
+ }
  function scheduleDmLightRefresh(){
   if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
   // Most maps have no moving DM lights. Ordinary token paths already have
@@ -330,6 +355,9 @@ export function createWorldV2TabletopRuntime({
    if(!dmPreview)stream=createWorldRealtimeTransport({
     db,mapId,viewerId:identity,
     onResync:async reason=>{
+     if(observerFirstBootstrap&&!await waitInitialSceneCurrent())
+      throw Error('V2 scene subscription not ready for signed sight');
+     if(disposed)throw Error('V2 observer disposed');
      if(manager.stale){
       if(!await manager.load())throw Error('V2 scene resync failed');
      }
@@ -366,6 +394,15 @@ export function createWorldV2TabletopRuntime({
     db,mapId,sceneManager:manager,
     onState:sceneState=>{
      state('scene-'+sceneState.reason);
+     if(observerFirstBootstrap){
+      if(sceneState.reason==='scene-current'&&!manager.stale){
+       initialSceneCurrent=true;
+       resolveSceneBootstrap(true);
+      }else if(sceneState.reason==='disconnected'){
+       initialSceneCurrent=false;
+       resolveSceneBootstrap(false);
+      }
+     }
      if(sceneState.reason==='scene-current')
       void reconcileSceneCurrent();
     },
@@ -444,6 +481,7 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
+   resolveSceneBootstrap(false);
    observerWatch?.dispose();observerWatch=null;
    if(foregroundListener&&typeof document!=='undefined'&&
     document.removeEventListener)

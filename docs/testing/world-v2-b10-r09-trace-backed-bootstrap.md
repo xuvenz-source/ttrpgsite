@@ -18,3 +18,6 @@ Future opt-in trace adds enumerated `movement.reject-reason` details; unknown se
 New browser-representative harness assertions require no first sight before subscription, exactly one signed adoption after subscription, no later scene-current seal, and fail-closed disconnect. Preview is verified separately. Full Node/Vite, PG17, CodeQL and independent real authenticated fog/hidden NPC QA are required before enabling this flag live.
 
 **R09:** staged; **release:** NO-GO; **next:** B10-R10 — secure client-only canary evaluation and additional Player1/Player2 trace for movement flashes/reject causes. No database application or production deployment until gates pass.
+
+### R09 CI follow-up: close the two-subscription race
+An initial test run discovered that scene subscription itself invalidates scene authority, independently of the private observer seal. The release candidate now holds the first sight until **both** channels are ready. The harness tests scene-first, observer-first, no-scene fail-closed, preview isolation and explicit disconnect revocation. The R08 historical next-step assertion was made immutable instead of a brittle global next-pointer. This amendment remains staged with no live deployment.

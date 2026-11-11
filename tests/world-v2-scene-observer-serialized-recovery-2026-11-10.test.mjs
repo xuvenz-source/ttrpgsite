@@ -43,7 +43,8 @@ function harness({delaySecond=null,denyAfterBootstrap=false,preview=false,
    this.currentVisibility=s;this.authorized=true;this.sightAdoptions++;return true
   },
   revoke(reason,hard=false){
-   this.revocations.push(reason);this.authorized=false;
+   this.revocations.push({reason,wasAuthorized:this.authorized});
+   this.authorized=false;
    if(hard)this.currentScene=null;
   },
   applyLocalMovement(){return true},
@@ -206,16 +207,14 @@ test('R09 opt-in first sight waits for private subscribe; scene ready cannot pre
   assert.equal(h.runtime.active,true);
   assert.equal(h.renderer.sightAdoptions,1);
   assert.equal(h.sightRequests,1);
-  const revocations=h.renderer.revocations.length;
-  assert.equal(revocations,1,'initial private seal happens before first visible signed sight');
-  h.sceneChannel().status('SUBSCRIBED');
-  await tick();await tick();await tick();
-  assert.equal(h.renderer.revocations.length,revocations);
-  assert.equal(h.renderer.sightAdoptions,1);
+  assert.equal(h.renderer.revocations.filter(r=>r.wasAuthorized).length,0,
+   'no initial subscription may revoke a frame that was already painted');
   assert.deepEqual(h.errors,[]);
   h.observerChannel().status('CLOSED');
   assert.equal(h.runtime.stream.locked,true);
   assert.equal(h.renderer.authorized,false,'disconnect must revoke previous sight');
+  assert.ok(h.renderer.revocations.some(r=>r.wasAuthorized),
+   'real channel loss still revokes a previously authorized frame');
  }finally{await h.runtime.dispose()}
 });
 test('R09 DM player preview retains direct signed sight and never joins player channel',async()=>{
@@ -228,5 +227,36 @@ test('R09 DM player preview retains direct signed sight and never joins player c
   assert.equal(h.renderer.sightAdoptions,1);
   assert.equal(h.runtime.effectiveViewer,PLAYER);
   assert.deepEqual(h.errors,[]);
+ }finally{await h.runtime.dispose()}
+});
+
+test('R09 opposite subscription order waits for BOTH signed scene and observer',async()=>{
+ const h=harness({bootstrapOnPrivateSubscription:true});
+ try{
+  assert.equal(await h.runtime.start(),true);
+  h.observerChannel().status('SUBSCRIBED');
+  await tick();await tick();await tick();
+  assert.equal(h.sightRequests,0,
+   'an observer subscribing first cannot paint before scene-current');
+  assert.equal(h.renderer.authorized,false);
+  h.sceneChannel().status('SUBSCRIBED');
+  await tick();await tick();await tick();await tick();
+  assert.equal(h.sightRequests,1);
+  assert.equal(h.renderer.sightAdoptions,1);
+  assert.equal(h.runtime.stream.locked,false);
+  assert.equal(h.renderer.revocations.filter(r=>r.wasAuthorized).length,0);
+  assert.deepEqual(h.errors,[]);
+ }finally{await h.runtime.dispose()}
+});
+test('R09 a never-ready scene keeps private observer locked and grants no sprite',async()=>{
+ const h=harness({bootstrapOnPrivateSubscription:true});
+ try{
+  assert.equal(await h.runtime.start(),true);
+  h.observerChannel().status('SUBSCRIBED');
+  await tick();await tick();
+  assert.equal(h.runtime.active,false);
+  assert.equal(h.sightRequests,0);
+  assert.equal(h.renderer.sightAdoptions,0);
+  assert.equal(h.runtime.stream.locked,true);
  }finally{await h.runtime.dispose()}
 });

@@ -32,7 +32,8 @@ test('B10-R08 links existing bounded, opt-in production trace; no private raw te
  assert.equal(progress.steps.B10_R08.releaseDecision,'NO_GO');
  assert.equal(progress.steps.B10_R08.noProductionChanges,true);
  assert.equal(progress.steps.B10_R08.R05Sql,'UNAPPLIED_BLOCKED');
- assert.equal(progress.nextStep,'B10-R09');
+ assert.match(progress.steps.B10_R08.next,/^B10-R09/);
+ assert.equal(progress.steps.B10_R08.releaseDecision,'NO_GO');
  const gate=JSON.parse(read('staging/world-v2-b10-release-qualification.json'));
  assert.equal(gate.decision,'NO_GO');
  assert.equal(gate.stagedRemediations.B10_R08.R05MigrationApplied,false);
