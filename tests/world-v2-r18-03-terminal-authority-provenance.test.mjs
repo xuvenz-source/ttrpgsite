@@ -86,7 +86,10 @@ test('R18-03 live migration-history preflight refuses alias drift and partial in
  assert.match(preflight,/has_function_privilege\('anon'/);
  const recovery=source('supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql');
  assert.match(recovery,/motion_r05_function_backup/);
- assert.match(recovery,/REVOKE/i);
+ assert.match(recovery,/has_function_privilege\('anon'/);
+ assert.match(recovery,/has_schema_privilege\('authenticated'/);
+ assert.match(recovery,/md5\(current_body\)<>digest/);
+ assert.match(recovery,/DELETE FROM forge_world_v2\.observer_pending_b07/);
  const runtime=source('src/engine/v2/WorldV2TabletopRuntime.js');
  assert.match(runtime,/VITE_WORLD_V2_OBSERVER_RECOVERY==='1'/);
 });
