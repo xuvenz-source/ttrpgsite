@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-11",
-  "productionBaseSha": "61c53f383b87af2d9d72b83e0cf22dce287b89cc",
-  "releaseBranch": "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11",
+  "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
+  "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -253,10 +253,18 @@
     },
     {
       "name": "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11",
-      "status": "staged",
+      "status": "released",
       "productionBaseSha": "61c53f383b87af2d9d72b83e0cf22dce287b89cc",
       "linkedPullRequest": 100,
-      "note": "B10-R15 isolated frontend-only optimization. Reuse a one-use commit signed sight for queued keyboard continuation only when exact ACKed endpoint and scene/permission versions are already authorized; otherwise preserve fresh RPC. Exact-head 4aaca562: 798/798 tests incl Chromium (0 skipped), PostgreSQL17 security workflow and CodeQL SUCCESS. No production merge, SQL or Vercel deploy; designer approval and authenticated live DM/P1/P2 testing pending."
+      "note": "PR #100 merged and verified on Vercel production at c1e098f, GitHub SHA confirmed. Controlled DM/Player2 live QA exposed a passive observer-path-discontinuity seal and one DM invalid-server-reply on an Advance. R16 addresses only the observer renderer reset; server Advance invalid reply remains separately gated.",
+      "productionCommit": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5"
+    },
+    {
+      "name": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+      "status": "staged",
+      "linkedPullRequest": null,
+      "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
+      "note": "B10-R16: avoid all-map opaque seal on valid same-generation private observer route origin mismatch or capped cosmetic backlog. Keep the affected route deferred until a fresh server-signed snapshot; malformed packets and sequence gaps still seal. No DB/SQL, Supabase Realtime protocol, fog authority or grants change. CI test and live DM/observer acceptance pending."
     }
   ],
   "features": [
@@ -705,11 +713,23 @@
       "sources": [
         "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11"
       ],
-      "status": "staged",
-      "releaseReady": false,
+      "status": "released",
+      "releaseReady": true,
       "linkedPullRequest": 100,
       "databaseDependencies": [],
-      "note": "Automated qualification completed at 4aaca562; gated on explicit release approval and paired authenticated live tests before release acceptance."
+      "note": "Released as PR #100 on production main c1e098f. R15 covers only keyboard signed sight reuse, not the sequential RPC architecture or R16 observer mismatch fix."
+    },
+    {
+      "id": "world-v2-b10-r16-observer-discontinuity-sight-recovery",
+      "description": "Preserve certified map/fog and unaffected sprites on buffer-only observer discontinuity while awaiting fresh signed sight; retain strict fail-closed for malformed packets/sequence/permission drift",
+      "sources": [
+        "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": null,
+      "databaseDependencies": [],
+      "note": "Staged client-only repair; player and DM QA plus review required before controlled deployment."
     }
   ],
   "databaseDependencies": [
@@ -1023,12 +1043,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "61c53f383b87af2d9d72b83e0cf22dce287b89cc",
-    "releaseBranch": "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11",
+    "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
+    "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
     "outstandingBranches": [
-      "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11"
+      "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
     ],
-    "stagePolicy": "R15 PR #100 only (frontend/trace/browser regression), based on live 61c53f3. Exact-head browser + Node + PG17 + CodeQL green; draft awaiting designer production approval. Preserve all completed PR #68–99 movement repairs and the authorized test campaign. Do not include unreconciled R05–R09 SQL branches or unrelated unready drafts. Explicitly audit current staged backlog before any single consolidated release; do not silently ship or discard ready work. Authenticated moving player + passive observer, fog, collision, permission changes and Supabase latency remain live acceptance gates.",
+    "stagePolicy": "R16 isolated, staging only. Must inspect exact diff, complete Node/Chromium, CodeQL and PostgreSQL security workflows; no merge or live deployment before designer approval. Test DM rapid arrow/drag with passive Player 2, observer buffer discontinuity, no whole-map blackout, fog/hidden-roster secrecy, sequence gap revocation and repeated blocked keyboard input. Investigate one 'invalid-server-reply' Advance separately without increasing server caps. Other B10 R05-R09 SQL draft branches remain NO-GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
