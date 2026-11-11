@@ -18,6 +18,7 @@ import {createVisibilityController} from './VisibilityController.js';
 import {createWorldRealtimeTransport} from './RealtimeTransport.js';
 import {collisionAllowsStep} from './CollisionSolver.js';
 import {createPreviewAuthority} from './PreviewAuthority.js';
+import {previewApprovedPositionChanged} from './PreviewSightRefresh.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {worldV2Trace} from './WorldTrace.js';
 import {createCanonicalCommitHandoff} from './CanonicalCommitHandoff.js';
@@ -225,9 +226,13 @@ export function createWorldV2TabletopRuntime({
    signal(onGesture,event);
    if(dmPreview&&['approved','blocked'].includes(event.type)&&
     event.selection?.length===1&&event.selection[0].kind==='token'){
-    previewPosition={tokenId:event.selection[0].id,
-     x:event.approved.x,y:event.approved.y};
-    void refreshVisibility('virtual-preview-step');
+    // Blocked ACKs can contain an accepted movement prefix. Only request
+    // fresh player-effective sight when the approved pose actually changes.
+    const tokenId=event.selection[0].id;
+    const moved=previewApprovedPositionChanged(
+     previewPosition,tokenId,event.approved);
+    previewPosition={tokenId,x:event.approved.x,y:event.approved.y};
+    if(moved)void refreshVisibility('virtual-preview-step');
    }
    if(event.type==='committed'&&dmPreview){
     // End the local handoff against a fresh non-mutating player-effective
