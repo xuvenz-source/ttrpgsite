@@ -44,6 +44,39 @@ BEGIN
  RAISE NOTICE 'R05 live-shape preflight: no partial candidates or active motion';
 END $world_v2_r05_pre$;
 
+-- Preserve exact ORIGINAL in-place function sources for a future,
+-- explicitly invoked forward recovery if a committed test rollout regresses.
+-- Only platform owner/admin can read this private RLS-protected table; no
+-- browser grants or policy are added. NO CREATE/DROP of production map data.
+CREATE TABLE forge_world_v2.motion_r05_function_backup (
+ signature text PRIMARY KEY,
+ old_definition text NOT NULL CHECK(length(old_definition)>80),
+ original_digest text NOT NULL CHECK(length(original_digest)=32),
+ captured_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+ALTER TABLE forge_world_v2.motion_r05_function_backup ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE forge_world_v2.motion_r05_function_backup
+ FROM PUBLIC,anon,authenticated;
+
+INSERT INTO forge_world_v2.motion_r05_function_backup(
+ signature,old_definition,original_digest)
+SELECT x.signature,pg_get_functiondef(to_regprocedure(x.signature)),
+ md5(pg_get_functiondef(to_regprocedure(x.signature)))
+FROM (VALUES
+ ('forge_world_v2.publish_approved_observers(forge_world_v2.motion_sessions,jsonb,jsonb)'),
+ ('forge_world_v2.advance_core_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)'),
+ ('public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)'),
+ ('public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)')
+) AS x(signature);
+DO $world_v2_r05_backup$
+BEGIN
+ IF (SELECT count(*) FROM forge_world_v2.motion_r05_function_backup)<>4
+  OR EXISTS(SELECT 1 FROM forge_world_v2.motion_r05_function_backup
+   WHERE md5(old_definition)<>original_digest)
+ THEN RAISE EXCEPTION 'R05 stop: incomplete original movement source backup';END IF;
+ RAISE NOTICE 'R05 captured four original private/public function definitions for post-commit recovery';
+END $world_v2_r05_backup$;
+
 -- ================================================================
 -- R05 SOURCE 1/5: supabase/candidates/world_v2_b03_path_validation.sql
 -- GitHub verified blob SHA 4f35859f2e8b16fbc875a5f3b9701c80bde543e7
@@ -1394,6 +1427,11 @@ BEGIN
     WHERE table_schema='forge_world_v2' AND table_name='motion_sessions'
       AND column_name IN ('last_advance_request_b08','last_commit_request_b08'))<>2
  THEN RAISE EXCEPTION 'R05 stop: incomplete integrated candidate install';END IF;
+ IF to_regclass('forge_world_v2.motion_r05_function_backup') IS NULL OR
+  NOT (SELECT relrowsecurity FROM pg_class WHERE oid=
+   'forge_world_v2.motion_r05_function_backup'::regclass) OR
+  (SELECT count(*) FROM forge_world_v2.motion_r05_function_backup)<>4
+ THEN RAISE EXCEPTION 'R05 stop: original function source backup is absent/unprotected';END IF;
  IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid=
     'forge_world_v2.observer_pending_b07'::regclass) OR
   NOT (SELECT relrowsecurity FROM pg_class WHERE oid=
