@@ -102,6 +102,6 @@ test('R10 signed fog notice accepts delivery ID; unsafe ID still revokes',async(
   assert.deepEqual(revocations,[]);
   assert.equal(controller.onVisionDirty({...notice,id:'bad'}),false);
   assert.equal(controller.authorized,false);
-  assert.deepEqual(revocations,['invalid-vision-notice']);
+  assert.deepEqual(revocations.map(x=>x.reason),['invalid-vision-notice']);
  }finally{controller.dispose()}
 });
