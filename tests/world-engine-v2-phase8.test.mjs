@@ -1180,3 +1180,36 @@ test('R16 only fixed non-private discontinuity labels enter trace',async()=>{
  assert.deepEqual(trace.snapshot().events.map(e=>e.detail),
   ['origin-mismatch','backlog','other']);
 });
+
+
+test('R16 accepted cursor-only signed sight clears just the deferred piece buffer',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero,ally]}));
+ const heroNode=ctx.renderer.getSpriteElement('token',hero.id);
+ const allyNode=ctx.renderer.getSpriteElement('token',ally.id);
+ const initial=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2]]),
+  {mapId,seq:6}),true);
+ assert.equal(ctx.renderer.applyObserverPath(path(ally,[[3,3],[4,3]]),
+  {mapId,seq:7}),true);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[2,3]]),
+  {mapId,seq:8}),true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision']);
+ // A cursor-only signed frame does not move the canonical hero.
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:8,visionEpoch:7,visiblePieces:[hero,ally]
+ })),true);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[2,3]]),
+  {mapId,seq:9}),true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision'],
+  'signed sight must prevent repeating the same buffer mismatch');
+ ctx.clock.run(1000,35,20);
+ assert.equal(position(heroNode),'200px 300px');
+ assert.equal(position(allyNode),'400px 300px',
+  'hero recovery must preserve independently approved ally movement');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),heroNode);
+ assert.equal(ctx.renderer.getSpriteElement('token',ally.id),allyNode);
+ assert.equal(ctx.renderer.stats.spriteRemoves,initial.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,initial.fullFogDraws);
+ ctx.renderer.dispose();
+});
