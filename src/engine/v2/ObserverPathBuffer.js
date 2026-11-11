@@ -110,6 +110,16 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
   // is a fixed-label diagnostic, never a coordinate or visibility grant.
   // Keep applyPath safe when legacy consumers destructure the method.
   inspectPath,
+  // Only a fully admitted signed roster/cursor may call this method.
+  // Discard the deferred cosmetic path even if the canonical cell is same.
+  resetFromSigned(item){
+   if(disposed||!authorizedPiece(item))return false;
+   const entry=pieces.get(key(item));
+   if(!entry||entry.hidden)return false;
+   entry.position={x:item.x,y:item.y};
+   entry.pending.length=0;entry.pathStart=null;entry.lastNow=null;
+   return true;
+  },
   applyPath(item){
    if(inspectPath(item)!=='ok')return false;
    const entry=pieces.get(key(item));
