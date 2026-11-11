@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "step": "B10-R18-15",
+  "observedDateMelbourne": "2026-11-12",
+  "releaseDecision": "NO_GO",
+  "stagingBranch": "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+  "priorPr": 116,
+  "priorVerifiedHead": "96c90f9d38eb4b794f2cb73b0f93c9a3d04ec2e3",
+  "currentFrontendCanary": {
+    "target": "production",
+    "deploymentId": "dpl_82NADuBV58sGdaXdcEgm2Gm2pzBb",
+    "source": "R18-14",
+    "observerRecovery12s": true,
+    "guardedObserverRecovery700ms": false
+  },
+  "productionGitMain": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "normalDmTrace": {
+    "authorityBeginP50Ms": 226.9,
+    "authorityAdvanceP50Ms": 381.3,
+    "authorityCommitP50Ms": 1168.4,
+    "authorityCommitP95Ms": 1462.5,
+    "visibilityRpcP50Ms": 260.8,
+    "firstReleaseToCommitMs": 2543,
+    "secondReleaseToCommitMs": 2772
+  },
+  "changeDescription": "pointer-only 0.10-cell hysteresis and exact previously server-denied target suppression in same gesture/unchanged signed origin; opt-in bounded release-to-terminal timer; original R17 blob hash preserved via explicit R18-15 amendment",
+  "backendSqlInstalled": false,
+  "productionFrontendR1815Deployed": false,
+  "productionPreviewUpdated": false,
+  "r05Approved": false,
+  "frontendNextDeployApproved": false,
+  "independentAuthMultiplayerAccepted": false,
+  "actualLinkedCliDryRunExecuted": false,
+  "ci": {
+    "node": "pending",
+    "codeql": "pending",
+    "isolatedSql": "pending",
+    "combinedSql": "pending"
+  },
+  "handoff": "docs/testing/world-v2-r18-15-corner-collision-settle-2026-11-12.md"
+}

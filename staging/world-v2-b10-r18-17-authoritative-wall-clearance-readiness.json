@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "step": "B10-R18-17",
+  "date": "2026-11-12",
+  "previousPr": 118,
+  "previousHead": "48f98e771c526ddd7945f3b5daa1d7d6f78c6a5e",
+  "branch": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
+  "releaseDecision": "STAGED_SQL_AND_FRONTEND_CANDIDATE_NO_GO",
+  "currentProduction": {
+    "mainSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "frontendDeploymentId": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "frontendRelease": "R18-15",
+    "wallClearanceFlag": false
+  },
+  "supabase": {
+    "projectId": "lwhwgqaunxbmvyndswze",
+    "historicRegisteredVersions": 83,
+    "frozenR05": "20261111023204",
+    "r05Installed": false,
+    "r18_17Applied": false,
+    "sqlApproved": false
+  },
+  "contract": {
+    "units": "0.10 grid cell inward margin on each edge, not 10% polygon occupancy",
+    "serverPredicate1": "forge_world_v2.swept_hits_segment",
+    "serverPredicate2": "forge_visibility.swept_hits_segment",
+    "clientFlag": "VITE_WORLD_V2_WALL_CLEARANCE=1",
+    "flagEnabled": false,
+    "swept": true,
+    "directWriteParity": true,
+    "fogVisibilityUnmodified": true
+  },
+  "ci": {
+    "node": "pending",
+    "codeql": "pending",
+    "postgresAuthority": "pending",
+    "combinedSql": "pending"
+  },
+  "unverified": [
+    "real Auth P1 passive P2 multiclient observer/LOS",
+    "separate approved R05 migration install and linked CLI dry-run",
+    "separate versioned R18-17 SQL migration with approval",
+    "actual frontend opt-in with matching installed server",
+    "repeated movement latency root cause"
+  ],
+  "handoff": "docs/testing/world-v2-r18-17-authoritative-wall-clearance-parity-2026-11-12.md"
+}
