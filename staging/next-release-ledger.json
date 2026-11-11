@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-11",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+  "releaseBranch": "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -287,6 +287,13 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "linkedPullRequest": 104,
       "note": "B10-R18-02 layered on R18-01 PR #103; client-only default-OFF 12s signed observer catch-up, strict private stream cursor/roster fencing, no SQL or production flag. Stage tests and exact-head release review pending; does not fix immediate unknown-piece/sequence-gap blackouts."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 105,
+      "note": "R18-03 current-R16 integration candidate; exact frozen R05 B03/B07/B08/R01/R03 terminal authority SQL, live read-only baseline hashes/83 versions, private RLS, manual four-function recovery and source-real PostgreSQL 17 tests. SQL file is nonapplied; no backend writes, no production activation. Does not cure immediate unknown-piece/sequence-gap resync. Protected 24-case DM/P1/P2 and R17 combined release are NO-GO."
     }
   ],
   "features": [
@@ -788,6 +795,20 @@
       "linkedPullRequest": 104,
       "databaseDependencies": [],
       "note": "Client-only opt-in OFF. Must review R02/B08/R03/R05 integration and complete protected DM/P1/P2 fog/LOS and free-tier load acceptance before activating."
+    },
+    {
+      "id": "world-v2-b10-r18-03-terminal-commit-reconciliation",
+      "description": "Stage proven-frozen actor-authorized atomic Commit, budgeted recipient-private terminal path drain and stale-route retirement, exact replay, and manual SQL recovery path, with live 83-version preflight and hostile PostgreSQL tests",
+      "sources": [
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 105,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO. Exact R05 #90 source preserved, migration nonapplied; target live catalog and version history preflight is point-in-time only; R18-02 recovery flag OFF; no real DM/P1/P2 protected LOS testing or R18-04 unknown-roster/sequence-gap design. Separate designer SQL+frontend release approval mandatory."
     }
   ],
   "databaseDependencies": [
@@ -1102,13 +1123,14 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+    "releaseBranch": "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
-      "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11"
+      "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+      "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11"
     ],
-    "stagePolicy": "R17 PR #102 keyboard only, R18-01 PR #103 audit only, and R18-02 opt-in canonical sight recovery (OFF) all remain staged/unmerged. R18-02 is STACKED on R18-01, not on R17. No production deploy/flag activation, new DB migration, public/private grants or paid services. Before release reconcile B08/R02/R03/R05, ensure R17 staged work included if ready, prove full protected fog/LOS and two-player convergence, code/security checks and exact production commit; explicit designer release approval required.",
+    "stagePolicy": "All remain DRAFT/unmerged/no production: R17 PR102 keyboard correction; R18-01 PR103 observer incident audit; R18-02 PR104 12s signed sight fallback default OFF; R18-03 PR105 exact frozen R05 integrated terminal authority SQL nonapplied. R18-03 is stacked on R18-02 source (and R18-01), not R17. R18-04 must solve recipient roster/sequence gap without exposing hidden actors. No blind db push (live 83 aliases vs repo), no Vercel deploy, SQL, RLS, Edge function, paid tier or environment flag changes without separate explicit designer approval and source-real plus protected 24-case QA.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
