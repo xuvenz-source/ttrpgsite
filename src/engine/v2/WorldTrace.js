@@ -13,7 +13,8 @@ const EVENTS=new Set([
  'movement.canonical-handoff','movement.cancel-reason',
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
- 'observer.unknown-piece','visibility.revoke','visibility.refresh',
+ 'observer.unknown-piece','observer.frame-accepted',
+ 'renderer.observer-await-vision','visibility.revoke','visibility.refresh',
  'visibility.rpc-call','visibility.rpc-tail','visibility.queue',
  'visibility.snapshot','visibility.stale-snapshot',
  'visibility.reject','visibility.notice','renderer.seal','renderer.scene-adopt',
@@ -23,7 +24,8 @@ const EVENTS=new Set([
  'renderer.sprite-remove','renderer.terrain-assign'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
- 'authority.cancel','visibility.rpc','visibility.queue-wait','render.frame']);
+ 'authority.cancel','visibility.rpc','visibility.queue-wait',
+ 'observer.frame-gap','render.frame']);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
  'revision','drag','touch','keyboard','preview','grabbed','busy','point',
  'selection','begin','lost-capture','pointer-cancel','blur','unmount',

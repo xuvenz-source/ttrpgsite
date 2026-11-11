@@ -98,32 +98,37 @@ export async function fetchWorldObserverCursorV2({db,mapId,viewerId}={}){
  */
 export function createWorldRealtimeTransport({
  db,mapId,viewerId,onResync,onPath=()=>{},onHide=()=>{},
- onRevoke=()=>{},onError=()=>{},onState=()=>{},onVisionDirty=()=>{}
+ onRevoke=()=>{},onError=()=>{},onState=()=>{},onVisionDirty=()=>{},
+ trace=worldV2Trace
 }={}){
  if(!db?.channel||!db?.removeChannel||!uuid(mapId)||!uuid(viewerId)||
   typeof onResync!=='function'||typeof onPath!=='function'||
   typeof onHide!=='function'||typeof onRevoke!=='function'||
   typeof onError!=='function'||typeof onState!=='function'||
-  typeof onVisionDirty!=='function')
+  typeof onVisionDirty!=='function'||
+  typeof trace?.event!=='function'||typeof trace?.begin!=='function')
   throw Error('Invalid V2 private observer transport');
  let channel=null,disposed=false,started=false,connected=false,locked=true;
  let generation=0,cursor=null,revision=null,permission=null;
  let roster=new Set(),pending=null,retryTimer=null,retryAttempts=0;
+ let acceptedFrameClock=null;
  const cancelRetry=()=>{
   if(retryTimer!==null){clearTimeout(retryTimer);retryTimer=null}
  };
  const state=reason=>onState({reason,connected,locked,cursor});
  const seal=reason=>{
   if(disposed)return;
-  worldV2Trace.event('observer.seal',reason);
+  trace.event('observer.seal',reason);
   locked=true;roster.clear();cursor=null;revision=null;permission=null;
+  // Do not include permission loss or offline intervals in packet cadence.
+  acceptedFrameClock=null;
   generation++;
   onRevoke(reason);state(reason);
  };
  async function resync(reason='manual'){
   if(disposed||!started||!connected)return false;
   cancelRetry();
-  worldV2Trace.event('observer.resync',reason);
+  trace.event('observer.resync',reason);
   if(reason!=='sight-retry')retryAttempts=0;
   seal(reason);
   const current=generation;
@@ -139,7 +144,7 @@ export function createWorldRealtimeTransport({
    permission=snapshot.permissionGeneration;
    roster=new Set(snapshot.visiblePieces.map(key));
    locked=false;retryAttempts=0;
-   worldV2Trace.event('observer.authorized');state('authorized');
+   trace.event('observer.authorized');state('authorized');
    return true;
   }).catch(error=>{
    if(!disposed&&current===generation){
@@ -166,18 +171,18 @@ export function createWorldRealtimeTransport({
   if(disposed||locked||!connected)return;
   const frame=payload?.payload;
   if(!validWorldMotionFrame(frame,mapId,viewerId)){
-   worldV2Trace.event('observer.invalid-frame');
+   trace.event('observer.invalid-frame');
    void resync('invalid-packet');
    return;
   }
   if(frame.environmentRevision!==revision||
    frame.permissionGeneration!==permission){
-   worldV2Trace.event('observer.version-change');
+   trace.event('observer.version-change');
    void resync('version-change');return;
   }
-  if(frame.seq<=cursor){worldV2Trace.event('observer.late-frame');return}
+  if(frame.seq<=cursor){trace.event('observer.late-frame');return}
   if(frame.seq!==cursor+1){
-   worldV2Trace.event('observer.sequence-gap');
+   trace.event('observer.sequence-gap');
    void resync('sequence-gap');return
   }
   cursor=frame.seq;
@@ -200,10 +205,16 @@ export function createWorldRealtimeTransport({
    }
   }
   if(needRoster){
-   worldV2Trace.event('observer.unknown-piece');
+   trace.event('observer.unknown-piece');
    void resync('unknown-piece');return
   }
   for(const item of pendingPaths)onPath(item,{seq:frame.seq,mapId});
+  // Success-only, recipient-side instrumentation. All packet, private
+  // identity, sequence, roster, and scene checks above must pass first.
+  // No token ID, coordinates, path length or raw payload is captured.
+  acceptedFrameClock?.('ok');
+  acceptedFrameClock=trace.begin('observer.frame-gap');
+  trace.event('observer.frame-accepted');
  }
  return {
   async start(){
@@ -244,6 +255,7 @@ export function createWorldRealtimeTransport({
    disposed=true;started=false;connected=false;locked=true;
    cancelRetry();retryAttempts=0;
    generation++;roster.clear();cursor=null;revision=null;permission=null;
+   acceptedFrameClock=null;
    const old=channel;channel=null;
    if(old)await db.removeChannel(old);
   },
