@@ -5,8 +5,8 @@
  * Never use this result as proof of permission or persist it as a canonical move.
  */
 import {
- validCollisionPoint,segmentCrossesSweptFootprint,
- segmentBoundingBox,footprintSweepBounds,boxesMayOverlap
+ validCollisionPoint,segmentCrossesSweptFootprintWithClearance,
+ WALL_EDGE_CLEARANCE_CELLS,segmentBoundingBox,footprintSweepBounds,boxesMayOverlap
 } from './CollisionGeometry.js';
 
 const EPS=1e-7;
@@ -43,9 +43,10 @@ const fail=()=>({complete:false,blocked:true,offset:null,waypoints:[],reason:'in
  * The caller MUST enforce this scope: a string is not an auth credential.
  */
 export function compileCollisionScene({
- map,environment,revision,collisionEnabled=true,scope
+ map,environment,revision,collisionEnabled=true,scope,wallClearanceCells=0
 }={}){
- if(!['dm','disclosed'].includes(scope)||!int(revision)||revision<0||
+ if(![0,WALL_EDGE_CLEARANCE_CELLS].includes(wallClearanceCells)||
+  !['dm','disclosed'].includes(scope)||!int(revision)||revision<0||
   typeof collisionEnabled!=='boolean'||!finite(map?.width)||!finite(map?.height)||
   !finite(map?.grid_size)||map.grid_size<=0||
   !Array.isArray(environment?.objects)||environment.objects.length>120)return null;
@@ -76,7 +77,8 @@ export function compileCollisionScene({
   }
  }
  return {version:2,mapId:typeof map.id==='string'?map.id:null,
-  scope,revision,collisionEnabled,widthCells,heightCells,segments};
+  scope,revision,collisionEnabled,widthCells,heightCells,segments,
+  wallClearanceCells};
 }
 function normalizedPieces(pieces){
  if(!Array.isArray(pieces)||pieces.length<1||pieces.length>64)return null;
@@ -136,8 +138,9 @@ function firstImpact(scene,pieces,anchor,from,to){
    scene.querySegments(sweep):scene.segments;
   for(const segment of candidates){
    if(barrierPasses(segment,part)||!boxesMayOverlap(sweep,segment.bounds))continue;
-   const intersects=t=>segmentCrossesSweptFootprint(segment.a,segment.b,
-    start,lerp(start,end,t),part.spanX,part.spanY);
+   const intersects=t=>segmentCrossesSweptFootprintWithClearance(
+    segment.a,segment.b,start,lerp(start,end,t),
+    part.spanX,part.spanY,scene.wallClearanceCells??0);
    if(!intersects(1))continue;
    if(intersects(0)){consider(0,segment.tangent);continue}
    let lo=0,hi=1;
