@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "step": "B10-R06",
+  "state": "STAGED_NOT_DEPLOYED",
+  "decision": "NO_GO",
+  "sourcePr": 90,
+  "migrationHistoryAudit": "staging/world-v2-b10-r06-history-reconciliation.json",
+  "buildTimeModes": {
+    "off": {
+      "VITE_WORLD_V2_OBSERVER_RECOVERY": "0",
+      "VITE_WORLD_V2_OBSERVER_RECOVERY_CANARY_MAP_ID": "unset",
+      "VITE_WORLD_V2_OBSERVER_RECOVERY_GLOBAL": "0"
+    },
+    "testMap": {
+      "VITE_WORLD_V2_OBSERVER_RECOVERY": "1",
+      "VITE_WORLD_V2_OBSERVER_RECOVERY_CANARY_MAP_ID": "<OPERATOR_CONFIGURED_TEST_MAP_UUID>",
+      "VITE_WORLD_V2_OBSERVER_RECOVERY_GLOBAL": "0"
+    },
+    "allMaps": {
+      "VITE_WORLD_V2_OBSERVER_RECOVERY": "1",
+      "VITE_WORLD_V2_OBSERVER_RECOVERY_CANARY_MAP_ID": "*",
+      "VITE_WORLD_V2_OBSERVER_RECOVERY_GLOBAL": "1"
+    }
+  },
+  "otherFlagsMustRemainOff": [
+    "VITE_WORLD_V2_COALESCE_MOTION",
+    "VITE_WORLD_V2_CERTIFIED_MOTION",
+    "VITE_WORLD_V2_COMMIT_RECONCILE"
+  ],
+  "realAuthRequired": [
+    "DM",
+    "P1",
+    "P2"
+  ],
+  "fixture": "tests/fixtures/world-v2-multiplayer-manifest.json",
+  "fixtureStatus": "NOT_PREPARED_AS_OF_A04",
+  "auth24Cases": "NOT_RUN",
+  "positiveRequirements": [
+    "signed owner-scoped sight",
+    "correct private hide/roster revocation",
+    "no previews writing movement",
+    "no cross-map or stale-client sight leaks",
+    "one 6s foreground-only timer per eligible viewer, no timer on other maps",
+    "no map bitmap reassignments or sprite remounts from ordinary movement",
+    "bounded Supabase CPU/RAM and query rate"
+  ],
+  "abortOn": [
+    "hidden actor leak",
+    "private role permission drift",
+    "revocation failure",
+    "map flashing increase",
+    "excessive signed-sight RPC/DB memory",
+    "multiple in-flight refresh per viewer",
+    "unreconciled stale cached frontend"
+  ],
+  "sqlReleasePrerequisite": "B10-R03 coordinate retirement is global. A map-scoped R02 canary is insufficient: first ship and qualify all-map compatible R02 recovery build, or stop.",
+  "migrationMethod": "NOT AUTHORIZED; single version-recorded action only after immutable SQL digest, 83-version baseline and live catalog recheck. Do not use db push from full tree or auto repair.",
+  "approvedLiveMutations": false
+}

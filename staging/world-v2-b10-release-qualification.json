@@ -285,6 +285,18 @@
         "Current active browser clients/caches must be compatible with R03 terminal path retirement",
         "Free-tier Supabase CPU/RAM, Realtime fanout, p95 and map flashing still unmeasured"
       ]
+    },
+    "B10_R06": {
+      "status": "STAGED_HISTORY_AND_CLIENT_GUARD_NO_GO",
+      "branch": "stage/world-v2-b10-r06-history-safe-canary-2026-11-11",
+      "parentSha": "b2267a2fd4b06b82711bb036c5ab04795f702bf4",
+      "historyManifest": "staging/world-v2-b10-r06-history-reconciliation.json",
+      "canaryManifest": "staging/world-v2-b10-r06-client-canary.json",
+      "recoveryCanary": "OFF unless both source flag and specific map or separately explicit global scope",
+      "historySafety": "No bulk db push; 6 malformed legacy files and 1 duplicate timestamp; future single migration action must reconcile generated remote version",
+      "realThreeAccountQa": "NOT_RUN",
+      "liveSqlApplied": false,
+      "liveCanaryEnabled": false
     }
   },
   "nextRemediation": "B10-R06: reconcile history safely for one targeted migration and perform controlled client-first R02 test canary on disposable live campaign; validate real DM/P1/P2 signed fog before server R03 apply."

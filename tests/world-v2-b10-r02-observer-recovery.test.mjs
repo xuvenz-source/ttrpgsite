@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createObserverRecoveryWatch,OBSERVER_RECOVERY_INTERVAL_MS}
+import {createObserverRecoveryWatch,OBSERVER_RECOVERY_INTERVAL_MS,
+ isObserverRecoveryCanaryEligible}
  from '../src/engine/v2/ObserverRecoveryWatch.js';
 import {createWorldRealtimeTransport}
  from '../src/engine/v2/RealtimeTransport.js';
@@ -179,7 +180,9 @@ test('B10-R02 production flag is OFF unless explicitly opted in and preview neve
  const runtime=readFileSync(new URL(
   '../src/engine/v2/WorldV2TabletopRuntime.js',import.meta.url),'utf8');
  assert.match(runtime,/VITE_WORLD_V2_OBSERVER_RECOVERY==='1'/);
- assert.match(runtime,/budgetRecoveryEnabled=!dmPreview/);
+ assert.match(runtime,/budgetRecoveryEnabled=isObserverRecoveryCanaryEligible/);
+ assert.match(runtime,/VITE_WORLD_V2_OBSERVER_RECOVERY_CANARY_MAP_ID/);
+ assert.match(runtime,/VITE_WORLD_V2_OBSERVER_RECOVERY_GLOBAL==='1'/);
  assert.match(runtime,/createObserverRecoveryWatch/);
  assert.match(runtime,/vision\.refresh\('observer-budget-recovery'\)/);
  assert.match(runtime,/stream\?\.acceptSignedSight\(snapshot\)/);
@@ -190,4 +193,20 @@ test('B10-R02 production flag is OFF unless explicitly opted in and preview neve
   '../staging/world-v2-b10-release-qualification.json',import.meta.url)));
  assert.equal(gate.decision,'NO_GO');
  assert.equal(gate.sourceLimitations.manualScenarioCount,24);
+});
+
+test('B10-R06 default-off scoped recovery canary and separately gated all-map rollout',()=>{
+ const eligible=isObserverRecoveryCanaryEligible;
+ const map2='10000000-0000-4000-8000-000000000002';
+ assert.equal(eligible({enabled:true,mapId:MAP,canaryMapId:MAP}),true);
+ assert.equal(eligible({enabled:false,mapId:MAP,canaryMapId:MAP}),false);
+ assert.equal(eligible({enabled:true,mapId:MAP}),false);
+ assert.equal(eligible({enabled:true,mapId:MAP,canaryMapId:'bad'}),false);
+ assert.equal(eligible({enabled:true,mapId:'bad',canaryMapId:MAP}),false);
+ assert.equal(eligible({enabled:true,mapId:map2,canaryMapId:MAP}),false);
+ assert.equal(eligible({enabled:true,mapId:MAP,canaryMapId:MAP,dmPreview:true}),false);
+ assert.equal(eligible({enabled:true,mapId:MAP,canaryMapId:'*'}),false);
+ assert.equal(eligible({enabled:true,mapId:MAP,canaryMapId:'*',globalOptIn:true}),true);
+ assert.equal(eligible({enabled:false,mapId:MAP,canaryMapId:'*',globalOptIn:true}),false);
+ assert.equal(eligible({enabled:true,mapId:MAP.toUpperCase(),canaryMapId:MAP}),true);
 });

@@ -2090,5 +2090,29 @@
       "actionStep": "E05",
       "noLiveSqlAction": true
     }
-  ]
+  ],
+  "migrationHistoryR06": {
+    "state": "READ_ONLY_AUDITED_BLOCKED",
+    "source": "B10-R06",
+    "manifest": "staging/world-v2-b10-r06-history-reconciliation.json",
+    "counts": {
+      "remoteApplied": 83,
+      "repositorySql": 62,
+      "properlyVersionedFiles": 56,
+      "properlyVersionedDistinctVersions": 55,
+      "exactVersionMatchedFiles": 20,
+      "repositoryOnlyVersionedFiles": 36,
+      "remoteOnlyVersions": 63,
+      "legacyMalformedNames": 6,
+      "duplicateVersionGroups": 1,
+      "identicalNameDifferentVersionCandidates": 24
+    },
+    "duplicateVersions": [
+      "20261109000500"
+    ],
+    "exactReconciledHistoricalBodies": false,
+    "singleMigrationApplicationQualified": false,
+    "broadDbPushAllowed": false,
+    "allMapR02CanaryQualified": false
+  }
 }

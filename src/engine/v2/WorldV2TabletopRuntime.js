@@ -21,7 +21,7 @@ import {createPreviewAuthority} from './PreviewAuthority.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {certifyViewerMotion} from './CertifiedMotionPresentation.js';
 import {worldV2Trace} from './WorldTrace.js';
-import {createObserverRecoveryWatch} from './ObserverRecoveryWatch.js';
+import {createObserverRecoveryWatch,isObserverRecoveryCanaryEligible} from './ObserverRecoveryWatch.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -65,8 +65,12 @@ export function createWorldV2TabletopRuntime({
  // Budget recovery never invents or publishes coordinates. A normal
  // authenticated sight refresh reconciles committed canonical motion even
  // if a B07 private path/hide was stranded by exhausted Realtime budget.
- const budgetRecoveryEnabled=!dmPreview&&
-  import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY==='1';
+ const budgetRecoveryEnabled=isObserverRecoveryCanaryEligible({
+  enabled:import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY==='1',
+  mapId,dmPreview,
+  canaryMapId:import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY_CANARY_MAP_ID,
+  globalOptIn:import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY_GLOBAL==='1'
+ });
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
