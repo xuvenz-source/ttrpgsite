@@ -37,7 +37,7 @@ function clock(){
 }
 function harness({
  initial=sight(0),softResyncEnabled=true,
- recover=()=>current,timeout=700
+ recover=null,timeout=700
 }={}){
  let current=initial,subscriber=null,receiver=null,visionReceiver=null;
  const seen=[],hidden=[],revoked=[],requests=[],trace=createWorldV2Trace({enabled:true});
@@ -64,7 +64,7 @@ function harness({
    // Real runtime uses visibility.observerSnapshot(): renderer adopts
    // authenticated sight BEFORE transport receives it. This mock supplies
    // typed signed data only and independently checks the transport gate.
-   return recover(reason,current);
+   return typeof recover==='function'?recover(reason,current):current;
   },
   onPath:item=>seen.push(item),onHide:item=>hidden.push(item),
   onRevoke:r=>revoked.push(r)
@@ -160,7 +160,8 @@ test('R18-04 forbidden hidden piece does not acquire a sprite from fresh roster'
 
 test('R18-04 700ms deadline seals if fresh authenticated sight never returns',async()=>{
  let release;const pending=new Promise(resolve=>{release=resolve});
- const h=harness({recover:r=>r==='observer-guarded-sight'?pending:sight(1)});
+ const h=harness({recover:r=>r==='observer-guarded-sight'?pending:
+  r==='subscribed'?sight(0):sight(1)});
  await h.start();
  try{
   h.emit(1,[path(UNKNOWN)]);
@@ -179,7 +180,8 @@ test('R18-04 700ms deadline seals if fresh authenticated sight never returns',as
 });
 
 test('R18-04 incompatible signed scope after an unknown piece immediately falls back to seal',async()=>{
- const h=harness({recover:(_r,current)=>({...current,scope:'dm'})});
+ const h=harness({recover:(reason,current)=>
+  reason==='observer-guarded-sight'?{...current,scope:'dm'}:current});
  await h.start();
  try{
   h.setSnapshot(sight(1,[piece(KNOWN),piece(NEW)]));
@@ -194,7 +196,8 @@ test('R18-04 incompatible signed scope after an unknown piece immediately falls 
 test('R18-04 pending recovery never buffers private paths and bounds flood',async()=>{
  let release;const deferred=new Promise(resolve=>{release=resolve});
  const h=harness({recover:reason=>
-  reason==='observer-guarded-sight'?deferred:sight(19)});
+  reason==='observer-guarded-sight'?deferred:
+  reason==='subscribed'?sight(0):sight(19)});
  await h.start();
  try{
   h.emit(1,[path(UNKNOWN)]);await flush();
