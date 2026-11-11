@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {evaluateWallEdgeClearance,RESEARCH_WALL_CLEARANCE_CELLS}
  from '../scripts/qa/world-v2-wall-edge-clearance-research.mjs';
 import {createWorldV2Trace} from '../src/engine/v2/WorldTrace.js';
+import {summarizeRetainedCadence} from '../scripts/qa/world-v2-solo-dm-analyze.mjs';
 
 const vertical=(x,a=0,b=1)=>({wallStart:{x,y:a},wallEnd:{x,y:b}});
 const check=(x,{from={x:0,y:0},to={x:1,y:0},...rest}={})=>
@@ -129,4 +130,29 @@ test('R18-16 trace.clear drops preceding samples and any in-flight old timer',()
  h.advance(200);h.trace.clear();h.advance(1300);stale();
  assert.deepEqual(h.trace.snapshot().counts,{});
  assert.deepEqual(h.trace.snapshot().durations,{});
+});
+
+test('R18-16 last retained early/late cadence is descriptive with minimum 12 samples',()=>{
+ const h=traceHarness();
+ const values=Array.from({length:16},(_,i)=>i<8?150:1250);
+ for(const ms of values){
+  const end=h.trace.begin('authority.advance');h.advance(ms);end();
+ }
+ const cadence=summarizeRetainedCadence(h.trace.snapshot().events);
+ assert.deepEqual(cadence['authority.advance.sample'],{
+  samples:16,comparison:'late-higher-slow-share',
+  earlierSlowPct:0,laterSlowPct:100
+ });
+ assert.equal(cadence['authority.commit.sample'].comparison,'insufficient');
+ assert.equal(cadence['authority.commit.sample'].earlierSlowPct,null);
+});
+test('R18-16 mixed demand and insufficient sample sizes never claim a causal leak',()=>{
+ const events=Array.from({length:10},(_,i)=>({
+  event:'authority.commit.sample',detail:i%2?'over-2s':'under-250ms',ms:i
+ }));
+ const result=summarizeRetainedCadence(events);
+ assert.equal(result['authority.commit.sample'].comparison,'insufficient');
+ const code=readFileSync(new URL(
+  '../scripts/qa/world-v2-solo-dm-analyze.mjs',import.meta.url),'utf8');
+ assert.match(code,/not\\* a causal performance attribution|not\\* a causal/);
 });
