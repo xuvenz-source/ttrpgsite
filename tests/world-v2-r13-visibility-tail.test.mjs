@@ -16,7 +16,9 @@ const sight=(n=1)=>({version:2,mapId:MAP,viewerId:VIEWER,scope:'viewer',
  predictionGrants:[],lightCells:[],dmMovingLights:[]});
 const events=(t,name)=>t.snapshot().events.filter(e=>e.event===name);
 const make=({rpc,now=()=>0,onRevoke=()=>{},onSnapshot=()=>true}={})=>{
- const trace=createWorldV2Trace({enabled:true,limit:256});
+ // Use the SAME injected monotonic clock as the visibility controller so
+ // queue wait timings are deterministic rather than runner scheduling jitter.
+ const trace=createWorldV2Trace({enabled:true,limit:256,now});
  const controller=createVisibilityController({db:{rpc},mapId:MAP,
   viewerId:VIEWER,trace,now,onRevoke,onSnapshot});
  return {trace,controller};
