@@ -44,7 +44,9 @@ test('R06 release and canary guard preclude SQL with a single-map-only viewer',(
  const progress=JSON.parse(read('staging/engineering-progress.json'));
  const gate=JSON.parse(read('staging/world-v2-b10-release-qualification.json'));
  assert.equal(progress.steps.B10_R06.releaseDecision,'NO_GO');
- assert.equal(progress.nextStep,'B10-R07');
+ assert.equal(progress.nextStep,'B10-R08');
+ assert.equal(progress.steps.B10_R07.releaseDecision,'NO_GO');
+ assert.equal(progress.steps.B10_R07.noProductionChanges,true);
  assert.equal(gate.decision,'NO_GO');
  assert.equal(gate.stagedRemediations.B10_R06.liveSqlApplied,false);
 });
