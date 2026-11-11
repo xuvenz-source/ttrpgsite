@@ -20,6 +20,7 @@ import {collisionAllowsStep} from './CollisionSolver.js';
 import {createPreviewAuthority} from './PreviewAuthority.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {worldV2Trace} from './WorldTrace.js';
+import {createCanonicalCommitHandoff} from './CanonicalCommitHandoff.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -63,6 +64,7 @@ export function createWorldV2TabletopRuntime({
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
  let sceneRecovery=null;
+ const canonicalHandoff=createCanonicalCommitHandoff();
  let previewPosition=null,dmLightRefreshTimer=null;
  function scheduleDmLightRefresh(){
   if(disposed||!isDM||dmPreview||dmLightRefreshTimer!==null)return;
@@ -97,6 +99,7 @@ export function createWorldV2TabletopRuntime({
   },
   onInvalidate:({reason})=>{
    if(disposed)return;
+   canonicalHandoff.clear();
    movement?.cancelGesture('scene-change');
    renderer.revoke(reason,false);
    vision?.revoke(reason);
@@ -130,12 +133,14 @@ export function createWorldV2TabletopRuntime({
       (renderer.lastSightRejection||'unclassified'));
     }
    privateReady=true;
+   canonicalHandoff.observe(snapshot);
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');
    return true;
   },
   onRevoke:({reason})=>{
    if(disposed)return;
+   canonicalHandoff.clear();
    privateReady=false;
    renderer.revoke(reason,false);
    movement?.cancelGesture('permission');
@@ -189,7 +194,19 @@ export function createWorldV2TabletopRuntime({
   },
   onEvent:event=>{
    if(disposed)return;
-   renderer.applyLocalMovement(event);
+   const painted=renderer.applyLocalMovement(event);
+   if(event.type==='committed'&&!dmPreview&&painted===true&&authorized()){
+    const frame=vision.frame,anchor=event.selection?.[0];
+    const signed=frame?.visiblePieces?.find(p=>anchor&&key(p)===key(anchor));
+    canonicalHandoff.remember({
+     mapId,viewerId:identity,selection:event.selection,
+     signedOrigin:signed,endpoint:event.approved,
+     environmentRevision:frame?.environmentRevision,
+     permissionGeneration:frame?.permissionGeneration,
+     sceneGeneration:frame?.sceneGeneration
+    });
+   }else if(['rejected','cancelled','revoked'].includes(event.type))
+    canonicalHandoff.clear();
    signal(onGesture,event);
    if(dmPreview&&['approved','blocked'].includes(event.type)&&
     event.selection?.length===1&&event.selection[0].kind==='token'){
@@ -251,6 +268,7 @@ export function createWorldV2TabletopRuntime({
  }
  function revoke(reason,hard=true){
   if(disposed)return;
+  canonicalHandoff.clear();
   ++refreshRevision;privateReady=false;previewPosition=null;
    if(dmLightRefreshTimer!==null){
     clearTimeout(dmLightRefreshTimer);dmLightRefreshTimer=null;
@@ -302,6 +320,7 @@ export function createWorldV2TabletopRuntime({
      // onSnapshot automatically repaints only changed fog and sprite rows.
     },
     onRevoke:reason=>{
+     canonicalHandoff.clear();
      connected=false;privateReady=false;
      renderer.revoke(reason,false);
      movement.cancelGesture('disconnected');
@@ -328,6 +347,20 @@ export function createWorldV2TabletopRuntime({
    })().finally(()=>{if(starting===task)starting=null});
    starting=task;
    return task;
+  },
+  canonicalGestureOrigin({selection,signedOrigin}={}){
+   if(disposed||dmPreview||!authorized())return signedOrigin;
+   const frame=vision.frame;
+   const origin=canonicalHandoff.resolve({
+    mapId,viewerId:identity,selection,signedOrigin,
+    environmentRevision:frame?.environmentRevision,
+    permissionGeneration:frame?.permissionGeneration,
+    sceneGeneration:frame?.sceneGeneration
+   });
+   if(origin&&signedOrigin&&(origin.x!==signedOrigin.x||
+    origin.y!==signedOrigin.y))
+    worldV2Trace.event('movement.canonical-handoff','reused-commit');
+   return origin??signedOrigin;
   },
   attachInput({target,pointFromEvent,resolveSelection,
    onPointerRelease=()=>false,onPointerStatus=()=>{},
@@ -371,6 +404,7 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
+   canonicalHandoff.clear();
    ++refreshRevision;
     if(dmLightRefreshTimer!==null){
      clearTimeout(dmLightRefreshTimer);dmLightRefreshTimer=null;
