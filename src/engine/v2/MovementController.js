@@ -223,6 +223,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   cancelGesture(reason='user'){
    const g=active;
    if(!g)return false;
+   trace.event('movement.cancel-reason',reason);
    finish(g,{status:reason==='permission'?'revoked':'cancelled',reason});
    cancelSession(g);
    return true;
