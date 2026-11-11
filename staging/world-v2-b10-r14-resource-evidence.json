@@ -1,0 +1,81 @@
+{
+  "step": "B10-R14",
+  "observedAt": "2026-11-11",
+  "decision": "STAGED_REVIEW_NO_GO",
+  "productionSha": "cd0ee5f04c38e2c19e585033ed01b735d156b753",
+  "dm": {
+    "grabbed": 10,
+    "committed": 10,
+    "rejected": 0,
+    "approved": 73,
+    "blocked": 1,
+    "p95Ms": {
+      "begin": 272.2,
+      "advance": 232.5,
+      "commit": 249.2,
+      "visibilityRpc": 347.2,
+      "frameWork": 0.1
+    },
+    "visibilityCalls": 10,
+    "visibilityQueueEvents": 0,
+    "visibilitySlowTailEvents": 0,
+    "report": "slight rubber banding"
+  },
+  "passiveViewer": {
+    "events": 0,
+    "counts": 0,
+    "renderFrameSamples": 256,
+    "renderFrameP95Ms": 0.1,
+    "report": "mild lag",
+    "serverPacketCount": "UNKNOWN_UNINSTRUMENTED_IN_PRODUCTION"
+  },
+  "dbSpotCheck": {
+    "connections": 29,
+    "active": 2,
+    "idleInTransaction": 0,
+    "databaseSize": "25 MB",
+    "pgVersion": "17.11",
+    "freeTierMemoryUsage": "NOT_MEASURED"
+  },
+  "advisors": {
+    "missingFkIndexes": 36,
+    "unusedIndexes": 7,
+    "multiplePermissivePolicyWarnings": 2,
+    "causalAttribution": "NONE"
+  },
+  "cumulativeDbStats": {
+    "begin": {
+      "calls": 373,
+      "meanMs": 21.6,
+      "maxMs": 743.6
+    },
+    "advance": {
+      "calls": 754,
+      "meanMs": 45.4,
+      "maxMs": 1534.2
+    },
+    "commit": {
+      "calls": 317,
+      "meanMs": 101.4,
+      "maxMs": 2765.8
+    },
+    "visibility": {
+      "calls": 956,
+      "meanMs": 42.3,
+      "maxMs": 1856.5
+    },
+    "scope": "CUMULATIVE_NOT_PAIRED_WITH_LIVE_GESTURES"
+  },
+  "patch": {
+    "scope": "TRACE_ONLY",
+    "newEvent": "observer.frame-accepted",
+    "newMetric": "observer.frame-gap",
+    "noAdditionalDbRequests": true,
+    "noNetworkMessageChanges": true,
+    "noRendererOrFogChanges": true,
+    "featureOptIn": "worldV2Trace=1"
+  },
+  "next": "B10-R15",
+  "sqlApplied": false,
+  "deployPerformed": false
+}
