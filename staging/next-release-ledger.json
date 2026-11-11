@@ -355,7 +355,8 @@
       "name": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "B10-R18-12 operator-only read-only CLI 2.81.3 linked migration fetch/list/db push --dry-run runner, mocked adverse tests; live 12 Nov SELECT-only preflight 83/83 historical SQL digests, 7/7 functions, 0 unexpired gestures, R05 absent. No actual CLI session or production change; CI pending."
+      "note": "B10-R18-12 operator-only read-only CLI 2.81.3 linked migration fetch/list/db push --dry-run runner, mocked adverse tests; live 12 Nov SELECT-only preflight 83/83 historical SQL digests, 7/7 functions, 0 unexpired gestures, R05 absent. No actual CLI session or production change; CI pending.",
+      "linkedPullRequest": 114
     }
   ],
   "features": [
@@ -1061,7 +1062,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Connected Supabase SELECT-only preflight passed on 2026-11-12. This branch does not itself execute actual linked CLI, live multiplayer Auth or SQL install; NO_GO."
+      "note": "Connected Supabase SELECT-only preflight passed on 2026-11-12. This branch does not itself execute actual linked CLI, live multiplayer Auth or SQL install; NO_GO.",
+      "linkedPullRequest": 114
     }
   ],
   "databaseDependencies": [
