@@ -16,7 +16,7 @@ export function createObserverSightRecovery({
   recover(){
    if(disposed)return Promise.resolve(false);
    if(pending)return pending;
-   const task=(async()=>{
+   const task=Promise.resolve().then(async()=>{
     for(let attempt=0;attempt<maxAttempts;attempt++){
      if(disposed||!isAuthorized())return false;
      if(!isWaiting())return true;
@@ -30,7 +30,7 @@ export function createObserverSightRecovery({
     // If fresh sight never catches up, retain the prior fail-closed
     // scene reauthorization as a bounded last resort, never freeze forever.
     try{return await onExhausted()===true}catch{return false}
-   })().finally(()=>{if(pending===task)pending=null});
+   }).finally(()=>{if(pending===task)pending=null});
    pending=task;
    return task;
   },
