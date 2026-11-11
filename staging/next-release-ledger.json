@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-11",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+  "releaseBranch": "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -329,6 +329,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "linkedPullRequest": 110,
       "note": "R18-08 CLI v2.81.3 source-audited FETCH/LIST/DRY-RUN: offline exact 83-body digest comparison from read-only live SQL (no historic SQL exported); validator enforces migrations ENABLED, seed DISABLED, correct linked project ref and frozen R05 blob. 13 new synthetic tamper/config tests. Underlying remote read-only verification only. Linked CLI remote dry-run STILL NOT RUN, no frontend flag/SQL/deploy. NO-GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-09 offline-only pinned-CLI migration-list and db push --dry-run transcript consistency gate. Verifies 83 matched remote/local registered versions and exactly one pending reviewed R05; rejects false up-to-date, disabled migrations, extra SQL, seeds and roles. Live 83 SQL hashes still matched read-only, but no linked CLI was executed. Keeps NO-GO, flags OFF, SQL nonapplied and no deployment."
     }
   ],
   "features": [
@@ -938,6 +944,28 @@
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
       "note": "NO-GO. All 83 applied source hashes observed but actual remote CLI migration fetch+dry-run unperformed; secure linked release auth not available. No remote mutation, env, RLS, Edge or paid service. R18-02 signed client must be separately approved and live before distinct approved R05 SQL; R18-04 guarded recovery stays OFF pending protected revocation/LOS QA."
+    },
+    {
+      "id": "world-v2-b10-r18-09-cli-transcript-verification",
+      "description": "Fail-closed offline consistency verifier for pinned Supabase CLI migration list and dry-run transcripts; read-only 83-SQL-body fingerprint re-observation",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO. Only a supplemental offline parse of captured text, never authenticates CLI or permits SQL; actual linked v2.81.3 dry-run, approved signed recovery client, separate DB authorization and protected 24-case QA remain outstanding."
     }
   ],
   "databaseDependencies": [
@@ -1252,7 +1280,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+    "releaseBranch": "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1262,9 +1290,10 @@
       "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
       "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
       "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
-      "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11"
+      "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+      "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11"
     ],
-    "stagePolicy": "R18-08 readiness ONLY. All original R17/R18 PR #102–109 remain staged/unmerged and source preserved. Live R16 unchanged. Historical 83 remote migration version/name and exact reconstructed 83 SQL body fingerprints collected read-only. Run correct separate secure CLI v2.81.3 migration fetch + local history/body+config validator + migration list and db push --dry-run, only ONE reviewed R05 version; actual linked CLI dry-run not yet done. No migration install with MCP apply_migration (auto version), no manual history repair/bulk repo db push. First approved R18-02 signed sight client frontend must be built ON and Auth-tested before any separate authorized SQL. R18-04 guarded 700ms flag OFF pending dedicated LOS/revoke test. No merges, Vercel env/deploy, SQL/RLS/Edge/Realtime or paid infrastructure by implied proceeding.",
+    "stagePolicy": "R18-09 log-only CLI transcript verification; all R17/R18-01 through R18-08 staged source retained. Exact 83 remote body digests matched live read-only on 2026-11-11. Supabase linked CLI fetch/list/db push --dry-run NOT performed, historical SQL unapplied. Source validator and text log parser cannot authorize SQL. Separate R18-02 production client canary approval and authentication tests FIRST; distinct SQL approval and protected acceptance later. R18-04 guarded recovery remains OFF. No merges, env/deploy, DB writes, paid infrastructure or unapproved preview.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
