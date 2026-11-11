@@ -10,7 +10,7 @@
     "sourcePR": 107,
     "sourceHeadSha": "45b057fc70be78f43c610ee0a9688c7a3bce8fc8",
     "stagingBranch": "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
-    "additionalReadinessPR": null,
+    "additionalReadinessPR": 108,
     "originalUnmergedPRs": [
       102,
       103,
