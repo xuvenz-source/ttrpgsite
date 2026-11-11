@@ -285,7 +285,7 @@
       "name": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 104,
       "note": "B10-R18-02 layered on R18-01 PR #103; client-only default-OFF 12s signed observer catch-up, strict private stream cursor/roster fencing, no SQL or production flag. Stage tests and exact-head release review pending; does not fix immediate unknown-piece/sequence-gap blackouts."
     }
   ],
@@ -785,7 +785,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 104,
       "databaseDependencies": [],
       "note": "Client-only opt-in OFF. Must review R02/B08/R03/R05 integration and complete protected DM/P1/P2 fog/LOS and free-tier load acceptance before activating."
     }
