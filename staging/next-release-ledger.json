@@ -390,7 +390,8 @@
       "name": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "B10-R18-17: uninstalled SQL candidate replaces both V2 + direct-write swept collision geometry with identical 0.10-cell margin and PG17 rollback-only parity checks; strict-default client build flag, DM/preview collision parity, adversarial tests. Protected R05 frozen. No SQL or Vercel changes."
+      "note": "B10-R18-17: uninstalled SQL candidate replaces both V2 + direct-write swept collision geometry with identical 0.10-cell margin and PG17 rollback-only parity checks; strict-default client build flag, DM/preview collision parity, adversarial tests. Protected R05 frozen. No SQL or Vercel changes.",
+      "linkedPullRequest": 119
     }
   ],
   "features": [
@@ -1242,7 +1243,8 @@
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
         "supabase/candidates/world_v2_r18_17_wall_clearance_parity.sql"
       ],
-      "note": "Client cannot enable until separately approved, verified R05+new versioned R18-17 migration, both helpers in live PG and independently Auth P1/P2 tested. 10% is 0.10 CELL clearance, not area percentage. Fog/LOS authority unchanged. No live deployment."
+      "note": "Client cannot enable until separately approved, verified R05+new versioned R18-17 migration, both helpers in live PG and independently Auth P1/P2 tested. 10% is 0.10 CELL clearance, not area percentage. Fog/LOS authority unchanged. No live deployment.",
+      "linkedPullRequest": 119
     }
   ],
   "databaseDependencies": [
