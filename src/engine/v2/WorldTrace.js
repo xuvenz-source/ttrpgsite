@@ -27,7 +27,7 @@ const EVENTS=new Set([
  'renderer.observer-discontinuity'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
- 'authority.cancel','visibility.rpc','visibility.queue-wait',
+ 'authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
  'observer.frame-gap','render.frame']);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
  'revision','drag','touch','keyboard','preview','grabbed','busy','point',
