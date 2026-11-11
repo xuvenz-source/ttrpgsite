@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -343,6 +343,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-10 guarded 700ms observer recovery concealment fix. While in opt-in guarded grace or sequence gap, a private hide or vision dirty event immediately hard seals before synchronous or async signed reauthorization. Correctly ordered hides and default-OFF behavior unchanged; source-real tests pending. No live deployment, no applied R05 SQL, guarded flag OFF.",
       "linkedPullRequest": 112
+    },
+    {
+      "name": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-11 source-real PostgreSQL three-identity revoke/rejoin/DM-downgrade Auth role gate plus actual WorldRenderer/RealtimeTransport guarded hide/vision tests. No live Supabase/Auth, migration or deployment; pending exact-head CI."
     }
   ],
   "features": [
@@ -999,6 +1005,30 @@
       ],
       "note": "Concealment-first source change only in default-OFF guarded path. Authenticated DM/P1/P2 LOS/revocation remains untested and R18-04 feature activation NO-GO. No frontend canary or SQL approval; exact-head checks pending.",
       "linkedPullRequest": 112
+    },
+    {
+      "id": "world-v2-b10-r18-11-viewer-revocation-auth-gate",
+      "description": "Source-real PostgreSQL viewer-scope and private-topic RLS tests under P1 campaign removal/rejoin, P2 other-map scope and DM downgrade; actual renderer/transport fog blackout regression under guarded private hide and dirty-vision.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Test-only SQL in disposable PostgreSQL 17, test-only renderer transport fixture. No changes to shipped runtime, SQL or permissions. Live authenticated users, CLI migration dry-run and full browser acceptance unproven."
     }
   ],
   "databaseDependencies": [
@@ -1313,7 +1343,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1325,9 +1355,10 @@
       "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
       "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
       "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
-      "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12"
+      "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+      "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12"
     ],
-    "stagePolicy": "R18-10 privacy safety fix in default-OFF guarded transport; R17 + R18-01...R18-09 remain source-preserved in this branch. Production R16 unchanged. A valid private hide/vision event during the guarded window now triggers immediate full revocation, not visual retention; DM/P1/P2 Auth/LOS verification outstanding. Pinned CLI linked dry-run unperformed, R05 SQL unapplied. First R18-02 signed client must be separately approved and tested before another distinct SQL approval. R18-04 guarded remains OFF; no Vercel merge/deploy/env change, Supabase writes or paid infrastructure.",
+    "stagePolicy": "R18-11 adds only source-real isolated PostgreSQL membership revocation/downgrade integration and actual WorldRenderer/RealtimeTransport bounded guarded privacy tests, preserving R17+R18-01...R18-10. R18-10 client/SQL candidate unchanged and production R16 unaffected. Authenticated live DM/P1/P2, one actual isolated CLI migration fetch and dry run, 12s signed client canary and separately approved frozen R05 SQL install remain pending. Guarded feature remains OFF; no merger, production deployment, Supabase write or paid service authorized.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
