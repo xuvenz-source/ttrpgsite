@@ -270,7 +270,7 @@
     {
       "name": "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "status": "staged",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 102,
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "B10-R17 narrow client-only keyboard denial correction: rebase input cursor to last server-approved point after validated blocked ACK; suppress only the same denied adjacent cell until direction changes. Separate observer precommit/commit synchronization investigation documented; no schema/RPC/Fog changes. Pending PR review/QA; do not deploy automatically."
     }
@@ -747,7 +747,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 102,
       "databaseDependencies": [],
       "note": "Strict local ACK-derived input behavior; not a fix for observer canonical divergence or the underlying 200ms RPC round trips."
     }
