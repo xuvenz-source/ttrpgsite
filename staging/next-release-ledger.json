@@ -348,7 +348,8 @@
       "name": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-11 source-real PostgreSQL three-identity revoke/rejoin/DM-downgrade Auth role gate plus actual WorldRenderer/RealtimeTransport guarded hide/vision tests. No live Supabase/Auth, migration or deployment; pending exact-head CI."
+      "note": "R18-11 source-real PostgreSQL three-identity revoke/rejoin/DM-downgrade Auth role gate plus actual WorldRenderer/RealtimeTransport guarded hide/vision tests. No live Supabase/Auth, migration or deployment; pending exact-head CI.",
+      "linkedPullRequest": 113
     }
   ],
   "features": [
@@ -1028,7 +1029,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Test-only SQL in disposable PostgreSQL 17, test-only renderer transport fixture. No changes to shipped runtime, SQL or permissions. Live authenticated users, CLI migration dry-run and full browser acceptance unproven."
+      "note": "Test-only SQL in disposable PostgreSQL 17, test-only renderer transport fixture. No changes to shipped runtime, SQL or permissions. Live authenticated users, CLI migration dry-run and full browser acceptance unproven.",
+      "linkedPullRequest": 113
     }
   ],
   "databaseDependencies": [
