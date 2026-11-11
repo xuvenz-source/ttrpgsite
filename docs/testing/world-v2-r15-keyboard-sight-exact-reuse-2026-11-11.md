@@ -33,3 +33,16 @@ The original keyboard stepper in `src/engine/v2/KeyboardStepper.js` awaits `runt
 Repeat 30–60 seconds with distinct moving P1 and truly passive P2, capturing `worldV2Trace` after startup. Expected in favorable continuation cases: `visibility.continuation:covered>0`, fewer `visibility.queue:queued` and `visibility.rpc-call:queued`, no increase in `fallback`, rejected gestures, seals, fog redraw, sprite teardown, or RPC tails. Unchanged p95 Advance/Commit may remain ~200–350ms because each server-authorized movement RPC is still sequential. Do not conflate saving one duplicate sight RPC with solving fundamental movement RTT. The R05 comprehensive SQL release remains blocked on migration reconciliation and the 24-case protected QA matrix.
 
 **Handoff:** R15 investigation resolved to exact-equivalent client-side coalescing; target branch `stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11`. No production merge/deploy or live database writes. Next gate: exact-head CI, independent code review, then optional controlled live-test decision.
+
+## Approved R15 controlled live-test script (DM + two players)
+
+**Production release must wait for a successful required `build-and-test` PR status** (a successful duplicate push run cannot override branch protection). Preserve the existing test-only campaign and do not apply R05–R09 SQL.
+
+1. Sign in to separate DM, Player 1 (moving token) and Player 2 (passive observer) browser profiles. Confirm they are all on the same test map, Player 2 has no local gestures, and the DM has a controlled wall/fog test area. Set `worldV2Trace=1` in each signed-in map URL.
+2. After map startup finishes, in each developer console run `window.__worldV2Trace.clear()`. Keep both player accounts open for the same approximate 30–60-second movement interval.
+3. With Player 1, hold an arrow, then rapidly tap alternating arrows; tap more directions while the preceding commit is in flight; drag several tiles and immediately drag again. Player 2 should not touch controls. Look for no lost gestures, sprite remount, fog-map flashing or newly visible hidden tokens.
+4. With the DM, test ordinary drag, arrow keys, player-preview movement, wall blocking and fog-boundary entry. Confirm preview does not mutate live tokens and no player can cross an inaccessible wall or reveal undiscovered private map information.
+5. Capture `window.__worldV2Trace.snapshot()` from both Player 1 and Player 2; label accounts and note perceived delays separately. P1: `movement.grabbed/committed/rejected`, `visibility.continuation covered/fallback`, `visibility.rpc-call`, `visibility.queue`, authority p50/p95. P2: `movement.grabbed=0`, `observer.frame-accepted>0`, observer.frame-gap p50/p95; count any invalid frames, seals, fog redraws or sprite removes.
+6. Stop and report immediately if authorization errors, map blackouts, repeated rejected gestures, invisible-wall bypasses or hidden NPC leaks occur. Revert the frontend-only R15 commit if post-release security/functional smoke fails; no database rollback is needed.
+
+A successful live test verifies R15's exact-equivalent keyboard visibility optimization, **not** the unshipped R05 server-authority redesign or all 24 protected-fog scenarios.
