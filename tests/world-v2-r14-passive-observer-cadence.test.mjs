@@ -149,3 +149,22 @@ test('B10-R14 diagnostics remain off without trace opt-in; authorized packet pat
   assert.deepEqual(h.trace.snapshot().durations,{});
  }finally{await h.transport.dispose()}
 });
+
+
+test('R16 clearing passive observer trace discards prior in-flight frame gap stopwatch',async()=>{
+ const h=harness();
+ try{
+  await h.connect();
+  h.at(100);h.publish(frame(1));
+  h.trace.clear();
+  h.at(1010000);h.publish(frame(2));
+  assert.equal(accepted(h),1);
+  assert.equal(h.trace.snapshot().durations['observer.frame-gap'],undefined,
+   'clearing trace must not count previous idle time as latency');
+  h.at(1010250);h.publish(frame(3));
+  const gap=h.trace.snapshot().durations['observer.frame-gap'];
+  assert.equal(gap.samples,1);
+  assert.equal(gap.p50Ms,250);
+  assert.equal(gap.maxMs,250);
+ }finally{await h.transport.dispose()}
+});
