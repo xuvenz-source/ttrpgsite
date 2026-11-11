@@ -297,6 +297,17 @@
       "realThreeAccountQa": "NOT_RUN",
       "liveSqlApplied": false,
       "liveCanaryEnabled": false
+    },
+    "B10_R08": {
+      "status": "STAGED_DIAGNOSTIC_TRIAGE_NO_GO",
+      "sourceSha": "d626f8b60f2d76995d40a5167291951800241050",
+      "userReportedFails": 5,
+      "userReportedPasses": 1,
+      "liveSourceTraceExists": true,
+      "actualSanitizedTrace": "NOT_COLLECTED",
+      "R02CanaryReleased": false,
+      "R05MigrationApplied": false,
+      "protectedThreeAccountQa": "NOT_RUN"
     }
   },
   "nextRemediation": "B10-R06: reconcile history safely for one targeted migration and perform controlled client-first R02 test canary on disposable live campaign; validate real DM/P1/P2 signed fog before server R03 apply."

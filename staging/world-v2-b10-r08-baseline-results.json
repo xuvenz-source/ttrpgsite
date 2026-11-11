@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "step": "B10-R08",
+  "date": "2026-11-11",
+  "source": "DESIGNER_MANUAL_PR70_BASELINE_REPORT",
+  "deploymentSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+  "evidenceKind": "BINARY_MANUAL_OUTCOMES_NO_TELEMETRY_OR_VIDEO",
+  "fixture": {
+    "campaign": "TestCampaign",
+    "map": "GumfordGarden",
+    "automaticFog": false,
+    "collision": false
+  },
+  "results": [
+    {
+      "id": "BASE-01",
+      "role": "DM_NORMAL",
+      "title": "DM normal movement",
+      "outcome": "FAIL"
+    },
+    {
+      "id": "BASE-02",
+      "role": "DM_PREVIEW",
+      "title": "DM player preview",
+      "outcome": "FAIL"
+    },
+    {
+      "id": "BASE-03",
+      "role": "PLAYER_LOCAL",
+      "title": "Player movement",
+      "outcome": "FAIL"
+    },
+    {
+      "id": "BASE-04",
+      "role": "PLAYER_REMOTE",
+      "title": "Remote movement and flashing",
+      "outcome": "FAIL"
+    },
+    {
+      "id": "BASE-05",
+      "role": "MULTIROLE_REPEATED",
+      "title": "Repeated movement",
+      "outcome": "FAIL"
+    },
+    {
+      "id": "BASE-06",
+      "role": "RECONNECT",
+      "title": "Reconnect",
+      "outcome": "PASS"
+    }
+  ],
+  "failCount": 5,
+  "passCount": 1,
+  "unconfirmedDimensions": [
+    "whether drag did not start, began but froze, or moved slowly",
+    "whether preview failed by lag, missing token or failed movement",
+    "whether full terrain image flashed versus fog blackout or sprite redraw",
+    "actual first-paint, RPC, Realtime and renderer p50/p95",
+    "browser/device/network and separate account sessions",
+    "true protected fog/collision behaviour under published fixture"
+  ],
+  "releaseDecision": "NO_GO",
+  "canaryDecision": "DEFER_R02_CANARY_AS_NOT_PRIMARY_MOTION_FIX",
+  "nextPriority": "TRACE_ON_CURRENT_PR70_THEN_ISOLATE_FIRST_SHARED_FAILURE",
+  "trustedTraceSource": "src/engine/v2/WorldTrace.js",
+  "traceOnLiveProduction": true,
+  "traceOptIn": "worldV2Trace=1",
+  "traceApi": "window.__worldV2Trace.snapshot()",
+  "secrets": "NO_IDS_NO_COORDINATES_NO_JWTS_NO_RAW_PAYLOADS",
+  "noLiveMutation": true
+}
