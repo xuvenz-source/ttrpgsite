@@ -76,3 +76,31 @@ export function boxesMayOverlap(a,b){
  return a.minX<=b.maxX+EPS&&a.maxX+EPS>=b.minX&&
   a.minY<=b.maxY+EPS&&a.maxY+EPS>=b.minY;
 }
+
+/**
+ * Local parity for the separately gated R18-17 server predicate.
+ * Strict is the default until PostgreSQL candidate is separately
+ * authorized, installed, and the Vite client flag is turned ON.
+ *
+ * The core sweep is ALWAYS continuous (not endpoint-only): a thin solid
+ * wall across the token's interior must block even during fast dragging.
+ */
+export const WALL_EDGE_CLEARANCE_CELLS=0.10;
+export function segmentCrossesSweptFootprintWithClearance(
+ a,b,from,to,spanX,spanY,clearanceCells=0
+){
+ if(clearanceCells===0)
+  return segmentCrossesSweptFootprint(a,b,from,to,spanX,spanY);
+ if(clearanceCells!==WALL_EDGE_CLEARANCE_CELLS||
+  !validCollisionPoint(a)||!validCollisionPoint(b)||
+  !validCollisionPoint(from)||!validCollisionPoint(to)||
+  !finite(spanX)||!finite(spanY)||spanX<=0||spanY<=0||
+  spanX>12||spanY>12)
+  throw Error('Invalid R18-17 collision clearance contract');
+ const insetX=Math.min(clearanceCells,spanX/4);
+ const insetY=Math.min(clearanceCells,spanY/4);
+ return segmentCrossesSweptFootprint(a,b,
+  {x:from.x+insetX,y:from.y+insetY},
+  {x:to.x+insetX,y:to.y+insetY},
+  spanX-2*insetX,spanY-2*insetY);
+}
