@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "updated": "2026-11-12",
+  "step": "B10-R18-10",
+  "releaseDecision": "NO_GO",
+  "stagingBranch": "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+  "parentPr": 111,
+  "parentHeadSha": "f09d3b0d16138a223f101c3659d2cc40907a69fb",
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "productionApproval": false,
+  "databaseApproval": false,
+  "changes": {
+    "runtimeFile": "src/engine/v2/RealtimeTransport.js",
+    "scope": "guarded mode only",
+    "privateHideDuringGuardHardSeals": true,
+    "privateVisionDirtyDuringGuardHardSeals": true,
+    "activeFlagByDefault": false
+  },
+  "releaseGates": {
+    "actualLinkedCliDryRunPerformed": false,
+    "authPlayerFogRevocationVerified": false,
+    "frontendCanaryDeployed": false,
+    "backendMigrationApplied": false,
+    "guardedRecoveryEnabled": false,
+    "postSql24CaseAccepted": false,
+    "freeTierLoadAccepted": false
+  },
+  "runbook": "docs/testing/world-v2-r18-10-guarded-concealment-2026-11-12.md"
+}
