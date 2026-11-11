@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "step": "B10-R05",
+  "date": "2026-11-11",
+  "state": "STAGED_UNAPPLIED",
+  "deploymentDecision": "NO_GO",
+  "stackParent": {
+    "pullRequest": 89,
+    "head": "ce49a07c6ee30135e6a38f5fbb3e1e98c7b45450"
+  },
+  "liveCampaigns": "DISPOSABLE_TEST_ONLY_NO_REAL_CAMPAIGNS_ACTIVE",
+  "cliProvenance": {
+    "version": "2.81.3",
+    "actionsRun": 42946657992,
+    "artifactPath": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+    "generatedByOfficialMigrationNew": true
+  },
+  "exactMigration": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+  "sourceCandidates": [
+    "supabase/candidates/world_v2_b03_path_validation.sql",
+    "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+    "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+    "supabase/candidates/world_v2_b10_r01_core_path_integration.sql",
+    "supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql"
+  ],
+  "readOnlyLivePreflight": "supabase/release-preflight/world_v2_b10_r05_exact_live_catalog.sql",
+  "postCommitRecovery": "supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql",
+  "testOnlyRehearsal": "tests/world-v2-b10-postgres/versioned-release-r05.sql",
+  "replayActionsRun": 42948102943,
+  "rehearsalEvidence": {
+    "versionedSqlAtomicAbort": "PASS in disposable PG17",
+    "postCommitOriginalFourFunctionRestore": "PASS in disposable PG17",
+    "privateSourceBackupRLS": "PASS in disposable PG17",
+    "liveAuthSignedThreeAccounts": "NOT_RUN",
+    "collisionFogHiddenNPC24Cases": "NOT_RUN",
+    "realtimeExhaustionPerformance": "NOT_RUN"
+  },
+  "liveSourceAudit": {
+    "baselineAppliedMigrationCount": 83,
+    "baselineLatestVersion": "20261109171247",
+    "repositoryVersionedFiles": 56,
+    "exactVersionMatches": 20,
+    "unappliedRepositoryVersions": 36,
+    "liveVersionsWithNoExactRepositoryFile": 63,
+    "blindDbPushAllowed": false,
+    "note": "A standard db push or include-all may replay historical migration aliases. Must use approved targeted installation path after manual history/source verification; do not perform automatic history repair."
+  },
+  "startupFlags": {
+    "VITE_WORLD_V2_OBSERVER_RECOVERY": "OFF until paired test rollout; initially deploy R02 ON to test clients before the SQL commit",
+    "VITE_WORLD_V2_COALESCE_MOTION": "OFF until SQL and signed Auth QA",
+    "VITE_WORLD_V2_CERTIFIED_MOTION": "OFF until SQL and signed Auth QA",
+    "VITE_WORLD_V2_COMMIT_RECONCILE": "OFF until SQL and signed Auth QA"
+  },
+  "releasePhases": [
+    {
+      "number": 1,
+      "action": "deploy compatible frontend recovery R02 ON and other advanced flags OFF to disposable test users; observe signed sight rate, count and 3-account authorization",
+      "requires": "auth + protected fog fixture, explicit canary decision; source/CI gates"
+    },
+    {
+      "number": 2,
+      "action": "quiesce all gesture sessions; perform exact read-only live pg_proc/migration/version/ACL preflight; confirm 0 active motions; record backup and release target",
+      "requires": "phase 1 passed"
+    },
+    {
+      "number": 3,
+      "action": "apply only exact R05 versioned SQL via approved history-safe targeted migration action, not broad db push; verify resulting history and 4 original source backup rows",
+      "requires": "manual version/alias reconciliation and source hash verification"
+    },
+    {
+      "number": 4,
+      "action": "run 24 distinct DM/P1/P2 protected collision/fog/ownership/preview/reconnect tests; deliberately exhaust observer budget, verify signed hides/terminal replay and CPU/memory",
+      "requires": "phase 3 pass"
+    },
+    {
+      "number": 5,
+      "action": "enable B05/B06/B08 build flags only after corresponding endpoint proofs; benchmark p50/p95/flash and fanout before mainline release",
+      "requires": "phase 4 pass"
+    }
+  ],
+  "rollback": {
+    "beforeSqlCommit": "abort transaction; verify catalog original and no R05 recovery table",
+    "afterSqlCommit": "freeze movement and revert advanced frontend flags; execute manual recovery SQL restoring 4 exact original private/public function definitions from private RLS backup; verify; preserve migration history and write a new reviewed forward repair",
+    "provenOnlyInDisposablePostgres": true,
+    "originalAdminSourceRetained": true,
+    "noDropCampaignTables": true,
+    "notAutomatic": true
+  },
+  "noGoBlockers": [
+    "83 live migration versions versus 56 repository filenames, only 20 exact matches; targeted history-safe apply must be audited",
+    "A06 Gate A 24 real authenticated DM/P1/P2 fog/LOS/collision/hidden NPC/multi-tab cases NOT RUN",
+    "R02 signed sight recovery client must be enabled+tested before R03 terminal coordinate retirement",
+    "No measured free-tier p95, map flash, Realtime fanout or additional 6-second signed sight database pressure",
+    "Published fog/authorization and old cached browser versions during paired release not validated",
+    "No production migration or deployment authorized/required in B10-R05"
+  ]
+}
