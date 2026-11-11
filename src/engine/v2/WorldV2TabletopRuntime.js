@@ -22,6 +22,7 @@ import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {worldV2Trace} from './WorldTrace.js';
 import {createCanonicalCommitHandoff} from './CanonicalCommitHandoff.js';
 import {createObserverSightRecovery} from './ObserverSightRecovery.js';
+import {createObserverRecoveryWatch} from './ObserverRecoveryWatch.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -61,6 +62,10 @@ export function createWorldV2TabletopRuntime({
    .some(callback=>typeof callback!=='function'))
   throw Error('Invalid V2 tabletop integration');
  const identity=dmPreview?previewViewerId:viewerId;
+ // Opt-in remains OFF in all existing production builds. Preview is local.
+ const observerRecoveryEnabled=!dmPreview&&
+  import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY==='1';
+ let observerWatch=null,foregroundListener=null;
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
@@ -135,6 +140,9 @@ export function createWorldV2TabletopRuntime({
     }
    privateReady=true;
    canonicalHandoff.observe(snapshot);
+   // Renderer admitted this complete signed sight first. Only now may the
+   // private stream move its cosmetic cursor/roster to the certified state.
+   if(observerRecoveryEnabled)stream?.acceptSignedSight(snapshot);
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');
    return true;
@@ -390,7 +398,34 @@ export function createWorldV2TabletopRuntime({
    });
    if(stream&&(!await stream.start()||disposed))return false;
    if(!await sceneTransport.start()||disposed)return false;
-   started=true;state('started');return true;
+   started=true;
+   if(observerRecoveryEnabled&&!observerWatch){
+    const foreground=()=>typeof document==='undefined'||
+     document.visibilityState!=='hidden';
+    observerWatch=createObserverRecoveryWatch({
+     isForeground:foreground,
+     canCheck:()=>!disposed&&started&&stream?.connected===true&&
+      stream?.locked===false&&authorized()&&!movement.active&&
+      !deferredObserverRecovery.pending,
+     check:async()=>{
+      // Only the existing viewer-authenticated sight RPC can correct a
+      // missing final path. No public cursor, client ID, or guessed point.
+      const accepted=await refreshVisibility('observer-budget-recovery');
+      if(!accepted&&!authorized()&&!disposed&&stream?.connected)
+       void stream.resync('observer-budget-recovery-denied');
+      return accepted&&authorized();
+     },
+     onError:error=>signal(onError,error)
+    });
+    if(typeof document!=='undefined'&&document.addEventListener){
+     foregroundListener=()=>{
+      if(foreground())void observerWatch?.resume();
+     };
+     document.addEventListener('visibilitychange',foregroundListener);
+    }
+    observerWatch.start();
+   }
+   state('started');return true;
    })().finally(()=>{if(starting===task)starting=null});
    starting=task;
    return task;
@@ -452,6 +487,11 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
+   observerWatch?.dispose();observerWatch=null;
+   if(foregroundListener&&typeof document!=='undefined'&&
+    document.removeEventListener)
+    document.removeEventListener('visibilitychange',foregroundListener);
+   foregroundListener=null;
    deferredObserverRecovery.dispose();
    canonicalHandoff.clear();committedSight=null;
    ++refreshRevision;

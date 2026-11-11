@@ -112,6 +112,17 @@ export function createWorldRealtimeTransport({
  let generation=0,cursor=null,revision=null,permission=null;
  let roster=new Set(),pending=null,retryTimer=null,retryAttempts=0;
  let acceptedFrameClock=null;
+ // Positions here originate ONLY from accepted server-signed sight.
+ // A private motion packet is never a new permission to show a sprite.
+ let sightScope=null,sightPositions=new Map(),sightFences=new Map();
+ const sightPoint=p=>int(p?.x)&&int(p?.y)&&p.x>=0&&p.y>=0&&
+  p.x<=10000&&p.y<=10000;
+ const signedPositions=snapshot=>{
+  if(!snapshot.visiblePieces.every(sightPoint))return null;
+  return new Map(snapshot.visiblePieces.map(p=>[
+   key(p),{x:p.x,y:p.y}
+  ]));
+ };
  const cancelRetry=()=>{
   if(retryTimer!==null){clearTimeout(retryTimer);retryTimer=null}
  };
@@ -120,6 +131,7 @@ export function createWorldRealtimeTransport({
   if(disposed)return;
   trace.event('observer.seal',reason);
   locked=true;roster.clear();cursor=null;revision=null;permission=null;
+  sightScope=null;sightPositions.clear();sightFences.clear();
   // Do not include permission loss or offline intervals in packet cadence.
   acceptedFrameClock=null;
   generation++;
@@ -143,6 +155,11 @@ export function createWorldRealtimeTransport({
    revision=snapshot.environmentRevision;
    permission=snapshot.permissionGeneration;
    roster=new Set(snapshot.visiblePieces.map(key));
+   // A legacy typed cursor lacking full positions cannot authorize
+   // origin fencing or a later signed-roster update.
+   sightScope=['dm','viewer'].includes(snapshot.scope)?snapshot.scope:null;
+   sightPositions=sightScope?(signedPositions(snapshot)??new Map()):new Map();
+   sightFences.clear();
    locked=false;retryAttempts=0;
    trace.event('observer.authorized');state('authorized');
    return true;
@@ -194,9 +211,19 @@ export function createWorldRealtimeTransport({
     // Never reveal IDs or send hide actions for a piece never in an
     // authorized roster; conceal a known sprite immediately.
     if(roster.has(id)){
-     roster.delete(id);onHide(item,{seq:frame.seq,mapId});
+     roster.delete(id);sightPositions.delete(id);sightFences.delete(id);
+     onHide(item,{seq:frame.seq,mapId});
     }
    }else if(roster.has(id)){
+    const signed=sightFences.get(id);
+    if(signed&&(item.path[0].x!==signed.x||
+     item.path[0].y!==signed.y)){
+     // No old queued route can rewind a newer signed canonical point.
+     // Consume the stream cursor, not the unpresentable trajectory.
+     trace.event('observer.late-frame');
+     continue;
+    }
+    if(signed)sightFences.delete(id);
     pendingPaths.push(item);
    }else{
     // A piece entering light may require a new authorized roster; do not
@@ -246,6 +273,39 @@ export function createWorldRealtimeTransport({
    return true;
   },
   resync,
+  /**
+   * This may be called ONLY after an independently authenticated signed
+   * sight has been accepted by the renderer. An unsigned motion packet
+   * or server cursor alone must never grant a new visible roster.
+   */
+  acceptSignedSight(snapshot){
+   if(disposed||!started||!connected||locked||
+    !validWorldObserverSnapshot(snapshot,mapId,viewerId)||
+    !['dm','viewer'].includes(snapshot.scope)||
+    snapshot.cursor<cursor)return false;
+   if(!sightScope)return false;
+   if(snapshot.scope!==sightScope||
+    snapshot.environmentRevision!==revision||
+    snapshot.permissionGeneration!==permission){
+    // A scope or permission drift must seal the old private stream
+    // immediately, rather than reconcile it against new permissions.
+    void resync('signed-sight-version-change');
+    return false;
+   }
+   const next=signedPositions(snapshot);
+   if(!next)return false;
+   for(const [id,position] of next){
+    const previous=sightPositions.get(id);
+    if(!previous||previous.x!==position.x||previous.y!==position.y)
+     sightFences.set(id,position);
+   }
+   for(const id of sightFences.keys())
+    if(!next.has(id))sightFences.delete(id);
+   sightPositions=next;
+   roster=new Set(next.keys());
+   cursor=snapshot.cursor;
+   return true;
+  },
   // Scene recovery awaits an existing observer snapshot rather than
   // invalidating it with another concurrent generation.
   whenSettled(){return pending||Promise.resolve(!locked)},
@@ -255,6 +315,7 @@ export function createWorldRealtimeTransport({
    disposed=true;started=false;connected=false;locked=true;
    cancelRetry();retryAttempts=0;
    generation++;roster.clear();cursor=null;revision=null;permission=null;
+   sightScope=null;sightPositions.clear();sightFences.clear();
    acceptedFrameClock=null;
    const old=channel;channel=null;
    if(old)await db.removeChannel(old);
