@@ -42,6 +42,13 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/core-path-r01.sql
 psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/terminal-r03.sql
 
+# R18-17 is a separate NEVER-APPLIED wall-clearance SQL candidate.
+# Its isolated test installs both predicates inside a transaction, checks
+# actual V2 step_allowed, validates direct-write parity and ACL stability,
+# then ROLLS THE ENTIRE CHANGE BACK. Existing B03/B07/B08/R01/R03 fixtures
+# and the frozen versioned R05 rehearsal are unchanged.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/wall-clearance-r18-17.sql
+
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
  if psql -X -v ON_ERROR_STOP=1 -c "SET ROLE ${role}; SELECT forge_world_v2.validate_motion_path_batch_b03(gen_random_uuid(),1,'{}','[]',1,1);" >"/tmp/b10_${role}_deny.log" 2>&1;then
