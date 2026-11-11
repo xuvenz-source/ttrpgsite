@@ -362,7 +362,8 @@
       "name": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "B10-R18-13 solo-DM five-phase live QA readiness: no new runtime, live SQL or flags. Existing R16 trace capture, offline privacy-bounded analyzer and deterministic tests. Real DM/P1/passive P2 remains unverified. Staged CI pending."
+      "note": "B10-R18-13 solo-DM five-phase live QA readiness: no new runtime, live SQL or flags. Existing R16 trace capture, offline privacy-bounded analyzer and deterministic tests. Real DM/P1/passive P2 remains unverified. Staged CI pending.",
+      "linkedPullRequest": 115
     }
   ],
   "features": [
@@ -1095,7 +1096,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Staging-only solo-DM protocol does not replace genuinely independent authenticated P1/P2 convergence and LOS tests, Supabase CLI one-pending dry-run or two separate approvals. No production deployment/SQL/feature flags."
+      "note": "Staging-only solo-DM protocol does not replace genuinely independent authenticated P1/P2 convergence and LOS tests, Supabase CLI one-pending dry-run or two separate approvals. No production deployment/SQL/feature flags.",
+      "linkedPullRequest": 115
     }
   ],
   "databaseDependencies": [
