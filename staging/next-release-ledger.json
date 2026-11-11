@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -350,6 +350,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-11 real renderer concealment integration + source-real PG17 3-identity revoke/demote/rejoin gates passed 901/901 Node, PostgreSQL, CodeQL, build/dependency checks on first verified PR head. Exact-head CI reruns after documentation metadata only; live Auth/CLI/production still NO_GO.",
       "linkedPullRequest": 113
+    },
+    {
+      "name": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-12 operator-only read-only CLI 2.81.3 linked migration fetch/list/db push --dry-run runner, mocked adverse tests; live 12 Nov SELECT-only preflight 83/83 historical SQL digests, 7/7 functions, 0 unexpired gestures, R05 absent. No actual CLI session or production change; CI pending."
     }
   ],
   "features": [
@@ -1031,6 +1037,31 @@
       ],
       "note": "Tests source-real isolated PG17 with synthetic JWT roles and actual JS renderer, not live Supabase Auth/WebSockets. All 901 Node cases + PG17 source-real/combined + CodeQL green on verification commit. No runtime/SQL/permission changes; real CLI isolated rehearsal, live three-account acceptance and SQL approval remain blocked.",
       "linkedPullRequest": 113
+    },
+    {
+      "id": "world-v2-b10-r18-12-linked-cli-readonly-rehearsal",
+      "description": "Single guarded operator-only isolated migration fetch/list/dry-run that refuses mismatched 83-body history, wrong project/CLI/seed configuration and additional SQL; reconfirms live 7-function/83-version preflight by SELECT.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Connected Supabase SELECT-only preflight passed on 2026-11-12. This branch does not itself execute actual linked CLI, live multiplayer Auth or SQL install; NO_GO."
     }
   ],
   "databaseDependencies": [
@@ -1345,7 +1376,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1358,9 +1389,10 @@
       "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
       "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
       "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
-      "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12"
+      "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+      "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12"
     ],
-    "stagePolicy": "R18-11 adds only source-real isolated PostgreSQL membership revocation/downgrade integration and actual WorldRenderer/RealtimeTransport bounded guarded privacy tests, preserving R17+R18-01...R18-10. R18-10 client/SQL candidate unchanged and production R16 unaffected. Authenticated live DM/P1/P2, one actual isolated CLI migration fetch and dry run, 12s signed client canary and separately approved frozen R05 SQL install remain pending. Guarded feature remains OFF; no merger, production deployment, Supabase write or paid service authorized.",
+    "stagePolicy": "R18-12 combines live SELECT-only 83/83 history, 7/7 original-function hashes, 0 active gestures and a mock-tested, manually opt-in isolated Supabase CLI 2.81.3 read-only fetch/list/db push --dry-run runner. Preserves all R17 + R18-01..R18-11 staged work and frozen unapplied R05. No actual linked CLI connected to ChatGPT shell, no authorized live client canary, no deploy/merge, no SQL, no R18-04 guard activation, no paid infrastructure. Separate designer approval required for one frontend canary and another for SQL install.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
