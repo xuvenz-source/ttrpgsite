@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "updated": "2026-11-12",
+  "step": "B10-R18-11",
+  "releaseDecision": "NO_GO",
+  "branch": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+  "parentPr": 112,
+  "parentHeadSha": "28b43c14ddf6ec721680cc7ba0537685d0ed1fc2",
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "productionApproval": false,
+  "databaseApproval": false,
+  "guardedRecoveryEnabled": false,
+  "scope": {
+    "runtimeChanged": false,
+    "sqlMigrationChanged": false,
+    "productionGrantsChanged": false,
+    "sourceRealAuthFixture": "three identity Pg17 role revoke/demote/rejoin",
+    "rendererTransport": "actual source modules, synthetic signed snapshots"
+  },
+  "gates": {
+    "sourceRealPg17Status": "pending_ci",
+    "nodeTestStatus": "pending_ci",
+    "codeql": "pending_ci",
+    "combinedSql": "pending_ci",
+    "linkedCliHistoryDryRunPerformed": false,
+    "liveAuthMultiplayerCompleted": false,
+    "frontendCanaryDeployed": false,
+    "backendMigrationApplied": false,
+    "postSql24CaseAccepted": false,
+    "freeTierLoadAccepted": false
+  },
+  "handoff": "docs/testing/world-v2-r18-11-revocation-auth-gate-2026-11-12.md"
+}
