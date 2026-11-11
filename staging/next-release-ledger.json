@@ -327,7 +327,7 @@
       "name": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 110,
       "note": "R18-08 CLI v2.81.3 source-audited FETCH/LIST/DRY-RUN: offline exact 83-body digest comparison from read-only live SQL (no historic SQL exported); validator enforces migrations ENABLED, seed DISABLED, correct linked project ref and frozen R05 blob. 13 new synthetic tamper/config tests. Underlying remote read-only verification only. Linked CLI remote dry-run STILL NOT RUN, no frontend flag/SQL/deploy. NO-GO."
     }
   ],
@@ -933,7 +933,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 110,
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
