@@ -38,3 +38,9 @@ Reconcile older **B08 #83 terminal Commit recipient drainage**, **R03 #88 stale 
 **Protected test matrix**: real DM/Player1/Player2 on published fog + walls, hidden NPC entry/exit, actual line of sight and party-shared vision, permission revoke mid-stream, unknown-piece timing, deliberate missing sequence, dropped terminal frame with quiet map, reconnect/multi-tab, user/DM simultaneous gestures, repeated drag, DM preview local, 2×2 token footprint, scene generation change, frame flood, invalid signed data, 12s watch sampling of CPU/RAM/Realtime and sight p95. Prove canonical convergence and no private leaks. If any fail, leave both client flag and staged SQL unactivated.
 
 **Handoff:** This is a *client-only, flag-disabled intermediate implementation*, not an observer flashing fix or release-ready motion redesign. R17 #102 remains independent/unmerged and ready only for integration review. No production deploy.
+
+## Exact-head CI against current production main
+
+PR #104 is deliberately **targeted at `main` for qualification**, although its source branch is stacked upon the R18-01 audit commit. This exposes the combined R18-01 + R18-02 diff to the repository's CodeQL and source-real PostgreSQL workflow triggers (which currently only run on PRs targeting `main`). The two components remain separately tracked, unready and unmerged; this is not approval to ship either. R17 PR #102 remains a separate integration dependency. A successful push-only test is not a substitute for these required PR checks.
+
+At a 12-second cadence, 10 continuously foreground, authorized viewers would request at most ~0.83 extra signed visibility RPCs/second in steady state (not a measured rate; one-flight and authorization/background guards can reduce it). That still invokes database fog work and must be measured on Supabase Free before enabling the opt-in. Under complete network loss the watch offers **no** guaranteed convergence deadline.
