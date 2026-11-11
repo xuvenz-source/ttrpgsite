@@ -376,7 +376,8 @@
       "name": "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-15 actual R18-14 solo-DM drag trace: 1.17s commit p50 and >2.5s post-release wait, busy input on corners/wall/fog; fix pointer half-cell jitter and duplicate exact server-ACKed denied crossings, new release-to-terminal timer. R18-14 frontend already live separately from Git main, no new deploy or SQL."
+      "note": "R18-15 actual R18-14 solo-DM drag trace: 1.17s commit p50 and >2.5s post-release wait, busy input on corners/wall/fog; fix pointer half-cell jitter and duplicate exact server-ACKed denied crossings, new release-to-terminal timer. R18-14 frontend already live separately from Git main, no new deploy or SQL.",
+      "linkedPullRequest": 117
     }
   ],
   "features": [
@@ -1166,7 +1167,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Solo-DM R18-14 frontend canary live on exact SHA 96c90f9d (dpl_82NADuBV58sGdaXdcEgm2Gm2pzBb) without Git main merge; R18-15 not deployed. R05 unapplied, guarded recovery disabled, independent Auth multiplayer and CLI pending; NO_GO."
+      "note": "Solo-DM R18-14 frontend canary live on exact SHA 96c90f9d (dpl_82NADuBV58sGdaXdcEgm2Gm2pzBb) without Git main merge; R18-15 not deployed. R05 unapplied, guarded recovery disabled, independent Auth multiplayer and CLI pending; NO_GO.",
+      "linkedPullRequest": 117
     }
   ],
   "databaseDependencies": [
