@@ -218,9 +218,12 @@ test('R15 real Chromium React board reuses exact signed sight and falls back on 
     throw Error('R15 Chromium timeout '+mode+'/'+label+': '+JSON.stringify(await snap()));
    }
    await waitFor(x=>x.stepReady&&x.spriteCount===1&&x.spriteVisible==='visible','ready');
+   // The actual board clears selection on first map mount; select the
+   // authorized visible sprite through React before using the arrow API.
+   assert.equal(await b.evaluate('(()=>{const node=document.querySelector(".world-v2-token-content");if(!node)return false;node.click();return true})()'),true);
    await delay(50);
    assert.equal(await b.evaluate('window.__v2Integrated.step(1,0)'),true,
-    mode+': first keyboard input rejected');
+    mode+': first keyboard input rejected: '+JSON.stringify(await snap()));
    assert.equal(await b.evaluate('window.__v2Integrated.step(0,0,{release:true})'),true,
     mode+': first release rejected');
    await waitFor(x=>x.commitStarted===1,'first commit pending');
