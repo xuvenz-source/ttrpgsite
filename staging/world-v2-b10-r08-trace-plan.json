@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "step": "B10-R08",
+  "type": "TRACE_TRIAGE_PLAN",
+  "productionVersion": "PR70",
+  "enabledOnProdByQueryParam": true,
+  "queryParam": "worldV2Trace=1",
+  "snapshotFunction": "window.__worldV2Trace.snapshot()",
+  "traceCategories": {
+    "input": [
+      "input.pointer.status",
+      "input.pointer.start",
+      "input.keyboard.start",
+      "movement.grabbed"
+    ],
+    "authority": [
+      "authority.begin",
+      "authority.advance",
+      "authority.commit",
+      "movement.approved",
+      "movement.blocked",
+      "movement.rejected"
+    ],
+    "observer": [
+      "observer.resync",
+      "observer.seal",
+      "observer.sequence-gap",
+      "observer.unknown-piece",
+      "observer.authorized"
+    ],
+    "renderer": [
+      "renderer.seal",
+      "renderer.terrain-assign",
+      "renderer.fog-full",
+      "renderer.fog-partial",
+      "renderer.sprite-create",
+      "renderer.sprite-remove"
+    ],
+    "visibility": [
+      "visibility.refresh",
+      "visibility.revoke",
+      "visibility.snapshot",
+      "visibility.reject",
+      "visibility.rpc"
+    ]
+  },
+  "testDrills": [
+    "One failed DM normal drag and approximately 10 arrow tiles",
+    "One DM preview attempt",
+    "One player-owned drag while a separate player watches for flashing"
+  ],
+  "captureMethod": "Keep query parameter during logged-in campaign route. After each drill capture JSON.stringify(window.__worldV2Trace.snapshot()) via browser DevTools Console, then clear() for next role. Prefer separate browser profiles, never copy network response bodies or auth tokens.",
+  "triageRules": [
+    {
+      "signal": "input.pointer.status then no movement.grabbed",
+      "focus": "capture/selection/authorization gating"
+    },
+    {
+      "signal": "movement.grabbed then authority.begin high or rejected; no approved",
+      "focus": "movement session/RPC or denied ACK"
+    },
+    {
+      "signal": "movement.approved then renderer.terrain-assign/renderer.seal/renderer.fog-full on each move",
+      "focus": "renderer refresh/invalidation, not collision logic"
+    },
+    {
+      "signal": "observer resync, gaps or unknown-piece correlates with flashing",
+      "focus": "private observer stream and signed sight choreography"
+    },
+    {
+      "signal": "preview worse but no authority RPC",
+      "focus": "preview sight round trips, local renderer or input, not public motion write path"
+    }
+  ],
+  "gate": "No deploy until evidence differentiates input, server, private observer and renderer failures; no speculative R05 migration",
+  "realAuthProtectedCases": "NOT_RUN",
+  "dataHandling": "Trace is bounded and enumerated: no actor ids, coords, JWTs, raw RPC payloads, hidden identities or secrets"
+}

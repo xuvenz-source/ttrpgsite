@@ -2124,5 +2124,14 @@
     "currentFixtureProtected": false,
     "previewSsoEnabled": true,
     "sqlMigrationR05Applied": false
+  },
+  "manualMovementBaselineR08": {
+    "source": "Designer PR70 six-case manual test",
+    "campaign": "TestCampaign",
+    "result": "5 FAIL; 1 PASS reconnect",
+    "manifest": "staging/world-v2-b10-r08-baseline-results.json",
+    "canaryDecision": "DEFER_R02_AND_R05",
+    "diagnosticPlan": "staging/world-v2-b10-r08-trace-plan.json",
+    "next": "B10-R09"
   }
 }
