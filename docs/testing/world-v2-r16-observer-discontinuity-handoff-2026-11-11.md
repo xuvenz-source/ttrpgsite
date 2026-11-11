@@ -35,3 +35,6 @@ After approval only: DM and passive Player 2, normal mode (not DM preview), rapi
 The 14 blocked movements and one `invalid-server-reply` warrant isolating Advance's exact null case. Do **not** treat R16 as a fix for held-keyboard session budgets, sequential RTT or server-authorized collision. Propose a separate test-proven R17 design to reduce redundant blocked attempts without bypassing collision or authorizing hidden paths; only after identifying the failure mode.
 
 **Handoff:** R16 staged frontend-only / no release. Supabase was read-only. Remain on the existing free-tier plan.
+
+## Trace-window hygiene (additional nonfunctional R16 correction)
+The later Player 2 snapshot showed `observer.frame-gap.maxMs=1,012,865.5` despite a ~15-second event window. `worldV2Trace.clear()` clears historical measurements, but a stopwatch started by an earlier accepted observer frame was still live; its close after reset polluted the new sample. R16 now increments a private trace-reset generation and ignores elapsed timers created before the reset, without altering the transport or frame cadence. A deterministic passive-observer regression proves that the first new frame after clearing produces no old idle gap, and only the next pair of accepted frames measures the new interval. No identity, clock timestamp, packet, or position is logged.
