@@ -151,6 +151,7 @@ test('R18-04 forbidden hidden piece does not acquire a sprite from fresh roster'
   await settle();
   assert.equal(h.transport.cursor,1);
   assert.equal(h.seen.length,0);
+  h.setSnapshot(sight(2,[piece(KNOWN)]));
   h.emit(2,[path(UNKNOWN)]);
   await settle();
   assert.equal(h.seen.length,0,'RLS-signed roster still excludes hidden NPC');
