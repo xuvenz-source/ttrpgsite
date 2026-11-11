@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -385,6 +385,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-16 actual R18-15 solo DM evidence: live PostgreSQL swept rectangle blocks a 5% wall edge clip. QA-only candidate 0.10-cell inner footprint vs strict collision, no live rule changed. Adds bounded authority-timing bins to inspect slowdown under repeated movements. No SQL/production deployment.",
       "linkedPullRequest": 118
+    },
+    {
+      "name": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-17: uninstalled SQL candidate replaces both V2 + direct-write swept collision geometry with identical 0.10-cell margin and PG17 rollback-only parity checks; strict-default client build flag, DM/preview collision parity, adversarial tests. Protected R05 frozen. No SQL or Vercel changes."
     }
   ],
   "features": [
@@ -1206,6 +1212,37 @@
       ],
       "note": "Physical wall clearance needs separate PostgreSQL direct-write/client collision parity migration and explicit SQL approval. Repeated lag measured commit 1.06s p50 and release lock 2.38s p95; progressive trend not yet established. Independent users and CLI rehearsal pending.",
       "linkedPullRequest": 118
+    },
+    {
+      "id": "world-v2-b10-r18-17-authoritative-wall-clearance-parity",
+      "description": "Unified 0.10 grid-cell inward swept footprint tolerance for blocking wall edges, still blocking true wall crossing; server V2 and direct-write predicates in uninstalled candidate, client/DM-preview default-OFF opt-in. Nonmutating PG17 rolled-back tests.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_clearance_parity.sql"
+      ],
+      "note": "Client cannot enable until separately approved, verified R05+new versioned R18-17 migration, both helpers in live PG and independently Auth P1/P2 tested. 10% is 0.10 CELL clearance, not area percentage. Fog/LOS authority unchanged. No live deployment."
     }
   ],
   "databaseDependencies": [
@@ -1520,7 +1557,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1538,9 +1575,10 @@
       "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
       "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
       "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
-      "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12"
+      "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+      "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12"
     ],
-    "stagePolicy": "R18-16 retains 17 stages. R18-15 frontend canary live at dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ, main R16 unchanged. QA-only 0.10-cell wall clearance simulator is not connected to runtime or server; live collision remains strict. New bounded opt-in timing samples can investigate sustained movement lag. No deployment, R05 installation, guarded observer recovery, direct-write change or paid infra. Wall tolerance requires separate secure PostgreSQL/client parity design and explicit SQL approval; frontend deployment requires separate approval.",
+    "stagePolicy": "R18-17 maintains 18 stacked branches, current R18-15 frontend canary remains live with strict collision. Adds client-opt-in 0.10 cell swept margin and candidate PostgreSQL parity for World V2 and direct-write, but SQL is NOT a versioned migration/applied. Do not modify frozen R05; genuine R05 linked CLI dry run and separate SQL approval before R05. A subsequently versioned R18-17 wall migration needs its own CLI/ACL review and separate SQL approval; only after SQL verification enable Vite wall-clearance flag in separately approved frontend build. Keep fog/LOS/private observer safety and real Auth P1 passive P2 tests as release gates. Sustained commit latency is still unresolved.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
