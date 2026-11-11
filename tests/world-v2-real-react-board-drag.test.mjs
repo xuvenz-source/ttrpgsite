@@ -189,3 +189,69 @@ test('R12 real React V2 player can drag again before lagged signed sight catches
   assert.deepEqual(second.errors,[]);
  }finally{await b?.close();await vite.close()}
 });
+
+
+test('R15 real Chromium React board reuses exact signed sight and falls back on stale keyboard continuation',
+ {timeout:90000},async t=>{
+ const path=chrome();
+ if(!path){t.skip('Chromium unavailable');return}
+ const vite=await createViteServer({root:ROOT,configFile:false,
+  server:{host:'127.0.0.1',port:0,hmr:false},appType:'spa',
+  logLevel:'error'});
+ let b;
+ try{
+  await vite.listen();
+  b=await browser(path);
+  await b.send('Page.enable');
+  await b.send('Runtime.enable');
+  const port=vite.httpServer.address().port;
+  for(const mode of ['r15-covered','r15-fallback']){
+   await b.send('Page.navigate',{url:'http://127.0.0.1:'+port+
+    '/tests/browser/world-v2-real-board.html?mode='+mode+'&worldV2Trace=1'});
+   const snap=()=>b.evaluate('window.__v2Integrated?.snapshot()');
+   async function waitFor(predicate,label,tries=200){
+    for(let i=0;i<tries;i++){
+     const value=await snap().catch(()=>null);
+     if(value&&predicate(value))return value;
+     await delay(15);
+    }
+    throw Error('R15 Chromium timeout '+mode+'/'+label+': '+JSON.stringify(await snap()));
+   }
+   await waitFor(x=>x.stepReady&&x.spriteCount===1&&x.spriteVisible==='visible','ready');
+   await delay(50);
+   assert.equal(await b.evaluate('window.__v2Integrated.step(1,0)'),true,
+    mode+': first keyboard input rejected');
+   assert.equal(await b.evaluate('window.__v2Integrated.step(0,0,{release:true})'),true,
+    mode+': first release rejected');
+   await waitFor(x=>x.commitStarted===1,'first commit pending');
+   assert.equal(await b.evaluate('window.__v2Integrated.step(1,0)'),true,
+    mode+': queued keyboard input rejected during pending commit');
+   await b.evaluate('window.__v2Integrated.resumeCommit()');
+   await waitFor(x=>x.firstCommitSightStarted===1,'signed commit sight pending');
+   const before=await snap();
+   assert.equal(before.postCommitSightCalls,1,
+    mode+': only the mandatory signed commit sight should start');
+   await b.evaluate('window.__v2Integrated.resumeSight()');
+   const continued=await waitFor(
+    x=>x.rpc.filter(n=>n==='begin_world_motion_v2').length===2,
+    'second gesture after canonical commit sight');
+   const expected=mode==='r15-covered'?1:2;
+   assert.equal(continued.postCommitSightCalls,expected,
+    mode+': expected only exact commit sight for covered continuation; stale must fall back');
+   assert.equal(continued.commitStarted,1,
+    'capture continuation before second independent gesture finishes');
+   assert.equal(continued.spriteCount,1,mode+': no sprite remount');
+   assert.equal(continued.canvasCount,1,mode+': no fog remount');
+   assert.deepEqual(continued.errors,[],mode+': no browser runtime errors');
+   const detail=mode==='r15-covered'?'covered':'fallback';
+   assert.ok(continued.trace?.events.some(e=>
+    e.event==='visibility.continuation'&&e.detail===detail),
+    mode+': missing causal continuation diagnostic');
+   await waitFor(x=>x.commitStarted>=2,'second gesture commit');
+   const final=await snap();
+   assert.ok(final.position.x>=4,mode+': second gesture should advance canonical position');
+   assert.equal(final.trace?.counts?.['movement.rejected']??0,0,
+    mode+': no rejected gestures');
+  }
+ }finally{await b?.close();await vite.close()}
+});
