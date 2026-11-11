@@ -15,10 +15,10 @@ const frame=(seq,options={})=>({
  items:[{kind:'token',id:TOKEN,action:'path',
   path:[{x:seq,y:1},{x:seq+1,y:1}]}],...options
 });
-function harness(){
+function harness({enabled=true}={}){
  let clock=0,subscriber=null,subscribes=0,resyncCalls=0;
  const handlers={},paths=[],revocations=[],statuses=[];
- const trace=createWorldV2Trace({enabled:true,now:()=>clock});
+ const trace=createWorldV2Trace({enabled,now:()=>clock});
  const channel={
   on(_type,filter,callback){handlers[filter.event]=callback;return this},
   subscribe(callback){subscriber=callback;subscribes++;return this}
@@ -130,5 +130,22 @@ test('B10-R14 client with no accepted packets has no cosmetic observer frame wor
   assert.equal(h.paths.length,0);
   assert.equal(h.resyncCalls,1);
   assert.equal(h.subscribes,1);
+ }finally{await h.transport.dispose()}
+});
+
+
+test('B10-R14 diagnostics remain off without trace opt-in; authorized packet path remains active',async()=>{
+ const h=harness({enabled:false});
+ try{
+  await h.connect();
+  h.at(100);h.publish(frame(1));
+  h.at(290);h.publish(frame(2));
+  assert.equal(h.paths.length,2,'disabled trace must never suppress authorized movement');
+  assert.equal(h.resyncCalls,1);
+  assert.equal(h.subscribes,1);
+  assert.equal(h.trace.snapshot().enabled,false);
+  assert.deepEqual(h.trace.snapshot().counts,{});
+  assert.deepEqual(h.trace.snapshot().events,[]);
+  assert.deepEqual(h.trace.snapshot().durations,{});
  }finally{await h.transport.dispose()}
 });

@@ -14,7 +14,7 @@ const EVENTS=new Set([
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','observer.frame-accepted',
- 'renderer.observer-await-vision','visibility.revoke','visibility.refresh',
+ 'visibility.revoke','visibility.refresh',
  'visibility.rpc-call','visibility.rpc-tail','visibility.queue',
  'visibility.snapshot','visibility.stale-snapshot',
  'visibility.reject','visibility.notice','renderer.seal','renderer.scene-adopt',

@@ -19,6 +19,9 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # A duplicate R14 push job hung in npm test; fail closed rather than
+    # consuming shared CI resources indefinitely or treating it as passed.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

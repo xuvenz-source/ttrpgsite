@@ -35,7 +35,23 @@
     "idleInTransaction": 0,
     "databaseSize": "25 MB",
     "pgVersion": "17.11",
-    "freeTierMemoryUsage": "NOT_MEASURED"
+    "freeTierMemoryUsage": "NOT_MEASURED",
+    "dashboardScreenshot": {
+      "source": "User-supplied Supabase dashboard screenshot",
+      "observedLocal": "2026-11-11T17:36:00+11:00",
+      "totalRamMB": 406.45,
+      "totalMemoryUsageMB": 399.83,
+      "usagePercent": 98.4,
+      "usedMB": 243.57,
+      "cacheAndBuffersMB": 156.25,
+      "swapSeriesMB": 368.9,
+      "swapSeriesPercent": 90.76,
+      "memoryCommitmentGB": 1.41,
+      "commitmentWarning90PercentGB": 1.36,
+      "statedCommitmentCapacityGB": 1.4,
+      "interpretation": "Critical resource headroom; single measurement, not proof of an OOM or of movement RPC root cause",
+      "percentNearCapacityTrue": true
+    }
   },
   "advisors": {
     "missingFkIndexes": 36,
@@ -77,5 +93,12 @@
   },
   "next": "B10-R15",
   "sqlApplied": false,
-  "deployPerformed": false
+  "deployPerformed": false,
+  "releaseGate": {
+    "allExactHeadChecksRequired": true,
+    "ciJobTimeoutMinutes": 20,
+    "previousDuplicatePushRun": "HUNG_IN_NPM_TEST_NOT_COUNTED_AS_PASS",
+    "migrationApply": false,
+    "noPaidResources": true
+  }
 }
