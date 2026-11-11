@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "updated": "2026-11-11",
+  "releaseDecision": "NO_GO",
+  "productionApproval": false,
+  "databaseApproval": false,
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "parentSourcePR": 109,
+  "stagingBranch": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+  "liveReadOnly": {
+    "remoteVersions": 83,
+    "sqlBodyDigestsCollected": 83,
+    "missingStatementArrays": 0,
+    "duplicateRemoteVersions": 0,
+    "targetR05AlreadyApplied": false,
+    "compiledBuildFlagsChanged": false
+  },
+  "cliSourceAudit": {
+    "tag": "v2.81.3",
+    "fetchImpl": "internal/migration/fetch/fetch.go",
+    "pushImpl": "internal/db/push/push.go",
+    "versionedApplyImpl": "pkg/migration/file.go",
+    "linkedProjectPrecedence": "internal/utils/flags/project_ref.go",
+    "verdict": "SUPPORTED_IN_SOURCE_ONLY",
+    "actualLinkedCliExecuted": false
+  },
+  "newChecks": {
+    "requiresFreshSqlHashExport": true,
+    "requiresExact83FetchedBodyDigests": true,
+    "requiresExplicitMigrationsEnabled": true,
+    "requiresExplicitSeedingDisabled": true,
+    "requiresCorrectLinkedProjectRef": true,
+    "frozenR05GitBlobSha": "f4e296725c09055685321726cbe4bc6e09dbce5a",
+    "correctUseOfMCPApplyMigration": false
+  },
+  "work": "STAGING_AUDIT_ONLY",
+  "linkedCliDryRunPerformed": false,
+  "frontendCanaryDeployed": false,
+  "backendMigrationApplied": false,
+  "guardedRecoveryEnabled": false,
+  "runbook": "docs/testing/world-v2-r18-08-hashed-migration-cli-gates-2026-11-11.md",
+  "sourceDigest": "staging/world-v2-b10-r18-08-remote-history-content-hashes.json",
+  "query": "supabase/release-preflight/world_v2_b10_r18_08_readonly_migration_body_hashes.sql",
+  "validator": "scripts/release/validate-world-v2-r18-08-history-payload.mjs",
+  "nextGate": "Securely authenticated linked CLI 2.81.3 FETCH+LIST+DRY-RUN under an explicitly controlled read-only release session. Only one pending frozen migration allowed; zero remote mutation. Actual client and database release require separate explicit approval."
+}
