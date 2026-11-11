@@ -278,7 +278,7 @@
       "name": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 103,
       "note": "R18-01 audit-only: traced four real observer map resets from two unknown-piece and two sequence-gap cases; synthetic fail-closed baseline, protocol review and security/release gates; NO runtime fix, no database changes."
     }
   ],
@@ -766,7 +766,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 103,
       "databaseDependencies": [],
       "note": "Tests prove current fail-closed baseline, including no self-healing after dropped terminal packet. Requires separately approved R18 actual implementation, isolated SQL and protected live QA."
     }
