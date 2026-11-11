@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "step": "B10-R18-13",
+  "observedDate": "2026-11-12",
+  "releaseDecision": "NO_GO",
+  "parentPr": 114,
+  "parentHeadSha": "163b655e2655e35d23abc7ce1a38c83387df048b",
+  "branch": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+  "productionSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "productionVercelDeployment": "dpl_3US3Jm1P6iYSnuZeFAUbyLrfrr1g",
+  "soloTestOwner": "one authenticated DM",
+  "soloCoverage": [
+    "dm-idle",
+    "dm-open-floor",
+    "dm-solid-wall",
+    "dm-fog-edge",
+    "local-dm-preview"
+  ],
+  "unprovedWithDMOnly": [
+    "separate authenticated player session",
+    "passive P2 observer convergence",
+    "cross-account private Realtime RLS",
+    "player-side permission revocation",
+    "24-case multiplayer acceptance"
+  ],
+  "liveSqlChanged": false,
+  "liveRuntimeChanged": false,
+  "liveVercelChanged": false,
+  "r18RecoveryFlagProduction": false,
+  "r18GuardedRecoveryFlagProduction": false,
+  "independentFrontendApproval": false,
+  "independentSqlApproval": false,
+  "sqlVersionInstalled": false,
+  "linkedCliActualDryRun": false,
+  "ci": {
+    "node": "pending",
+    "codeql": "pending",
+    "postgres": "pending",
+    "combinedSql": "pending"
+  },
+  "handoff": "docs/testing/world-v2-r18-13-solo-dm-live-test-2026-11-12.md"
+}
