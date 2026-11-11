@@ -247,6 +247,9 @@ test('R18-04 only explicit opt-in outside DM preview can enable guarded recovery
  assert.match(rt,/guardedObserverEnabled=!dmPreview/);
  assert.match(rt,/softResyncEnabled:guardedObserverEnabled/);
  assert.match(rt,/observerRecoveryEnabled\|\|guardedObserverEnabled/);
+ assert.match(rt,/document\.visibilityState==='hidden'&&stream\.recovering/);
+ assert.match(rt,/document\.visibilityState==='visible'&&stream\.locked/);
+ assert.match(rt,/document\.removeEventListener\('visibilitychange',guardedListener\)/);
  const source=readFileSync(new URL('../src/engine/v2/RealtimeTransport.js',import.meta.url),'utf8');
  assert.match(source,/softResyncEnabled=false/);
  assert.doesNotMatch(source,/onPath\(item[\s\S]{0,35}guardedPending/);
