@@ -334,7 +334,8 @@
       "name": "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-09 offline-only pinned-CLI migration-list and db push --dry-run transcript consistency gate. Verifies 83 matched remote/local registered versions and exactly one pending reviewed R05; rejects false up-to-date, disabled migrations, extra SQL, seeds and roles. Live 83 SQL hashes still matched read-only, but no linked CLI was executed. Keeps NO-GO, flags OFF, SQL nonapplied and no deployment."
+      "note": "R18-09 offline-only pinned-CLI migration-list and db push --dry-run transcript consistency gate. Verifies 83 matched remote/local registered versions and exactly one pending reviewed R05; rejects false up-to-date, disabled migrations, extra SQL, seeds and roles. Live 83 SQL hashes still matched read-only, but no linked CLI was executed. Keeps NO-GO, flags OFF, SQL nonapplied and no deployment.",
+      "linkedPullRequest": 111
     }
   ],
   "features": [
@@ -965,7 +966,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "NO-GO. Only a supplemental offline parse of captured text, never authenticates CLI or permits SQL; actual linked v2.81.3 dry-run, approved signed recovery client, separate DB authorization and protected 24-case QA remain outstanding."
+      "note": "NO-GO. Only a supplemental offline parse of captured text, never authenticates CLI or permits SQL; actual linked v2.81.3 dry-run, approved signed recovery client, separate DB authorization and protected 24-case QA remain outstanding.",
+      "linkedPullRequest": 111
     }
   ],
   "databaseDependencies": [
