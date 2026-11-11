@@ -97,13 +97,22 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
    for(const [id,entry] of next)pieces.set(id,entry);
    return true;
   },
-  applyPath(item){
-   if(disposed||!approvedPath(item))return false;
+  // Classify only buffer continuity, never private IDs or coordinates. The
+  // trusted observer transport has already checked each packet's envelope,
+  // sequence, authority generation, roster and adjacent route shape.
+  // Untrusted direct calls are also rejected here before any presentation.
+  inspectPath(item){
+   if(disposed||!approvedPath(item))return 'invalid';
    const entry=pieces.get(key(item));
-   if(!entry||entry.hidden)return false;
+   if(!entry||entry.hidden)return 'unrostered';
    const expected=entry.pending.at(-1)||entry.position;
-   if(!same(item.path[0],expected)||entry.pending.length+item.path.length-1>maxQueue)
-    return false; // Require a genuine server snapshot, not a guessed diagonal.
+   if(!same(item.path[0],expected))return 'origin-mismatch';
+   if(entry.pending.length+item.path.length-1>maxQueue)return 'backlog';
+   return 'ok';
+  },
+  applyPath(item){
+   if(this.inspectPath(item)!=='ok')return false;
+   const entry=pieces.get(key(item));
    if(!entry.pending.length)entry.pathStart={...entry.position};
    entry.pending.push(...item.path.slice(1).map(p=>({x:p.x,y:p.y})));
    return true;
