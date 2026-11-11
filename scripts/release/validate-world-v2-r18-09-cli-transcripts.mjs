@@ -34,9 +34,10 @@ export function validateR18CliTranscripts({
   for(const rawLine of clean(migrationListOutput).split('\n')){
     const line=rawLine.trim();
     if(!line||!line.includes('|'))continue;
-    const bits=line.split('|');
-    if(!bits[0].trim())bits.shift();
-    if(!bits.at(-1).trim())bits.pop();
+    // Strip only actual Markdown table edges, not a blank Local/Remote cell.
+    const bits=rawLine.split('|');
+    if(rawLine.trimStart().startsWith('|'))bits.shift();
+    if(rawLine.trimEnd().endsWith('|'))bits.pop();
     const cells=bits.map(x=>x.trim());
     if(cells.length!==3)fail('Unexpected migration list table format');
     if(cells[0]==='Local'&&cells[1]==='Remote'){
