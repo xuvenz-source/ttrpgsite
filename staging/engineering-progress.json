@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10-R05",
+  "nextStep": "B10-R06",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -557,6 +557,53 @@
       "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight.",
       "pr71Status": "CLOSED_UNMERGED_SUPERSEDED",
       "pr71ClosureComment": "https://github.com/xuvenz-source/ttrpgsite/pull/71#issuecomment-6776267305"
+    },
+    "B10_R05": {
+      "status": "STAGED",
+      "releaseReady": false,
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
+      "pullRequest": 90,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/90",
+      "basePullRequest": 89,
+      "baseHead": "ce49a07c6ee30135e6a38f5bb3e1e98c7b45450",
+      "migration": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+      "cliProvenance": "Supabase CLI 2.81.3 generated path from runner #42946657992",
+      "exactLivePreflight": "supabase/release-preflight/world_v2_b10_r05_exact_live_catalog.sql",
+      "recovery": "supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql",
+      "releasePlan": "staging/world-v2-b10-r05-release-plan.json",
+      "documentation": "docs/architecture/world-v2-b10-r05-versioned-release-recovery.md",
+      "expectedFiles": [
+        ".github/workflows/world-v2-b10-r05-cli.yml",
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/release-preflight/world_v2_b10_r05_exact_live_catalog.sql",
+        "supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql",
+        "tests/world-v2-b10-postgres/extract_original_commit_r05.py",
+        "tests/world-v2-b10-postgres/versioned-release-r05.sql",
+        "tests/world-v2-b10-postgres/rehearse-r05.sh",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-r05-versioned-release.test.mjs",
+        "staging/world-v2-b10-r05-release-plan.json",
+        "docs/architecture/world-v2-b10-r05-versioned-release-recovery.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "CLI-generated versioned migration combining B03→B07→B08→R01→R03 exact source, fail-closed live-shape pre/post checks and protected four-function backup. Separate disposable PG17 verifies both transaction abort and post-commit restoration. Read-only live exact signature/ACL check and migration filename alias audit; no live SQL changes.",
+      "verification": "Official CLI #42946657992 PASS. Isolated source-real PostgreSQL 17 R05 commit-abort and postcommit restoration #42948102943 PASS. Actual live read-only source-digest preflight executed with no error; 83 applied/56 repository/20 exact version matches. Full exact final PR head frontend/CodeQL/SQL PENDING.",
+      "security": "R05 backup table private RLS, no browser grants, no new public RPC; four original function definitions allow transactional recovery; active session and partial install guards fail closed. Targeted migration history reconciliation remains blocking.",
+      "noProductionChanges": true,
+      "sqlApplied": false,
+      "featureFlagsActivated": false,
+      "blockers": [
+        "83 applied live Supabase migration versions vs 56 versioned repo files, only 20 exact matches; blind CLI db push would replay 36 unmatched repo versions. No targeted history-safe apply method yet reviewed and authorized.",
+        "R02 authorized sight frontend must be deployed/verified before R03 terminal observer paths are retired in SQL; Vite flags are build-time, and cached older browser builds may not recover.",
+        "Original source snapshot/recovery passes disposable PG17, but no committed real Supabase recovery rehearsal or live trigger/concurrency validation.",
+        "A06/Gate A full 24 cases under three genuinely independently authenticated DM/P1/P2 sessions, hidden NPC and fog/LOS/collision/door/2×2/multi-tab remain NOT RUN.",
+        "Per-viewer sight refresh CPU/free-tier RAM, Realtime physical and billed fanout, remote/local p95, map flashing and sprite remounts not measured.",
+        "Staged migrations and release flags were NOT applied or deployed; no go-live decision, and production remains original."
+      ],
+      "next": "B10-R06 historical migration/version-alias reconciliation, targeted release method and client-first, three-authenticated-session canary before any SQL apply or paired Vercel deployment."
     }
   },
   "handoffs": {
@@ -1206,6 +1253,46 @@
       "noDeployment": true,
       "next": "B10-R05 author version-safe forward-only migration and actual rollforward/rollback plan; authorize safe paired test-campaign deployment only after exact source/security/flag parity and authenticated DM/P1/P2 preflight.",
       "pr71Status": "CLOSED_UNMERGED_SUPERSEDED"
+    },
+    "B10_R05": {
+      "step": "B10-R05",
+      "date": "2026-11-11",
+      "status": "STAGED — NO-GO",
+      "branch": "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
+      "pullRequest": 90,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/90",
+      "parentPR": 89,
+      "parentHead": "ce49a07c6ee30135e6a38f5bb3e1e98c7b45450",
+      "expectedFiles": [
+        ".github/workflows/world-v2-b10-r05-cli.yml",
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/release-preflight/world_v2_b10_r05_exact_live_catalog.sql",
+        "supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql",
+        "tests/world-v2-b10-postgres/extract_original_commit_r05.py",
+        "tests/world-v2-b10-postgres/versioned-release-r05.sql",
+        "tests/world-v2-b10-postgres/rehearse-r05.sh",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-r05-versioned-release.test.mjs",
+        "staging/world-v2-b10-r05-release-plan.json",
+        "docs/architecture/world-v2-b10-r05-versioned-release-recovery.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "scope": "CLI-generated versioned migration combining B03→B07→B08→R01→R03 exact source, fail-closed live-shape pre/post checks and protected four-function backup. Separate disposable PG17 verifies both transaction abort and post-commit restoration. Read-only live exact signature/ACL check and migration filename alias audit; no live SQL changes.",
+      "evidence": "Official CLI #42946657992 PASS. Isolated source-real PostgreSQL 17 R05 commit-abort and postcommit restoration #42948102943 PASS. Actual live read-only source-digest preflight executed with no error; 83 applied/56 repository/20 exact version matches. Full exact final PR head frontend/CodeQL/SQL PENDING.",
+      "security": "R05 backup table private RLS, no browser grants, no new public RPC; four original function definitions allow transactional recovery; active session and partial install guards fail closed. Targeted migration history reconciliation remains blocking.",
+      "blockers": [
+        "83 applied live Supabase migration versions vs 56 versioned repo files, only 20 exact matches; blind CLI db push would replay 36 unmatched repo versions. No targeted history-safe apply method yet reviewed and authorized.",
+        "R02 authorized sight frontend must be deployed/verified before R03 terminal observer paths are retired in SQL; Vite flags are build-time, and cached older browser builds may not recover.",
+        "Original source snapshot/recovery passes disposable PG17, but no committed real Supabase recovery rehearsal or live trigger/concurrency validation.",
+        "A06/Gate A full 24 cases under three genuinely independently authenticated DM/P1/P2 sessions, hidden NPC and fog/LOS/collision/door/2×2/multi-tab remain NOT RUN.",
+        "Per-viewer sight refresh CPU/free-tier RAM, Realtime physical and billed fanout, remote/local p95, map flashing and sprite remounts not measured.",
+        "Staged migrations and release flags were NOT applied or deployed; no go-live decision, and production remains original."
+      ],
+      "noAppliedSql": true,
+      "noDeployment": true,
+      "next": "B10-R06 historical migration/version-alias reconciliation, targeted release method and client-first, three-authenticated-session canary before any SQL apply or paired Vercel deployment."
     }
   },
   "pendingWork": [
@@ -1326,10 +1413,10 @@
     },
     {
       "id": "B10-FORWARD-MIGRATION",
-      "status": "BLOCKED",
-      "ownerStep": "B10-remediation",
+      "status": "STAGED_VERSIONED_NOT_APPLIED",
+      "ownerStep": "B10-R05",
       "category": "release-gate",
-      "notes": "Package valid forward-only B03/B07/B08 migration in safe order, verify installed function signatures/RLS/grants and recovery strategy; no SQL apply without release approval."
+      "notes": "R05 official CLI versioned 5-candidate SQL staged; exact live pg_proc preflight and separate PG17 atomic abort+postcommit recovery verified, but 83-vs-56/20 version-alias discrepancy blocks broad db push. Targeted history-safe apply and real client-first fog/Auth tests remain."
     },
     {
       "id": "B10-FREE-TIER-SECURITY",
@@ -1361,10 +1448,17 @@
     },
     {
       "id": "B10-R04-SYNTHETIC-ROLLOUT-LIMIT",
-      "status": "BLOCKED",
+      "status": "STAGED_RECOVERY_REHEARSED_NOT_LIVE",
       "ownerStep": "B10-R05",
       "category": "release-gate",
-      "notes": "R04 PG17 source-real fixture lacks original public Commit although live Supabase has it. Rehearsal checks clean install+rollback under both original presence/absence but does not prove live schema triggers, Auth or post-commit downgrade. Require CLI-created versioned migration with exact live signature and recoverability."
+      "notes": "R05 expands fixture to original released public Commit and tests both transaction abort and committed recovery via backed-up private/public source definitions; live deployment, history reconcile, Auth test and resource limits remain blocking."
+    },
+    {
+      "id": "B10-R05-LIVE-83-VS-56-MIGRATION-VERSION-DRIFT",
+      "ownerStep": "B10-R06",
+      "status": "BLOCKED",
+      "category": "release-history-safety",
+      "notes": "Read-only live history has 83 applied migration versions, repository has 56 versioned SQL files, only 20 exact matches, 36 repo-only/63 live-only. Do not run broad Supabase db push/include-all or cosmetic migration repair. Create scoped, history-safe, reviewed single-migration application + downstream exact-version reconciliation."
     }
   ],
   "sourceOfTruthRules": [

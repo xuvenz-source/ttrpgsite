@@ -14,8 +14,12 @@ test('B10 source gate refuses live release with unintegrated B03 and A06 blocked
  assert.equal(gate.sourceLimitations.B03CalledFromActiveAdvanceCore,false);
  assert.equal(gate.sourceLimitations.A06GateA,'BLOCKED');
  assert.equal(gate.sourceLimitations.releaseApproval,false);
- assert.equal(gate.sourceLimitations.PR71,'DRAFT_AMEND_BEFORE_MERGE');
- assert.equal(gate.noGoReasons.length,7);
+ assert.equal(gate.sourceLimitations.PR71,'CLOSED_UNMERGED_SUPERSEDED_R04',
+  'the unsafe PR71 soft sight hold was closed unmerged and must not reappear');
+ assert.equal(gate.noGoReasons.length,8);
+ assert.equal(gate.stagedRemediations.B10_R05.status,'STAGED_VERSIONED_NONAPPLIED');
+ assert.ok(gate.noGoReasons.some(x=>/83 live migration|83 live migration entries|83 applied live/i.test(x)),
+  'the historical migration-version mismatch must remain an explicit release blocker');
  assert.match(workflow,/B10 — Integrated movement release qualification/);
  const core=read('supabase/migrations/20261109095000_world_engine_v2_motion_authority.sql');
  const wrapper=read('supabase/migrations/20261109100000_world_engine_v2_private_observer_stream.sql');
