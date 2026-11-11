@@ -11,7 +11,8 @@ import {fileURLToPath} from 'node:url';
 const PHASES=Object.freeze(['idle','open','collision','fog','preview']);
 const METRICS=Object.freeze([
  'authority.begin','authority.advance','authority.commit',
- 'visibility.rpc','visibility.queue-wait','observer.frame-gap','render.frame'
+ 'movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
+ 'observer.frame-gap','render.frame'
 ]);
 const COUNTS=Object.freeze([
  'movement.grabbed','movement.approved','movement.blocked',
@@ -92,6 +93,9 @@ export function summarizeSoloDmTrace(raw,{phase}={}){
  if(durations['visibility.rpc'].p95Ms!==null&&
     durations['visibility.rpc'].p95Ms>750)
   notes.push('Sight RPC p95 above 750ms diagnostic alert (not a universal release threshold)');
+ if(durations['movement.release-to-terminal'].p95Ms!==null&&
+    durations['movement.release-to-terminal'].p95Ms>750)
+  notes.push('Post-release movement lock p95 above 750ms: inspect remaining advances and terminal commit');
  return Object.freeze({
   phase,level:reasons.length?'investigate':
    notes.some(x=>x.startsWith('No movement acknowledgment')||
