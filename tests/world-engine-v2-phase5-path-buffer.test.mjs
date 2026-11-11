@@ -134,3 +134,20 @@ test('hidden or disposed buffer never animates again',()=>{
  assert.equal(b.authorizePieces([hero]),false);
  assert.deepEqual(b.tick(600),[]);
 });
+
+
+test('R16 detached observer API stays backward-compatible and classification never grants motion',()=>{
+ const b=createObserverPathBuffer();
+ b.authorizePieces([hero]);
+ const {applyPath,inspectPath}=b;
+ const valid=path(hero,[[0,0],[1,0]]);
+ assert.equal(inspectPath(valid),'ok');
+ assert.equal(applyPath(valid),true,
+  'detaching the existing public applyPath method must remain valid');
+ assert.equal(inspectPath(path(hero,[[7,0],[8,0]])),'origin-mismatch');
+ assert.equal(inspectPath(path(hero,[[0,0],[5,0]])),'invalid');
+ assert.equal(inspectPath(path(torch,[[0,4],[1,4]])),'unrostered');
+ assert.deepEqual(pos(b,hero),{x:0,y:0},
+  'classification cannot present unapproved positions');
+ b.dispose();
+});
