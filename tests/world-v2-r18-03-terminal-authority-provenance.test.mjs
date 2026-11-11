@@ -101,6 +101,8 @@ test('R18-03 candidate remains explicitly NO-GO, not a black-screen or roster fi
  assert.equal(feature?.linkedPullRequest,105);
  assert.ok(feature.databaseDependencies?.length>0);
  assert.equal(ledger.upcomingRelease.databaseReleaseVersion,null);
- assert.equal(ledger.upcomingRelease.releaseBranch,
-  'stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11');
+ const r18Branch='stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11';
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(r18Branch),
+  'a later staging step cannot silently drop R18-03 reviewed SQL');
+ assert.equal(ledger.branches.find(x=>x.name===r18Branch)?.status,'staged');
 });
