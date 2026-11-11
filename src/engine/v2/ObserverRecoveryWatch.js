@@ -12,6 +12,20 @@
  */
 export const OBSERVER_RECOVERY_INTERVAL_MS=6000;
 
+// R06: a deployment flag alone is not authorization to poll every viewer.
+// A canary is limited to one explicitly configured test map. The all-map
+// mode requires a second, independently opted-in build setting.
+export function isObserverRecoveryCanaryEligible({
+ enabled=false,mapId,canaryMapId,globalOptIn=false,dmPreview=false
+}={}){
+ const id=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+ if(enabled!==true||dmPreview===true||!id.test(mapId??''))return false;
+ if(canaryMapId==='*')return globalOptIn===true;
+ return id.test(canaryMapId??'')&&
+  mapId.toLowerCase()===canaryMapId.toLowerCase();
+}
+
+
 export function createObserverRecoveryWatch({
  check,canCheck,isForeground=()=>true,
  intervalMs=OBSERVER_RECOVERY_INTERVAL_MS,

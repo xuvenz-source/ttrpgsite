@@ -1,0 +1,536 @@
+{
+  "schema": 1,
+  "step": "B10-R06",
+  "capturedDate": "2026-11-11",
+  "sourceBranch": "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
+  "baselineMain": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+  "project": "TTRPG Site",
+  "evidenceKind": "READ_ONLY_REMOTE_MIGRATION_LIST_AND_GITHUB_FILE_NAMES",
+  "mutation": "NONE",
+  "contentParity": "NOT_ESTABLISHED_BY_NAME_OR_TIMESTAMP",
+  "counts": {
+    "remoteApplied": 83,
+    "repositorySql": 62,
+    "properlyVersionedFiles": 56,
+    "properlyVersionedDistinctVersions": 55,
+    "exactVersionMatchedFiles": 20,
+    "repositoryOnlyVersionedFiles": 36,
+    "remoteOnlyVersions": 63,
+    "legacyMalformedNames": 6,
+    "duplicateVersionGroups": 1,
+    "identicalNameDifferentVersionCandidates": 24
+  },
+  "baselineRemoteLatest": "20261109171247",
+  "targetStagedMigration": "20261111023204_world_v2_b10_integrated_motion.sql",
+  "targetInstalled": false,
+  "exactVersionMatches": [
+    "20261107052003_map_combat_initiative.sql",
+    "20261107081654_npc_template_inheritance_and_dead_status.sql",
+    "20261107081736_campaign_tools_issuance.sql",
+    "20261107081754_campaign_pins_and_handouts.sql",
+    "20261107095343_campaign_tool_item_collaboration.sql",
+    "20261107095350_campaign_sheet_inventory_collaboration.sql",
+    "20261107110539_authoritative_fog_collision_release.sql",
+    "20261107113749_campaign_pin_icon_expansion.sql",
+    "20261108031754_world_runtime_movement_fog_collision_20261108.sql",
+    "20261108052335_campaign_cross_inventory_item_transfers.sql",
+    "20261108055943_world_runtime_single_write_trajectory.sql",
+    "20261108091818_observer_and_per_viewer_visibility_release_20261108.sql",
+    "20261108111759_unified_movement_fog_realtime_memory_20261108.sql",
+    "20261108112135_fix_motion_session_record_alias_20261108.sql",
+    "20261108112252_guard_stationary_motion_collision_20261108.sql",
+    "20261108112544_fix_motion_step_count_builtin_20261108.sql",
+    "20261109000100_authorized_predictive_navigation.sql",
+    "20261109000200_private_verified_visibility_deltas.sql",
+    "20261109000300_navigation_scene_revisions.sql",
+    "20261109000400_concealed_navigation_gestures.sql"
+  ],
+  "repositoryOnlyVersionedFiles": [
+    "20261106180000_multiple_character_sheets.sql",
+    "20261106180100_private_player_maps.sql",
+    "20261106180200_macro_crit_thresholds.sql",
+    "20261106190000_campaign_account_names.sql",
+    "20261106190100_dm_ability_modifiers.sql",
+    "20261106190200_linked_attack_macros.sql",
+    "20261106200000_dm_distribute_inventory_items.sql",
+    "20261106200100_token_encumbrance_badges.sql",
+    "20261106200200_sheet_quickcode_values.sql",
+    "20261106200300_npc_structure_trigger_fix.sql",
+    "20261106200400_move_entire_party_map.sql",
+    "20261106200500_private_live_movement.sql",
+    "20261106200600_private_map_quick_status.sql",
+    "20261107000100_sidebar_menu_preferences.sql",
+    "20261107033000_dm_map_environment_layers.sql",
+    "20261107124000_fog_visibility_batch_optimization.sql",
+    "20261108013000_inventory_lease_expiry_qualification.sql",
+    "20261108023000_holdable_campaign_tools.sql",
+    "20261108033000_player_owned_token_artwork.sql",
+    "20261108043000_macro_quickcode_resolution.sql",
+    "20261108055000_nonfog_token_movement_tick_optimization.sql",
+    "20261109000500_batched_concealed_navigation.sql",
+    "20261109000500_dm_map_npc_protected_columns.sql",
+    "20261109000600_batched_motion_observer_visibility.sql",
+    "20261109000700_authorized_dm_observer_paths.sql",
+    "20261109000800_dm_held_torch_authorized_motion.sql",
+    "20261109095000_world_engine_v2_motion_authority.sql",
+    "20261109100000_world_engine_v2_private_observer_stream.sql",
+    "20261109101000_world_engine_v2_static_scene_publication.sql",
+    "20261109102000_world_engine_v2_vision_geometry.sql",
+    "20261109102100_world_engine_v2_visibility_snapshots.sql",
+    "20261109102200_world_engine_v2_visibility_invalidation.sql",
+    "20261109102300_world_engine_v2_vision_roster_invalidation.sql",
+    "20261109103000_world_engine_v2_legacy_commit_checkpoint.sql",
+    "20261110050000_free_tier_rls_initplan_optimization.sql",
+    "20261111023204_world_v2_b10_integrated_motion.sql"
+  ],
+  "remoteOnlyMigrationRecords": [
+    {
+      "version": "20261105110307",
+      "name": "tabletop_foundation"
+    },
+    {
+      "version": "20261105111843",
+      "name": "tabletop_rls_permissions"
+    },
+    {
+      "version": "20261105111916",
+      "name": "tabletop_functions_and_map_storage"
+    },
+    {
+      "version": "20261105112023",
+      "name": "lock_down_trigger_functions"
+    },
+    {
+      "version": "20261105112515",
+      "name": "enable_tabletop_realtime"
+    },
+    {
+      "version": "20261105112628",
+      "name": "restrict_player_character_visibility"
+    },
+    {
+      "version": "20261105114239",
+      "name": "add_npc_bestiary_and_character_artwork"
+    },
+    {
+      "version": "20261105121107",
+      "name": "token_grid_footprint_sizes"
+    },
+    {
+      "version": "20261105121723",
+      "name": "sync_updated_character_art_to_placed_tokens"
+    },
+    {
+      "version": "20261105133019",
+      "name": "create_personal_token_libraries"
+    },
+    {
+      "version": "20261105142051",
+      "name": "allow_players_to_place_own_characters_on_active_map"
+    },
+    {
+      "version": "20261105143416",
+      "name": "map_calibration_source_dimensions_and_realtime"
+    },
+    {
+      "version": "20261105144953",
+      "name": "token_display_layout_and_private_resource_views"
+    },
+    {
+      "version": "20261105145039",
+      "name": "refresh_map_tokens_when_character_resources_change"
+    },
+    {
+      "version": "20261105151706",
+      "name": "read_current_maximum_resource_fields_for_token_monitors"
+    },
+    {
+      "version": "20261105153016",
+      "name": "account_keybindings_and_campaign_macro_hotbars"
+    },
+    {
+      "version": "20261105162813",
+      "name": "dm_selected_token_quick_edit_fields_and_secure_updates"
+    },
+    {
+      "version": "20261105163409",
+      "name": "allow_only_dm_approved_quick_resource_changes_on_controlled_npcs"
+    },
+    {
+      "version": "20261105163541",
+      "name": "reconnect_legacy_token_monitor_fields_to_unique_sheet_ids"
+    },
+    {
+      "version": "20261105164144",
+      "name": "atomic_batch_token_quick_adjustments"
+    },
+    {
+      "version": "20261105165418",
+      "name": "throttle_public_username_account_creation"
+    },
+    {
+      "version": "20261106033810",
+      "name": "token_status_effects_20261106"
+    },
+    {
+      "version": "20261106033824",
+      "name": "ui_scale_preferences_20261106"
+    },
+    {
+      "version": "20261106061941",
+      "name": "spellcasting_20261106"
+    },
+    {
+      "version": "20261106061954",
+      "name": "visual_macros_20261106"
+    },
+    {
+      "version": "20261106074744",
+      "name": "20261106_weapon_attack_cards"
+    },
+    {
+      "version": "20261106074748",
+      "name": "20261106_token_reference_codes"
+    },
+    {
+      "version": "20261106074750",
+      "name": "20261106_multiple_character_sheets"
+    },
+    {
+      "version": "20261106074754",
+      "name": "20261106_private_player_maps"
+    },
+    {
+      "version": "20261106074757",
+      "name": "20261106_macro_crit_thresholds"
+    },
+    {
+      "version": "20261106090848",
+      "name": "20261106_campaign_account_names"
+    },
+    {
+      "version": "20261106090851",
+      "name": "20261106_dm_ability_modifiers"
+    },
+    {
+      "version": "20261106090857",
+      "name": "20261106_linked_attack_macros"
+    },
+    {
+      "version": "20261106105547",
+      "name": "dm_distribute_inventory_items"
+    },
+    {
+      "version": "20261106105551",
+      "name": "token_encumbrance_badges"
+    },
+    {
+      "version": "20261106105555",
+      "name": "sheet_quickcode_values"
+    },
+    {
+      "version": "20261106105559",
+      "name": "npc_structure_trigger_fix"
+    },
+    {
+      "version": "20261106105604",
+      "name": "move_entire_party_map"
+    },
+    {
+      "version": "20261106105608",
+      "name": "private_live_movement"
+    },
+    {
+      "version": "20261106105612",
+      "name": "private_map_quick_status"
+    },
+    {
+      "version": "20261106160353",
+      "name": "sidebar_menu_preferences"
+    },
+    {
+      "version": "20261107030341",
+      "name": "dm_map_environment_layers"
+    },
+    {
+      "version": "20261107051546",
+      "name": "remove_unused_anon_preference_and_map_grants"
+    },
+    {
+      "version": "20261107135138",
+      "name": "fog_visibility_batch_optimization"
+    },
+    {
+      "version": "20261107150259",
+      "name": "inventory_lease_expiry_qualification"
+    },
+    {
+      "version": "20261107150305",
+      "name": "holdable_campaign_tools"
+    },
+    {
+      "version": "20261107164822",
+      "name": "player_owned_token_artwork"
+    },
+    {
+      "version": "20261107164849",
+      "name": "macro_quickcode_resolution"
+    },
+    {
+      "version": "20261107173054",
+      "name": "nonfog_token_movement_tick_optimization"
+    },
+    {
+      "version": "20261108162852",
+      "name": "dm_map_npc_protected_columns"
+    },
+    {
+      "version": "20261109082328",
+      "name": "unified_movement_batched_concealed_navigation_20261109000500"
+    },
+    {
+      "version": "20261109082332",
+      "name": "unified_movement_batched_motion_observer_visibility_20261109000600"
+    },
+    {
+      "version": "20261109082344",
+      "name": "unified_movement_authorized_dm_observer_paths_20261109000700"
+    },
+    {
+      "version": "20261109082347",
+      "name": "unified_movement_dm_held_torch_authorized_motion_20261109000800"
+    },
+    {
+      "version": "20261109162313",
+      "name": "world_engine_v2_motion_authority"
+    },
+    {
+      "version": "20261109162326",
+      "name": "world_engine_v2_private_observer_stream"
+    },
+    {
+      "version": "20261109162330",
+      "name": "world_engine_v2_static_scene_publication"
+    },
+    {
+      "version": "20261109162334",
+      "name": "world_engine_v2_vision_geometry"
+    },
+    {
+      "version": "20261109162343",
+      "name": "world_engine_v2_visibility_snapshots"
+    },
+    {
+      "version": "20261109162347",
+      "name": "world_engine_v2_visibility_invalidation"
+    },
+    {
+      "version": "20261109162352",
+      "name": "world_engine_v2_vision_roster_invalidation"
+    },
+    {
+      "version": "20261109162357",
+      "name": "world_engine_v2_legacy_commit_checkpoint"
+    },
+    {
+      "version": "20261109171247",
+      "name": "free_tier_rls_initplan_optimization_20261110050000"
+    }
+  ],
+  "filenameAliasCandidates": [
+    {
+      "repositoryFile": "20261106200000_dm_distribute_inventory_items.sql",
+      "repositoryVersion": "20261106200000",
+      "remoteVersion": "20261106105547",
+      "matchingName": "dm_distribute_inventory_items",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261106200100_token_encumbrance_badges.sql",
+      "repositoryVersion": "20261106200100",
+      "remoteVersion": "20261106105551",
+      "matchingName": "token_encumbrance_badges",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261106200200_sheet_quickcode_values.sql",
+      "repositoryVersion": "20261106200200",
+      "remoteVersion": "20261106105555",
+      "matchingName": "sheet_quickcode_values",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261106200300_npc_structure_trigger_fix.sql",
+      "repositoryVersion": "20261106200300",
+      "remoteVersion": "20261106105559",
+      "matchingName": "npc_structure_trigger_fix",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261106200400_move_entire_party_map.sql",
+      "repositoryVersion": "20261106200400",
+      "remoteVersion": "20261106105604",
+      "matchingName": "move_entire_party_map",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261106200500_private_live_movement.sql",
+      "repositoryVersion": "20261106200500",
+      "remoteVersion": "20261106105608",
+      "matchingName": "private_live_movement",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261106200600_private_map_quick_status.sql",
+      "repositoryVersion": "20261106200600",
+      "remoteVersion": "20261106105612",
+      "matchingName": "private_map_quick_status",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261107000100_sidebar_menu_preferences.sql",
+      "repositoryVersion": "20261107000100",
+      "remoteVersion": "20261106160353",
+      "matchingName": "sidebar_menu_preferences",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261107033000_dm_map_environment_layers.sql",
+      "repositoryVersion": "20261107033000",
+      "remoteVersion": "20261107030341",
+      "matchingName": "dm_map_environment_layers",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261107124000_fog_visibility_batch_optimization.sql",
+      "repositoryVersion": "20261107124000",
+      "remoteVersion": "20261107135138",
+      "matchingName": "fog_visibility_batch_optimization",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261108013000_inventory_lease_expiry_qualification.sql",
+      "repositoryVersion": "20261108013000",
+      "remoteVersion": "20261107150259",
+      "matchingName": "inventory_lease_expiry_qualification",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261108023000_holdable_campaign_tools.sql",
+      "repositoryVersion": "20261108023000",
+      "remoteVersion": "20261107150305",
+      "matchingName": "holdable_campaign_tools",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261108033000_player_owned_token_artwork.sql",
+      "repositoryVersion": "20261108033000",
+      "remoteVersion": "20261107164822",
+      "matchingName": "player_owned_token_artwork",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261108043000_macro_quickcode_resolution.sql",
+      "repositoryVersion": "20261108043000",
+      "remoteVersion": "20261107164849",
+      "matchingName": "macro_quickcode_resolution",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261108055000_nonfog_token_movement_tick_optimization.sql",
+      "repositoryVersion": "20261108055000",
+      "remoteVersion": "20261107173054",
+      "matchingName": "nonfog_token_movement_tick_optimization",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109000500_dm_map_npc_protected_columns.sql",
+      "repositoryVersion": "20261109000500",
+      "remoteVersion": "20261108162852",
+      "matchingName": "dm_map_npc_protected_columns",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109095000_world_engine_v2_motion_authority.sql",
+      "repositoryVersion": "20261109095000",
+      "remoteVersion": "20261109162313",
+      "matchingName": "world_engine_v2_motion_authority",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109100000_world_engine_v2_private_observer_stream.sql",
+      "repositoryVersion": "20261109100000",
+      "remoteVersion": "20261109162326",
+      "matchingName": "world_engine_v2_private_observer_stream",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109101000_world_engine_v2_static_scene_publication.sql",
+      "repositoryVersion": "20261109101000",
+      "remoteVersion": "20261109162330",
+      "matchingName": "world_engine_v2_static_scene_publication",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109102000_world_engine_v2_vision_geometry.sql",
+      "repositoryVersion": "20261109102000",
+      "remoteVersion": "20261109162334",
+      "matchingName": "world_engine_v2_vision_geometry",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109102100_world_engine_v2_visibility_snapshots.sql",
+      "repositoryVersion": "20261109102100",
+      "remoteVersion": "20261109162343",
+      "matchingName": "world_engine_v2_visibility_snapshots",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109102200_world_engine_v2_visibility_invalidation.sql",
+      "repositoryVersion": "20261109102200",
+      "remoteVersion": "20261109162347",
+      "matchingName": "world_engine_v2_visibility_invalidation",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109102300_world_engine_v2_vision_roster_invalidation.sql",
+      "repositoryVersion": "20261109102300",
+      "remoteVersion": "20261109162352",
+      "matchingName": "world_engine_v2_vision_roster_invalidation",
+      "contentParity": "UNVERIFIED"
+    },
+    {
+      "repositoryFile": "20261109103000_world_engine_v2_legacy_commit_checkpoint.sql",
+      "repositoryVersion": "20261109103000",
+      "remoteVersion": "20261109162357",
+      "matchingName": "world_engine_v2_legacy_commit_checkpoint",
+      "contentParity": "UNVERIFIED"
+    }
+  ],
+  "legacyMalformedNames": [
+    "20261106_spellcasting.sql",
+    "20261106_token_reference_codes.sql",
+    "20261106_token_status_effects.sql",
+    "20261106_ui_scale_preferences.sql",
+    "20261106_visual_macros.sql",
+    "20261106_weapon_attack_cards.sql"
+  ],
+  "duplicateVersionGroups": [
+    {
+      "version": "20261109000500",
+      "files": [
+        "20261109000500_batched_concealed_navigation.sql",
+        "20261109000500_dm_map_npc_protected_columns.sql"
+      ]
+    }
+  ],
+  "forbiddenActions": [
+    "supabase db push from complete source tree",
+    "supabase migration up --include-all",
+    "automatic migration repair",
+    "rename old remote applied versions",
+    "apply B10-R05 without signed R02 all-map compatibility"
+  ],
+  "releaseMethod": "NOT_SELECTED_OR_EXECUTED. Prefer a reviewed single-migration history-recording operation; CLI v2.81.3 isolated single-file dry-run may fail closed with remote/local drift, and Supabase apply_migration may use a newly generated remote version. Inspect actual version and reconcile checked-in source in a later audited release step.",
+  "noGo": true
+}

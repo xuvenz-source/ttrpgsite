@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10-R06",
+  "nextStep": "B10-R07",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -604,6 +604,50 @@
         "Staged migrations and release flags were NOT applied or deployed; no go-live decision, and production remains original."
       ],
       "next": "B10-R06 historical migration/version-alias reconciliation, targeted release method and client-first, three-authenticated-session canary before any SQL apply or paired Vercel deployment."
+    },
+    "B10_R06": {
+      "status": "STAGED",
+      "releaseDecision": "NO_GO",
+      "releaseReady": false,
+      "branch": "stage/world-v2-b10-r06-history-safe-canary-2026-11-11",
+      "parentPR": 90,
+      "parentHead": "b2267a2fd4b06b82711bb036c5ab04795f702bf4",
+      "historyAudit": "staging/world-v2-b10-r06-history-reconciliation.json",
+      "canaryManifest": "staging/world-v2-b10-r06-client-canary.json",
+      "docs": "docs/architecture/world-v2-b10-r06-history-safe-canary.md",
+      "modifiedSource": [
+        "src/engine/v2/ObserverRecoveryWatch.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js"
+      ],
+      "tests": [
+        "tests/world-v2-b10-r02-observer-recovery.test.mjs",
+        "tests/world-v2-b10-r06-history-canary.test.mjs"
+      ],
+      "observedMigrationCounts": {
+        "remoteApplied": 83,
+        "repositorySql": 62,
+        "properlyVersionedFiles": 56,
+        "properlyVersionedDistinctVersions": 55,
+        "exactVersionMatchedFiles": 20,
+        "repositoryOnlyVersionedFiles": 36,
+        "remoteOnlyVersions": 63,
+        "legacyMalformedNames": 6,
+        "duplicateVersionGroups": 1,
+        "identicalNameDifferentVersionCandidates": 24
+      },
+      "scope": "Staging-only exact version/name reconciliation plus fail-closed one-map and explicit all-map R02 periodic signed-sight build gates; no live flags or backend changes",
+      "verification": "Read-only current Supabase migration listing and exact GitHub file inventory completed; new exact-head CI must run. No live DM/P1/P2 or p95 proof.",
+      "security": "R02 canary only changes whether existing signed auth/LOS refresh watcher is enabled; no public coordinate feed, grants, new database RPC or authorization shortcuts.",
+      "blockers": [
+        "36 repo-only valid migration filenames including a duplicate version prefix; 63 live-only versions and six legacy short names; exact historical SQL parity not certified",
+        "No verified single-action migration application preserving tracked version against remote/local drift",
+        "R02 one-map canary does not protect viewers on all maps under global R03; all-map rollout and cached clients must be qualified first",
+        "A06 24 real protected three-account tests, fog/collision fixture, p95, blackouts, free-tier resource budget NOT RUN"
+      ],
+      "sqlApplied": false,
+      "featureFlagsActivated": false,
+      "noProductionChanges": true,
+      "next": "B10-R07: guarded all-map R02 canary/browser cache and version-preserving targeted migration apply approval readiness; no silent deployment"
     }
   },
   "handoffs": {

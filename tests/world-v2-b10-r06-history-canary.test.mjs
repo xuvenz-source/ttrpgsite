@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const history=JSON.parse(read('staging/world-v2-b10-r06-history-reconciliation.json'));
+const canary=JSON.parse(read('staging/world-v2-b10-r06-client-canary.json'));
+
+test('R06 historical migration audit acknowledges mismatches and duplicate version',()=>{
+ assert.equal(history.step,'B10-R06');
+ assert.equal(history.mutation,'NONE');
+ assert.equal(history.counts.remoteApplied,83);
+ assert.equal(history.counts.repositorySql,62);
+ assert.equal(history.counts.properlyVersionedFiles,56);
+ assert.equal(history.counts.properlyVersionedDistinctVersions,55);
+ assert.equal(history.counts.exactVersionMatchedFiles,20);
+ assert.equal(history.counts.repositoryOnlyVersionedFiles,36);
+ assert.equal(history.counts.remoteOnlyVersions,63);
+ assert.equal(history.counts.legacyMalformedNames,6);
+ assert.equal(history.counts.duplicateVersionGroups,1);
+ assert.equal(history.counts.identicalNameDifferentVersionCandidates,24);
+ assert.equal(history.exactVersionMatches.length,20);
+ assert.equal(history.repositoryOnlyVersionedFiles.length,36);
+ assert.equal(history.remoteOnlyMigrationRecords.length,63);
+ assert.equal(history.duplicateVersionGroups[0].version,'20261109000500');
+ assert.equal(history.contentParity,'NOT_ESTABLISHED_BY_NAME_OR_TIMESTAMP');
+ assert.equal(history.targetInstalled,false);
+ assert.equal(history.noGo,true);
+});
+
+test('R06 release and canary guard preclude SQL with a single-map-only viewer',()=>{
+ const runtime=read('src/engine/v2/WorldV2TabletopRuntime.js');
+ const watch=read('src/engine/v2/ObserverRecoveryWatch.js');
+ assert.match(runtime,/isObserverRecoveryCanaryEligible/);
+ assert.match(runtime,/VITE_WORLD_V2_OBSERVER_RECOVERY_CANARY_MAP_ID/);
+ assert.match(runtime,/VITE_WORLD_V2_OBSERVER_RECOVERY_GLOBAL==='1'/);
+ assert.match(watch,/canaryMapId==='\*'/);
+ assert.match(watch,/globalOptIn===true/);
+ assert.match(watch,/dmPreview===true/);
+ assert.equal(canary.state,'STAGED_NOT_DEPLOYED');
+ assert.equal(canary.decision,'NO_GO');
+ assert.equal(canary.approvedLiveMutations,false);
+ assert.match(canary.sqlReleasePrerequisite,/all-map compatible R02 recovery build/);
+ assert.equal(canary.auth24Cases,'NOT_RUN');
+ const progress=JSON.parse(read('staging/engineering-progress.json'));
+ const gate=JSON.parse(read('staging/world-v2-b10-release-qualification.json'));
+ assert.equal(progress.steps.B10_R06.releaseDecision,'NO_GO');
+ assert.equal(progress.nextStep,'B10-R07');
+ assert.equal(gate.decision,'NO_GO');
+ assert.equal(gate.stagedRemediations.B10_R06.liveSqlApplied,false);
+});
