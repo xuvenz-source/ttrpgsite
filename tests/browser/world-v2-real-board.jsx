@@ -9,7 +9,7 @@ const PLAYER='30000000-0000-4000-8000-000000000001';
 const DM='30000000-0000-4000-8000-000000000002';
 const TOKEN='40000000-0000-4000-8000-000000000001';
 const mode=new URLSearchParams(location.search).get('mode')||'player';
-const isDM=mode!=='player',preview=mode==='preview';
+const isDM=mode!=='player'&&mode!=='stale',preview=mode==='preview';
 const user=isDM?DM:PLAYER;
 let position={x:2,y:2},priorPosition={x:2,y:2},staleUntil=0;
 let nextSession=0,cursor=5,visionEpoch=6;
