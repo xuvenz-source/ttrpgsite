@@ -167,3 +167,25 @@ test('R18-08 direct script cannot execute SQL or invoke deployment and remains N
  assert.match(source,/actualCliDryRunPerformed:false/);
  assert.match(source,/fetched_sql_md5/);
 });
+
+test('R18-08 release machine record cannot imply completion or approval',()=>{
+ const plan=JSON.parse(readFileSync(join(root,
+  'staging/world-v2-b10-r18-08-payload-preflight.json'),'utf8'));
+ const ledger=JSON.parse(readFileSync(join(root,
+  'staging/next-release-ledger.json'),'utf8'));
+ assert.equal(plan.releaseDecision,'NO_GO');
+ assert.equal(plan.productionApproval,false);
+ assert.equal(plan.databaseApproval,false);
+ assert.equal(plan.cliSourceAudit.actualLinkedCliExecuted,false);
+ assert.equal(plan.linkedCliDryRunPerformed,false);
+ assert.equal(plan.frontendCanaryDeployed,false);
+ assert.equal(plan.backendMigrationApplied,false);
+ assert.equal(plan.guardedRecoveryEnabled,false);
+ assert.equal(plan.liveReadOnly.sqlBodyDigestsCollected,83);
+ assert.equal(ledger.upcomingRelease.databaseReleaseVersion,null);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,9);
+ assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,9);
+ assert.equal(ledger.releaseBranch,plan.stagingBranch);
+ assert.equal(ledger.features.find(x=>x.id===
+  'world-v2-b10-r18-08-remote-history-body-verification')?.releaseReady,false);
+});
