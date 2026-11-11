@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -364,6 +364,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "B10-R18-13 solo-DM five-phase live QA readiness: no new runtime, live SQL or flags. Existing R16 trace capture, offline privacy-bounded analyzer and deterministic tests. Real DM/P1/passive P2 remains unverified. Staged CI pending.",
       "linkedPullRequest": 115
+    },
+    {
+      "name": "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-14 source-confirmed solo DM preview collision refresh storm: 1352 blocked events, 1580 visibility refresh requests; only refresh when collision-approved preview token identity/cell actually changes, preserve final signed sight. Standalone unit tests; live verification pending. All production gates remain NO_GO."
     }
   ],
   "features": [
@@ -1098,6 +1104,33 @@
       ],
       "note": "Staging-only solo-DM protocol does not replace genuinely independent authenticated P1/P2 convergence and LOS tests, Supabase CLI one-pending dry-run or two separate approvals. No production deployment/SQL/feature flags.",
       "linkedPullRequest": 115
+    },
+    {
+      "id": "world-v2-b10-r18-14-preview-blocked-sight-dedupe",
+      "description": "Avoid expensive player-effective preview visibility refresh scheduling for blocked/approved movement ACKs that leave the collision-approved token identity/position unchanged; preserve partial accepted prefix, final signed sight and all secure revocation paths.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Designer real R16 traces show DM authority p95 begin 1.31s / advance 2.09s / commit 3.95s; preview 1352 blocked and 1580 sight refresh requests, coalesced to 46 RPCs. No R05 SQL, production frontend deploy, flag enable or real Auth multiplayer acceptance."
     }
   ],
   "databaseDependencies": [
@@ -1412,7 +1445,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1427,9 +1460,10 @@
       "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
       "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
       "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
-      "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12"
+      "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+      "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12"
     ],
-    "stagePolicy": "R18-13 maintains all 14 outstanding R17/R18 branches and adds nonruntime QA only: a five-phase solo-DM baseline/canary protocol plus offline trace analyzer and tests. Production remains R16 with no new Vercel flag, SQL or paid preview. DM preview is local and can NEVER substitute for authenticated player observer/LOS tests. Require independently approved frontend-only canary, test first on R16 SQL; separately approve and verify Supabase CLI migration and SQL when truly independent player acceptance becomes possible. Guarded 700ms recovery remains OFF.",
+    "stagePolicy": "R18-14 retains 15 staged branches and source-based preview no-op sight refresh optimization. Actual R16 DM traces confirm multi-second server RPC latencies and avoidable 1352 collision-blocked refresh calls. Staging unit tests cannot prove live latency improvement or independent player observer/LOS/RLS. Frontend-only 12-second recovery canary only after separate explicit approval; 700ms guarded recovery stays disabled; frozen R05 SQL only after independent actual linked CLI/real Auth and separate SQL approval.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
