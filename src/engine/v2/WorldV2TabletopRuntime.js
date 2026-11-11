@@ -68,7 +68,7 @@ export function createWorldV2TabletopRuntime({
  // Independent default-OFF rollout: no private path grants new sprites.
  const guardedObserverEnabled=!dmPreview&&
   import.meta.env?.VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY==='1';
- let observerWatch=null,foregroundListener=null;
+ let observerWatch=null,foregroundListener=null,guardedListener=null;
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
@@ -404,6 +404,20 @@ export function createWorldV2TabletopRuntime({
    if(stream&&(!await stream.start()||disposed))return false;
    if(!await sceneTransport.start()||disposed)return false;
    started=true;
+   // Background tabs may suspend timers beyond the 700ms safety deadline.
+   // Conceal synchronously when a guarded window is backgrounded; on
+   // foreground return reauthorize only if that stream is still locked.
+   if(guardedObserverEnabled&&typeof document!=='undefined'&&
+    document.addEventListener&&!guardedListener){
+    guardedListener=()=>{
+     if(disposed||!stream?.connected)return;
+     if(document.visibilityState==='hidden'&&stream.recovering)
+      void stream.resync('observer-guarded-background');
+     else if(document.visibilityState==='visible'&&stream.locked)
+      void stream.resync('observer-guarded-foreground');
+    };
+    document.addEventListener('visibilitychange',guardedListener);
+   }
    if(observerRecoveryEnabled&&!observerWatch){
     const foreground=()=>typeof document==='undefined'||
      document.visibilityState!=='hidden';
@@ -497,6 +511,10 @@ export function createWorldV2TabletopRuntime({
     document.removeEventListener)
     document.removeEventListener('visibilitychange',foregroundListener);
    foregroundListener=null;
+   if(guardedListener&&typeof document!=='undefined'&&
+    document.removeEventListener)
+    document.removeEventListener('visibilitychange',guardedListener);
+   guardedListener=null;
    deferredObserverRecovery.dispose();
    canonicalHandoff.clear();committedSight=null;
    ++refreshRevision;
