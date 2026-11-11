@@ -251,3 +251,45 @@ test('R18-04 only explicit opt-in outside DM preview can enable guarded recovery
  assert.match(source,/softResyncEnabled=false/);
  assert.doesNotMatch(source,/onPath\(item[\s\S]{0,35}guardedPending/);
 });
+
+
+test('R18-04 permission revision change during guarded sight revokes immediately and discards late response',async()=>{
+ let release;const pending=new Promise(resolve=>{release=resolve});
+ const h=harness({recover:(reason,current)=>
+  reason==='observer-guarded-sight'?pending:
+  reason==='subscribed'?current:sight(2,[piece(KNOWN)],
+   {permissionGeneration:5})});
+ await h.start();
+ try{
+  h.emit(1,[path(UNKNOWN)]);await flush();
+  assert.equal(h.transport.recovering,true);
+  h.emit(2,[path()],{permissionGeneration:5});
+  assert.equal(h.transport.locked,true,
+   'a version change cannot remain in a previously signed grace period');
+  assert.ok(h.revoked.includes('version-change'));
+  assert.equal(h.timers.timers.size,0);
+  release(sight(2,[piece(KNOWN),piece(UNKNOWN)]));
+  await settle();
+  assert.equal(h.seen.length,0,
+   'old signed sight may not authorize a path after permission changes');
+  assert.equal(h.transport.cursor,2);
+ }finally{await h.dispose()}
+});
+
+test('R18-04 malformed private payload during guarded window bypasses the grace and hard-seals',async()=>{
+ let release;const pending=new Promise(resolve=>{release=resolve});
+ const h=harness({recover:(reason,current)=>
+  reason==='observer-guarded-sight'?pending:current});
+ await h.start();
+ try{
+  h.emit(1,[path(UNKNOWN)]);await flush();
+  assert.equal(h.transport.recovering,true);
+  h.raw(frame(2,[path()],{secretFogCoordinates:[12,19]}));
+  assert.equal(h.transport.locked,true);
+  assert.ok(h.revoked.includes('invalid-packet'));
+  release(sight(2,[piece(KNOWN),piece(UNKNOWN)]));
+  await settle();
+  assert.equal(h.seen.length,0);
+  assert.equal(h.timers.timers.size,0);
+ }finally{await h.dispose()}
+});
