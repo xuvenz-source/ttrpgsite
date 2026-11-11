@@ -98,3 +98,18 @@ test('R18-09 CLI parser does not invoke shell, network, SQL or claim applied mig
  assert.match(source,/actualLinkedCliExecutedByValidator:false/);
  assert.match(source,/sqlInstallationAuthorized:false/);
 });
+
+test('R18-09 staging release ledger preserves all ten outstanding branches and no SQL approval',()=>{
+ const ledger=JSON.parse(readFileSync(join(root,'staging/next-release-ledger.json'),'utf8'));
+ const status=JSON.parse(readFileSync(join(root,'staging/world-v2-b10-r18-09-cli-transcript-readiness.json'),'utf8'));
+ assert.equal(status.releaseDecision,'NO_GO');
+ assert.equal(status.productionApproval,false);
+ assert.equal(status.databaseApproval,false);
+ assert.equal(status.actualLinkedCliDryRunPerformed,false);
+ assert.equal(status.backendMigrationApplied,false);
+ assert.equal(ledger.releaseBranch,status.stagingBranch);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,10);
+ assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,10);
+ assert.equal(ledger.upcomingRelease.databaseReleaseVersion,null);
+ assert.equal(ledger.features.find(x=>x.id==='world-v2-b10-r18-09-cli-transcript-verification')?.linkedPullRequest,111);
+});
