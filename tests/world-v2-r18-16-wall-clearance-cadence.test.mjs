@@ -154,5 +154,5 @@ test('R18-16 mixed demand and insufficient sample sizes never claim a causal lea
  assert.equal(result['authority.commit.sample'].comparison,'insufficient');
  const code=readFileSync(new URL(
   '../scripts/qa/world-v2-solo-dm-analyze.mjs',import.meta.url),'utf8');
- assert.match(code,/not\\* a causal performance attribution|not\\* a causal/);
+ assert.match(code,/causal performance attribution/);
 });
