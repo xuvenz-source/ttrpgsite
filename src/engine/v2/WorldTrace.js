@@ -10,6 +10,7 @@ const EVENTS=new Set([
  'movement.grabbed','movement.approved','movement.blocked','movement.released',
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
  'movement.reject-phase','movement.reject-reason',
+ 'movement.canonical-handoff','movement.cancel-reason',
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','visibility.revoke','visibility.refresh',
@@ -47,7 +48,8 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'advance','commit','path','invalid-path','invalid-authority-ack',
  'invalid-commit','begin-failed','invalid-session','path-limit',
  'rpc-unavailable','invalid-server-reply','client-contract',
- 'session-cancelled','authority-error']);
+ 'session-cancelled','authority-error','reused-commit',
+ 'keyboard-unmount','map-change','dispose']);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;

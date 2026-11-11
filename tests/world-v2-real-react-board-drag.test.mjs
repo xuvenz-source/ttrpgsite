@@ -132,3 +132,60 @@ test('integrated actual React board drags owned player, DM and preview token',{t
   }
  }finally{await b?.close();await vite.close()}
 });
+
+test('R12 real React V2 player can drag again before lagged signed sight catches up',
+ {timeout:90000},async t=>{
+ const path=chrome();
+ if(!path){t.skip('Chromium unavailable');return}
+ const vite=await createViteServer({root:ROOT,configFile:false,
+  server:{host:'127.0.0.1',port:0,hmr:false},appType:'spa',
+  logLevel:'error'});
+ let b;
+ try{
+  await vite.listen();
+  b=await browser(path);
+  await b.send('Page.enable');
+  await b.send('Runtime.enable');
+  const port=vite.httpServer.address().port;
+  await b.send('Page.navigate',{url:'http://127.0.0.1:'+port+
+   '/tests/browser/world-v2-real-board.html?mode=stale&worldV2Trace=1'});
+  let ready=false;
+  for(let i=0;i<160;i++){
+   try{ready=await b.evaluate('Boolean(window.__v2Integrated?.ready())')}catch{}
+   if(ready)break;await delay(80);
+  }
+  assert.equal(ready,true,'player fixture failed to mount V2');
+  const gesture=async distance=>{
+   const rect=await b.evaluate('window.__v2Integrated.bounds()');
+   const send=(type,x,y)=>b.send('Input.dispatchMouseEvent',{
+    type,x,y,button:type==='mouseMoved'?'none':'left',
+    buttons:type==='mouseReleased'?0:1,clickCount:1});
+   await send('mouseMoved',rect.x,rect.y);
+   await send('mousePressed',rect.x,rect.y);
+   await send('mouseMoved',rect.x+distance*.5,rect.y);
+   await send('mouseMoved',rect.x+distance,rect.y);
+   await send('mouseReleased',rect.x+distance,rect.y);
+  };
+  await gesture(61);
+  for(let i=0;i<50;i++){
+   if((await b.evaluate('window.__v2Integrated.snapshot().committed'))>=1)break;
+   await delay(15);
+  }
+  const first=await b.evaluate('window.__v2Integrated.snapshot()');
+  assert.equal(first.committed,1,JSON.stringify(first));
+  await delay(40);
+  await gesture(61);
+  for(let i=0;i<50;i++){
+   if((await b.evaluate('window.__v2Integrated.snapshot().committed'))>=2)break;
+   await delay(15);
+  }
+  const second=await b.evaluate('window.__v2Integrated.snapshot()');
+  assert.equal(second.committed,2,
+   'second drag must use ACKed canonical endpoint, not stale signed sight: '+JSON.stringify(second));
+  assert.equal(second.trace?.counts?.['movement.rejected']??0,0);
+  assert.ok((second.trace?.counts?.['movement.canonical-handoff']??0)>=1);
+  assert.equal(second.spriteCount,1,'no sprite remount');
+  assert.equal(second.canvasCount,1,'no fog layer remount');
+  assert.deepEqual(second.errors,[]);
+ }finally{await b?.close();await vite.close()}
+});

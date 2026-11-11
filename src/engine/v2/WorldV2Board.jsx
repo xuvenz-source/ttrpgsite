@@ -361,9 +361,12 @@ export default function WorldV2Board(props){
    part=>part.kind===picked.kind&&part.id===picked.id);
   if(!current)return denied('current');
   const virtual=dmPreview?runtimeRef.current?.previewPosition:null;
+  const signedOrigin={x:current.x,y:current.y};
   const origin=virtual&&virtual.tokenId===picked.id?
    {x:virtual.x,y:virtual.y}:
-   {x:current.x,y:current.y};
+   runtimeRef.current?.canonicalGestureOrigin({
+    selection,signedOrigin
+   })??signedOrigin;
   if(!Number.isSafeInteger(origin.x)||!Number.isSafeInteger(origin.y))
    return denied('origin');
   if(!keyboard)viewport.current?.focus?.({preventScroll:true});

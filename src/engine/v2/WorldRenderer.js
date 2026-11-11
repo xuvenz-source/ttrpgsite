@@ -571,6 +571,13 @@ export function createWorldRenderer({
     !Number.isSafeInteger(event.gestureId)||event.gestureId<1)
     return false;
    if(event.type==='grabbed'){
+    // Preserve the prior approved sprite anchors for the exact same
+    // selection while a newly signed position snapshot is still pending.
+    const carry=local?.handoff&&same(local.approved,event.approved)&&
+     Array.isArray(event.selection)&&event.selection.length===local.anchors.size&&
+     event.selection.every(p=>local.anchors.has(key(p)))?
+      {anchors:local.anchors,dx:local.approved.x-local.origin.x,
+       dy:local.approved.y-local.origin.y}:null;
     if(local)clearLocal();
     if(!Array.isArray(event.selection)||!event.selection.length||
      event.selection.length>48||!validMotionPoint(event.approved))return false;
@@ -578,7 +585,10 @@ export function createWorldRenderer({
     for(const p of event.selection){
      if(!p||!['token','tool'].includes(p.kind)||!validId(p.id)||
       !sprites.has(key(p))||anchors.has(key(p)))return false;
-     const position=observer.getPosition(p.kind,p.id);
+     const prior=carry?.anchors.get(key(p));
+     const position=prior?
+      {x:prior.x+carry.dx,y:prior.y+carry.dy}:
+      observer.getPosition(p.kind,p.id);
      if(!position)return false;
      const sprite=sprites.get(key(p)).node;
      anchors.set(key(p),{kind:p.kind,id:p.id,...position,

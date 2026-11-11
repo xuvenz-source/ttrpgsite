@@ -9,9 +9,10 @@ const PLAYER='30000000-0000-4000-8000-000000000001';
 const DM='30000000-0000-4000-8000-000000000002';
 const TOKEN='40000000-0000-4000-8000-000000000001';
 const mode=new URLSearchParams(location.search).get('mode')||'player';
-const isDM=mode!=='player',preview=mode==='preview';
+const isDM=mode!=='player'&&mode!=='stale',preview=mode==='preview';
 const user=isDM?DM:PLAYER;
-let position={x:2,y:2},nextSession=0,cursor=5,visionEpoch=6;
+let position={x:2,y:2},priorPosition={x:2,y:2},staleUntil=0;
+let nextSession=0,cursor=5,visionEpoch=6;
 const rpc=[],errors=[],channelTopics=[],channelEvents=[];
 const pointerEvents=[];
 document.addEventListener('pointerdown',event=>{
@@ -42,7 +43,9 @@ const sight=()=>({version:2,mapId:MAP,viewerId:preview?PLAYER:user,
  environmentRevision:7,permissionGeneration:4,sceneGeneration:2,
  enabled:!isDM||preview,width:10,height:10,partyShared:false,
  visible:!isDM||preview?cells:[],explored:!isDM||preview?cells:[],
- visiblePieces:[{kind:'token',id:TOKEN,x:position.x,y:position.y}],
+ visiblePieces:[{kind:'token',id:TOKEN,
+  x:mode==='stale'&&performance.now()<staleUntil?priorPosition.x:position.x,
+  y:mode==='stale'&&performance.now()<staleUntil?priorPosition.y:position.y}],
  predictionGrants:[],lightCells:[],dmMovingLights:[]});
 const db={
  realtime:{async setAuth(){}},
@@ -53,6 +56,9 @@ const db={
    name==='preview_world_visibility_at_v2')
    return {data:sight(),error:null};
   if(name==='begin_world_motion_v2'){
+   // Reproduce the live server's strict canonical-origin rule in stale mode.
+   if(mode==='stale'&&(args.p_origin?.x!==position.x||
+    args.p_origin?.y!==position.y))return {data:null,error:null};
    return {data:{version:2,sessionId:'50000000-0000-4000-8000-'+
     String(++nextSession).padStart(12,'0')},error:null};
   }
@@ -63,7 +69,9 @@ const db={
     seq:args.p_seq,blocked:false,accepted,revision:7},error:null};
   }
   if(name==='commit_world_motion_v2'){
-   position={...args.p_endpoint};cursor++;visionEpoch++;
+   priorPosition={...position};position={...args.p_endpoint};
+   if(mode==='stale')staleUntil=performance.now()+1100;
+   cursor++;visionEpoch++;
    return {data:{version:2,sessionId:args.p_session,seq:args.p_seq,
     endpoint:{...position}},error:null};
   }
