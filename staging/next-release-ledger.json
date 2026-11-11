@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-11",
-  "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-  "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "releaseBranch": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -261,10 +261,25 @@
     },
     {
       "name": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
-      "status": "staged",
+      "status": "released",
       "linkedPullRequest": 101,
       "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-      "note": "B10-R16: avoid all-map opaque seal on valid same-generation private observer route origin mismatch or capped cosmetic backlog. Keep the affected route deferred until a fresh server-signed snapshot; malformed packets and sequence gaps still seal. No DB/SQL, Supabase Realtime protocol, fog authority or grants change. CI test and live DM/observer acceptance pending."
+      "note": "R16 PR #101 merged and Vercel READY at 90df8c9. Live DM/P2 QA showed remaining observer unknown-piece and sequence gaps, which R16's buffer-only recovery did not address. 2+2 events, four full seals captured in R18 audit; no unauthorized exposure shown.",
+      "productionCommit": "90df8c960e79e8d66c322095611427da7bb09de4"
+    },
+    {
+      "name": "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 102,
+      "note": "B10-R17 client-only blocked keyboard edge rebase. Exact-head PR#102 verification green 814/814, CodeQL and PostgreSQL auth; releaseReady=false, draft/unmerged. Does not fix observer position convergence. Must include with next approved consolidated release if qualified."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": null,
+      "note": "R18-01 audit-only: traced four real observer map resets from two unknown-piece and two sequence-gap cases; synthetic fail-closed baseline, protocol review and security/release gates; NO runtime fix, no database changes."
     }
   ],
   "features": [
@@ -725,11 +740,35 @@
       "sources": [
         "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
       ],
-      "status": "staged",
-      "releaseReady": false,
+      "status": "released",
+      "releaseReady": true,
       "linkedPullRequest": 101,
       "databaseDependencies": [],
-      "note": "Staged client-only repair; player and DM QA plus review required before controlled deployment."
+      "note": "Released PR #101 commit 90df8c9; R16 addressed cosmetic buffer origin/backlog only. R18 incident shows remaining unknown-piece and sequence-gap stream faults."
+    },
+    {
+      "id": "world-v2-b10-r17-server-blocked-keyboard-input-rebase",
+      "description": "Rebase keyboard cursor to server-approved cell after blocked ACK and suppress only the exact denied adjacent repeat",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 102,
+      "databaseDependencies": [],
+      "note": "Independent from R18; potential release pending protected fog/DM QA and designer approval."
+    },
+    {
+      "id": "world-v2-b10-r18-01-observer-private-delivery-audit",
+      "description": "Auditable R16 observer incident reproduction and authority-safe B08/R02/R03 recovery design; not a runtime correction",
+      "sources": [
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": null,
+      "databaseDependencies": [],
+      "note": "Tests prove current fail-closed baseline, including no self-healing after dropped terminal packet. Requires separately approved R18 actual implementation, isolated SQL and protected live QA."
     }
   ],
   "databaseDependencies": [
@@ -1043,12 +1082,13 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-    "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+    "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "releaseBranch": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
     "outstandingBranches": [
-      "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
+      "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+      "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11"
     ],
-    "stagePolicy": "R16 isolated, staging only. Must inspect exact diff, complete Node/Chromium, CodeQL and PostgreSQL security workflows; no merge or live deployment before designer approval. Test DM rapid arrow/drag with passive Player 2, observer buffer discontinuity, no whole-map blackout, fog/hidden-roster secrecy, sequence gap revocation and repeated blocked keyboard input. Investigate one 'invalid-server-reply' Advance separately without increasing server caps. Other B10 R05-R09 SQL draft branches remain NO-GO.",
+    "stagePolicy": "R17 remains draft functional candidate, R18-01 is a diagnostics/security-baseline audit ONLY. Neither is release-ready or authorized for production. R18 terminal observer fix must reconcile existing B08/R02/R03/R05 draft stack, prove fog/hidden NPC and lost-message safe convergence, pass current-main combined CI and obtain separate designer approval before targeted live Supabase migration. Do not deploy SQL, enable preview, or upgrade plans.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
