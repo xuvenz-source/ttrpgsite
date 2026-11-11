@@ -320,7 +320,7 @@
       "name": "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 109,
       "note": "R18-07 isolated remote-migration-history SQL release mechanism (READ-ONLY). Live Supabase 83 registered versions vs repository 56 SQL files (55 distinct timestamps, only 20 exact matches), all 83 remote entries have SQL and target 20261111023204 is unused. Supabase MCP apply_migration generates its own version, so NOT acceptable for exact reviewed CLI migration; do not bulk db push or repair history. Candidate: secure isolated CLI 2.81.3 migration fetch, exact 83 version/name match + frozen R05 Git blob, strict validator and one-migration remote dry-run; actual linked CLI dry-run NOT YET RUN. R18-02 signed viewer canary and separate SQL approval still required. No live DB write/deploy/flags/paid infrastructure."
     }
   ],
@@ -904,7 +904,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 109,
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
