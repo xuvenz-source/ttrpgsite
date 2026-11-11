@@ -306,7 +306,7 @@
       "name": "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 107,
       "note": "R18-05 single consolidated source candidate integrating reviewed R17 #102 exact KeyboardStepper, MovementController, WorldV2Board files and tests with R18-01 #103, R18-02 #104 signed quiet-observer watch OFF, R18-03 #105 frozen nonapplied R05 terminal authority SQL, and R18-04 #106 guarded private roster/sequence-gap repair OFF. All original stages remain separately tracked and unmerged. Current main R16 unchanged; no production SQL, feature flags, Vercel deployment, RLS, Edge or paid-plan changes. Full combined PR review/CI, protected DM/P1/P2 QA and explicit release approval pending."
     }
   ],
@@ -849,7 +849,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 107,
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
