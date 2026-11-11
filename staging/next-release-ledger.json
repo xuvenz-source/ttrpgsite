@@ -2114,5 +2114,15 @@
     "singleMigrationApplicationQualified": false,
     "broadDbPushAllowed": false,
     "allMapR02CanaryQualified": false
+  },
+  "releaseAuthorizationR07": {
+    "designerAuthorizedControlledLiveTesting": true,
+    "conditions": "release gates must actually pass; security and migration safety not waived",
+    "nextReadinessStep": "B10-R08",
+    "productionUnchanged": true,
+    "testBaselineNoDeploy": "docs/testing/world-v2-b10-r07-live-test-readiness-2026-11-11.md",
+    "currentFixtureProtected": false,
+    "previewSsoEnabled": true,
+    "sqlMigrationR05Applied": false
   }
 }

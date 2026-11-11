@@ -17,7 +17,7 @@
     "appliedMigrationCountAtAudit": 83,
     "verifiedAt": "2026-11-10"
   },
-  "nextStep": "B10-R07",
+  "nextStep": "B10-R08",
   "steps": {
     "A01": {
       "status": "VERIFIED"
@@ -648,6 +648,39 @@
       "featureFlagsActivated": false,
       "noProductionChanges": true,
       "next": "B10-R07: guarded all-map R02 canary/browser cache and version-preserving targeted migration apply approval readiness; no silent deployment"
+    },
+    "B10_R07": {
+      "status": "BLOCKED",
+      "stageArtifacts": "STAGED",
+      "releaseDecision": "NO_GO",
+      "releaseReady": false,
+      "branch": "stage/world-v2-b10-r07-live-canary-readiness-2026-11-11",
+      "parentHead": "8c28466e69ce7685289415e059697c1c3aed77f3",
+      "parentPullRequest": 91,
+      "document": "docs/testing/world-v2-b10-r07-live-test-readiness-2026-11-11.md",
+      "currentProductionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "liveTestFixture": {
+        "campaign": "TestCampaign",
+        "map": "GumfordGarden",
+        "tokenCount": 6,
+        "environmentObjects": 3,
+        "automaticFog": false,
+        "collisionEnabled": false
+      },
+      "previewProtection": "SSO enabled; branch build V2 env parity not verified and multi-account access not qualified",
+      "designerLiveTestAuthorization": "YES WHEN SAFETY_RELEASE_GATES_PASS; no permission to waive fog/LOS, migration parity, protected accounts or code/SQL compatibility",
+      "verification": "Vercel READY production PR70, Supabase read-only 83 migrations/0 active sessions and map environment summary, R06 CI PASS; no real DM/P1/P2 live test executed",
+      "noProductionChanges": true,
+      "sqlApplied": false,
+      "featureFlagsActivated": false,
+      "blockers": [
+        "Unprotected current live fixture fog/collision false",
+        "Unqualified preview SSO and V2 build env for distinct DM/P1/P2",
+        "All-map R02/cached-browser compatibility unverified before global R03",
+        "R05 migration history drift/duplicate version unresolved",
+        "A06 24-case authenticated acceptance unexecuted"
+      ],
+      "next": "B10-R08 — inspect live baseline evidence, qualify separate R02-only client deployment or keep blocked; do not auto-release SQL"
     }
   },
   "handoffs": {
