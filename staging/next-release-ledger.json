@@ -348,7 +348,7 @@
       "name": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-11 source-real PostgreSQL three-identity revoke/rejoin/DM-downgrade Auth role gate plus actual WorldRenderer/RealtimeTransport guarded hide/vision tests. No live Supabase/Auth, migration or deployment; pending exact-head CI.",
+      "note": "R18-11 real renderer concealment integration + source-real PG17 3-identity revoke/demote/rejoin gates passed 901/901 Node, PostgreSQL, CodeQL, build/dependency checks on first verified PR head. Exact-head CI reruns after documentation metadata only; live Auth/CLI/production still NO_GO.",
       "linkedPullRequest": 113
     }
   ],
@@ -1029,7 +1029,7 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Test-only SQL in disposable PostgreSQL 17, test-only renderer transport fixture. No changes to shipped runtime, SQL or permissions. Live authenticated users, CLI migration dry-run and full browser acceptance unproven.",
+      "note": "Tests source-real isolated PG17 with synthetic JWT roles and actual JS renderer, not live Supabase Auth/WebSockets. All 901 Node cases + PG17 source-real/combined + CodeQL green on verification commit. No runtime/SQL/permission changes; real CLI isolated rehearsal, live three-account acceptance and SQL approval remain blocked.",
       "linkedPullRequest": 113
     }
   ],
