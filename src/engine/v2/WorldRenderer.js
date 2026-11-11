@@ -412,6 +412,8 @@ export function createWorldRenderer({
     stats.rejectedPackets++;return false;
    }
    const previously=visibility,prevMask=fogMask;
+   // Capture only deferred piece keys after all cursor and permission gates.
+   const recovered=new Set(pendingVisionPieces);
    const reuse=sameWorldFogCells(previously,next);
    const nextMask=reuse?prevMask:makeWorldFogMask(next);
    if(next.enabled&&!nextMask){
@@ -449,6 +451,11 @@ export function createWorldRenderer({
      seal('sprite-factory-error');return false;
     }
    }
+   // Reconcile deferred cosmetic routes against signed canonical positions
+   // even for cursor-only sight frames. Never reset other sprites or fog.
+   for(const piece of next.visiblePieces)
+    if(recovered.has(key(piece))&&observer.resetFromSigned(piece))
+     dirtySprites.add(key(piece));
    reconcileLocal(next);
    // Compare the latest validated mask against the last PAINTED mask.
    // Multiple sight RPCs coalesce to one dirty pass on the next RAF.
