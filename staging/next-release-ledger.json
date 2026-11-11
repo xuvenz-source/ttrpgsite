@@ -383,7 +383,8 @@
       "name": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-16 actual R18-15 solo DM evidence: live PostgreSQL swept rectangle blocks a 5% wall edge clip. QA-only candidate 0.10-cell inner footprint vs strict collision, no live rule changed. Adds bounded authority-timing bins to inspect slowdown under repeated movements. No SQL/production deployment."
+      "note": "R18-16 actual R18-15 solo DM evidence: live PostgreSQL swept rectangle blocks a 5% wall edge clip. QA-only candidate 0.10-cell inner footprint vs strict collision, no live rule changed. Adds bounded authority-timing bins to inspect slowdown under repeated movements. No SQL/production deployment.",
+      "linkedPullRequest": 118
     }
   ],
   "features": [
@@ -1203,7 +1204,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Physical wall clearance needs separate PostgreSQL direct-write/client collision parity migration and explicit SQL approval. Repeated lag measured commit 1.06s p50 and release lock 2.38s p95; progressive trend not yet established. Independent users and CLI rehearsal pending."
+      "note": "Physical wall clearance needs separate PostgreSQL direct-write/client collision parity migration and explicit SQL approval. Repeated lag measured commit 1.06s p50 and release lock 2.38s p95; progressive trend not yet established. Independent users and CLI rehearsal pending.",
+      "linkedPullRequest": 118
     }
   ],
   "databaseDependencies": [
