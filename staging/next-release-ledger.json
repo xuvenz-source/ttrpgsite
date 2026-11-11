@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-11",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+  "releaseBranch": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -280,6 +280,13 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "linkedPullRequest": 103,
       "note": "R18-01 audit-only: traced four real observer map resets from two unknown-piece and two sequence-gap cases; synthetic fail-closed baseline, protocol review and security/release gates; NO runtime fix, no database changes."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": null,
+      "note": "B10-R18-02 layered on R18-01 PR #103; client-only default-OFF 12s signed observer catch-up, strict private stream cursor/roster fencing, no SQL or production flag. Stage tests and exact-head release review pending; does not fix immediate unknown-piece/sequence-gap blackouts."
     }
   ],
   "features": [
@@ -769,6 +776,18 @@
       "linkedPullRequest": 103,
       "databaseDependencies": [],
       "note": "Tests prove current fail-closed baseline, including no self-healing after dropped terminal packet. Requires separately approved R18 actual implementation, isolated SQL and protected live QA."
+    },
+    {
+      "id": "world-v2-b10-r18-02-signed-observer-convergence",
+      "description": "Opt-in authenticated signed sight catch-up for quiet observers missing final movement/hide frames, with validated cursor/roster alignment and stale private route fencing",
+      "sources": [
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": null,
+      "databaseDependencies": [],
+      "note": "Client-only opt-in OFF. Must review R02/B08/R03/R05 integration and complete protected DM/P1/P2 fog/LOS and free-tier load acceptance before activating."
     }
   ],
   "databaseDependencies": [
@@ -1083,12 +1102,13 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+    "releaseBranch": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
-      "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11"
+      "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+      "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11"
     ],
-    "stagePolicy": "R17 remains draft functional candidate, R18-01 is a diagnostics/security-baseline audit ONLY. Neither is release-ready or authorized for production. R18 terminal observer fix must reconcile existing B08/R02/R03/R05 draft stack, prove fog/hidden NPC and lost-message safe convergence, pass current-main combined CI and obtain separate designer approval before targeted live Supabase migration. Do not deploy SQL, enable preview, or upgrade plans.",
+    "stagePolicy": "R17 PR #102 keyboard only, R18-01 PR #103 audit only, and R18-02 opt-in canonical sight recovery (OFF) all remain staged/unmerged. R18-02 is STACKED on R18-01, not on R17. No production deploy/flag activation, new DB migration, public/private grants or paid services. Before release reconcile B08/R02/R03/R05, ensure R17 staged work included if ready, prove full protected fog/LOS and two-player convergence, code/security checks and exact production commit; explicit designer release approval required.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
