@@ -63,7 +63,7 @@ export function createWorldV2TabletopRuntime({
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
- let sceneRecovery=null;
+ let sceneRecovery=null,committedSight=null;
  const canonicalHandoff=createCanonicalCommitHandoff();
  let previewPosition=null,dmLightRefreshTimer=null;
  function scheduleDmLightRefresh(){
@@ -99,7 +99,7 @@ export function createWorldV2TabletopRuntime({
   },
   onInvalidate:({reason})=>{
    if(disposed)return;
-   canonicalHandoff.clear();
+   canonicalHandoff.clear();committedSight=null;
    movement?.cancelGesture('scene-change');
    renderer.revoke(reason,false);
    vision?.revoke(reason);
@@ -140,7 +140,7 @@ export function createWorldV2TabletopRuntime({
   },
   onRevoke:({reason})=>{
    if(disposed)return;
-   canonicalHandoff.clear();
+   canonicalHandoff.clear();committedSight=null;
    privateReady=false;
    renderer.revoke(reason,false);
    movement?.cancelGesture('permission');
@@ -195,6 +195,7 @@ export function createWorldV2TabletopRuntime({
   onEvent:event=>{
    if(disposed)return;
    const painted=renderer.applyLocalMovement(event);
+   if(event.type==='grabbed')committedSight=null;
    if(event.type==='committed'&&!dmPreview&&painted===true&&authorized()){
     const frame=vision.frame,anchor=event.selection?.[0];
     const signed=frame?.visiblePieces?.find(p=>anchor&&key(p)===key(anchor));
@@ -205,8 +206,9 @@ export function createWorldV2TabletopRuntime({
      permissionGeneration:frame?.permissionGeneration,
      sceneGeneration:frame?.sceneGeneration
     });
-   }else if(['rejected','cancelled','revoked'].includes(event.type))
-    canonicalHandoff.clear();
+   }else if(['rejected','cancelled','revoked'].includes(event.type)){
+    canonicalHandoff.clear();committedSight=null;
+   }
    signal(onGesture,event);
    if(dmPreview&&['approved','blocked'].includes(event.type)&&
     event.selection?.length===1&&event.selection[0].kind==='token'){
@@ -224,7 +226,18 @@ export function createWorldV2TabletopRuntime({
     // holds its approved endpoint until this authorized snapshot arrives.
     signal(onCommit,{mapId,selection:event.selection,
      endpoint:event.approved});
-    void refreshVisibility('committed');
+    // The keyboard continuation must first await THIS already-required
+    // server-signed sight request, not queue an equivalent extra RPC.
+    // Only an admitted frame showing the exact canonical endpoint qualifies.
+    const before=vision.frame,anchor=event.selection?.[0];
+    const pending=refreshVisibility('committed');
+    committedSight=painted===true&&authorized()&&before&&anchor?{
+     promise:pending,kind:anchor.kind,id:anchor.id,
+     endpoint:{x:event.approved.x,y:event.approved.y},
+     environmentRevision:before.environmentRevision,
+     permissionGeneration:before.permissionGeneration,
+     sceneGeneration:before.sceneGeneration
+    }:null;
    }else if(['rejected','cancelled','revoked'].includes(event.type)){
     void refreshVisibility('gesture-failed');
    }
@@ -232,6 +245,31 @@ export function createWorldV2TabletopRuntime({
  });
  async function refreshVisibility(reason='manual'){
   if(disposed||manager.stale||!manager.displayedScene)return false;
+  if(reason==='keyboard-continuation'){
+   // A queued arrow gesture needs signed canonical sight, but the commit
+   // handler already fetched it. Reuse only if the result was accepted in
+   // the same permission/scene and shows the ACKed endpoint. All other
+   // cases retain the original fresh authorization request.
+   const ticket=committedSight;
+   committedSight=null;
+   if(ticket){
+    let accepted=false;
+    try{accepted=await ticket.promise}catch{}
+    const frame=vision.frame;
+    const piece=frame?.visiblePieces?.find(p=>
+     p.kind===ticket.kind&&p.id===ticket.id);
+    if(accepted&&authorized()&&
+     frame.environmentRevision===ticket.environmentRevision&&
+     frame.permissionGeneration===ticket.permissionGeneration&&
+     frame.sceneGeneration===ticket.sceneGeneration&&
+     piece?.x===ticket.endpoint.x&&piece?.y===ticket.endpoint.y){
+     worldV2Trace.event('visibility.continuation','covered');
+     return true;
+    }
+   }
+   worldV2Trace.event('visibility.continuation','fallback');
+   if(disposed||manager.stale||!manager.displayedScene)return false;
+  }
   const revision=++refreshRevision;
   const result=await vision.refresh(reason);
   if(disposed||revision!==refreshRevision)return false;
@@ -268,7 +306,7 @@ export function createWorldV2TabletopRuntime({
  }
  function revoke(reason,hard=true){
   if(disposed)return;
-  canonicalHandoff.clear();
+  canonicalHandoff.clear();committedSight=null;
   ++refreshRevision;privateReady=false;previewPosition=null;
    if(dmLightRefreshTimer!==null){
     clearTimeout(dmLightRefreshTimer);dmLightRefreshTimer=null;
@@ -404,7 +442,7 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
-   canonicalHandoff.clear();
+   canonicalHandoff.clear();committedSight=null;
    ++refreshRevision;
     if(dmLightRefreshTimer!==null){
      clearTimeout(dmLightRefreshTimer);dmLightRefreshTimer=null;
