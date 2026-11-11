@@ -533,7 +533,25 @@ export function createWorldRenderer({
     }
     return true;
    }
-   if(!observer.applyPath(item)){
+   const continuity=observer.inspectPath(item);
+   if(continuity==='origin-mismatch'||continuity==='backlog'){
+    // A valid private packet may overtake a signed canonical reconciliation
+    // or the bounded cosmetic queue. Never bridge its unknown origin, and
+    // never present its unapproved segment. Preserve the existing signed
+    // world and request a NEW signed snapshot before this piece can move.
+    // Other previously-authorized sprites and the fog canvas stay mounted.
+    worldV2Trace.event('renderer.observer-discontinuity',continuity);
+    pendingVisionPieces.add(id);
+    if(meta.seq>latestSeq){latestSeq=meta.seq;seqItems.clear()}
+    seqItems.add(id);
+    if(!awaitingFreshVision){
+     awaitingFreshVision=true;
+     worldV2Trace.event('renderer.observer-await-vision');
+     safe(onNeedResync,'observer-path-await-vision');
+    }
+    return true;
+   }
+   if(continuity!=='ok'||!observer.applyPath(item)){
     stats.rejectedPackets++;seal('observer-path-discontinuity');return false;
    }
    if(meta.seq>latestSeq){latestSeq=meta.seq;seqItems.clear()}
