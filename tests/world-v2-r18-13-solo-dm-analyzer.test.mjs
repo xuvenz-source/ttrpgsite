@@ -111,6 +111,17 @@ test('R18-13 incomplete batch is permissible but never becomes live release appr
  assert.deepEqual(report.missingPhases,['collision','fog','preview']);
  assert.deepEqual(SOLO_DM_PHASES,['idle','open','collision','fog','preview']);
 });
+test('R18-15 solo-DM analyzer exposes bounded post-release lock time',()=>{
+ const snapshot=makePhase([],[
+  ['movement.release-to-terminal',1250],
+  ['authority.commit',980]
+ ]);
+ const result=summarizeSoloDmTrace(snapshot,{phase:'collision'});
+ assert.equal(result.durations['movement.release-to-terminal'].p95Ms,1250);
+ assert.ok(result.notes.some(x=>/Post-release movement lock p95/.test(x)));
+ assert.equal(JSON.stringify(result).includes('sessionId'),false);
+});
+
 test('R18-13 retains current production opt-in trace and prohibits unnecessary privileged surfaces',()=>{
  const trace=readFileSync(new URL(
   '../src/engine/v2/WorldTrace.js',import.meta.url),'utf8');
