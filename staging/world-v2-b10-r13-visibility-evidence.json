@@ -1,0 +1,57 @@
+{
+  "step": "B10-R13",
+  "date": "2026-11-11",
+  "status": "STAGED_DIAGNOSTIC_ONLY",
+  "currentWorkingMain": "7079d189aad34679ca5b5d577fafcd8f1ba6a26d",
+  "observations": {
+    "playerOne": {
+      "grabbed": 7,
+      "committed": 7,
+      "rejected": 0,
+      "advanceP95Ms": 372.2
+    },
+    "playerTwo": {
+      "grabbed": 27,
+      "committed": 27,
+      "rejected": 0,
+      "canonicalHandoffs": 6,
+      "visibilityRequestCount": 35,
+      "visibilityP50Ms": 216.2,
+      "visibilityP95Ms": 2472.8,
+      "visibilityMaxMs": 6127.7,
+      "frameP95Ms": 0.1,
+      "traceLimit": 256,
+      "passiveObserver": false
+    }
+  },
+  "supabaseReadOnly": {
+    "pgVersion": "17.11",
+    "pgStatVisibilityCalls": 918,
+    "meanDbExecMs": 43.5,
+    "maxDbExecMs": 1856.5,
+    "sampledConnections": 29,
+    "activeConnections": 2,
+    "samplesAcrossReleases": true
+  },
+  "release": {
+    "sqlApplied": false,
+    "featureFlagsChanged": false,
+    "newRpcCalls": false,
+    "rendererOrPermissionChanged": false,
+    "fullFogProtectedTest": "NOT_RUN",
+    "passiveObserverTest": "NOT_RUN",
+    "migrationState": "83_APPLIED_UNCHANGED",
+    "decision": "NO_GO_UNTIL_CI"
+  },
+  "instrumentation": {
+    "events": [
+      "visibility.rpc-call",
+      "visibility.rpc-tail",
+      "visibility.queue"
+    ],
+    "metric": "visibility.queue-wait",
+    "traceRequiresQueryParam": "worldV2Trace=1",
+    "recordsIdsOrCoords": false
+  },
+  "nextStep": "B10-R14"
+}
