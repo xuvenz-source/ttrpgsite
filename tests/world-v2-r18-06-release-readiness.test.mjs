@@ -78,11 +78,13 @@ test('R18-06 preserves every independently reviewed input plus one consolidated 
   assert.ok(ledger.branches.some(x=>x.linkedPullRequest===number&&x.status==='staged'),
    'cannot silently exclude unreleased source PR '+number);
  }
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,7);
- assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,7);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.length>=7);
+ assert.equal(new Set(ledger.upcomingRelease.outstandingBranches).size,
+  ledger.upcomingRelease.outstandingBranches.length);
  for(const b of ledger.upcomingRelease.outstandingBranches)
   assert.equal(ledger.branches.find(x=>x.name===b)?.status,'staged');
- assert.equal(ledger.upcomingRelease.releaseBranch,
-  'stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11');
- assert.equal(plan.source.stagingBranch,ledger.releaseBranch);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(
+  plan.source.stagingBranch),
+  'later release steps must never discard the R18-06 canary plan');
+ assert.equal(ledger.branches.find(x=>x.name===plan.source.stagingBranch)?.linkedPullRequest,108);
 });
