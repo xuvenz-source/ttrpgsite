@@ -12,7 +12,13 @@ createdb "$r05db"
 r05_psql(){
  PGDATABASE="$r05db" psql -X -v ON_ERROR_STOP=1 "$@"
 }
-r05_psql -f tests/world-v2-b04-postgres/schema.sql
+# Login roles are CLUSTER-global. The preceding historical fixture
+# created anon/authenticated in this same disposable service; keep every
+# schema/table/function statement identical but omit duplicate role CREATE.
+sed -e '/^CREATE ROLE anon NOLOGIN;$/d' \
+    -e '/^CREATE ROLE authenticated NOLOGIN;$/d' \
+    tests/world-v2-b04-postgres/schema.sql > /tmp/world_v2_b10_r05_schema.sql
+r05_psql -f /tmp/world_v2_b10_r05_schema.sql
 r05_psql -f tests/world-v2-b07-postgres/schema.sql
 r05_psql -f tests/world-v2-b08-postgres/schema.sql
 python3 tests/world-v2-b04-postgres/extract_real_v2_functions.py > /tmp/world_v2_b10_r05_core.sql
