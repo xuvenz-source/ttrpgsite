@@ -91,7 +91,7 @@ test('R18-17 large tokens, mixed group and unmodified map bounds remain safe',()
  assert.equal(allows(s,pos(0,0),pos(1,0),[wide]),true);
  assert.equal(allows(scene([wall(2.75)],0.10),pos(0,0),pos(1,0),[wide]),false);
  const group=[p(0,0),{kind:'tool',id:'other',x:1,y:0,spanX:1,spanY:1}];
- assert.equal(allows(s,pos(0,0),pos(1,0),group),false,
+ assert.equal(allows(scene([wall(2.75)],0.10),pos(0,0),pos(1,0),group),false,
   'one colliding group member blocks the whole rigid movement');
  const empty=scene([],0.10);
  assert.equal(allows(empty,pos(8,0),pos(10,0),[p(8,0)]),false,
