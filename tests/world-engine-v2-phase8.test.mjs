@@ -1072,7 +1072,7 @@ test('live regression: DM editor overlay is mounted only in explicit edit mode',
  const source=readFileSync(new URL('../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
  assert.match(source,/isDM&&!dmPreview&&editor\?\.enabled&&environment&&<MapEnvironmentOverlay/);
  assert.match(source,/if\(reason==='observer-path-await-vision'\)/);
- assert.match(source,/refreshVisibility\('observer-path-await-vision'\)/);
+ assert.match(source,/r\.recoverObserverSight\(\)/);
 });
 
 
