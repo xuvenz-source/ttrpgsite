@@ -18,16 +18,20 @@
     "rendererTransport": "actual source modules, synthetic signed snapshots"
   },
   "gates": {
-    "sourceRealPg17Status": "pending_ci",
-    "nodeTestStatus": "pending_ci",
-    "codeql": "pending_ci",
-    "combinedSql": "pending_ci",
+    "sourceRealPg17Status": "passed",
+    "nodeTestStatus": "passed",
+    "codeql": "passed",
+    "combinedSql": "passed",
     "linkedCliHistoryDryRunPerformed": false,
     "liveAuthMultiplayerCompleted": false,
     "frontendCanaryDeployed": false,
     "backendMigrationApplied": false,
     "postSql24CaseAccepted": false,
-    "freeTierLoadAccepted": false
+    "freeTierLoadAccepted": false,
+    "nodeTestsPassed": 901,
+    "nodeTestsFailed": 0,
+    "observedVerificationSha": "943dafd85ae25f56196795112b50325a681b95e8"
   },
-  "handoff": "docs/testing/world-v2-r18-11-revocation-auth-gate-2026-11-12.md"
+  "handoff": "docs/testing/world-v2-r18-11-revocation-auth-gate-2026-11-12.md",
+  "note": "All isolated tests and source checks passed on observed pre-metadata HEAD; final exact-head CI must independently succeed before step closes. Production still NO_GO."
 }
