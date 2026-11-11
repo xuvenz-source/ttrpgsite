@@ -299,7 +299,7 @@
       "name": "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 106,
       "note": "R18-04 default-OFF 700ms single-flight stable-generation signed roster/sequence-gap recovery, 16-frame bounded cursor-only backpressure, no new visibility from private movement packets, hard seal on invalid/revoked/timeout. Staging tests only. Pending hostile QA and R17 consolidation. No new migration, Supabase writes, Vercel activation or deployment."
     }
   ],
@@ -825,7 +825,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 106,
       "databaseDependencies": [],
       "note": "NO-GO for activation: must demonstrate protected LOS/permission revocation, hidden NPC removal, no unauthorized sprite/position/fog, 700ms max grace, free-tier extra sight RPCs. R18-03 reviewed migration still nonapplied."
     }
