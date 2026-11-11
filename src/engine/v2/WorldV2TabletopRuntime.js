@@ -69,6 +69,10 @@ export function createWorldV2TabletopRuntime({
  // Independent default-OFF rollout: no private path grants new sprites.
  const guardedObserverEnabled=!dmPreview&&
   import.meta.env?.VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY==='1';
+ // Strict default remains ON until a separately approved database install.
+ // One opt-in value is shared by normal DM collision and local DM preview.
+ const wallClearanceCells=import.meta.env?.VITE_WORLD_V2_WALL_CLEARANCE==='1'?
+  0.10:0;
  let observerWatch=null,foregroundListener=null,guardedListener=null;
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
@@ -97,7 +101,7 @@ export function createWorldV2TabletopRuntime({
   sceneStale:manager.stale,streamLocked:stream?.locked??true
  });
  const manager=createSceneManager({
-  mapId,viewerId,
+  mapId,viewerId,wallClearanceCells,
   fetchManifest:({mapId})=>fetchWorldSceneV2({db,mapId}),
   onChange:(snapshot,dirty)=>{
    if(disposed)return;
