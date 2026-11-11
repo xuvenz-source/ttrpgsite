@@ -1,0 +1,50 @@
+name: World V2 B10 combined SQL integration (staging only)
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-*'
+  pull_request:
+    branches:
+      - 'stage/**'
+    paths:
+      - '.github/workflows/world-v2-b10-integrated.yml'
+      - 'supabase/candidates/world_v2_b03_path_validation.sql'
+      - 'supabase/candidates/world_v2_b07_private_observer_budget.sql'
+      - 'supabase/candidates/world_v2_b08_commit_reconciliation.sql'
+      - 'tests/world-v2-b10-postgres/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  combined-postgres-17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: b10_ephemeral_only
+          POSTGRES_DB: world_v2_b10
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_b10"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      WORLD_V2_B10_ISOLATED: 'yes'
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: world_v2_b10
+      PGUSER: postgres
+      PGPASSWORD: b10_ephemeral_only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify isolated database
+        run: |
+          psql --version
+          psql -X -v ON_ERROR_STOP=1 -c 'SELECT current_database(), version()'
+      - name: Compile and test B03 then B07 then B08 together
+        run: bash tests/world-v2-b10-postgres/run.sh
