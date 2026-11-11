@@ -269,6 +269,14 @@ export function createWorldRealtimeTransport({
    void resync('version-change');return;
   }
   if(frame.seq<=cursor){trace.event('observer.late-frame');return}
+  // A hide in a missing-sequence frame or during a guarded grace period
+  // may represent a new LOS/concealment decision. Do not keep painting the
+  // old signed roster for 700ms while a private hide is already known.
+  // A full seal is safer than inferring which out-of-order paths are valid.
+  if(softResyncEnabled&&frame.items.some(item=>item.action==='hide')&&
+   (guardedPending||frame.seq!==cursor+1)){
+   void resync('observer-guarded-hide');return;
+  }
   if(guardedPending){
    // Hold only the sequence bound. Private payload/coordinates are dropped.
    guardedDropped++;
@@ -363,6 +371,12 @@ export function createWorldRealtimeTransport({
    channel.on('broadcast',{event:WORLD_MOTION_EVENT},incoming);
    channel.on('broadcast',{event:'world-vision-v2'},payload=>{
     if(disposed||!connected)return;
+    // Even a same-generation sight-dirty notice can mean a previously
+    // visible NPC left LOS. The guarded view must not outlive that signal.
+    // Reauthorize instead of retaining a potentially stale roster/mask.
+    if(guardedPending){
+     void resync('observer-guarded-vision-dirty');return;
+    }
     try{onVisionDirty(payload?.payload)}catch{
      void resync('invalid-vision-event');
     }
