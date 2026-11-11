@@ -1,3 +1,4 @@
+import {validWorldBroadcastId} from './BroadcastEnvelope.js';
 /**
  * World Engine V2 — one receive-only private scene-publication topic per map.
  * No token-position subscriptions, no polling, no per-cell updates, no
@@ -9,10 +10,11 @@
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const worldSceneTopic=mapId=>'forge-world-scene-v2:'+mapId;
 export const WORLD_SCENE_EVENT='scene-revision-v2';
-const validNotice=(notice,mapId)=>notice?.version===2&&
+const validNotice=(notice,mapId)=>validWorldBroadcastId(notice)&&
+ notice.version===2&&
  notice.mapId===mapId&&Number.isSafeInteger(notice.sceneGeneration)&&
  notice.sceneGeneration>=0&&Object.keys(notice).every(key=>
- ['version','mapId','sceneGeneration'].includes(key));
+ ['version','mapId','sceneGeneration','id'].includes(key));
 
 export function createSceneTransport({
  db,mapId,sceneManager,onError=()=>{},onState=()=>{}
