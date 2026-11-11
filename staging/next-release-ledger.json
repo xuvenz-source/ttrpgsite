@@ -570,6 +570,30 @@
         "codeQL": "PASS #42879038807",
         "realAuthMatrix": "NOT_RUN"
       }
+    },
+    {
+      "name": "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
+      "status": "staged",
+      "documentationOnly": false,
+      "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "basedOnStagingHead": "ce49a07c6ee30135e6a38f5bb3e1e98c7b45450",
+      "basePullRequest": 89,
+      "linkedPullRequest": 90,
+      "releaseReady": false,
+      "sqlApplied": false,
+      "productionDeployed": false,
+      "gateDecision": "NO_GO",
+      "featureFlagsActivated": false,
+      "docs": "docs/architecture/world-v2-b10-r05-versioned-release-recovery.md",
+      "note": "B10-R05 official CLI 2.81.3 migration combined five exact SQL candidates and private RLS four-source snapshot. Separate isolated PG17 simulates BOTH aborted installation and aftercommit restoration. Read-only live history mismatch 83/56 with 20 exact means NO broad db push. 24 real Auth/fog QA NOT RUN, paired R02 client-first canary still blocking.",
+      "testEvidence": {
+        "cliGenerated": "PASS #42946657992",
+        "migrationAtomicAbort": "PASS #42948102943",
+        "migrationPostCommitRecovery": "PASS #42948102943",
+        "frontend": "PENDING exact-head",
+        "codeQL": "PENDING exact-head",
+        "realDMPlayer1Player2": "NOT_RUN"
+      }
     }
   ],
   "features": [
@@ -1184,6 +1208,25 @@
       ],
       "verification": "Read-only live signature preflight and isolated PG17 transactional rollback, no live RLS/LOS or deployment validation.",
       "nextAcceptanceStep": "B10-R05 versioned forward-only migration with live-compatible rollforward and 24-case test-campaign authentication"
+    },
+    {
+      "id": "world-v2-b10-r05-versioned-release-migration-and-recovery",
+      "status": "staged-unreleased",
+      "releaseReady": false,
+      "description": "Official Supabase CLI versioned B03/B07/B08/R01/R03 migration with protected four-source postcommit recovery and source-hash/alias preflight; no production apply, flagged release gated.",
+      "sources": [
+        "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11"
+      ],
+      "databaseDependencies": [
+        "B03",
+        "B07",
+        "B08",
+        "B10-R01",
+        "B10-R03",
+        "B10-R02 frontend recovery before SQL"
+      ],
+      "verification": "CLI name and separate source-real PostgreSQL 17 abort + committed recovery, exact live read-only preflight; Auth/fog/realtime and history alias not qualified.",
+      "nextAcceptanceStep": "B10-R06 safe history-targeted apply plan, R02 client-first canary and 24-case 3-account A06 QA"
     }
   ],
   "databaseDependencies": [
@@ -1550,7 +1593,8 @@
     "B10-R02: default-off authenticated six-second vision fallback can recover canonical visible positions/hides when private Realtime budget loses all packets, with signed roster/cursor gates; browser offline/background and ambiguous same-origin deferred frames prevent hard guarantees. Gate B NO-GO.",
     "B10-R03 nonapplied private terminal queue candidate retires unsent coordinate paths after canonical Commit so exact replay cannot reanimate old coordinates; certified hides only survive. DO NOT apply without B10-R02 signed sight fallback and A06/PR71/real migration gates. Release NO_GO.",
     "B10-R04: never deploy PR71 sight-hold; it has no hard deadline during private stream lock. Existing renderer revoke preserves fail-closed sight; 3 existing DM grab tests vetoed an over-restrictive connection guard. Safe trailing 280ms app reads ported. Atomic five-candidate migration source rehearsal rolls back in isolated PG17. No live production changes.",
-    "11 Nov 2026 PR #71 closed unmerged and marked superseded; do not restore its unlimited certified sight hold. B10-R04 source/SQL/CodeQL tests passed; permission-secure C02 bounded continuity still release-blocked."
+    "11 Nov 2026 PR #71 closed unmerged and marked superseded; do not restore its unlimited certified sight hold. B10-R04 source/SQL/CodeQL tests passed; permission-secure C02 bounded continuity still release-blocked.",
+    "B10-R05 migration has exact 5 staged SQL sources and RLS protected original body backup, but 83 live vs 56 repo history versions / only 20 matches make bulk db push unsafe. Use reviewed single-target approach only after R02 client-first authenticated canary; source real PG17 recovery is not production clearance. Release NO_GO."
   ],
   "upcomingRelease": {
     "productionBaseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
@@ -1572,6 +1616,7 @@
       "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
       "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
       "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
+      "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10"
     ],
