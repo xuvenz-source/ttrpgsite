@@ -1,0 +1,42 @@
+name: World V2 B10-R05 CLI migration provenance (staging only)
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r05-*'
+    paths:
+      - '.github/workflows/world-v2-b10-r05-cli.yml'
+      - 'supabase/migrations/*world_v2_b10_integrated_motion*.sql'
+      - 'supabase/candidates/world_v2_*.sql'
+      - 'tests/world-v2-b10-postgres/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.81.3
+      - name: Verify CLI and create migration filename once in throwaway checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase --version
+          shopt -s nullglob
+          existing=(supabase/migrations/*world_v2_b10_integrated_motion*.sql)
+          if (( ${#existing[@]} == 0 ));then
+            # Official supabase CLI creates the timestamped file; this
+            # workflow DOES NOT push, deploy or apply the migration.
+            supabase migration new world_v2_b10_integrated_motion
+            existing=(supabase/migrations/*world_v2_b10_integrated_motion*.sql)
+            (( ${#existing[@]} == 1 ))
+            printf 'B10_R05_CLI_GENERATED_PATH=%s\n' "${existing[0]}"
+          else
+            (( ${#existing[@]} == 1 ))
+            printf 'B10_R05_VERSIONED_PATH=%s\n' "${existing[0]}"
+          fi
+          [[ "${existing[0]}" =~ ^supabase/migrations/[0-9]{14}_world_v2_b10_integrated_motion\.sql$ ]]
+          echo 'B10-R05 CLI filename provenance PASS; no credentials, remote writes or deploy'
