@@ -47,7 +47,9 @@
     "terminalQueueR03": "STAGED_ISOLATED_PG17_14_ASSERTIONS_PASS_EARLIER_HEAD__FINAL_HEAD_PENDING",
     "migrationR04": "PASS_DISPOSABLE_PG17_ATOMIC_INSTALL_ROLLBACK_42879039106",
     "r04Application": "PASS_841_OF_841_TESTS_BUILD_EDGE_ESLINT_NPM_AUDIT_ZERO_42879038586",
-    "r04CodeQL": "PASS_ACTIONS_42879038807__SCAN_EXECUTION_NOT_ZERO_OPEN_ALERTS_PROOF"
+    "r04CodeQL": "PASS_ACTIONS_42879038807__SCAN_EXECUTION_NOT_ZERO_OPEN_ALERTS_PROOF",
+    "r05VersionedMigration": "CLI_GENERATED_PATH_20261111023204_42946657992__ISOLATED_COMMIT_AND_RECOVERY_PASS_42948102943__EXACT_HEAD_PENDING",
+    "r05LivePreflight": "READ_ONLY_EXACT_CATALOG_PASS_2026_11_11__NO_SQL_WRITE"
   },
   "sourceLimitations": {
     "B03Installed": false,
@@ -55,7 +57,7 @@
     "B07Installed": false,
     "B08Installed": false,
     "A06GateA": "BLOCKED",
-    "PR71": "DRAFT_AMEND_BEFORE_MERGE",
+    "PR71": "CLOSED_UNMERGED_SUPERSEDED_R04",
     "manualFixtureStatus": "NOT_RUN",
     "manualScenarioCount": 24,
     "releaseApproval": false
@@ -67,7 +69,8 @@
     "A06 authenticated DM/Player1/Player2 24-case protected fog/collision/door/2x2/hidden NPC/browser test is NOT RUN. Only test campaigns exist, so test data may be reset, but real Auth/LOS/access and revocation proof remains necessary.",
     "B10-R04 rehearses atomic B03→B07→B08→R01→R03 candidate SQL in disposable PG17 and exact transactional rollback. No production versioned forward migration, operational rollback or client/backend flag synchronization has yet been approved.",
     "No reviewed, forward-only production migration or compatible rollback/downgrade strategy for installed B03+B07+B08 and active versioned RPCs.",
-    "No merged consolidated release, main+Vercel+database build parity or separate designer deployment approval."
+    "No merged consolidated release, main+Vercel+database build parity or separate designer deployment approval.",
+    "B10-R05 CLI versioned migration now exists and its atomic abort and post-commit original-function restoration pass isolated PG17. However only 20 of 56 repository SQL versions match 83 live migration entries; broad db push would be unsafe. No live SQL or rebuild activated, and the full 24-case authenticated protected map acceptance remains NOT RUN."
   ],
   "expectedNextAction": "Do not merge, apply SQL or deploy. Preserve draft B10 PR and blockers; designer must explicitly authorize release remediation/test fixture or a future release step.",
   "secretsPolicy": "No user IDs, JWTs, hidden map data, raw private Realtime payloads or signed URLs in this ledger.",
@@ -238,7 +241,51 @@
       "liveCampaignUse": "Test-only campaigns, no real campaign progress to preserve; resets acceptable once explicit paired SQL+client rollback and real auth/fog permission gates pass. Does not make hidden NPC/ownership/foreign-user leaks acceptable.",
       "releaseReady": false,
       "productionDeployed": false
+    },
+    "B10_R05": {
+      "status": "STAGED_VERSIONED_NONAPPLIED",
+      "sourceBranch": "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
+      "parentPullRequest": 89,
+      "migrationFile": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+      "cliGeneratedFilenameActionsRun": 42946657992,
+      "cliVersion": "2.81.3",
+      "candidateCount": 5,
+      "migrationVerifiedSourceVerbatim": true,
+      "originalFunctionBackup": "forge_world_v2.motion_r05_function_backup",
+      "backupProtectedByRLS": true,
+      "recoveryFile": "supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql",
+      "readOnlyExactLiveCatalog": "supabase/release-preflight/world_v2_b10_r05_exact_live_catalog.sql",
+      "sourceRealTransactionalDryRun": {
+        "status": "PASS",
+        "run": 42948102943,
+        "db": "world_v2_b10_r05"
+      },
+      "sourceRealAfterCommitRecovery": {
+        "status": "PASS",
+        "run": 42948102943,
+        "fourOriginalFunctionsRestored": true
+      },
+      "liveCatalogReadOnlyPreflight": "PASS at snapshot 2026-11-11; must re-run before deployment",
+      "migrationHistory": {
+        "liveAppliedCount": 83,
+        "repoFiles": 56,
+        "exactVersionMatches": 20,
+        "repositoryUnapplied": 36,
+        "liveOnly": 63,
+        "blindDbPushAllowed": false
+      },
+      "clientBeforeSqlRequirement": "Build and validate R02 VITE_WORLD_V2_OBSERVER_RECOVERY=1 frontend before migration; advanced B05/B06/B08 flags remain off.",
+      "liveMigrationApplied": false,
+      "liveAppDeployed": false,
+      "releaseQualified": false,
+      "outstanding": [
+        "No history-safe targeted application method yet approved despite 83-vs-56 filename drift",
+        "A06 24 authenticated real DM/P1/P2 cases NOT RUN",
+        "R02 signed fallback resource load and real fog/LOS not measured",
+        "Current active browser clients/caches must be compatible with R03 terminal path retirement",
+        "Free-tier Supabase CPU/RAM, Realtime fanout, p95 and map flashing still unmeasured"
+      ]
     }
   },
-  "nextRemediation": "B10-R05: produce versioned forward-only release migration and safe rollback/rollforward with exact Supabase signature preflight, then consented authenticated test-campaign deployment and 24-case DM/P1/P2 acceptance. C02 separately handles stable renderer revocation."
+  "nextRemediation": "B10-R06: reconcile history safely for one targeted migration and perform controlled client-first R02 test canary on disposable live campaign; validate real DM/P1/P2 signed fog before server R03 apply."
 }
