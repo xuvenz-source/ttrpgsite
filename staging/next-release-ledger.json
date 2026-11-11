@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -357,6 +357,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "B10-R18-12 operator-only read-only CLI 2.81.3 linked migration fetch/list/db push --dry-run runner, mocked adverse tests; live 12 Nov SELECT-only preflight 83/83 historical SQL digests, 7/7 functions, 0 unexpired gestures, R05 absent. No actual CLI session or production change; CI pending.",
       "linkedPullRequest": 114
+    },
+    {
+      "name": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-13 solo-DM five-phase live QA readiness: no new runtime, live SQL or flags. Existing R16 trace capture, offline privacy-bounded analyzer and deterministic tests. Real DM/P1/passive P2 remains unverified. Staged CI pending."
     }
   ],
   "features": [
@@ -1064,6 +1070,32 @@
       ],
       "note": "Connected Supabase SELECT-only preflight passed on 2026-11-12. This branch does not itself execute actual linked CLI, live multiplayer Auth or SQL install; NO_GO.",
       "linkedPullRequest": 114
+    },
+    {
+      "id": "world-v2-b10-r18-13-solo-dm-live-test",
+      "description": "One authenticated DM can collect real R16 and later consented frontend-canary baseline for idle, arrows/drags, wall/fog collision and local player preview; bounded trace analyzer flags renderer/sight/authority regressions without private data.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Staging-only solo-DM protocol does not replace genuinely independent authenticated P1/P2 convergence and LOS tests, Supabase CLI one-pending dry-run or two separate approvals. No production deployment/SQL/feature flags."
     }
   ],
   "databaseDependencies": [
@@ -1378,7 +1410,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1392,9 +1424,10 @@
       "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
       "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
       "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
-      "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12"
+      "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+      "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12"
     ],
-    "stagePolicy": "R18-12 combines live SELECT-only 83/83 history, 7/7 original-function hashes, 0 active gestures and a mock-tested, manually opt-in isolated Supabase CLI 2.81.3 read-only fetch/list/db push --dry-run runner. Preserves all R17 + R18-01..R18-11 staged work and frozen unapplied R05. No actual linked CLI connected to ChatGPT shell, no authorized live client canary, no deploy/merge, no SQL, no R18-04 guard activation, no paid infrastructure. Separate designer approval required for one frontend canary and another for SQL install.",
+    "stagePolicy": "R18-13 maintains all 14 outstanding R17/R18 branches and adds nonruntime QA only: a five-phase solo-DM baseline/canary protocol plus offline trace analyzer and tests. Production remains R16 with no new Vercel flag, SQL or paid preview. DM preview is local and can NEVER substitute for authenticated player observer/LOS tests. Require independently approved frontend-only canary, test first on R16 SQL; separately approve and verify Supabase CLI migration and SQL when truly independent player acceptance becomes possible. Guarded 700ms recovery remains OFF.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
