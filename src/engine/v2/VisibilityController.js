@@ -15,26 +15,35 @@ import {
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const noop=()=>{};
+const monotonic=()=>typeof performance!=='undefined'&&
+ typeof performance.now==='function'?performance.now():Date.now();
 const validId=v=>typeof v==='string'&&UUID.test(v);
 export const WORLD_VISION_EVENT='world-vision-v2';
 export function createVisibilityController({
  db,mapId,viewerId,dmPreview=false,getScene=()=>null,
  getPreviewPosition=()=>null,
- onFog=noop,onRoster=noop,onSnapshot=noop,onRevoke=noop,onError=noop
+ onFog=noop,onRoster=noop,onSnapshot=noop,onRevoke=noop,onError=noop,
+ trace=worldV2Trace,now=monotonic
 }={}){
  if(!db?.rpc||!validId(mapId)||!validId(viewerId)||
   typeof dmPreview!=='boolean'||typeof getScene!=='function'||
   typeof getPreviewPosition!=='function'||
   typeof onFog!=='function'||typeof onRoster!=='function'||
   typeof onSnapshot!=='function'||typeof onRevoke!=='function'||
-  typeof onError!=='function')
+  typeof onError!=='function'||typeof trace?.event!=='function'||
+  typeof trace?.begin!=='function'||typeof now!=='function')
   throw Error('Invalid V2 visibility controller');
  let disposed=false,epoch=0,currentMap=mapId,currentViewer=viewerId;
  let current=null,mask=null,inFlight=null,queued=false,authorized=false;
+ let queuedTimer=null;
  const safe=(fn,...args)=>{try{fn(...args)}catch{}};
  function revoke(reason='revoked'){
-  worldV2Trace.event('visibility.revoke',reason);
+  trace.event('visibility.revoke',reason);
   epoch++;current=null;mask=null;authorized=false;queued=false;
+  if(queuedTimer){
+   queuedTimer('error');queuedTimer=null;
+   trace.event('visibility.queue','discarded');
+  }
   safe(onRevoke,{mapId:currentMap,viewerId:currentViewer,reason});
  }
  function validateScene(frame){
@@ -62,7 +71,7 @@ export function createVisibilityController({
   if(sameAuthority&&(
    next.visionEpoch<current.visionEpoch||next.cursor<current.cursor
   )){
-   worldV2Trace.event('visibility.stale-snapshot');
+   trace.event('visibility.stale-snapshot');
    return null;
   }
   if(current&&(
@@ -91,12 +100,12 @@ export function createVisibilityController({
   const decision=onSnapshot(next);
   if(decision==='stale'){
    current=priorFrame;mask=priorMask;authorized=priorAuthorized;
-   worldV2Trace.event('visibility.stale-snapshot');
+   trace.event('visibility.stale-snapshot');
    return null;
   }
   if(decision===false)
    throw Error('V2 renderer rejected authorized sight');
-  worldV2Trace.event('visibility.snapshot',
+  trace.event('visibility.snapshot',
    changes.full?'full':changes.rects.length?'partial':'none');
   if(shouldUpdateFog)safe(onFog,{
    frame:next,mask:nextMask,dirty:changes
@@ -106,7 +115,7 @@ export function createVisibilityController({
   });
   return next;
  }
- async function fetchFrame(){
+ async function fetchFrame(reason){
   const virtual=dmPreview?getPreviewPosition():null;
   if(virtual&&(!validId(virtual.tokenId)||
    !Number.isSafeInteger(virtual.x)||!Number.isSafeInteger(virtual.y)))
@@ -121,37 +130,54 @@ export function createVisibilityController({
   }:{
    name:'get_world_visibility_v2',params:{p_map:currentMap}
   };
-  const done=worldV2Trace.begin('visibility.rpc');
+  trace.event('visibility.rpc-call',reason);
+  const started=now(),done=trace.begin('visibility.rpc');
   let result='error',data,error;
   try{({data,error}=await db.rpc(args.name,args.params));
    if(!error&&data)result='ok';
-  }finally{done(result)}
+  }finally{
+   done(result);
+   // R13: a monotonic, bucketed timing signal; no IDs, coordinates,
+   // HTTP headers, raw responses, JWTs or error messages ever enter trace.
+   const elapsed=now()-started;
+   if(Number.isFinite(elapsed)&&elapsed>=750)
+    trace.event('visibility.rpc-tail',
+     elapsed>=5000?'over-5s':elapsed>=2000?'over-2s':'over-750ms');
+  }
   if(error||!data)throw Error('V2 viewer sight unavailable');
   return data;
  }
  function refresh(reason='manual'){
   if(disposed)return Promise.resolve(null);
-  worldV2Trace.event('visibility.refresh',reason);
+  trace.event('visibility.refresh',reason);
   if(inFlight){
-   queued=true;
+   // Existing queue remains one-bit: instrumentation must never add,
+   // suppress, reorder or parallelize a server-authorized sight RPC.
+   if(!queued){
+    queued=true;queuedTimer=trace.begin('visibility.queue-wait');
+    trace.event('visibility.queue','queued');
+   }else trace.event('visibility.queue','coalesced');
    const pending=inFlight;
    // A queued newer refresh is not failure of the current authorized frame.
    return pending.then(()=>inFlight&&inFlight!==pending?inFlight:current)
     .then(()=>current);
   }
   const requestEpoch=epoch;
-  const task=Promise.resolve().then(fetchFrame).then(raw=>
+  const task=Promise.resolve().then(()=>fetchFrame(reason)).then(raw=>
    adopt(raw,requestEpoch)
   ).catch(error=>{
    if(!disposed&&epoch===requestEpoch){
-    worldV2Trace.event('visibility.reject');
+    trace.event('visibility.reject');
     revoke('invalid-snapshot');safe(onError,error);
    }
    return null;
   }).finally(()=>{
    if(inFlight===task)inFlight=null;
    if(!disposed&&queued){
-    queued=false;void refresh('queued');
+    queued=false;
+    queuedTimer?.('ok');queuedTimer=null;
+    trace.event('visibility.queue','drained');
+    void refresh('queued');
    }
   });
   inFlight=task;
@@ -175,7 +201,7 @@ export function createVisibilityController({
      'environmentRevision','permissionGeneration','sceneGeneration','id'
     ].includes(k))){
     if(!disposed){
-     worldV2Trace.event('visibility.notice','invalid-vision-notice');
+     trace.event('visibility.notice','invalid-vision-notice');
      revoke('invalid-vision-notice');
     }
     return false;
@@ -191,7 +217,7 @@ export function createVisibilityController({
      notice.permissionGeneration<current.permissionGeneration||
      notice.sceneGeneration<current.sceneGeneration
     )){
-    worldV2Trace.event('visibility.notice','stale');
+    trace.event('visibility.notice','stale');
     return false;
    }
    if(current&&(
@@ -199,7 +225,7 @@ export function createVisibilityController({
     notice.permissionGeneration!==current.permissionGeneration||
     notice.sceneGeneration!==current.sceneGeneration
    )){
-    worldV2Trace.event('visibility.notice','vision-version-change');
+    trace.event('visibility.notice','vision-version-change');
     revoke('vision-version-change');
     void refresh('vision-version-change');return true;
    }

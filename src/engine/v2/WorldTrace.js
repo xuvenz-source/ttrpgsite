@@ -14,6 +14,7 @@ const EVENTS=new Set([
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','visibility.revoke','visibility.refresh',
+ 'visibility.rpc-call','visibility.rpc-tail','visibility.queue',
  'visibility.snapshot','visibility.stale-snapshot',
  'visibility.reject','visibility.notice','renderer.seal','renderer.scene-adopt',
  'renderer.visibility-reject','renderer.static-draw','renderer.fog-full',
@@ -22,7 +23,7 @@ const EVENTS=new Set([
  'renderer.sprite-remove','renderer.terrain-assign'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
- 'authority.cancel','visibility.rpc','render.frame']);
+ 'authority.cancel','visibility.rpc','visibility.queue-wait','render.frame']);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
  'revision','drag','touch','keyboard','preview','grabbed','busy','point',
  'selection','begin','lost-capture','pointer-cancel','blur','unmount',
@@ -49,7 +50,8 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'invalid-commit','begin-failed','invalid-session','path-limit',
  'rpc-unavailable','invalid-server-reply','client-contract',
  'session-cancelled','authority-error','reused-commit',
- 'keyboard-unmount','map-change','dispose']);
+ 'keyboard-unmount','map-change','dispose',
+ 'over-750ms','over-2s','over-5s','coalesced','drained','discarded']);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;
