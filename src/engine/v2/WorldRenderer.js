@@ -412,6 +412,8 @@ export function createWorldRenderer({
     stats.rejectedPackets++;return false;
    }
    const previously=visibility,prevMask=fogMask;
+   // Capture only deferred piece keys after all cursor and permission gates.
+   const recovered=new Set(pendingVisionPieces);
    const reuse=sameWorldFogCells(previously,next);
    const nextMask=reuse?prevMask:makeWorldFogMask(next);
    if(next.enabled&&!nextMask){
@@ -449,6 +451,11 @@ export function createWorldRenderer({
      seal('sprite-factory-error');return false;
     }
    }
+   // Reconcile deferred cosmetic routes against signed canonical positions
+   // even for cursor-only sight frames. Never reset other sprites or fog.
+   for(const piece of next.visiblePieces)
+    if(recovered.has(key(piece))&&observer.resetFromSigned(piece))
+     dirtySprites.add(key(piece));
    reconcileLocal(next);
    // Compare the latest validated mask against the last PAINTED mask.
    // Multiple sight RPCs coalesce to one dirty pass on the next RAF.
@@ -533,7 +540,25 @@ export function createWorldRenderer({
     }
     return true;
    }
-   if(!observer.applyPath(item)){
+   const continuity=observer.inspectPath(item);
+   if(continuity==='origin-mismatch'||continuity==='backlog'){
+    // A valid private packet may overtake a signed canonical reconciliation
+    // or the bounded cosmetic queue. Never bridge its unknown origin, and
+    // never present its unapproved segment. Preserve the existing signed
+    // world and request a NEW signed snapshot before this piece can move.
+    // Other previously-authorized sprites and the fog canvas stay mounted.
+    worldV2Trace.event('renderer.observer-discontinuity',continuity);
+    pendingVisionPieces.add(id);
+    if(meta.seq>latestSeq){latestSeq=meta.seq;seqItems.clear()}
+    seqItems.add(id);
+    if(!awaitingFreshVision){
+     awaitingFreshVision=true;
+     worldV2Trace.event('renderer.observer-await-vision');
+     safe(onNeedResync,'observer-path-await-vision');
+    }
+    return true;
+   }
+   if(continuity!=='ok'||!observer.applyPath(item)){
     stats.rejectedPackets++;seal('observer-path-discontinuity');return false;
    }
    if(meta.seq>latestSeq){latestSeq=meta.seq;seqItems.clear()}

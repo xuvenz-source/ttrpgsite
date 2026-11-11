@@ -919,7 +919,7 @@ export default function WorldV2Board(props){
        if(reason==='observer-path-await-vision'){
          // A non-destructive sight refresh, not a full scene resync.
          // Genuine permission/scene changes continue to conceal immediately.
-         void r.refreshVisibility('observer-path-await-vision');return;
+         void r.recoverObserverSight();return;
         }
         if(['observer-sequence-gap','observer-path-discontinuity',
         'observer-path-not-in-authorized-fog',

@@ -27,6 +27,15 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
   !Number.isFinite(catchupMs)||catchupMs<20||catchupMs>1000)
   throw Error('Invalid V2 observer buffer bounds');
  const pieces=new Map();let disposed=false;
+ function inspectPath(item){
+  if(disposed||!approvedPath(item))return 'invalid';
+  const entry=pieces.get(key(item));
+  if(!entry||entry.hidden)return 'unrostered';
+  const expected=entry.pending.at(-1)||entry.position;
+  if(!same(item.path[0],expected))return 'origin-mismatch';
+  if(entry.pending.length+item.path.length-1>maxQueue)return 'backlog';
+  return 'ok';
+ }
  function remaining(entry){
   let length=0,previous=entry.position;
   for(const waypoint of entry.pending){
@@ -97,13 +106,23 @@ export function createObserverPathBuffer({maxPieces=500,catchupMs=150}={}){
    for(const [id,entry] of next)pieces.set(id,entry);
    return true;
   },
-  applyPath(item){
-   if(disposed||!approvedPath(item))return false;
+  // Only the private server path stream supplies authority. Classification
+  // is a fixed-label diagnostic, never a coordinate or visibility grant.
+  // Keep applyPath safe when legacy consumers destructure the method.
+  inspectPath,
+  // Only a fully admitted signed roster/cursor may call this method.
+  // Discard the deferred cosmetic path even if the canonical cell is same.
+  resetFromSigned(item){
+   if(disposed||!authorizedPiece(item))return false;
    const entry=pieces.get(key(item));
    if(!entry||entry.hidden)return false;
-   const expected=entry.pending.at(-1)||entry.position;
-   if(!same(item.path[0],expected)||entry.pending.length+item.path.length-1>maxQueue)
-    return false; // Require a genuine server snapshot, not a guessed diagonal.
+   entry.position={x:item.x,y:item.y};
+   entry.pending.length=0;entry.pathStart=null;entry.lastNow=null;
+   return true;
+  },
+  applyPath(item){
+   if(inspectPath(item)!=='ok')return false;
+   const entry=pieces.get(key(item));
    if(!entry.pending.length)entry.pathStart={...entry.position};
    entry.pending.push(...item.path.slice(1).map(p=>({x:p.x,y:p.y})));
    return true;

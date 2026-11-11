@@ -21,6 +21,7 @@ import {createPreviewAuthority} from './PreviewAuthority.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {worldV2Trace} from './WorldTrace.js';
 import {createCanonicalCommitHandoff} from './CanonicalCommitHandoff.js';
+import {createObserverSightRecovery} from './ObserverSightRecovery.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -275,6 +276,14 @@ export function createWorldV2TabletopRuntime({
   if(disposed||revision!==refreshRevision)return false;
   return !!result&&privateReady;
  }
+ const deferredObserverRecovery=createObserverSightRecovery({
+  refresh:()=>refreshVisibility('observer-path-await-vision'),
+  isWaiting:()=>!disposed&&renderer.awaitingFreshVision===true,
+  isAuthorized:authorized,
+  // If signed cursor still cannot catch up after three attempts, use the
+  // existing fail-closed scene/sight recovery instead of freezing the token.
+  onExhausted:()=>refreshScene('observer-path-discontinuity')
+ });
  async function refreshScene(reason='manual'){
   if(disposed)return false;
   if(reloading)return reloading;
@@ -433,6 +442,7 @@ export function createWorldV2TabletopRuntime({
   },
   detachInput(){input?.unmount();input=null},
   refreshVisibility,refreshScene,revoke,
+  recoverObserverSight:()=>deferredObserverRecovery.recover(),
   forceReauthorize:async()=>{
    if(disposed)return false;
    movement.cancelGesture('permission');
@@ -442,6 +452,7 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
+   deferredObserverRecovery.dispose();
    canonicalHandoff.clear();committedSight=null;
    ++refreshRevision;
     if(dmLightRefreshTimer!==null){

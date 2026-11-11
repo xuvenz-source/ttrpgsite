@@ -1072,5 +1072,144 @@ test('live regression: DM editor overlay is mounted only in explicit edit mode',
  const source=readFileSync(new URL('../src/engine/v2/WorldV2Board.jsx',import.meta.url),'utf8');
  assert.match(source,/isDM&&!dmPreview&&editor\?\.enabled&&environment&&<MapEnvironmentOverlay/);
  assert.match(source,/if\(reason==='observer-path-await-vision'\)/);
- assert.match(source,/refreshVisibility\('observer-path-await-vision'\)/);
+ assert.match(source,/r\.recoverObserverSight\(\)/);
+});
+
+
+test('R16 same-generation buffer origin mismatch preserves other sprites and fog while awaiting signed sight',()=>{
+ const ctx=make();activate(ctx);
+ const heroNode=ctx.renderer.getSpriteElement('token',hero.id);
+ const allyNode=ctx.renderer.getSpriteElement('token',ally.id);
+ const base=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[5,2],[6,2]]),
+  {mapId,seq:6}),true);
+ assert.equal(ctx.renderer.authorized,true);
+ assert.equal(ctx.renderer.awaitingFreshVision,true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision']);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),heroNode);
+ assert.equal(ctx.renderer.getSpriteElement('token',ally.id),allyNode);
+ assert.equal(ctx.renderer.stats.spriteRemoves,base.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,base.fullFogDraws);
+ assert.equal(ctx.renderer.stats.terrainAssignments,base.terrainAssignments);
+ // Valid independent private movement must keep working while the hero
+ // waits for a fresh signed canonical roster.
+ assert.equal(ctx.renderer.applyObserverPath(path(ally,[[3,3],[4,3]]),
+  {mapId,seq:7}),true);
+ ctx.clock.run(1010,40,8);
+ assert.equal(position(allyNode),'400px 300px');
+ assert.equal(position(heroNode),'200px 200px',
+  'unverified remote endpoint cannot be painted or teleported');
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:7,visionEpoch:7,
+  visiblePieces:[{...hero,x:6,y:2},{...ally,x:4,y:3},torch]
+ })),true);
+ ctx.clock.flush(1600);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),heroNode);
+ assert.equal(ctx.renderer.stats.spriteRemoves,base.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,base.fullFogDraws);
+ ctx.renderer.dispose();
+});
+
+test('R16 valid server route saturating cosmetic queue defers with one signed refresh, no full reset',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ const before=ctx.renderer.stats;
+ // 4x24 valid steps in a confined 2-cell corridor, without calling RAF.
+ // This only saturates presentation; server-authoritative movement remains
+ // entirely separate. Each packet has an exactly matching approved origin.
+ for(let frame=0;frame<4;frame++){
+  const coords=Array.from({length:25},(_,i)=>[i%2===0?2:3,2]);
+  assert.equal(ctx.renderer.applyObserverPath(path(hero,coords),{
+   mapId,seq:6+frame
+  }),true);
+ }
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2]]),
+  {mapId,seq:10}),true);
+ assert.equal(ctx.renderer.authorized,true);
+ assert.equal(ctx.renderer.awaitingFreshVision,true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision']);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.renderer.stats.spriteRemoves,before.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,before.fullFogDraws);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:10,visionEpoch:7,visiblePieces:[{...hero,x:3,y:2}]
+ })),true);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ ctx.renderer.dispose();
+});
+
+test('R16 malformed path and actual packet sequence gap still fail closed',()=>{
+ for(const item of [
+  {route:[[2,2],[8,2]],seq:6,reason:'observer-path-discontinuity'},
+  {route:[[2,2],[3,2]],seq:8,reason:'observer-sequence-gap'}
+ ]){
+  const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+  const prior=ctx.renderer.stats;
+  assert.equal(ctx.renderer.applyObserverPath(path(hero,item.route),
+   {mapId,seq:item.seq}),false);
+  assert.equal(ctx.renderer.authorized,false);
+  assert.equal(ctx.renderer.getSpriteElement('token',hero.id),null);
+  assert.ok(ctx.resync.includes(item.reason));
+  assert.equal(ctx.renderer.stats.spriteRemoves,prior.spriteRemoves+1);
+  ctx.renderer.dispose();
+ }
+});
+
+test('R16 signed roster can still conceal a deferred piece without exposing remote path',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero,ally]}));
+ const allyNode=ctx.renderer.getSpriteElement('token',ally.id);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[5,2],[6,2]]),
+  {mapId,seq:6}),true);
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:6,visionEpoch:7,visiblePieces:[ally]
+ })),true);
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),null);
+ assert.equal(ctx.renderer.getSpriteElement('token',ally.id),allyNode);
+ assert.equal(ctx.renderer.authorized,true);
+ ctx.renderer.dispose();
+});
+
+test('R16 only fixed non-private discontinuity labels enter trace',async()=>{
+ const {createWorldV2Trace}=await import('../src/engine/v2/WorldTrace.js');
+ const trace=createWorldV2Trace({enabled:true});
+ trace.event('renderer.observer-discontinuity','origin-mismatch');
+ trace.event('renderer.observer-discontinuity','backlog');
+ trace.event('renderer.observer-discontinuity','private coordinate 30,40');
+ assert.deepEqual(trace.snapshot().events.map(e=>e.detail),
+  ['origin-mismatch','backlog','other']);
+});
+
+
+test('R16 accepted cursor-only signed sight clears just the deferred piece buffer',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero,ally]}));
+ const heroNode=ctx.renderer.getSpriteElement('token',hero.id);
+ const allyNode=ctx.renderer.getSpriteElement('token',ally.id);
+ const initial=ctx.renderer.stats;
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[3,2]]),
+  {mapId,seq:6}),true);
+ assert.equal(ctx.renderer.applyObserverPath(path(ally,[[3,3],[4,3]]),
+  {mapId,seq:7}),true);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[2,3]]),
+  {mapId,seq:8}),true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision']);
+ // A cursor-only signed frame does not move the canonical hero.
+ assert.equal(ctx.renderer.adoptVisibility(sight({
+  cursor:8,visionEpoch:7,visiblePieces:[hero,ally]
+ })),true);
+ assert.equal(ctx.renderer.awaitingFreshVision,false);
+ assert.equal(ctx.renderer.applyObserverPath(path(hero,[[2,2],[2,3]]),
+  {mapId,seq:9}),true);
+ assert.deepEqual(ctx.resync,['observer-path-await-vision'],
+  'signed sight must prevent repeating the same buffer mismatch');
+ ctx.clock.run(1000,35,20);
+ assert.equal(position(heroNode),'200px 300px');
+ assert.equal(position(allyNode),'400px 300px',
+  'hero recovery must preserve independently approved ally movement');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),heroNode);
+ assert.equal(ctx.renderer.getSpriteElement('token',ally.id),allyNode);
+ assert.equal(ctx.renderer.stats.spriteRemoves,initial.spriteRemoves);
+ assert.equal(ctx.renderer.stats.fullFogDraws,initial.fullFogDraws);
+ ctx.renderer.dispose();
 });
