@@ -210,19 +210,22 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    // not fill the path queue with alternating jitter cells.
    const cell=['drag','touch','preview'].includes(g.mode)?
     pointerIntentCell(pointer,g.intentCell):gridPoint(pointer);
-   if(!cell||!appendGestureBend(g.pending,cell,g.approved)){
+   if(!cell){
     g.phase='path';reject(g,'path-limit');return false;
    }
    g.pointer={...pointer};g.intentCell={...cell};
-   if(g.blockedRetry&&
+   if(g.pending.length===0&&g.blockedRetry&&
     g.blockedRetry.from.x===g.approved.x&&
     g.blockedRetry.from.y===g.approved.y&&
     g.blockedRetry.to.x===cell.x&&g.blockedRetry.to.y===cell.y){
-    // appendGestureBend above would otherwise requeue the same denied
-    // target. Drop it locally; other cells still get server validation.
-    g.pending.length=0;return true;
+    // Suppress ONLY the exact previously denied target at this
+    // unchanged server-approved origin. Preserve any queued turns.
+    return true;
    }
    g.blockedRetry=null;
+   if(!appendGestureBend(g.pending,cell,g.approved)){
+    g.phase='path';reject(g,'path-limit');return false;
+   }
    if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}
    // A synchronous caller-supplied grant check must approve the *entire*
    // displacement. Default is false: no speculative hidden-wall travel.
