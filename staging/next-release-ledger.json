@@ -262,7 +262,7 @@
     {
       "name": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
       "status": "staged",
-      "linkedPullRequest": null,
+      "linkedPullRequest": 101,
       "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
       "note": "B10-R16: avoid all-map opaque seal on valid same-generation private observer route origin mismatch or capped cosmetic backlog. Keep the affected route deferred until a fresh server-signed snapshot; malformed packets and sequence gaps still seal. No DB/SQL, Supabase Realtime protocol, fog authority or grants change. CI test and live DM/observer acceptance pending."
     }
@@ -727,7 +727,7 @@
       ],
       "status": "staged",
       "releaseReady": false,
-      "linkedPullRequest": null,
+      "linkedPullRequest": 101,
       "databaseDependencies": [],
       "note": "Staged client-only repair; player and DM QA plus review required before controlled deployment."
     }
