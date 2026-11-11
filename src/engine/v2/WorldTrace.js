@@ -63,6 +63,7 @@ const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10
 export function createWorldV2Trace({enabled=false,limit=256,now=clock}={}){
  const cap=Number.isSafeInteger(limit)?Math.min(512,Math.max(16,limit)):256;
  const events=[],times=new Map(),counts=new Map(),start=now();
+ let resetGeneration=0;
  function event(name,detail=''){
   if(!enabled||!EVENTS.has(name))return;
   events.push({ms:Math.max(0,Math.round(now()-start)),event:name,
@@ -72,8 +73,11 @@ export function createWorldV2Trace({enabled=false,limit=256,now=clock}={}){
  }
  function begin(name){
   if(!enabled||!METRICS.has(name))return ()=>{};
-  const start=now();
+  const start=now(),generation=resetGeneration;
   return result=>{
+   // Ignore timers started before a trace-clear; otherwise the next
+   // observer packet can report minutes of idle time as movement latency.
+   if(generation!==resetGeneration)return;
    const elapsed=now()-start;
    if(!Number.isFinite(elapsed)||elapsed<0)return;
    let a=times.get(name);if(!a){a=[];times.set(name,a)}
@@ -91,7 +95,7 @@ export function createWorldV2Trace({enabled=false,limit=256,now=clock}={}){
   return {enabled:Boolean(enabled),limit:cap,
    events:events.map(x=>({...x})),counts:Object.fromEntries(counts),durations};
  }
- function clear(){events.length=0;times.clear();counts.clear()}
+ function clear(){resetGeneration++;events.length=0;times.clear();counts.clear()}
  return Object.freeze({enabled:Boolean(enabled),event,begin,snapshot,clear});
 }
 const enabled=typeof window!=='undefined'&&
