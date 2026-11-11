@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-11",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+  "releaseBranch": "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -301,6 +301,13 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "linkedPullRequest": 106,
       "note": "R18-04 default-OFF 700ms single-flight stable-generation signed roster/sequence-gap recovery, 16-frame bounded cursor-only backpressure, no new visibility from private movement packets, hard seal on invalid/revoked/timeout. Staging tests only. Pending hostile QA and R17 consolidation. No new migration, Supabase writes, Vercel activation or deployment."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": null,
+      "note": "R18-05 single consolidated source candidate integrating reviewed R17 #102 exact KeyboardStepper, MovementController, WorldV2Board files and tests with R18-01 #103, R18-02 #104 signed quiet-observer watch OFF, R18-03 #105 frozen nonapplied R05 terminal authority SQL, and R18-04 #106 guarded private roster/sequence-gap repair OFF. All original stages remain separately tracked and unmerged. Current main R16 unchanged; no production SQL, feature flags, Vercel deployment, RLS, Edge or paid-plan changes. Full combined PR review/CI, protected DM/P1/P2 QA and explicit release approval pending."
     }
   ],
   "features": [
@@ -828,6 +835,25 @@
       "linkedPullRequest": 106,
       "databaseDependencies": [],
       "note": "NO-GO for activation: must demonstrate protected LOS/permission revocation, hidden NPC removal, no unauthorized sprite/position/fog, 700ms max grace, free-tier extra sight RPCs. R18-03 reviewed migration still nonapplied."
+    },
+    {
+      "id": "world-v2-b10-r18-05-consolidated-release",
+      "description": "Integrated exact R17 blocked-keyboard ACK rebase with R18-01/02/03/04 passive observer source, signed fog-bound roster recovery and frozen nonapplied terminal SQL for a single future gated release",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": null,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO: combined exact-head CI and review pending; R18-02 12-second authenticated sight and R18-04 700ms guarded signed recovery flags both remain OFF. Real protected fog/hidden NPC/role revocation and DM/P2 convergence not accepted; migration remote catalog aliases require targeted history-safe approval, never db push. Original PRs 102-106 remain draft/unmerged."
     }
   ],
   "databaseDependencies": [
@@ -1142,15 +1168,16 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+    "releaseBranch": "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
       "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
       "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
-      "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11"
+      "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+      "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11"
     ],
-    "stagePolicy": "R17 PR #102 keyboard fix; R18-01 #103 audit; R18-02 #104 lost-terminal signed sight watch OFF; R18-03 #105 reviewed R05 versioned terminal authority SQL NONAPPLIED; R18-04 guarded roster/seq-gap soft recovery OFF are all independently tracked and unmerged. R18-04 source is STACKED on R18-03, not R17. Any protected map access, LOS or permission loss must fail closed; 700ms stale prior-signed grace requires explicit security approval. No SQL, Vercel, Realtime permission/Edge changes, preview, paid services or flag activation without separate consolidated live-test authorization.",
+    "stagePolicy": "R18-05 is the ONE consolidated staging source for independent pending R17 #102 and R18-01..04 #103-106, all retained in ledger. Reconcile historical 'included' and 'staged-unreleased' legacy features against actual production; do not blindly deploy old SQL. R18-02 and R18-04 recovery flags OFF. Frozen R05 SQL candidate NONAPPLIED; no SQL/RLS/Edge changes or db push. Requires exact-head combined code/security/PG source-real CI, real DM/P1/P2 protected fog/hidden NPC/permission revocation+free-tier test plan, and separate explicit designer authorization before ANY migration or Vercel main merge.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
