@@ -65,6 +65,9 @@ export function createWorldV2TabletopRuntime({
  // Opt-in remains OFF in all existing production builds. Preview is local.
  const observerRecoveryEnabled=!dmPreview&&
   import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY==='1';
+ // Independent default-OFF rollout: no private path grants new sprites.
+ const guardedObserverEnabled=!dmPreview&&
+  import.meta.env?.VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY==='1';
  let observerWatch=null,foregroundListener=null;
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
@@ -142,7 +145,8 @@ export function createWorldV2TabletopRuntime({
    canonicalHandoff.observe(snapshot);
    // Renderer admitted this complete signed sight first. Only now may the
    // private stream move its cosmetic cursor/roster to the certified state.
-   if(observerRecoveryEnabled)stream?.acceptSignedSight(snapshot);
+   if(observerRecoveryEnabled||guardedObserverEnabled)
+    stream?.acceptSignedSight(snapshot);
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');
    return true;
@@ -353,6 +357,7 @@ export function createWorldV2TabletopRuntime({
    // Phase 10 integration task, never a bypass of recipient channel RLS.
    if(!dmPreview)stream=createWorldRealtimeTransport({
     db,mapId,viewerId:identity,
+    softResyncEnabled:guardedObserverEnabled,
     onResync:async reason=>{
      if(manager.stale){
       if(!await manager.load())throw Error('V2 scene resync failed');
