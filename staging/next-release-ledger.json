@@ -341,7 +341,8 @@
       "name": "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-10 guarded 700ms observer recovery concealment fix. While in opt-in guarded grace or sequence gap, a private hide or vision dirty event immediately hard seals before synchronous or async signed reauthorization. Correctly ordered hides and default-OFF behavior unchanged; source-real tests pending. No live deployment, no applied R05 SQL, guarded flag OFF."
+      "note": "R18-10 guarded 700ms observer recovery concealment fix. While in opt-in guarded grace or sequence gap, a private hide or vision dirty event immediately hard seals before synchronous or async signed reauthorization. Correctly ordered hides and default-OFF behavior unchanged; source-real tests pending. No live deployment, no applied R05 SQL, guarded flag OFF.",
+      "linkedPullRequest": 112
     }
   ],
   "features": [
@@ -996,7 +997,8 @@
       "databaseDependencies": [
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
       ],
-      "note": "Concealment-first source change only in default-OFF guarded path. Authenticated DM/P1/P2 LOS/revocation remains untested and R18-04 feature activation NO-GO. No frontend canary or SQL approval; exact-head checks pending."
+      "note": "Concealment-first source change only in default-OFF guarded path. Authenticated DM/P1/P2 LOS/revocation remains untested and R18-04 feature activation NO-GO. No frontend canary or SQL approval; exact-head checks pending.",
+      "linkedPullRequest": 112
     }
   ],
   "databaseDependencies": [
