@@ -19,6 +19,9 @@ export function pointerIntentCell(pointer,previous=null,{
  if(!next||previous!==null&&!validCell(previous)||
   !Number.isFinite(hysteresis)||hysteresis<0||hysteresis>=0.49)
   return null;
+ // Keep the server-oriented integer grid canonical: -0 and +0 are the
+ // same cell, but a strict path comparison must not emit alternating forms.
+ for(const axis of ['x','y'])if(Object.is(next[axis],-0))next[axis]=0;
  if(previous===null)return next;
  const result={...next};
  for(const axis of ['x','y']){
