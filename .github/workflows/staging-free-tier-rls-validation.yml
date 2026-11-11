@@ -39,7 +39,7 @@ jobs:
       PGPASSWORD: postgres
       PGDATABASE: rlsfixture
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install synthetic fixture and 13 original policy definitions
         run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/free-tier-rls-fixture.sql
       - name: Prove original DM, player, outsider and observer permissions

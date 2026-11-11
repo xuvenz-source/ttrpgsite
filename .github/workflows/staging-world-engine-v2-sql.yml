@@ -33,7 +33,7 @@ jobs:
       PGPASSWORD: postgres
       PGDATABASE: v2fixture
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install synthetic fixture
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-authority-fixture.sql
       - name: Apply staged V2 schema to disposable PostgreSQL
