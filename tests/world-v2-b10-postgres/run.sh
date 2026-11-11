@@ -53,4 +53,8 @@ for role in anon authenticated;do
 done
 echo 'B10-R01 PASS: source-real B03+B07+B08 integrated private-core and hostile regressions'
 echo 'B10-R03 PASS: B03+B07+B08+R01 canonical core and terminal queue-retirement hostile regressions'
+# Real versioned release candidate is independently tested in a SECOND
+# disposable local database with source-extracted original public Commit.
+# It must pass BOTH atomic abort and post-commit four-function recovery.
+bash tests/world-v2-b10-postgres/rehearse-r05.sh
 echo 'B10 RELEASE GATE STILL BLOCKED: nonapplied candidate, observer-budget recovery and live Auth/LOS QA remain.'
