@@ -9,6 +9,7 @@
  * refresh and Phase 9 wires this to the single V2 rendering store.
  */
 import {worldV2Trace} from './WorldTrace.js';
+import {validWorldBroadcastId} from './BroadcastEnvelope.js';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const int=Number.isSafeInteger;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -35,7 +36,7 @@ function validPiece(item){
  return true;
 }
 export function validWorldMotionFrame(packet,mapId,viewerId){
- if(!packet||typeof packet!=='object'||packet.version!==2||
+ if(!validWorldBroadcastId(packet)||packet.version!==2||
   packet.mapId!==mapId||packet.viewerId!==viewerId||
   !int(packet.seq)||packet.seq<1||
   !int(packet.environmentRevision)||packet.environmentRevision<0||
@@ -44,7 +45,7 @@ export function validWorldMotionFrame(packet,mapId,viewerId){
   packet.items.length>MAX_OBSERVER_FRAME_PIECES||
   Object.keys(packet).some(k=>![
    'version','mapId','viewerId','seq','environmentRevision',
-   'permissionGeneration','items'
+   'permissionGeneration','items','id'
   ].includes(k)))return false;
  const ids=new Set();
  for(const item of packet.items){

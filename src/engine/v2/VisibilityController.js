@@ -7,6 +7,7 @@
  * tree remount, fog canvas rebuild or independent frame timers.
  */
 import {worldV2Trace} from './WorldTrace.js';
+import {validWorldBroadcastId} from './BroadcastEnvelope.js';
 import {
   normalizeWorldVisibilityFrame,makeWorldFogMask,
  diffWorldFogMasks,diffWorldVisiblePieces,sameWorldFogCells
@@ -163,7 +164,7 @@ export function createVisibilityController({
    * EXISTING Phase 5 viewer channel. No second socket or token subscription.
    */
   onVisionDirty(notice){
-   if(disposed||!notice||notice.version!==2||
+   if(disposed||!validWorldBroadcastId(notice)||notice.version!==2||
     notice.mapId!==currentMap||notice.viewerId!==currentViewer||
     !Number.isSafeInteger(notice.visionEpoch)||notice.visionEpoch<0||
     !Number.isSafeInteger(notice.environmentRevision)||
@@ -171,7 +172,7 @@ export function createVisibilityController({
     !Number.isSafeInteger(notice.sceneGeneration)||
     Object.keys(notice).some(k=>![
      'version','mapId','viewerId','visionEpoch',
-     'environmentRevision','permissionGeneration','sceneGeneration'
+     'environmentRevision','permissionGeneration','sceneGeneration','id'
     ].includes(k))){
     if(!disposed){
      worldV2Trace.event('visibility.notice','invalid-vision-notice');
