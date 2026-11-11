@@ -10,6 +10,7 @@
  * server-authorized scene has been adopted. Phase 7 revokes sight separately.
  */
 import {compileCollisionScene} from './CollisionSolver.js';
+import {WALL_EDGE_CLEARANCE_CELLS} from './CollisionGeometry.js';
 import {createSceneSpatialIndex} from './SceneSpatialIndex.js';
 import {normalizeWorldSceneSnapshot,worldSceneDirtyRegions} from './SceneSnapshot.js';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -21,11 +22,13 @@ const signature=scene=>[
  scene.dimensions.width,scene.dimensions.height,scene.dimensions.gridSize
 ].join(':');
 export function createSceneManager({
- mapId,viewerId,fetchManifest,onChange=noop,onInvalidate=noop,onError=noop
+ mapId,viewerId,fetchManifest,onChange=noop,onInvalidate=noop,onError=noop,
+ wallClearanceCells=0
 }={}){
  if(!isUuid(mapId)||!isUuid(viewerId)||typeof fetchManifest!=='function'||
   typeof onChange!=='function'||typeof onInvalidate!=='function'||
-  typeof onError!=='function')
+  typeof onError!=='function'||
+  ![0,WALL_EDGE_CLEARANCE_CELLS].includes(wallClearanceCells))
   throw Error('V2 SceneManager needs an authorized map and loader');
  let currentMap=mapId,currentViewer=viewerId,disposed=false;
  let epoch=0,manifest=null,collision=null,spatial=null,stale=true;
@@ -77,7 +80,8 @@ export function createSceneManager({
       height:accepted.dimensions.height,
       grid_size:accepted.dimensions.gridSize},
      environment:accepted.environment,revision:accepted.revision,
-     collisionEnabled:accepted.collisionEnabled,scope:'dm'
+     collisionEnabled:accepted.collisionEnabled,scope:'dm',
+     wallClearanceCells
     });
     if(!base)throw Error('Invalid DM collision geometry');
     lookup=createSceneSpatialIndex(base);
@@ -89,7 +93,8 @@ export function createSceneManager({
       height:accepted.dimensions.height,
       grid_size:accepted.dimensions.gridSize},
      environment:accepted.environment,revision:accepted.revision,
-     collisionEnabled:accepted.collisionEnabled,scope:'dm'
+     collisionEnabled:accepted.collisionEnabled,scope:'dm',
+     wallClearanceCells
     });
     if(!base)throw Error('Invalid DM collision geometry');
     lookup=createSceneSpatialIndex(base);
@@ -108,7 +113,8 @@ export function createSceneManager({
       height:accepted.dimensions.height,
       grid_size:accepted.dimensions.gridSize},
      environment:{objects:[]},revision:accepted.revision,
-     collisionEnabled:false,scope:'dm'
+     collisionEnabled:false,scope:'dm',
+     wallClearanceCells
     });
     if(!base)throw Error('Invalid safe unconfigured DM movement geometry');
     lookup=createSceneSpatialIndex(base);
