@@ -114,9 +114,15 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
        g.presented={...g.approved};g.predicted=false;
       }
       state=g.closing?'Finishing':'Moving';
+      // The denied waypoint is derived solely from the validated ACK
+      // prefix and this client's requested route. It is local input feedback,
+      // never an authorization to reveal a hidden wall or move a sprite.
+      const route=response.blocked?expandGestureRoute(before,batch.targets):null;
+      const blockedAt=route&&response.accepted.length<route.length?
+       {...route[response.accepted.length]}:null;
       emit(g,response.blocked?'blocked':'approved',{
        seq,blocked:response.blocked,from:before,
-       accepted:response.accepted.map(p=>({...p}))
+       accepted:response.accepted.map(p=>({...p})),blockedAt
       });
      continue;
     }
