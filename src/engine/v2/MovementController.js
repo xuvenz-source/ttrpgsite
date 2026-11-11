@@ -28,20 +28,34 @@ const validAck=(reply,sessionId,seq,from,targets)=>{
  return true;
 };
 const noop=()=>{};
+/** Only fixed, non-private rejection classes are exposed to in-memory trace. */
+export function classifyWorldMovementRejection(reason){
+ if(['invalid-path','invalid-authority-ack','invalid-commit',
+     'begin-failed','invalid-session','path-limit','authority-error']
+     .includes(reason))return reason;
+ if(reason==='World movement server unavailable')return 'rpc-unavailable';
+ if(reason==='Invalid world movement response')return 'invalid-server-reply';
+ if(['Invalid V2 begin request','Invalid V2 movement batch',
+     'Invalid V2 commit'].includes(reason))return 'client-contract';
+ if(reason==='V2 movement cancelled')return 'session-cancelled';
+ return 'other';
+}
 const predictionReached=(origin,predicted,approved)=>{
  const dx=predicted.x-origin.x,dy=predicted.y-origin.y;
  const d=dx*dx+dy*dy;
  return d<=1e-9||(approved.x-origin.x)*dx+
   (approved.y-origin.y)*dy>=d-1e-7;
 };
-export function createMovementController({authority,onEvent=noop,canPredict=()=>false}={}){
+export function createMovementController({authority,onEvent=noop,canPredict=()=>false,
+ trace=worldV2Trace}={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
-  typeof onEvent!=='function'||typeof canPredict!=='function')
+  typeof onEvent!=='function'||typeof canPredict!=='function'||
+  typeof trace?.event!=='function')
   throw Error('V2 movement requires a complete authority interface');
  let active=null,disposed=false,state='Idle',generation=0;
  const emit=(gesture,type,extra={})=>{
   if(type!=='sampled'&&type!=='presented')
-   worldV2Trace.event('movement.'+type,gesture.mode);
+   trace.event('movement.'+type,gesture.mode);
   onEvent({type,state,gestureId:gesture.generation,mapId:gesture.mapId,
    selection:gesture.selection,pointer:{...gesture.pointer},
    approved:{...gesture.approved},presented:{...gesture.presented},...extra});
@@ -63,6 +77,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
  };
  const reject=(g,reason)=>{
   if(active!==g)return;
+  trace.event('movement.reject-phase',g.phase);
+  trace.event('movement.reject-reason',classifyWorldMovementRejection(reason));
   finish(g,{status:'rejected',reason});
   cancelSession(g);
  };
@@ -74,8 +90,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     if(g.pending.length){
      const snapshot=g.pending.slice();
      const batch=takeGestureBatch(g.approved,snapshot);
-     if(!batch||!batch.targets.length){reject(g,'invalid-path');break}
+     if(!batch||!batch.targets.length){g.phase='path';reject(g,'invalid-path');break}
      const before={...g.approved},seq=++g.seq;
+     g.phase='advance';
      const response=await authority.advance({
       version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
       seq,from:before,targets:batch.targets,selection:g.selection,
@@ -110,6 +127,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      break;
     }
     const seq=++g.seq;
+    g.phase='commit';
     const reply=await authority.commit({
      version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
      seq,endpoint:{...g.approved},selection:g.selection,
@@ -146,7 +164,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],seq:0,mode,sessionId:null,closing:false,
+    pending:[],seq:0,mode,phase:'begin',sessionId:null,closing:false,
      predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
     environmentRevision,permissionGeneration};
@@ -171,7 +189,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(disposed||!g||g.closing||!validPoint(pointer))return false;
    const cell=gridPoint(pointer);
    if(!cell||!appendGestureBend(g.pending,cell,g.approved)){
-    reject(g,'path-limit');return false;
+    g.phase='path';reject(g,'path-limit');return false;
    }
    g.pointer={...pointer};
    if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}

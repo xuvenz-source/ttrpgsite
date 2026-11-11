@@ -9,6 +9,7 @@ const EVENTS=new Set([
  'input.pointer.cancel','input.pointer.blur','input.keyboard.start','input.keyboard.end',
  'movement.grabbed','movement.approved','movement.blocked','movement.released',
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
+ 'movement.reject-phase','movement.reject-reason',
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','visibility.revoke','visibility.refresh',
@@ -42,7 +43,11 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'authorization-revoked','resync-error','authorized','permission','stale',
  'gate','hit','owner','roster','current','origin','runtime-inactive','runtime-roster',
  'user','tool-handoff','scene','visibility','input','network',
- 'authority','sequence','sprite']);
+ 'authority','sequence','sprite',
+ 'advance','commit','path','invalid-path','invalid-authority-ack',
+ 'invalid-commit','begin-failed','invalid-session','path-limit',
+ 'rpc-unavailable','invalid-server-reply','client-contract',
+ 'session-cancelled','authority-error']);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;
