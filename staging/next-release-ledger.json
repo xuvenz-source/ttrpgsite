@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "updated": "2026-11-11",
-  "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-  "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "releaseBranch": "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -261,10 +261,18 @@
     },
     {
       "name": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
-      "status": "staged",
+      "status": "released",
       "linkedPullRequest": 101,
       "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-      "note": "B10-R16: avoid all-map opaque seal on valid same-generation private observer route origin mismatch or capped cosmetic backlog. Keep the affected route deferred until a fresh server-signed snapshot; malformed packets and sequence gaps still seal. No DB/SQL, Supabase Realtime protocol, fog authority or grants change. CI test and live DM/observer acceptance pending."
+      "note": "Released PR #101 as Vercel production c90df8c9, 811/811 CI. Subsequent live QA found occasional DM vs Player 2 token position mismatch and severe lag at fog/collision boundaries. The R16 buffer-only rebase to sight might be pre-commit canonical; this is a confirmed architectural race possibility but individual event causality requires paired traces. Track R18 design and do not claim production acceptance.",
+      "productionCommit": "90df8c960e79e8d66c322095611427da7bb09de4"
+    },
+    {
+      "name": "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+      "status": "staged",
+      "linkedPullRequest": null,
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R17 narrow client-only keyboard denial correction: rebase input cursor to last server-approved point after validated blocked ACK; suppress only the same denied adjacent cell until direction changes. Separate observer precommit/commit synchronization investigation documented; no schema/RPC/Fog changes. Pending PR review/QA; do not deploy automatically."
     }
   ],
   "features": [
@@ -725,11 +733,23 @@
       "sources": [
         "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
       ],
-      "status": "staged",
-      "releaseReady": false,
+      "status": "released",
+      "releaseReady": true,
       "linkedPullRequest": 101,
       "databaseDependencies": [],
-      "note": "Staged client-only repair; player and DM QA plus review required before controlled deployment."
+      "note": "Released PR #101 as c90df8c9; field QA flagged intermittent observer divergence. Exact signed reconciliation on commit remains an outstanding R18 correctness gate."
+    },
+    {
+      "id": "world-v2-b10-r17-server-blocked-keyboard-input-rebase",
+      "description": "Stop repeated known-denied keyboard key requests, rebase subsequent intended movement from server-approved cell, allow immediate turn after wall/fog collision without speculative world geometry",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": null,
+      "databaseDependencies": [],
+      "note": "Strict local ACK-derived input behavior; not a fix for observer canonical divergence or the underlying 200ms RPC round trips."
     }
   ],
   "databaseDependencies": [
@@ -1043,12 +1063,12 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-    "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+    "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "releaseBranch": "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
     "outstandingBranches": [
-      "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
+      "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11"
     ],
-    "stagePolicy": "R16 isolated, staging only. Must inspect exact diff, complete Node/Chromium, CodeQL and PostgreSQL security workflows; no merge or live deployment before designer approval. Test DM rapid arrow/drag with passive Player 2, observer buffer discontinuity, no whole-map blackout, fog/hidden-roster secrecy, sequence gap revocation and repeated blocked keyboard input. Investigate one 'invalid-server-reply' Advance separately without increasing server caps. Other B10 R05-R09 SQL draft branches remain NO-GO.",
+    "stagePolicy": "R17 isolated client-only pending CI review and DM/player acceptance; release needs designer approval. Observer position desync is separate R18 commit-authoritative protocol gate; do not ship SQL until reviewed. Legacy R05-R09 SQL and B10 wide redesign remain NO-GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
