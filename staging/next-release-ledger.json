@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -378,6 +378,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-15 actual R18-14 solo-DM drag trace: 1.17s commit p50 and >2.5s post-release wait, busy input on corners/wall/fog; fix pointer half-cell jitter and duplicate exact server-ACKed denied crossings, new release-to-terminal timer. R18-14 frontend already live separately from Git main, no new deploy or SQL.",
       "linkedPullRequest": 117
+    },
+    {
+      "name": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-16 actual R18-15 solo DM evidence: live PostgreSQL swept rectangle blocks a 5% wall edge clip. QA-only candidate 0.10-cell inner footprint vs strict collision, no live rule changed. Adds bounded authority-timing bins to inspect slowdown under repeated movements. No SQL/production deployment."
     }
   ],
   "features": [
@@ -1169,6 +1175,35 @@
       ],
       "note": "Solo-DM R18-14 frontend canary live on exact SHA 96c90f9d (dpl_82NADuBV58sGdaXdcEgm2Gm2pzBb) without Git main merge; R18-15 not deployed. R05 unapplied, guarded recovery disabled, independent Auth multiplayer and CLI pending; NO_GO.",
       "linkedPullRequest": 117
+    },
+    {
+      "id": "world-v2-b10-r18-16-wall-clearance-cadence-research",
+      "description": "Read-only confirmed 5% wall edge clipping; QA-only strict-vs-0.10-cell clearance comparison, no authorization integration. Opt-in bounded movement RPC/terminal lock timing bins and last-retained first-vs-second half trend.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Physical wall clearance needs separate PostgreSQL direct-write/client collision parity migration and explicit SQL approval. Repeated lag measured commit 1.06s p50 and release lock 2.38s p95; progressive trend not yet established. Independent users and CLI rehearsal pending."
     }
   ],
   "databaseDependencies": [
@@ -1483,7 +1518,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1500,9 +1535,10 @@
       "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
       "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
       "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
-      "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12"
+      "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+      "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12"
     ],
-    "stagePolicy": "R18-15 preserves 16 stacked staging branches with the latest UI source from R18-14 production frontend canary, while main remains protected R16 and frozen R05 SQL unapplied. Source-real DM trace demonstrates 2.54s/2.77s release-to-commit and >1s median commit. This stage adds exact denied-cell pointer retry suppression and small corner hysteresis; it does NOT remove the authoritative begin/advance/commit lock. No further frontend deploy without new explicit approval; no SQL without separately approved authenticated linked CLI/real DM P1 P2 safety checks. Guarded 700ms observer recovery remains OFF, 12-second signed recovery ON only in current R18-14 canary.",
+    "stagePolicy": "R18-16 retains 17 stages. R18-15 frontend canary live at dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ, main R16 unchanged. QA-only 0.10-cell wall clearance simulator is not connected to runtime or server; live collision remains strict. New bounded opt-in timing samples can investigate sustained movement lag. No deployment, R05 installation, guarded observer recovery, direct-write change or paid infra. Wall tolerance requires separate secure PostgreSQL/client parity design and explicit SQL approval; frontend deployment requires separate approval.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
