@@ -41,7 +41,7 @@ test('R18-20 campaign identity guard is narrow and private, no Data API/RLS gran
 });
 test('R18-20 source-real campaign tests demonstrate previously allowed DM dual-campaign reparent then explicit denial',()=>{
  const s=read(integration);
- assert.match(s,/\\i tests\/world-v2-b10-postgres\/live-source-r18-20\.sql/);
+ assert.match(s,/\\i tests\/world-v2-b10-postgres\/live-validators-r18-20\.sql/);
  assert.match(s,/CREATE TRIGGER tokens_validate/);
  assert.match(s,/CREATE TRIGGER campaign_tool_validate_issue/);
  assert.ok(s.indexOf('I07 unpatched dual-campaign DM')<
