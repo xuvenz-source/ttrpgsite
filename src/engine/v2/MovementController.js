@@ -184,6 +184,54 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     void drain(g);
   }
  }
+ // R18-38: the same existing gesture pipeline is used for every raw
+ // cell crossing. Suppress unpaintable intermediate sampled/presented
+ // callbacks only when a browser event carries multiple coalesced samples.
+ function updatePointer(pointer,publish=true){
+   const g=active;
+   if(disposed||!g||g.closing||!validPoint(pointer))return false;
+   // Hysteresis is only for pointer input. A near-half-cell corner must
+   // not fill the path queue with alternating jitter cells.
+   const cell=['drag','touch','preview'].includes(g.mode)?
+    pointerIntentCell(pointer,g.intentCell):gridPoint(pointer);
+   if(!cell){
+    g.phase='path';reject(g,'path-limit');return false;
+   }
+   g.pointer={...pointer};g.intentCell={...cell};
+   if(g.pending.length===0&&g.blockedRetry&&
+    g.blockedRetry.from.x===g.approved.x&&
+    g.blockedRetry.from.y===g.approved.y&&
+    g.blockedRetry.to.x===cell.x&&g.blockedRetry.to.y===cell.y){
+    // Suppress ONLY the exact previously denied target at this
+    // unchanged server-approved origin. Preserve any queued turns.
+    return true;
+   }
+   g.blockedRetry=null;
+   if(!appendGestureBend(g.pending,cell,g.inFlightTarget??g.approved)){
+    g.phase='path';reject(g,'path-limit');return false;
+   }
+   if(g.pending.length){
+    state='Moving';
+    if(publish)emit(g,'sampled',{intended:cell});
+   }
+   // A synchronous caller-supplied grant check must approve the *entire*
+   // displacement. Default is false: no speculative hidden-wall travel.
+   if(publish){
+   let approvedPrediction=false;
+   try{approvedPrediction=canPredict({
+    mapId:g.mapId,selection:g.selection,from:{...g.approved},
+    to:cell,pointer:{...pointer},mode:g.mode,
+    environmentRevision:g.environmentRevision,
+    permissionGeneration:g.permissionGeneration
+   })===true}catch{}
+   if(approvedPrediction){
+    g.presented={...pointer};g.predicted=true;
+     emit(g,'presented',{predicted:true});
+   }
+   }
+   if(g.sessionId)void drain(g);
+   return true;
+ }
  return {
   get state(){return state},
   get active(){return !!active},
@@ -219,44 +267,16 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    });
    return true;
   },
-  updateGesture(pointer){
-   const g=active;
-   if(disposed||!g||g.closing||!validPoint(pointer))return false;
-   // Hysteresis is only for pointer input. A near-half-cell corner must
-   // not fill the path queue with alternating jitter cells.
-   const cell=['drag','touch','preview'].includes(g.mode)?
-    pointerIntentCell(pointer,g.intentCell):gridPoint(pointer);
-   if(!cell){
-    g.phase='path';reject(g,'path-limit');return false;
-   }
-   g.pointer={...pointer};g.intentCell={...cell};
-   if(g.pending.length===0&&g.blockedRetry&&
-    g.blockedRetry.from.x===g.approved.x&&
-    g.blockedRetry.from.y===g.approved.y&&
-    g.blockedRetry.to.x===cell.x&&g.blockedRetry.to.y===cell.y){
-    // Suppress ONLY the exact previously denied target at this
-    // unchanged server-approved origin. Preserve any queued turns.
-    return true;
-   }
-   g.blockedRetry=null;
-   if(!appendGestureBend(g.pending,cell,g.inFlightTarget??g.approved)){
-    g.phase='path';reject(g,'path-limit');return false;
-   }
-   if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}
-   // A synchronous caller-supplied grant check must approve the *entire*
-   // displacement. Default is false: no speculative hidden-wall travel.
-   let approvedPrediction=false;
-   try{approvedPrediction=canPredict({
-    mapId:g.mapId,selection:g.selection,from:{...g.approved},
-    to:cell,pointer:{...pointer},mode:g.mode,
-    environmentRevision:g.environmentRevision,
-    permissionGeneration:g.permissionGeneration
-   })===true}catch{}
-   if(approvedPrediction){
-    g.presented={...pointer};g.predicted=true;
-     emit(g,'presented',{predicted:true});
-   }
-   if(g.sessionId)void drain(g);
+  updateGesture(pointer){return updatePointer(pointer)},
+  updateGestureSamples(samples){
+   // Preserve every coalesced sample's ordered grid intent, including turns
+   // and reversals. Only the final sub-frame sample may be painted after
+   // this synchronous native pointer event, so only it needs the costly
+   // local collision/prediction check. Existing authority RPCs, permissions,
+   // blocked replies and canonical commits are unchanged.
+   if(!Array.isArray(samples)||!samples.length)return false;
+   for(let i=0;i<samples.length;i++)
+    if(!updatePointer(samples[i],i===samples.length-1))return false;
    return true;
   },
   endGesture(pointer){
