@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {validateR1823ReadOnlyEvidence}
  from '../scripts/release/validate-world-v2-r18-23-readonly-evidence.mjs';
@@ -110,4 +112,21 @@ test('R18-23 CLI without external evidence cannot contact remote or approve anyt
  assert.notEqual(result.status,0);
  assert.match(result.stderr,/R18-23 NO-GO/);
  assert.doesNotMatch(result.stderr,/token|password|Authorization:/i);
+});
+
+test('R18-23 never leaks malformed external evidence contents into CLI errors',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'r18-23-evidence-'));
+ const secret='TEST_ONLY_BEARER_TOKEN_SHOULD_NOT_APPEAR';
+ try{
+  const evidencePath=join(dir,'bad-evidence.json');
+  writeFileSync(evidencePath,'{ "access_token": "'+secret+'", malformed }');
+  const script=fileURLToPath(new URL(
+   '../scripts/release/validate-world-v2-r18-23-readonly-evidence.mjs',
+   import.meta.url));
+  const result=spawnSync(process.execPath,[script,'--evidence='+evidencePath],
+   {encoding:'utf8'});
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr,/R18-23 NO-GO: invalid evidence file/);
+  assert.equal((result.stdout+result.stderr).includes(secret),false);
+ }finally{rmSync(dir,{recursive:true,force:true})}
 });
