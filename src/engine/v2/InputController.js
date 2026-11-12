@@ -13,7 +13,8 @@ export function createInputController({
  keyboardTarget=typeof window==='undefined'?target:window,
  blurTarget=typeof window==='undefined'?keyboardTarget:window,
  setTimer=(fn,delay)=>setTimeout(fn,delay),
- clearTimer=handle=>clearTimeout(handle),keyboardIdleMs=90
+ clearTimer=handle=>clearTimeout(handle),keyboardIdleMs=90,
+ trace=worldV2Trace
 }={}){
  if(!target?.addEventListener||!target?.removeEventListener||
   !keyboardTarget?.addEventListener||!keyboardTarget?.removeEventListener||
@@ -21,7 +22,9 @@ export function createInputController({
   !controller||typeof pointFromEvent!=='function'||
   typeof resolveSelection!=='function'||
   typeof onPointerRelease!=='function'||
-  typeof onPointerStatus!=='function')throw Error('Invalid V2 input adapter');
+  typeof onPointerStatus!=='function'||
+  typeof trace?.count!=='function'||typeof trace?.begin!=='function')
+  throw Error('Invalid V2 input adapter');
  let mounted=false,activePointer=null,keyboardCursor=null,keyboardTimer=null;
  let pointerOffset=null,activePick=null,lastMoveEvent=null;
  // Listen on the owning document in capture phase. React delegates events
@@ -95,8 +98,8 @@ export function createInputController({
   lastMoveEvent=event;
   // R18-39: privacy-safe, opt-in aggregate counters. No raw points, ids,
   // URLs or input event payloads leave this local QA report.
-  const complete=worldV2Trace.enabled?
-   worldV2Trace.begin('input.pointer.processing'):null;
+  const complete=trace.enabled?
+   trace.begin('input.pointer.processing'):null;
   const samples=event.getCoalescedEvents?.();
   const points=[];
   for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
@@ -108,12 +111,12 @@ export function createInputController({
   }
   // Count batches without overflowing the bounded timeline. The values
   // describe input shape, not the private geometry or authorized route.
-  worldV2Trace.count('input.pointer.move-events');
-  worldV2Trace.count('input.pointer.samples',points.length);
+  trace.count('input.pointer.move-events');
+  trace.count('input.pointer.samples',points.length);
   if(points.length>1){
-   worldV2Trace.count('input.pointer.batches');
-   worldV2Trace.count('input.pointer.batched-samples',points.length);
-  }else if(points.length===1)worldV2Trace.count('input.pointer.single-events');
+   trace.count('input.pointer.batches');
+   trace.count('input.pointer.batched-samples',points.length);
+  }else if(points.length===1)trace.count('input.pointer.single-events');
   // One browser event cannot paint its intermediate coalesced positions.
   // Retain all grid turns and hysteresis samples in the controller, but
   // evaluate costly visual prediction only for the last visible pointer.
