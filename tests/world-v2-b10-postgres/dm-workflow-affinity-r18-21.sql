@@ -14,6 +14,9 @@ CREATE TABLE public.campaign_tool_templates(id uuid PRIMARY KEY,campaign_id uuid
 -- trajectory-aware collision trigger bodies from R18-19.
 \i /tmp/world_v2_b10_r18_18_legacy_triggers.sql
 \i /tmp/world_v2_b10_r18_19_latest_trajectory.sql
+-- Current deployed trigger hooks are source-real and require the V2
+-- transaction checkpoint helper; exact pg_get_functiondef is pinned.
+\i tests/world-v2-b10-postgres/live-v2-checkpoint-r18-21.sql
 \i tests/world-v2-b10-postgres/live-validators-r18-20.sql
 CREATE TRIGGER tokens_validate
  BEFORE INSERT OR UPDATE ON public.map_tokens
