@@ -12,6 +12,7 @@ const EVENTS=new Set([
  'movement.reject-phase','movement.reject-reason',
  'movement.canonical-handoff','movement.cancel-reason',
  'authority.begin.sample','authority.advance.sample','authority.commit.sample',
+ 'authority.finalize.sample',
  'movement.release-to-terminal.sample',
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
@@ -29,6 +30,7 @@ const EVENTS=new Set([
  'renderer.observer-discontinuity'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
+ 'authority.finalize',
  'authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
  'observer.frame-gap','render.frame']);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
@@ -72,7 +74,7 @@ export const isWorldV2TraceDetail=detail=>DETAILS.has(detail);
 export const isWorldV2TraceMetric=name=>METRICS.has(name);
 const cadenceMetrics=new Set([
  'authority.begin','authority.advance','authority.commit',
- 'movement.release-to-terminal'
+ 'authority.finalize','movement.release-to-terminal'
 ]);
 const latencyClass=ms=>ms>5000?'over-5s':ms>2000?'over-2s':
  ms>750?'over-750ms':ms>=250?'250-750ms':'under-250ms';
