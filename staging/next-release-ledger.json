@@ -469,7 +469,8 @@
       "name": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "B10-R18-29: default-OFF opt-in client atomic-finalization adapter. Closing final ≤8-target/24-cell batches use new R18-28 RPC only under VITE_WORLD_V2_ATOMIC_FINALIZE=1 and never in DM preview; earlier batches and default behavior retain existing Advance/Commit. Validate full exact approved prefix and Commit sequence. Only exact identical one-time replay on thrown transport outcome; NULL/revoke/malformed fail closed with no legacy fallback. No live activation; R18-28 and all previous SQL UNAPPLIED; Vercel flag absent. New 18 adversarial mock protocol tests plus reviewed original source checks. Multisigned user, linked CLI, private fog and performance gates remain NO-GO."
+      "note": "B10-R18-29: default-OFF opt-in client atomic-finalization adapter. Closing final ≤8-target/24-cell batches use new R18-28 RPC only under VITE_WORLD_V2_ATOMIC_FINALIZE=1 and never in DM preview; earlier batches and default behavior retain existing Advance/Commit. Validate full exact approved prefix and Commit sequence. Only exact identical one-time replay on thrown transport outcome; NULL/revoke/malformed fail closed with no legacy fallback. No live activation; R18-28 and all previous SQL UNAPPLIED; Vercel flag absent. New 18 adversarial mock protocol tests plus reviewed original source checks. Multisigned user, linked CLI, private fog and performance gates remain NO-GO.",
+      "linkedPullRequest": 133
     }
   ],
   "features": [
@@ -1929,7 +1930,8 @@
       "r05LinkedCliPreflightComplete": false,
       "realThreeAccountAcceptance": false,
       "liveSqlOrFrontendChange": false,
-      "releaseDecision": "STAGING_NO_GO"
+      "releaseDecision": "STAGING_NO_GO",
+      "pr": 133
     }
   },
   "lastRelease": {
