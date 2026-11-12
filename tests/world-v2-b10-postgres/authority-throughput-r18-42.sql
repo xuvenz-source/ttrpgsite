@@ -17,7 +17,8 @@ CREATE TEMP TABLE r42_samples(
 DO $r42_original$
 BEGIN
  PERFORM public.b08_assert(
-  to_regprocedure('public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)') IS NULL
+  to_regprocedure('public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)') IS NOT NULL
+  AND to_regprocedure('public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)') IS NULL
   AND to_regclass('forge_world_v2.observer_pending_b07') IS NULL
   AND (SELECT x=1 AND y=1 FROM public.map_tokens
    WHERE id='00000000-0000-4000-8000-000000000101'::uuid),
