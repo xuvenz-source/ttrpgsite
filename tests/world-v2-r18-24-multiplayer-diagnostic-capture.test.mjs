@@ -114,3 +114,54 @@ test('R18-24 board controls appear only on opt-in, with no extra RPC or listener
   assert.doesNotMatch(text,/service_role|request\.jwt\.claim/i);
  }
 });
+
+
+test('R18-39 aggregate counters are bounded, private, opt-in and copy-safe',()=>{
+ let now=0;
+ const trace=createWorldV2Trace({enabled:true,limit:16,now:()=>now});
+ const counters=[
+  'input.pointer.move-events','input.pointer.samples',
+  'input.pointer.batches','input.pointer.batched-samples',
+  'input.pointer.single-events','movement.prediction-checked',
+  'movement.prediction-skipped'
+ ];
+ for(const key of counters)trace.count(key);
+ trace.count('input.pointer.samples',65536);
+ trace.count('input.pointer.samples',65537);
+ trace.count('input.pointer.samples',-1);
+ trace.count('input.pointer.samples',3.2);
+ trace.count('private.geometry-map-id',2);
+ const done=trace.begin('movement.prediction-check');
+ now=0.8;done();
+ const evt=trace.begin('input.pointer.processing');
+ now=1.5;evt();
+ const snap=trace.snapshot();
+ assert.deepEqual(snap.events,[],
+  'high-frequency pointer evidence must not evict movement RPCs');
+ assert.equal(snap.counts['input.pointer.samples'],65537);
+ assert.deepEqual(Object.keys(snap.counts).sort(),counters.sort());
+ assert.equal(snap.durations['movement.prediction-check'].p50Ms,0.8);
+ assert.equal(snap.durations['input.pointer.processing'].p50Ms,0.7);
+ const report=createWorldV2DiagnosticReport(snap,{role:'dm',caseId:'collision'});
+ assert.equal(report.trace.counts['input.pointer.samples'],65537);
+ assert.equal(report.trace.durations['movement.prediction-check'].samples,1);
+ assert.ok(!JSON.stringify(report).includes('private.geometry-map-id'));
+ trace.clear();
+ assert.deepEqual(trace.snapshot().counts,{});
+ assert.deepEqual(trace.snapshot().durations,{});
+});
+test('R18-39 unknown counter labels and value tampering fail closed',()=>{
+ const baseline=snapshot();
+ assert.throws(()=>createWorldV2DiagnosticReport({
+  ...baseline,counts:{'input.pointer.samples':{},...baseline.counts}
+ }),/Invalid bounded/);
+ assert.throws(()=>createWorldV2DiagnosticReport({
+  ...baseline,counts:{'private.x':12,...baseline.counts}
+ }),/Invalid bounded/);
+ assert.throws(()=>createWorldV2DiagnosticReport({
+  ...baseline,durations:{
+   ...baseline.durations,
+   'input.pointer.unknown':{samples:1,p50Ms:1,p95Ms:1,maxMs:1}
+  }
+ }),/Invalid bounded/);
+});
