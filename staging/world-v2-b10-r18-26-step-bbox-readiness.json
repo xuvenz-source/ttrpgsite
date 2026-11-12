@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "step": "B10-R18-26",
+  "observedDate": "2026-11-12",
+  "sourcePR": 127,
+  "sourceHead": "9a0b726cf6e37251fc0f1b8032db65037a8a2742",
+  "sourceBranch": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+  "stagingBranch": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+  "decision": "STAGING_ONLY_SQL_NO_GO",
+  "productionFrontend": {
+    "gitSha": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+    "deployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "r18_25InstrumentationRolledBack": true,
+    "changeInThisStep": false
+  },
+  "productionDatabase": {
+    "migrationVersions": 83,
+    "latest": "20261109171247",
+    "r05Applied": false,
+    "changesInThisStep": false
+  },
+  "archivedR18_25Measurements": {
+    "predictionP95ms": 0.1,
+    "pointerP95ms": 0.2,
+    "advanceP95ms": 447.5,
+    "commitP95ms": 1133.7,
+    "browserAndDbSamplesTemporallyPaired": false
+  },
+  "optimization": {
+    "existingFunction": "forge_world_v2.step_allowed(jsonb,jsonb,double precision,double precision,double precision,double precision,double precision,double precision,integer,integer,boolean)",
+    "liveOriginalMD5": "6dcd75ce4719cd0bf6173f77f75fdf32",
+    "onlyAddsConservativeAabbSkip": true,
+    "geometryThresholdChanged": false,
+    "privateACLChanged": false,
+    "observerDeliveryChanged": false,
+    "rootCauseFullyResolved": false,
+    "pendingMeasuredCIResult": true,
+    "testsExpectedParityCases": 4860,
+    "source": "supabase/candidates/world_v2_r18_26_step_bbox_prefilter.sql",
+    "pgTest": "tests/world-v2-b10-postgres/step-bbox-r18-26.sql",
+    "nodeTest": "tests/world-v2-r18-26-step-prefilter-security.test.mjs"
+  },
+  "blockers": {
+    "linkedAuthenticatedSupabaseCLIMigrationFetch": false,
+    "exactR05OnlyLinkedDryRun": false,
+    "independentAuthenticatedDMPlayer1Player2": false,
+    "fogPrivateRecipientAcceptance": false,
+    "approvedSqlInstallation": false,
+    "approvedFrontendDeployment": false
+  },
+  "unchanged": {
+    "R05Frozen": true,
+    "R1817Unversioned": true,
+    "correctedR1819Unversioned": true,
+    "R1820Unversioned": true,
+    "liveSqlUnchanged": true,
+    "mainUnchanged": true,
+    "freeTierOnly": true
+  }
+}
