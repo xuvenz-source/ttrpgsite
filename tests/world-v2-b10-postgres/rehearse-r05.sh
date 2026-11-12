@@ -5,6 +5,12 @@ set -euo pipefail
 [[ "${WORLD_V2_B10_ISOLATED:-}" == "yes" ]] || { echo "R05 ephemeral marker missing" >&2; exit 64; }
 [[ "${PGHOST:-}" == "localhost" || "${PGHOST:-}" == "127.0.0.1" ]] || { echo "R05 remote database refused" >&2; exit 64; }
 [[ "${PGDATABASE:-}" == "world_v2_b10" ]] || { echo "R05 caller database refused" >&2;exit 64; }
+# Match the R18-22 fixture's defense against external/project DSNs.
+# Only the CI-provided local PostgreSQL 17 service is acceptable.
+[[ -z "${PGSERVICE:-}" && -z "${PGSERVICEFILE:-}" &&
+   -z "${DATABASE_URL:-}" && -z "${SUPABASE_DB_URL:-}" ]] || {
+ echo "R05 unsafe external connection override refused" >&2;exit 64;
+}
 
 r05db='world_v2_b10_r05'
 # The CI PostgreSQL service is fresh and only for the GitHub Actions job.
@@ -26,5 +32,9 @@ python3 tests/world-v2-b07-postgres/extract_viewer_authority.py > /tmp/world_v2_
 python3 tests/world-v2-b10-postgres/extract_original_commit_r05.py > /tmp/world_v2_b10_r05_original_commit.sql
 r05_psql -f /tmp/world_v2_b10_r05_core.sql
 r05_psql -f /tmp/world_v2_b10_r05_viewers.sql
+# R18-42: profile exact LIVE baseline before any R05 SQL is overlaid.
+# Benchmark is wrapped in BEGIN / ROLLBACK with a post-rollback assertion.
+# The fixture's private observer publisher is intentionally test-only.
+r05_psql -f tests/world-v2-b10-postgres/authority-throughput-r18-42.sql
 r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql
 echo 'B10-R05 PASS: isolated release migration, atomic rollback and manual after-commit restoration'
