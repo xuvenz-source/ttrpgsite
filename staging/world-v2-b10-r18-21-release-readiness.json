@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "step": "B10-R18-21",
+  "date": "2026-11-12",
+  "releaseDecision": "STAGING_NO_GO",
+  "branch": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+  "parentPr": 123,
+  "parentSha": "60e4016d0934b42d6fc3342defa5a670ead9afa5",
+  "liveFrontend": {
+    "release": "R18-15",
+    "deployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ"
+  },
+  "mainSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "liveMigrations": 83,
+  "liveR05Applied": false,
+  "guarded700msEnabled": false,
+  "stagedChanges": [
+    "DM source-real map-upload/calibration/party-routing compatibility, W01-W17 rollback",
+    "R18-19 map guard rebuilt from exact live token/tool collision definitions, preserving World V2 commit_allows_piece_v2",
+    "Source-real private signed commit checkpoint C01-C10 rollback for tokens and tools",
+    "Node test ensuring only intended map-transfer guards differ from live source"
+  ],
+  "productionCollisionFunctionMd5": {
+    "token": "7e652f0f2334980ccc724e1748d334ba",
+    "tool": "771ea1716498a43210661532f9c24977",
+    "authorizedCheckpoint": "7298cb6051ba259a9c5be1963e1a46a5"
+  },
+  "partyRpcMd5": "2e7de20ead8eb0dd156fe4e6f2f08bb7",
+  "tests": {
+    "dmWorkflows": 17,
+    "signedCheckpoint": 10,
+    "disposableRollback": true,
+    "sourceReal": true
+  },
+  "sqlCandidateApplied": false,
+  "clientClearanceEnabled": false,
+  "releaseDependencies": [
+    "actual pinned Supabase CLI linked read-only 83-body reconciliation",
+    "separate explicit user approval for frozen R05",
+    "post-R05 functions re-read and newer candidate migrations versioned only through pinned CLI",
+    "full R05 then wall/map/affinity combined source-real SQL transactional rehearsal",
+    "separate user approval for follow-on SQL and frontend 0.10 activation",
+    "authenticated DM,P1,passive P2 LOS fog and movement convergence QA"
+  ],
+  "handoff": "docs/testing/world-v2-r18-21-dm-workflow-checkpoint-release-2026-11-12.md"
+}
