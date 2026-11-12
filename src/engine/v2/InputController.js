@@ -94,13 +94,21 @@ export function createInputController({
    event===lastMoveEvent)return;
   lastMoveEvent=event;
   const samples=event.getCoalescedEvents?.();
+  const points=[];
   for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
    const p=point(sample);
-   if(p)controller.updateGesture({
+   if(p)points.push({
     x:p.x+(pointerOffset?.x??0),
     y:p.y+(pointerOffset?.y??0)
    });
   }
+  // One browser event cannot paint its intermediate coalesced positions.
+  // Retain all grid turns and hysteresis samples in the controller, but
+  // evaluate costly visual prediction only for the last visible pointer.
+  // Older adapters/test doubles retain the original sequential API.
+  if(points.length>1&&typeof controller.updateGestureSamples==='function')
+   controller.updateGestureSamples(points);
+  else for(const p of points)controller.updateGesture(p);
   if(!controller.active)release();
   event.preventDefault?.();
  };
