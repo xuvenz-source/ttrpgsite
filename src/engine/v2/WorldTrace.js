@@ -11,6 +11,7 @@ const EVENTS=new Set([
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
  'movement.reject-phase','movement.reject-reason',
  'movement.canonical-handoff','movement.cancel-reason',
+ 'movement.prediction','movement.presentation',
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','observer.frame-accepted',
@@ -60,7 +61,8 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'session-cancelled','authority-error','reused-commit',
  'keyboard-unmount','map-change','dispose',
  'over-750ms','over-2s','over-5s','coalesced','drained','discarded',
- 'covered','fallback','origin-mismatch','backlog']);
+ 'covered','fallback','origin-mismatch','backlog',
+ 'granted','denied','snap']);
 // Privacy allowlist readers for local QA export. No additional trace data.
 export const isWorldV2TraceEvent=name=>EVENTS.has(name);
 export const isWorldV2TraceDetail=detail=>DETAILS.has(detail);
