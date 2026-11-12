@@ -446,7 +446,9 @@
       "name": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-26: candidate private V2 step_allowed conservative 0.0001-cell padded segment AABB early rejection, preserving original SAT and R18-17 clearance. Differential test clones exact original live definition, compares 4860 normal/hostile cases and rolls back inside isolated fully staged post-R05 PostgreSQL. R18-25 instrumented frontend was rolled back and is NOT included. Real signed DM/P1/P2, pinned linked CLI, SQL release remain BLOCKED. Live frontend R18-24; 83 DB migrations; no live SQL/merge/deploy."
+      "note": "R18-26: candidate private V2 step_allowed conservative 0.0001-cell padded segment AABB early rejection, preserving original SAT and R18-17 clearance. Differential test clones exact original live definition, compares 4860 normal/hostile cases and rolls back inside isolated fully staged post-R05 PostgreSQL. R18-25 instrumented frontend was rolled back and is NOT included. Real signed DM/P1/P2, pinned linked CLI, SQL release remain BLOCKED. Live frontend R18-24; 83 DB migrations; no live SQL/merge/deploy.",
+      "linkedPullRequest": 130,
+      "ci": "PASS at source SHA b4fd6e0b: 1015/1015 Node, CodeQL, isolated authority and combined PG17. 4860/4860 reference collision parity; 13/13 PG gates. 100-remote-wall 40-call synthetic benchmark original 26.50ms vs candidate 9.91ms, advisory only. Live unchanged."
     }
   ],
   "features": [
@@ -1851,6 +1853,26 @@
       "lastReadOnlyDbVersionCount": 83,
       "userAuthFogSecurityAccepted": false,
       "priorReadyDeployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ"
+    },
+    "r1826ServerOptimization": {
+      "draftPr": 130,
+      "testedSourceSha": "b4fd6e0b69f8c3b0f8ca86fa71de837c670f6c71",
+      "candidateSql": "supabase/candidates/world_v2_r18_26_step_bbox_prefilter.sql",
+      "originalFunctionMD5": "6dcd75ce4719cd0bf6173f77f75fdf32",
+      "combinedPostgresRun": 43157643591,
+      "parityCases": 4860,
+      "parityMismatches": 0,
+      "rollbackOriginalFunctionConfirmed": true,
+      "benchmarkAdvisoryMs": {
+        "original40Calls": 26.5,
+        "candidate40Calls": 9.91,
+        "remoteWalls": 100
+      },
+      "result": "ISOLATED_TESTS_PASS_LIVE_SQL_NO_GO",
+      "sqlApplied": false,
+      "frontendDeployed": false,
+      "authenticationGate": "pending real signed DM/P1/P2",
+      "linkedCliGate": "pending pinned v2.81.3"
     }
   },
   "lastRelease": {
