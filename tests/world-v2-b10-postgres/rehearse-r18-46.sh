@@ -58,6 +58,55 @@ r46_psql -f tests/world-v2-b10-postgres/recoverable-install-r18-46.sql
 # Contain the optional RPC, restore R05's 4 bodies, then our 5 originals.
 r46_psql -f supabase/release-recovery/world_v2_b10_r18_45_atomic_containment.sql
 r46_psql -f supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql
+
+# Adversarial real-SQL injection: inside a throwaway transaction, tamper
+# with one installed function's security-relevant search_path and execute
+# the EXACT recovery DO body. It MUST abort on the installed-source digest
+# mismatch, without restoring any of the five sources or committing the
+# tamper. This is NOT a production fault injection.
+python3 - <<'PY'
+from pathlib import Path
+body=Path('supabase/release-recovery/world_v2_b10_r18_46_restore_original_geometry.sql').read_text()
+start=body.index('DO $r46_recover
+r46_psql -f tests/world-v2-b10-postgres/verify-recovered-r18-46.sql
+
+echo 'R18-46 PASS: guarded capture BEFORE R17, exact 5+4 restored originals AFTER COMMIT, two safer R20 guard triggers retained; isolated PG17'
+)
+end=body.index('END $r46_recover$;',start)+len('END $r46_recover$;')
+assert body.count('DO $r46_recover
+r46_psql -f tests/world-v2-b10-postgres/verify-recovered-r18-46.sql
+
+echo 'R18-46 PASS: guarded capture BEFORE R17, exact 5+4 restored originals AFTER COMMIT, two safer R20 guard triggers retained; isolated PG17'
+)==1
+assert body.count('END $r46_recover$;')==1
+preamble="""\\set ON_ERROR_STOP on
+BEGIN;
+SET LOCAL search_path='';
+ALTER FUNCTION forge_world_v2.step_allowed(
+jsonb,jsonb,double precision,double precision,double precision,double precision,
+double precision,double precision,integer,integer,boolean)
+SET search_path TO 'pg_catalog';
+"""
+Path('/tmp/world_v2_b10_r46_drift_probe.sql').write_text(preamble+body[start:end]+"\nROLLBACK;\n")
+PY
+if r46_psql -f /tmp/world_v2_b10_r46_drift_probe.sql > /tmp/world_v2_b10_r46_drift.log 2>&1; then
+ echo 'R46 SECURITY FAILURE: unreviewed changed function was accepted by recovery' >&2; exit 1
+fi
+grep -F 'R46 recovery STOP: source, ACL, or security mode drift' /tmp/world_v2_b10_r46_drift.log >/dev/null || {
+ echo 'R46 SECURITY FAILURE: recovery rejected for unexpected reason' >&2
+ tail -n 8 /tmp/world_v2_b10_r46_drift.log >&2
+ exit 1
+}
+# The failed ALTER+recovery transaction was rolled back by PostgreSQL.
+# All five replacements are STILL installed and sealed, unmodified.
+r46_replacements="$(r46_psql -Atc \
+"SELECT count(*) FROM forge_world_v2.motion_r46_source_backup b
+ WHERE md5(pg_get_functiondef(to_regprocedure(b.signature)))=b.installed_digest")"
+[[ "$r46_replacements" == "5" ]] || {
+ echo 'R46 SECURITY FAILURE: failed recovery left some function sources altered' >&2; exit 1
+}
+echo 'R18-46 adversarial recovery: altered source REFUSED and all five installed definitions remained unchanged'
+
 r46_psql -f supabase/release-recovery/world_v2_b10_r18_46_restore_original_geometry.sql
 r46_psql -f tests/world-v2-b10-postgres/verify-recovered-r18-46.sql
 
