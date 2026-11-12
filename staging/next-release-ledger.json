@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -441,6 +441,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-24 staged opt-in, clipboard-only World V2 diagnostic UI for nontechnical DM/P1/passive-P2 testers. Uses existing whitelisted bounded WorldTrace snapshot; exports no IDs, secret signed sight, coordinates, auth, telemetry or RPCs. Reports remain self-labeled and release NO-GO; real linked authenticated CLI and three-browser Auth/Realtime/LOS/fog/revocation remain unexecuted. No frontend/SQL production deployment.",
       "linkedPullRequest": 127
+    },
+    {
+      "name": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-26: candidate private V2 step_allowed conservative 0.0001-cell padded segment AABB early rejection, preserving original SAT and R18-17 clearance. Differential test clones exact original live definition, compares 4860 normal/hostile cases and rolls back inside isolated fully staged post-R05 PostgreSQL. R18-25 instrumented frontend was rolled back and is NOT included. Real signed DM/P1/P2, pinned linked CLI, SQL release remain BLOCKED. Live frontend R18-24; 83 DB migrations; no live SQL/merge/deploy."
     }
   ],
   "features": [
@@ -1790,7 +1796,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1816,9 +1822,10 @@
       "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
       "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
       "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
-      "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12"
+      "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+      "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-24 retains all prior R18-23 source branches and release gates. Browser QA capture is opt-in via existing worldV2Trace=1, local clipboard only and no new Supabase requests/privileges. Redacted trace labels are SELF-REPORTED, never authenticate player identities or fog/Realtime security. Read-only live baseline 83 migrations, frozen R05 not applied, protected sources 7/7. Real pinned authenticated CLI v2.81.3 fetch/83-hash + R05-only dry-run, and independently signed DM/P1/passive-P2 A01-A12 must pass before separate frontend and SQL authorizations. NO-GO / no merge/deploy/paid-tier/700ms recovery. QA-only frontend canary PR #128 is NOW deployed READY at exact SHA 7326c45d (Vercel dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN) on top of previously live R18-15 only, independently excluding R18-16+ collision/SQL. Full staged R18-24 remains NO-GO, R05 absent, real signed DM/P1/P2 acceptance not yet demonstrated.",
+    "stagePolicy": "B10-R18-26 cumulative source preserves R18-24, R05 frozen original SQL, R18-17 wall clearance, corrected R18-19 checkpoint-aware map guards and R18-20 affinity. R18-25 is a separate rolled-back diagnostic-only frontend (excluded). New UNVERSIONED R18-26 private step_allowed bounding-box skip remains isolated, checked against exact source baseline and 4860-case differential parity in roll-backed PG17. Live is R18-24 canary only, R05 absent, 83 migration versions. No production SQL, no frontend promotion or main merge, no guarded recovery, no paid tier. Authenticated pinned CLI history/strict R05-only dry run and independent real DM/P1/passive-P2 fog/Realtime/revocation still mandatory. RELEASE NO-GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": [],
     "frontendQaOnlyLiveCanary": {
