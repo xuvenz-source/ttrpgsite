@@ -232,17 +232,31 @@ test('R18-43 runtime activation is default-OFF and forbidden in DM preview',()=>
 });
 
 
-test('R18-43 a previously committed route may finalize a fully-blocked last batch only with server canonical receipt',async()=>{
- const h=harness({onFinalize:req=>ack(req,{blocked:true,accepted:[],
-  endpoint:{...req.from},noMotion:undefined})});
+test('R18-43 previously approved path with blocked terminal batch requires canonical receipt',async()=>{
+ const first=deferred();
+ const h=harness({
+  onAdvance:req=>req.seq===1?first.promise:{
+   version:2,sessionId:SID,seq:req.seq,blocked:false,
+   accepted:expandGestureRoute(req.from,req.targets)
+  },
+  onFinalize:req=>ack(req,{blocked:true,accepted:[],
+   endpoint:{...req.from},noMotion:undefined})
+ });
  try{
   h.begin();await tick();
   h.controller.updateGesture({x:2,y:1});await tick();
-  // First advance is completed; final collision must commit its prior path.
+  assert.equal(h.calls.advance.length,1);
+  // Last cell is supplied WHILE first Advance is in flight. Its
+  // new final batch cannot start until the first ACK, after release.
   h.controller.updateGesture({x:3,y:1});
-  const result=await h.controller.endGesture();
+  const pending=h.controller.endGesture();
+  assert.equal(h.calls.finalize.length,0);
+  first.resolve({version:2,sessionId:SID,seq:1,blocked:false,
+   accepted:[{x:2,y:1}]});
+  const result=await pending;
   assert.equal(result.status,'committed');
   assert.deepEqual(result.endpoint,{x:2,y:1});
+  assert.equal(result.noMotion,undefined);
   assert.equal(h.calls.advance.length,1);
   assert.equal(h.calls.finalize.length,1);
   assert.equal(h.calls.commit.length,0);
