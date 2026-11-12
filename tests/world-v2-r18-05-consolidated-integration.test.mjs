@@ -78,6 +78,16 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  };
  assert.equal(approvedCoalescedController.priorReviewedBlobSha,
   '48070f99f818bc7669f4fc0d6f64335129d6f9cc');
+ // R18-39 adds only opt-in local QA counters and CPU timing: no authority
+ // wire, server contract, signed grant, fog, or collision-policy edits.
+ const approvedLocalMetrics={
+  path:approvedCoalescedController.path,
+  priorReviewedBlobSha:approvedCoalescedController.reviewedBlobSha,
+  workPackage:'B10-R18-39-LOCAL-BROWSER-METRICS',
+  reviewedBlobSha:'bc83ad6dbb3543b538864440484b12d46494c6a0'
+ };
+ assert.equal(approvedLocalMetrics.priorReviewedBlobSha,
+  '389105a3b20b97fc66258da65c7adb4c4e5570c9');
  // The keyboard source is transplanted byte-for-byte from the reviewed
  // R18-34 signed-sight change, not from the cumulative SQL staging branch.
  const approvedLiveKeyboardAmendment={
@@ -102,8 +112,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedCoalescedController.path?
-   approvedCoalescedController.reviewedBlobSha:
+  assert.equal(checked,path===approvedLocalMetrics.path?
+   approvedLocalMetrics.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
    path===approvedLiveKeyboardAmendment.path?
    approvedLiveKeyboardAmendment.reviewedBlobSha:sha,
