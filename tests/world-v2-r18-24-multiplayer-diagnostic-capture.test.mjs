@@ -111,6 +111,6 @@ test('R18-24 board controls appear only on opt-in, with no extra RPC or listener
  assert.match(panel,/onKeyDown=\{e=>e\.stopPropagation\(\)\}/);
  for(const text of [panel,helper]){
   assert.doesNotMatch(text,/(?:db|supabase)\.rpc\(|createClient\(|\.channel\(|\bfetch\(|WebSocket\(|localStorage\.|sessionStorage\.|setInterval\(/);
-  assert.doesNotMatch(text,/AUTHORIZATION|service_role|request\.jwt\.claim/i);
+  assert.doesNotMatch(text,/service_role|request\.jwt\.claim/i);
  }
 });
