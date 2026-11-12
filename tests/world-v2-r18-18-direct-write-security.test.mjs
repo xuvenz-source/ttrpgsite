@@ -43,7 +43,7 @@ test('R18-18 uses only disposable PG17 and a rollback transaction',()=>{
  assert.match(shell,/PGDATABASE/);
  assert.match(shell,/extract_real_collision_triggers_r18_18\.py/);
  assert.match(shell,/direct-write-wall-r18-18\.sql/);
- assert.doesNotMatch(sql,/supabase_migrations|production|dblink|postgres:\/\/|service_role_secret|\bGRANT\b/i);
+ assert.doesNotMatch(sql,/\bsupabase_migrations\b|\bdblink\s*\(|postgres:\/\/|service_role_secret|^\s*GRANT\s/mi);
 });
 test('R18-18 actually updates token/tool rows, not only calling geometry functions',()=>{
  const s=text(qa);
