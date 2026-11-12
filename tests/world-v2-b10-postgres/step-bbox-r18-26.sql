@@ -16,7 +16,7 @@ END $r26_initial$;
 -- Freeze the unmodified source in an independent internal name BEFORE the
 -- candidate replaces it. This is not a permissive shim.
 SELECT replace(pg_get_functiondef(
- 'forge_world_v2.step_allowed(jsonb,jsonb,double precision,double precision,double precision,double precision,double precision,integer,integer,boolean)'::regprocedure),
+ 'forge_world_v2.step_allowed(jsonb,jsonb,double precision,double precision,double precision,double precision,double precision,double precision,integer,integer,boolean)'::regprocedure),
  'FUNCTION forge_world_v2.step_allowed(',
  'FUNCTION forge_world_v2.step_allowed_reference_r18_26(') AS source
 \gexec
