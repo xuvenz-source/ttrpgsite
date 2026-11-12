@@ -60,8 +60,9 @@ test('R18-19 source-real public RPC and trajectory validation use actual row wri
   'move_map_group','r19_expect_token_map','r19_expect_tool_map',
   'UPDATE public.campaign_tool_issues SET map_id=','UPDATE public.map_tokens SET map_id=',
   'SET LOCAL ROLE authenticated','CREATE POLICY',
-  'GET STACKED DIAGNOSTICS','REVOKE ALL'])assert.ok(
+  'GET STACKED DIAGNOSTICS'])assert.ok(
   s.includes(needle),needle);
+ assert.match(source(extractor),/REVOKE ALL ON FUNCTION forge_visibility\\.validate_piece_trajectory/);
  assert.equal((s.match(/SET LOCAL ROLE authenticated;/g)||[]).length,3);
  assert.equal((s.match(/RESET ROLE;/g)||[]).length,3);
  assert.match(s,/^BEGIN;/m);assert.match(s,/^ROLLBACK;\s*$/m);
