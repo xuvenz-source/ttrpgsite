@@ -202,9 +202,17 @@ BEGIN
  ON CONFLICT(viewer_id) DO UPDATE SET status=excluded.status;
  PERFORM public.r20_issue_legacy(hidden,actor,token,'token',scene,5);
  SELECT count(*),coalesce(max(id),0) INTO n,previous_message_id FROM realtime.b07_outbox;
+ SELECT public.advance_map_motion_session_path(hidden,
+   '[{"x":1,"y":1},{"x":2,"y":1}]'::jsonb,6) INTO published;
+ RAISE NOTICE 'R18-20 S12 diagnostic: accepted %, new events %, P2 new %, DM hide new %',
+  published,
+  (SELECT count(*) FROM realtime.b07_outbox WHERE id>previous_message_id),
+  (SELECT count(*) FROM realtime.b07_outbox WHERE id>previous_message_id AND
+   topic='forge-observer:'||test_map::text||':'||other_player::text),
+  (SELECT count(*) FROM realtime.b07_outbox WHERE id>previous_message_id AND
+   topic='forge-observer:'||test_map::text||':'||dm::text AND message->>'action'='hide');
  PERFORM public.b08_assert(
-  public.advance_map_motion_session_path(hidden,
-   '[{"x":1,"y":1},{"x":2,"y":1}]'::jsonb,6) AND
+  published AND
   (SELECT count(*)=n+1 FROM realtime.b07_outbox) AND
   (SELECT count(*)=0 FROM realtime.b07_outbox WHERE id>previous_message_id AND
     topic='forge-observer:'||test_map::text||':'||other_player::text) AND
