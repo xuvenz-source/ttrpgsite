@@ -397,7 +397,8 @@
       "name": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-18 authentic historical source-extracted legacy token + mounted tool BEFORE UPDATE collision triggers, 38 hostile direct-write wall/door/permission assertions + four role-change/map-transfer checks under disposable PG17 BEGIN/ROLLBACK. No live DB writes; full production RLS, alternate RPC and private observer still pending."
+      "note": "R18-18 authentic historical source-extracted legacy token + mounted tool BEFORE UPDATE collision triggers, 38 hostile direct-write wall/door/permission assertions + four role-change/map-transfer checks under disposable PG17 BEGIN/ROLLBACK. No live DB writes; full production RLS, alternate RPC and private observer still pending.",
+      "linkedPullRequest": 121
     }
   ],
   "features": [
@@ -1282,7 +1283,8 @@
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
         "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql"
       ],
-      "note": "Live R18-15 unchanged. Frozen R05 unapplied. 42 PG17 test assertions are rollback only and do NOT replicate real policy RLS or authenticated P1/P2. New SQL and frontend activation need separate explicit approvals and actual pinned CLI 83-version reconciliation."
+      "note": "Live R18-15 unchanged. Frozen R05 unapplied. 42 PG17 test assertions are rollback only and do NOT replicate real policy RLS or authenticated P1/P2. New SQL and frontend activation need separate explicit approvals and actual pinned CLI 83-version reconciliation.",
+      "linkedPullRequest": 121
     }
   ],
   "databaseDependencies": [
