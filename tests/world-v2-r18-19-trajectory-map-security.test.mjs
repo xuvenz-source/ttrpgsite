@@ -67,8 +67,12 @@ test('R18-19 source-real public RPC and trajectory validation use actual row wri
  assert.equal((s.match(/RESET ROLE;/g)||[]).length,3);
  assert.match(s,/^BEGIN;/m);assert.match(s,/^ROLLBACK;\s*$/m);
  const a=[...s.matchAll(/'A(\d\d) /g)].map(x=>Number(x[1]));
+ const b=[...s.matchAll(/'B(\d\d) /g)].map(x=>Number(x[1]));
  const l=[...s.matchAll(/'L(\d\d) /g)].map(x=>Number(x[1]));
  assert.deepEqual(a,Array.from({length:22},(_,i)=>i+1));
+ assert.deepEqual(b,[1,2,3]);
+ assert.ok(s.indexOf('unpatched latest held-tool shortcut')<s.indexOf('CREATE OR REPLACE FUNCTION public.r19_scene'));
+ assert.ok(s.indexOf('R18-19: three negative-control')<s.indexOf('CREATE OR REPLACE FUNCTION public.r19_scene'));
  assert.deepEqual(l,Array.from({length:7},(_,i)=>i+1));
 });
 test('R18-19 no unsafe execution or broad auth surfaces',()=>{
