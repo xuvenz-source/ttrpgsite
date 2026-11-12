@@ -57,6 +57,16 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQueueAmendment.priorReviewedBlobSha,
   '0603e7b42ebd937a41e2a65e8b13089aa496dfba');
  assert.equal(approvedQueueAmendment.workPackage,'B10-R18-31-LIVE-QUEUE-ONLY');
+ // R18-32 is a separate reviewed, client-only backpressure/denial
+ // amendment ON TOP of the exact live R18-31 queue canary.
+ const approvedCollisionInputAmendment={
+  path:approvedQueueAmendment.path,
+  priorReviewedBlobSha:approvedQueueAmendment.reviewedBlobSha,
+  workPackage:'B10-R18-32-COLLISION-INPUT',
+  reviewedBlobSha:'1e209133111d0c85339d51281e786c50595ed386'
+ };
+ assert.equal(approvedCollisionInputAmendment.priorReviewedBlobSha,
+  '347d3ac8cd9992027d5a67340ae45220cccd8da5');
  // R18-24 adds only a query-opted-in QA report button to the previously
  // frozen board. The two insertion sites were compared exactly to the
  // R18-23 source. Movement/visibility authority code is unchanged.
@@ -71,8 +81,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedQueueAmendment.path?
-   approvedQueueAmendment.reviewedBlobSha:
+  assert.equal(checked,path===approvedCollisionInputAmendment.path?
+   approvedCollisionInputAmendment.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:sha,
    'R17-reviewed source drifted without an exact audited amendment: '+path);
  }
