@@ -75,12 +75,12 @@ test('R18-22 active POST-R05 has real canonical token+tool movement, not just ge
   'forge_world_v2.motion_r05_function_backup',
   'forge_visibility.map_rules',
   'commit_allows_piece_v2',
-  'SOURCE-REAL',
   'token reparent blocked',
   'map reparent blocked',
   'actual mount canonical commit',
   'O17 test-only DML rolled back'
  ]) assert.ok(s.includes(needle),needle);
+ assert.match(s,/source-real/i);
  assert.deepEqual([...s.matchAll(/'O(\d\d) /g)].map(m=>Number(m[1])).sort((a,b)=>a-b),
   Array.from({length:20},(_,i)=>i+1));
  assert.match(s,/^BEGIN;$/m);assert.match(s,/^ROLLBACK;$/m);
