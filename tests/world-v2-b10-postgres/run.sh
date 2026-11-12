@@ -69,6 +69,11 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/campaign-affinity-r18-
 # positive accepted preview and negative owner/scene/rules/held/expiry paths.
 # Realtime and LOS are intentionally PRIVATE test stubs, never production.
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/legacy-session-r18-20.sql
+# R18-21 DM workflow compatibility: source-real live move_entire_party_to_map
+# plus actual validator/guard SQL, map INSERT as upload/clone, grid calibration,
+# active-map routing/assignment, owner denial and no campaign_id reparent.
+# Distinct independent PG17 BEGIN/ROLLBACK; never connect to live database.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/dm-workflow-affinity-r18-21.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
