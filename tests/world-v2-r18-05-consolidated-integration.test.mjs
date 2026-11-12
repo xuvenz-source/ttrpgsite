@@ -45,10 +45,23 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedAmendment.originalR17,
   'a88c26578a23d4da8d06263d04f2789248f1b942');
  assert.equal(approvedAmendment.workPackage,'B10-R18-15');
+ // R18-24 adds only a query-opted-in QA report button to the previously
+ // frozen board. The two insertion sites were compared exactly to the
+ // R18-23 source. Movement/visibility authority code is unchanged.
+ const approvedQaAmendment={
+  path:'src/engine/v2/WorldV2Board.jsx',
+  originalR17:frozen['src/engine/v2/WorldV2Board.jsx'],
+  workPackage:'B10-R18-24',
+  reviewedBlobSha:'0a5131f054acb98afe5471e2a66cd78c29312f5e'
+ };
+ assert.equal(approvedQaAmendment.originalR17,
+  'ae0adfa7d02de9f0bbc75a0e1e8972ef860537cb');
+ assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
   assert.equal(checked,path===approvedAmendment.path?
-   approvedAmendment.reviewedBlobSha:sha,
+   approvedAmendment.reviewedBlobSha:
+   path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:sha,
    'R17-reviewed source drifted without an exact audited amendment: '+path);
  }
  const runtime=readFileSync(new URL(
