@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -464,6 +464,12 @@
       "note": "R18-28: optional unversioned post-R05 public finalize_world_motion_v2 RPC that invokes old actor-bound Advance then canonical Commit inside a SQL transaction, with subtransaction rollback on failure, server-derived only endpoint, private exact-request receipt and replay reauthorization. New public SECURITY DEFINER EXECUTE restricted to authenticated, no private schema grants. R18-24 remains production; R05 and all R18-17/19/20/26/27 candidates unapplied; client does not call new RPC. 16 isolated PG17 assertions incl blocked prefix, ACL, queued hide, injected Commit failure rollback, permission-generation revocation, plus Node contract tests. Full SQL and frontend release NO-GO.",
       "linkedPullRequest": 132,
       "isolatedEvidence": "Post-R05 disposable PG17 20 ordered + R26 4860/13 + R27 13 + R28 16 assertions all PASS at source a2ca4458; Node 1028/1028 + Vite passed. New cached receipt revoked after permission generation change; failed canonical token write rolls back Advance/outbox; wholly blocked final step rolls back. Full exact PR head and CodeQL still required. Production untouched."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-29: default-OFF opt-in client atomic-finalization adapter. Closing final ≤8-target/24-cell batches use new R18-28 RPC only under VITE_WORLD_V2_ATOMIC_FINALIZE=1 and never in DM preview; earlier batches and default behavior retain existing Advance/Commit. Validate full exact approved prefix and Commit sequence. Only exact identical one-time replay on thrown transport outcome; NULL/revoke/malformed fail closed with no legacy fallback. No live activation; R18-28 and all previous SQL UNAPPLIED; Vercel flag absent. New 18 adversarial mock protocol tests plus reviewed original source checks. Multisigned user, linked CLI, private fog and performance gates remain NO-GO."
     }
   ],
   "features": [
@@ -1813,7 +1819,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1842,9 +1848,10 @@
       "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
       "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
       "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
-      "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12"
+      "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+      "stage/world-v2-b10-r18-29-finalization-client-2026-11-12"
     ],
-    "stagePolicy": "R18-28 retains ALL frozen and unversioned staged post-R05 SQL and release gates. One new optional public SECURITY DEFINER finalize RPC, explicitly authenticated-only, calls exact existing Advance+Commit in one DB txn and journals actor-bound exact retry. Inner subtransaction rolls back Advance/outbox if canonical Commit fails; wholly blocked means NULL with no mutation; blocked prefix commits server-approved endpoint only. Existing frontend NOT updated and does not call new API. Strict R05 linked authenticated CLI history/R05-only dry-run, genuine signed DM/P1/passive-P2 LOS/fog/recipient ACL/revocation tests and full post-SQL readiness remain mandatory. No Vercel or Supabase production deployment, no promotion, no 700ms guarded recovery, no paid tiers. RELEASE NO-GO.",
+    "stagePolicy": "B10-R18-29 continues cumulative R18-28 with ONLY a default-OFF client terminal adapter and 18 adversarial tests. No backend installed, no Vercel deployment, no main merge. VITE_WORLD_V2_ATOMIC_FINALIZE absent from existing Vercel envs, preview forbidden, canonical final ACK accepted only after exact prefix/seq/end-point validation. One identical retry after transport loss and NO blind legacy fallbacks. Supabase production still 83 migrations, frozen R05 and later candidates unapplied; Vercel live R18-24. The same externally authenticated pinned linked CLI history/R05-only dry-run, real distinct DM/P1/passive P2 private sight/Realtime/revocation and sustained latency gates remain mandatory. Full SQL + frontend release NO-GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": [],
     "frontendQaOnlyLiveCanary": {
@@ -1906,6 +1913,22 @@
       "nextClientPackage": "R18-29",
       "sqlInstalled": false,
       "userAuthFogMultiplayerAcceptance": false,
+      "releaseDecision": "STAGING_NO_GO"
+    },
+    "r1829AtomicClient": {
+      "stage": "B10-R18-29",
+      "defaultFlag": "VITE_WORLD_V2_ATOMIC_FINALIZE",
+      "enabledInProduction": false,
+      "explicitBackendDependency": "unapplied R18-28",
+      "controllerReviewedBlobSha": "45e0068182932e7533bfbb58b55e9091bb83c857",
+      "newAdversarialTests": 18,
+      "clientIntegrationEnabled": false,
+      "routeAuthority": "server-only",
+      "onUncertainAck": "single identical replay then fail-closed",
+      "privateSightAuthorizationRequired": true,
+      "r05LinkedCliPreflightComplete": false,
+      "realThreeAccountAcceptance": false,
+      "liveSqlOrFrontendChange": false,
       "releaseDecision": "STAGING_NO_GO"
     }
   },
