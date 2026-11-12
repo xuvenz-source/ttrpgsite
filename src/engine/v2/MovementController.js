@@ -33,19 +33,35 @@ const validAck=(reply,sessionId,seq,from,targets)=>{
  * single accepted position. Only the original route's exact 8-connected
  * server-approved prefix is permitted; an endpoint is never client-invented.
  */
-export function validAtomicFinalizationAck(reply,sessionId,seq,from,targets){
+export function validAtomicFinalizationAck(reply,sessionId,seq,from,targets,previousMotion=false){
  if(!reply||reply.version!==2||reply.sessionId!==sessionId||
   reply.seq!==seq||reply.commitSeq!==seq+1||
   reply.finalized!==true||typeof reply.blocked!=='boolean'||
+  (reply.noMotion!==undefined&&reply.noMotion!==true)||
   !Array.isArray(reply.accepted)||
   Object.keys(reply).some(k=>![
    'version','sessionId','seq','commitSeq','finalized',
-   'blocked','accepted','endpoint'
+   'blocked','accepted','endpoint','noMotion'
   ].includes(k)))return false;
  const expected=expandGestureRoute(from,targets);
- if(!expected||reply.accepted.length<1||
-  reply.accepted.length>expected.length||
+ if(!expected||reply.accepted.length>expected.length||
   (!reply.blocked&&reply.accepted.length!==expected.length))return false;
+ // Two source-authorized blocked-only terminal states are deliberately distinct.
+ if(!reply.accepted.length){
+  if(!reply.blocked||!Object.keys(reply.endpoint||{}).every(
+    key=>['x','y'].includes(key))||
+    Object.keys(reply.endpoint||{}).length!==2||
+    !Number.isSafeInteger(reply.endpoint?.x)||
+    !Number.isSafeInteger(reply.endpoint?.y)||
+    reply.endpoint.x!==from.x||reply.endpoint.y!==from.y)
+   return false;
+  // No-motion receipts require no prior approved steps. Otherwise the
+  // existing canonical Commit must have persisted all prior steps.
+  return previousMotion?
+   reply.noMotion===undefined:
+   reply.noMotion===true;
+ }
+ if(reply.noMotion!==undefined)return false;
  for(let i=0;i<reply.accepted.length;i++){
   const p=reply.accepted[i],want=expected[i];
   if(!p||!Number.isSafeInteger(p.x)||!Number.isSafeInteger(p.y)||
@@ -105,7 +121,10 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   state=result.status==='committed'?'Committed':
    result.status==='revoked'?'Revoked':
    result.status==='cancelled'?'Cancelled':'Rejected';
-  emit(g,result.status,{reason:result.reason||null});
+  emit(g,result.status,{
+   reason:result.reason||null,
+   ...(result.noMotion?{noMotion:true}:{})
+  });
   if(g.resolveFinish){g.resolveFinish(result);g.resolveFinish=null}
  };
  const cancelSession=g=>{
@@ -151,7 +170,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
       authority.finalize(request):authority.advance(request));
      if(active!==g)break;
      if(!(finalizing?
-      validAtomicFinalizationAck(response,g.sessionId,seq,before,batch.targets):
+      validAtomicFinalizationAck(response,g.sessionId,seq,before,batch.targets,g.hadMotion):
       validAck(response,g.sessionId,seq,before,batch.targets))){
       reject(g,finalizing?'invalid-final-ack':'invalid-authority-ack');break;
      }
@@ -190,7 +209,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
        // again before accepting the final canonical endpoint.
        if(active===g){
         g.seq=seq+1;
-        finish(g,{status:'committed',endpoint:{...g.approved}});
+        finish(g,{status:'committed',endpoint:{...g.approved},
+         noMotion:response.noMotion===true});
        }
        break;
       }
