@@ -439,7 +439,8 @@
       "name": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-24 staged opt-in, clipboard-only World V2 diagnostic UI for nontechnical DM/P1/passive-P2 testers. Uses existing whitelisted bounded WorldTrace snapshot; exports no IDs, secret signed sight, coordinates, auth, telemetry or RPCs. Reports remain self-labeled and release NO-GO; real linked authenticated CLI and three-browser Auth/Realtime/LOS/fog/revocation remain unexecuted. No frontend/SQL production deployment."
+      "note": "R18-24 staged opt-in, clipboard-only World V2 diagnostic UI for nontechnical DM/P1/passive-P2 testers. Uses existing whitelisted bounded WorldTrace snapshot; exports no IDs, secret signed sight, coordinates, auth, telemetry or RPCs. Reports remain self-labeled and release NO-GO; real linked authenticated CLI and three-browser Auth/Realtime/LOS/fog/revocation remain unexecuted. No frontend/SQL production deployment.",
+      "linkedPullRequest": 127
     }
   ],
   "features": [
