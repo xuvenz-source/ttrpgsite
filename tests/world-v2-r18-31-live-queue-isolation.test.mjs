@@ -267,7 +267,11 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
   '48070f99f818bc7669f4fc0d6f64335129d6f9cc');
  assert.equal(reviewedPriorR18_31,
   '347d3ac8cd9992027d5a67340ae45220cccd8da5');
- assert.equal(blob,'389105a3b20b97fc66258da65c7adb4c4e5570c9');
+ // The exact reviewed R18-38 source remains audit history; R18-39
+ // attaches only bounded local metrics to that same movement pipeline.
+ const reviewedPriorR18_38='389105a3b20b97fc66258da65c7adb4c4e5570c9';
+ assert.equal(reviewedPriorR18_38,'389105a3b20b97fc66258da65c7adb4c4e5570c9');
+ assert.equal(blob,'bc83ad6dbb3543b538864440484b12d46494c6a0');
  assert.match(source,/updateGestureSamples\(samples\)/);
  assert.match(source,/updatePointer\(samples\[i\],i===samples\.length-1\)/);
  assert.match(source,/result\.noMotion===true\?\{noMotion:true\}:\{\}/);

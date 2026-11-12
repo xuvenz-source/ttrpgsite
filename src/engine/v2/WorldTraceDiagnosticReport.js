@@ -6,7 +6,8 @@
  * are NOT proof of distinct authenticated identities or private fog safety.
  */
 import {
- isWorldV2TraceEvent,isWorldV2TraceDetail,isWorldV2TraceMetric
+ isWorldV2TraceEvent,isWorldV2TraceDetail,isWorldV2TraceMetric,
+ isWorldV2TraceCounter
 } from './WorldTrace.js';
 
 export const WORLD_V2_QA_CASES=Object.freeze([
@@ -46,7 +47,7 @@ export function createWorldV2DiagnosticReport(snapshot,{
 
  const counts={};
  for(const [key,value] of Object.entries(snapshot.counts)){
-  if(!(isWorldV2TraceEvent(key)||
+  if(!(isWorldV2TraceEvent(key)||isWorldV2TraceCounter(key)||
     (key.endsWith('.error')&&
      isWorldV2TraceMetric(key.slice(0,-6))))||
     !safeCount(value))fail();

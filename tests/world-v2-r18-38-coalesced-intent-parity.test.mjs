@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createMovementController} from '../src/engine/v2/MovementController.js';
 import {expandGestureRoute} from '../src/engine/v2/GesturePath.js';
+import {createWorldV2Trace} from '../src/engine/v2/WorldTrace.js';
 
 const MAP='11111111-1111-4111-8111-111111111111';
 const TOKEN='22222222-2222-4222-8222-222222222222';
@@ -17,7 +18,8 @@ const approved=req=>({
  version:2,sessionId:SID,seq:req.seq,blocked:false,
  accepted:expandGestureRoute(req.from,req.targets)
 });
-function harness({mode='drag',prediction=()=>false,advance=req=>approved(req)}={}){
+function harness({mode='drag',prediction=()=>false,advance=req=>approved(req),
+ trace}={}){
  const calls={begin:[],advance:[],commit:[],cancel:[]},events=[];
  const authority={
   async begin(req){calls.begin.push(req);return {version:2,sessionId:SID}},
@@ -28,7 +30,8 @@ function harness({mode='drag',prediction=()=>false,advance=req=>approved(req)}={
   async cancel(req){calls.cancel.push(req);return true}
  };
  const controller=createMovementController({authority,
-  canPredict:prediction,onEvent:event=>events.push(event)});
+  canPredict:prediction,onEvent:event=>events.push(event),
+  ...(trace?{trace}:{})});
  const begin=()=>controller.beginGesture({
   mapId:MAP,selection:[{kind:'token',id:TOKEN}],
   mode,origin:P(2,2),pointer:P(2,2),
@@ -172,5 +175,42 @@ test('R18-38 rejects empty sample batch but retains existing direct point input'
   const result=await h.controller.endGesture();
   assert.equal(result.status,'committed');
   assert.deepEqual(result.endpoint,P(3,2));
+ }finally{h.controller.dispose()}
+});
+
+
+test('R18-39 prediction metrics count only executed final check after 240 coalesced samples',async()=>{
+ let now=0;
+ const trace=createWorldV2Trace({enabled:true,limit:32,now:()=>{now+=0.1;return now}});
+ const h=harness({trace,prediction:()=>true});
+ try{
+  assert.equal(h.begin(),true);await settle();
+  const samples=Array.from({length:240},(_,i)=>P(2.02+i/1000,2.12));
+  assert.equal(h.controller.updateGestureSamples(samples),true);
+  const snap=trace.snapshot();
+  assert.equal(snap.counts['movement.prediction-skipped'],239);
+  assert.equal(snap.counts['movement.prediction-checked'],1);
+  assert.equal(snap.durations['movement.prediction-check'].samples,1);
+  assert.equal(snap.events.some(e=>e.event==='movement.prediction-skipped'),false);
+  const ending=await h.controller.endGesture();
+  assert.equal(ending.noMotion,true);
+  assert.equal(h.calls.advance.length,0);
+ }finally{h.controller.dispose()}
+});
+test('R18-39 blocked and revoked sample packets never turn counters into canonical authority',async()=>{
+ let now=0;
+ const trace=createWorldV2Trace({enabled:true,limit:32,now:()=>now++});
+ const first=deferred();
+ const h=harness({trace,prediction:()=>false,
+  advance:async req=>{await first.promise;return approved(req)}});
+ try{
+  h.begin();await settle();
+  h.controller.updateGesture(P(3,2));await settle();
+  h.controller.updateGestureSamples([P(3.2,2.1),P(4.1,2.2),P(5.1,2.4)]);
+  h.controller.updateContext({permissionGeneration:2});
+  first.resolve();await settle();
+  assert.equal(h.calls.commit.length,0);
+  assert.equal(h.events.some(e=>e.type==='committed'),false);
+  assert.ok(trace.snapshot().counts['movement.prediction-checked']>=1);
  }finally{h.controller.dispose()}
 });

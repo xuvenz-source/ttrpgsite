@@ -216,14 +216,19 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    }
    // A synchronous caller-supplied grant check must approve the *entire*
    // displacement. Default is false: no speculative hidden-wall travel.
+   // Only aggregate counts and CPU durations are recorded in opt-in QA.
+   if(!publish)trace.count?.('movement.prediction-skipped');
    if(publish){
+   trace.count?.('movement.prediction-checked');
+   const predictionDone=trace.enabled?
+    trace.begin?.('movement.prediction-check'):null;
    let approvedPrediction=false;
    try{approvedPrediction=canPredict({
     mapId:g.mapId,selection:g.selection,from:{...g.approved},
     to:cell,pointer:{...pointer},mode:g.mode,
     environmentRevision:g.environmentRevision,
     permissionGeneration:g.permissionGeneration
-   })===true}catch{}
+   })===true}catch{}finally{predictionDone?.()}
    if(approvedPrediction){
     g.presented={...pointer};g.predicted=true;
      emit(g,'presented',{predicted:true});

@@ -28,7 +28,14 @@ const EVENTS=new Set([
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
  'authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
- 'observer.frame-gap','render.frame']);
+ 'observer.frame-gap','render.frame',
+ // R18-39 opt-in local browser-only CPU measurements, never a server RPC.
+ 'input.pointer.processing','movement.prediction-check']);
+const COUNTERS=new Set([
+ 'input.pointer.move-events','input.pointer.samples','input.pointer.batches',
+ 'input.pointer.batched-samples','input.pointer.single-events',
+ 'movement.prediction-checked','movement.prediction-skipped'
+]);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
  'revision','drag','touch','keyboard','preview','grabbed','busy','point',
  'selection','begin','lost-capture','pointer-cancel','blur','unmount',
@@ -65,6 +72,7 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
 export const isWorldV2TraceEvent=name=>EVENTS.has(name);
 export const isWorldV2TraceDetail=detail=>DETAILS.has(detail);
 export const isWorldV2TraceMetric=name=>METRICS.has(name);
+export const isWorldV2TraceCounter=name=>COUNTERS.has(name);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;
@@ -78,6 +86,14 @@ export function createWorldV2Trace({enabled=false,limit=256,now=clock}={}){
    detail:typeof detail==='string'&&DETAILS.has(detail)?detail:'other'});
   if(events.length>cap)events.shift();
   counts.set(name,Math.min(2147483647,(counts.get(name)||0)+1));
+ }
+ // Opt-in aggregate counters do NOT write per-event timeline entries:
+ // an ordinary pointer burst must never evict useful authority history.
+ // Delta is bounded and cannot carry coordinates, IDs, or arbitrary labels.
+ function count(name,delta=1){
+  if(!enabled||!COUNTERS.has(name)||
+   !Number.isSafeInteger(delta)||delta<1||delta>65536)return;
+  counts.set(name,Math.min(2147483647,(counts.get(name)||0)+delta));
  }
  function begin(name){
   if(!enabled||!METRICS.has(name))return ()=>{};
@@ -104,7 +120,7 @@ export function createWorldV2Trace({enabled=false,limit=256,now=clock}={}){
    events:events.map(x=>({...x})),counts:Object.fromEntries(counts),durations};
  }
  function clear(){resetGeneration++;events.length=0;times.clear();counts.clear()}
- return Object.freeze({enabled:Boolean(enabled),event,begin,snapshot,clear});
+ return Object.freeze({enabled:Boolean(enabled),event,count,begin,snapshot,clear});
 }
 const enabled=typeof window!=='undefined'&&
  typeof window.location?.search==='string'&&
