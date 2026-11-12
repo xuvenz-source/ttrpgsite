@@ -96,18 +96,30 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      const snapshot=g.pending.slice();
      const batch=takeGestureBatch(g.approved,snapshot);
      if(!batch||!batch.targets.length){g.phase='path';reject(g,'invalid-path');break}
+     // R18-31: detach ONLY this already-validated batch before its RPC.
+     // Pointer updates during the network wait are then retained as future
+     // input, instead of being accidentally removed by a late Advance ACK.
+     g.pending.splice(0,batch.consumed);
+     g.inFlightTarget={...batch.targets.at(-1)};
      const before={...g.approved},seq=++g.seq;
      g.phase='advance';
-     const response=await authority.advance({
-      version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
-      seq,from:before,targets:batch.targets,selection:g.selection,
-      environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
-     });
+     let response;
+     try{
+      response=await authority.advance({
+       version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
+       seq,from:before,targets:batch.targets,selection:g.selection,
+       environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
+      });
+     }finally{
+      // Future input may start from the submitted target while awaiting.
+      // Clear it even on a failed/cancelled request; rejection remains
+      // governed solely by the existing authoritative ACK checks.
+      g.inFlightTarget=null;
+     }
      if(active!==g)break;
      if(!validAck(response,g.sessionId,seq,before,batch.targets)){
       reject(g,'invalid-authority-ack');break;
      }
-     g.pending.splice(0,batch.consumed);
      if(response.accepted.length){
       g.approved={...response.accepted.at(-1)};
       g.hadMotion=true;
@@ -182,7 +194,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],seq:0,mode,phase:'begin',sessionId:null,closing:false,
+    pending:[],inFlightTarget:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
     intentCell:{...origin},blockedRetry:null,releaseTimer:null,
     predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
@@ -223,7 +235,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     return true;
    }
    g.blockedRetry=null;
-   if(!appendGestureBend(g.pending,cell,g.approved)){
+   if(!appendGestureBend(g.pending,cell,g.inFlightTarget??g.approved)){
     g.phase='path';reject(g,'path-limit');return false;
    }
    if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}
