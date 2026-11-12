@@ -259,11 +259,17 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  const blob=createHash('sha1').update(
   'blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
  // Preserve historical R18-31 reviewed checksum as provenance.
- // R18-35 only adds the proven noMotion event after exact server ACK.
+ // Preserve R18-31/R18-35 source lineage; R18-38 is an isolated
+ // new API for cosmetic prediction after coalesced browser event samples.
  const reviewedPriorR18_31='347d3ac8cd9992027d5a67340ae45220cccd8da5';
+ const reviewedPriorR18_35='48070f99f818bc7669f4fc0d6f64335129d6f9cc';
+ assert.equal(reviewedPriorR18_35,
+  '48070f99f818bc7669f4fc0d6f64335129d6f9cc');
  assert.equal(reviewedPriorR18_31,
   '347d3ac8cd9992027d5a67340ae45220cccd8da5');
- assert.equal(blob,'48070f99f818bc7669f4fc0d6f64335129d6f9cc');
+ assert.equal(blob,'389105a3b20b97fc66258da65c7adb4c4e5570c9');
+ assert.match(source,/updateGestureSamples\(samples\)/);
+ assert.match(source,/updatePointer\(samples\[i\],i===samples\.length-1\)/);
  assert.match(source,/result\.noMotion===true\?\{noMotion:true\}:\{\}/);
  assert.match(source,/g\.pending\.splice\(0,batch\.consumed\);\s*g\.inFlightTarget=/);
  assert.match(source,/g\.inFlightTarget\?\?g\.approved/);

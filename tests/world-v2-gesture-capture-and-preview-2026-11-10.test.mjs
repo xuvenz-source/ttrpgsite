@@ -26,7 +26,7 @@ function emitter(){
   options(name){return (handlers.get(name)||[]).map(v=>v.opts)}
  };
 }
-function harness({capture=false}={}){
+function harness({capture=false,batching=false}={}){
  const documentTarget=emitter(),target=emitter(),keyboard=emitter(),
   blurTarget=emitter();
  const events=[],status=[];
@@ -43,6 +43,9 @@ function harness({capture=false}={}){
   get active(){return active},
   beginGesture(data){active=true;events.push(['begin',data]);return true},
   updateGesture(point){events.push(['move',point]);return active},
+  ...(batching?{updateGestureSamples(points){
+   events.push(['batch',points]);return active;
+  }}:{}),
   endGesture(){active=false;events.push(['end']);return Promise.resolve()},
   cancelGesture(reason){active=false;events.push(['cancel',reason])}
  };
@@ -78,6 +81,53 @@ test('document capture starts a scoped drag before a React child can stop propag
  assert.equal(h.documentTarget.count('pointerdown'),0);
  assert.equal(h.documentTarget.count('pointermove'),0);
  assert.equal(h.documentTarget.count('pointerup'),0);
+});
+
+test('R18-38 coalesced pointer burst reaches new API once and pointer-up still submits its final position',()=>{
+ const h=harness({batching:true});
+ h.documentTarget.emit('pointerdown',h.event());
+ const e=h.event({x:4.25,y:2.25});
+ e.getCoalescedEvents=()=>[
+  h.event({x:2.35,y:2.25}),
+  h.event({x:3.25,y:2.25}),
+  h.event({x:3.25,y:3.25}),
+  h.event({x:4.25,y:3.25})
+ ];
+ h.documentTarget.emit('pointermove',e);
+ h.documentTarget.emit('pointerup',h.event({x:4.25,y:2.25}));
+ assert.deepEqual(h.events.map(x=>x[0]),['begin','batch','move','end']);
+ const points=h.events[1][1];
+ assert.deepEqual(points,[
+  {x:2.10,y:2},{x:3,y:2},{x:3,y:3},{x:4,y:3}
+ ]);
+ assert.deepEqual(h.events[2][1],{x:4,y:2},
+  'release must remain the actual final event, not the last coalesced sample');
+ h.input.unmount();
+});
+test('R18-38 one sample and older adapters still use the unchanged point API',()=>{
+ const h=harness({batching:true});
+ h.documentTarget.emit('pointerdown',h.event());
+ const e=h.event({x:3.25,y:2.25});
+ e.getCoalescedEvents=()=>[h.event({x:3.25,y:2.25})];
+ h.documentTarget.emit('pointermove',e);
+ h.documentTarget.emit('pointerup',h.event({x:3.25,y:2.25}));
+ assert.deepEqual(h.events.map(x=>x[0]),['begin','move','move','end']);
+ h.input.unmount();
+});
+test('R18-38 invalid coalesced points do not invent input coordinates',()=>{
+ const h=harness({batching:true});
+ h.documentTarget.emit('pointerdown',h.event());
+ const e=h.event({x:4.25,y:2.25});
+ e.getCoalescedEvents=()=>[
+  h.event({x:2.35,y:2.25}),
+  {point:null},
+  h.event({x:3.25,y:2.25})
+ ];
+ h.documentTarget.emit('pointermove',e);
+ h.documentTarget.emit('pointerup',h.event({x:3.25,y:2.25}));
+ assert.deepEqual(h.events.map(x=>x[0]),['begin','batch','move','end']);
+ assert.deepEqual(h.events[1][1],[{x:2.10,y:2},{x:3,y:2}]);
+ h.input.unmount();
 });
 
 test('the document adapter cannot initiate a drag from the sidebar',()=>{

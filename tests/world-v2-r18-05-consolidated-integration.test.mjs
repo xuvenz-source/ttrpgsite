@@ -68,6 +68,16 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  };
  assert.equal(approvedLiveNoMotionEvent.priorReviewedBlobSha,
   '347d3ac8cd9992027d5a67340ae45220cccd8da5');
+ // R18-38 strictly preserves the R18-35 authority payload/queue and
+ // adds only final-frame prediction evaluation for a coalesced browser burst.
+ const approvedCoalescedController={
+  path:approvedLiveNoMotionEvent.path,
+  priorReviewedBlobSha:approvedLiveNoMotionEvent.reviewedBlobSha,
+  workPackage:'B10-R18-38-COALESCED-POINTER-INTENT',
+  reviewedBlobSha:'389105a3b20b97fc66258da65c7adb4c4e5570c9'
+ };
+ assert.equal(approvedCoalescedController.priorReviewedBlobSha,
+  '48070f99f818bc7669f4fc0d6f64335129d6f9cc');
  // The keyboard source is transplanted byte-for-byte from the reviewed
  // R18-34 signed-sight change, not from the cumulative SQL staging branch.
  const approvedLiveKeyboardAmendment={
@@ -92,8 +102,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedLiveNoMotionEvent.path?
-   approvedLiveNoMotionEvent.reviewedBlobSha:
+  assert.equal(checked,path===approvedCoalescedController.path?
+   approvedCoalescedController.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
    path===approvedLiveKeyboardAmendment.path?
    approvedLiveKeyboardAmendment.reviewedBlobSha:sha,
