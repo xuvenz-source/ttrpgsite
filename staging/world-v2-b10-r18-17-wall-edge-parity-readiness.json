@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "step": "B10-R18-17",
+  "date": "2026-11-12",
+  "branch": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+  "parentHead": "48f98e771c526ddd7945f3b5daa1d7d6f78c6a5e",
+  "parentPr": 118,
+  "liveFrontend": {
+    "release": "R18-15",
+    "deployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "source": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be"
+  },
+  "productionMain": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "releaseDecision": "STAGED_NO_GO",
+  "frontendClearanceDefault": 0,
+  "experimentalClearanceCells": 0.1,
+  "clientRuntimeOptInEnabled": false,
+  "serverSql": "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+  "serverSqlIsVersionedMigration": false,
+  "serverSqlAppliedToLive": false,
+  "r05OriginalMigrationModified": false,
+  "r05AppliedToLive": false,
+  "signedObserver12sLive": true,
+  "guardedObserver700msLive": false,
+  "isolatedPg17Assertions": 14,
+  "isolatedPg17RolledBack": true,
+  "clientTests": "pending-exact-head",
+  "codeql": "pending-exact-head",
+  "riskRemaining": [
+    "legacy direct-write token/tool trigger tests not yet source-real",
+    "real pinned linked CLI and 83 history reconciliation not executed",
+    "R05 and new R18-17 backend require independent SQL approvals",
+    "client opt-in must only enable after verified compatible server",
+    "real Auth P1 and P2 observer LOS and revocation acceptance not yet done"
+  ],
+  "handoff": "docs/testing/world-v2-r18-17-wall-edge-parity-2026-11-12.md"
+}
