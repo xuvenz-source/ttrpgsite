@@ -33,6 +33,8 @@ for(const row of records){
   assert.equal(reply.blocked,true);
  }
  const events=[],calls={begin:0,advance:0,finalize:0,commit:0,cancel:0};
+ let releaseFirstAdvance;
+ const firstAdvance=new Promise(resolve=>{releaseFirstAdvance=resolve});
  const authority={
   async begin(){calls.begin++;return {version:2,sessionId}},
   async advance(req){
@@ -40,6 +42,9 @@ for(const row of records){
    assert.equal(row.previousMotion,true,
     'ordinary Advance is expected only for earlier pre-approved cells');
    assert.equal(req.seq,1);
+   // Deliberately keep the first Advance pending while the pointer turns
+   // toward the wall. The next waypoint must survive this network wait.
+   await firstAdvance;
    return {version:2,sessionId,seq:1,blocked:false,
     accepted:expandGestureRoute(req.from,req.targets)};
   },
@@ -70,11 +75,12 @@ for(const row of records){
  if(row.previousMotion){
   await tick(); // complete Begin before first, ordinary Advance
   controller.updateGesture({x:3,y:1});
-  await tick();await tick(); // ordinary Advance must settle
-  assert.equal(calls.advance,1,'one real earlier authorized batch');
+  assert.equal(calls.advance,1,'first ordinary Advance must be in flight');
  }
  controller.updateGesture(row.targets.at(-1));
- const done=await controller.endGesture();
+ const finishing=controller.endGesture();
+ if(row.previousMotion)releaseFirstAdvance();
+ const done=await finishing;
  assert.equal(done.status,'committed',JSON.stringify({
   scenario:row.scenario,reason:done.reason,events:events.map(e=>({
    type:e.type,reason:e.reason,seq:e.seq,approved:e.approved,
