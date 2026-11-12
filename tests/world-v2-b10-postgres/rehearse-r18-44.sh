@@ -44,3 +44,13 @@ node tests/world-v2-b10-postgres/verify-blocked-final-r18-30.mjs /tmp/world_v2_b
 # and canonical state still win against hostile candidate terminal requests.
 r44_psql -f tests/world-v2-b10-postgres/authority-bridge-r18-44.sql
 echo 'R18-44 PASS: exact R05->wall->guards->affinity source chain, R18-28/30 server terminal, JS wire and adversarial gates, ROLLED BACK'
+
+# R18-45: first prove the historical R18-26 and R18-27 overlays each
+# individually preserve collision/canonical/observer behavior and roll back.
+# Only after that, commit the complete dependency stack in this disposable
+# third DB, then prove terminal-RPC revocation and the protected 4-function
+# R05 forward recovery (not an unsafe false full-database downgrade).
+r44_psql -f tests/world-v2-b10-postgres/step-bbox-r18-26.sql
+r44_psql -f tests/world-v2-b10-postgres/commit-empty-r18-27.sql
+r44_psql -f tests/world-v2-b10-postgres/postcommit-containment-r18-45.sql
+echo 'R18-45 PASS: complete R05->17/19/20/26/27/28/30 committed ONLY in disposable DB, ACL containment, classic movement and four-function forward recovery'
