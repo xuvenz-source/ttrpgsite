@@ -61,4 +61,8 @@ bash tests/world-v2-b10-postgres/rehearse-r05.sh
 # installed, then EXACT source-reviewed wall/guards/atomic finalizer stack.
 # Both optional final functions are ROLLED BACK before the script exits.
 bash tests/world-v2-b10-postgres/rehearse-r18-44.sh
-echo 'B10 RELEASE GATE STILL BLOCKED: nonapplied candidate, observer-budget recovery and independent DM/P1/P2 Auth/LOS QA remain.'
+# Separate fourth isolated PG17 DB: capture five original post-R05
+# functions BEFORE R17, install candidate stack, seal and restore 5+4
+# function sources through independent committed recovery transactions.
+bash tests/world-v2-b10-postgres/rehearse-r18-46.sh
+echo 'B10 RELEASE GATE STILL BLOCKED: no reviewed versioned post-R05 migrations or independent DM/P1/P2 Auth/LOS QA.'
