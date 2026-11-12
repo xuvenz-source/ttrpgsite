@@ -271,7 +271,12 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  // attaches only bounded local metrics to that same movement pipeline.
  const reviewedPriorR18_38='389105a3b20b97fc66258da65c7adb4c4e5570c9';
  assert.equal(reviewedPriorR18_38,'389105a3b20b97fc66258da65c7adb4c4e5570c9');
- assert.equal(blob,'bc83ad6dbb3543b538864440484b12d46494c6a0');
+ // Historical R18-39 metrics-only source remains explicitly pinned.
+ const reviewedMetrics='bc83ad6dbb3543b538864440484b12d46494c6a0';
+ assert.equal(reviewedMetrics,'bc83ad6dbb3543b538864440484b12d46494c6a0');
+ // Atomic terminal branch is gated OFF by default; existing Advance/Commit
+ // queue contract tests remain unchanged.
+ assert.equal(blob,'e91d8a76b95f18d07bba188608ed88fae657324f');
  assert.match(source,/updateGestureSamples\(samples\)/);
  assert.match(source,/updatePointer\(samples\[i\],i===samples\.length-1\)/);
  assert.match(source,/result\.noMotion===true\?\{noMotion:true\}:\{\}/);
@@ -280,6 +285,11 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  assert.match(source,/finally\{[\s\S]*?g\.inFlightTarget=null/);
  assert.match(source,/const reply=await authority\.commit/);
  assert.match(source,/if\(response\.blocked\)g\.pending\.length=0/);
- assert.doesNotMatch(source,/finalize_world_motion_v2|enableAtomicFinalize|authority\.finalize\(/);
+ // R18-43 is independently reviewed and default OFF. Historical
+ // R18-31 Advance queue semantics remain required when not finalizing.
+ assert.match(source,/enableAtomicFinalize=false/);
+ assert.match(source,/const finalizing=enableAtomicFinalize&&g\.closing/);
+ assert.match(source,/authority\.finalize\(request\):authority\.advance\(request\)/);
+ assert.doesNotMatch(source,/\bdb\.rpc\(/);
  assert.doesNotMatch(source,/\bdb\.rpc\b|localStorage|sendBroadcast/);
 });

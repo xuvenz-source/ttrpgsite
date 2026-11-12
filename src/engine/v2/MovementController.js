@@ -28,11 +28,56 @@ const validAck=(reply,sessionId,seq,from,targets)=>{
  }
  return true;
 };
+/**
+ * R18-43: a fully validated atomic receipt is the ONLY way to treat a
+ * final Advance as canonical. Auth, fog, collision and canonical writing
+ * remain on the server; no packet may synthesize a successful endpoint.
+ * The two blocked-empty states differ: prior approved steps require the
+ * server's canonical Commit, while no prior steps are a noMotion receipt.
+ */
+export function validAtomicFinalizationAck(reply,sessionId,seq,from,targets,previousMotion=false){
+ if(!reply||reply.version!==2||reply.sessionId!==sessionId||
+   reply.seq!==seq||reply.commitSeq!==seq+1||
+   reply.finalized!==true||typeof reply.blocked!=='boolean'||
+   (reply.noMotion!==undefined&&reply.noMotion!==true)||
+   !Array.isArray(reply.accepted)||
+   Object.keys(reply).some(k=>![
+    'version','sessionId','seq','commitSeq','finalized',
+    'blocked','accepted','endpoint','noMotion'
+   ].includes(k)))return false;
+ const expected=expandGestureRoute(from,targets);
+ if(!expected||reply.accepted.length>expected.length||
+   (!reply.blocked&&reply.accepted.length!==expected.length))return false;
+ if(!reply.accepted.length){
+  if(!reply.blocked||!Object.keys(reply.endpoint||{}).every(
+    key=>['x','y'].includes(key))||
+    Object.keys(reply.endpoint||{}).length!==2||
+    !Number.isSafeInteger(reply.endpoint?.x)||
+    !Number.isSafeInteger(reply.endpoint?.y)||
+    reply.endpoint.x!==from.x||reply.endpoint.y!==from.y)
+   return false;
+  return previousMotion?
+   reply.noMotion===undefined:reply.noMotion===true;
+ }
+ if(reply.noMotion!==undefined)return false;
+ for(let i=0;i<reply.accepted.length;i++){
+  const p=reply.accepted[i],wanted=expected[i];
+  if(!p||!Number.isSafeInteger(p.x)||!Number.isSafeInteger(p.y)||
+    Object.keys(p).some(k=>!['x','y'].includes(k))||
+    p.x!==wanted.x||p.y!==wanted.y)return false;
+ }
+ const endpoint=reply.endpoint,last=reply.accepted.at(-1);
+ return !!endpoint&&Number.isSafeInteger(endpoint.x)&&
+  Number.isSafeInteger(endpoint.y)&&
+  Object.keys(endpoint).length===2&&
+  Object.keys(endpoint).every(k=>['x','y'].includes(k))&&
+  endpoint.x===last.x&&endpoint.y===last.y;
+}
 const noop=()=>{};
 /** Only fixed, non-private rejection classes are exposed to in-memory trace. */
 export function classifyWorldMovementRejection(reason){
  if(['invalid-path','invalid-authority-ack','invalid-commit',
-     'begin-failed','invalid-session','path-limit','authority-error']
+     'invalid-final-ack','begin-failed','invalid-session','path-limit','authority-error']
      .includes(reason))return reason;
  if(reason==='World movement server unavailable')return 'rpc-unavailable';
  if(reason==='Invalid world movement response')return 'invalid-server-reply';
@@ -48,11 +93,14 @@ const predictionReached=(origin,predicted,approved)=>{
   (approved.y-origin.y)*dy>=d-1e-7;
 };
 export function createMovementController({authority,onEvent=noop,canPredict=()=>false,
- trace=worldV2Trace}={}){
+ trace=worldV2Trace,enableAtomicFinalize=false}={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
   typeof onEvent!=='function'||typeof canPredict!=='function'||
   typeof trace?.event!=='function')
   throw Error('V2 movement requires a complete authority interface');
+ if(typeof enableAtomicFinalize!=='boolean'||
+   (enableAtomicFinalize&&typeof authority.finalize!=='function'))
+  throw Error('Invalid V2 atomic finalize feature gate');
  let active=null,disposed=false,state='Idle',generation=0;
  const emit=(gesture,type,extra={})=>{
   if(type!=='sampled'&&type!=='presented')
@@ -106,14 +154,21 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      g.pending.splice(0,batch.consumed);
      g.inFlightTarget={...batch.targets.at(-1)};
      const before={...g.approved},seq=++g.seq;
-     g.phase='advance';
+     // A final, fully fitting batch can atomically Advance + Commit if
+     // and ONLY if the independently versioned server endpoint is ready.
+     // Open gestures and preview keep their existing authority flow.
+     const finalizing=enableAtomicFinalize&&g.closing&&
+      g.mode!=='preview'&&batch.remaining.length===0;
+     g.phase=finalizing?'finalize':'advance';
+     const request={
+      version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
+      seq,from:before,targets:batch.targets,selection:g.selection,
+      environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
+     };
      let response;
      try{
-      response=await authority.advance({
-       version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
-       seq,from:before,targets:batch.targets,selection:g.selection,
-       environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
-      });
+      response=await (finalizing?
+       authority.finalize(request):authority.advance(request));
      }finally{
       // Future input may start from the submitted target while awaiting.
       // Clear it even on a failed/cancelled request; rejection remains
@@ -121,8 +176,10 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
       g.inFlightTarget=null;
      }
      if(active!==g)break;
-     if(!validAck(response,g.sessionId,seq,before,batch.targets)){
-      reject(g,'invalid-authority-ack');break;
+     if(!(finalizing?
+      validAtomicFinalizationAck(response,g.sessionId,seq,before,batch.targets,g.hadMotion):
+      validAck(response,g.sessionId,seq,before,batch.targets))){
+      reject(g,finalizing?'invalid-final-ack':'invalid-authority-ack');break;
      }
      if(response.accepted.length){
       g.approved={...response.accepted.at(-1)};
@@ -152,6 +209,16 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
        seq,blocked:response.blocked,from:before,
        accepted:response.accepted.map(p=>({...p})),blockedAt
       });
+      if(finalizing){
+       // Commit ALREADY happened in the same server transaction. A second
+       // Commit is forbidden even if the reply arrived after a cancellation.
+       if(active===g){
+        g.seq=seq+1;
+        finish(g,{status:'committed',endpoint:{...g.approved},
+         ...(response.noMotion===true?{noMotion:true}:{})});
+       }
+       break;
+      }
      continue;
     }
     if(!g.closing)break;

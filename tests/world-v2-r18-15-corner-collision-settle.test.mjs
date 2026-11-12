@@ -237,9 +237,12 @@ test('R18-15 only record bounded new release-to-terminal trace timing',()=>{
  assert.match(movement,/if\(g\.pending\.length===0&&g\.blockedRetry/);
  assert.match(movement,/\['drag','touch','preview'\]\.includes\(g\.mode\)/);
  assert.match(movement,/if\(response\.blocked\)g\.pending\.length=0/);
- // R18-31 preserves this exact legacy Advance RPC with reviewed
- // try/finally ownership of an in-flight batch; no optional atomic RPC.
- assert.match(movement,/response=await authority\.advance/);
+ // The R18-31 normal Advance path retains exact in-flight batch
+ // ownership. R18-43's optional terminal path is default-OFF and never
+ // changes an unclosed gesture's server validation.
+ assert.match(movement,/authority\.advance\(request\)/);
+ assert.match(movement,/enableAtomicFinalize=false/);
+ assert.match(movement,/const finalizing=enableAtomicFinalize&&g\.closing/);
  assert.match(movement,/g\.pending\.splice\(0,batch\.consumed\);\s*g\.inFlightTarget=/);
  assert.match(movement,/if\(!appendGestureBend\(g\.pending,cell,g\.inFlightTarget\?\?g\.approved\)\)/);
  assert.match(movement,/const reply=await authority\.commit/);

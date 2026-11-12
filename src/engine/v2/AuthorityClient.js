@@ -26,7 +26,9 @@ async function traceRpc(db,name,params,metric){
   result=response?.error?'error':'ok';return response;
  }finally{done(result)}
 }
-export function createWorldAuthorityClient({db}={}){
+export function createWorldAuthorityClient({db,atomicFinalizeEnabled=false}={}){
+ if(typeof atomicFinalizeEnabled!=='boolean')
+  throw Error('Invalid V2 terminal feature gate');
  if(!db||typeof db.rpc!=='function')throw Error('V2 requires an RPC client');
  let disposed=false;
  const sessions=new Map();
@@ -96,6 +98,54 @@ export function createWorldAuthorityClient({db}={}){
      throw Error('V2 movement cancelled');
     return reply;
    }finally{if(sessions.get(sessionId)===current)sessions.delete(sessionId)}
+  },
+  /**
+   * Optional R18-43 pre-reviewed R18-30 atomic last Advance + Commit.
+   * STRICTLY disabled unless the versioned server migration is installed.
+   * After dispatch, ordinary Advance/Commit fallback is forbidden: a lost
+   * response could mean that the canonical write already happened.
+   * At most one byte-identical retry on a thrown transport error only.
+   */
+  async finalize({mapId,sessionId,gestureId,seq,from,targets,
+   environmentRevision,permissionGeneration}){
+   required();
+   if(!atomicFinalizeEnabled)
+    throw Error('V2 atomic terminal disabled');
+   const current=sessions.get(sessionId);
+   if(!current||!id(sessionId)||current.mapId!==mapId||
+     current.gestureId!==gestureId||!int(seq)||seq<=current.seq||
+     !int(seq+1)||!point(from)||!Array.isArray(targets)||
+     !targets.length||targets.length>8||!targets.every(point)||
+     !int(environmentRevision)||environmentRevision<0||
+     !int(permissionGeneration)||permissionGeneration<0)
+    throw Error('Invalid V2 finalization batch');
+   // Reserve both wire sequence numbers before any outbound traffic.
+   current.seq=seq+1;
+   const request={
+    p_session:sessionId,p_seq:seq,p_from:{x:from.x,y:from.y},
+    p_targets:targets.map(p=>({x:p.x,y:p.y})),
+    p_environment_revision:environmentRevision,
+    p_permission_generation:permissionGeneration
+   };
+   try{
+    let response;
+    try{
+     response=await traceRpc(db,'finalize_world_motion_v2',
+      request,'authority.finalize');
+    }catch{
+     if(disposed||sessions.get(sessionId)!==current)
+      throw Error('V2 movement cancelled');
+     // Exact request object; never a new route or sequence number.
+     response=await traceRpc(db,'finalize_world_motion_v2',
+      request,'authority.finalize');
+    }
+    const reply=requireReply(response?.data,response?.error);
+    if(disposed||sessions.get(sessionId)!==current)
+     throw Error('V2 movement cancelled');
+    return reply;
+   }finally{
+    if(sessions.get(sessionId)===current)sessions.delete(sessionId);
+   }
   },
   async cancel({mapId,sessionId,gestureId}){
    if(!id(sessionId))return false;
