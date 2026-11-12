@@ -78,6 +78,16 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  };
  assert.equal(approvedLiveKeyboardAmendment.originalR17,
   '1951a5802b7ed6b15af080660bc8f88627c83d2c');
+ // R18-36 is an additive, presentation-only amendment from live R18-35:
+ // the renderer receives controller-owned mode and bounded prediction trace.
+ const approvedDragPresentationAmendment={
+  path:approvedLiveNoMotionEvent.path,
+  priorReviewedBlobSha:approvedLiveNoMotionEvent.reviewedBlobSha,
+  workPackage:'B10-R18-36-APPROVED-DRAG-PRESENTATION',
+  reviewedBlobSha:'d2a066b074b9536dfa35f0ff33752541c695720f'
+ };
+ assert.equal(approvedDragPresentationAmendment.priorReviewedBlobSha,
+  '48070f99f818bc7669f4fc0d6f64335129d6f9cc');
  // R18-24 adds only a query-opted-in QA report button to the previously
  // frozen board. The two insertion sites were compared exactly to the
  // R18-23 source. Movement/visibility authority code is unchanged.
@@ -92,8 +102,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedLiveNoMotionEvent.path?
-   approvedLiveNoMotionEvent.reviewedBlobSha:
+  assert.equal(checked,path===approvedDragPresentationAmendment.path?
+   approvedDragPresentationAmendment.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
    path===approvedLiveKeyboardAmendment.path?
    approvedLiveKeyboardAmendment.reviewedBlobSha:sha,
