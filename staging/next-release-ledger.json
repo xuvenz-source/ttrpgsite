@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -420,6 +420,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-21 DM map upload/calibration/party route source-real PG17 W01-W17 passed in rollback; CRITICAL correct superseded R18-19 map-guard SQL to preserve LIVE World V2 commit_allows_piece_v2 token+tool signed checkpoint bypass. C01-C10 source-real checkpoint regression and exact live normalized function-body-only-delta Node QA; no SQL/production deployment. Frozen R05 kept intact.",
       "linkedPullRequest": 124
+    },
+    {
+      "name": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-22 THIRD fresh disposable PG17 source-real ordered sequence: frozen R05 committed and kept active -> R18-17 V2+legacy 0.10 helper -> corrected checkpoint-aware R18-19 token/tool cross-map guards -> R18-20 map/token campaign affinity, each locally committed; 20/20 O assertions confirm real public token and 2x2 mounted tool Begin/Advance/Commit, replay/unauthorized map/solid wall blocks and private ACL. Additional R05 atomic recovery separate. Nothing deployed."
     }
   ],
   "features": [
@@ -1416,6 +1422,44 @@
       ],
       "note": "Do NOT merge or apply old PR #122 R18-19 function candidate standalone: it omits LIVE forge_world_v2.commit_allows_piece_v2 and risks double collision/rubberbanding. Only cumulative corrected R18-21 source can be used for future source-real staged SQL rehearsal. Actual authenticated CLI 83-body migration preflight, fresh post-R05 function fingerprints, combined R05->new SQL rehearsal, real P1/P2 Auth LOS and separate SQL/frontend authorizations remain blockers.",
       "linkedPullRequest": 124
+    },
+    {
+      "id": "world-v2-b10-r18-22-ordered-post-r05-authority-security-rehearsal",
+      "description": "Rehearse frozen R05 without restoring its new authority followed by the three unversioned collision/security candidates in four ordered COMMITs inside a third disposable PostgreSQL 17 database, with exact migrated-function backups, live checkpoint-aware trigger source, real public token and 2x2 tool canonical Commit, map-transfer/RLS protection, rollback and source-fingerprint checks.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+        "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+        "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+        "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+        "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
+      ],
+      "note": "20/20 O assertions in disposable PG17 are not a linked CLI migration history, actual prod full schema or authenticated P1/P2 LOS acceptance; no real SQL applied. R05 frozen remains only versioned pending migration, later SQL candidates need post-R05 signed-hash re-review and separate explicit approval. 700ms guarded observer and client 0.10 stay OFF."
     }
   ],
   "databaseDependencies": [
@@ -1730,7 +1774,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1753,9 +1797,10 @@
       "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
       "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
       "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
-      "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12"
+      "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+      "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-21 preserves 22 staged branches. DM source-real party routing/map upload/calibration compatibility and 0.10 wall candidate remain tested in isolated rollback. URGENT correctness correction: original R18-19 SQL copied pre-V2 checkpoint legacy guards and must NEVER be installed; R18-21 updated both function bodies from exact current LIVE pg_get_functiondef with only intended cross-map checks, retaining signed commit_allows_piece_v2. Source-equivalence Node tests and C01-C10 actual private checkpoint SQL must pass. Frozen R05/unversioned candidates all unapplied; R18-15 live unchanged, 700ms guarded recovery OFF. Need independent authenticated CLI 83 history, fully stacked R05->wall->corrected map guard->affinity SQL replay, DM/P1/P2 LOS/observer/cadence acceptance, separate approvals for database then frontend. Never automatically deploy.",
+    "stagePolicy": "B10-R18-22 preserves 23 stacked branches. Third disposable PG17 fixture installs frozen original R05 (leaves new Core/Advance/Commit and backups ACTIVE), then R18-17 wall clearance, corrected R18-19 live-checkpoint-aware token/tool map guard, R18-20 map/token affinity. 20/20 ordered token+2x2 mount canonical movement/security assertions pass; isolated original R05 after-commit recovery remains independently tested. Still SQL/FRONTEND NO-GO: pinned authenticated linked CLI 83-history body fetch/hash and true R05-only dry run, real Auth DM/P1/P2 LOS + revocation, exact post-R05 source review, distinct user SQL and later frontend approvals. Live R18-15 unchanged, 700ms guarded observer OFF; no paid tier or migration writes.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
