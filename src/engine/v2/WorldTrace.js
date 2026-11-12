@@ -59,7 +59,7 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'user','tool-handoff','scene','visibility','input','network',
  'authority','sequence','sprite',
  'advance','commit','path','invalid-path','invalid-authority-ack',
- 'invalid-commit','begin-failed','invalid-session','path-limit',
+ 'invalid-commit','invalid-final-ack','begin-failed','invalid-session','path-limit',
  'rpc-unavailable','invalid-server-reply','client-contract',
  'session-cancelled','authority-error','reused-commit',
  'keyboard-unmount','map-change','dispose',
