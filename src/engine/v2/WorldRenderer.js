@@ -621,7 +621,10 @@ export function createWorldRenderer({
       baseOutlineOffset:sprite.style.outlineOffset??'',
       baseFilter:sprite.style.filter??''});
     }
-    local={gestureId:event.gestureId,origin:copyPoint(event.approved),
+    local={gestureId:event.gestureId,
+     mode:['drag','touch','keyboard','preview'].includes(event.mode)?
+      event.mode:null,
+     origin:copyPoint(event.approved),
      approved:copyPoint(event.approved),display:copyPoint(event.approved),
      predicted:false,handoff:false,anchors,
       route:createApprovedPathPresentation()};
@@ -657,6 +660,14 @@ export function createWorldRenderer({
        local.predicted=false;local.display=copyPoint(local.approved);
        local.route.reset(local.approved);
       }
+     }else if(['drag','touch'].includes(local.mode)){
+      // R18-36: an actor's already server-validated drag ACK should be
+      // displayed on the next frame, not replayed through another 105 ms
+      // cosmetic catch-up queue. This never predicts a crossing or alters
+      // canonical positions, ACL, fog, or the observer's interpolation.
+      local.display=copyPoint(local.approved);
+      local.route.reset(local.approved);
+      worldV2Trace.event('movement.presentation','snap');
      }else{
       const accepted=event.accepted;
       const valid=Array.isArray(accepted)&&event.from&&
