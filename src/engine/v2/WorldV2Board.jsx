@@ -7,6 +7,7 @@ import {pickWorldPointerTarget,worldMovementInputAllowed}
 import {wasWorldPointerDownClaimed} from './WorldPointerOwnership.js';
 import {worldGestureSelection} from './GestureSelection.js';
 import {worldV2Trace} from './WorldTrace.js';
+import WorldTraceCapturePanel from './WorldTraceCapturePanel.jsx';
 import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
@@ -942,5 +943,6 @@ export default function WorldV2Board(props){
    </div>
   </div>
   {spritePortals}
+  <WorldTraceCapturePanel isDM={isDM} dmPreview={dmPreview}/>
  </>;
 }
