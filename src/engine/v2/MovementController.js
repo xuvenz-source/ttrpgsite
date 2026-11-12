@@ -58,7 +58,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   if(type!=='sampled'&&type!=='presented')
    trace.event('movement.'+type,gesture.mode);
   onEvent({type,state,gestureId:gesture.generation,mapId:gesture.mapId,
-   selection:gesture.selection,pointer:{...gesture.pointer},
+   selection:gesture.selection,mode:gesture.mode,pointer:{...gesture.pointer},
    approved:{...gesture.approved},presented:{...gesture.presented},...extra});
  };
  const finish=(g,result)=>{
@@ -229,6 +229,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(!cell){
     g.phase='path';reject(g,'path-limit');return false;
    }
+   const intentChanged=cell.x!==g.intentCell.x||cell.y!==g.intentCell.y;
    g.pointer={...pointer};g.intentCell={...cell};
    if(g.pending.length===0&&g.blockedRetry&&
     g.blockedRetry.from.x===g.approved.x&&
@@ -252,6 +253,10 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     environmentRevision:g.environmentRevision,
     permissionGeneration:g.permissionGeneration
    })===true}catch{}
+   // R18-36: bounded, private counters explain slow drag presentation.
+   // Never log coordinates, actor IDs, scene geometry or RPC payloads.
+   if(intentChanged&&['drag','touch'].includes(g.mode))
+    trace.event('movement.prediction',approvedPrediction?'granted':'denied');
    if(approvedPrediction){
     g.presented={...pointer};g.predicted=true;
      emit(g,'presented',{predicted:true});
