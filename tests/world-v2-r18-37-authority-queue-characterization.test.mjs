@@ -94,27 +94,30 @@ test('R18-37: 240 subcell input samples still run 240 synchronous prediction che
   assert.equal(h.calls.commit.length,0);
  }finally{h.movement.dispose()}
 });
-test('R18-37: blocked ACK discards later unapproved lateral intent during network wait',async()=>{
+test('R18-37 historical blocked-ACK loss is corrected only for newly arrived lateral input by R18-40',async()=>{
  const first=deferred();
  const h=createHarness({advance:async req=>{
-  await first.promise;
+  if(req.seq===1)await first.promise;
   return {version:2,sessionId:SESSION,seq:req.seq,blocked:true,accepted:[]};
  }});
  try{
   h.begin();await settle();
   h.movement.updateGesture(P(2,1));await settle();
   assert.equal(h.calls.advance.length,1);
-  // A later sideways input is *queued* while the wall response is outstanding.
+  // R18-37 documented this as dropped; R18-40 rebases only the newest
+  // differently directed sample, and the second ACK can still deny it.
   h.movement.updateGesture(P(2,2));
   const complete=h.movement.endGesture();
   first.resolve();
   const result=await complete;
   assert.equal(result.status,'committed');
   assert.equal(result.noMotion,true);
-  assert.equal(h.calls.advance.length,1,
-   'conservative fail-closed behavior currently drops the queued turn');
+  assert.equal(h.calls.advance.length,2,
+   'new lateral target needs one new server validation, not silent approval');
+  assert.deepEqual(h.calls.advance[1].from,P(1,1));
+  assert.deepEqual(h.calls.advance[1].targets,[P(2,2)]);
   assert.equal(h.calls.commit.length,0);
-  assert.equal(h.events.filter(e=>e.type==='blocked').length,1);
+  assert.equal(h.events.filter(e=>e.type==='blocked').length,2);
  }finally{h.movement.dispose()}
 });
 test('R18-37: viewer prediction grant expires for presentation after first accepted cell',()=>{
