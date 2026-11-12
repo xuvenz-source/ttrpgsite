@@ -8,6 +8,7 @@ const EVENTS=new Set([
  'input.pick',
  'input.pointer.cancel','input.pointer.blur','input.keyboard.start','input.keyboard.end',
  'movement.grabbed','movement.approved','movement.blocked','movement.released',
+ 'movement.path-backpressure',
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
  'movement.reject-phase','movement.reject-reason',
  'movement.canonical-handoff','movement.cancel-reason',
