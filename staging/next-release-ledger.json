@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -399,6 +399,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-18 authentic historical source-extracted legacy token + mounted tool BEFORE UPDATE collision triggers, 38 hostile direct-write wall/door/permission assertions + four role-change/map-transfer checks under disposable PG17 BEGIN/ROLLBACK. No live DB writes; full production RLS, alternate RPC and private observer still pending.",
       "linkedPullRequest": 121
+    },
+    {
+      "name": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-19 source-corrected actual final 20261108055943 trajectory-aware legacy guards & alternate commit_map_trajectory, 3 negative controls for held/unpublished issued tool map transfer shortcut, 22 latest-body trajectory/cross-map tests and 7 role-authenticated RLS-mirror cases all local rollback; staged NONAPPLIED cross-map DM+same-campaign guard. Standalone campaign_id edits still need separate trigger/RLS hardening."
     }
   ],
   "features": [
@@ -1285,6 +1291,40 @@
       ],
       "note": "Live R18-15 unchanged. Frozen R05 unapplied. 42 PG17 test assertions are rollback only and do NOT replicate real policy RLS or authenticated P1/P2. New SQL and frontend activation need separate explicit approvals and actual pinned CLI 83-version reconciliation.",
       "linkedPullRequest": 121
+    },
+    {
+      "id": "world-v2-b10-r18-19-source-real-trajectory-crossmap-security",
+      "description": "Source-real final deployed legacy trajectory validators, token/tool SQL triggers and public alternate movement RPC authority, with rollback tests for bent-path collision and atomic group commit; detect non-DM issued-tool cross-map shortcut in original, stage source-derived pre-return map/campaign guard, and validate owned/shared/revoked tool RLS expressions under SET ROLE authenticated.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql"
+      ],
+      "note": "No R05 or new SQL applied; active R18-15 strict client unchanged. Source fidelity gap in prior R18-18 corrected. 32 disposable rollback assertions cannot replace real Auth P1/P2, standalone campaign_id UPDATE, policy/foreign-key verification or CLI migration history reconciliation. Guarded observer 700ms still OFF."
     }
   ],
   "databaseDependencies": [
@@ -1599,7 +1639,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1619,9 +1659,10 @@
       "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
       "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
       "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
-      "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12"
+      "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+      "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12"
     ],
-    "stagePolicy": "R18-18 preserves 19 release branches. Latest source-real legacy direct-write token/tool collision tests against 0.10 candidate are only in disposable PG17 with rollback and pinned historical trigger source blobs, no Supabase writes. R05 migration frozen and uninstalled, R18-17 collision candidate not a real migration, current R18-15 frontend live unchanged and guarded 700ms observer OFF. Finish alternate trajectory RPC, full RLS/cross-map issued tool role tests, authenticated DM/P1/P2 LOS, signed observer and migration CLI checks. Future SQL and frontend each require separate explicit approvals.",
+    "stagePolicy": "B10-R18-19 now 20 staged branches. Latest deployed trajectory-aware SQL source must be used (20261108055943), not prior R18-18 historical guard copy. Explicit nonapplied source-derived SQL candidate guards issued tool map moves before held/unpublished shortcuts, requires DM and same-campaign destination; token map moves require same campaign. 3 negative controls plus 29 auth/trajectory assertions in local rollback, with source-real alternate movement RPC and RLS policy mirror. Outstanding: campaign_id-only updates, actual production RLS/foreign keys, remaining legacy gesture RPC and independent Auth P1/P2 LOS revocation, exact 83 CLI migration history plus distinct R05/wall/guard SQL approval and frontend approval. Live R18-15 stable; no SQL, no frontend, 700ms guarded recovery remains OFF.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
