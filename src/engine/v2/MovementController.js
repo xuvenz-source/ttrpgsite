@@ -28,10 +28,42 @@ const validAck=(reply,sessionId,seq,from,targets)=>{
  }
  return true;
 };
+/**
+ * Validate the ENTIRE new R18-28 terminal wire reply before using even a
+ * single accepted position. Only the original route's exact 8-connected
+ * server-approved prefix is permitted; an endpoint is never client-invented.
+ */
+export function validAtomicFinalizationAck(reply,sessionId,seq,from,targets){
+ if(!reply||reply.version!==2||reply.sessionId!==sessionId||
+  reply.seq!==seq||reply.commitSeq!==seq+1||
+  reply.finalized!==true||typeof reply.blocked!=='boolean'||
+  !Array.isArray(reply.accepted)||
+  Object.keys(reply).some(k=>![
+   'version','sessionId','seq','commitSeq','finalized',
+   'blocked','accepted','endpoint'
+  ].includes(k)))return false;
+ const expected=expandGestureRoute(from,targets);
+ if(!expected||reply.accepted.length<1||
+  reply.accepted.length>expected.length||
+  (!reply.blocked&&reply.accepted.length!==expected.length))return false;
+ for(let i=0;i<reply.accepted.length;i++){
+  const p=reply.accepted[i],want=expected[i];
+  if(!p||!Number.isSafeInteger(p.x)||!Number.isSafeInteger(p.y)||
+   Object.keys(p).some(k=>!['x','y'].includes(k))||
+   p.x!==want.x||p.y!==want.y)return false;
+ }
+ const endpoint=reply.endpoint,last=reply.accepted.at(-1);
+ return !!endpoint&&Number.isSafeInteger(endpoint.x)&&
+  Number.isSafeInteger(endpoint.y)&&
+  Object.keys(endpoint).length===2&&
+  Object.keys(endpoint).every(k=>['x','y'].includes(k))&&
+  endpoint.x===last.x&&endpoint.y===last.y;
+}
 const noop=()=>{};
 /** Only fixed, non-private rejection classes are exposed to in-memory trace. */
 export function classifyWorldMovementRejection(reason){
  if(['invalid-path','invalid-authority-ack','invalid-commit',
+     'invalid-final-ack',
      'begin-failed','invalid-session','path-limit','authority-error']
      .includes(reason))return reason;
  if(reason==='World movement server unavailable')return 'rpc-unavailable';
@@ -48,11 +80,14 @@ const predictionReached=(origin,predicted,approved)=>{
   (approved.y-origin.y)*dy>=d-1e-7;
 };
 export function createMovementController({authority,onEvent=noop,canPredict=()=>false,
- trace=worldV2Trace}={}){
+ trace=worldV2Trace,enableAtomicFinalize=false}={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
   typeof onEvent!=='function'||typeof canPredict!=='function'||
   typeof trace?.event!=='function')
   throw Error('V2 movement requires a complete authority interface');
+ if(typeof enableAtomicFinalize!=='boolean'||
+   (enableAtomicFinalize&&typeof authority.finalize!=='function'))
+  throw Error('Invalid V2 atomic finalize feature gate');
  let active=null,disposed=false,state='Idle',generation=0;
  const emit=(gesture,type,extra={})=>{
   if(type!=='sampled'&&type!=='presented')
@@ -97,15 +132,28 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      const batch=takeGestureBatch(g.approved,snapshot);
      if(!batch||!batch.targets.length){g.phase='path';reject(g,'invalid-path');break}
      const before={...g.approved},seq=++g.seq;
-     g.phase='advance';
-     const response=await authority.advance({
+     // Only a CLOSING, COMPLETELY FITTING, real-player last batch can
+     // replace the final Advance+Commit with the optional atomic RPC.
+     // A long gesture still uses exactly the existing bounded Advance
+     // path until its final batch. Preview never touches server Commit.
+     const finalizing=enableAtomicFinalize&&g.closing&&
+      g.mode!=='preview'&&batch.remaining.length===0;
+     g.phase=finalizing?'finalize':'advance';
+     const request={
       version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
       seq,from:before,targets:batch.targets,selection:g.selection,
       environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
-     });
+     };
+     // A potentially committed but lost final reply must NOT be retried
+     // through legacy Advance or Commit. The authority adapter may replay
+     // ONLY the identical finalization request once.
+     const response=await (finalizing?
+      authority.finalize(request):authority.advance(request));
      if(active!==g)break;
-     if(!validAck(response,g.sessionId,seq,before,batch.targets)){
-      reject(g,'invalid-authority-ack');break;
+     if(!(finalizing?
+      validAtomicFinalizationAck(response,g.sessionId,seq,before,batch.targets):
+      validAck(response,g.sessionId,seq,before,batch.targets))){
+      reject(g,finalizing?'invalid-final-ack':'invalid-authority-ack');break;
      }
      g.pending.splice(0,batch.consumed);
      if(response.accepted.length){
@@ -136,6 +184,16 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
        seq,blocked:response.blocked,from:before,
        accepted:response.accepted.map(p=>({...p})),blockedAt
       });
+      if(finalizing){
+       // Commit already happened server-side; NEVER send a second Commit.
+       // Event callbacks may have revoked the gesture, so check identity
+       // again before accepting the final canonical endpoint.
+       if(active===g){
+        g.seq=seq+1;
+        finish(g,{status:'committed',endpoint:{...g.approved}});
+       }
+       break;
+      }
      continue;
     }
     if(!g.closing)break;
