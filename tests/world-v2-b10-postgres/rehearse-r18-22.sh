@@ -39,4 +39,7 @@ r22_psql -f tests/world-v2-b10-postgres/step-bbox-r18-26.sql
 # Commit empty-work fast-path in BEGIN/ROLLBACK. This test covers real
 # post-R05 token+mount commit, private queued hides, exact ACK retry and ACL.
 r22_psql -f tests/world-v2-b10-postgres/commit-empty-r18-27.sql
+# R18-28 optional 1-RTT final Advance + Commit, same trusted
+# existing RPCs and private queue. Fully isolated BEGIN/ROLLBACK only.
+r22_psql -f tests/world-v2-b10-postgres/atomic-finalize-r18-28.sql
 echo 'B10-R18-22 PASS: R05->wall->checkpoint-aware map guards->affinity in one fresh local PG17, live R05 authority retained'
