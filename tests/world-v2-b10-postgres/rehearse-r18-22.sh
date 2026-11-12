@@ -31,4 +31,8 @@ python3 tests/world-v2-b10-postgres/extract_latest_trajectory_r18_19.py > /tmp/w
 r22_psql -f /tmp/world_v2_b10_r18_22_core.sql
 r22_psql -f /tmp/world_v2_b10_r18_22_viewers.sql
 r22_psql -f tests/world-v2-b10-postgres/ordered-stack-r18-22.sql
+# R18-26 overlay AFTER the full installed R05->wall->map->affinity stack.
+# The overlay test itself uses BEGIN / ROLLBACK and verifies original source
+# and client schema/function grants remain untouched. Never run on live.
+r22_psql -f tests/world-v2-b10-postgres/step-bbox-r18-26.sql
 echo 'B10-R18-22 PASS: R05->wall->checkpoint-aware map guards->affinity in one fresh local PG17, live R05 authority retained'
