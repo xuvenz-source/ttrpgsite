@@ -93,20 +93,23 @@ export function createInputController({
   if(activePointer===null||event.pointerId!==activePointer||
    event===lastMoveEvent)return;
   lastMoveEvent=event;
-  // A single browser pointermove can contain dozens of high-frequency
-  // hardware samples. Treat that group as ONE frame-level intent, using its
-  // latest position. Feeding every intermediate jitter sample into the
-  // gesture queue amplifies corner oscillation and collision RPC backlog.
-  // This changes input sampling only; server sweep collision still validates
-  // every grid cell of the requested displacement.
-  const samples=event.getCoalescedEvents?.();
-  const latest=Array.isArray(samples)&&samples.length?
-   samples[samples.length-1]:event;
-  const p=point(latest)??(latest===event?null:point(event));
-  if(p)controller.updateGesture({
-   x:p.x+(pointerOffset?.x??0),
-   y:p.y+(pointerOffset?.y??0)
-  });
+  // Browser pointermove groups can contain hundreds of device samples.
+  // Bound per-dispatch input work while retaining the first, last, and
+  // evenly spaced intermediate bends. In particular, a two-sample right
+  // angle still keeps BOTH corners instead of taking a diagonal shortcut.
+  // All resulting cells still pass the original server collision sweep.
+  const coalesced=event.getCoalescedEvents?.();
+  const samples=Array.isArray(coalesced)&&coalesced.length?coalesced:[event];
+  const sampledCount=Math.min(4,samples.length);
+  for(let i=0;i<sampledCount;i++){
+   const index=sampledCount===1?samples.length-1:
+    Math.round(i*(samples.length-1)/(sampledCount-1));
+   const p=point(samples[index])??(i===sampledCount-1?point(event):null);
+   if(p)controller.updateGesture({
+    x:p.x+(pointerOffset?.x??0),
+    y:p.y+(pointerOffset?.y??0)
+   });
+  }
   if(!controller.active)release();
   event.preventDefault?.();
  };
