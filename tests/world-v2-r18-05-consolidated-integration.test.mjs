@@ -94,7 +94,7 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
   path:approvedLocalMetrics.path,
   priorReviewedBlobSha:approvedLocalMetrics.reviewedBlobSha,
   workPackage:'B10-R18-40-BLOCKED-LATERAL-REBASE',
-  reviewedBlobSha:'6b9c2abfb859b2a8d56b55529c219d2709b5fa86'
+  reviewedBlobSha:'d770a1fdfd149663a90ddbb55c25c7dee6c36b97'
  };
  assert.equal(approvedBlockedLateralRebase.priorReviewedBlobSha,
   'bc83ad6dbb3543b538864440484b12d46494c6a0');
