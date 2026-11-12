@@ -425,7 +425,8 @@
       "name": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-22 THIRD fresh disposable PG17 source-real ordered sequence: frozen R05 committed and kept active -> R18-17 V2+legacy 0.10 helper -> corrected checkpoint-aware R18-19 token/tool cross-map guards -> R18-20 map/token campaign affinity, each locally committed; 20/20 O assertions confirm real public token and 2x2 mounted tool Begin/Advance/Commit, replay/unauthorized map/solid wall blocks and private ACL. Additional R05 atomic recovery separate. Nothing deployed."
+      "note": "R18-22 THIRD fresh disposable PG17 source-real ordered sequence: frozen R05 committed and kept active -> R18-17 V2+legacy 0.10 helper -> corrected checkpoint-aware R18-19 token/tool cross-map guards -> R18-20 map/token campaign affinity, each locally committed; 20/20 O assertions confirm real public token and 2x2 mounted tool Begin/Advance/Commit, replay/unauthorized map/solid wall blocks and private ACL. Additional R05 atomic recovery separate. Nothing deployed.",
+      "linkedPullRequest": 125
     }
   ],
   "features": [
@@ -1459,7 +1460,8 @@
         "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
         "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
       ],
-      "note": "20/20 O assertions in disposable PG17 are not a linked CLI migration history, actual prod full schema or authenticated P1/P2 LOS acceptance; no real SQL applied. R05 frozen remains only versioned pending migration, later SQL candidates need post-R05 signed-hash re-review and separate explicit approval. 700ms guarded observer and client 0.10 stay OFF."
+      "note": "20/20 O assertions in disposable PG17 are not a linked CLI migration history, actual prod full schema or authenticated P1/P2 LOS acceptance; no real SQL applied. R05 frozen remains only versioned pending migration, later SQL candidates need post-R05 signed-hash re-review and separate explicit approval. 700ms guarded observer and client 0.10 stay OFF.",
+      "linkedPullRequest": 125
     }
   ],
   "databaseDependencies": [
