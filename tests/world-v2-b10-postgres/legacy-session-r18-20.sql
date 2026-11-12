@@ -116,7 +116,7 @@ DECLARE
  expired uuid:='00000000-0000-4000-8000-000000000309';
  override_sid uuid:='00000000-0000-4000-8000-000000000310';
  scene jsonb:='{"objects":[]}'::jsonb;
- wall jsonb; n bigint;published boolean;
+ wall jsonb; n bigint;previous_message_id bigint;published boolean;
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
@@ -201,14 +201,14 @@ BEGIN
  VALUES(other_player,0),(dm,2)
  ON CONFLICT(viewer_id) DO UPDATE SET status=excluded.status;
  PERFORM public.r20_issue_legacy(hidden,actor,token,'token',scene,5);
- SELECT count(*) INTO n FROM realtime.b07_outbox;
+ SELECT count(*),coalesce(max(id),0) INTO n,previous_message_id FROM realtime.b07_outbox;
  PERFORM public.b08_assert(
   public.advance_map_motion_session_path(hidden,
    '[{"x":1,"y":1},{"x":2,"y":1}]'::jsonb,6) AND
   (SELECT count(*)=n+1 FROM realtime.b07_outbox) AND
-  (SELECT count(*)=0 FROM realtime.b07_outbox WHERE
+  (SELECT count(*)=0 FROM realtime.b07_outbox WHERE id>previous_message_id AND
     topic='forge-observer:'||test_map::text||':'||other_player::text) AND
-  (SELECT count(*)=1 FROM realtime.b07_outbox WHERE
+  (SELECT count(*)=1 FROM realtime.b07_outbox WHERE id>previous_message_id AND
     topic='forge-observer:'||test_map::text||':'||dm::text AND
     message->>'action'='hide'),
   'S12 simulated zero-visibility recipient gets no path, hide-only DM gets no path');
