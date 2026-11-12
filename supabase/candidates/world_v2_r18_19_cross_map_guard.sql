@@ -1,10 +1,15 @@
--- R18-19 PRE-RELEASE CROSS-MAP AUTHORITY HARDENING CANDIDATE.
+-- R18-21 SOURCE-REAL CORRECTION to R18-19 cross-map candidate.
 -- NEVER APPLY DIRECTLY TO SUPABASE. NOT A VERSIONED MIGRATION.
--- Exact prior live function bodies from 20261108055943, amended only to
--- validate map-transfer scope BEFORE pre-existing legacy early-return paths.
--- Production SQL, frozen R05 and R18-17 candidates remain untouched.
--- No new RPC surface, grants, policy or trigger is created.
---
+-- Current LIVE pg_get_functiondef fingerprints (read-only 12 Nov 2026):
+-- forge_visibility.enforce_collision: 7e652f0f2334980ccc724e1748d334ba
+-- forge_visibility.enforce_tool_collision: 771ea1716498a43210661532f9c24977
+-- Both BASE functions include World V2 commit_allows_piece_v2 checkpoint
+-- bypass; earlier R18-19 candidate wrongly copied pre-checkpoint SQL!
+-- This correction rebuilds from the exact current live bodies; the ONLY
+-- intentional behavioral change is the explicit map-transfer check
+-- BEFORE legacy early returns. Full auth validators remain independent.
+-- Frozen R05 and production SQL are NOT MODIFIED. No grants, RLS, or new RPC.
+
 create or replace function forge_visibility.enforce_collision()
 returns trigger language plpgsql volatile security definer set search_path='' as $$
 declare
@@ -23,12 +28,11 @@ begin
     old.span_y is not distinct from new.span_y and
     old.map_id is not distinct from new.map_id then return new;end if;
  dm:=public.is_campaign_dm(new.campaign_id);
- -- R18-19: even the DM may only transfer a token to a map in its campaign.
- if new.map_id is distinct from old.map_id and
-    not exists (
-     select 1 from public.battle_maps bm
-     where bm.id=new.map_id and bm.campaign_id=new.campaign_id
-    ) then
+ -- R18-21: destination map belongs to the token's fixed campaign.
+ if new.map_id is distinct from old.map_id and not exists (
+  select 1 from public.battle_maps bm
+  where bm.id=new.map_id and bm.campaign_id=new.campaign_id
+ ) then
   raise exception 'Token destination map outside campaign';
  end if;
  if new.map_id is distinct from old.map_id and not dm then
@@ -59,7 +63,16 @@ begin
    where ch.id=new.character_id and ch.campaign_id=new.campaign_id;
   attrs:=coalesce(attrs,'{}'::jsonb);
  end if;
- -- For approved trajectories the trigger itself checks every bent segment.
+ -- Trusted V2 commits use an unforgeable per-transaction private row.
+  -- The legacy route validator remains solely for pre-cutover compatibility.
+  IF old.map_id IS NOT DISTINCT FROM new.map_id AND
+     old.campaign_id IS NOT DISTINCT FROM new.campaign_id AND
+     old.span_x IS NOT DISTINCT FROM new.span_x AND
+     old.span_y IS NOT DISTINCT FROM new.span_y AND
+     forge_world_v2.commit_allows_piece_v2(
+      'token',new.id,new.campaign_id,new.map_id,
+      old.x,old.y,new.x,new.y) THEN RETURN new;END IF;
+  -- For approved trajectories the trigger itself checks every bent segment.
  route_text:=current_setting('forge.trajectory_steps',true);
  if coalesce(route_text,'')<>'' and
     current_setting('forge.trajectory_map',true)=new.map_id::text and
@@ -94,7 +107,8 @@ begin
   end loop;
  end loop;
  return new;
-end $$;
+end
+$$;
 
 create or replace function forge_visibility.enforce_tool_collision()
 returns trigger language plpgsql volatile security definer set search_path='' as $$
@@ -107,8 +121,7 @@ begin
   if current_setting('request.jwt.claim.role',true)='service_role' then return new;end if;
   raise exception 'Sign in to move tools';
  end if;
- -- R18-19: verify map-transfer authority BEFORE every held-item,
- -- unpublished-map or missing-map-rules early return.
+ -- R18-21: check map transfer before held/unpublished shortcuts.
  if new.map_id is distinct from old.map_id then
   if not public.is_campaign_dm(new.campaign_id) then
    raise exception 'Only the DM can transfer issued tools between maps';
@@ -152,7 +165,14 @@ begin
   new.x+span>w or new.y+span>h then
    raise exception 'Tool movement leaves the map bounds';end if;
  attrs:=coalesce(new.state->'attrs','{}'::jsonb);
- route_text:=current_setting('forge.trajectory_steps',true);
+ IF old.map_id IS NOT DISTINCT FROM new.map_id AND
+     old.campaign_id IS NOT DISTINCT FROM new.campaign_id AND
+     old.config IS NOT DISTINCT FROM new.config AND
+     old.kind IS NOT DISTINCT FROM new.kind AND
+     forge_world_v2.commit_allows_piece_v2(
+      'tool',new.id,new.campaign_id,new.map_id,
+      old.x,old.y,new.x,new.y) THEN RETURN new;END IF;
+  route_text:=current_setting('forge.trajectory_steps',true);
  if coalesce(route_text,'')<>'' and
     current_setting('forge.trajectory_map',true)=new.map_id::text and
     current_setting('forge.trajectory_actor',true)=actor::text then
@@ -186,4 +206,5 @@ begin
   end loop;
  end loop;
  return new;
-end $$;
+end
+$$;
