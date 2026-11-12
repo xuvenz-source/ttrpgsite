@@ -224,6 +224,9 @@ GRANT SELECT ON public.campaign_members TO authenticated;
 GRANT SELECT ON public.battle_maps TO authenticated;
 GRANT SELECT,UPDATE ON public.campaign_tool_issues TO authenticated;
 GRANT USAGE ON SCHEMA public TO authenticated;
+-- Fixture parity: Supabase authenticated role can resolve auth.uid(),
+-- while this disposable schema was created without ordinary USAGE grants.
+GRANT USAGE ON SCHEMA auth TO authenticated;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub',
  '00000000-0000-4000-8000-000000000011',true);
