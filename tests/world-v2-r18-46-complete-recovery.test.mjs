@@ -92,7 +92,7 @@ test('R18-46 atomic restoring transaction refuses drift before executing first s
  assert.match(restore,/pg_get_functiondef\(p\)\)<>rec\.original_digest/);
  // SQL comments may explain that dangerous operations are forbidden.
  // Inspect executable SQL rather than matching those words in comments.
- const executable=restore.replace(/^--[^\n]*$/gm,'');
+ const executable=restore.replace(/^[ \t]*--[^\n]*$/gm,'');
  assert.doesNotMatch(executable,/\bDROP\s+(?:TABLE|TRIGGER|FUNCTION)\b|\bCASCADE\b|schema_migrations.*(?:UPDATE|DELETE)/);
 });
 test('R18-46 security-first recovery keeps R18-20 campaign-identity guards and normal actor APIs',()=>{
