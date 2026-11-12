@@ -52,6 +52,13 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/wall-edge-r18-17.sql
 python3 tests/world-v2-b10-postgres/extract_real_collision_triggers_r18_18.py \
  > /tmp/world_v2_b10_r18_18_legacy_triggers.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/direct-write-wall-r18-18.sql
+# R18-19: overwrite the historical 20261108031754 guard source with the
+# ACTUAL LATER 20261108055943 trajectory-aware guard source, then validate
+# private per-leg geometry, public alternate RPCs, and map-transfer authorization.
+# Source extractor and candidate are local-only. All work ROLLBACK.
+python3 tests/world-v2-b10-postgres/extract_latest_trajectory_r18_19.py \
+ > /tmp/world_v2_b10_r18_19_latest_trajectory.sql
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/trajectory-map-auth-r18-19.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
