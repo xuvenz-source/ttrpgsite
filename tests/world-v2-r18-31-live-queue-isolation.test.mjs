@@ -263,7 +263,12 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  const reviewedPriorR18_31='347d3ac8cd9992027d5a67340ae45220cccd8da5';
  assert.equal(reviewedPriorR18_31,
   '347d3ac8cd9992027d5a67340ae45220cccd8da5');
- assert.equal(blob,'48070f99f818bc7669f4fc0d6f64335129d6f9cc');
+ // R18-36 adds only a typed local display mode and private prediction trace
+ // on top of the previously pinned R18-35 controller; wire calls are identical.
+ const reviewedPriorR18_35='48070f99f818bc7669f4fc0d6f64335129d6f9cc';
+ assert.equal(reviewedPriorR18_35,
+  '48070f99f818bc7669f4fc0d6f64335129d6f9cc');
+ assert.equal(blob,'d2a066b074b9536dfa35f0ff33752541c695720f');
  assert.match(source,/result\.noMotion===true\?\{noMotion:true\}:\{\}/);
  assert.match(source,/g\.pending\.splice\(0,batch\.consumed\);\s*g\.inFlightTarget=/);
  assert.match(source,/g\.inFlightTarget\?\?g\.approved/);
