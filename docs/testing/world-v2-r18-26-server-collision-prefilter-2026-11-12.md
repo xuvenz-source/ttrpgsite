@@ -45,3 +45,13 @@ The existing `tests/world-v2-b10-postgres/rehearse-r18-22.sh` still reconstructs
 - Vercel live frontend should remain on R18-24; the rolled-back R18-25 instrumentation is excluded from this cumulative branch. Do NOT enable guarded 700ms recovery or relax collision.
 
 **Decision:** Stage and test narrow server-side work now; **no production SQL or frontend deploy** until authenticated migration and independent-player gates. Follow a confirmed candidate performance result with broader isolated adversarial tests and a new explicit release review. R18-26 alone is not an adequate cure for observed ~1 s commit latency.
+
+## Completed source-level validation — exact SQL commit `b4fd6e0b`
+
+The first B10 combined SQL workflow detected a **test harness error**, not a geometry failure: the original-function reference `regprocedure` in a newly written SELECT listed only five double-precision arguments instead of the real function's six. The R26-01 source hash gate passed before this error. The typo was corrected without changing candidate SQL or frozen migrations, and the full combined PostgreSQL workflow then passed at exact source commit `b4fd6e0b69f8c3b0f8ca86fa71de837c670f6c71`.
+
+- Full isolated combined PostgreSQL 17 #43157643591: **SUCCESS**, original R18-22 **O01–O20** all pass; R18-26 exact live baseline source pinned; **4,860/4,860** reference-versus-candidate collision cases match; **13/13** R26 gates pass. Invalid wall coordinate still raises the same PostgreSQL SQLSTATE. Original function and reference both restored/removed after transaction rollback. No live SQL executed.
+- Isolated benchmark: 40 repeated permitted moves through a synthetic scene with 100 remote barriers take **26.50 ms** with the original and **9.91 ms** with the conservative prefilter. This is a **62.6% reduction in the time for this particular 40-call microbenchmark**, not a measured production Commit or browser latency gain. It does not predict how much of the ~1 s Commit RTT will disappear.
+- Staged frontend Node verification #43157649678: **1,015/1,015 tests**, Vite production build and audit passed. Isolated PostgreSQL authority #43157649747: **PASS**. CodeQL #43157649650: **PASS**.
+
+**Decision unchanged:** the candidate is worthy of further review as a post-R05 opt-in server performance change, but **no migration version, production deployment, merge, or release authorization** follows from the benchmark. Testers are not required for this isolated SQL test; they remain required before full fog/private observer acceptance.
