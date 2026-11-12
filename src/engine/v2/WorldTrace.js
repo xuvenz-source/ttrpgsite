@@ -64,6 +64,12 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'under-250ms','250-750ms','over-750ms','over-2s','over-5s',
  'coalesced','drained','discarded',
  'covered','fallback','origin-mismatch','backlog']);
+// Narrow validation predicates for opt-in local diagnostic export.
+ // Keep one source of truth: no event names or details are accepted outside
+ // the trace recorder's existing privacy allowlists.
+export const isWorldV2TraceEvent=name=>EVENTS.has(name);
+export const isWorldV2TraceDetail=detail=>DETAILS.has(detail);
+export const isWorldV2TraceMetric=name=>METRICS.has(name);
 const cadenceMetrics=new Set([
  'authority.begin','authority.advance','authority.commit',
  'movement.release-to-terminal'
