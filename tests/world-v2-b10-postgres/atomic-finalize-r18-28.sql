@@ -25,6 +25,12 @@ BEGIN
 
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
+ -- The R18-22 temporary wall was correctly rolled back by its own test.
+ -- Re-create the exact 3.95 shallow-overlap wall in THIS disposable
+ -- transaction before testing both an allowed prefix and blocked endpoint.
+ UPDATE public.map_environments e SET
+  live='{"objects":[{"type":"wall","points":[{"x":3.95,"y":0},{"x":3.95,"y":16}],"blocksMovement":true}]}'::jsonb
+ WHERE e.map_id=test_map;
  ack:=public.begin_world_motion_v2(test_map,
   jsonb_build_array(jsonb_build_object('kind','token','id',token)),
   '{"x":1,"y":1}'::jsonb,'drag',1,1,false);
