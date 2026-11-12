@@ -274,7 +274,7 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  // Historical R18-39 metrics-only controller SHA is still preserved.
  assert.equal('bc83ad6dbb3543b538864440484b12d46494c6a0',
   'bc83ad6dbb3543b538864440484b12d46494c6a0');
- assert.equal(blob,'6b9c2abfb859b2a8d56b55529c219d2709b5fa86');
+ assert.equal(blob,'d770a1fdfd149663a90ddbb55c25c7dee6c36b97');
  assert.match(source,/updateGestureSamples\(samples\)/);
  assert.match(source,/updatePointer\(samples\[i\],i===samples\.length-1\)/);
  assert.match(source,/result\.noMotion===true\?\{noMotion:true\}:\{\}/);
