@@ -42,4 +42,9 @@ r22_psql -f tests/world-v2-b10-postgres/commit-empty-r18-27.sql
 # R18-28 optional 1-RTT final Advance + Commit, same trusted
 # existing RPCs and private queue. Fully isolated BEGIN/ROLLBACK only.
 r22_psql -f tests/world-v2-b10-postgres/atomic-finalize-r18-28.sql
+# R18-30: candidate overlay on the exact source-real R18-28 backend.
+# Export FIXTURE-ONLY wire ACK data to /tmp and have the ACTUAL JS V2
+# controller+validator parse it, before the CI disposable DB is removed.
+r22_psql -f tests/world-v2-b10-postgres/blocked-final-r18-30.sql
+node tests/world-v2-b10-postgres/verify-blocked-final-r18-30.mjs /tmp/world_v2_b10_r18_30_wire.jsonl
 echo 'B10-R18-22 PASS: R05->wall->checkpoint-aware map guards->affinity in one fresh local PG17, live R05 authority retained'
