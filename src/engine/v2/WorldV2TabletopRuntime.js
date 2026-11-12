@@ -245,7 +245,10 @@ export function createWorldV2TabletopRuntime({
     // snapshot; never ask the live movement database to commit preview.
     void refreshVisibility('virtual-preview-final');
    }
-   if(event.type==='committed'&&!dmPreview){
+   if(event.type==='committed'&&!dmPreview&&!event.noMotion){
+    // No-motion wall receipts never update canonical positions. They
+    // already have unchanged signed sight, so must not start a redundant
+    // post-commit visibility RPC. Actual commits retain full reauthorization.
     // Actor's final motion is acknowledged once by Phase 4. The renderer
     // holds its approved endpoint until this authorized snapshot arrives.
     signal(onCommit,{mapId,selection:event.selection,
