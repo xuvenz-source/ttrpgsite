@@ -418,7 +418,8 @@
       "name": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-21 DM map upload/calibration/party route source-real PG17 W01-W17 passed in rollback; CRITICAL correct superseded R18-19 map-guard SQL to preserve LIVE World V2 commit_allows_piece_v2 token+tool signed checkpoint bypass. C01-C10 source-real checkpoint regression and exact live normalized function-body-only-delta Node QA; no SQL/production deployment. Frozen R05 kept intact."
+      "note": "R18-21 DM map upload/calibration/party route source-real PG17 W01-W17 passed in rollback; CRITICAL correct superseded R18-19 map-guard SQL to preserve LIVE World V2 commit_allows_piece_v2 token+tool signed checkpoint bypass. C01-C10 source-real checkpoint regression and exact live normalized function-body-only-delta Node QA; no SQL/production deployment. Frozen R05 kept intact.",
+      "linkedPullRequest": 124
     }
   ],
   "features": [
@@ -1413,7 +1414,8 @@
         "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
         "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
       ],
-      "note": "Do NOT merge or apply old PR #122 R18-19 function candidate standalone: it omits LIVE forge_world_v2.commit_allows_piece_v2 and risks double collision/rubberbanding. Only cumulative corrected R18-21 source can be used for future source-real staged SQL rehearsal. Actual authenticated CLI 83-body migration preflight, fresh post-R05 function fingerprints, combined R05->new SQL rehearsal, real P1/P2 Auth LOS and separate SQL/frontend authorizations remain blockers."
+      "note": "Do NOT merge or apply old PR #122 R18-19 function candidate standalone: it omits LIVE forge_world_v2.commit_allows_piece_v2 and risks double collision/rubberbanding. Only cumulative corrected R18-21 source can be used for future source-real staged SQL rehearsal. Actual authenticated CLI 83-body migration preflight, fresh post-R05 function fingerprints, combined R05->new SQL rehearsal, real P1/P2 Auth LOS and separate SQL/frontend authorizations remain blockers.",
+      "linkedPullRequest": 124
     }
   ],
   "databaseDependencies": [
