@@ -32,6 +32,9 @@ python3 tests/world-v2-b07-postgres/extract_viewer_authority.py > /tmp/world_v2_
 python3 tests/world-v2-b10-postgres/extract_original_commit_r05.py > /tmp/world_v2_b10_r05_original_commit.sql
 r05_psql -f /tmp/world_v2_b10_r05_core.sql
 r05_psql -f /tmp/world_v2_b10_r05_viewers.sql
+# Install the extracted ORIGINAL public Commit into this disposable fixture.
+# The existing R05 rehearsal also reloads this exact source independently.
+r05_psql -f /tmp/world_v2_b10_r05_original_commit.sql
 # R18-42: profile exact LIVE baseline before any R05 SQL is overlaid.
 # Benchmark is wrapped in BEGIN / ROLLBACK with a post-rollback assertion.
 # The fixture's private observer publisher is intentionally test-only.
