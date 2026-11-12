@@ -6,6 +6,44 @@ ALTER TABLE forge_visibility.map_rules
 \i /tmp/world_v2_b10_r18_18_legacy_triggers.sql
 \i /tmp/world_v2_b10_r18_19_latest_trajectory.sql
 \i supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql
+-- NEGATIVE CONTROL: source-real LATEST legacy trigger (before patch)
+-- currently skips checks if the target has no map rules or if the tool is
+-- held. In a simplified fixture with no real RLS, demonstrate ONLY the
+-- trigger-level shortcut. Production Data API exploitability is NOT claimed.
+DO $r19_baseline$
+DECLARE
+ actor uuid:='00000000-0000-4000-8000-000000000011';
+ dm uuid:='00000000-0000-4000-8000-000000000013';
+ original_map uuid:='00000000-0000-4000-8000-000000000021';
+ unpublished_map uuid:='00000000-0000-4000-8000-000000000024';
+ camp uuid:='00000000-0000-4000-8000-000000000001';
+ tool uuid:='00000000-0000-4000-8000-000000000201';
+ holder uuid:='00000000-0000-4000-8000-000000000101';
+BEGIN
+ INSERT INTO public.battle_maps VALUES(unpublished_map,camp,160,160,10);
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ PERFORM set_config('request.jwt.claim.role','authenticated',true);
+ UPDATE public.campaign_tool_issues SET map_id=unpublished_map WHERE id=tool;
+ PERFORM public.b08_assert(
+  (SELECT map_id=unpublished_map FROM public.campaign_tool_issues WHERE id=tool),
+  'B01 unpatched latest tool trigger shortcut allows owner to move to map with no rules (fixture without RLS)');
+ PERFORM set_config('request.jwt.claim.sub',dm::text,true);
+ UPDATE public.campaign_tool_issues SET map_id=original_map WHERE id=tool;
+ UPDATE public.campaign_tool_issues SET held_by_token_id=holder WHERE id=tool;
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ UPDATE public.campaign_tool_issues SET map_id=unpublished_map WHERE id=tool;
+ PERFORM public.b08_assert(
+  (SELECT map_id=unpublished_map FROM public.campaign_tool_issues WHERE id=tool),
+  'B02 unpatched latest held-tool shortcut allows direct cross-map UPDATE (fixture without RLS)');
+ PERFORM set_config('request.jwt.claim.sub',dm::text,true);
+ UPDATE public.campaign_tool_issues SET map_id=original_map,
+  held_by_token_id=NULL WHERE id=tool;
+ PERFORM public.b08_assert(
+  (SELECT map_id=original_map AND held_by_token_id IS NULL
+   FROM public.campaign_tool_issues WHERE id=tool),
+  'B03 fixture restored before hardened candidate');
+ RAISE NOTICE 'R18-19: three negative-control/cleanup baseline assertions PASSED';
+END $r19_baseline$;
 \i supabase/candidates/world_v2_r18_19_cross_map_guard.sql
 
 CREATE OR REPLACE FUNCTION public.r19_scene(
