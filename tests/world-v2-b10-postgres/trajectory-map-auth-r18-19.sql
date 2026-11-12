@@ -5,6 +5,9 @@ ALTER TABLE forge_visibility.map_rules
  ADD COLUMN fog_enforced boolean NOT NULL DEFAULT false;
 \i /tmp/world_v2_b10_r18_18_legacy_triggers.sql
 \i /tmp/world_v2_b10_r18_19_latest_trajectory.sql
+-- Current deployed trigger hooks are source-real and require the V2
+-- transaction checkpoint helper; exact pg_get_functiondef is pinned.
+\i tests/world-v2-b10-postgres/live-v2-checkpoint-r18-21.sql
 \i supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql
 -- NEGATIVE CONTROL: source-real LATEST legacy trigger (before patch)
 -- currently skips checks if the target has no map rules or if the tool is
