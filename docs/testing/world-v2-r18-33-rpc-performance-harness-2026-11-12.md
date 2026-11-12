@@ -14,13 +14,13 @@ Exactly one new test-only `tests/world-v2-b10-postgres/performance-r18-33.sql` a
 
 The PG17 harness begins with actual installed-in-fixture R05 + R18-17/19/20. The first six-iteration sample set executes authorized:
 1. Two-cell accepted movement toward a 5% shallow wall edge and real canonical Commit.
-2. Immediate attempt into a solid wall (blocked Advance with no Commit and explicit cancellation).
+2. Immediate attempt into a solid wall (blocked Advance with no Commit). The isolated fixture does not load the live Cancel RPC, so baseline cancellation overhead is explicitly excluded; the still-provisional session is rolled back with the whole transaction.
 3. Authenticated reversal using Begin/Advance/Commit, not a test-only token UPDATE.
 4. Eight alternating approved Advance batches within one session and a full-route canonical Commit.
 
 In the *same rollback-only transaction*, the harness overlays the unchanged R18-26 wall bounding prefilter, R18-27 empty-work Commit, R18-28 atomic finalization and R18-30 blocked-only terminal receipt. It repeats those four cases six times via Begin+Finalize and (for the eight-advance case) seven ordinary Advance calls plus final atomic Advance/Commit. It asserts each server-approved step and exact final canonical token coordinate, zero-motion wall receipts, preserved authenticated-only public finalizer/private-schema restrictions, and exact rollback of all temporary data, new RPC and test schema changes.
 
-The benchmark reports 48 per-scenario timings (6 repetitions × 4 scenarios × 2 variants), with mean, p50, p95 and max. These are SQL-local, serial, low-sample, single-actor fixture results. **There is intentionally no CI speedup threshold and no extrapolation to production browser RTT or independent signed multiplayer/fog performance.** Captured SQL times exclude HTTPS round trips; the two variants also have different numbers of server calls by design. Tests judge authorization and convergence; timing is an exploratory diagnostic only.
+The benchmark reports 48 per-scenario timings (6 repetitions × 4 scenarios × 2 variants), with mean, p50, p95 and max. These are SQL-local, serial, low-sample, single-actor fixture results. The blocked baseline and staged no-motion finalizer are not identical terminal lifecycles because cancellation is omitted on the baseline. **There is intentionally no CI speedup threshold and no extrapolation to production browser RTT or independent signed multiplayer/fog performance.** Captured SQL times exclude HTTPS round trips; the two variants also have different numbers of server calls by design. Tests judge authorization and convergence; timing is an exploratory diagnostic only.
 
 ## Gates and release state
 
