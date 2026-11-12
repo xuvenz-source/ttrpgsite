@@ -115,7 +115,7 @@ test('R18-17 server-equivalent candidate is NO-MIGRATION and both helpers preser
    '\\.swept_hits_segment\\('));
  }
  assert.equal((sql.match(/RETURNS boolean LANGUAGE plpgsql IMMUTABLE SET search_path=''/g)||[]).length,2);
- assert.equal((sql.match(/least\\(0\\.10,w\\/4\\.0\\)/g)||[]).length,2);
+ assert.equal(sql.split('least(0.10,w/4.0)').length-1,2);
  assert.doesNotMatch(sql,/CREATE TABLE|GRANT |DROP FUNCTION|ALTER POLICY|SECURITY DEFINER/i);
  assert.match(sql,/NOT A VERSIONED MIGRATION/);
 });
