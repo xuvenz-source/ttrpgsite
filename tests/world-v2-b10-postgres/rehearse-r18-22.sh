@@ -35,4 +35,8 @@ r22_psql -f tests/world-v2-b10-postgres/ordered-stack-r18-22.sql
 # The overlay test itself uses BEGIN / ROLLBACK and verifies original source
 # and client schema/function grants remain untouched. Never run on live.
 r22_psql -f tests/world-v2-b10-postgres/step-bbox-r18-26.sql
+# R18-27: after R26 restores its original function, apply the R05
+# Commit empty-work fast-path in BEGIN/ROLLBACK. This test covers real
+# post-R05 token+mount commit, private queued hides, exact ACK retry and ACL.
+r22_psql -f tests/world-v2-b10-postgres/commit-empty-r18-27.sql
 echo 'B10-R18-22 PASS: R05->wall->checkpoint-aware map guards->affinity in one fresh local PG17, live R05 authority retained'
