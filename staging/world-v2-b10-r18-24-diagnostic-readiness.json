@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "step": "B10-R18-24",
+  "date": "2026-11-12",
+  "parentPr": 126,
+  "parentHead": "425f1da12a1f936a87bd04f4f7ef273f1346e220",
+  "branch": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+  "decision": "STAGING_NO_GO",
+  "changes": {
+    "optInOnly": "worldV2Trace=1",
+    "localTraceCopyUI": true,
+    "localDataOnly": true,
+    "extraNetworkRequests": 0,
+    "extraBackgroundPolling": 0,
+    "supabaseSqlChanges": false,
+    "authorityChanges": false,
+    "collisionChanges": false,
+    "fogPermissionChanges": false,
+    "generatedReportAuthenticatesRealUsers": false
+  },
+  "initialReleaseBaseline": {
+    "registeredMigrations": 83,
+    "r05Version": "20261111023204",
+    "r05Applied": false,
+    "productionMain": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "frontendDeployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "guardedObserverRecovery700ms": false
+  },
+  "remainingGates": {
+    "pinnedLinkedCliHistoryFetched": false,
+    "r05OnlyTrueDryRun": false,
+    "independentlyAuthenticatedThreeBrowsers": false,
+    "actualRealtimePrivateRecipientTest": false,
+    "liveFogLosRevocationAcceptance": false,
+    "measuredSustainedMultiplayerPerformance": false,
+    "productionFrontendApproval": false,
+    "sqlInstallationApproval": false
+  },
+  "paths": {
+    "panel": "src/engine/v2/WorldTraceCapturePanel.jsx",
+    "formatter": "src/engine/v2/WorldTraceDiagnosticReport.js",
+    "tests": "tests/world-v2-r18-24-multiplayer-diagnostic-capture.test.mjs",
+    "handoff": "docs/testing/world-v2-r18-24-multiplayer-qa-capture-2026-11-12.md"
+  },
+  "sqlApplied": false,
+  "mainMerged": false,
+  "productionDeployed": false,
+  "paidTierAdded": false
+}
