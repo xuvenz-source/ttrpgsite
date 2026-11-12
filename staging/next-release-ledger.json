@@ -404,7 +404,8 @@
       "name": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-19 source-corrected actual final 20261108055943 trajectory-aware legacy guards & alternate commit_map_trajectory, 3 negative controls for held/unpublished issued tool map transfer shortcut, 22 latest-body trajectory/cross-map tests and 7 role-authenticated RLS-mirror cases all local rollback; staged NONAPPLIED cross-map DM+same-campaign guard. Standalone campaign_id edits still need separate trigger/RLS hardening."
+      "note": "R18-19 source-corrected actual final 20261108055943 trajectory-aware legacy guards & alternate commit_map_trajectory, 3 negative controls for held/unpublished issued tool map transfer shortcut, 22 latest-body trajectory/cross-map tests and 7 role-authenticated RLS-mirror cases all local rollback; staged NONAPPLIED cross-map DM+same-campaign guard. Standalone campaign_id edits still need separate trigger/RLS hardening.",
+      "linkedPullRequest": 122
     }
   ],
   "features": [
@@ -1324,7 +1325,8 @@
         "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
         "supabase/candidates/world_v2_r18_19_cross_map_guard.sql"
       ],
-      "note": "No R05 or new SQL applied; active R18-15 strict client unchanged. Source fidelity gap in prior R18-18 corrected. 32 disposable rollback assertions cannot replace real Auth P1/P2, standalone campaign_id UPDATE, policy/foreign-key verification or CLI migration history reconciliation. Guarded observer 700ms still OFF."
+      "note": "No R05 or new SQL applied; active R18-15 strict client unchanged. Source fidelity gap in prior R18-18 corrected. 32 disposable rollback assertions cannot replace real Auth P1/P2, standalone campaign_id UPDATE, policy/foreign-key verification or CLI migration history reconciliation. Guarded observer 700ms still OFF.",
+      "linkedPullRequest": 122
     }
   ],
   "databaseDependencies": [
