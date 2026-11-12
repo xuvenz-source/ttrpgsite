@@ -174,6 +174,10 @@ export function createWorldV2TabletopRuntime({
  const movement=createMovementController({
   authority,
   canPredict:request=>{
+   // Synchronous CPU-only diagnostic. Never logs a request, geometry,
+   // actor, authorization result or hidden wall details.
+   const endLocalPrediction=worldV2Trace.begin('prediction.local');
+   try{
     if(disposed||!authorized())return false;
     if(!isDM)return canPredictWithinWorldGrants({
      frame:vision.frame,scene:manager.displayedScene,request
@@ -205,6 +209,7 @@ export function createWorldV2TabletopRuntime({
     anchor:{x:source.x,y:source.y},
     from:request.from,to:request.pointer
    });
+   }finally{endLocalPrediction()}
   },
   onEvent:event=>{
    if(disposed)return;
