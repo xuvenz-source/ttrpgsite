@@ -95,4 +95,9 @@ echo 'B10-R03 PASS: B03+B07+B08+R01 canonical core and terminal queue-retirement
 # disposable local database with source-extracted original public Commit.
 # It must pass BOTH atomic abort and post-commit four-function recovery.
 bash tests/world-v2-b10-postgres/rehearse-r05.sh
+# R18-22: Unlike the R05 rollback/recovery rehearsal, keep frozen R05
+# INSTALLED in a third disposable database, then install all three unversioned
+# SQL candidates in release order. No external DB connection permitted.
+# This is a source-real *combined* pre-release test, NOT SQL authorization.
+bash tests/world-v2-b10-postgres/rehearse-r18-22.sh
 echo 'B10 RELEASE GATE STILL BLOCKED: nonapplied candidate, observer-budget recovery and live Auth/LOS QA remain.'
