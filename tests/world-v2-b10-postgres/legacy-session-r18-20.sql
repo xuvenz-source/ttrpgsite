@@ -121,7 +121,8 @@ BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
  PERFORM public.b08_assert(
-  (SELECT p.prosecdef AND p.proconfig @> array['search_path=']
+  (SELECT p.prosecdef AND
+   pg_get_functiondef(p.oid) LIKE '%SET search_path TO ''''%' 
    FROM pg_proc p WHERE p.oid=
    'public.advance_map_motion_session_path(uuid,jsonb,bigint)'::regprocedure),
   'S01 true live legacy advance session remains SECURITY DEFINER with empty search_path');
