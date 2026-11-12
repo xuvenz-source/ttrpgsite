@@ -71,7 +71,12 @@ for(const row of records){
  }
  controller.updateGesture(row.targets.at(-1));
  const done=await controller.endGesture();
- assert.equal(done.status,'committed',row.scenario);
+ assert.equal(done.status,'committed',JSON.stringify({
+  scenario:row.scenario,reason:done.reason,events:events.map(e=>({
+   type:e.type,reason:e.reason,seq:e.seq,approved:e.approved,
+   blockedAt:e.blockedAt
+  })),calls,expected:row.reply
+ }));
  assert.deepEqual(done.endpoint,row.canonicalPosition,row.scenario);
  assert.equal(done.noMotion===true,row.noMotion,row.scenario);
  assert.equal(calls.finalize,1,row.scenario);
