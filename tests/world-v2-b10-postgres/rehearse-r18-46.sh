@@ -27,6 +27,11 @@ python3 tests/world-v2-b10-postgres/extract_real_collision_triggers_r18_18.py > 
 python3 tests/world-v2-b10-postgres/extract_latest_trajectory_r18_19.py > /tmp/world_v2_b10_r18_22_trajectory.sql
 r46_psql -f /tmp/world_v2_b10_r46_core.sql
 r46_psql -f /tmp/world_v2_b10_r46_viewers.sql
+# The older R18-22 fixture loaded only the R17 legacy visibility SAT
+# replacement. This fourth DB must load the ORIGINAL published SAT first
+# so the five-body protected snapshot matches the real pre-R17 catalog.
+python3 tests/world-v2-b10-postgres/extract_original_visibility_swept_r18_46.py > /tmp/world_v2_b10_r46_original_visibility_swept.sql
+r46_psql -f /tmp/world_v2_b10_r46_original_visibility_swept.sql
 
 # Immutable historical R18-22 script installs R05, R17/19/20.
 # Produce an EPHEMERAL variant with just ONE insertion point AFTER R05 and
