@@ -1,5 +1,6 @@
 import {worldV2Trace} from './WorldTrace.js';
-import {appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from './GesturePath.js';
+import {MAX_GESTURE_BENDS,appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from './GesturePath.js';
+import {pointerIntentCell} from './PointerIntentCell.js';
 
 /** V2 gesture orchestration. This is deliberately isolated from live RPCs.
  * Authority adapter MUST be backed by server validation in later phases.
@@ -62,6 +63,10 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
  };
  const finish=(g,result)=>{
   if(active===g)active=null;
+  // Measure the entire client lockout after pointer/key release, including
+  // remaining authorized advances, terminal commit, and cancellation.
+  g.releaseTimer?.(result.status==='committed'?'ok':'error');
+  g.releaseTimer=null;
   state=result.status==='committed'?'Committed':
    result.status==='revoked'?'Revoked':
    result.status==='cancelled'?'Cancelled':'Rejected';
@@ -91,32 +96,59 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      const snapshot=g.pending.slice();
      const batch=takeGestureBatch(g.approved,snapshot);
      if(!batch||!batch.targets.length){g.phase='path';reject(g,'invalid-path');break}
+     // R18-31: detach ONLY this already-validated batch before its RPC.
+     // Pointer updates during the network wait are then retained as future
+     // input, instead of being accidentally removed by a late Advance ACK.
+     g.pending.splice(0,batch.consumed);
+     g.inFlightTarget={...batch.targets.at(-1)};
      const before={...g.approved},seq=++g.seq;
      g.phase='advance';
-     const response=await authority.advance({
-      version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
-      seq,from:before,targets:batch.targets,selection:g.selection,
-      environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
-     });
+     let response;
+     try{
+      response=await authority.advance({
+       version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
+       seq,from:before,targets:batch.targets,selection:g.selection,
+       environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
+      });
+     }finally{
+      // Future input may start from the submitted target while awaiting.
+      // Clear it even on a failed/cancelled request; rejection remains
+      // governed solely by the existing authoritative ACK checks.
+      g.inFlightTarget=null;
+     }
      if(active!==g)break;
      if(!validAck(response,g.sessionId,seq,before,batch.targets)){
       reject(g,'invalid-authority-ack');break;
      }
-     g.pending.splice(0,batch.consumed);
      if(response.accepted.length){
       g.approved={...response.accepted.at(-1)};
       g.hadMotion=true;
      }
      // A denied crossing invalidates the entire unapproved route.
+     // Remember ONLY the explicitly denied, server-ACKed target while
+     // the approved origin remains unchanged. Repeated pointer events on
+     // that exact target must not create an endless collision RPC loop.
      if(response.blocked)g.pending.length=0;
      if(response.blocked||!g.predicted||
        predictionReached(g.origin,g.presented,g.approved)){
        g.presented={...g.approved};g.predicted=false;
       }
       state=g.closing?'Finishing':'Moving';
+      // The denied waypoint is derived solely from the validated ACK
+      // prefix and this client's requested route. It is local input feedback,
+      // never an authorization to reveal a hidden wall or move a sprite.
+      const route=response.blocked?expandGestureRoute(before,batch.targets):null;
+      const blockedAt=route&&response.accepted.length<route.length?
+       {...route[response.accepted.length]}:null;
+      g.blockedRetry=response.blocked&&blockedAt&&
+       ['drag','touch','preview'].includes(g.mode)?{
+        // Cache only the FIRST denied next-cell crossing, not the
+        // distant destination beyond it; never infer any other wall.
+        from:{...g.approved},to:{...blockedAt}
+       }:null;
       emit(g,response.blocked?'blocked':'approved',{
        seq,blocked:response.blocked,from:before,
-       accepted:response.accepted.map(p=>({...p}))
+       accepted:response.accepted.map(p=>({...p})),blockedAt
       });
      continue;
     }
@@ -164,8 +196,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],seq:0,mode,phase:'begin',sessionId:null,closing:false,
-     predicted:false,
+    pending:[],inFlightTarget:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
+    intentCell:{...origin},blockedRetry:null,releaseTimer:null,
+    predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
     environmentRevision,permissionGeneration};
    active=g;state='Grabbed';
@@ -187,11 +220,44 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   updateGesture(pointer){
    const g=active;
    if(disposed||!g||g.closing||!validPoint(pointer))return false;
-   const cell=gridPoint(pointer);
-   if(!cell||!appendGestureBend(g.pending,cell,g.approved)){
+   // Hysteresis is only for pointer input. A near-half-cell corner must
+   // not fill the path queue with alternating jitter cells.
+   const cell=['drag','touch','preview'].includes(g.mode)?
+    pointerIntentCell(pointer,g.intentCell):gridPoint(pointer);
+   if(!cell){
     g.phase='path';reject(g,'path-limit');return false;
    }
-   g.pointer={...pointer};
+   g.pointer={...pointer};g.intentCell={...cell};
+   if(g.pending.length===0&&g.blockedRetry&&
+    g.blockedRetry.from.x===g.approved.x&&
+    g.blockedRetry.from.y===g.approved.y){
+    // Find only the FIRST intended grid step in O(1), even for a cursor
+    // many tiles beyond the wall. Full route expansion's 48-cell limit
+    // must never turn a known denied crossing into a fresh RPC.
+    const dx=cell.x-g.approved.x,dy=cell.y-g.approved.y;
+    const steps=Math.max(Math.abs(dx),Math.abs(dy));
+    const first=steps?{
+     x:g.approved.x+Math.sign(dx)*Math.round(Math.abs(dx)/steps),
+     y:g.approved.y+Math.sign(dy)*Math.round(Math.abs(dy)/steps)
+    }:null;
+    if(first?.x===g.blockedRetry.to.x&&first?.y===g.blockedRetry.to.y){
+     // The identical server-denied NEXT cell is suppressed. Genuine
+     // alternate directions continue to require new server authority.
+     return true;
+    }
+   }
+   g.blockedRetry=null;
+   if(!appendGestureBend(g.pending,cell,g.inFlightTarget??g.approved)){
+    if(g.pending.length>=MAX_GESTURE_BENDS&&
+     ['drag','touch','preview'].includes(g.mode)){
+     // Refuse only the excess input sample until the original queue
+     // drains. NEVER skip a legitimate bend, invent a shortcut, or
+     // reject an existing server-approved gesture because of jitter.
+     trace.event('movement.path-backpressure',g.mode);
+     return false;
+    }
+    g.phase='path';reject(g,'path-limit');return false;
+   }
    if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}
    // A synchronous caller-supplied grant check must approve the *entire*
    // displacement. Default is false: no speculative hidden-wall travel.
@@ -215,7 +281,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(!g.closing&&pointer&&validPoint(pointer))this.updateGesture(pointer);
    if(active!==g)return Promise.resolve({status:'rejected'});
    if(g.finishPromise)return g.finishPromise;
-   g.closing=true;state='Finishing';emit(g,'released');
+   g.closing=true;state='Finishing';
+   g.releaseTimer=trace.begin?.('movement.release-to-terminal')??null;
+   emit(g,'released');
    g.finishPromise=new Promise(resolve=>{g.resolveFinish=resolve});
    if(g.sessionId)void drain(g);
    return g.finishPromise;

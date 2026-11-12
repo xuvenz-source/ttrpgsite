@@ -286,13 +286,18 @@ test('scene revision invalidation and duplicate members fail safely',async()=>{
  assert.equal(calls.commit.length,0);
 });
 
-test('bounded gesture path refuses excessive turns instead of dropping bends',async()=>{
+test('bounded gesture path refuses excess input without dropping already queued turns',async()=>{
  const {authority}=makeAuthority({begin:()=>new Promise(()=>{})});
  const controller=createMovementController({authority});
  controller.beginGesture(config);
+ let refused=0;
  for(let i=1;i<=130&&controller.active;i++){
   const x=i%2===1?1:0;
-  controller.updateGesture({x,y:i});
+  if(!controller.updateGesture({x,y:i}))refused++;
  }
- assert.equal(controller.state,'Rejected');
+ assert.equal(controller.state,'Moving',
+  'input saturation cannot roll back an already-approved gesture');
+ assert.equal(controller.active,true);
+ assert.ok(refused>0,'excess input is explicitly refused at the fixed cap');
+ controller.cancelGesture('user');
 });

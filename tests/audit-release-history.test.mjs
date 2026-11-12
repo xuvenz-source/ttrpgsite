@@ -20,7 +20,19 @@ test('release ledger records previous releases and pending authorized migrations
  assert.equal(ledger.branches.find(item=>item.name===ledger.releaseBranch)?.productionBaseSha,
   ledger.productionBaseSha);
  assert.equal(ledger.upcomingRelease.productionBaseSha,ledger.productionBaseSha);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
+ const outstanding=ledger.upcomingRelease.outstandingBranches;
+ assert.ok(Array.isArray(outstanding)&&outstanding.length>0);
+ assert.equal(outstanding.length,new Set(outstanding).size,
+  'the staged release ledger must not list duplicate branches');
+ assert.ok(outstanding.includes(ledger.releaseBranch),
+  'the active release branch must be tracked as outstanding');
+ for(const name of outstanding){
+  const entry=ledger.branches.find(item=>item.name===name);
+  assert.equal(entry?.status,'staged',
+   'every outstanding release branch must be explicitly staged: '+name);
+  assert.equal(entry?.productionBaseSha,ledger.productionBaseSha,
+   'every outstanding release branch must match production: '+name);
+ }
  assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&
@@ -74,7 +86,7 @@ test('release ledger records previous releases and pending authorized migrations
   /revoke all on function forge_visibility\.validate_piece_trajectory/);
  assert.doesNotMatch(read('supabase/migrations/20261108055943_world_runtime_single_write_trajectory.sql'),
   /^begin;|^commit;/m);
- assert.deepEqual(ledger.upcomingRelease.outstandingBranches,[ledger.releaseBranch]);
+ assert.ok(ledger.upcomingRelease.outstandingBranches.includes(ledger.releaseBranch));
  assert.ok(ledger.branches.some(item=>item.name==='stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08'&&item.status==='released'));
  assert.ok(ledger.branches.some(x=>
   x.name==='stage/supabase-multiplayer-performance-2026-11-08'&&

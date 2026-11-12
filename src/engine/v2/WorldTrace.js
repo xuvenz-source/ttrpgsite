@@ -8,12 +8,14 @@ const EVENTS=new Set([
  'input.pick',
  'input.pointer.cancel','input.pointer.blur','input.keyboard.start','input.keyboard.end',
  'movement.grabbed','movement.approved','movement.blocked','movement.released',
+ 'movement.path-backpressure',
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
  'movement.reject-phase','movement.reject-reason',
  'movement.canonical-handoff','movement.cancel-reason',
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','observer.frame-accepted',
+ 'observer.guarded-start','observer.guarded-held','observer.guarded-recovered',
  'visibility.revoke','visibility.refresh',
  'visibility.rpc-call','visibility.rpc-tail','visibility.queue',
  'visibility.continuation',
@@ -26,7 +28,7 @@ const EVENTS=new Set([
  'renderer.observer-discontinuity'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
- 'authority.cancel','visibility.rpc','visibility.queue-wait',
+ 'authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
  'observer.frame-gap','render.frame']);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
  'revision','drag','touch','keyboard','preview','grabbed','busy','point',
@@ -38,6 +40,9 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'permission-generation-changed','invalid-vision-notice',
  'vision-version-change','invalid-snapshot','context-change','disposed',
  'disconnected','subscribed','sight-retry','sequence-gap','invalid-packet',
+ 'observer-guarded-sight','observer-guarded-timeout',
+ 'observer-guarded-overflow','observer-guarded-invalid',
+ 'observer-guarded-rejected','observer-guarded-stale','observer-guarded-error',
  'version-change','unknown-piece','scene-current','observer-resync',
  'movement-vision-dirty','virtual-preview-step','virtual-preview-final',
  'committed','gesture-failed','scene-resync','board-active',
@@ -57,6 +62,10 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'keyboard-unmount','map-change','dispose',
  'over-750ms','over-2s','over-5s','coalesced','drained','discarded',
  'covered','fallback','origin-mismatch','backlog']);
+// Privacy allowlist readers for local QA export. No additional trace data.
+export const isWorldV2TraceEvent=name=>EVENTS.has(name);
+export const isWorldV2TraceDetail=detail=>DETAILS.has(detail);
+export const isWorldV2TraceMetric=name=>METRICS.has(name);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;

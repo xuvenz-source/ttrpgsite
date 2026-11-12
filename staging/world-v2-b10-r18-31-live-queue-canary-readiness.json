@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "step": "B10-R18-31",
+  "date": "2026-11-12",
+  "branch": "stage/world-v2-b10-r18-31-live-queue-only-2026-11-12",
+  "sourceCommit": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+  "cumulativeSourcePr": 134,
+  "sourceIsolatedFromCumulativeSql": true,
+  "productionBaseline": {
+    "domain": "ttrpgsite.vercel.app",
+    "deploymentId": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "initialSource": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+    "version": "R18-24 QA-only",
+    "expectedLiveMigrationVersions": 83,
+    "frozenR05Version": "20261111023204",
+    "frozenR05Installed": false,
+    "atomicFinalizationRpcInstalled": false
+  },
+  "change": {
+    "codePath": "src/engine/v2/MovementController.js",
+    "originalR1815Blob": "0603e7b42ebd937a41e2a65e8b13089aa496dfba",
+    "reviewedQueueOnlyBlob": "347d3ac8cd9992027d5a67340ae45220cccd8da5",
+    "numberOfEditedControllerAnchors": 5,
+    "submittedBatchDetachedBeforeAwait": true,
+    "newPointerRelativeToInFlightTarget": true,
+    "inFlightTargetClearedOnTransportSettle": true,
+    "oldPostAckPendingSpliceRemoved": true,
+    "newServerRpc": false,
+    "addedSql": false,
+    "changedBackendOrAuth": false,
+    "atomicFinalizationEnabled": false,
+    "changedPermissionsOrFog": false,
+    "changedTracePayloadSchema": false,
+    "changedVercelEnvironment": false
+  },
+  "tests": {
+    "file": "tests/world-v2-r18-31-live-queue-isolation.test.mjs",
+    "newNodeCases": 12,
+    "initialNodeBuildTestCount": 960,
+    "exactHeadCIRequired": true,
+    "nodeTestsPassedInitial": true,
+    "noSqlMigrationsChanged": true,
+    "sourceLockR17AndR1815Preserved": true,
+    "cornerAndWallCollisionRegression": true,
+    "longDragBatchAndReturnToOrigin": true,
+    "blockedPrefixAndRevocation": true,
+    "independentDmP1PassiveP2Tested": false,
+    "liveMeasuredSpeedup": false
+  },
+  "release": {
+    "decision": "PENDING_FINAL_EXACT_HEAD_CHECKS",
+    "soleDmQAEnoughForIsolatedFrontend": true,
+    "notEnoughForFullSqlRelease": true,
+    "rollbackDeployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "productionDeployed": false,
+    "rollbackRequiredOn": [
+      "forbidden_cell_move",
+      "token_or_map_flashing",
+      "canonical_position_mismatch",
+      "new_visibility_authorization_error",
+      "worse_delayed_input"
+    ],
+    "codeqlExactHeadRequired": true,
+    "webBuildExactHeadRequired": true,
+    "liveAliasPreflightRequired": true,
+    "supabaseReadOnlyPreflightRequired": true
+  }
+}

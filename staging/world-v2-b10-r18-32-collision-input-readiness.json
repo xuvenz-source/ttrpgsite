@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "step": "B10-R18-32",
+  "date": "2026-11-12",
+  "baselineBranch": "stage/world-v2-b10-r18-31-live-queue-only-2026-11-12",
+  "baselineCommit": "d94985e1135822953c9f67d9b46d238facaaaa1f",
+  "branch": "stage/world-v2-b10-r18-32-collision-input-backpressure-2026-11-12",
+  "decision": "STAGING_PENDING_EXACT_HEAD_CI",
+  "scope": "frontend_only_on_verified_live_source",
+  "live": {
+    "production": "https://ttrpgsite.vercel.app",
+    "baselineDeployment": "dpl_DCyZdsSTjmvbT5YnMK7sjbzGTgem",
+    "priorRollbackDeployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "installedMigrationCount": 83,
+    "frozenR05Applied": false,
+    "newFinalizationRpcInstalled": false,
+    "installedSQLChangesThisStep": false,
+    "defaultAtomicFlagEnabled": false
+  },
+  "observedDmTrace": {
+    "advanceSamples": 27,
+    "advanceP50Ms": 250.4,
+    "advanceP95Ms": 544.9,
+    "commitSamples": 8,
+    "commitP50Ms": 1087.5,
+    "commitP95Ms": 1662.5,
+    "terminalSamples": 9,
+    "terminalP95Ms": 2040.6,
+    "pathLimitRejections": 1,
+    "invalidServerReplyBegin": 2,
+    "blockedEvents": 3,
+    "renderFrameP95Ms": 0.1,
+    "measuredSource": "user-provided bounded opt-in QA capture",
+    "correlationOfCollisionWithCommitRttProven": false
+  },
+  "change": {
+    "files": [
+      "src/engine/v2/InputController.js",
+      "src/engine/v2/MovementController.js",
+      "src/engine/v2/WorldTrace.js"
+    ],
+    "maxCoalescedPointerSamplesPerEvent": 4,
+    "preservesTwoSampleCornerTurn": true,
+    "firstDeniedNeighborConstantTime": true,
+    "sameApprovedOriginRequiredForDedupe": true,
+    "alternativeFirstStepAlwaysSentToServer": true,
+    "preservesOriginal128BendCap": true,
+    "refusesExtraSamplesWithoutRejectingGesture": true,
+    "neverDiscardsExistingRouteToMakeShortcut": true,
+    "serverAuthorityAndCollisionChecksUnchanged": true,
+    "noNewRpc": true,
+    "noSqlMigration": true,
+    "noPermissionChange": true,
+    "noNewRealtimeTopic": true,
+    "noFogChange": true,
+    "previewAndKeyboardUnchanged": true,
+    "noInfrastructureCostChange": true
+  },
+  "test": {
+    "sourceReviewAgainst": "d94985e1135822953c9f67d9b46d238facaaaa1f",
+    "newSuite": "tests/world-v2-r18-32-collision-input-backpressure.test.mjs",
+    "newCases": 10,
+    "historicalSourceLockRetained": true,
+    "localFrontendTestsPassAtPreDocsSource": true,
+    "finalExactHeadPending": true,
+    "codeqlPending": true,
+    "isolatedPgPending": true,
+    "productionBuildPending": true,
+    "soloDmAcceptancePending": true,
+    "independentMultiplayerAcceptancePending": true,
+    "claimsSpeedup": false
+  },
+  "release": {
+    "rollbackOn": [
+      "unauthorized_collision_crossing",
+      "new_or_worse_lag",
+      "map_flashing",
+      "canonical_position_divergence",
+      "private_sight_error"
+    ],
+    "standardLiveRollback": "dpl_DCyZdsSTjmvbT5YnMK7sjbzGTgem",
+    "fullSqlAndAtomicReleaseStillNoGo": true
+  }
+}

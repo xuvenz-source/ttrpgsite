@@ -93,9 +93,18 @@ export function createInputController({
   if(activePointer===null||event.pointerId!==activePointer||
    event===lastMoveEvent)return;
   lastMoveEvent=event;
-  const samples=event.getCoalescedEvents?.();
-  for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
-   const p=point(sample);
+  // Browser pointermove groups can contain hundreds of device samples.
+  // Bound per-dispatch input work while retaining the first, last, and
+  // evenly spaced intermediate bends. In particular, a two-sample right
+  // angle still keeps BOTH corners instead of taking a diagonal shortcut.
+  // All resulting cells still pass the original server collision sweep.
+  const coalesced=event.getCoalescedEvents?.();
+  const samples=Array.isArray(coalesced)&&coalesced.length?coalesced:[event];
+  const sampledCount=Math.min(4,samples.length);
+  for(let i=0;i<sampledCount;i++){
+   const index=sampledCount===1?samples.length-1:
+    Math.round(i*(samples.length-1)/(sampledCount-1));
+   const p=point(samples[index])??(i===sampledCount-1?point(event):null);
    if(p)controller.updateGesture({
     x:p.x+(pointerOffset?.x??0),
     y:p.y+(pointerOffset?.y??0)
