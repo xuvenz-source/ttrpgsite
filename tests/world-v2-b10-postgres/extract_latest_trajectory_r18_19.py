@@ -22,7 +22,7 @@ def load(source):
     name, digest = SOURCES[source]
     path = ROOT / name
     b = path.read_bytes()
-    actual = hashlib.sha1(b"blob " + str(len(b)).encode() + b"\\0" + b).hexdigest()
+    actual = hashlib.sha1(b"blob " + str(len(b)).encode() + b"\0" + b).hexdigest()
     if actual != digest:
         sys.exit("R18-19 FROZEN SOURCE DRIFT: " + name)
     return b.decode("utf-8")
@@ -61,6 +61,6 @@ items = [
     "double precision,double precision,double precision,jsonb)"
     " FROM PUBLIC,anon,authenticated;",
 ]
-print("\\n\\n".join(items))
+print("\n\n".join(items))
 print("R18-19 exact latest trigger + trajectory + 2 public RPC bodies extracted",
       file=sys.stderr)
