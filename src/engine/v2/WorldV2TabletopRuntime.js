@@ -210,7 +210,8 @@ export function createWorldV2TabletopRuntime({
    if(disposed)return;
    const painted=renderer.applyLocalMovement(event);
    if(event.type==='grabbed')committedSight=null;
-   if(event.type==='committed'&&!dmPreview&&painted===true&&authorized()){
+   if(event.type==='committed'&&!event.noMotion&&
+     !dmPreview&&painted===true&&authorized()){
     const frame=vision.frame,anchor=event.selection?.[0];
     const signed=frame?.visiblePieces?.find(p=>anchor&&key(p)===key(anchor));
     canonicalHandoff.remember({
@@ -239,7 +240,7 @@ export function createWorldV2TabletopRuntime({
     // snapshot; never ask the live movement database to commit preview.
     void refreshVisibility('virtual-preview-final');
    }
-   if(event.type==='committed'&&!dmPreview){
+   if(event.type==='committed'&&!dmPreview&&!event.noMotion){
     // Actor's final motion is acknowledged once by Phase 4. The renderer
     // holds its approved endpoint until this authorized snapshot arrives.
     signal(onCommit,{mapId,selection:event.selection,
