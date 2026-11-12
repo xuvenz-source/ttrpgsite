@@ -265,7 +265,7 @@ BEGIN
  UPDATE public.campaign_tool_issues SET x=x+1 WHERE id=tool;
  GET DIAGNOSTICS n=ROW_COUNT;
  PERFORM public.b08_assert(n=0,
-  'L04 independent authenticated player cannot update someone else\'s private tool');
+  'L04 independent authenticated player cannot update someone else''s private tool');
 END $r19_rls$;
 RESET ROLE;
 UPDATE public.campaign_tool_issues
