@@ -64,19 +64,20 @@ test('R18-32 coalesced hardware samples produce ONE latest pointer update per ev
  const samples=Array.from({length:300},(_,i)=>e(i%2?2.9:2.1,i%2?1.9:1.1));
  samples.push(e(6.2,3.2));
  doc.emit('pointermove',{...e(6.2,3.2),getCoalescedEvents:()=>samples});
- assert.equal(updates.length,1,'300 coalesced events must not become 300 bends');
- assert.deepEqual(updates[0],point(6,3));
+ assert.equal(updates.length,4,'300 coalesced events must be bounded to 4');
+ assert.deepEqual(updates.at(-1),point(6,3));
  doc.emit('pointerup',e(6.2,3.2));
- assert.equal(updates.length,2,'pointer release still applies final coordinates');
- assert.deepEqual(updates[1],point(6,3));
+ assert.equal(updates.length,5,'pointer release still applies final coordinates');
+ assert.deepEqual(updates.at(-1),point(6,3));
  input.unmount();
 });
 
-test('R18-32 coalesced latest invalid sample falls back to regular pointermove',()=>{
+test('R18-32 bounded coalesced turns preserve first, last and intermediate input',()=>{
  const source=readFileSync(new URL('../src/engine/v2/InputController.js',
   import.meta.url),'utf8');
- assert.match(source,/const latest=Array\.isArray\(samples\)&&samples\.length/);
- assert.match(source,/const p=point\(latest\)\?\?\(latest===event\?null:point\(event\)\)/);
+ assert.match(source,/const sampledCount=Math\.min\(4,samples\.length\)/);
+ assert.match(source,/Math\.round\(i\*\(samples\.length-1\)\/\(sampledCount-1\)\)/);
+ assert.match(source,/point\(samples\[index\]\)\?\?\(i===sampledCount-1\?point\(event\):null\)/);
  assert.doesNotMatch(source,/for\(const sample of Array\.isArray\(samples\)/);
 });
 
@@ -141,16 +142,18 @@ test('R18-32 changing requested direction during in-flight Advance is not suppre
  h.ctl.dispose();
 });
 
-test('R18-32 server-blocked ACK clears all unapproved overflow and pending waypoints',async()=>{
+test('R18-32 server-blocked ACK clears all unapproved bounded pending waypoints',async()=>{
  const first=gate(),h=model({onAdvance:req=>req.seq===1?
   first.promise:{blocked:false,accepted:expandGestureRoute(req.from,req.targets)}
  });
  h.begin();await tick();
  h.ctl.updateGesture(point(2,1));await tick();
+ let refused=0;
  for(let i=0;i<MAX_GESTURE_BENDS+50;i++){
   const p=i%2?point(5,4):point(4,5);
-  assert.equal(h.ctl.updateGesture(p),true);
+  if(!h.ctl.updateGesture(p))refused++;
  }
+ assert.ok(refused>0,'excess hardware samples are explicitly refused');
  assert.equal(h.events.filter(e=>e.type==='rejected').length,0,
   'path saturation cannot roll back previously authorized movement');
  assert.ok(h.trace.snapshot().counts['movement.path-backpressure']>=1);
@@ -166,22 +169,27 @@ test('R18-32 server-blocked ACK clears all unapproved overflow and pending waypo
  h.ctl.dispose();
 });
 
-test('R18-32 backpressure retains newest final cell for subsequent signed Advance',async()=>{
+test('R18-32 backpressure preserves all queued bends and cannot forge a shortcut',async()=>{
  const first=gate(),h=model({onAdvance:req=>req.seq===1?
   first.promise:{blocked:false,accepted:expandGestureRoute(req.from,req.targets)}
  });
  h.begin();await tick();h.ctl.updateGesture(point(2,1));await tick();
+ let refused=0;
  for(let i=0;i<MAX_GESTURE_BENDS+20;i++)
-  h.ctl.updateGesture(i%2?point(3,1):point(2,2));
- h.ctl.updateGesture(point(7,3));
+  if(!h.ctl.updateGesture(i%2?point(3,1):point(2,2)))refused++;
+ assert.ok(refused>0);
+ assert.equal(h.ctl.updateGesture(point(7,3)),false,
+  'an over-cap endpoint must NOT silently replace real bends with a shortcut');
  const done=h.ctl.endGesture();first.resolve({blocked:false,accepted:[point(2,1)]});
  const out=await done;
  assert.equal(out.status,'committed');
- assert.deepEqual(out.endpoint,point(7,3));
+ assert.deepEqual(out.endpoint,point(3,1),
+  'only the last genuinely enqueued grid bend can be committed');
  assert.equal(h.calls.commit.length,1);
  assert.ok(h.calls.advance.length>1);
  assert.equal(h.calls.advance.some(req=>req.targets.at(-1)?.x===7&&
-  req.targets.at(-1)?.y===3),true);
+  req.targets.at(-1)?.y===3),false,
+  'the refused final point must never be used as a hidden shortcut');
  h.ctl.dispose();
 });
 
