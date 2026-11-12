@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "updated": "2026-11-12",
+  "step": "B10-R18-11",
+  "releaseDecision": "NO_GO",
+  "branch": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+  "parentPr": 112,
+  "parentHeadSha": "28b43c14ddf6ec721680cc7ba0537685d0ed1fc2",
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "productionApproval": false,
+  "databaseApproval": false,
+  "guardedRecoveryEnabled": false,
+  "scope": {
+    "runtimeChanged": false,
+    "sqlMigrationChanged": false,
+    "productionGrantsChanged": false,
+    "sourceRealAuthFixture": "three identity Pg17 role revoke/demote/rejoin",
+    "rendererTransport": "actual source modules, synthetic signed snapshots"
+  },
+  "gates": {
+    "sourceRealPg17Status": "passed",
+    "nodeTestStatus": "passed",
+    "codeql": "passed",
+    "combinedSql": "passed",
+    "linkedCliHistoryDryRunPerformed": false,
+    "liveAuthMultiplayerCompleted": false,
+    "frontendCanaryDeployed": false,
+    "backendMigrationApplied": false,
+    "postSql24CaseAccepted": false,
+    "freeTierLoadAccepted": false,
+    "nodeTestsPassed": 901,
+    "nodeTestsFailed": 0,
+    "observedVerificationSha": "943dafd85ae25f56196795112b50325a681b95e8"
+  },
+  "handoff": "docs/testing/world-v2-r18-11-revocation-auth-gate-2026-11-12.md",
+  "note": "All isolated tests and source checks passed on observed pre-metadata HEAD; final exact-head CI must independently succeed before step closes. Production still NO_GO."
+}

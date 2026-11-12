@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "step": "B10-R18-29",
+  "date": "2026-11-12",
+  "branch": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+  "sourcePr": 132,
+  "sourceHead": "6a99ccaabde66978289b7cc053155a1934e17610",
+  "status": "STAGING_PENDING_FINAL_CI",
+  "releaseDecision": "NO_GO",
+  "production": {
+    "frontend": "R18-24 opt-in QA-only",
+    "vercelDeployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "existingSupabaseMigrations": 83,
+    "frozenR05Applied": false,
+    "atomicFinalizeRpcInstalled": false,
+    "newSqlApplied": false,
+    "frontendDeployed": false,
+    "mainMerged": false
+  },
+  "feature": {
+    "envVar": "VITE_WORLD_V2_ATOMIC_FINALIZE",
+    "default": "OFF",
+    "vercelVariableConfigured": false,
+    "dmPreviewExcluded": true,
+    "controllerRequiresClosing": true,
+    "remainingBatchMustFit": true,
+    "unclosedAndNonterminalAdvanceUsesLegacy": true,
+    "normalCommitWhenNoFinalBatch": true,
+    "explicitAuthorityGate": true,
+    "fullWireAckValidation": true,
+    "acceptedPrefixMustMatchRequestedCells": true,
+    "canonicalEndpointFromServerOnly": true,
+    "noUnknownReplyFields": true,
+    "allowedTransportRetriesAfterThrown": 1,
+    "retriesIdenticalRequestOnly": true,
+    "fallbackToLegacyOnAmbiguousFinal": false,
+    "nullOrFailedFinalUsesRejectAndReauth": true,
+    "noPrivatePayloadOrCoordinatesInTrace": true,
+    "noNewBackendCallsInProduction": true,
+    "noClaimedLatencyImprovement": true
+  },
+  "sourceChanged": [
+    "src/engine/v2/MovementController.js",
+    "src/engine/v2/AuthorityClient.js",
+    "src/engine/v2/WorldV2TabletopRuntime.js",
+    "src/engine/v2/WorldTrace.js"
+  ],
+  "tests": {
+    "newNodeTest": "tests/world-v2-r18-29-atomic-finalization-client.test.mjs",
+    "newMockCases": 18,
+    "originalR17FrozenHashPreserved": true,
+    "originalR1815ReviewedHashPreserved": true,
+    "r1829MovementControllerReviewedBlobSha": "45e0068182932e7533bfbb58b55e9091bb83c857",
+    "priorSourceGuardsExplicitlyAmended": true,
+    "sql": "R18-28 16-case disposable PG17 independently verifies actual database function",
+    "userMultiplayerBrowsersTested": false,
+    "actualBrowserLatencyGainProven": false
+  },
+  "blockers": {
+    "signedLinkedCliR05DryRun": false,
+    "auditedInstallationOfR05AndLaterCandidates": false,
+    "threeIndependentAuthenticatedBrowsers": false,
+    "privateFogAndRealtimeAuthorization": false,
+    "signedRevocationAcceptance": false,
+    "browserSlowdownAcceptance": false,
+    "explicitReleaseAuthorization": false
+  },
+  "nextStep": "R18-30 cross-layer integration, blocked-only final semantics and controlled latency gate, no production activation"
+}

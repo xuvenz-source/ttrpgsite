@@ -64,6 +64,32 @@ export function segmentCrossesSweptFootprint(a,b,from,to,spanX,spanY){
  }
  return leave-enter>EPS;
 }
+/** B10-R18-17: opt-in physical FOOTPRINT edge clearance (grid units).
+ * Default is STRICT. Invalid requests FAIL CLOSED: true=colliding.
+ * Never relaxes map bounds, door rules, LOS or server authorization.
+ *
+ * This must only be enabled by a separate, server-compatible release.
+ * It is NOT wired into the current live scene compiler by default.
+ */
+export const WORLD_V2_WALL_EDGE_CLEARANCE_CELLS=0.10;
+export function segmentCrossesSweptFootprintWithClearance(
+ a,b,from,to,spanX,spanY,clearanceCells=0
+){
+ if(!validCollisionPoint(a)||!validCollisionPoint(b)||
+  !validCollisionPoint(from)||!validCollisionPoint(to)||
+  !finite(spanX)||!finite(spanY)||spanX<=0||spanY<=0||
+  spanX>12||spanY>12||
+  (clearanceCells!==0&&
+   clearanceCells!==WORLD_V2_WALL_EDGE_CLEARANCE_CELLS))return true;
+ if(clearanceCells===0)
+  return segmentCrossesSweptFootprint(a,b,from,to,spanX,spanY);
+ const insetX=Math.min(clearanceCells,spanX/4);
+ const insetY=Math.min(clearanceCells,spanY/4);
+ const internalFrom={x:from.x+insetX,y:from.y+insetY};
+ const internalTo={x:to.x+insetX,y:to.y+insetY};
+ return segmentCrossesSweptFootprint(
+  a,b,internalFrom,internalTo,spanX-2*insetX,spanY-2*insetY);
+}
 export function segmentBoundingBox(a,b){
  return {minX:Math.min(a.x,b.x),maxX:Math.max(a.x,b.x),
   minY:Math.min(a.y,b.y),maxY:Math.max(a.y,b.y)};
