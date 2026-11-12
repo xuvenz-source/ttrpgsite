@@ -97,12 +97,18 @@ test('R18-28 integrated test covers actor replay, blocked prefix, queued privacy
  assert.match(runner,/WORLD_V2_B10_ISOLATED/);
  assert.match(runner,/PGDATABASE:-/);
 });
-test('R18-28 no frontend calls new server RPC without a separately reviewed client protocol',()=>{
+test('R18-28 public terminal RPC remains opt-in only under reviewed R18-29 default-OFF client protocol',()=>{
  const transport=read('src/engine/v2/AuthorityClient.js');
  const controller=read('src/engine/v2/MovementController.js');
  const runtime=read('src/engine/v2/WorldV2TabletopRuntime.js');
- for(const src of [transport,controller,runtime])
-  assert.equal(src.includes('finalize_world_motion_v2'),false);
+ assert.match(transport,/atomicFinalizeEnabled=false/);
+ assert.match(transport,/if\(!atomicFinalizeEnabled\)/);
+ assert.match(transport,/finalize_world_motion_v2/);
  assert.match(transport,/commit_world_motion_v2/);
  assert.match(transport,/advance_world_motion_v2/);
+ assert.match(controller,/enableAtomicFinalize=false/);
+ assert.match(controller,/const finalizing=enableAtomicFinalize&&g\.closing&&/);
+ assert.match(controller,/batch\.remaining\.length===0/);
+ assert.match(runtime,/atomicFinalizeEnabled=!dmPreview&&/);
+ assert.match(runtime,/VITE_WORLD_V2_ATOMIC_FINALIZE==='1'/);
 });
