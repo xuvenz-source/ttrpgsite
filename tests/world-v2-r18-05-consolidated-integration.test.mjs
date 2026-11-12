@@ -68,6 +68,19 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedBlockedFinalAmendment.priorReviewedBlobSha,
   '45e0068182932e7533bfbb58b55e9091bb83c857');
  assert.equal(approvedBlockedFinalAmendment.workPackage,'B10-R18-30');
+ // R18-34 is the first explicit KeyboardStepper amendment to frozen
+ // R17. Its only new optimization is signed unchanged-sight reuse after
+ // authenticated zero-motion terminal acknowledgement, with fail-closed
+ // scene, generation, roster and revocation checks.
+ const approvedNoMotionAmendment={
+  path:'src/engine/v2/KeyboardStepper.js',
+  originalR17:frozen['src/engine/v2/KeyboardStepper.js'],
+  workPackage:'B10-R18-34',
+  reviewedBlobSha:'59b835fda26bfefe1eba0fce62a4a1b4b13b05d1'
+ };
+ assert.equal(approvedNoMotionAmendment.originalR17,
+  '1951a5802b7ed6b15af080660bc8f88627c83d2c');
+ assert.equal(approvedNoMotionAmendment.workPackage,'B10-R18-34');
  // R18-24 adds only a query-opted-in QA report button to the previously
  // frozen board. The two insertion sites were compared exactly to the
  // R18-23 source. Movement/visibility authority code is unchanged.
@@ -84,7 +97,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
   assert.equal(checked,path===approvedBlockedFinalAmendment.path?
    approvedBlockedFinalAmendment.reviewedBlobSha:
-   path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:sha,
+   path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
+   path===approvedNoMotionAmendment.path?approvedNoMotionAmendment.reviewedBlobSha:sha,
    'R17-reviewed source drifted without an exact audited amendment: '+path);
  }
  const runtime=readFileSync(new URL(
