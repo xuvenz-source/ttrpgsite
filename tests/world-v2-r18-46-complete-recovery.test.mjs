@@ -125,6 +125,45 @@ test('R18-46 fourth PG17 database is loopback-only and installs source capture B
   runner.indexOf('world_v2_b10_r18_46_restore_original_geometry.sql'));
  assert.doesNotMatch(runner,/supabase\s+db\s+(push|reset)|curl|wget|PGHOST="\$\{.*supabase/i);
 });
+test('R18-46 executes real source-drift injection against actual recovery DO in a rolled-back transaction',()=>{
+ assert.match(runner,/world_v2_b10_r46_drift_probe\.sql/);
+ assert.match(runner,/ALTER FUNCTION forge_world_v2\.step_allowed/);
+ assert.match(runner,/SET search_path TO 'pg_catalog'/);
+ assert.match(runner,/body\.index\('DO \$r46_recover\
+ let last=-1;
+ for(const f of ['world_v2_r18_26_step_bbox_prefilter.sql',
+  'world_v2_r18_27_commit_empty_work.sql',
+  'world_v2_r18_28_atomic_finalize.sql',
+  'world_v2_r18_30_blocked_final_semantics.sql',
+  'world_v2_r18_46_seal_release_sources.sql']){
+  const idx=install.indexOf(f);
+  assert.ok(idx>last,'missing or out of order '+f);last=idx;
+ }
+ assert.ok(last<install.indexOf('COMMIT;'));
+ assert.match(install,/^BEGIN;/m);
+ assert.match(install,/^COMMIT;/m);
+ assert.match(install,/R46-01 full source stack committed/);
+ const master=read('tests/world-v2-b10-postgres/run.sh');
+ assert.ok(master.indexOf('rehearse-r18-44.sh')<master.indexOf('rehearse-r18-46.sh'));
+});
+test('R18-46 backend staging does not turn on production atomic client grants or flags',()=>{
+ const runtime=read('src/engine/v2/WorldV2TabletopRuntime.js');
+ assert.match(runtime,/atomicFinalizeEnabled=!dmPreview&&/);
+ assert.match(runtime,/VITE_WORLD_V2_ATOMIC_FINALIZE==='1'/);
+ assert.match(runtime,/VITE_WORLD_V2_ATOMIC_FINALIZE_READY==='1'/);
+ assert.match(read('src/engine/v2/AuthorityClient.js'),/atomicFinalizeEnabled=false/);
+ assert.match(restore,/has_function_privilege\('authenticated',\s*'public\.finalize_world_motion_v2/);
+});
+\)/);
+ assert.match(runner,/R46 recovery STOP: source, ACL, or security mode drift/);
+ assert.match(runner,/SECURITY FAILURE: unreviewed changed function/);
+ assert.match(runner,/SECURITY FAILURE: failed recovery left some function sources altered/);
+ assert.match(runner,/md5\(pg_get_functiondef\(to_regprocedure\(b\.signature\)\)\)=b\.installed_digest/);
+ assert.ok(runner.indexOf('world_v2_b10_r46_drift_probe.sql')<
+  runner.indexOf('r46_replacements='));
+ assert.ok(runner.indexOf('r46_replacements=')<
+  runner.indexOf('r46_psql -f supabase/release-recovery/world_v2_b10_r18_46_restore_original_geometry.sql'));
+});
 test('R18-46 commit all four exact post-R05 candidates, seal BEFORE COMMIT',()=>{
  let last=-1;
  for(const f of ['world_v2_r18_26_step_bbox_prefilter.sql',
