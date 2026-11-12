@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "step": "B10-R18-23",
+  "date": "2026-11-12",
+  "parentPr": 125,
+  "parentHead": "e42bfa83a7df01caab61c5ad047ba74ff9f5e37c",
+  "branch": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+  "releaseDecision": "STAGING_NO_GO",
+  "productionUnchanged": true,
+  "liveReadOnly": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "observedDate": "2026-11-12",
+    "historicalVersions": 83,
+    "remoteHistoricalSqlDigestMatches": 83,
+    "historyDiscrepancies": 0,
+    "latestMigration": "20261109171247",
+    "r05Applied": false,
+    "protectedFunctionDigestMatches": 7,
+    "protectedFunctionDigestsExpected": 7,
+    "activeUnexpiredMotionSessions": 0,
+    "partialR05Install": false,
+    "privateWorldV2TablesChecked": 6,
+    "privateWorldV2TablesWithoutRls": 0,
+    "privateWorldV2TablesWithClientSelect": 0,
+    "worldV2RpcsChecked": 7,
+    "worldV2RpcsExecutableByAnon": 0,
+    "authRoleAdvanceRpcExec": true,
+    "realAuthVerified": false
+  },
+  "externalGates": {
+    "actualPinnedCliLinkedHistoryFetch": false,
+    "realLinkedR05OnlyDryRun": false,
+    "independentDmP1P2SignedBrowsers": false,
+    "actualRealtimeRecipientIsolation": false,
+    "realRevocationAndFogAcceptance": false,
+    "measuredExtendedMultiplayerMovementLag": false
+  },
+  "unchanged": {
+    "frozenR05": true,
+    "candidateSqlR1817R1819R1820": true,
+    "gitMain": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "guardedObserverRecovery700ms": false,
+    "sqlApplied": false,
+    "vercelDeployed": false,
+    "gitMerged": false,
+    "paidTierAdded": false
+  },
+  "references": {
+    "sql": "supabase/release-preflight/world_v2_b10_r18_23_readonly_security_catalog.sql",
+    "nodeValidator": "scripts/release/validate-world-v2-r18-23-readonly-evidence.mjs",
+    "tests": "tests/world-v2-r18-23-readonly-evidence.test.mjs",
+    "handoff": "docs/testing/world-v2-r18-23-live-history-auth-gates-2026-11-12.md"
+  }
+}

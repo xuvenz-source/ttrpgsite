@@ -72,3 +72,5 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-tool-prediction-contract.sql
       - name: Verify real collision triggers accept only sealed V2 group commits
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-phase10-real-triggers.sql
+      - name: Verify R18-11 signed viewer sight and recipient RLS after role revocation
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/world-engine-v2-r18-11-revocation-auth-contract.sql
