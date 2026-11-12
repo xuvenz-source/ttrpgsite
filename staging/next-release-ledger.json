@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -392,6 +392,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-17 coordinated physical 0.10-cell edge clearance: strict-by-default client primitive/scene solver plus dual identical-signature V2/legacy PostgreSQL swept helpers as NONAPPLIED candidate; 14 source-real PG17 assertions rolled back. Further direct-write trigger/independent Auth/CLI tests required, no live deployment.",
       "linkedPullRequest": 120
+    },
+    {
+      "name": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-18 authentic historical source-extracted legacy token + mounted tool BEFORE UPDATE collision triggers, 38 hostile direct-write wall/door/permission assertions + four role-change/map-transfer checks under disposable PG17 BEGIN/ROLLBACK. No live DB writes; full production RLS, alternate RPC and private observer still pending."
     }
   ],
   "features": [
@@ -1245,6 +1251,38 @@
       ],
       "note": "Requires actual CLI-generated migration with historical 83 versions reconciled and two separately approved SQL phases, source-real legacy direct-write/trigger parity, independent player LOS/observer/DM tests and explicit later frontend opt-in. 700ms guarded observer OFF. No current production changes.",
       "linkedPullRequest": 120
+    },
+    {
+      "id": "world-v2-b10-r18-18-legacy-direct-write-security-validation",
+      "description": "Source-extract pinned production legacy collision trigger bodies and run real direct token/tool UPDATE tests against proposed dual V2/legacy 0.10-cell edge clearance inside disposable PG17 rollback; verify DM overrides, membership revocation, doors, group-size tool, conditional movement, map bounds and malformed published scene.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql"
+      ],
+      "note": "Live R18-15 unchanged. Frozen R05 unapplied. 42 PG17 test assertions are rollback only and do NOT replicate real policy RLS or authenticated P1/P2. New SQL and frontend activation need separate explicit approvals and actual pinned CLI 83-version reconciliation."
     }
   ],
   "databaseDependencies": [
@@ -1559,7 +1597,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1578,9 +1616,10 @@
       "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
       "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
       "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
-      "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12"
+      "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+      "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12"
     ],
-    "stagePolicy": "R18-17 retains all 18 R17/R18 staged branches and appends a strict-default client wall clearance option plus NONAPPLIED dual V2/legacy SQL helper candidate. The SQL candidate is not a valid migration until pinned authenticated CLI operator creates and verifies a new ordered version after frozen R05; do not apply SQL, alter production or enable new preflight yet. Real token/tool UPDATE trigger parity and hidden-wall player authorization tests required; SQL install and frontend rollout each require separate explicit approvals. Live R18-15 canary and 12s signed recovery continue, 700ms guard OFF. Server commit latency remains a separate issue.",
+    "stagePolicy": "R18-18 preserves 19 release branches. Latest source-real legacy direct-write token/tool collision tests against 0.10 candidate are only in disposable PG17 with rollback and pinned historical trigger source blobs, no Supabase writes. R05 migration frozen and uninstalled, R18-17 collision candidate not a real migration, current R18-15 frontend live unchanged and guarded 700ms observer OFF. Finish alternate trajectory RPC, full RLS/cross-map issued tool role tests, authenticated DM/P1/P2 LOS, signed observer and migration CLI checks. Future SQL and frontend each require separate explicit approvals.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
