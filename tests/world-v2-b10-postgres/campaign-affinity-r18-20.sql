@@ -14,7 +14,7 @@ CREATE TABLE public.campaign_tool_templates(id uuid PRIMARY KEY,campaign_id uuid
 \i /tmp/world_v2_b10_r18_19_latest_trajectory.sql
 \i supabase/candidates/world_v2_r18_19_cross_map_guard.sql
 -- This file contains actual pg_get_functiondef snapshots of LIVE validators.
-\i tests/world-v2-b10-postgres/live-source-r18-20.sql
+\i tests/world-v2-b10-postgres/live-validators-r18-20.sql
 CREATE TRIGGER tokens_validate
  BEFORE INSERT OR UPDATE ON public.map_tokens FOR EACH ROW
  EXECUTE FUNCTION public.validate_token_map();
