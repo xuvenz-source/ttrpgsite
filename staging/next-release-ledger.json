@@ -1818,9 +1818,33 @@
       "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
       "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-24 retains all prior R18-23 source branches and release gates. Browser QA capture is opt-in via existing worldV2Trace=1, local clipboard only and no new Supabase requests/privileges. Redacted trace labels are SELF-REPORTED, never authenticate player identities or fog/Realtime security. Read-only live baseline 83 migrations, frozen R05 not applied, protected sources 7/7. Real pinned authenticated CLI v2.81.3 fetch/83-hash + R05-only dry-run, and independently signed DM/P1/passive-P2 A01-A12 must pass before separate frontend and SQL authorizations. NO-GO / no merge/deploy/paid-tier/700ms recovery.",
+    "stagePolicy": "B10-R18-24 retains all prior R18-23 source branches and release gates. Browser QA capture is opt-in via existing worldV2Trace=1, local clipboard only and no new Supabase requests/privileges. Redacted trace labels are SELF-REPORTED, never authenticate player identities or fog/Realtime security. Read-only live baseline 83 migrations, frozen R05 not applied, protected sources 7/7. Real pinned authenticated CLI v2.81.3 fetch/83-hash + R05-only dry-run, and independently signed DM/P1/passive-P2 A01-A12 must pass before separate frontend and SQL authorizations. NO-GO / no merge/deploy/paid-tier/700ms recovery. QA-only frontend canary PR #128 is NOW deployed READY at exact SHA 7326c45d (Vercel dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN) on top of previously live R18-15 only, independently excluding R18-16+ collision/SQL. Full staged R18-24 remains NO-GO, R05 absent, real signed DM/P1/P2 acceptance not yet demonstrated.",
     "databaseReleaseVersion": null,
-    "additionalDatabaseReleaseVersions": []
+    "additionalDatabaseReleaseVersions": [],
+    "frontendQaOnlyLiveCanary": {
+      "stage": "B10-R18-24",
+      "status": "READY",
+      "deploymentId": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+      "url": "https://ttrpgsite.vercel.app",
+      "sha": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+      "branch": "stage/world-v2-b10-r18-24-qa-only-live-canary-2026-11-12",
+      "pr": 128,
+      "baseLiveR1815Sha": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be",
+      "rolledOutComponents": [
+        "opt-in local QA capture panel",
+        "privacy allowlisted trace export",
+        "QA diagnostic tests"
+      ],
+      "explicitlyNotRolledOut": [
+        "R18-16+ collision & clearance candidates",
+        "R05 migration",
+        "R18-17/19/20 SQL",
+        "700ms guarded observer recovery"
+      ],
+      "lastReadOnlyDbVersionCount": 83,
+      "userAuthFogSecurityAccepted": false,
+      "priorReadyDeployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ"
+    }
   },
   "lastRelease": {
     "name": "Unified Movement, Fog, Realtime and Memory Architecture",
