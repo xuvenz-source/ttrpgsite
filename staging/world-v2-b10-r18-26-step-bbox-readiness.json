@@ -34,11 +34,23 @@
     "privateACLChanged": false,
     "observerDeliveryChanged": false,
     "rootCauseFullyResolved": false,
-    "pendingMeasuredCIResult": true,
+    "pendingMeasuredCIResult": false,
     "testsExpectedParityCases": 4860,
     "source": "supabase/candidates/world_v2_r18_26_step_bbox_prefilter.sql",
     "pgTest": "tests/world-v2-b10-postgres/step-bbox-r18-26.sql",
-    "nodeTest": "tests/world-v2-r18-26-step-prefilter-security.test.mjs"
+    "nodeTest": "tests/world-v2-r18-26-step-prefilter-security.test.mjs",
+    "isolatedPostgresParity": "PASS",
+    "isolatedParityCasesPassed": 4860,
+    "isolatedPostgresAssertions": 13,
+    "benchmark": {
+      "sourceGitSha": "b4fd6e0b69f8c3b0f8ca86fa71de837c670f6c71",
+      "originalMsFor40Calls": 26.5,
+      "candidateMsFor40Calls": 9.91,
+      "scene": "100 remote solid wall segments; 40 identical 1-cell steps",
+      "evidence": "GitHub Actions B10 combined SQL run #43157643591; independent B10 fixture",
+      "caveat": "Not production wall distribution, not contemporaneous browser RPC, not a release-time latency prediction"
+    },
+    "explicitProductionImprovementProven": false
   },
   "blockers": {
     "linkedAuthenticatedSupabaseCLIMigrationFetch": false,
@@ -56,5 +68,15 @@
     "liveSqlUnchanged": true,
     "mainUnchanged": true,
     "freeTierOnly": true
+  },
+  "ci": {
+    "sourceSha": "b4fd6e0b69f8c3b0f8ca86fa71de837c670f6c71",
+    "nodeTestsPassed": 1015,
+    "nodeTestsFailed": 0,
+    "viteBuild": "passed",
+    "codeql": "passed",
+    "isolatedPostgresqlAuthority": "passed",
+    "combinedPostgresql17": "passed",
+    "combinedSqlRunId": 43157643591
   }
 }
