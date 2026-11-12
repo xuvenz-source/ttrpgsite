@@ -337,6 +337,33 @@ test('immediate local grab highlights without awaiting RPC',()=>{
  ctx.clock.flush(1016);assert.equal(position(node),'200px 200px');
  ctx.renderer.dispose();
 });
+test('R18-34 zero-motion blocked gesture clears local overlay without a canonical refresh',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ assert.equal(ctx.renderer.applyLocalMovement(
+  motion('grabbed',{x:2,y:2})),true);
+ assert.equal(ctx.renderer.applyLocalMovement(
+  motion('blocked',{x:2,y:2},{blocked:true,accepted:[]})),true);
+ const resyncBefore=ctx.resync.length;
+ assert.equal(ctx.renderer.applyLocalMovement(
+  motion('committed',{x:2,y:2},{noMotion:true})),true);
+ ctx.clock.flush(1030);
+ assert.equal(position(node),'200px 200px');
+ assert.equal(node.style.outline,'');
+ assert.equal(ctx.renderer.getSpriteElement('token',hero.id),node);
+ assert.equal(ctx.resync.length,resyncBefore,
+  'no canonical token write means no redundant sight request');
+ assert.equal(ctx.renderer.authorized,true);
+ ctx.renderer.dispose();
+});
+test('R18-34 a forged non-origin noMotion event cannot retire local authority',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ ctx.renderer.applyLocalMovement(motion('grabbed',{x:2,y:2}));
+ assert.equal(ctx.renderer.applyLocalMovement(
+  motion('committed',{x:3,y:2},{noMotion:true})),false);
+ assert.equal(ctx.resync.includes('canonical-commit'),false);
+ ctx.renderer.dispose();
+});
 test('local prediction does not snap backward for older approved ACK',()=>{
  const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
  const node=ctx.renderer.getSpriteElement('token',hero.id);
