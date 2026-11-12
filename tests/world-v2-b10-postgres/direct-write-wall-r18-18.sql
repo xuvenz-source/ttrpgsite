@@ -272,4 +272,47 @@ BEGIN
   'T38 private V2 schema remains revoked and rejected positions unchanged');
  RAISE NOTICE 'R18-18: 38 hostile direct-write token/tool assertions PASSED, rollback follows';
 END $r18_18$;
+-- Additional role-changing permission tests: these verify the trigger's
+-- DM override and map-transfer invariants, NOT production RLS policies.
+DO $r18_18_roles$
+DECLARE
+ player uuid:='00000000-0000-4000-8000-000000000011';
+ dm uuid:='00000000-0000-4000-8000-000000000013';
+ camp uuid:='00000000-0000-4000-8000-000000000001';
+ test_map uuid:='00000000-0000-4000-8000-000000000021';
+ token uuid:='00000000-0000-4000-8000-000000000101';
+ large_token uuid:='00000000-0000-4000-8000-000000000103';
+ old_map uuid;reason text;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',player::text,true);
+ PERFORM set_config('forge.collision_override','off',true);
+ SELECT map_id INTO old_map FROM public.map_tokens WHERE id=token;
+ BEGIN
+  UPDATE public.map_tokens SET map_id=
+   '00000000-0000-4000-8000-000000000099'::uuid WHERE id=token;
+ EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS reason=MESSAGE_TEXT;
+ END;
+ PERFORM public.b08_assert(
+  position('Players cannot move tokens between maps' IN coalesce(reason,''))>0
+  AND (SELECT map_id=old_map FROM public.map_tokens WHERE id=token),
+  'P01 player direct token map-transfer cannot bypass role check');
+ -- Simulate revocation of DM role in the disposable fixture. The GUC is
+ -- deliberately still set to 'on': the SQL guard MUST recheck actual role.
+ PERFORM public.r18_18_clear(test_map);
+ PERFORM public.r18_18_wall(test_map,7.05,0,7.05,16);
+ UPDATE public.campaign_members SET role='player'
+ WHERE campaign_id=camp AND user_id=dm;
+ PERFORM set_config('request.jwt.claim.sub',dm::text,true);
+ PERFORM set_config('forge.collision_override','on',true);
+ PERFORM public.b08_assert(NOT public.is_campaign_dm(camp),
+  'P02 live membership fixture revokes DM role before next UPDATE');
+ PERFORM public.r18_18_token_x(large_token,7,'Movement blocked',
+  'P03 revoked DM cannot bypass collision with stale override GUC');
+ UPDATE public.campaign_members SET role='dm'
+ WHERE campaign_id=camp AND user_id=dm;
+ PERFORM public.r18_18_token_x(large_token,7,NULL,
+  'P04 restored DM plus explicit override can cross again');
+ RAISE NOTICE 'R18-18: 4 additional role-change and map-transfer assertions PASSED';
+END $r18_18_roles$;
 ROLLBACK;
