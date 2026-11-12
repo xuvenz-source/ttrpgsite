@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "step": "B10-R18-25",
+  "date": "2026-11-12",
+  "scope": "R18-24 current live QA canary plus opt-in CPU-only timing",
+  "baselineLiveSha": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+  "baselineDeployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+  "status": "STAGING_PENDING_CI",
+  "releaseDecision": "NO_GO_SQL",
+  "observedTrace": {
+    "advance": {
+      "samples": 49,
+      "p50Ms": 225.5,
+      "p95Ms": 292.1
+    },
+    "commit": {
+      "samples": 6,
+      "p50Ms": 976.2,
+      "p95Ms": 1020.7
+    },
+    "releaseToTerminal": {
+      "samples": 8,
+      "p50Ms": 983.4,
+      "p95Ms": 1544.7
+    },
+    "renderFrame": {
+      "samples": 256,
+      "p95Ms": 0.1
+    },
+    "blockedMovements": 11,
+    "pinCausedDatabaseBlockProven": false
+  },
+  "newTraceMetricNames": [
+    "input.pick-duration",
+    "input.pointer-handle",
+    "prediction.local"
+  ],
+  "newEvent": "input.pointer.intercept:pin",
+  "newAuthSurface": false,
+  "newNetworkRequests": 0,
+  "newSql": false,
+  "collisionBehaviorChanged": false,
+  "movementBehaviorChanged": false,
+  "currentSupabaseMigrationCount": 83,
+  "r05Applied": false,
+  "realMultiplayerSecurityAccepted": false,
+  "candidateSqlDeploymentApproved": false,
+  "nextTest": "solo DM capture collision/open/stress case with opt-in R18-25 frontend",
+  "rollback": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN"
+}
