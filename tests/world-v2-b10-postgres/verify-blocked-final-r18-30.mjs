@@ -63,8 +63,12 @@ for(const row of records){
   mode:'drag',origin,pointer:origin,
   environmentRevision:1,permissionGeneration:1
  }),true,row.scenario);
- await tick(); // complete Begin before gesture input
+ // The real controller starts its ordinary Advance as soon as it has
+ // both a session ID and pending input. To exercise the closing final RPC
+ // on a short drag, release before the asynchronous Begin ACK arrives.
+ // Only the prior-approved scenario intentionally waits before first input.
  if(row.previousMotion){
+  await tick(); // complete Begin before first, ordinary Advance
   controller.updateGesture({x:3,y:1});
   await tick();await tick(); // ordinary Advance must settle
   assert.equal(calls.advance,1,'one real earlier authorized batch');
