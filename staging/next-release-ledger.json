@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -434,6 +434,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-23 live READ-ONLY 83/83 migration-body digests, frozen original R05 catalog sources 7/7, no active gestures or partial install, six private RLS tables protected and seven World V2 public RPCs anon-denied. Staged single-SELECT catalog preflight, fail-closed 30-minute external evidence verifier and independent signed DM/P1/passive-P2 manual acceptance protocol. Real linked pinned CLI fetch/dry-run and three-browser Auth LOS/Realtime remain UNEXECUTED; SQL/FRONTEND NO-GO. No Supabase/Vercel/main change.",
       "linkedPullRequest": 126
+    },
+    {
+      "name": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-24 staged opt-in, clipboard-only World V2 diagnostic UI for nontechnical DM/P1/passive-P2 testers. Uses existing whitelisted bounded WorldTrace snapshot; exports no IDs, secret signed sight, coordinates, auth, telemetry or RPCs. Reports remain self-labeled and release NO-GO; real linked authenticated CLI and three-browser Auth/Realtime/LOS/fog/revocation remain unexecuted. No frontend/SQL production deployment."
     }
   ],
   "features": [
@@ -1783,7 +1789,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1808,9 +1814,10 @@
       "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
       "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
       "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
-      "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12"
+      "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+      "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-23 preserves every previous R18-22 source branch. Production read-only history digests still match 83/83, frozen R05 protected function sources 7/7, original private catalog ACL/RLS remains denied, 0 active movement sessions, R05 absent. New isolated diagnostic SQL and fail-closed evidence parser check only LIVE metadata; independently authenticated pinned CLI 83-body fetch + exact R05-only dry-run and genuine DM/P1/P2 signed LOS/fog/recipient-topic/revocation testing are NOT performed and MUST precede explicit separate frontend/SQL approvals. LIVE FRONTEND+SQL NO-GO, 700ms recovery OFF, no paid service.",
+    "stagePolicy": "B10-R18-24 retains all prior R18-23 source branches and release gates. Browser QA capture is opt-in via existing worldV2Trace=1, local clipboard only and no new Supabase requests/privileges. Redacted trace labels are SELF-REPORTED, never authenticate player identities or fog/Realtime security. Read-only live baseline 83 migrations, frozen R05 not applied, protected sources 7/7. Real pinned authenticated CLI v2.81.3 fetch/83-hash + R05-only dry-run, and independently signed DM/P1/passive-P2 A01-A12 must pass before separate frontend and SQL authorizations. NO-GO / no merge/deploy/paid-tier/700ms recovery.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
