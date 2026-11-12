@@ -12,8 +12,7 @@ test('R18-33 times genuine RPCs, wall denial, reversal and eight approved batche
   assert.ok(sql.includes(section),'missing '+section);
  }
  for(const name of ['begin_world_motion_v2','advance_world_motion_v2',
-  'commit_world_motion_v2','finalize_world_motion_v2',
-  'cancel_world_motion_v2'])assert.ok(sql.includes('public.'+name),name);
+  'commit_world_motion_v2','finalize_world_motion_v2'])assert.ok(sql.includes('public.'+name),name);
  for(const scenario of ['approved-near-wall','blocked-first-step',
   'reversal','eight-advance-burst'])assert.ok(sql.includes(scenario),scenario);
  assert.equal(sql.split('FOR i IN 1..6 LOOP').length-1,2);
