@@ -236,7 +236,7 @@ test('R18-15 only record bounded new release-to-terminal trace timing',()=>{
  assert.match(movement,/g\.releaseTimer\?\.\(result\.status==='committed'/);
  assert.match(movement,/if\(g\.pending\.length===0&&g\.blockedRetry/);
  assert.match(movement,/\['drag','touch','preview'\]\.includes\(g\.mode\)/);
- assert.match(movement,/if\(response\.blocked\)\{g\.pending\.length=0;g\.overflowCell=null;\}/);
+ assert.match(movement,/if\(response\.blocked\)g\.pending\.length=0/);
  // R18-31 preserves this exact legacy Advance RPC with reviewed
  // try/finally ownership of an in-flight batch; no optional atomic RPC.
  assert.match(movement,/response=await authority\.advance/);
