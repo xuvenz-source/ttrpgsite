@@ -93,14 +93,20 @@ export function createInputController({
   if(activePointer===null||event.pointerId!==activePointer||
    event===lastMoveEvent)return;
   lastMoveEvent=event;
+  // A single browser pointermove can contain dozens of high-frequency
+  // hardware samples. Treat that group as ONE frame-level intent, using its
+  // latest position. Feeding every intermediate jitter sample into the
+  // gesture queue amplifies corner oscillation and collision RPC backlog.
+  // This changes input sampling only; server sweep collision still validates
+  // every grid cell of the requested displacement.
   const samples=event.getCoalescedEvents?.();
-  for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
-   const p=point(sample);
-   if(p)controller.updateGesture({
-    x:p.x+(pointerOffset?.x??0),
-    y:p.y+(pointerOffset?.y??0)
-   });
-  }
+  const latest=Array.isArray(samples)&&samples.length?
+   samples[samples.length-1]:event;
+  const p=point(latest)??(latest===event?null:point(event));
+  if(p)controller.updateGesture({
+   x:p.x+(pointerOffset?.x??0),
+   y:p.y+(pointerOffset?.y??0)
+  });
   if(!controller.active)release();
   event.preventDefault?.();
  };
