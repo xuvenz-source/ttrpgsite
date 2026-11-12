@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "updated": "2026-11-11",
+  "releaseDecision": "NO_GO",
+  "sourceBranch": "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+  "basePR": 108,
+  "productionMain": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "exactTargetVersion": "20261111023204",
+  "migrationFile": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+  "exactGitBlobSha": "f4e296725c09055685321726cbe4bc6e09dbce5a",
+  "baseline": "staging/world-v2-b10-r18-07-live-migration-baseline.json",
+  "validator": "scripts/release/validate-world-v2-r18-07-workspace.mjs",
+  "method": "SINGLE_APPROVED_FILE_USING_ISOLATED_CLI_WORKSPACE_AFTER_REMOTE_MIGRATION_FETCH",
+  "cliTargetVersion": "2.81.3",
+  "observed": {
+    "localFiles": 56,
+    "localUniqueVersions": 55,
+    "remoteRegistered": 83,
+    "matchingVersions": 20,
+    "remoteOnlyVersions": 63,
+    "localOnlyVersions": 35,
+    "remoteEmptySqlStatements": 0,
+    "targetAlreadyRegistered": false
+  },
+  "stagingVerified": false,
+  "linkedCliDryRunCompleted": false,
+  "exactlyOnePendingLinkedCliDryRun": false,
+  "productionClientReady": false,
+  "approvedFrontend": false,
+  "approvedDatabase": false,
+  "sqlApplied": false,
+  "historyRepaired": false,
+  "remoteHistoryMutated": false,
+  "safeToApply": false,
+  "flags": {
+    "VITE_WORLD_V2_OBSERVER_RECOVERY": "ABSENT_IN_LIVE",
+    "VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY": "ABSENT_IN_LIVE"
+  },
+  "permittedNextStep": "Read-only linked CLI migration fetch, validator, migration list, and db push --dry-run after proper secure operator setup; DO NOT apply SQL.",
+  "prohibited": [
+    "MCP apply_migration (server-generated version)",
+    "repo-root db push",
+    "bulk --include-all",
+    "remote migration repair",
+    "manual insert/delete/update into migration history",
+    "R18-04 guarded activation before protected Auth/LOS acceptance",
+    "SQL before R18-02 signed client is live and verified"
+  ],
+  "documentation": "docs/testing/world-v2-r18-07-isolated-history-cli-release-2026-11-11.md"
+}

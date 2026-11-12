@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "step": "B10-R18-18",
+  "date": "2026-11-12",
+  "releaseDecision": "STAGING_NO_GO",
+  "parentPr": 120,
+  "parentSha": "79afb01a68a7c6cc6107e51dd5e97b5e3740a45e",
+  "stagingBranch": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+  "liveFrontend": {
+    "release": "R18-15",
+    "deploymentId": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "sha": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be"
+  },
+  "gitMainSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "migrationR05Unchanged": true,
+  "migrationR05Applied": false,
+  "wallHelperSqlCandidateApplied": false,
+  "liveFrontendUpdated": false,
+  "guardedObserverRecoveryEnabled": false,
+  "isolatedPg17LegacyRealTriggerAssertions": 38,
+  "isolatedPg17PermissionFixtureAssertions": 4,
+  "isolatedPg17RolledBack": true,
+  "sourceRealLegacyTriggers": "tests/world-v2-b10-postgres/extract_real_collision_triggers_r18_18.py",
+  "testSql": "tests/world-v2-b10-postgres/direct-write-wall-r18-18.sql",
+  "qaTest": "tests/world-v2-r18-18-direct-write-security.test.mjs",
+  "testCI": "pending-exact-head",
+  "codeql": "pending-exact-head",
+  "unsupportedAssertions": [
+    "real authenticated role-based RLS enforcement",
+    "cross-map issued tool privilege under actual production map membership",
+    "real Auth P1/P2 observer and private LOS/revocation",
+    "linked Supabase CLI migration-history rehearsal",
+    "SQL/front-end production acceptance"
+  ],
+  "handoff": "docs/testing/world-v2-r18-18-direct-write-wall-security-2026-11-12.md"
+}

@@ -98,7 +98,9 @@ test('R12 runtime and renderer wiring preserves locked signed-sight and original
  const renderer=readFileSync(new URL('../src/engine/v2/WorldRenderer.js',import.meta.url),'utf8');
  assert.match(runtime,/canonicalHandoff\.observe\(snapshot\)/);
  assert.match(runtime,/canonicalHandoff\.clear\(\)/);
- assert.match(runtime,/event\.type==='committed'&&!dmPreview&&painted===true&&authorized\(\)/);
+ // R18-30: zero-motion wall collisions must never seed a canonical
+  // handoff; the original authorized/painted guard remains mandatory.
+  assert.match(runtime,/event\.type==='committed'&&!event\.noMotion&&\s+!dmPreview&&painted===true&&authorized\(\)/);
  assert.match(board,/runtimeRef\.current\?\.canonicalGestureOrigin/);
  assert.match(renderer,/const carry=local\?\.handoff&&same\(local\.approved,event\.approved\)/);
  assert.match(renderer,/const prior=carry\?\.anchors\.get\(key\(p\)\)/);

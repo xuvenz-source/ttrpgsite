@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "updated": "2026-11-11",
-  "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-  "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+  "updated": "2026-11-12",
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "releaseBranch": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -261,10 +261,223 @@
     },
     {
       "name": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
-      "status": "staged",
+      "status": "released",
       "linkedPullRequest": 101,
       "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-      "note": "B10-R16: avoid all-map opaque seal on valid same-generation private observer route origin mismatch or capped cosmetic backlog. Keep the affected route deferred until a fresh server-signed snapshot; malformed packets and sequence gaps still seal. No DB/SQL, Supabase Realtime protocol, fog authority or grants change. CI test and live DM/observer acceptance pending."
+      "note": "R16 PR #101 merged and Vercel READY at 90df8c9. Live DM/P2 QA showed remaining observer unknown-piece and sequence gaps, which R16's buffer-only recovery did not address. 2+2 events, four full seals captured in R18 audit; no unauthorized exposure shown.",
+      "productionCommit": "90df8c960e79e8d66c322095611427da7bb09de4"
+    },
+    {
+      "name": "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 102,
+      "note": "B10-R17 client-only blocked keyboard edge rebase. Exact-head PR#102 verification green 814/814, CodeQL and PostgreSQL auth; releaseReady=false, draft/unmerged. Does not fix observer position convergence. Must include with next approved consolidated release if qualified."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 103,
+      "note": "R18-01 audit-only: traced four real observer map resets from two unknown-piece and two sequence-gap cases; synthetic fail-closed baseline, protocol review and security/release gates; NO runtime fix, no database changes."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 104,
+      "note": "B10-R18-02 layered on R18-01 PR #103; client-only default-OFF 12s signed observer catch-up, strict private stream cursor/roster fencing, no SQL or production flag. Stage tests and exact-head release review pending; does not fix immediate unknown-piece/sequence-gap blackouts."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 105,
+      "note": "R18-03 current-R16 integration candidate; exact frozen R05 B03/B07/B08/R01/R03 terminal authority SQL, live read-only baseline hashes/83 versions, private RLS, manual four-function recovery and source-real PostgreSQL 17 tests. SQL file is nonapplied; no backend writes, no production activation. Does not cure immediate unknown-piece/sequence-gap resync. Protected 24-case DM/P1/P2 and R17 combined release are NO-GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 106,
+      "note": "R18-04 default-OFF 700ms single-flight stable-generation signed roster/sequence-gap recovery, 16-frame bounded cursor-only backpressure, no new visibility from private movement packets, hard seal on invalid/revoked/timeout. Staging tests only. Pending hostile QA and R17 consolidation. No new migration, Supabase writes, Vercel activation or deployment."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 107,
+      "note": "R18-05 single consolidated source candidate integrating reviewed R17 #102 exact KeyboardStepper, MovementController, WorldV2Board files and tests with R18-01 #103, R18-02 #104 signed quiet-observer watch OFF, R18-03 #105 frozen nonapplied R05 terminal authority SQL, and R18-04 #106 guarded private roster/sequence-gap repair OFF. All original stages remain separately tracked and unmerged. Current main R16 unchanged; no production SQL, feature flags, Vercel deployment, RLS, Edge or paid-plan changes. Full combined PR review/CI, protected DM/P1/P2 QA and explicit release approval pending."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 108,
+      "note": "R18-06 explicit release-readiness and protected canary plan layered over exact R18-05 PR107. Live read-only 83-entry catalog, seven fingerprint/grant matches, 0 active sessions and no partial candidate install confirmed 2026-11-11. Vercel READY R16; BOTH recovery build flags absent. First approved client deployment requires R18-02 signed watch ON before any approved R05 SQL, guarded 700ms recovery OFF pending separate security activation. One-file migration registration method and real multi-account privacy acceptance not verified. NO-GO; no deployed changes."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 109,
+      "note": "R18-07 isolated remote-migration-history SQL release mechanism (READ-ONLY). Live Supabase 83 registered versions vs repository 56 SQL files (55 distinct timestamps, only 20 exact matches), all 83 remote entries have SQL and target 20261111023204 is unused. Supabase MCP apply_migration generates its own version, so NOT acceptable for exact reviewed CLI migration; do not bulk db push or repair history. Candidate: secure isolated CLI 2.81.3 migration fetch, exact 83 version/name match + frozen R05 Git blob, strict validator and one-migration remote dry-run; actual linked CLI dry-run NOT YET RUN. R18-02 signed viewer canary and separate SQL approval still required. No live DB write/deploy/flags/paid infrastructure."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "linkedPullRequest": 110,
+      "note": "R18-08 CLI v2.81.3 source-audited FETCH/LIST/DRY-RUN: offline exact 83-body digest comparison from read-only live SQL (no historic SQL exported); validator enforces migrations ENABLED, seed DISABLED, correct linked project ref and frozen R05 blob. 13 new synthetic tamper/config tests. Underlying remote read-only verification only. Linked CLI remote dry-run STILL NOT RUN, no frontend flag/SQL/deploy. NO-GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-09 offline-only pinned-CLI migration-list and db push --dry-run transcript consistency gate. Verifies 83 matched remote/local registered versions and exactly one pending reviewed R05; rejects false up-to-date, disabled migrations, extra SQL, seeds and roles. Live 83 SQL hashes still matched read-only, but no linked CLI was executed. Keeps NO-GO, flags OFF, SQL nonapplied and no deployment.",
+      "linkedPullRequest": 111
+    },
+    {
+      "name": "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-10 guarded 700ms observer recovery concealment fix. While in opt-in guarded grace or sequence gap, a private hide or vision dirty event immediately hard seals before synchronous or async signed reauthorization. Correctly ordered hides and default-OFF behavior unchanged; source-real tests pending. No live deployment, no applied R05 SQL, guarded flag OFF.",
+      "linkedPullRequest": 112
+    },
+    {
+      "name": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-11 real renderer concealment integration + source-real PG17 3-identity revoke/demote/rejoin gates passed 901/901 Node, PostgreSQL, CodeQL, build/dependency checks on first verified PR head. Exact-head CI reruns after documentation metadata only; live Auth/CLI/production still NO_GO.",
+      "linkedPullRequest": 113
+    },
+    {
+      "name": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-12 operator-only read-only CLI 2.81.3 linked migration fetch/list/db push --dry-run runner, mocked adverse tests; live 12 Nov SELECT-only preflight 83/83 historical SQL digests, 7/7 functions, 0 unexpired gestures, R05 absent. No actual CLI session or production change; CI pending.",
+      "linkedPullRequest": 114
+    },
+    {
+      "name": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-13 solo-DM five-phase live QA readiness: no new runtime, live SQL or flags. Existing R16 trace capture, offline privacy-bounded analyzer and deterministic tests. Real DM/P1/passive P2 remains unverified. Staged CI pending.",
+      "linkedPullRequest": 115
+    },
+    {
+      "name": "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-14 source-confirmed solo DM preview collision refresh storm: 1352 blocked events, 1580 visibility refresh requests; only refresh when collision-approved preview token identity/cell actually changes, preserve final signed sight. Standalone unit tests; live verification pending. All production gates remain NO_GO.",
+      "linkedPullRequest": 116
+    },
+    {
+      "name": "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-15 actual R18-14 solo-DM drag trace: 1.17s commit p50 and >2.5s post-release wait, busy input on corners/wall/fog; fix pointer half-cell jitter and duplicate exact server-ACKed denied crossings, new release-to-terminal timer. R18-14 frontend already live separately from Git main, no new deploy or SQL.",
+      "linkedPullRequest": 117
+    },
+    {
+      "name": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-16 actual R18-15 solo DM evidence: live PostgreSQL swept rectangle blocks a 5% wall edge clip. QA-only candidate 0.10-cell inner footprint vs strict collision, no live rule changed. Adds bounded authority-timing bins to inspect slowdown under repeated movements. No SQL/production deployment.",
+      "linkedPullRequest": 118
+    },
+    {
+      "name": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-17 coordinated physical 0.10-cell edge clearance: strict-by-default client primitive/scene solver plus dual identical-signature V2/legacy PostgreSQL swept helpers as NONAPPLIED candidate; 14 source-real PG17 assertions rolled back. Further direct-write trigger/independent Auth/CLI tests required, no live deployment.",
+      "linkedPullRequest": 120
+    },
+    {
+      "name": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-18 authentic historical source-extracted legacy token + mounted tool BEFORE UPDATE collision triggers, 38 hostile direct-write wall/door/permission assertions + four role-change/map-transfer checks under disposable PG17 BEGIN/ROLLBACK. No live DB writes; full production RLS, alternate RPC and private observer still pending.",
+      "linkedPullRequest": 121
+    },
+    {
+      "name": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-19 source-corrected actual final 20261108055943 trajectory-aware legacy guards & alternate commit_map_trajectory, 3 negative controls for held/unpublished issued tool map transfer shortcut, 22 latest-body trajectory/cross-map tests and 7 role-authenticated RLS-mirror cases all local rollback; staged NONAPPLIED cross-map DM+same-campaign guard. Standalone campaign_id edits still need separate trigger/RLS hardening.",
+      "linkedPullRequest": 122
+    },
+    {
+      "name": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-20 verified actual live validators already reject token/map mismatches and tool campaign_id changes, corrected prior isolated collision finding; read-only 7 token/2 tool no mismatch. Stages NONAPPLIED token/map campaign identity guard for dual-campaign DM reparent and source-real live legacy movement-session RPC: 20 baseline/guard and 20 session assertions, all rolled back. No production deployment/SQL.",
+      "linkedPullRequest": 123
+    },
+    {
+      "name": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-21 DM map upload/calibration/party route source-real PG17 W01-W17 passed in rollback; CRITICAL correct superseded R18-19 map-guard SQL to preserve LIVE World V2 commit_allows_piece_v2 token+tool signed checkpoint bypass. C01-C10 source-real checkpoint regression and exact live normalized function-body-only-delta Node QA; no SQL/production deployment. Frozen R05 kept intact.",
+      "linkedPullRequest": 124
+    },
+    {
+      "name": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-22 THIRD fresh disposable PG17 source-real ordered sequence: frozen R05 committed and kept active -> R18-17 V2+legacy 0.10 helper -> corrected checkpoint-aware R18-19 token/tool cross-map guards -> R18-20 map/token campaign affinity, each locally committed; 20/20 O assertions confirm real public token and 2x2 mounted tool Begin/Advance/Commit, replay/unauthorized map/solid wall blocks and private ACL. Additional R05 atomic recovery separate. Nothing deployed.",
+      "linkedPullRequest": 125
+    },
+    {
+      "name": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-23 live READ-ONLY 83/83 migration-body digests, frozen original R05 catalog sources 7/7, no active gestures or partial install, six private RLS tables protected and seven World V2 public RPCs anon-denied. Staged single-SELECT catalog preflight, fail-closed 30-minute external evidence verifier and independent signed DM/P1/passive-P2 manual acceptance protocol. Real linked pinned CLI fetch/dry-run and three-browser Auth LOS/Realtime remain UNEXECUTED; SQL/FRONTEND NO-GO. No Supabase/Vercel/main change.",
+      "linkedPullRequest": 126
+    },
+    {
+      "name": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-24 staged opt-in, clipboard-only World V2 diagnostic UI for nontechnical DM/P1/passive-P2 testers. Uses existing whitelisted bounded WorldTrace snapshot; exports no IDs, secret signed sight, coordinates, auth, telemetry or RPCs. Reports remain self-labeled and release NO-GO; real linked authenticated CLI and three-browser Auth/Realtime/LOS/fog/revocation remain unexecuted. No frontend/SQL production deployment.",
+      "linkedPullRequest": 127
+    },
+    {
+      "name": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-26: candidate private V2 step_allowed conservative 0.0001-cell padded segment AABB early rejection, preserving original SAT and R18-17 clearance. Differential test clones exact original live definition, compares 4860 normal/hostile cases and rolls back inside isolated fully staged post-R05 PostgreSQL. R18-25 instrumented frontend was rolled back and is NOT included. Real signed DM/P1/P2, pinned linked CLI, SQL release remain BLOCKED. Live frontend R18-24; 83 DB migrations; no live SQL/merge/deploy.",
+      "linkedPullRequest": 130,
+      "ci": "PASS at source SHA b4fd6e0b: 1015/1015 Node, CodeQL, isolated authority and combined PG17. 4860/4860 reference collision parity; 13/13 PG gates. 100-remote-wall 40-call synthetic benchmark original 26.50ms vs candidate 9.91ms, advisory only. Live unchanged."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-27: exact frozen R05 Commit with four additive if-empty gates (skip no-op token/tool update and observer drain only when private recipient queue absent), with original actor/session/scene locks, triple session_valid and full path replay intact. Test clone original and track real nonempty private hide drain; 13/13 isolated PG17 checks, 6 Node source guards; existing R18-22/R18-26 tests retained. No performance speedup claim. Live R18-24; R05 absent. Authenticated CLI and DM/P1/P2 fog/revocation gates still pending. SQL and frontend NO-GO.",
+      "linkedPullRequest": 131
+    },
+    {
+      "name": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-28: optional unversioned post-R05 public finalize_world_motion_v2 RPC that invokes old actor-bound Advance then canonical Commit inside a SQL transaction, with subtransaction rollback on failure, server-derived only endpoint, private exact-request receipt and replay reauthorization. New public SECURITY DEFINER EXECUTE restricted to authenticated, no private schema grants. R18-24 remains production; R05 and all R18-17/19/20/26/27 candidates unapplied; client does not call new RPC. 16 isolated PG17 assertions incl blocked prefix, ACL, queued hide, injected Commit failure rollback, permission-generation revocation, plus Node contract tests. Full SQL and frontend release NO-GO.",
+      "linkedPullRequest": 132,
+      "isolatedEvidence": "Post-R05 disposable PG17 20 ordered + R26 4860/13 + R27 13 + R28 16 assertions all PASS at source a2ca4458; Node 1028/1028 + Vite passed. New cached receipt revoked after permission generation change; failed canonical token write rolls back Advance/outbox; wholly blocked final step rolls back. Full exact PR head and CodeQL still required. Production untouched."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-29: default-OFF opt-in client atomic-finalization adapter. Closing final ≤8-target/24-cell batches use new R18-28 RPC only under VITE_WORLD_V2_ATOMIC_FINALIZE=1 and never in DM preview; earlier batches and default behavior retain existing Advance/Commit. Validate full exact approved prefix and Commit sequence. Only exact identical one-time replay on thrown transport outcome; NULL/revoke/malformed fail closed with no legacy fallback. No live activation; R18-28 and all previous SQL UNAPPLIED; Vercel flag absent. New 18 adversarial mock protocol tests plus reviewed original source checks. Multisigned user, linked CLI, private fog and performance gates remain NO-GO.",
+      "linkedPullRequest": 133
+    },
+    {
+      "name": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-30: Fix R18-28 blocked-only terminal: source-checked zero-motion cancelled receipt only when no prior approved cells; canonical Commit of earlier approved legs when final attempt wholly blocked. Exact retry, map/permission revocation, private LOS and actor locks preserved. JS validator and runtime noMotion canonical handoff skip. Additionally fixes delayed Advance pending input ownership (detach in-flight batch before await; preserve newer forward/reversal input; server ACK blocked still clears unauthorized route) even with atomic flag OFF. Tests: 13 source-real PG17 gates, 5 PostgreSQL wire shapes accepted by real JS controller, 7 Node source gates + 4 slow Advance cases, full prior SQL. No live SQL/flag/frontend/deploy/merge, 83 migrations and frozen R05 absent; DM/P1/P2 and CLI gates mandatory.",
+      "linkedPullRequest": 134
     }
   ],
   "features": [
@@ -725,11 +938,581 @@
       "sources": [
         "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
       ],
-      "status": "staged",
-      "releaseReady": false,
+      "status": "released",
+      "releaseReady": true,
       "linkedPullRequest": 101,
       "databaseDependencies": [],
-      "note": "Staged client-only repair; player and DM QA plus review required before controlled deployment."
+      "note": "Released PR #101 commit 90df8c9; R16 addressed cosmetic buffer origin/backlog only. R18 incident shows remaining unknown-piece and sequence-gap stream faults."
+    },
+    {
+      "id": "world-v2-b10-r17-server-blocked-keyboard-input-rebase",
+      "description": "Rebase keyboard cursor to server-approved cell after blocked ACK and suppress only the exact denied adjacent repeat",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 102,
+      "databaseDependencies": [],
+      "note": "Independent from R18; potential release pending protected fog/DM QA and designer approval."
+    },
+    {
+      "id": "world-v2-b10-r18-01-observer-private-delivery-audit",
+      "description": "Auditable R16 observer incident reproduction and authority-safe B08/R02/R03 recovery design; not a runtime correction",
+      "sources": [
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 103,
+      "databaseDependencies": [],
+      "note": "Tests prove current fail-closed baseline, including no self-healing after dropped terminal packet. Requires separately approved R18 actual implementation, isolated SQL and protected live QA."
+    },
+    {
+      "id": "world-v2-b10-r18-02-signed-observer-convergence",
+      "description": "Opt-in authenticated signed sight catch-up for quiet observers missing final movement/hide frames, with validated cursor/roster alignment and stale private route fencing",
+      "sources": [
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 104,
+      "databaseDependencies": [],
+      "note": "Client-only opt-in OFF. Must review R02/B08/R03/R05 integration and complete protected DM/P1/P2 fog/LOS and free-tier load acceptance before activating."
+    },
+    {
+      "id": "world-v2-b10-r18-03-terminal-commit-reconciliation",
+      "description": "Stage proven-frozen actor-authorized atomic Commit, budgeted recipient-private terminal path drain and stale-route retirement, exact replay, and manual SQL recovery path, with live 83-version preflight and hostile PostgreSQL tests",
+      "sources": [
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 105,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO. Exact R05 #90 source preserved, migration nonapplied; target live catalog and version history preflight is point-in-time only; R18-02 recovery flag OFF; no real DM/P1/P2 protected LOS testing or R18-04 unknown-roster/sequence-gap design. Separate designer SQL+frontend release approval mandatory."
+    },
+    {
+      "id": "world-v2-b10-r18-04-guarded-observer-roster-recovery",
+      "description": "Opt-in bounded authorized observer recovery for same-generation missing private sequence and unrostered packet, preserving only last signed frame for up to 700ms before fail-closed fallback",
+      "sources": [
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 106,
+      "databaseDependencies": [],
+      "note": "NO-GO for activation: must demonstrate protected LOS/permission revocation, hidden NPC removal, no unauthorized sprite/position/fog, 700ms max grace, free-tier extra sight RPCs. R18-03 reviewed migration still nonapplied."
+    },
+    {
+      "id": "world-v2-b10-r18-05-consolidated-release",
+      "description": "Integrated exact R17 blocked-keyboard ACK rebase with R18-01/02/03/04 passive observer source, signed fog-bound roster recovery and frozen nonapplied terminal SQL for a single future gated release",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 107,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO: combined exact-head CI and review pending; R18-02 12-second authenticated sight and R18-04 700ms guarded signed recovery flags both remain OFF. Real protected fog/hidden NPC/role revocation and DM/P2 convergence not accepted; migration remote catalog aliases require targeted history-safe approval, never db push. Original PRs 102-106 remain draft/unmerged."
+    },
+    {
+      "id": "world-v2-b10-r18-06-release-readiness-and-canary",
+      "description": "Source-checked R18-05/06 deployment and recovery runbook, read-only exact Supabase baseline, client-before-SQL rollout and 24-case protected live acceptance with machine-readable NO-GO gates",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 108,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "R18-06 is readiness documentation/tests only. Vercel flags absent, SQL nonapplied; prereq R18-02 production build serving before R05 migration. Single-file migration registration unverified, actual Auth/LOS/live-memory tests pending, guarded 700ms feature OFF. Separate designer approval required for frontend and SQL; no deployment."
+    },
+    {
+      "id": "world-v2-b10-r18-07-isolated-migration-history",
+      "description": "Read-only audited 83-version remote Supabase history snapshot and source-frozen isolated CLI migration workspace validator for exactly one pending reviewed R05 version",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 109,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO. 12 local historical migration files may conflict; repo has 56 migrations/55 unique versions and remote 83 with 20 matching. The CLI isolated-workspace method is prepared but NOT linked dry-run verified; no SQL may be applied via MCP apply_migration (auto version) or bulk db push. Live client R18-02 needs verified ON before separately authorized R05. R18-04 guarded ON remains deferred."
+    },
+    {
+      "id": "world-v2-b10-r18-08-remote-history-body-verification",
+      "description": "Read-only verified 83 source SQL migration body digests and guarded isolated CLI config/project preflight to protect exact R05 one-file dry run",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "linkedPullRequest": 110,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO. All 83 applied source hashes observed but actual remote CLI migration fetch+dry-run unperformed; secure linked release auth not available. No remote mutation, env, RLS, Edge or paid service. R18-02 signed client must be separately approved and live before distinct approved R05 SQL; R18-04 guarded recovery stays OFF pending protected revocation/LOS QA."
+    },
+    {
+      "id": "world-v2-b10-r18-09-cli-transcript-verification",
+      "description": "Fail-closed offline consistency verifier for pinned Supabase CLI migration list and dry-run transcripts; read-only 83-SQL-body fingerprint re-observation",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "NO-GO. Only a supplemental offline parse of captured text, never authenticates CLI or permits SQL; actual linked v2.81.3 dry-run, approved signed recovery client, separate DB authorization and protected 24-case QA remain outstanding.",
+      "linkedPullRequest": 111
+    },
+    {
+      "id": "world-v2-b10-r18-10-guarded-concealment-priority",
+      "description": "Prioritize private token hide and fog/vision-dirty signals above optional guarded observer visual retention; hard seal before server reauthorization under exceptional packet loss.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Concealment-first source change only in default-OFF guarded path. Authenticated DM/P1/P2 LOS/revocation remains untested and R18-04 feature activation NO-GO. No frontend canary or SQL approval; exact-head checks pending.",
+      "linkedPullRequest": 112
+    },
+    {
+      "id": "world-v2-b10-r18-11-viewer-revocation-auth-gate",
+      "description": "Source-real PostgreSQL viewer-scope and private-topic RLS tests under P1 campaign removal/rejoin, P2 other-map scope and DM downgrade; actual renderer/transport fog blackout regression under guarded private hide and dirty-vision.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Tests source-real isolated PG17 with synthetic JWT roles and actual JS renderer, not live Supabase Auth/WebSockets. All 901 Node cases + PG17 source-real/combined + CodeQL green on verification commit. No runtime/SQL/permission changes; real CLI isolated rehearsal, live three-account acceptance and SQL approval remain blocked.",
+      "linkedPullRequest": 113
+    },
+    {
+      "id": "world-v2-b10-r18-12-linked-cli-readonly-rehearsal",
+      "description": "Single guarded operator-only isolated migration fetch/list/dry-run that refuses mismatched 83-body history, wrong project/CLI/seed configuration and additional SQL; reconfirms live 7-function/83-version preflight by SELECT.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Connected Supabase SELECT-only preflight passed on 2026-11-12. This branch does not itself execute actual linked CLI, live multiplayer Auth or SQL install; NO_GO.",
+      "linkedPullRequest": 114
+    },
+    {
+      "id": "world-v2-b10-r18-13-solo-dm-live-test",
+      "description": "One authenticated DM can collect real R16 and later consented frontend-canary baseline for idle, arrows/drags, wall/fog collision and local player preview; bounded trace analyzer flags renderer/sight/authority regressions without private data.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Staging-only solo-DM protocol does not replace genuinely independent authenticated P1/P2 convergence and LOS tests, Supabase CLI one-pending dry-run or two separate approvals. No production deployment/SQL/feature flags.",
+      "linkedPullRequest": 115
+    },
+    {
+      "id": "world-v2-b10-r18-14-preview-blocked-sight-dedupe",
+      "description": "Avoid expensive player-effective preview visibility refresh scheduling for blocked/approved movement ACKs that leave the collision-approved token identity/position unchanged; preserve partial accepted prefix, final signed sight and all secure revocation paths.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Designer real R16 traces show DM authority p95 begin 1.31s / advance 2.09s / commit 3.95s; preview 1352 blocked and 1580 sight refresh requests, coalesced to 46 RPCs. No R05 SQL, production frontend deploy, flag enable or real Auth multiplayer acceptance.",
+      "linkedPullRequest": 116
+    },
+    {
+      "id": "world-v2-b10-r18-15-drag-corner-collision-settle",
+      "description": "Hysteresis for drag/touch/preview half-cell jitter and same-gesture exact server-denied pointer target retry suppression without path/fog authorization bypass; bounded release-to-terminal metric and historical original R17 SHA integrity amendment.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Solo-DM R18-14 frontend canary live on exact SHA 96c90f9d (dpl_82NADuBV58sGdaXdcEgm2Gm2pzBb) without Git main merge; R18-15 not deployed. R05 unapplied, guarded recovery disabled, independent Auth multiplayer and CLI pending; NO_GO.",
+      "linkedPullRequest": 117
+    },
+    {
+      "id": "world-v2-b10-r18-16-wall-clearance-cadence-research",
+      "description": "Read-only confirmed 5% wall edge clipping; QA-only strict-vs-0.10-cell clearance comparison, no authorization integration. Opt-in bounded movement RPC/terminal lock timing bins and last-retained first-vs-second half trend.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql"
+      ],
+      "note": "Physical wall clearance needs separate PostgreSQL direct-write/client collision parity migration and explicit SQL approval. Repeated lag measured commit 1.06s p50 and release lock 2.38s p95; progressive trend not yet established. Independent users and CLI rehearsal pending.",
+      "linkedPullRequest": 118
+    },
+    {
+      "id": "world-v2-b10-r18-17-wall-edge-clearance-parity",
+      "description": "Client opt-in 0.10-grid-cell physical swept-footprint wall tolerance with strict default and independently granted movement; matching private V2 + legacy token/tool SAT PostgreSQL helper replacements staged in a separate unversioned, nonapplied candidate, tested in isolated rollback.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql"
+      ],
+      "note": "Requires actual CLI-generated migration with historical 83 versions reconciled and two separately approved SQL phases, source-real legacy direct-write/trigger parity, independent player LOS/observer/DM tests and explicit later frontend opt-in. 700ms guarded observer OFF. No current production changes.",
+      "linkedPullRequest": 120
+    },
+    {
+      "id": "world-v2-b10-r18-18-legacy-direct-write-security-validation",
+      "description": "Source-extract pinned production legacy collision trigger bodies and run real direct token/tool UPDATE tests against proposed dual V2/legacy 0.10-cell edge clearance inside disposable PG17 rollback; verify DM overrides, membership revocation, doors, group-size tool, conditional movement, map bounds and malformed published scene.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql"
+      ],
+      "note": "Live R18-15 unchanged. Frozen R05 unapplied. 42 PG17 test assertions are rollback only and do NOT replicate real policy RLS or authenticated P1/P2. New SQL and frontend activation need separate explicit approvals and actual pinned CLI 83-version reconciliation.",
+      "linkedPullRequest": 121
+    },
+    {
+      "id": "world-v2-b10-r18-19-source-real-trajectory-crossmap-security",
+      "description": "Source-real final deployed legacy trajectory validators, token/tool SQL triggers and public alternate movement RPC authority, with rollback tests for bent-path collision and atomic group commit; detect non-DM issued-tool cross-map shortcut in original, stage source-derived pre-return map/campaign guard, and validate owned/shared/revoked tool RLS expressions under SET ROLE authenticated.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql"
+      ],
+      "note": "No R05 or new SQL applied; active R18-15 strict client unchanged. Source fidelity gap in prior R18-18 corrected. 32 disposable rollback assertions cannot replace real Auth P1/P2, standalone campaign_id UPDATE, policy/foreign-key verification or CLI migration history reconciliation. Guarded observer 700ms still OFF.",
+      "linkedPullRequest": 122
+    },
+    {
+      "id": "world-v2-b10-r18-20-campaign-affinity-live-legacy-session-security",
+      "description": "Pin SELECT-only actual production token/tool validators and legacy signed movement-session RPC by definition hash; replay full write-validator and legacy preview/update/revoke/observer-stub paths in disposable PostgreSQL. Stage private no-reparent campaign_id trigger for map and token only; respect existing issued-tool immutability.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+        "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+        "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
+      ],
+      "note": "Correction: legacy collision trigger shortcut alone does not prove production exploit; live validate_campaign_tool_write/validate_token_map already check map-campaign affinity. Dual-campaign DM token/map reparent is open absent new guard; added candidate stays NONAPPLIED. Legacy movement RPC S01-S20 uses simulated LOS/stub observer only, real P1/P2 and server migration remain gated.",
+      "linkedPullRequest": 123
+    },
+    {
+      "id": "world-v2-b10-r18-21-dm-workflows-live-checkpoint-source-parity",
+      "description": "Review actual DM map upload/routing/map calibration and future copy-as-insert compatibility with campaign affinity. Rebuild staged tool/token map guard against current live signed V2 checkpoint-aware collision trigger definitions (R18-19 originally regressed it), and require full-source normalized guard-only delta plus real private checkpoint token/tool UPDATE acceptance and direct collision denial.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+        "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+        "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+        "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
+      ],
+      "note": "Do NOT merge or apply old PR #122 R18-19 function candidate standalone: it omits LIVE forge_world_v2.commit_allows_piece_v2 and risks double collision/rubberbanding. Only cumulative corrected R18-21 source can be used for future source-real staged SQL rehearsal. Actual authenticated CLI 83-body migration preflight, fresh post-R05 function fingerprints, combined R05->new SQL rehearsal, real P1/P2 Auth LOS and separate SQL/frontend authorizations remain blockers.",
+      "linkedPullRequest": 124
+    },
+    {
+      "id": "world-v2-b10-r18-22-ordered-post-r05-authority-security-rehearsal",
+      "description": "Rehearse frozen R05 without restoring its new authority followed by the three unversioned collision/security candidates in four ordered COMMITs inside a third disposable PostgreSQL 17 database, with exact migrated-function backups, live checkpoint-aware trigger source, real public token and 2x2 tool canonical Commit, map-transfer/RLS protection, rollback and source-fingerprint checks.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+        "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+        "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+        "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+        "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
+      ],
+      "note": "20/20 O assertions in disposable PG17 are not a linked CLI migration history, actual prod full schema or authenticated P1/P2 LOS acceptance; no real SQL applied. R05 frozen remains only versioned pending migration, later SQL candidates need post-R05 signed-hash re-review and separate explicit approval. 700ms guarded observer and client 0.10 stay OFF.",
+      "linkedPullRequest": 125
     }
   ],
   "databaseDependencies": [
@@ -1043,14 +1826,141 @@
     "PR #52: migration 20261108091818 installed RLS-restricted per-viewer revision table; anon denied and authenticated SELECT-only, v2 RPC authenticated-only; private helper grants withheld; deployed client pending single main release."
   ],
   "upcomingRelease": {
-    "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-    "releaseBranch": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+    "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "releaseBranch": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
     "outstandingBranches": [
-      "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11"
+      "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+      "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+      "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+      "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+      "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+      "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+      "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+      "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+      "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+      "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+      "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+      "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+      "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+      "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+      "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+      "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+      "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+      "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+      "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+      "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+      "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+      "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+      "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+      "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+      "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+      "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+      "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
+      "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+      "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+      "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12"
     ],
-    "stagePolicy": "R16 isolated, staging only. Must inspect exact diff, complete Node/Chromium, CodeQL and PostgreSQL security workflows; no merge or live deployment before designer approval. Test DM rapid arrow/drag with passive Player 2, observer buffer discontinuity, no whole-map blackout, fog/hidden-roster secrecy, sequence gap revocation and repeated blocked keyboard input. Investigate one 'invalid-server-reply' Advance separately without increasing server caps. Other B10 R05-R09 SQL draft branches remain NO-GO.",
+    "stagePolicy": "B10-R18-30 cumulative staged source includes frozen R05 and all R18-17/19/20/26/27/28 unversioned SQL; new R18-30 blocked-only terminal function candidate is UNVERSIONED and rollback-only tested. Source-real 13 PG17 assertions, five PostgreSQL-generated wire results checked through exact JS parser and controller; delayed Advance queue preserves fast forward and reversal input, with server-ACKed wall failures still discarding unauthorized future steps. Production remains R18-24 QA-only, 83 Supabase versions, R05 unapplied, atomic feature flag OFF, R18-25 instrumentation rolled back, no paid costs. Authenticated pinned v2.81.3 linked full-body 83 migration history and strict R05-only dry-run, explicit staged SQL versioning/approval, three distinct signed DM/P1/passive P2 private LOS/fog/Realtime/revocation and sustained real browser latency gates remain mandatory. SQL & frontend RELEASE NO-GO.",
     "databaseReleaseVersion": null,
-    "additionalDatabaseReleaseVersions": []
+    "additionalDatabaseReleaseVersions": [],
+    "frontendQaOnlyLiveCanary": {
+      "stage": "B10-R18-24",
+      "status": "READY",
+      "deploymentId": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+      "url": "https://ttrpgsite.vercel.app",
+      "sha": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+      "branch": "stage/world-v2-b10-r18-24-qa-only-live-canary-2026-11-12",
+      "pr": 128,
+      "baseLiveR1815Sha": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be",
+      "rolledOutComponents": [
+        "opt-in local QA capture panel",
+        "privacy allowlisted trace export",
+        "QA diagnostic tests"
+      ],
+      "explicitlyNotRolledOut": [
+        "R18-16+ collision & clearance candidates",
+        "R05 migration",
+        "R18-17/19/20 SQL",
+        "700ms guarded observer recovery"
+      ],
+      "lastReadOnlyDbVersionCount": 83,
+      "userAuthFogSecurityAccepted": false,
+      "priorReadyDeployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ"
+    },
+    "r1826ServerOptimization": {
+      "draftPr": 130,
+      "testedSourceSha": "b4fd6e0b69f8c3b0f8ca86fa71de837c670f6c71",
+      "candidateSql": "supabase/candidates/world_v2_r18_26_step_bbox_prefilter.sql",
+      "originalFunctionMD5": "6dcd75ce4719cd0bf6173f77f75fdf32",
+      "combinedPostgresRun": 43157643591,
+      "parityCases": 4860,
+      "parityMismatches": 0,
+      "rollbackOriginalFunctionConfirmed": true,
+      "benchmarkAdvisoryMs": {
+        "original40Calls": 26.5,
+        "candidate40Calls": 9.91,
+        "remoteWalls": 100
+      },
+      "result": "ISOLATED_TESTS_PASS_LIVE_SQL_NO_GO",
+      "sqlApplied": false,
+      "frontendDeployed": false,
+      "authenticationGate": "pending real signed DM/P1/P2",
+      "linkedCliGate": "pending pinned v2.81.3"
+    },
+    "r1828AtomicFinalization": {
+      "pr": 132,
+      "sourceParent": "4947e33a34e124e4584424a0b67b1b8199f72c69",
+      "rpc": "public.finalize_world_motion_v2",
+      "candidate": "supabase/candidates/world_v2_r18_28_atomic_finalize.sql",
+      "publicSecurityDefinerReviewedInIsolation": true,
+      "authenticatedExecuteOnly": true,
+      "clientUsesRpc": false,
+      "expectedRoundTripSavingOnlyAfterLaterClientIntegration": 1,
+      "fullPostR05FixtureCases": 16,
+      "isolatedPostgresPassSha": "a2ca4458d450a58ba641d962e9a1226d5e6a82e1",
+      "nodeTestsPassedAtSource": 1028,
+      "nextClientPackage": "R18-29",
+      "sqlInstalled": false,
+      "userAuthFogMultiplayerAcceptance": false,
+      "releaseDecision": "STAGING_NO_GO"
+    },
+    "r1829AtomicClient": {
+      "stage": "B10-R18-29",
+      "defaultFlag": "VITE_WORLD_V2_ATOMIC_FINALIZE",
+      "enabledInProduction": false,
+      "explicitBackendDependency": "unapplied R18-28",
+      "controllerReviewedBlobSha": "45e0068182932e7533bfbb58b55e9091bb83c857",
+      "newAdversarialTests": 18,
+      "clientIntegrationEnabled": false,
+      "routeAuthority": "server-only",
+      "onUncertainAck": "single identical replay then fail-closed",
+      "privateSightAuthorizationRequired": true,
+      "r05LinkedCliPreflightComplete": false,
+      "realThreeAccountAcceptance": false,
+      "liveSqlOrFrontendChange": false,
+      "releaseDecision": "STAGING_NO_GO",
+      "pr": 133
+    },
+    "r1830BlockedTerminal": {
+      "stage": "B10-R18-30",
+      "draftPr": 134,
+      "sourceParent": "f1ce095aadbd0927c074a31c7404a9dd98e4452c",
+      "onlyUnversionedCandidate": "supabase/candidates/world_v2_r18_30_blocked_final_semantics.sql",
+      "signedNoMotionReceiptStatus": "cancelled",
+      "priorMotionFinalBlockedUsesOriginalCanonicalCommit": true,
+      "originalR1828SourceUnchanged": true,
+      "fixedInFlightPointerQueue": true,
+      "independentAuthScenePermissionRevocationPreserved": true,
+      "exactWireCasesFromIsolatedPostgres": 5,
+      "isolatedSQLGates": 13,
+      "newNodeCases": 11,
+      "featureFlagStillOff": true,
+      "pgPostR05SuiteRollbackOnly": true,
+      "productionSqlChanged": false,
+      "productionFrontendChanged": false,
+      "liveSpeedupProven": false,
+      "securityReleaseDecision": "NO_GO"
+    }
   },
   "lastRelease": {
     "name": "Unified Movement, Fog, Realtime and Memory Architecture",

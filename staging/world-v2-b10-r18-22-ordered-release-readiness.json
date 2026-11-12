@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "step": "B10-R18-22",
+  "date": "2026-11-12",
+  "releaseDecision": "STAGING_NO_GO",
+  "parentPr": 124,
+  "parentHead": "5164a4c8af877c88c98ef17b6fea4f3a88af152a",
+  "branch": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+  "production": {
+    "liveFrontendRelease": "R18-15",
+    "deployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "gitMain": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "registeredMigrations": 83,
+    "r05Version": "20261111023204",
+    "r05Applied": false,
+    "observerGuarded700ms": false,
+    "clientWallClearanceEnabled": false
+  },
+  "testDb": {
+    "name": "world_v2_b10_r18_22",
+    "isolatedMarker": "WORLD_V2_B10_ISOLATED=yes",
+    "pgHost": "127.0.0.1",
+    "postgresVersion": 17,
+    "allDisposable": true,
+    "sourceRealLegacyGuards": true,
+    "viewerLosIsStub": true
+  },
+  "orderedSql": [
+    {
+      "order": 1,
+      "path": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+      "sha": "f4e296725c09055685321726cbe4bc6e09dbce5a",
+      "frozen": true,
+      "committedInDisposableFixture": true,
+      "appliedToSupabase": false
+    },
+    {
+      "order": 2,
+      "path": "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+      "sha": "c78998da8a9013591f2bb479cca4b222f41ef2d7",
+      "versioned": false,
+      "committedInDisposableFixture": true,
+      "appliedToSupabase": false
+    },
+    {
+      "order": 3,
+      "path": "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+      "sha": "55db7e6b6839d1d8b489203baa11c99264648a55",
+      "correctedSignedCheckpoint": true,
+      "versioned": false,
+      "committedInDisposableFixture": true,
+      "appliedToSupabase": false
+    },
+    {
+      "order": 4,
+      "path": "supabase/candidates/world_v2_r18_20_campaign_affinity.sql",
+      "sha": "3980808966ec56ad74120bc4f737c78ddd2056bb",
+      "versioned": false,
+      "committedInDisposableFixture": true,
+      "appliedToSupabase": false
+    }
+  ],
+  "assertions": {
+    "orderedFullStack": 20,
+    "realTokenBeginAdvanceCommit": true,
+    "realTwoByTwoMountBeginAdvanceCommit": true,
+    "atomicRollbackOfAdversarialDml": true,
+    "allPriorSuiteRetained": true
+  },
+  "remainingGates": [
+    "authenticated pinned Supabase CLI migration fetch all 83 remote SQL bodies, exact hash reconciliation, dry run",
+    "separate explicit R05 SQL approval and verified live signed recovery",
+    "post-R05 read-only function fingerprint revalidation and separately versioned/approved 3 new SQL changes",
+    "real independent Auth DM/P1/passive-P2 LOS/fog/revocation QA and extended-load measures",
+    "separate frontend opt-in 0.10 wall + 700ms observer guard stays disabled",
+    "free-tier movement authority latency optimization"
+  ],
+  "handoff": "docs/testing/world-v2-r18-22-ordered-post-r05-2026-11-12.md",
+  "sqlApplied": false,
+  "mergePerformed": false,
+  "vercelDeploymentPerformed": false
+}

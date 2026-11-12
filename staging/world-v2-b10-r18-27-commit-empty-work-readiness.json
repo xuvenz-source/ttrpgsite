@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "step": "B10-R18-27",
+  "date": "2026-11-12",
+  "sourceBranch": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
+  "parentCommit": "331e04bb78fdb15064bd2a54e3bddb6562cc295a",
+  "sourcePr": 130,
+  "releaseDecision": "STAGING_NO_GO",
+  "liveProduction": {
+    "frontendDeployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "frontendVersion": "R18-24 QA-only",
+    "registeredMigrationCount": 83,
+    "frozenR05Version": "20261111023204",
+    "r05Applied": false,
+    "sqlModified": false,
+    "vercelChanged": false
+  },
+  "change": {
+    "candidate": "supabase/candidates/world_v2_r18_27_commit_empty_work.sql",
+    "editedFunction": "public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)",
+    "exactOriginal": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+    "guardedEmptyWork": [
+      "token_update_if_selected",
+      "tool_update_if_selected",
+      "terminal_observer_drain_if_pending",
+      "idempotent_retry_drain_if_pending"
+    ],
+    "oldFunctionSourcePreservedExceptReviewedGuards": true,
+    "newAclOrRls": false,
+    "newRpc": false,
+    "sessionValidCallsPreserved": 3,
+    "fullAcceptedRouteValidationPreserved": true,
+    "authorisationOrRevocationChecksRemoved": false,
+    "privateObserverPathChanged": false,
+    "releaseLatencyReductionMeasured": false
+  },
+  "isolatedChecks": {
+    "sourceByteParityNodeCases": 6,
+    "sourceNodeCasesPassed": true,
+    "rollbackOnlyPgAssertions": 13,
+    "rollbackOnlyPgAssertionsPassed": true,
+    "tokenCommit": "passed",
+    "tool2x2Commit": "passed",
+    "crossActorCommitDenied": true,
+    "tamperedReplayDenied": true,
+    "exactRetryPreserved": true,
+    "emptyObserverDrainSkipped": true,
+    "queuedPrivateHideInvokesOriginalDrain": true,
+    "stalePathsNotRetained": true,
+    "privateAclPreserved": true,
+    "rollbackProved": true,
+    "stagingPostgresOnly": true,
+    "initialNodeRun": 43160831638,
+    "initialCombinedPostgresRun": 43160833067,
+    "finalHeadCiPending": true
+  },
+  "releaseBlockers": {
+    "authenticatedPinnedLinkedCliMigrationHistory": false,
+    "r05OnlyLinkedDryRun": false,
+    "independentDmPlayer1PassivePlayer2Auth": false,
+    "actualRealtimePrivateObserverAndFog": false,
+    "sustainedMovementLatencyBudget": false,
+    "explicitSqlInstallationApproval": false
+  }
+}
