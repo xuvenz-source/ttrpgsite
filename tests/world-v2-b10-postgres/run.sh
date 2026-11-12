@@ -64,6 +64,11 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/trajectory-map-auth-r1
 # prove old token/map coherent campaign reparent and subsequent denial by
 # the NEW, nonapplied campaign-affinity candidate. All DDL/DML ROLLBACK.
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/campaign-affinity-r18-20.sql
+# R18-20: second independent rollback replays the actual live PostgreSQL
+# legacy movement-session SQL with a minimal private-schema fixture. Test
+# positive accepted preview and negative owner/scene/rules/held/expiry paths.
+# Realtime and LOS are intentionally PRIVATE test stubs, never production.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/legacy-session-r18-20.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
