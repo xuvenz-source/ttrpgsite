@@ -57,6 +57,27 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQueueAmendment.priorReviewedBlobSha,
   '0603e7b42ebd937a41e2a65e8b13089aa496dfba');
  assert.equal(approvedQueueAmendment.workPackage,'B10-R18-31-LIVE-QUEUE-ONLY');
+ // R18-35 is a frontend-only amendment to the live R18-31 queue
+ // controller: only a server-ACKed noMotion boolean is carried to render.
+ // The R18-31 authority/Advance/Commit logic and prior checksum are kept.
+ const approvedLiveNoMotionEvent={
+  path:approvedQueueAmendment.path,
+  priorReviewedBlobSha:approvedQueueAmendment.reviewedBlobSha,
+  workPackage:'B10-R18-35-LIVE-NO-MOTION-EVENT',
+  reviewedBlobSha:'48070f99f818bc7669f4fc0d6f64335129d6f9cc'
+ };
+ assert.equal(approvedLiveNoMotionEvent.priorReviewedBlobSha,
+  '347d3ac8cd9992027d5a67340ae45220cccd8da5');
+ // The keyboard source is transplanted byte-for-byte from the reviewed
+ // R18-34 signed-sight change, not from the cumulative SQL staging branch.
+ const approvedLiveKeyboardAmendment={
+  path:'src/engine/v2/KeyboardStepper.js',
+  originalR17:frozen['src/engine/v2/KeyboardStepper.js'],
+  workPackage:'B10-R18-35-LIVE-SIGNED-SIGHT',
+  reviewedBlobSha:'59b835fda26bfefe1eba0fce62a4a1b4b13b05d1'
+ };
+ assert.equal(approvedLiveKeyboardAmendment.originalR17,
+  '1951a5802b7ed6b15af080660bc8f88627c83d2c');
  // R18-24 adds only a query-opted-in QA report button to the previously
  // frozen board. The two insertion sites were compared exactly to the
  // R18-23 source. Movement/visibility authority code is unchanged.
@@ -71,9 +92,11 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedQueueAmendment.path?
-   approvedQueueAmendment.reviewedBlobSha:
-   path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:sha,
+  assert.equal(checked,path===approvedLiveNoMotionEvent.path?
+   approvedLiveNoMotionEvent.reviewedBlobSha:
+   path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
+   path===approvedLiveKeyboardAmendment.path?
+   approvedLiveKeyboardAmendment.reviewedBlobSha:sha,
    'R17-reviewed source drifted without an exact audited amendment: '+path);
  }
  const runtime=readFileSync(new URL(
