@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createInputController} from '../src/engine/v2/InputController.js';
+import {createWorldV2Trace} from '../src/engine/v2/WorldTrace.js';
 import {worldGestureSelection} from '../src/engine/v2/GestureSelection.js';
 
 const TOKEN='40000000-0000-4000-8000-000000000001';
@@ -26,7 +27,7 @@ function emitter(){
   options(name){return (handlers.get(name)||[]).map(v=>v.opts)}
  };
 }
-function harness({capture=false,batching=false}={}){
+function harness({capture=false,batching=false,trace}={}){
  const documentTarget=emitter(),target=emitter(),keyboard=emitter(),
   blurTarget=emitter();
  const events=[],status=[];
@@ -54,7 +55,8 @@ function harness({capture=false,batching=false}={}){
   pointFromEvent:event=>event.point,
   resolveSelection:()=>({mapId:'10000000-0000-4000-8000-000000000001',
    selection:[piece('token',TOKEN)],origin:{x:2,y:2},mode:'preview'}),
-  onPointerStatus:(_,code)=>status.push(code)
+  onPointerStatus:(_,code)=>status.push(code),
+  ...(trace?{trace}:{})
  });
  input.mount();
  function event(point={x:2.25,y:2.25},inMap=true){
@@ -81,6 +83,39 @@ test('document capture starts a scoped drag before a React child can stop propag
  assert.equal(h.documentTarget.count('pointerdown'),0);
  assert.equal(h.documentTarget.count('pointermove'),0);
  assert.equal(h.documentTarget.count('pointerup'),0);
+});
+
+test('R18-39 counts real browser pointer coalescing without raw positions or timeline flood',()=>{
+ let now=1000;
+ const trace=createWorldV2Trace({enabled:true,limit:16,now:()=>{now+=0.5;return now}});
+ const h=harness({batching:true,trace});
+ h.documentTarget.emit('pointerdown',h.event());
+ const raw=h.event({x:4.25,y:2.25});
+ raw.getCoalescedEvents=()=>Array.from({length:6},(_,i)=>
+  h.event({x:2.35+i/4,y:2.25}));
+ h.documentTarget.emit('pointermove',raw);
+ h.documentTarget.emit('pointermove',h.event({x:4.2,y:2.25}));
+ h.documentTarget.emit('pointerup',h.event({x:4.25,y:2.25}));
+ const snap=trace.snapshot();
+ assert.equal(snap.counts['input.pointer.move-events'],2);
+ assert.equal(snap.counts['input.pointer.samples'],7);
+ assert.equal(snap.counts['input.pointer.batches'],1);
+ assert.equal(snap.counts['input.pointer.batched-samples'],6);
+ assert.equal(snap.counts['input.pointer.single-events'],1);
+ assert.equal(snap.durations['input.pointer.processing'].samples,2);
+ assert.deepEqual(snap.events,[],'high-frequency metrics must not flood ring buffer');
+ assert.ok(!JSON.stringify(snap).includes('4.25')&&!JSON.stringify(snap).includes(TOKEN));
+ h.input.unmount();
+});
+test('R18-39 unobserved input remains no-op and invalid pointer count is bounded',()=>{
+ const trace=createWorldV2Trace({enabled:false});
+ const h=harness({batching:true,trace});
+ h.documentTarget.emit('pointerdown',h.event());
+ h.documentTarget.emit('pointermove',h.event({x:5.2,y:2.25}));
+ h.documentTarget.emit('pointerup',h.event({x:5.2,y:2.25}));
+ assert.deepEqual(trace.snapshot().counts,{});
+ assert.deepEqual(trace.snapshot().durations,{});
+ h.input.unmount();
 });
 
 test('R18-38 coalesced pointer burst reaches new API once and pointer-up still submits its final position',()=>{
