@@ -271,7 +271,10 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  // attaches only bounded local metrics to that same movement pipeline.
  const reviewedPriorR18_38='389105a3b20b97fc66258da65c7adb4c4e5570c9';
  assert.equal(reviewedPriorR18_38,'389105a3b20b97fc66258da65c7adb4c4e5570c9');
- assert.equal(blob,'bc83ad6dbb3543b538864440484b12d46494c6a0');
+ // Historical R18-39 metrics-only controller SHA is still preserved.
+ assert.equal('bc83ad6dbb3543b538864440484b12d46494c6a0',
+  'bc83ad6dbb3543b538864440484b12d46494c6a0');
+ assert.equal(blob,'d770a1fdfd149663a90ddbb55c25c7dee6c36b97');
  assert.match(source,/updateGestureSamples\(samples\)/);
  assert.match(source,/updatePointer\(samples\[i\],i===samples\.length-1\)/);
  assert.match(source,/result\.noMotion===true\?\{noMotion:true\}:\{\}/);
@@ -280,6 +283,9 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  assert.match(source,/finally\{[\s\S]*?g\.inFlightTarget=null/);
  assert.match(source,/const reply=await authority\.commit/);
  assert.match(source,/if\(response\.blocked\)g\.pending\.length=0/);
+ assert.match(source,/const newestAfterFlight=response\.blocked/);
+ assert.match(source,/expandGestureRoute\(g\.approved,\[newestAfterFlight\]/);
+ assert.match(source,/appendGestureBend\(g\.pending,newestAfterFlight,g\.approved\)/);
  assert.doesNotMatch(source,/finalize_world_motion_v2|enableAtomicFinalize|authority\.finalize\(/);
  assert.doesNotMatch(source,/\bdb\.rpc\b|localStorage|sendBroadcast/);
 });

@@ -106,6 +106,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      g.pending.splice(0,batch.consumed);
      g.inFlightTarget={...batch.targets.at(-1)};
      const before={...g.approved},seq=++g.seq;
+     // A leftover bend from a budget-limited batch is not *new* input.
+     // Compare this monotonic cell-intent revision with the ACK's arrival.
+     const inputRevisionAtSend=g.inputRevision;
      g.phase='advance';
      let response;
      try{
@@ -128,10 +131,14 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
       g.approved={...response.accepted.at(-1)};
       g.hadMotion=true;
      }
-     // A denied crossing invalidates the entire unapproved route.
-     // Remember ONLY the explicitly denied, server-ACKed target while
-     // the approved origin remains unchanged. Repeated pointer events on
-     // that exact target must not create an endless collision RPC loop.
+     // A denied crossing invalidates all route bends based on the
+     // unapproved in-flight target. Only the NEWEST input received *during*
+     // this RPC may independently describe a sideways turn. It is not
+     // authorized by this response and must be rebased on its ACKed endpoint.
+     const newestAfterFlight=response.blocked&&
+      g.inputRevision>inputRevisionAtSend&&
+      ['drag','touch','preview'].includes(g.mode)&&g.pending.length?
+      {...g.pending.at(-1)}:null;
      if(response.blocked)g.pending.length=0;
      if(response.blocked||!g.predicted||
        predictionReached(g.origin,g.presented,g.approved)){
@@ -148,6 +155,21 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
        ['drag','touch','preview'].includes(g.mode)?{
         from:{...g.approved},to:{...batch.targets.at(-1)}
        }:null;
+      // R18-40: only rebase a genuinely different first step. Straight
+      // extensions crossing the same denied wall are discarded, preventing
+      // collision-probing retry loops. The next Advance uses the standard
+      // server authority and the last exactly validated approved endpoint.
+      if(newestAfterFlight&&blockedAt){
+       const rebased=expandGestureRoute(g.approved,[newestAfterFlight],
+        {maxCells:512});
+       const first=rebased?.[0];
+       if(first&&(first.x!==blockedAt.x||first.y!==blockedAt.y)){
+        if(!appendGestureBend(g.pending,newestAfterFlight,g.approved)){
+         g.phase='path';reject(g,'path-limit');break;
+        }
+        g.blockedRetry=null;
+       }
+      }
       emit(g,response.blocked?'blocked':'approved',{
        seq,blocked:response.blocked,from:before,
        accepted:response.accepted.map(p=>({...p})),blockedAt
@@ -197,7 +219,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(!cell){
     g.phase='path';reject(g,'path-limit');return false;
    }
+   const changedCell=cell.x!==g.intentCell.x||cell.y!==g.intentCell.y;
    g.pointer={...pointer};g.intentCell={...cell};
+   if(changedCell)g.inputRevision++;
    if(g.pending.length===0&&g.blockedRetry&&
     g.blockedRetry.from.x===g.approved.x&&
     g.blockedRetry.from.y===g.approved.y&&
@@ -251,7 +275,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],inFlightTarget:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
+    pending:[],inFlightTarget:null,seq:0,inputRevision:0,
+    mode,phase:'begin',sessionId:null,closing:false,
     intentCell:{...origin},blockedRetry:null,releaseTimer:null,
     predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
