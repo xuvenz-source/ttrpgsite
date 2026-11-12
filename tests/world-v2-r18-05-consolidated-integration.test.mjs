@@ -57,6 +57,17 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedAtomicAmendment.priorReviewedBlobSha,
   '0603e7b42ebd937a41e2a65e8b13089aa496dfba');
  assert.equal(approvedAtomicAmendment.workPackage,'B10-R18-29');
+ // R18-30 explicitly adds only the two server-authorized wall-terminal
+ // outcomes to the reviewed R18-29 default-OFF controller protocol.
+ const approvedBlockedFinalAmendment={
+  path:approvedAtomicAmendment.path,
+  priorReviewedBlobSha:approvedAtomicAmendment.reviewedBlobSha,
+  workPackage:'B10-R18-30',
+  reviewedBlobSha:'6af5dec75dc7a5482894035cfc2860aac907e6ef'
+ };
+ assert.equal(approvedBlockedFinalAmendment.priorReviewedBlobSha,
+  '45e0068182932e7533bfbb58b55e9091bb83c857');
+ assert.equal(approvedBlockedFinalAmendment.workPackage,'B10-R18-30');
  // R18-24 adds only a query-opted-in QA report button to the previously
  // frozen board. The two insertion sites were compared exactly to the
  // R18-23 source. Movement/visibility authority code is unchanged.
@@ -71,8 +82,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedAtomicAmendment.path?
-   approvedAtomicAmendment.reviewedBlobSha:
+  assert.equal(checked,path===approvedBlockedFinalAmendment.path?
+   approvedBlockedFinalAmendment.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:sha,
    'R17-reviewed source drifted without an exact audited amendment: '+path);
  }
