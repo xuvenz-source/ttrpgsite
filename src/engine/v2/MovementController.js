@@ -106,6 +106,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      g.pending.splice(0,batch.consumed);
      g.inFlightTarget={...batch.targets.at(-1)};
      const before={...g.approved},seq=++g.seq;
+     // A leftover bend from a budget-limited batch is not *new* input.
+     // Compare this monotonic cell-intent revision with the ACK's arrival.
+     const inputRevisionAtSend=g.inputRevision;
      g.phase='advance';
      let response;
      try{
@@ -133,6 +136,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      // this RPC may independently describe a sideways turn. It is not
      // authorized by this response and must be rebased on its ACKed endpoint.
      const newestAfterFlight=response.blocked&&
+      g.inputRevision>inputRevisionAtSend&&
       ['drag','touch','preview'].includes(g.mode)&&g.pending.length?
       {...g.pending.at(-1)}:null;
      if(response.blocked)g.pending.length=0;
@@ -215,7 +219,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(!cell){
     g.phase='path';reject(g,'path-limit');return false;
    }
+   const changedCell=cell.x!==g.intentCell.x||cell.y!==g.intentCell.y;
    g.pointer={...pointer};g.intentCell={...cell};
+   if(changedCell)g.inputRevision++;
    if(g.pending.length===0&&g.blockedRetry&&
     g.blockedRetry.from.x===g.approved.x&&
     g.blockedRetry.from.y===g.approved.y&&
@@ -269,7 +275,8 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],inFlightTarget:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
+    pending:[],inFlightTarget:null,seq:0,inputRevision:0,
+    mode,phase:'begin',sessionId:null,closing:false,
     intentCell:{...origin},blockedRetry:null,releaseTimer:null,
     predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
