@@ -46,6 +46,12 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/terminal-r03.sql
 # both V2 and legacy helper parity against strict crossing, then leave the
 # historical B10 R05 stack unmodified for its separate rehearsal below.
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/wall-edge-r18-17.sql
+# R18-18: use EXACT historic, git-blob-verified legacy trigger definitions
+# to exercise actual token/tool UPDATE statements against candidate swept
+# collision semantics. Both trigger install and all test writes ROLLBACK.
+python3 tests/world-v2-b10-postgres/extract_real_collision_triggers_r18_18.py \
+ > /tmp/world_v2_b10_r18_18_legacy_triggers.sql
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/direct-write-wall-r18-18.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
