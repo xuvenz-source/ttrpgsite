@@ -45,6 +45,18 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedAmendment.originalR17,
   'a88c26578a23d4da8d06263d04f2789248f1b942');
  assert.equal(approvedAmendment.workPackage,'B10-R18-15');
+ // R18-31 is a separate minimal extraction ON TOP OF LIVE R18-24:
+ // it retains the reviewed R18-15 controller, adds only delayed-Advance
+ // queue ownership, and does NOT include unreleased R18-29/R18-30 SQL API.
+ const approvedQueueAmendment={
+  path:approvedAmendment.path,
+  priorReviewedBlobSha:approvedAmendment.reviewedBlobSha,
+  workPackage:'B10-R18-31-LIVE-QUEUE-ONLY',
+  reviewedBlobSha:'347d3ac8cd9992027d5a67340ae45220cccd8da5'
+ };
+ assert.equal(approvedQueueAmendment.priorReviewedBlobSha,
+  '0603e7b42ebd937a41e2a65e8b13089aa496dfba');
+ assert.equal(approvedQueueAmendment.workPackage,'B10-R18-31-LIVE-QUEUE-ONLY');
  // R18-24 adds only a query-opted-in QA report button to the previously
  // frozen board. The two insertion sites were compared exactly to the
  // R18-23 source. Movement/visibility authority code is unchanged.
@@ -59,8 +71,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedAmendment.path?
-   approvedAmendment.reviewedBlobSha:
+  assert.equal(checked,path===approvedQueueAmendment.path?
+   approvedQueueAmendment.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:sha,
    'R17-reviewed source drifted without an exact audited amendment: '+path);
  }
