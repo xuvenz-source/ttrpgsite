@@ -1,4 +1,4 @@
-# B10-R18-23 — Live history/catal​og reconciliation and real Auth acceptance gate
+# B10-R18-23 — Live history/catalog reconciliation and real Auth acceptance gate
 
 **12 November 2026 · Australia/Melbourne · STAGING ONLY · LIVE SQL/FRONTEND NO-GO**
 
