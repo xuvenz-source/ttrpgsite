@@ -13,6 +13,17 @@ const install=read('tests/world-v2-b10-postgres/recoverable-install-r18-46.sql')
 const final=read('tests/world-v2-b10-postgres/verify-recovered-r18-46.sql');
 const migrations='supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql';
 
+test('R18-46 pre-R17 visibility SAT comes only from pinned published SQL',()=>{
+ const source=read('tests/world-v2-b10-postgres/extract_original_visibility_swept_r18_46.py');
+ assert.match(source,/20261107110539_authoritative_fog_collision_release.sql/);
+ assert.match(source,/fcac1768285a2774fe62894ec2ec0649f0174769/);
+ assert.ok(source.includes('create or replace function forge_visibility.swept_hits_segment('));
+ assert.equal(blob(read('supabase/migrations/20261107110539_authoritative_fog_collision_release.sql')),
+  'fcac1768285a2774fe62894ec2ec0649f0174769');
+ assert.match(runner,/extract_original_visibility_swept_r18_46.py/);
+ assert.ok(runner.indexOf('r46_original_visibility_swept.sql')<
+  runner.indexOf('r46_ordered.sql'));
+});
 test('R18-46 original 83-version R05 migration, historical ordered stack and R18-17/19/20 remain byte-identical',()=>{
  const fixed={
   [migrations]:'f4e296725c09055685321726cbe4bc6e09dbce5a',
@@ -79,7 +90,10 @@ test('R18-46 atomic restoring transaction refuses drift before executing first s
  assert.match(restore,/md5\(rec\.old_definition\)<>rec\.original_digest/);
  assert.match(restore,/EXECUTE rec\.old_definition/);
  assert.match(restore,/pg_get_functiondef\(p\)\)<>rec\.original_digest/);
- assert.doesNotMatch(restore,/DROP (?:TABLE|TRIGGER|FUNCTION)|\bCASCADE\b|schema_migrations.*(?:UPDATE|DELETE)/);
+ // SQL comments may explain that dangerous operations are forbidden.
+ // Inspect executable SQL rather than matching those words in comments.
+ const executable=restore.replace(/^--[^\n]*$/gm,'');
+ assert.doesNotMatch(executable,/\bDROP\s+(?:TABLE|TRIGGER|FUNCTION)\b|\bCASCADE\b|schema_migrations.*(?:UPDATE|DELETE)/);
 });
 test('R18-46 security-first recovery keeps R18-20 campaign-identity guards and normal actor APIs',()=>{
  assert.match(restore,/Deliberately KEEP both source-pinned R18-20 campaign-affinity triggers/);
