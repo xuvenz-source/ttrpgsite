@@ -47,4 +47,7 @@ r22_psql -f tests/world-v2-b10-postgres/atomic-finalize-r18-28.sql
 # controller+validator parse it, before the CI disposable DB is removed.
 r22_psql -f tests/world-v2-b10-postgres/blocked-final-r18-30.sql
 node tests/world-v2-b10-postgres/verify-blocked-final-r18-30.mjs /tmp/world_v2_b10_r18_30_wire.jsonl
+# R18-33: compare actual R05 and integrated R26+R27+R28+R30 flows
+# on this disposable local PG17 only. Full BEGIN/ROLLBACK; timings advisory.
+r22_psql -f tests/world-v2-b10-postgres/performance-r18-33.sql
 echo 'B10-R18-22 PASS: R05->wall->checkpoint-aware map guards->affinity in one fresh local PG17, live R05 authority retained'
