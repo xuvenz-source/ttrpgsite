@@ -13,7 +13,10 @@ export function createWorldKeyboardStepper({
  if(typeof getRuntime!=='function'||typeof makePick!=='function'||
   typeof onFocus!=='function'||typeof setTimer!=='function'||
   typeof clearTimer!=='function')throw Error('Invalid V2 keyboard stepper');
- let cursor=null,timer=null,finishing=null,disposed=false;
+ let cursor=null,timer=null,finishing=null,disposed=false,blocked=null;
+ const same=(a,b)=>a?.x===b?.x&&a?.y===b?.y;
+ const cell=p=>Number.isSafeInteger(p?.x)&&Number.isSafeInteger(p?.y)&&
+  p.x>=0&&p.y>=0&&p.x<=10000;
  const queued=[];
  const clearIdle=()=>{
   if(timer!==null)clearTimer(timer);
@@ -28,7 +31,7 @@ export function createWorldKeyboardStepper({
    if(queued.length>=maxQueued)return false;
    queued.push([dx,dy]);return true;
   }
-  if(cursor&&!runtime.movement.active)cursor=null;
+  if(cursor&&!runtime.movement.active){cursor=null;blocked=null}
   if(!cursor){
    if(runtime.movement.active)return false;
    onFocus();
@@ -40,16 +43,20 @@ export function createWorldKeyboardStepper({
     environmentRevision:scene.revision,
     permissionGeneration:frame.permissionGeneration
    }))return false;
-   cursor={...picked.origin};
+   cursor={...picked.origin};blocked=null;
   }
   const to={x:cursor.x+dx,y:cursor.y+dy};
+  // A held key may repeat an already denied crossing. Suppress only that
+  // exact server-confirmed cell, not an arbitrary unknown collision region.
+  if(blocked&&same(blocked.from,cursor)&&same(blocked.to,to))return true;
+  blocked=null;
   if(!runtime.movement.updateGesture(to)){cursor=null;return false}
   cursor=to;return true;
  }
  function finish(){
   clearIdle();
   if(disposed||!cursor)return;
-  cursor=null;
+  cursor=null;blocked=null;
   const runtime=getRuntime();
   if(!runtime)return;
   const task=Promise.resolve(runtime.movement.endGesture()).catch(()=>null);
@@ -69,6 +76,19 @@ export function createWorldKeyboardStepper({
   });
  }
  return Object.freeze({
+  onBlocked(event){
+   const runtime=getRuntime();
+   if(disposed||!cursor||finishing||!runtime?.movement.active||
+    event?.type!=='blocked'||!cell(event.approved))return false;
+   // Rebase to the last server-approved cell, not stale queued key intent.
+   cursor={x:event.approved.x,y:event.approved.y};
+   const denied=event.blockedAt;
+   blocked=cell(denied)&&
+    Math.max(Math.abs(denied.x-cursor.x),
+     Math.abs(denied.y-cursor.y))===1?
+     {from:{...cursor},to:{x:denied.x,y:denied.y}}:null;
+   return true;
+  },
   step(dx,dy,{release=false}={}){
    if(disposed)return false;
    if(release){
@@ -82,7 +102,7 @@ export function createWorldKeyboardStepper({
   dispose(){
    disposed=true;clearIdle();queued.length=0;
    if(cursor)getRuntime()?.movement.cancelGesture('keyboard-unmount');
-   cursor=null;
+   cursor=null;blocked=null;
   },
   get queueLength(){return queued.length},
   get moving(){return cursor!==null||finishing!==null}
