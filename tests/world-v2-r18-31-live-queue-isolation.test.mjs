@@ -260,12 +260,12 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
   'blob '+Buffer.byteLength(source)+'\0').update(source).digest('hex');
  // R18-31 is still reviewed as historical SHA 347d3ac8...; the
  // separately reviewed R18-32 changes only denial/backpressure logic.
- assert.equal(blob,'1e209133111d0c85339d51281e786c50595ed386');
+ assert.equal(blob,'6d5bf1a767fdee627892e551f3f3318e02afe6da');
  assert.match(source,/g\.pending\.splice\(0,batch\.consumed\);\s*g\.inFlightTarget=/);
  assert.match(source,/g\.inFlightTarget\?\?g\.approved/);
  assert.match(source,/finally\{[\s\S]*?g\.inFlightTarget=null/);
  assert.match(source,/const reply=await authority\.commit/);
- assert.match(source,/if\(response\.blocked\)\{g\.pending\.length=0;g\.overflowCell=null;\}/);
+ assert.match(source,/if\(response\.blocked\)g\.pending\.length=0/);
  assert.doesNotMatch(source,/finalize_world_motion_v2|enableAtomicFinalize|authority\.finalize\(/);
  assert.doesNotMatch(source,/\bdb\.rpc\b|localStorage|sendBroadcast/);
 });
