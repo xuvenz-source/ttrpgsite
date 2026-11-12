@@ -98,3 +98,113 @@ test('R18-30 no-motion terminal event cannot create a false canonical handoff',(
  assert.match(controller,/g\.hadMotion\):/);
  assert.match(controller,/enableAtomicFinalize=false/);
 });
+
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+function delayedAdvanceHarness({nextCell={x:4,y:1},blocked=false,flag=true}={}){
+ const SID='22222222-2222-4222-8222-222222222222',calls=[],events=[];
+ let resolveAdvance;
+ const gate=new Promise(resolve=>{resolveAdvance=resolve});
+ const authority={
+  async begin(){calls.push({kind:'begin'});return {version:2,sessionId:SID}},
+  async advance(req){
+   calls.push({kind:'advance',req});
+   if(req.seq===1){
+    await gate;
+    return {version:2,sessionId:SID,seq:1,
+     blocked,accepted:blocked?[{x:2,y:1}]:[{x:2,y:1},{x:3,y:1}]};
+   }
+   return {version:2,sessionId:SID,seq:req.seq,blocked:false,
+    accepted:expandRoute(req.from,req.targets)};
+  },
+  async finalize(req){
+   calls.push({kind:'finalize',req});
+   const accepted=expandRoute(req.from,req.targets);
+   return {version:2,sessionId:SID,seq:req.seq,commitSeq:req.seq+1,
+    finalized:true,blocked:false,accepted,endpoint:accepted.at(-1)};
+  },
+  async commit(req){
+   calls.push({kind:'commit',req});
+   return {version:2,sessionId:SID,seq:req.seq,endpoint:req.endpoint};
+  },
+  async cancel(){calls.push({kind:'cancel'});return true}
+ };
+ const ctl=createMovementController({authority,enableAtomicFinalize:flag,
+  onEvent:e=>events.push(e)});
+ const origin={x:1,y:1};
+ assert.equal(ctl.beginGesture({
+  mapId:'11111111-1111-4111-8111-111111111111',
+  selection:[{kind:'token',id:'33333333-3333-4333-8333-333333333333'}],
+  mode:'drag',origin,pointer:origin,
+  environmentRevision:1,permissionGeneration:1
+ }),true);
+ return {ctl,calls,events,nextCell,resolveAdvance};
+}
+function expandRoute(from,targets){
+ const cells=[];let at={...from};
+ for(const p of targets){
+  const dx=p.x-at.x,dy=p.y-at.y,n=Math.max(Math.abs(dx),Math.abs(dy));
+  for(let i=1;i<=n;i++)cells.push({
+   x:at.x+Math.round(dx*i/n),y:at.y+Math.round(dy*i/n)});
+  at=p;
+ }
+ return cells;
+}
+test('R18-30 delayed Advance preserves a newer FAST drag waypoint for terminal finalization',async()=>{
+ const h=delayedAdvanceHarness();
+ await tick();
+ h.ctl.updateGesture({x:3,y:1});
+ assert.equal(h.calls.filter(c=>c.kind==='advance').length,1);
+ h.ctl.updateGesture({x:4,y:1});
+ const finishing=h.ctl.endGesture();
+ h.resolveAdvance();
+ const out=await finishing;
+ assert.equal(out.status,'committed');
+ assert.deepEqual(out.endpoint,{x:4,y:1});
+ assert.equal(h.calls.filter(c=>c.kind==='advance').length,1);
+ const final=h.calls.find(c=>c.kind==='finalize');
+ assert.deepEqual(final.req.from,{x:3,y:1});
+ assert.deepEqual(final.req.targets,[{x:4,y:1}]);
+ assert.equal(h.calls.some(c=>c.kind==='commit'),false);
+ h.ctl.dispose();
+});
+test('R18-30 delayed Advance preserves RETURN TO ORIGIN instead of dropping reversal',async()=>{
+ const h=delayedAdvanceHarness({nextCell:{x:1,y:1}});
+ await tick();h.ctl.updateGesture({x:3,y:1});
+ h.ctl.updateGesture({x:1,y:1});
+ const finishing=h.ctl.endGesture();
+ h.resolveAdvance();
+ const out=await finishing;
+ assert.equal(out.status,'committed');
+ assert.deepEqual(out.endpoint,{x:1,y:1});
+ const final=h.calls.find(c=>c.kind==='finalize');
+ assert.deepEqual(final.req.from,{x:3,y:1});
+ assert.deepEqual(final.req.targets,[{x:1,y:1}]);
+ h.ctl.dispose();
+});
+test('R18-30 delayed blocked server Advance discards only unauthorized later pointer intent',async()=>{
+ const h=delayedAdvanceHarness({blocked:true});
+ await tick();h.ctl.updateGesture({x:3,y:1});
+ h.ctl.updateGesture({x:4,y:1});
+ const finishing=h.ctl.endGesture();h.resolveAdvance();
+ const out=await finishing;
+ assert.equal(out.status,'committed');
+ assert.deepEqual(out.endpoint,{x:2,y:1});
+ assert.equal(h.calls.filter(c=>c.kind==='advance').length,1);
+ assert.equal(h.calls.filter(c=>c.kind==='finalize').length,0);
+ assert.equal(h.calls.filter(c=>c.kind==='commit').length,1);
+ assert.equal(h.events.filter(e=>e.type==='blocked').length,1);
+ h.ctl.dispose();
+});
+test('R18-30 queue isolation also keeps the original default-OFF Advance+Commit behavior',async()=>{
+ const h=delayedAdvanceHarness({flag:false});
+ await tick();h.ctl.updateGesture({x:3,y:1});
+ h.ctl.updateGesture({x:4,y:1});
+ const finishing=h.ctl.endGesture();h.resolveAdvance();
+ const out=await finishing;
+ assert.equal(out.status,'committed');
+ assert.deepEqual(out.endpoint,{x:4,y:1});
+ assert.equal(h.calls.filter(c=>c.kind==='advance').length,2);
+ assert.equal(h.calls.filter(c=>c.kind==='finalize').length,0);
+ assert.equal(h.calls.filter(c=>c.kind==='commit').length,1);
+ h.ctl.dispose();
+});
