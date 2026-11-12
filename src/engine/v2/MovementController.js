@@ -128,10 +128,13 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
       g.approved={...response.accepted.at(-1)};
       g.hadMotion=true;
      }
-     // A denied crossing invalidates the entire unapproved route.
-     // Remember ONLY the explicitly denied, server-ACKed target while
-     // the approved origin remains unchanged. Repeated pointer events on
-     // that exact target must not create an endless collision RPC loop.
+     // A denied crossing invalidates all route bends based on the
+     // unapproved in-flight target. Only the NEWEST input received *during*
+     // this RPC may independently describe a sideways turn. It is not
+     // authorized by this response and must be rebased on its ACKed endpoint.
+     const newestAfterFlight=response.blocked&&
+      ['drag','touch','preview'].includes(g.mode)&&g.pending.length?
+      {...g.pending.at(-1)}:null;
      if(response.blocked)g.pending.length=0;
      if(response.blocked||!g.predicted||
        predictionReached(g.origin,g.presented,g.approved)){
@@ -148,6 +151,21 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
        ['drag','touch','preview'].includes(g.mode)?{
         from:{...g.approved},to:{...batch.targets.at(-1)}
        }:null;
+      // R18-40: only rebase a genuinely different first step. Straight
+      // extensions crossing the same denied wall are discarded, preventing
+      // collision-probing retry loops. The next Advance uses the standard
+      // server authority and the last exactly validated approved endpoint.
+      if(newestAfterFlight&&blockedAt){
+       const rebased=expandGestureRoute(g.approved,[newestAfterFlight],
+        {maxCells:512});
+       const first=rebased?.[0];
+       if(first&&(first.x!==blockedAt.x||first.y!==blockedAt.y)){
+        if(!appendGestureBend(g.pending,newestAfterFlight,g.approved)){
+         g.phase='path';reject(g,'path-limit');break;
+        }
+        g.blockedRetry=null;
+       }
+      }
       emit(g,response.blocked?'blocked':'approved',{
        seq,blocked:response.blocked,from:before,
        accepted:response.accepted.map(p=>({...p})),blockedAt
