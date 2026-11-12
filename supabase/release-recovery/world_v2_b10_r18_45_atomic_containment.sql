@@ -28,7 +28,7 @@ BEGIN
      'public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
      'EXECUTE') OR
     NOT has_function_privilege('authenticated',
-     'public.advance_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)',
+     'public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
      'EXECUTE') OR
     NOT has_function_privilege('authenticated',
      'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)',
