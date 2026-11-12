@@ -670,6 +670,13 @@ export function createWorldRenderer({
      }
    }else if(event.type==='committed'){
     if(!validMotionPoint(event.approved))return false;
+    if(event.noMotion===true){
+     // No canonical row changed: retire the local selection overlay against
+     // the already-authorized signed origin. Never create a pending handoff,
+     // synthetic sprite destination or redundant canonical roster refresh.
+     if(!same(event.approved,local.origin))return false;
+     clearLocal();scheduler.invalidate();return true;
+    }
     local.approved=copyPoint(event.approved);
     local.display=copyPoint(event.approved);
     local.predicted=false;local.handoff=true;
