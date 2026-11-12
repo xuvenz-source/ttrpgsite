@@ -59,6 +59,11 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/direct-write-wall-r18-
 python3 tests/world-v2-b10-postgres/extract_latest_trajectory_r18_19.py \
  > /tmp/world_v2_b10_r18_19_latest_trajectory.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/trajectory-map-auth-r18-19.sql
+# R18-20: full write-path correction. Install live read-only-snapshotted
+# token/tool validators AND existing latest triggers in isolated PG17,
+# prove old token/map coherent campaign reparent and subsequent denial by
+# the NEW, nonapplied campaign-affinity candidate. All DDL/DML ROLLBACK.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/campaign-affinity-r18-20.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
