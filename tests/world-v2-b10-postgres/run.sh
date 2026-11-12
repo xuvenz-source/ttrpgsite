@@ -41,6 +41,11 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/core-path-r01.sql
 # canonical commit (including the equal-origin stale frame case).
 psql -X -v ON_ERROR_STOP=1 -f supabase/candidates/world_v2_b10_r03_terminal_queue_retirement.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/terminal-r03.sql
+# R18-17 intentionally stages NO live migration: overlay the dual 0.10-cell
+# swept-wall candidate inside a disposable BEGIN/ROLLBACK test only. Check
+# both V2 and legacy helper parity against strict crossing, then leave the
+# historical B10 R05 stack unmodified for its separate rehearsal below.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/wall-edge-r18-17.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
