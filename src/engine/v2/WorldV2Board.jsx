@@ -943,6 +943,7 @@ export default function WorldV2Board(props){
    </div>
   </div>
   {spritePortals}
-  <WorldTraceCapturePanel isDM={isDM} dmPreview={dmPreview}/>
+  {worldV2Trace.enabled&&
+   <WorldTraceCapturePanel isDM={isDM} dmPreview={dmPreview}/>}
  </>;
 }
