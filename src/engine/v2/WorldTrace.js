@@ -27,7 +27,7 @@ const EVENTS=new Set([
  'renderer.observer-discontinuity'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
- 'authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
+ 'authority.finalize','authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
  'observer.frame-gap','render.frame',
  // R18-39 opt-in local browser-only CPU measurements, never a server RPC.
  'input.pointer.processing','movement.prediction-check']);
@@ -61,8 +61,8 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'gate','hit','owner','roster','current','origin','runtime-inactive','runtime-roster',
  'user','tool-handoff','scene','visibility','input','network',
  'authority','sequence','sprite',
- 'advance','commit','path','invalid-path','invalid-authority-ack',
- 'invalid-commit','begin-failed','invalid-session','path-limit',
+ 'advance','commit','finalize','path','invalid-path','invalid-authority-ack',
+ 'invalid-commit','invalid-final-ack','begin-failed','invalid-session','path-limit',
  'rpc-unavailable','invalid-server-reply','client-contract',
  'session-cancelled','authority-error','reused-commit',
  'keyboard-unmount','map-change','dispose',
