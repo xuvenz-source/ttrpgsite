@@ -476,7 +476,8 @@
       "name": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "B10-R18-30: Fix R18-28 blocked-only terminal: source-checked zero-motion cancelled receipt only when no prior approved cells; canonical Commit of earlier approved legs when final attempt wholly blocked. Exact retry, map/permission revocation, private LOS and actor locks preserved. JS validator and runtime noMotion canonical handoff skip. Additionally fixes delayed Advance pending input ownership (detach in-flight batch before await; preserve newer forward/reversal input; server ACK blocked still clears unauthorized route) even with atomic flag OFF. Tests: 13 source-real PG17 gates, 5 PostgreSQL wire shapes accepted by real JS controller, 7 Node source gates + 4 slow Advance cases, full prior SQL. No live SQL/flag/frontend/deploy/merge, 83 migrations and frozen R05 absent; DM/P1/P2 and CLI gates mandatory."
+      "note": "B10-R18-30: Fix R18-28 blocked-only terminal: source-checked zero-motion cancelled receipt only when no prior approved cells; canonical Commit of earlier approved legs when final attempt wholly blocked. Exact retry, map/permission revocation, private LOS and actor locks preserved. JS validator and runtime noMotion canonical handoff skip. Additionally fixes delayed Advance pending input ownership (detach in-flight batch before await; preserve newer forward/reversal input; server ACK blocked still clears unauthorized route) even with atomic flag OFF. Tests: 13 source-real PG17 gates, 5 PostgreSQL wire shapes accepted by real JS controller, 7 Node source gates + 4 slow Advance cases, full prior SQL. No live SQL/flag/frontend/deploy/merge, 83 migrations and frozen R05 absent; DM/P1/P2 and CLI gates mandatory.",
+      "linkedPullRequest": 134
     }
   ],
   "features": [
@@ -1942,7 +1943,7 @@
     },
     "r1830BlockedTerminal": {
       "stage": "B10-R18-30",
-      "draftPr": null,
+      "draftPr": 134,
       "sourceParent": "f1ce095aadbd0927c074a31c7404a9dd98e4452c",
       "onlyUnversionedCandidate": "supabase/candidates/world_v2_r18_30_blocked_final_semantics.sql",
       "signedNoMotionReceiptStatus": "cancelled",
