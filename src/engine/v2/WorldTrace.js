@@ -61,6 +61,10 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'keyboard-unmount','map-change','dispose',
  'over-750ms','over-2s','over-5s','coalesced','drained','discarded',
  'covered','fallback','origin-mismatch','backlog']);
+// Privacy allowlist readers for local QA export. No additional trace data.
+export const isWorldV2TraceEvent=name=>EVENTS.has(name);
+export const isWorldV2TraceDetail=detail=>DETAILS.has(detail);
+export const isWorldV2TraceMetric=name=>METRICS.has(name);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;
