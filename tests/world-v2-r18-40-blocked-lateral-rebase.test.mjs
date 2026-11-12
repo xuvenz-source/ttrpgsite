@@ -176,3 +176,42 @@ test('R18-40 invalid ACK prevents all lateral recovery and rejects safely',async
   assert.equal(h.events.some(e=>e.type==='presented'),false);
  }finally{h.controller.dispose()}
 });
+
+test('R18-40 never mistakes budget-limited unsent bends for fresh post-RPC input',async()=>{
+ const gate=deferred(),h=fixture({advance:async req=>{
+  await gate.promise;return blocked(req);
+ }});
+ try{
+  h.begin();
+  // Send a 20-cell east leg + 20-cell north leg before Begin resolves.
+  // First Advance is bounded to 24 cells, leaving the OLD north target
+  // in the queue while the request is in flight.
+  h.controller.updateGesture(P(22,2));
+  h.controller.updateGesture(P(22,22));
+  await settle();
+  assert.equal(h.calls.advance.length,1);
+  assert.deepEqual(h.calls.advance[0].targets,[P(22,2),P(22,6)]);
+  const end=h.controller.endGesture();
+  gate.resolve();const result=await end;
+  assert.equal(result.noMotion,true);
+  assert.equal(h.calls.advance.length,1,
+   'a pre-existing unsent tail cannot be replayed as fresh lateral input');
+  assert.equal(h.calls.commit.length,0);
+ }finally{h.controller.dispose()}
+});
+test('R18-40 same-cell samples while Advance is pending do not mark old bends as fresh',async()=>{
+ const gate=deferred(),h=fixture({advance:async req=>{
+  await gate.promise;return blocked(req);
+ }});
+ try{
+  h.begin();
+  h.controller.updateGesture(P(22,2));
+  h.controller.updateGesture(P(22,22));
+  await settle();
+  for(let i=0;i<150;i++)h.controller.updateGesture(P(22.001,22.001));
+  const end=h.controller.endGesture();gate.resolve();
+  const result=await end;
+  assert.equal(result.noMotion,true);
+  assert.equal(h.calls.advance.length,1);
+ }finally{h.controller.dispose()}
+});
