@@ -34,7 +34,7 @@ BEGIN
    'public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
    'EXECUTE') AND
   NOT has_function_privilege('anon',
-   'public.finalize_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)',
+   'public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
    'EXECUTE') AND
   (SELECT count(*)=2 FROM information_schema.columns
    WHERE table_schema='forge_world_v2' AND table_name='motion_sessions'
@@ -72,13 +72,13 @@ BEGIN
  SELECT session_id INTO sid FROM pg_temp.r45_active LIMIT 1;
  PERFORM public.b08_assert(
   NOT has_function_privilege('authenticated',
-   'public.finalize_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)',
+   'public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
    'EXECUTE') AND
   NOT has_function_privilege('anon',
-   'public.finalize_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)',
+   'public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
    'EXECUTE') AND
   to_regprocedure(
-   'public.finalize_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)'
+   'public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)'
   ) IS NOT NULL AND
   (SELECT status='active' AND last_seq=0
    FROM forge_world_v2.motion_sessions WHERE id=sid) AND
@@ -125,7 +125,7 @@ BEGIN
     WHERE b.original_digest IS DISTINCT FROM
      md5(pg_get_functiondef(to_regprocedure(b.signature)))) AND
   NOT has_function_privilege('authenticated',
-   'public.finalize_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)',
+   'public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
    'EXECUTE') AND
   has_function_privilege('authenticated',
    'public.advance_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)',
