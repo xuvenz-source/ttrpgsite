@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -406,6 +406,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-19 source-corrected actual final 20261108055943 trajectory-aware legacy guards & alternate commit_map_trajectory, 3 negative controls for held/unpublished issued tool map transfer shortcut, 22 latest-body trajectory/cross-map tests and 7 role-authenticated RLS-mirror cases all local rollback; staged NONAPPLIED cross-map DM+same-campaign guard. Standalone campaign_id edits still need separate trigger/RLS hardening.",
       "linkedPullRequest": 122
+    },
+    {
+      "name": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-20 verified actual live validators already reject token/map mismatches and tool campaign_id changes, corrected prior isolated collision finding; read-only 7 token/2 tool no mismatch. Stages NONAPPLIED token/map campaign identity guard for dual-campaign DM reparent and source-real live legacy movement-session RPC: 20 baseline/guard and 20 session assertions, all rolled back. No production deployment/SQL."
     }
   ],
   "features": [
@@ -1327,6 +1333,42 @@
       ],
       "note": "No R05 or new SQL applied; active R18-15 strict client unchanged. Source fidelity gap in prior R18-18 corrected. 32 disposable rollback assertions cannot replace real Auth P1/P2, standalone campaign_id UPDATE, policy/foreign-key verification or CLI migration history reconciliation. Guarded observer 700ms still OFF.",
       "linkedPullRequest": 122
+    },
+    {
+      "id": "world-v2-b10-r18-20-campaign-affinity-live-legacy-session-security",
+      "description": "Pin SELECT-only actual production token/tool validators and legacy signed movement-session RPC by definition hash; replay full write-validator and legacy preview/update/revoke/observer-stub paths in disposable PostgreSQL. Stage private no-reparent campaign_id trigger for map and token only; respect existing issued-tool immutability.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+        "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+        "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
+      ],
+      "note": "Correction: legacy collision trigger shortcut alone does not prove production exploit; live validate_campaign_tool_write/validate_token_map already check map-campaign affinity. Dual-campaign DM token/map reparent is open absent new guard; added candidate stays NONAPPLIED. Legacy movement RPC S01-S20 uses simulated LOS/stub observer only, real P1/P2 and server migration remain gated."
     }
   ],
   "databaseDependencies": [
@@ -1641,7 +1683,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1662,9 +1704,10 @@
       "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
       "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
       "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
-      "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12"
+      "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+      "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-19 now 20 staged branches. Latest deployed trajectory-aware SQL source must be used (20261108055943), not prior R18-18 historical guard copy. Explicit nonapplied source-derived SQL candidate guards issued tool map moves before held/unpublished shortcuts, requires DM and same-campaign destination; token map moves require same campaign. 3 negative controls plus 29 auth/trajectory assertions in local rollback, with source-real alternate movement RPC and RLS policy mirror. Outstanding: campaign_id-only updates, actual production RLS/foreign keys, remaining legacy gesture RPC and independent Auth P1/P2 LOS revocation, exact 83 CLI migration history plus distinct R05/wall/guard SQL approval and frontend approval. Live R18-15 stable; no SQL, no frontend, 700ms guarded recovery remains OFF.",
+    "stagePolicy": "R18-20 retains all 21 staged branches; live R18-15 frontend strict collision unchanged, main R16 protected, 700ms guarded observer recovery OFF. Full read-only live validator audit found existing tool campaign-id immutability and token/map campaign checks, correcting R18-19's collision-only implication. Stages NONAPPLIED private map/token campaign-ID no-reparent guard after 20 disposable baseline/guard assertions; 20 additional source-real live legacy session/preview tests with simulated observer, not real Auth LOS. No R05/wall/guard/affinity SQL installed. Need approved pinned CLI 83-body reconciliation, distinct SQL and frontend approvals, actual Auth P1/P2 signed LOS and admin/import compatibility. No free-tier cost increase.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
