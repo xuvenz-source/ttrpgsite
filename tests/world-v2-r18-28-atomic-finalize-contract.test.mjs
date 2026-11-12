@@ -82,9 +82,10 @@ test('R18-28 integrated test covers actor replay, blocked prefix, queued privacy
   'mismatched permission generation',
   'failed canonical write cannot persist',
   'new public entrypoint cannot grant',
-  'new RPC, retry fields'
+  'new RPC, retry fields',
+  'cached final ACK revoked after permission generation change'
  ]) assert.ok(suite.includes(word),word);
- for(let i=1;i<=15;i++)assert.ok(suite.includes('R28-'+String(i).padStart(2,'0')));
+ for(let i=1;i<=16;i++)assert.ok(suite.includes('R28-'+String(i).padStart(2,'0')));
  assert.match(suite,/ROLLBACK;/);
  assert.match(suite,/\bBEGIN;/);
  assert.ok(runner.indexOf('ordered-stack-r18-22.sql')<
