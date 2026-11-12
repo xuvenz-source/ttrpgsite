@@ -163,8 +163,8 @@ BEGIN
  PERFORM public.r20_assert_error(
   format('UPDATE public.map_tokens SET campaign_id=%L,map_id=%L WHERE id=%L',
    other_campaign,foreign_map,token),
-  'Campaign identity cannot change',
-  'I15 player cannot reparent token even to a map in another campaign');
+  'Players cannot move tokens between maps',
+  'I15 player cross-map reparent rejected by earlier collision trigger before affinity');
  PERFORM public.r20_assert_error(
   format('UPDATE public.battle_maps SET campaign_id=%L WHERE id=%L',
    other_campaign,src_map),
