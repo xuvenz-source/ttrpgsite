@@ -88,6 +88,16 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  };
  assert.equal(approvedLocalMetrics.priorReviewedBlobSha,
   '389105a3b20b97fc66258da65c7adb4c4e5570c9');
+ // R18-43 first explicit default-OFF terminal client amendment;
+ // R17/15/31/35/38/39 reviewed checksums remain in audit history.
+ const approvedAtomicTerminal={
+  path:approvedLocalMetrics.path,
+  priorReviewedBlobSha:approvedLocalMetrics.reviewedBlobSha,
+  workPackage:'B10-R18-43-ATOMIC-TERMINAL-BRIDGE',
+  reviewedBlobSha:'e91d8a76b95f18d07bba188608ed88fae657324f'
+ };
+ assert.equal(approvedAtomicTerminal.priorReviewedBlobSha,
+  'bc83ad6dbb3543b538864440484b12d46494c6a0');
  // The keyboard source is transplanted byte-for-byte from the reviewed
  // R18-34 signed-sight change, not from the cumulative SQL staging branch.
  const approvedLiveKeyboardAmendment={
@@ -112,8 +122,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedLocalMetrics.path?
-   approvedLocalMetrics.reviewedBlobSha:
+  assert.equal(checked,path===approvedAtomicTerminal.path?
+   approvedAtomicTerminal.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
    path===approvedLiveKeyboardAmendment.path?
    approvedLiveKeyboardAmendment.reviewedBlobSha:sha,
