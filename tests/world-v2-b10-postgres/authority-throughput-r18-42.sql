@@ -47,7 +47,7 @@ BEGIN
    SELECT CASE WHEN mod(i,2)=0 THEN label
     ELSE CASE WHEN label='paced-23' THEN 'single-batch-23'
       ELSE 'paced-23' END END
-   FROM unnest(ARRAY['paced-23','single-batch-23']) AS label
+   FROM unnest(ARRAY['paced-23','single-batch-23']) AS v(label)
   LOOP
    PERFORM public.b08_assert(
     (SELECT x=1 AND y=1 FROM public.map_tokens WHERE id=token),
