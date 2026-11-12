@@ -237,7 +237,10 @@ test('R18-15 only record bounded new release-to-terminal trace timing',()=>{
  assert.match(movement,/if\(g\.pending\.length===0&&g\.blockedRetry/);
  assert.match(movement,/\['drag','touch','preview'\]\.includes\(g\.mode\)/);
  assert.match(movement,/if\(response\.blocked\)g\.pending\.length=0/);
- assert.match(movement,/const response=await authority\.advance/);
+ // R18-29 is a reviewed default-OFF additive terminal transport.
+ // Under normal flags the legacy Advance/Commit path remains unchanged.
+ assert.match(movement,/enableAtomicFinalize=false/);
+ assert.match(movement,/authority\.finalize\(request\):authority\.advance\(request\)/);
  assert.match(movement,/const reply=await authority\.commit/);
  assert.doesNotMatch(movement,/db\.rpc|localStorage|sendBroadcast/);
 });
