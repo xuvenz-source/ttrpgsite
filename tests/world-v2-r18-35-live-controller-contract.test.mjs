@@ -90,9 +90,15 @@ test('R18-35 live canary retains R18-31 queue fix and excludes unreleased final 
  assert.match(controller,/g\.pending\.splice\(0,batch\.consumed\)/);
  assert.match(controller,/g\.inFlightTarget=\{\.\.\.batch\.targets\.at\(-1\)\}/);
  assert.match(controller,/\.\.\.\(result\.noMotion===true\?\{noMotion:true\}:\{\}\)/);
- assert.doesNotMatch(controller,/finalize_world_motion_v2|enableAtomicFinalize/);
- assert.doesNotMatch(authority,/finalize_world_motion_v2/);
- assert.doesNotMatch(runtime,/VITE_WORLD_V2_ATOMIC_FINALIZE/);
+ // R18-35 remains the unchanged live reference: normal Advance/Commit
+ // continue while the separate R18-43 candidate gate is disabled.
+ assert.match(controller,/enableAtomicFinalize=false/);
+ assert.match(controller,/const finalizing=enableAtomicFinalize&&g\.closing/);
+ assert.match(authority,/atomicFinalizeEnabled=false/);
+ assert.match(authority,/if\(!atomicFinalizeEnabled\)/);
+ assert.match(runtime,/VITE_WORLD_V2_ATOMIC_FINALIZE==='1'/);
+ assert.match(runtime,/VITE_WORLD_V2_ATOMIC_FINALIZE_READY==='1'/);
+ assert.match(runtime,/atomicFinalizeEnabled=!dmPreview/);
  assert.match(runtime,/event\.type==='committed'&&!dmPreview&&!event\.noMotion/);
  assert.match(keyboard,/canReuseWorldNoMotionSight/);
 });
