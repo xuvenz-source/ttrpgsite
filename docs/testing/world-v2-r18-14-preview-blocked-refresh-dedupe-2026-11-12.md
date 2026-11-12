@@ -1,0 +1,26 @@
+# B10-R18-14 — DM live traces: preview blocked ACK visibility-refresh dedupe
+
+**12 Nov 2026 · Staged-only movement/visibility optimization / production NO-GO.** Based on R18-13 PR #115 at exact HEAD `c1c6b5cc1074b4dcb6fb05a89e3098bfee2a7a9d`. Production R16 unchanged at `90df8c960e79e8d66c322095611427da7bb09de4`. This is an incremental application fix, NOT authorization to enable signed observer recovery, guarded recovery, to deploy frontend, or to run R05 SQL.
+
+## Evidence from real single-DM R16 traces supplied by designer
+
+The normal-DM trace combines startup/idle, wall/fog collision and active movement, and spans approximately 64.5s of retained events. Its counters are aggregate, **not isolated per scenario**. `authority.begin`: 9 calls, p50 **555.7ms**, p95 **1311.9ms**; `authority.advance`: 21, p50 **984.4ms**, p95 **2087.8ms**, max **2510.5ms**; `authority.commit`: 5, p50 **1654.9ms**, p95 **3950.1ms**. Signed `visibility.rpc`: 12, p50 **646.8ms**, p95 **5080.8ms**. Three rejections with reported reasons `path-limit`, `invalid-path`, `invalid-server-reply`. Two observer resyncs, two observer seals, four renderer seals, six sprite removals and twelve sprite creates; notably subscribed seal at ~7.14s, follow-on seal/revocation ~7.52s, and scene-current seal at ~12.23s all occur near startup and cannot establish continuous idle flashing. The `render.frame` timer only measures timed JS renderer work, not end-to-end user-visible frame paint.
+
+The **local DM player-preview trace** reports aggregate counters `movement.blocked=1352`, `movement.approved=176`, `visibility.refresh=1580`, `visibility.queue=1576`, but just `visibility.rpc-call=46` (one-bit queue coalescing is working). Preview `visibility.rpc`: p50 **302.6ms**, p95 **733.7ms**; 42 queue-wait samples p95 **685.8ms**; 24 partial fog draws and 3 full fog draws; movement authority timing samples absent as expected for local preview. The retained event list is only the last 256 entries (roughly 0.75s at end of a much longer trace); all counts are cumulative. No player-client network acceptance can be inferred from preview.
+
+## Source-confirmed root cause and narrowly scoped implementation
+
+In `WorldV2TabletopRuntime.js`, the preview movement `onEvent` previously ran `refreshVisibility('virtual-preview-step')` after EVERY `approved` and `blocked` ACK. `MovementController.js` emits a blocked ACK on a denied collision even if the approved endpoint remains at the exact same cell. Repeated blocked attempts against a wall therefore scheduled enormous numbers of unnecessary player-effective sight requests. `VisibilityController.js` coalesced them to 46 actual RPCs, but 1576 queue bookkeeping events and repeatedly scheduled requests were avoidable.
+
+Added pure `PreviewSightRefresh.js` pose comparison and connected it ONLY to the DM preview ACK path. A blocked or approved ACK with unchanged **token identity and collision-approved x/y** now skips a redundant visibility refresh. A blocked ACK containing an accepted movement prefix still refreshes, as does any accepted step and any switch of preview token identity, even to the same grid cell. The preview's **final signed sight refresh** on `committed` remains mandatory. This does not alter the collision solver, live DM/player movement authority, scene/permission revocation handling, player-effective preview RPC authorization, observer transport, secure fog cache, tokens, data access, schema or feature flags.
+
+The test suite includes 1352 unchanged no-op blocked ACKs, accepted-prefix blocked ACKs, real position changes and backtracking, token identity switches, malformed pose fail-closed, representative high-volume replay and runtime source wiring/final visibility authorization assertions. It exercises **unit/source contracts only**, not a full Chrome browser trace.
+
+## Interpretations and next gates
+
+- This optimization is expected to eliminate preview sight-refresh **scheduling on repeated blocked ACKs at an unchanged approved pose**. It will NOT necessarily reduce the number of local collision events or solve server-authoritative DM `begin/advance/commit` latency. It must be verified on a later authorized client-only canary with separate traces.
+- Normal DM movement is still too slow by the supplied baseline; R05 integrated single-authority server migration remains the staged architectural response, but do NOT prematurely apply it. User-side passive P2 position convergence, independent fog safety and role/membership revocation are still unverified.
+- Before an R18 frontend canary, obtain explicit user approval; compile `VITE_WORLD_V2_OBSERVER_RECOVERY=1` for the signed 12s watch and keep `VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY` OFF. Live R16 SQL must remain intact for that initial frontend compatibility test. R05 SQL requires a SEPARATE approval, genuine Supabase CLI authenticated linked 83-body fetch + one-pending dry run, and independently authenticated observer acceptance.
+- The original designer-supplied traces combine scenarios and include startup events; collect isolated idle, normal DM collision, fog collision and preview captures with `window.__worldV2Trace.clear()` after scene stabilization to distinguish idle flashing from startup resync.
+
+**Release decision: NO-GO.** No production change from this step.

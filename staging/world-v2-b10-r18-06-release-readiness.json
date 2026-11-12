@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "updated": "2026-11-11",
+  "planId": "world-v2-b10-r18-06-controlled-release",
+  "releaseDecision": "NO_GO",
+  "productionApproved": false,
+  "databaseApproved": false,
+  "source": {
+    "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "sourcePR": 107,
+    "sourceHeadSha": "45b057fc70be78f43c610ee0a9688c7a3bce8fc8",
+    "stagingBranch": "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+    "additionalReadinessPR": 108,
+    "originalUnmergedPRs": [
+      102,
+      103,
+      104,
+      105,
+      106
+    ]
+  },
+  "liveReadOnlySnapshot": {
+    "migrationCount": 83,
+    "latestVersion": "20261109171247",
+    "authoritySourceFingerprintsMatched": 7,
+    "activeMotionSessions": 0,
+    "partialInstallDetected": false,
+    "productionVercelDeploymentId": "dpl_3US3Jm1P6iYSnuZeFAUbyLrfrr1g",
+    "productionVercelReady": true,
+    "productionBuildFlags": {
+      "VITE_WORLD_V2_OBSERVER_RECOVERY": "ABSENT",
+      "VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY": "ABSENT"
+    },
+    "warning": "Point-in-time observations; rerun all fingerprints, grants, active sessions and flags immediately before release."
+  },
+  "migration": {
+    "file": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+    "exactGitBlobSha": "f4e296725c09055685321726cbe4bc6e09dbce5a",
+    "expectedMigrationVersion": "20261111023204",
+    "sourceOrder": [
+      "B03",
+      "B07",
+      "B08",
+      "R01",
+      "R03"
+    ],
+    "applied": false,
+    "applicationAndHistoryRegistrationVerified": false,
+    "bulkDbPushAllowed": false,
+    "originalFunctionRecovery": "supabase/release-recovery/world_v2_b10_r05_restore_original_authority.sql",
+    "preflight": "supabase/release-preflight/world_v2_b10_r05_exact_live_catalog.sql",
+    "warning": "The managed live migration history aliases differ from the repository; do not repair old history or run bulk db push."
+  },
+  "flags": {
+    "gate1ClientBeforeDatabase": {
+      "VITE_WORLD_V2_OBSERVER_RECOVERY": "1",
+      "VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY": "UNSET",
+      "enabledInLive": false,
+      "explicitFrontendApprovalRequired": true
+    },
+    "gate3GuardedRollout": {
+      "VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY": "1",
+      "releasePhase": "SEPARATE_FUTURE_APPROVAL",
+      "enabledInLive": false,
+      "explicitSecurityApprovalRequired": true
+    }
+  },
+  "phases": [
+    {
+      "id": "G0",
+      "name": "Freeze exact source and obtain designer frontend+SQL approvals",
+      "status": "BLOCKED",
+      "requires": [
+        "GitHub green exact-head CI",
+        "code/security/RLS review",
+        "designer frontend approval",
+        "designer separate SQL approval"
+      ]
+    },
+    {
+      "id": "G1",
+      "name": "One approved frontend deployment with R18-02 signed watch ON and guarded recovery OFF",
+      "status": "NOT_STARTED",
+      "requires": [
+        "Vercel production build flag set",
+        "preview disabled",
+        "main merge once",
+        "new Vercel READY SHA",
+        "pre-SQL DM/P1/P2 compatibility and free-tier checks"
+      ]
+    },
+    {
+      "id": "G2",
+      "name": "Quiesce gestures, recheck exact read-only R05 preflight and apply one targeted migration",
+      "status": "BLOCKED",
+      "requires": [
+        "pre-SQL real-Auth acceptance",
+        "0 sessions",
+        "7 matching fingerprints",
+        "83 exact migration entries",
+        "exact single-migration registration method verified",
+        "separate SQL authorization"
+      ]
+    },
+    {
+      "id": "G3",
+      "name": "Post-migration protected 24-case acceptance and recovery go/no-go",
+      "status": "BLOCKED",
+      "requires": [
+        "canonical convergence",
+        "no fog/hidden NPC leak",
+        "wall collision preserved",
+        "RLS grants unchanged",
+        "Supabase Free resource budget"
+      ]
+    },
+    {
+      "id": "G4",
+      "name": "Separate guarded 700ms visual continuity opt-in security approval and build",
+      "status": "DEFERRED",
+      "requires": [
+        "protected revocation and LOS tests",
+        "browser suspension tests",
+        "additional approved Vite build"
+      ]
+    }
+  ],
+  "hardStops": [
+    "private sight/hidden NPC leak",
+    "invalid signed frame renders path",
+    "wall bypass",
+    "persistent actor/observer endpoint mismatch",
+    "migration catalog/drift",
+    "unauthorized role grant",
+    "client-bundle mismatch",
+    "abnormal free-tier resource saturation"
+  ],
+  "doc": "docs/testing/world-v2-r18-06-production-release-runbook-2026-11-11.md"
+}

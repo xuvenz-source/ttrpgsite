@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "step": "B10-R18-28",
+  "date": "2026-11-12",
+  "branch": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+  "sourcePr": 131,
+  "parentCommit": "4947e33a34e124e4584424a0b67b1b8199f72c69",
+  "decision": "STAGING_ONLY_SQL_AND_FRONTEND_NO_GO",
+  "live": {
+    "vercelProduction": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "frontendVersion": "R18-24 QA-only",
+    "supabaseRegion": "ap-northeast-1",
+    "migrationVersions": 83,
+    "r05Applied": false,
+    "guardedObserverRecoveryEnabled": false,
+    "mainMerged": false,
+    "deployedThisStep": false
+  },
+  "candidate": {
+    "path": "supabase/candidates/world_v2_r18_28_atomic_finalize.sql",
+    "function": "public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)",
+    "newPrivateFields": [
+      "final_request_r28",
+      "final_reply_r28"
+    ],
+    "existingRpcBodiesModified": false,
+    "existingAuthChecksRemoved": false,
+    "introducesPublicSecurityDefiner": true,
+    "explicitlyGrantsExecuteOnlyToAuthenticated": true,
+    "privateSchemaGrantChanged": false,
+    "serverDerivedEndpointOnly": true,
+    "originalAdvanceAndCommitRunInSingleTransaction": true,
+    "rollbackIfCommitFails": true,
+    "fullBlockedBatchFailsClosed": true,
+    "partialBlockedBatchCommitsOnlyAcceptedPrefix": true,
+    "idempotentRetryMustReauthorize": true,
+    "activeFrontendCallsNewRpc": false,
+    "currentLivePerformanceImproved": false,
+    "potentialHttpRoundTripsEliminatedPerFinalBatch": 1,
+    "claimedSpeedup": false
+  },
+  "verification": {
+    "nodeContract": "tests/world-v2-r18-28-atomic-finalize-contract.test.mjs",
+    "postR05Sql": "tests/world-v2-b10-postgres/atomic-finalize-r18-28.sql",
+    "postR05CombinedRunner": "tests/world-v2-b10-postgres/rehearse-r18-22.sh",
+    "expectedPgAssertions": 16,
+    "syntheticAclAndObserverProofOnly": true,
+    "realThreeAccountsTested": false,
+    "exactHeadVerificationPending": true
+  },
+  "blockers": {
+    "linkedPinnedSupabaseCliHistory": false,
+    "exactR05OnlyLinkedDryRun": false,
+    "independentDmPlayer1PassivePlayer2": false,
+    "signedFogLosRealtimeAcceptance": false,
+    "frontendFlaggedClientProtocolBuilt": false,
+    "realLatencyMeasured": false,
+    "explicitSqlApproval": false,
+    "explicitFrontendPromotionApproval": false
+  },
+  "nextStep": "R18-29 disabled-by-default client finalization adapter and mock protocol tests, still not live"
+}

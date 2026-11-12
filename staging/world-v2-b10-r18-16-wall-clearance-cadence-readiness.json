@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "step": "B10-R18-16",
+  "date": "2026-11-12",
+  "branch": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+  "releaseDecision": "STAGED_RESEARCH_NO_GO",
+  "parentPr": 117,
+  "parentHead": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be",
+  "liveCanary": {
+    "release": "R18-15",
+    "deploymentId": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "version": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be"
+  },
+  "worldR05Installed": false,
+  "frontendReleaseApproved": false,
+  "databaseMigrationApproved": false,
+  "guardedObserver700ms": false,
+  "signedRecovery12s": true,
+  "liveSnapshot": {
+    "grabbed": 8,
+    "committed": 7,
+    "cancelled": 1,
+    "blocked": 4,
+    "advanceSamples": 27,
+    "advanceP50Ms": 251.2,
+    "commitSamples": 8,
+    "commitP50Ms": 1057.7,
+    "releaseToTerminalP95Ms": 2377.4
+  },
+  "liveServerGeometryExample": {
+    "wall5percentClipBlocked": true,
+    "wall20percentClipBlocked": true,
+    "wallCrossingAt1_05Blocked": true,
+    "strictOuterBoundaryTouchBlocked": false
+  },
+  "readOnlyPgStatCumulative": {
+    "advanceCalls": 1314,
+    "advanceMeanExecutionMs": 58.6,
+    "commitCalls": 441,
+    "commitMeanExecutionMs": 186.5
+  },
+  "experimentalClearanceUnits": "0.10 grid-cell inward band; no active changes",
+  "testsPending": true,
+  "sourceRoot": "scripts/qa/world-v2-wall-edge-clearance-research.mjs",
+  "serverAuthorizationUnchanged": true,
+  "productionCodeUnchanged": true,
+  "liveSqlUnchanged": true,
+  "unverified": [
+    "real DM per-operation cadence after code",
+    "cross-account P1 P2 observer safety",
+    "actual backend authority R05 CLI rehearsal",
+    "authoritative wall clearance SQL parity"
+  ],
+  "handoff": "docs/testing/world-v2-r18-16-wall-clearance-and-cadence-2026-11-12.md"
+}

@@ -26,7 +26,9 @@ async function traceRpc(db,name,params,metric){
   result=response?.error?'error':'ok';return response;
  }finally{done(result)}
 }
-export function createWorldAuthorityClient({db}={}){
+export function createWorldAuthorityClient({db,atomicFinalizeEnabled=false}={}){
+ if(typeof atomicFinalizeEnabled!=='boolean')
+  throw Error('Invalid V2 terminal feature gate');
  if(!db||typeof db.rpc!=='function')throw Error('V2 requires an RPC client');
  let disposed=false;
  const sessions=new Map();
@@ -96,6 +98,56 @@ export function createWorldAuthorityClient({db}={}){
      throw Error('V2 movement cancelled');
     return reply;
    }finally{if(sessions.get(sessionId)===current)sessions.delete(sessionId)}
+  },
+  /**
+   * Optional R18-28 atomic final Advance+Commit. The transport never falls
+   * back to ordinary Commit after dispatch; a lost HTTP response could mean
+   * the server already moved the pieces. Only a byte-identical retry of this
+   * same actor/sequence/route request is permitted, at most once after a
+   * thrown transport failure. NULL, server errors and malformed replies fail
+   * closed; MovementController independently validates the FULL response.
+   */
+  async finalize({mapId,sessionId,gestureId,seq,from,targets,
+   environmentRevision,permissionGeneration}){
+   required();
+   if(!atomicFinalizeEnabled)
+    throw Error('V2 atomic terminal disabled');
+   const current=sessions.get(sessionId);
+   if(!current||!id(sessionId)||current.mapId!==mapId||
+     current.gestureId!==gestureId||!int(seq)||seq<=current.seq||
+     !int(seq+1)||!point(from)||!Array.isArray(targets)||
+     !targets.length||targets.length>8||!targets.every(point)||
+     !int(environmentRevision)||environmentRevision<0||
+     !int(permissionGeneration)||permissionGeneration<0)
+    throw Error('Invalid V2 finalization batch');
+   // Mark BOTH sequence values consumed before the initial network call.
+   // Only the identical retry below may reuse the already-sent p_seq.
+   current.seq=seq+1;
+   const request={
+    p_session:sessionId,p_seq:seq,p_from:{x:from.x,y:from.y},
+    p_targets:targets.map(p=>({x:p.x,y:p.y})),
+    p_environment_revision:environmentRevision,
+    p_permission_generation:permissionGeneration
+   };
+   try{
+    let response;
+    try{
+     response=await traceRpc(db,'finalize_world_motion_v2',
+      request,'authority.finalize');
+    }catch{
+     if(disposed||sessions.get(sessionId)!==current)
+      throw Error('V2 movement cancelled');
+     // The only allowed recovery for an uncertain HTTP outcome.
+     response=await traceRpc(db,'finalize_world_motion_v2',
+      request,'authority.finalize');
+    }
+    const reply=requireReply(response?.data,response?.error);
+    if(disposed||sessions.get(sessionId)!==current)
+     throw Error('V2 movement cancelled');
+    return reply;
+   }finally{
+    if(sessions.get(sessionId)===current)sessions.delete(sessionId);
+   }
   },
   async cancel({mapId,sessionId,gestureId}){
    if(!id(sessionId))return false;

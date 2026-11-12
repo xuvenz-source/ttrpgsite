@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "step": "B10-R18-30",
+  "date": "2026-11-12",
+  "sourcePr": 133,
+  "sourceHead": "f1ce095aadbd0927c074a31c7404a9dd98e4452c",
+  "branch": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
+  "status": "STAGING_PENDING_FINAL_SHA_CI",
+  "releaseDecision": "SQL_AND_FRONTEND_NO_GO",
+  "productionBaseline": {
+    "vercelDeployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "frontline": "R18-24 diagnostic-only",
+    "supabaseMigrationVersions": 83,
+    "r05Applied": false,
+    "r1828AtomicRpcInstalled": false,
+    "r1830SqlInstalled": false,
+    "mainMerged": false,
+    "productionDeploymentChanged": false
+  },
+  "fixes": {
+    "blockedOnlyFirstStep": {
+      "serverStatus": "cancelled",
+      "canonicalMovementWritten": false,
+      "privateRoutePublished": false,
+      "response": {
+        "blocked": true,
+        "accepted": [],
+        "finalized": true,
+        "noMotion": true
+      },
+      "exactRequestReceipt": true,
+      "rechecksSignedActor": true,
+      "replayBlockedAfterPermissionRevocation": true
+    },
+    "blockedOnlyAfterPriorMotion": {
+      "serverStatus": "committed",
+      "canonicalValidation": "original trusted Commit",
+      "retainsEarlierAuthorizedSteps": true,
+      "wallPenetrationAllowed": false,
+      "finalReplyNoMotionFieldAbsent": true
+    },
+    "delayedAdvanceQueue": {
+      "inFlightWaypointsDetachedBeforeAwait": true,
+      "newInputRelativeToInFlightEndpoint": true,
+      "preserveFastForward": true,
+      "preserveReturnToOrigin": true,
+      "serverDeniedFutureStepsDiscarded": true,
+      "worksWithFeatureFlagOff": true
+    },
+    "canonicalHandoffSkipNoMotion": true,
+    "originalR05AndR1828SourceUntouched": true,
+    "newGrantsOrPublicRpcs": false,
+    "atomicFlagEnabled": false,
+    "newNetworkOrPaidComponents": false
+  },
+  "verification": {
+    "combinedSqlScript": "tests/world-v2-b10-postgres/blocked-final-r18-30.sql",
+    "crossedWireScript": "tests/world-v2-b10-postgres/verify-blocked-final-r18-30.mjs",
+    "nodeContracts": "tests/world-v2-r18-30-blocked-final-contract.test.mjs",
+    "realPostgresAssertions": 13,
+    "actualPostgresWireCases": 5,
+    "newNodeCases": 11,
+    "originalFrozenControllerR17AndR1815Preserved": true,
+    "originalR1829ControllerBlob": "45e0068182932e7533bfbb58b55e9091bb83c857",
+    "reviewedR1830ControllerBlob": "6a9d877d4663c7c3ee8e6e9927f9c6b2860a4b99",
+    "measuredProductionLatencyImprovement": false,
+    "actualThreeAccountAcceptance": false
+  },
+  "blockers": {
+    "pinnedAuthenticatedLinkedSupabaseCLI": false,
+    "historicalMigrationBodiesVerified": false,
+    "exactR05OnlyLinkedDryRun": false,
+    "stagedSqlVersionedAndApproved": false,
+    "independentAuthenticatedDmP1PassiveP2": false,
+    "signedFogAndRealtimeRevocation": false,
+    "endToEndLatencyBudget": false,
+    "productionPromotionAuthorization": false
+  },
+  "nextStep": "R18-31 isolated R18-24-compatible frontend-only queue canary assessment, no SQL activation without signed gates"
+}
