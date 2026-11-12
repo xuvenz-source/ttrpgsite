@@ -70,7 +70,11 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
   state=result.status==='committed'?'Committed':
    result.status==='revoked'?'Revoked':
    result.status==='cancelled'?'Cancelled':'Rejected';
-  emit(g,result.status,{reason:result.reason||null});
+  // R18-35: expose only a locally computed, server-ACKed zero-motion
+  // gesture state to the renderer and queued keyboard continuation.
+  // No new RPC, authority path, preview operation or write permission.
+  emit(g,result.status,{reason:result.reason||null,
+   ...(result.noMotion===true?{noMotion:true}:{})});
   if(g.resolveFinish){g.resolveFinish(result);g.resolveFinish=null}
  };
  const cancelSession=g=>{
