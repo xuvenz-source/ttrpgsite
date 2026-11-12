@@ -74,6 +74,11 @@ psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/legacy-session-r18-20.
 # active-map routing/assignment, owner denial and no campaign_id reparent.
 # Distinct independent PG17 BEGIN/ROLLBACK; never connect to live database.
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/dm-workflow-affinity-r18-21.sql
+# R18-21 critical V2 checkpoint parity. Both corrected legacy guards
+# MUST preserve live forge_world_v2.commit_allows_piece_v2 authorized Commit
+# bypass. Test actual UPDATE attempts with/without trusted private checkpoint
+# for token and held-tool models. Entire independent PG17 test ROLLBACK.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-b10-postgres/checkpoint-parity-r18-21.sql
 
 # Privilege checks after ALL three SQL candidates coexist.
 for role in anon authenticated;do
