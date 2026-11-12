@@ -150,6 +150,12 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      const snapshot=g.pending.slice();
      const batch=takeGestureBatch(g.approved,snapshot);
      if(!batch||!batch.targets.length){g.phase='path';reject(g,'invalid-path');break}
+     // Hand the already-chosen waypoints to the in-flight RPC BEFORE
+     // awaiting it. A pointer move arriving during the network wait must
+     // add a fresh future waypoint, not overwrite the head of this batch
+     // and then have that new intent discarded by the eventual ACK.
+     g.pending.splice(0,batch.consumed);
+     g.inFlightTarget={...batch.targets.at(-1)};
      const before={...g.approved},seq=++g.seq;
      // Only a CLOSING, COMPLETELY FITTING, real-player last batch can
      // replace the final Advance+Commit with the optional atomic RPC.
@@ -166,15 +172,21 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      // A potentially committed but lost final reply must NOT be retried
      // through legacy Advance or Commit. The authority adapter may replay
      // ONLY the identical finalization request once.
-     const response=await (finalizing?
-      authority.finalize(request):authority.advance(request));
+     let response;
+     try{
+      response=await (finalizing?
+       authority.finalize(request):authority.advance(request));
+     }finally{
+      // While the server was busy, new input was based on this
+      // in-flight endpoint rather than the stale approved position.
+      g.inFlightTarget=null;
+     }
      if(active!==g)break;
      if(!(finalizing?
       validAtomicFinalizationAck(response,g.sessionId,seq,before,batch.targets,g.hadMotion):
       validAck(response,g.sessionId,seq,before,batch.targets))){
       reject(g,finalizing?'invalid-final-ack':'invalid-authority-ack');break;
      }
-     g.pending.splice(0,batch.consumed);
      if(response.accepted.length){
       g.approved={...response.accepted.at(-1)};
       g.hadMotion=true;
@@ -260,7 +272,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],seq:0,mode,phase:'begin',sessionId:null,closing:false,
+    pending:[],inFlightTarget:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
     intentCell:{...origin},blockedRetry:null,releaseTimer:null,
     predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
@@ -301,7 +313,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     return true;
    }
    g.blockedRetry=null;
-   if(!appendGestureBend(g.pending,cell,g.approved)){
+   if(!appendGestureBend(g.pending,cell,g.inFlightTarget??g.approved)){
     g.phase='path';reject(g,'path-limit');return false;
    }
    if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}
