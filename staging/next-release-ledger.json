@@ -432,7 +432,8 @@
       "name": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-23 live READ-ONLY 83/83 migration-body digests, frozen original R05 catalog sources 7/7, no active gestures or partial install, six private RLS tables protected and seven World V2 public RPCs anon-denied. Staged single-SELECT catalog preflight, fail-closed 30-minute external evidence verifier and independent signed DM/P1/passive-P2 manual acceptance protocol. Real linked pinned CLI fetch/dry-run and three-browser Auth LOS/Realtime remain UNEXECUTED; SQL/FRONTEND NO-GO. No Supabase/Vercel/main change."
+      "note": "R18-23 live READ-ONLY 83/83 migration-body digests, frozen original R05 catalog sources 7/7, no active gestures or partial install, six private RLS tables protected and seven World V2 public RPCs anon-denied. Staged single-SELECT catalog preflight, fail-closed 30-minute external evidence verifier and independent signed DM/P1/passive-P2 manual acceptance protocol. Real linked pinned CLI fetch/dry-run and three-browser Auth LOS/Realtime remain UNEXECUTED; SQL/FRONTEND NO-GO. No Supabase/Vercel/main change.",
+      "linkedPullRequest": 126
     }
   ],
   "features": [
