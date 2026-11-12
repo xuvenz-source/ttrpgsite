@@ -12,6 +12,9 @@ CREATE TABLE public.campaign_tool_templates(id uuid PRIMARY KEY,campaign_id uuid
 -- original trigger DDL, then the R18-19 staged collision/map candidate.
 \i /tmp/world_v2_b10_r18_18_legacy_triggers.sql
 \i /tmp/world_v2_b10_r18_19_latest_trajectory.sql
+-- Current deployed trigger hooks are source-real and require the V2
+-- transaction checkpoint helper; exact pg_get_functiondef is pinned.
+\i tests/world-v2-b10-postgres/live-v2-checkpoint-r18-21.sql
 \i supabase/candidates/world_v2_r18_19_cross_map_guard.sql
 -- This file contains actual pg_get_functiondef snapshots of LIVE validators.
 \i tests/world-v2-b10-postgres/live-validators-r18-20.sql
