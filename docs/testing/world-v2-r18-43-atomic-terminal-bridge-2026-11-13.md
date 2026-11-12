@@ -1,0 +1,32 @@
+# B10-R18-43 — Default-OFF atomic terminal transport bridge
+
+Date: 13 November 2026, Australia/Melbourne. **Staging only / NO LIVE MIGRATION / NO RELEASE FLAG ACTIVATION.**
+
+## Lineage and scope
+
+Clean parent R18-42 `baf1d9f6574b47f9cb8d4a97ea388a345a84835f`, itself from R18-41/R18-39. Rejected R18-40 lateral-rebase code has deliberately **not** been inherited. Current live baseline remains R18-35 `5ca8c83bdef4a5d9870020b0f2b16723f7790e38`. Live Supabase has 83 applied migrations; R05 `20261111023204` is unapplied. The atomic `public.finalize_world_motion_v2(uuid,bigint,jsonb,jsonb,bigint,bigint)` RPC does **not exist** in live Supabase (read-only `to_regprocedure` check, 13 Nov). Neither `VITE_WORLD_V2_ATOMIC_FINALIZE` nor `VITE_WORLD_V2_ATOMIC_FINALIZE_READY` exists among the Vercel project environment-variable names.
+
+This package adapts the previously tested R18-29/R18-30 **optional** terminal protocol to the isolated R18-42 source, preserving newer R18-35 no-motion behavior, R18-38 coalesced samples, R18-39 QA counters, observer/visibility grants and standard Advance/Commit. It is a **frontend bridge**, not the server-certified movement envelope envisioned for later R18-44. It does not change the existing server RPC, database tables, scene, RLS, Realtime observer broadcaster, fog prediction grants, login, movement collision rules, keyboard cadence or physical wall intersection.
+
+## Implementation
+
+1. `src/engine/v2/WorldV2TabletopRuntime.js` opts in only if **both** build-time values `VITE_WORLD_V2_ATOMIC_FINALIZE==='1'` and `VITE_WORLD_V2_ATOMIC_FINALIZE_READY==='1'` are set **and** the movement is not DM preview. Both flags are missing in live and preview environments. Both downstream constructors also independently default to `false`.
+2. Normal open gestures continue serialized `Begin → Advance → Commit`; no new authority or predicted route. Only a closing *real* movement with a nonempty, fully fitting last batch of at most **8 targets / 24 cells** may use the new `finalize` transport, merging that last Advance + Commit into one authenticated server transaction. Existing approved batches must still use ordinary authority; DM preview remains local. When all Advances have completed and the queue is empty, the existing Commit remains mandatory.
+3. The transport validates session, actor-bound locally held session ID, gesture ID, monotonic sequence, integer route, bounded target count, scene revision and permission generation. It reserves both `seq` and `seq+1` before the call and dispatches `public.finalize_world_motion_v2` only if opted in. After a thrown, uncertain network failure, it may replay **one byte-identical request once**. It must **never** fall back to separate Advance or Commit because the original transaction may have already written canonical state. Explicit error, NULL, invalid reply and repeated transport failure fail closed.
+4. `MovementController` validates the **complete** version-2 atomic receipt before emitting an approved, blocked or committed event: exact sessionId, `seq`, `commitSeq=seq+1`, `finalized=true`, bounded exact server-accepted prefix of the submitted route, integer endpoint matching last accepted cell and strictly enumerated receipt keys. Fully blocked first step requires explicit `noMotion=true`; a fully blocked final step after earlier approved movement requires a canonical-receipt endpoint at the last approved position **without** `noMotion`. Invalid receipts and permission revocation never authorize a sprite or a second Commit.
+5. The privacy-safe QA trace adds only allowlisted `authority.finalize` duration and fixed `invalid-final-ack` / `finalize` reasons. It never records actor/session/coordinates, fog, private geometry, raw RPC body, arbitrary user text or secrets.
+
+## Tests and gates
+
+- `tests/world-v2-r18-43-atomic-terminal-client.test.mjs` adapts source-reviewed R18-29 transport/controller contract with additional blocked-existing-route canonical ACK, fully blocked first-step `noMotion`, malformed route and revocation cases.
+- Legacy R18-15/R18-31/R18-35 source-assertion tests were updated to preserve actual behavior when this gate is OFF, rather than prohibit the mere presence of an independently gated new feature. All historical audited R17/R18-15/R18-31/R18-35/R18-38/R18-39 controller hashes remain recorded, and the new R18-43 exact blob is pinned.
+- Independent combined and isolated PG17 tests run on *separate disposable databases*, not Supabase. Existing historical R18-30 source-real SQL terminal semantics remain staged in a different cumulative branch; this PR **does not** depend on or merge that SQL. Before enabling, redo the exact live-83-version migration history, permissions/ACL, function digest, rollback, R18-26/27/28/30 commit/observer hostile checks and P1/P2 private-sight tests.
+- Real Chromium board, Vite build, lint, production dependency audit, Edge function checks, CodeQL and existing 1005+ frontend tests are release gates. A preview with flags OFF would behave exactly like R18-42 and cannot establish improved terminal latency. **Do not deploy a false-performance preview.**
+
+## Limitations and next required engineering work
+
+- This is *one* potential RTT saving only when a final pending Advance can be merged into Commit. Held-arrow gestures still invoke serialized Advances. Already-sent Advances and Commit still wait on server authority. **No claim of smooth collision, fast held arrows, true wall-local snap, or immediate regrab is warranted**.
+- Atomic backend R18-30 includes blocked-last-batch receipts and canonical single-transaction commitment; it has not been installed. The server must own collision verification, signed visibility and observer privacy. The client may not invent an authorization envelope or reveal hidden walls by pre-authorizing unseen directions.
+- For a meaningful movement-speed change, next R18-44 must address server-certified inputs and RTT count with independent DM/P1/passive-P2 adversarial fog/LOS testing. Production deployment remains **NO-GO** until backend and frontend changes are integrated, reviewed and tested in an isolated release path. The user currently has only a sole DM available, which is sufficient for local input performance measurement but not private multiplayer security acceptance.
+
+**Release state: draft staging, feature default OFF, no production, no SQL, no migration, no Vercel env flags, no free-tier upgrade.**
