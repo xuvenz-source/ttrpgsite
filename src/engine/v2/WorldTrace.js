@@ -5,7 +5,7 @@
  */
 const EVENTS=new Set([
  'input.pointer.status','input.pointer.start','input.pointer.end',
- 'input.pick',
+ 'input.pick','input.pointer.intercept',
  'input.pointer.cancel','input.pointer.blur','input.keyboard.start','input.keyboard.end',
  'movement.grabbed','movement.approved','movement.blocked','movement.released',
  'movement.committed','movement.cancelled','movement.rejected','movement.revoked',
@@ -28,7 +28,8 @@ const EVENTS=new Set([
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
  'authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
- 'observer.frame-gap','render.frame']);
+ 'observer.frame-gap','render.frame',
+ 'input.pick-duration','input.pointer-handle','prediction.local']);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
  'revision','drag','touch','keyboard','preview','grabbed','busy','point',
  'selection','begin','lost-capture','pointer-cancel','blur','unmount',
@@ -52,6 +53,7 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'gesture-revoked','viewer-map-switch','permission-revoked',
  'authorization-revoked','resync-error','authorized','permission','stale',
  'gate','hit','owner','roster','current','origin','runtime-inactive','runtime-roster',
+ 'pin',
  'user','tool-handoff','scene','visibility','input','network',
  'authority','sequence','sprite',
  'advance','commit','path','invalid-path','invalid-authority-ack',
