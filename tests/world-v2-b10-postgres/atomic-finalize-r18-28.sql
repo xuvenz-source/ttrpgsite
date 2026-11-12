@@ -12,7 +12,7 @@ DECLARE
  test_map uuid:='00000000-0000-4000-8000-000000000021';
  token uuid:='00000000-0000-4000-8000-000000000101';
  tool uuid:='00000000-0000-4000-8000-000000000201';
- sid uuid;ack jsonb;reply jsonb;again jsonb;
+ sid uuid;first_sid uuid;first_reply jsonb;ack jsonb;reply jsonb;again jsonb;
  touched timestamptz;before_events bigint;reason text;
 BEGIN
  PERFORM public.b08_assert(
@@ -55,6 +55,7 @@ BEGIN
   (SELECT status='committed' AND last_seq=2
    FROM forge_world_v2.motion_sessions WHERE id=sid),
   'R28-04 exact original Advance+canonical Commit atomically move token');
+ first_sid:=sid;first_reply:=reply;
  SELECT updated_at INTO touched FROM public.map_tokens WHERE id=token;
  again:=public.finalize_world_motion_v2(
   sid,1,'{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb,1,1);
@@ -139,6 +140,21 @@ BEGIN
    IS NULL AND
   (SELECT last_seq=0 FROM forge_world_v2.motion_sessions WHERE id=sid),
   'R28-12 mismatched permission generation cannot commit a cell');
+ -- A cached receipt cannot be replayed after a DM permission/role
+ -- generation update, even though the canonical token remains committed.
+ UPDATE forge_visibility.navigation_permission_generations
+ SET generation=generation+1 WHERE map_id=test_map;
+ PERFORM public.b08_assert(
+  public.finalize_world_motion_v2(
+   first_sid,1,'{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb,1,1)
+   IS NULL AND
+  (SELECT status='committed' AND final_reply_r28=first_reply
+   FROM forge_world_v2.motion_sessions WHERE id=first_sid),
+  'R28-13 cached final ACK revoked after permission generation change');
+ -- Restore only disposable fixture's generation for the following
+ -- injected-failure test; the whole SQL block is rolled back afterward.
+ UPDATE forge_visibility.navigation_permission_generations
+ SET generation=generation-1 WHERE map_id=test_map;
 END $r28_check$;
 
 -- Exercise a real canonical-write failure AFTER the final Advance. The
@@ -176,7 +192,7 @@ BEGIN
    FROM forge_world_v2.motion_sessions WHERE id=sid) AND
   (SELECT x=3 FROM public.map_tokens WHERE id=token) AND
   (SELECT count(*)=before_events FROM realtime.b07_outbox),
-  'R28-13 failed canonical write cannot persist Advance session or private observer event');
+  'R28-14 failed canonical write cannot persist Advance session or private observer event');
 END $r28_fault$;
 DROP TRIGGER r28_fault_injected ON public.map_tokens;
 DROP FUNCTION pg_temp.r28_fault_trigger();
@@ -191,7 +207,7 @@ BEGIN
   AND NOT has_schema_privilege('authenticated','forge_world_v2','USAGE')
   AND NOT has_table_privilege('authenticated',
    'forge_world_v2.motion_sessions','SELECT'),
-  'R28-14 new public entrypoint cannot grant client access to private sessions');
+  'R28-15 new public entrypoint cannot grant client access to private sessions');
 END $r28_security$;
 ROLLBACK;
 DO $r28_after$
@@ -201,6 +217,6 @@ BEGIN
   AND (SELECT count(*)=0 FROM information_schema.columns
     WHERE table_schema='forge_world_v2' AND table_name='motion_sessions'
       AND column_name IN ('final_request_r28','final_reply_r28')),
-  'R28-15 new RPC, retry fields and all fixture writes rolled back');
- RAISE NOTICE 'R18-28: 15 rollback-only atomic-finalize and security assertions PASSED';
+  'R28-16 new RPC, retry fields and all fixture writes rolled back');
+ RAISE NOTICE 'R18-28: 16 rollback-only atomic-finalize and security assertions PASSED';
 END $r28_after$;
