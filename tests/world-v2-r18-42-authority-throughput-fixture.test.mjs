@@ -31,6 +31,7 @@ test('R18-42 timing harness runs only after source-extracted REAL Commit and bef
   'DATABASE_URL','SUPABASE_DB_URL',
   'r05_psql -f /tmp/world_v2_b10_r05_core.sql',
   'r05_psql -f /tmp/world_v2_b10_r05_viewers.sql',
+  'r05_psql -f /tmp/world_v2_b10_r05_original_commit.sql',
   'r05_psql -f tests/world-v2-b10-postgres/authority-throughput-r18-42.sql',
   'r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql'
  ])assert.ok(runner.includes(marker),marker);
@@ -38,6 +39,8 @@ test('R18-42 timing harness runs only after source-extracted REAL Commit and bef
  assert.ok(rank('r05_psql -f /tmp/world_v2_b10_r05_core.sql')<
   rank('r05_psql -f /tmp/world_v2_b10_r05_viewers.sql'));
  assert.ok(rank('r05_psql -f /tmp/world_v2_b10_r05_viewers.sql')<
+  rank('r05_psql -f /tmp/world_v2_b10_r05_original_commit.sql'));
+ assert.ok(rank('r05_psql -f /tmp/world_v2_b10_r05_original_commit.sql')<
   rank('r05_psql -f tests/world-v2-b10-postgres/authority-throughput-r18-42.sql'));
  assert.ok(rank('r05_psql -f tests/world-v2-b10-postgres/authority-throughput-r18-42.sql')<
   rank('r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql'));
