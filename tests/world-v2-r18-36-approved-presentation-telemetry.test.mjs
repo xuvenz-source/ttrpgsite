@@ -7,7 +7,6 @@ import {expandGestureRoute} from '../src/engine/v2/GesturePath.js';
 const MAP='11111111-1111-4111-8111-111111111111';
 const TOKEN='22222222-2222-4222-8222-222222222222';
 const SESSION='33333333-3333-4333-8333-333333333333';
-const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
 test('R18-36 prediction signal is cell-change bounded and never exposes private data',async()=>{
  let now=0;
@@ -23,7 +22,7 @@ test('R18-36 prediction signal is cell-change bounded and never exposes private 
   async cancel(){return true}
  };
  const movement=createMovementController({authority,trace,
-  canPredict:request=>request.pointer.x<=3,
+  canPredict:request=>request.pointer.x<3.5,
   onEvent:event=>events.push(event)});
  try{
   assert.equal(movement.beginGesture({mapId:MAP,mode:'drag',
