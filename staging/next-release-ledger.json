@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -449,6 +449,12 @@
       "note": "R18-26: candidate private V2 step_allowed conservative 0.0001-cell padded segment AABB early rejection, preserving original SAT and R18-17 clearance. Differential test clones exact original live definition, compares 4860 normal/hostile cases and rolls back inside isolated fully staged post-R05 PostgreSQL. R18-25 instrumented frontend was rolled back and is NOT included. Real signed DM/P1/P2, pinned linked CLI, SQL release remain BLOCKED. Live frontend R18-24; 83 DB migrations; no live SQL/merge/deploy.",
       "linkedPullRequest": 130,
       "ci": "PASS at source SHA b4fd6e0b: 1015/1015 Node, CodeQL, isolated authority and combined PG17. 4860/4860 reference collision parity; 13/13 PG gates. 100-remote-wall 40-call synthetic benchmark original 26.50ms vs candidate 9.91ms, advisory only. Live unchanged."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-27: exact frozen R05 Commit with four additive if-empty gates (skip no-op token/tool update and observer drain only when private recipient queue absent), with original actor/session/scene locks, triple session_valid and full path replay intact. Test clone original and track real nonempty private hide drain; 13/13 isolated PG17 checks, 6 Node source guards; existing R18-22/R18-26 tests retained. No performance speedup claim. Live R18-24; R05 absent. Authenticated CLI and DM/P1/P2 fog/revocation gates still pending. SQL and frontend NO-GO."
     }
   ],
   "features": [
@@ -1798,7 +1804,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1825,9 +1831,10 @@
       "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
       "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
       "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
-      "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12"
+      "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+      "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-26 cumulative source preserves R18-24, R05 frozen original SQL, R18-17 wall clearance, corrected R18-19 checkpoint-aware map guards and R18-20 affinity. R18-25 is a separate rolled-back diagnostic-only frontend (excluded). New UNVERSIONED R18-26 private step_allowed bounding-box skip remains isolated, checked against exact source baseline and 4860-case differential parity in roll-backed PG17. Live is R18-24 canary only, R05 absent, 83 migration versions. No production SQL, no frontend promotion or main merge, no guarded recovery, no paid tier. Authenticated pinned CLI history/strict R05-only dry run and independent real DM/P1/passive-P2 fog/Realtime/revocation still mandatory. RELEASE NO-GO.",
+    "stagePolicy": "R18-27 maintains the cumulative R18-26 post-R05 staged source and all historical SQL exact hashes. Only 4 empty-work guards added to frozen R05 public Commit, in an UNVERSIONED candidate; R05 original remains unchanged. 13/13 isolated token+tool+private queued-hide Postgres tests pass and original source-parity test denies unrelated changes. Still no live SQL/frontend change or main merge. Production frontend rolled back to R18-24, 83 Supabase migration versions, R05 NOT applied. R18-17, corrected R18-19, R18-20, R18-26 and R18-27 all unversioned; no shadow production work. Actual signed DM/P1/passive-P2 and pinned authenticated linked CLI v2.81.3 migration history/strict R05-only dry run still required. No claimed real speedup. RELEASE NO-GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": [],
     "frontendQaOnlyLiveCanary": {
