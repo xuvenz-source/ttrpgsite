@@ -62,7 +62,7 @@ test('R18-19 source-real public RPC and trajectory validation use actual row wri
   'SET LOCAL ROLE authenticated','CREATE POLICY',
   'GET STACKED DIAGNOSTICS'])assert.ok(
   s.includes(needle),needle);
- assert.match(source(extractor),/REVOKE ALL ON FUNCTION forge_visibility\\.validate_piece_trajectory/);
+ assert.match(source(extractor),/REVOKE ALL ON FUNCTION forge_visibility\.validate_piece_trajectory/);
  assert.equal((s.match(/SET LOCAL ROLE authenticated;/g)||[]).length,3);
  assert.equal((s.match(/RESET ROLE;/g)||[]).length,3);
  assert.match(s,/^BEGIN;/m);assert.match(s,/^ROLLBACK;\s*$/m);
