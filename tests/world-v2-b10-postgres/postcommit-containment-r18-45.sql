@@ -15,9 +15,15 @@ BEGIN
   'R45-01 baseline has R05+wall/guards but no atomic endpoint');
 END $r45_before$;
 
--- Simulate both source-reviewed atomic candidate files being COMMITTED to
--- this test DB, not merely tested inside an aborting transaction.
+-- Commit the COMPLETE historical post-R05 dependency chain to the
+-- throwaway database: R18-26/27 performance candidates first, followed by
+-- R18-28 and R18-30 authenticated atomic finalization. This is *not* a
+-- recommendation to ship R18-26/27 on performance grounds: prior measurements
+-- were mixed and some scenarios regressed. Recovery below will show why
+-- original step_allowed and legacy guard backups are still required.
 BEGIN;
+\i supabase/candidates/world_v2_r18_26_step_bbox_prefilter.sql
+\i supabase/candidates/world_v2_r18_27_commit_empty_work.sql
 \i supabase/candidates/world_v2_r18_28_atomic_finalize.sql
 \i supabase/candidates/world_v2_r18_30_blocked_final_semantics.sql
 COMMIT;
@@ -128,6 +134,10 @@ BEGIN
    'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)',
    'EXECUTE') AND
   to_regprocedure('forge_visibility.guard_campaign_affinity_r18_20()') IS NOT NULL AND
+  -- R18-26's separate collision helper and R18-19/20 guards are still
+  -- installed: THIS IS FORWARD CONTAINMENT, NOT FULL PRE-RELEASE ROLLBACK.
+  position('sweep_min_x' IN pg_get_functiondef(
+   'forge_world_v2.step_allowed(jsonb,jsonb,double precision,double precision,double precision,double precision,double precision,double precision,integer,integer,boolean)'::regprocedure))>0 AND
   (SELECT x=2 AND y=1 FROM public.map_tokens
    WHERE id='00000000-0000-4000-8000-000000000101'::uuid) AND
   (SELECT count(*)=0 FROM forge_world_v2.motion_sessions
