@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# R18-22 third, fresh disposable Postgres service database.
+# R05 is installed and LEFT ACTIVE inside this local DB so that subsequent
+# candidate SQL is tested in the actual order, unlike the recovery rehearsal.
+# This script is not an approval to run SQL against a Supabase project.
+[[ "${WORLD_V2_B10_ISOLATED:-}" == "yes" ]] || { echo "R18-22: isolated marker missing" >&2;exit 64; }
+[[ "${PGHOST:-}" == "localhost" || "${PGHOST:-}" == "127.0.0.1" ]] || { echo "R18-22: remote database refused" >&2;exit 64; }
+[[ "${PGDATABASE:-}" == "world_v2_b10" ]] || { echo "R18-22: non-fixture caller refused" >&2;exit 64; }
+r22_db=world_v2_b10_r18_22
+# Exclude external/project-supplied PGSERVICE/URI, even if PGHOST is local.
+[[ -z "${PGSERVICE:-}" && -z "${PGSERVICEFILE:-}" && -z "${DATABASE_URL:-}" && -z "${SUPABASE_DB_URL:-}" ]] || {
+ echo "R18-22: unsafe connection override" >&2;exit 64;
+}
+createdb "${r22_db}"
+r22_psql(){ PGDATABASE="${r22_db}" psql -X -v ON_ERROR_STOP=1 "$@"; }
+sed -e '/^CREATE ROLE anon NOLOGIN;$/d' -e '/^CREATE ROLE authenticated NOLOGIN;$/d' \
+ tests/world-v2-b04-postgres/schema.sql > /tmp/world_v2_b10_r18_22_schema.sql
+r22_psql -f /tmp/world_v2_b10_r18_22_schema.sql
+r22_psql -f tests/world-v2-b07-postgres/schema.sql
+r22_psql -f tests/world-v2-b08-postgres/schema.sql
+
+# Source-replay current deployed V2 core and private observer visibility
+# from frozen original shipped migration, not stubbed authority.
+python3 tests/world-v2-b04-postgres/extract_real_v2_functions.py > /tmp/world_v2_b10_r18_22_core.sql
+python3 tests/world-v2-b07-postgres/extract_viewer_authority.py > /tmp/world_v2_b10_r18_22_viewers.sql
+python3 tests/world-v2-b10-postgres/extract_original_commit_r05.py > /tmp/world_v2_b10_r18_22_original_commit.sql
+python3 tests/world-v2-b10-postgres/extract_real_collision_triggers_r18_18.py > /tmp/world_v2_b10_r18_22_orig_collisions.sql
+python3 tests/world-v2-b10-postgres/extract_latest_trajectory_r18_19.py > /tmp/world_v2_b10_r18_22_trajectory.sql
+
+r22_psql -f /tmp/world_v2_b10_r18_22_core.sql
+r22_psql -f /tmp/world_v2_b10_r18_22_viewers.sql
+r22_psql -f tests/world-v2-b10-postgres/ordered-stack-r18-22.sql
+echo 'B10-R18-22 PASS: R05->wall->checkpoint-aware map guards->affinity in one fresh local PG17, live R05 authority retained'
