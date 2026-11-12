@@ -454,7 +454,8 @@
       "name": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-27: exact frozen R05 Commit with four additive if-empty gates (skip no-op token/tool update and observer drain only when private recipient queue absent), with original actor/session/scene locks, triple session_valid and full path replay intact. Test clone original and track real nonempty private hide drain; 13/13 isolated PG17 checks, 6 Node source guards; existing R18-22/R18-26 tests retained. No performance speedup claim. Live R18-24; R05 absent. Authenticated CLI and DM/P1/P2 fog/revocation gates still pending. SQL and frontend NO-GO."
+      "note": "R18-27: exact frozen R05 Commit with four additive if-empty gates (skip no-op token/tool update and observer drain only when private recipient queue absent), with original actor/session/scene locks, triple session_valid and full path replay intact. Test clone original and track real nonempty private hide drain; 13/13 isolated PG17 checks, 6 Node source guards; existing R18-22/R18-26 tests retained. No performance speedup claim. Live R18-24; R05 absent. Authenticated CLI and DM/P1/P2 fog/revocation gates still pending. SQL and frontend NO-GO.",
+      "linkedPullRequest": 131
     }
   ],
   "features": [
