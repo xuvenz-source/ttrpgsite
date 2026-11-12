@@ -101,12 +101,6 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      // input, instead of being accidentally removed by a late Advance ACK.
      g.pending.splice(0,batch.consumed);
      g.inFlightTarget={...batch.targets.at(-1)};
-     if(g.overflowCell&&g.pending.length<MAX_GESTURE_BENDS){
-      const latest=g.overflowCell;g.overflowCell=null;
-      if(!appendGestureBend(g.pending,latest,g.inFlightTarget)){
-       g.phase='path';reject(g,'invalid-path');break;
-      }
-     }
      const before={...g.approved},seq=++g.seq;
      g.phase='advance';
      let response;
@@ -134,7 +128,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      // Remember ONLY the explicitly denied, server-ACKed target while
      // the approved origin remains unchanged. Repeated pointer events on
      // that exact target must not create an endless collision RPC loop.
-     if(response.blocked){g.pending.length=0;g.overflowCell=null;}
+     if(response.blocked)g.pending.length=0;
      if(response.blocked||!g.predicted||
        predictionReached(g.origin,g.presented,g.approved)){
        g.presented={...g.approved};g.predicted=false;
@@ -202,7 +196,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],inFlightTarget:null,overflowCell:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
+    pending:[],inFlightTarget:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
     intentCell:{...origin},blockedRetry:null,releaseTimer:null,
     predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
@@ -237,7 +231,15 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(g.pending.length===0&&g.blockedRetry&&
     g.blockedRetry.from.x===g.approved.x&&
     g.blockedRetry.from.y===g.approved.y){
-    const first=expandGestureRoute(g.approved,[cell])?.[0];
+    // Find only the FIRST intended grid step in O(1), even for a cursor
+    // many tiles beyond the wall. Full route expansion's 48-cell limit
+    // must never turn a known denied crossing into a fresh RPC.
+    const dx=cell.x-g.approved.x,dy=cell.y-g.approved.y;
+    const steps=Math.max(Math.abs(dx),Math.abs(dy));
+    const first=steps?{
+     x:g.approved.x+Math.sign(dx)*Math.round(Math.abs(dx)/steps),
+     y:g.approved.y+Math.sign(dy)*Math.round(Math.abs(dy)/steps)
+    }:null;
     if(first?.x===g.blockedRetry.to.x&&first?.y===g.blockedRetry.to.y){
      // The identical server-denied NEXT cell is suppressed. Genuine
      // alternate directions continue to require new server authority.
@@ -248,11 +250,11 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(!appendGestureBend(g.pending,cell,g.inFlightTarget??g.approved)){
     if(g.pending.length>=MAX_GESTURE_BENDS&&
      ['drag','touch','preview'].includes(g.mode)){
-     // Avoid aborting already-approved movement due to high-frequency
-     // pointer noise. Retain ONE last endpoint outside the bounded queue,
-     // and authorize it through the original RPC after space is available.
-     if(!g.overflowCell)trace.event('movement.path-backpressure',g.mode);
-     g.overflowCell={...cell};return true;
+     // Refuse only the excess input sample until the original queue
+     // drains. NEVER skip a legitimate bend, invent a shortcut, or
+     // reject an existing server-approved gesture because of jitter.
+     trace.event('movement.path-backpressure',g.mode);
+     return false;
     }
     g.phase='path';reject(g,'path-limit');return false;
    }
