@@ -411,7 +411,8 @@
       "name": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-20 verified actual live validators already reject token/map mismatches and tool campaign_id changes, corrected prior isolated collision finding; read-only 7 token/2 tool no mismatch. Stages NONAPPLIED token/map campaign identity guard for dual-campaign DM reparent and source-real live legacy movement-session RPC: 20 baseline/guard and 20 session assertions, all rolled back. No production deployment/SQL."
+      "note": "R18-20 verified actual live validators already reject token/map mismatches and tool campaign_id changes, corrected prior isolated collision finding; read-only 7 token/2 tool no mismatch. Stages NONAPPLIED token/map campaign identity guard for dual-campaign DM reparent and source-real live legacy movement-session RPC: 20 baseline/guard and 20 session assertions, all rolled back. No production deployment/SQL.",
+      "linkedPullRequest": 123
     }
   ],
   "features": [
@@ -1368,7 +1369,8 @@
         "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
         "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
       ],
-      "note": "Correction: legacy collision trigger shortcut alone does not prove production exploit; live validate_campaign_tool_write/validate_token_map already check map-campaign affinity. Dual-campaign DM token/map reparent is open absent new guard; added candidate stays NONAPPLIED. Legacy movement RPC S01-S20 uses simulated LOS/stub observer only, real P1/P2 and server migration remain gated."
+      "note": "Correction: legacy collision trigger shortcut alone does not prove production exploit; live validate_campaign_tool_write/validate_token_map already check map-campaign affinity. Dual-campaign DM token/map reparent is open absent new guard; added candidate stays NONAPPLIED. Legacy movement RPC S01-S20 uses simulated LOS/stub observer only, real P1/P2 and server migration remain gated.",
+      "linkedPullRequest": 123
     }
   ],
   "databaseDependencies": [
