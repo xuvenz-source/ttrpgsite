@@ -69,6 +69,11 @@ export function createWorldV2TabletopRuntime({
  // Independent default-OFF rollout: no private path grants new sprites.
  const guardedObserverEnabled=!dmPreview&&
   import.meta.env?.VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY==='1';
+ // R18-29 opt-in is STRICTLY OFF by default. Activate only in an
+ // independently approved frontend AFTER the R18-28 backend is installed.
+ // Preview must never call the persistent finalization RPC.
+ const atomicFinalizeEnabled=!dmPreview&&
+  import.meta.env?.VITE_WORLD_V2_ATOMIC_FINALIZE==='1';
  let observerWatch=null,foregroundListener=null,guardedListener=null;
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
@@ -170,9 +175,9 @@ export function createWorldV2TabletopRuntime({
     catch{return null}
    },
    getPosition:()=>previewPosition
-  }):createWorldAuthorityClient({db});
+  }):createWorldAuthorityClient({db,atomicFinalizeEnabled});
  const movement=createMovementController({
-  authority,
+  authority,enableAtomicFinalize:atomicFinalizeEnabled,
   canPredict:request=>{
     if(disposed||!authorized())return false;
     if(!isDM)return canPredictWithinWorldGrants({
