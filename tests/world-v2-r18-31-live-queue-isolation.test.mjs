@@ -285,6 +285,11 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  assert.match(source,/finally\{[\s\S]*?g\.inFlightTarget=null/);
  assert.match(source,/const reply=await authority\.commit/);
  assert.match(source,/if\(response\.blocked\)g\.pending\.length=0/);
- assert.doesNotMatch(source,/finalize_world_motion_v2|enableAtomicFinalize|authority\.finalize\(/);
+ // R18-43 is independently reviewed and default OFF. Historical
+ // R18-31 Advance queue semantics remain required when not finalizing.
+ assert.match(source,/enableAtomicFinalize=false/);
+ assert.match(source,/const finalizing=enableAtomicFinalize&&g\.closing/);
+ assert.match(source,/authority\.finalize\(request\):authority\.advance\(request\)/);
+ assert.doesNotMatch(source,/\bdb\.rpc\(/);
  assert.doesNotMatch(source,/\bdb\.rpc\b|localStorage|sendBroadcast/);
 });
