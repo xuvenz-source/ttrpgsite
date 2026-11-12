@@ -88,6 +88,16 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  };
  assert.equal(approvedLocalMetrics.priorReviewedBlobSha,
   '389105a3b20b97fc66258da65c7adb4c4e5570c9');
+ // R18-40 is strictly client-side reconciliation of new lateral intent
+ // AFTER a validated blocked ACK; no permissions or backend wire changes.
+ const approvedBlockedLateralRebase={
+  path:approvedLocalMetrics.path,
+  priorReviewedBlobSha:approvedLocalMetrics.reviewedBlobSha,
+  workPackage:'B10-R18-40-BLOCKED-LATERAL-REBASE',
+  reviewedBlobSha:'6b9c2abfb859b2a8d56b55529c219d2709b5fa86'
+ };
+ assert.equal(approvedBlockedLateralRebase.priorReviewedBlobSha,
+  'bc83ad6dbb3543b538864440484b12d46494c6a0');
  // The keyboard source is transplanted byte-for-byte from the reviewed
  // R18-34 signed-sight change, not from the cumulative SQL staging branch.
  const approvedLiveKeyboardAmendment={
@@ -112,8 +122,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedLocalMetrics.path?
-   approvedLocalMetrics.reviewedBlobSha:
+  assert.equal(checked,path===approvedBlockedLateralRebase.path?
+   approvedBlockedLateralRebase.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
    path===approvedLiveKeyboardAmendment.path?
    approvedLiveKeyboardAmendment.reviewedBlobSha:sha,
