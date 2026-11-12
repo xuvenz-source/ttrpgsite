@@ -103,6 +103,7 @@ test('R18-24 board controls appear only on opt-in, with no extra RPC or listener
  const helper=readFileSync(new URL(
   '../src/engine/v2/WorldTraceDiagnosticReport.js',import.meta.url),'utf8');
  assert.match(board,/WorldTraceCapturePanel isDM=\{isDM\} dmPreview=\{dmPreview\}/);
+ assert.match(board,/worldV2Trace\.enabled&&/);
  assert.match(panel,/if\(!worldV2Trace\.enabled\)return null/);
  assert.match(panel,/worldV2Trace\.clear\(\)/);
  assert.match(panel,/navigator\.clipboard\.writeText\(output\)/);
