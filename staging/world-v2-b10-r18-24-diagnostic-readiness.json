@@ -45,5 +45,29 @@
   "sqlApplied": false,
   "mainMerged": false,
   "productionDeployed": false,
-  "paidTierAdded": false
+  "paidTierAdded": false,
+  "frontendOnlyLiveCanary": {
+    "approval": "user approved live testing when needed",
+    "status": "DEPLOYED_READY",
+    "deployment": "dpl_7HUmXi7eQ2oq2Y5HiW6r5Pvzq1HN",
+    "project": "ttrpgsite",
+    "domain": "https://ttrpgsite.vercel.app",
+    "exactGitSha": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+    "sourceBranch": "stage/world-v2-b10-r18-24-qa-only-live-canary-2026-11-12",
+    "sourcePr": 128,
+    "derivedFromLiveFrontendSha": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be",
+    "priorDeploymentForRollback": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "isolatedFromUnreleasedR1816Plus": true,
+    "exactHeadNodeTestsPassed": 948,
+    "exactHeadCodeQL": "passed",
+    "exactHeadPostgresAuthority": "passed",
+    "productionBuild": "passed",
+    "liveHomeHttpStatus": 200,
+    "liveOptInJsAssetHttpStatus": 200,
+    "backendMigrationCountAfterRelease": 83,
+    "r05Applied": false,
+    "realThreeAccountAcceptanceCompleted": false,
+    "privilegedMigrationOrRlsChanges": false,
+    "guardedRecoveryFlagChanged": false
+  }
 }
