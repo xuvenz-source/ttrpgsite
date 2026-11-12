@@ -41,7 +41,7 @@ BEGIN
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
  UPDATE public.map_environments
  SET live='{"objects":[{"type":"wall","points":[{"x":1.5,"y":0},{"x":1.5,"y":10}],"blocksMovement":true}]}'::jsonb
- WHERE map_id=map_id;
+ WHERE map_id='00000000-0000-4000-8000-000000000021'::uuid;
  PERFORM public.b08_assert(
   (SELECT count(*)=2 FROM pg_proc p JOIN pg_namespace n
    ON n.oid=p.pronamespace WHERE n.nspname='forge_visibility'
