@@ -364,6 +364,51 @@ test('R18-35 a forged non-origin noMotion event cannot retire local authority',(
  assert.equal(ctx.resync.includes('canonical-commit'),false);
  ctx.renderer.dispose();
 });
+test('R18-36 drag paints the latest server-approved cell without extra cosmetic lag',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ const start=motion('grabbed',{x:2,y:2},{mode:'drag'});
+ assert.equal(ctx.renderer.applyLocalMovement(start),true);
+ ctx.clock.flush(1000);
+ const approved=motion('approved',{x:3,y:2},{
+  mode:'drag',from:{x:2,y:2},accepted:[{x:3,y:2}]
+ });
+ assert.equal(ctx.renderer.applyLocalMovement(approved),true);
+ // No second 105 ms path animation: actor already owns signed ACK.
+ ctx.clock.flush(1016);
+ assert.equal(position(node),'300px 200px');
+ assert.equal(ctx.resync.length,0);
+ assert.equal(ctx.renderer.authorized,true);
+ ctx.renderer.dispose();
+});
+test('R18-36 keyboard still interpolates only its authenticated route',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.applyLocalMovement(motion('grabbed',{x:2,y:2},{mode:'keyboard'}));
+ ctx.clock.flush(1000);
+ ctx.renderer.applyLocalMovement(motion('approved',{x:3,y:2},{
+  mode:'keyboard',from:{x:2,y:2},accepted:[{x:3,y:2}]
+ }));
+ ctx.clock.flush(1016);
+ assert.equal(position(node),'200px 200px',
+  'keyboard path is not fast-forwarded by drag-specific change');
+ ctx.clock.flush(1032);
+ assert.ok(parseFloat(position(node))>200);
+ assert.ok(parseFloat(position(node))<300);
+ ctx.renderer.dispose();
+});
+test('R18-36 unknown or untrusted local gesture mode never grants a snap',()=>{
+ const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
+ const node=ctx.renderer.getSpriteElement('token',hero.id);
+ ctx.renderer.applyLocalMovement(motion('grabbed',{x:2,y:2},{mode:'untrusted'}));
+ ctx.clock.flush(1000);
+ ctx.renderer.applyLocalMovement(motion('approved',{x:3,y:2},{
+  mode:'drag',from:{x:2,y:2},accepted:[{x:3,y:2}]
+ }));
+ ctx.clock.flush(1016);
+ assert.equal(position(node),'200px 200px');
+ ctx.renderer.dispose();
+});
 test('local prediction does not snap backward for older approved ACK',()=>{
  const ctx=make();activate(ctx,scene(),sight({visiblePieces:[hero]}));
  const node=ctx.renderer.getSpriteElement('token',hero.id);
