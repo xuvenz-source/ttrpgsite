@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -427,6 +427,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-22 THIRD fresh disposable PG17 source-real ordered sequence: frozen R05 committed and kept active -> R18-17 V2+legacy 0.10 helper -> corrected checkpoint-aware R18-19 token/tool cross-map guards -> R18-20 map/token campaign affinity, each locally committed; 20/20 O assertions confirm real public token and 2x2 mounted tool Begin/Advance/Commit, replay/unauthorized map/solid wall blocks and private ACL. Additional R05 atomic recovery separate. Nothing deployed.",
       "linkedPullRequest": 125
+    },
+    {
+      "name": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-23 live READ-ONLY 83/83 migration-body digests, frozen original R05 catalog sources 7/7, no active gestures or partial install, six private RLS tables protected and seven World V2 public RPCs anon-denied. Staged single-SELECT catalog preflight, fail-closed 30-minute external evidence verifier and independent signed DM/P1/passive-P2 manual acceptance protocol. Real linked pinned CLI fetch/dry-run and three-browser Auth LOS/Realtime remain UNEXECUTED; SQL/FRONTEND NO-GO. No Supabase/Vercel/main change."
     }
   ],
   "features": [
@@ -1776,7 +1782,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1800,9 +1806,10 @@
       "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
       "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
       "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
-      "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12"
+      "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+      "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-22 preserves 23 stacked branches. Third disposable PG17 fixture installs frozen original R05 (leaves new Core/Advance/Commit and backups ACTIVE), then R18-17 wall clearance, corrected R18-19 live-checkpoint-aware token/tool map guard, R18-20 map/token affinity. 20/20 ordered token+2x2 mount canonical movement/security assertions pass; isolated original R05 after-commit recovery remains independently tested. Still SQL/FRONTEND NO-GO: pinned authenticated linked CLI 83-history body fetch/hash and true R05-only dry run, real Auth DM/P1/P2 LOS + revocation, exact post-R05 source review, distinct user SQL and later frontend approvals. Live R18-15 unchanged, 700ms guarded observer OFF; no paid tier or migration writes.",
+    "stagePolicy": "B10-R18-23 preserves every previous R18-22 source branch. Production read-only history digests still match 83/83, frozen R05 protected function sources 7/7, original private catalog ACL/RLS remains denied, 0 active movement sessions, R05 absent. New isolated diagnostic SQL and fail-closed evidence parser check only LIVE metadata; independently authenticated pinned CLI 83-body fetch + exact R05-only dry-run and genuine DM/P1/P2 signed LOS/fog/recipient-topic/revocation testing are NOT performed and MUST precede explicit separate frontend/SQL approvals. LIVE FRONTEND+SQL NO-GO, 700ms recovery OFF, no paid service.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
