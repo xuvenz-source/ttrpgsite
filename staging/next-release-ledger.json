@@ -461,7 +461,9 @@
       "name": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-28: optional unversioned post-R05 public finalize_world_motion_v2 RPC that invokes old actor-bound Advance then canonical Commit inside a SQL transaction, with subtransaction rollback on failure, server-derived only endpoint, private exact-request receipt and replay reauthorization. New public SECURITY DEFINER EXECUTE restricted to authenticated, no private schema grants. R18-24 remains production; R05 and all R18-17/19/20/26/27 candidates unapplied; client does not call new RPC. 16 isolated PG17 assertions incl blocked prefix, ACL, queued hide, injected Commit failure rollback, permission-generation revocation, plus Node contract tests. Full SQL and frontend release NO-GO."
+      "note": "R18-28: optional unversioned post-R05 public finalize_world_motion_v2 RPC that invokes old actor-bound Advance then canonical Commit inside a SQL transaction, with subtransaction rollback on failure, server-derived only endpoint, private exact-request receipt and replay reauthorization. New public SECURITY DEFINER EXECUTE restricted to authenticated, no private schema grants. R18-24 remains production; R05 and all R18-17/19/20/26/27 candidates unapplied; client does not call new RPC. 16 isolated PG17 assertions incl blocked prefix, ACL, queued hide, injected Commit failure rollback, permission-generation revocation, plus Node contract tests. Full SQL and frontend release NO-GO.",
+      "linkedPullRequest": 132,
+      "isolatedEvidence": "Post-R05 disposable PG17 20 ordered + R26 4860/13 + R27 13 + R28 16 assertions all PASS at source a2ca4458; Node 1028/1028 + Vite passed. New cached receipt revoked after permission generation change; failed canonical token write rolls back Advance/outbox; wholly blocked final step rolls back. Full exact PR head and CodeQL still required. Production untouched."
     }
   ],
   "features": [
@@ -1888,6 +1890,23 @@
       "frontendDeployed": false,
       "authenticationGate": "pending real signed DM/P1/P2",
       "linkedCliGate": "pending pinned v2.81.3"
+    },
+    "r1828AtomicFinalization": {
+      "pr": 132,
+      "sourceParent": "4947e33a34e124e4584424a0b67b1b8199f72c69",
+      "rpc": "public.finalize_world_motion_v2",
+      "candidate": "supabase/candidates/world_v2_r18_28_atomic_finalize.sql",
+      "publicSecurityDefinerReviewedInIsolation": true,
+      "authenticatedExecuteOnly": true,
+      "clientUsesRpc": false,
+      "expectedRoundTripSavingOnlyAfterLaterClientIntegration": 1,
+      "fullPostR05FixtureCases": 16,
+      "isolatedPostgresPassSha": "a2ca4458d450a58ba641d962e9a1226d5e6a82e1",
+      "nodeTestsPassedAtSource": 1028,
+      "nextClientPackage": "R18-29",
+      "sqlInstalled": false,
+      "userAuthFogMultiplayerAcceptance": false,
+      "releaseDecision": "STAGING_NO_GO"
     }
   },
   "lastRelease": {
