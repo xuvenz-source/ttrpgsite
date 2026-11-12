@@ -390,7 +390,8 @@
       "name": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
       "status": "staged",
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-      "note": "R18-17 coordinated physical 0.10-cell edge clearance: strict-by-default client primitive/scene solver plus dual identical-signature V2/legacy PostgreSQL swept helpers as NONAPPLIED candidate; 14 source-real PG17 assertions rolled back. Further direct-write trigger/independent Auth/CLI tests required, no live deployment."
+      "note": "R18-17 coordinated physical 0.10-cell edge clearance: strict-by-default client primitive/scene solver plus dual identical-signature V2/legacy PostgreSQL swept helpers as NONAPPLIED candidate; 14 source-real PG17 assertions rolled back. Further direct-write trigger/independent Auth/CLI tests required, no live deployment.",
+      "linkedPullRequest": 120
     }
   ],
   "features": [
@@ -1242,7 +1243,8 @@
         "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
         "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql"
       ],
-      "note": "Requires actual CLI-generated migration with historical 83 versions reconciled and two separately approved SQL phases, source-real legacy direct-write/trigger parity, independent player LOS/observer/DM tests and explicit later frontend opt-in. 700ms guarded observer OFF. No current production changes."
+      "note": "Requires actual CLI-generated migration with historical 83 versions reconciled and two separately approved SQL phases, source-real legacy direct-write/trigger parity, independent player LOS/observer/DM tests and explicit later frontend opt-in. 700ms guarded observer OFF. No current production changes.",
+      "linkedPullRequest": 120
     }
   ],
   "databaseDependencies": [
