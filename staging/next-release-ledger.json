@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -471,6 +471,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "B10-R18-29: default-OFF opt-in client atomic-finalization adapter. Closing final ≤8-target/24-cell batches use new R18-28 RPC only under VITE_WORLD_V2_ATOMIC_FINALIZE=1 and never in DM preview; earlier batches and default behavior retain existing Advance/Commit. Validate full exact approved prefix and Commit sequence. Only exact identical one-time replay on thrown transport outcome; NULL/revoke/malformed fail closed with no legacy fallback. No live activation; R18-28 and all previous SQL UNAPPLIED; Vercel flag absent. New 18 adversarial mock protocol tests plus reviewed original source checks. Multisigned user, linked CLI, private fog and performance gates remain NO-GO.",
       "linkedPullRequest": 133
+    },
+    {
+      "name": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "B10-R18-30: Fix R18-28 blocked-only terminal: source-checked zero-motion cancelled receipt only when no prior approved cells; canonical Commit of earlier approved legs when final attempt wholly blocked. Exact retry, map/permission revocation, private LOS and actor locks preserved. JS validator and runtime noMotion canonical handoff skip. Additionally fixes delayed Advance pending input ownership (detach in-flight batch before await; preserve newer forward/reversal input; server ACK blocked still clears unauthorized route) even with atomic flag OFF. Tests: 13 source-real PG17 gates, 5 PostgreSQL wire shapes accepted by real JS controller, 7 Node source gates + 4 slow Advance cases, full prior SQL. No live SQL/flag/frontend/deploy/merge, 83 migrations and frozen R05 absent; DM/P1/P2 and CLI gates mandatory."
     }
   ],
   "features": [
@@ -1820,7 +1826,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1850,9 +1856,10 @@
       "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
       "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
       "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
-      "stage/world-v2-b10-r18-29-finalization-client-2026-11-12"
+      "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+      "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12"
     ],
-    "stagePolicy": "B10-R18-29 continues cumulative R18-28 with ONLY a default-OFF client terminal adapter and 18 adversarial tests. No backend installed, no Vercel deployment, no main merge. VITE_WORLD_V2_ATOMIC_FINALIZE absent from existing Vercel envs, preview forbidden, canonical final ACK accepted only after exact prefix/seq/end-point validation. One identical retry after transport loss and NO blind legacy fallbacks. Supabase production still 83 migrations, frozen R05 and later candidates unapplied; Vercel live R18-24. The same externally authenticated pinned linked CLI history/R05-only dry-run, real distinct DM/P1/passive P2 private sight/Realtime/revocation and sustained latency gates remain mandatory. Full SQL + frontend release NO-GO.",
+    "stagePolicy": "B10-R18-30 cumulative staged source includes frozen R05 and all R18-17/19/20/26/27/28 unversioned SQL; new R18-30 blocked-only terminal function candidate is UNVERSIONED and rollback-only tested. Source-real 13 PG17 assertions, five PostgreSQL-generated wire results checked through exact JS parser and controller; delayed Advance queue preserves fast forward and reversal input, with server-ACKed wall failures still discarding unauthorized future steps. Production remains R18-24 QA-only, 83 Supabase versions, R05 unapplied, atomic feature flag OFF, R18-25 instrumentation rolled back, no paid costs. Authenticated pinned v2.81.3 linked full-body 83 migration history and strict R05-only dry-run, explicit staged SQL versioning/approval, three distinct signed DM/P1/passive P2 private LOS/fog/Realtime/revocation and sustained real browser latency gates remain mandatory. SQL & frontend RELEASE NO-GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": [],
     "frontendQaOnlyLiveCanary": {
@@ -1932,6 +1939,26 @@
       "liveSqlOrFrontendChange": false,
       "releaseDecision": "STAGING_NO_GO",
       "pr": 133
+    },
+    "r1830BlockedTerminal": {
+      "stage": "B10-R18-30",
+      "draftPr": null,
+      "sourceParent": "f1ce095aadbd0927c074a31c7404a9dd98e4452c",
+      "onlyUnversionedCandidate": "supabase/candidates/world_v2_r18_30_blocked_final_semantics.sql",
+      "signedNoMotionReceiptStatus": "cancelled",
+      "priorMotionFinalBlockedUsesOriginalCanonicalCommit": true,
+      "originalR1828SourceUnchanged": true,
+      "fixedInFlightPointerQueue": true,
+      "independentAuthScenePermissionRevocationPreserved": true,
+      "exactWireCasesFromIsolatedPostgres": 5,
+      "isolatedSQLGates": 13,
+      "newNodeCases": 11,
+      "featureFlagStillOff": true,
+      "pgPostR05SuiteRollbackOnly": true,
+      "productionSqlChanged": false,
+      "productionFrontendChanged": false,
+      "liveSpeedupProven": false,
+      "securityReleaseDecision": "NO_GO"
     }
   },
   "lastRelease": {
