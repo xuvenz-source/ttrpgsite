@@ -67,8 +67,15 @@ export function createInputController({
   }
   const p=point(event);
   if(!p){status(event,'point');return}
-  const picked=resolveSelection(event,p);
-  if(!picked?.origin){status(event,'selection');return}
+  // Measure synchronous pointer selection separately from server Begin RPC.
+  const endPick=worldV2Trace.begin('input.pick-duration');
+  let picked;
+  try{picked=resolveSelection(event,p)}finally{endPick()}
+  if(!picked?.origin){
+   if(event.target?.closest?.('.map-handout-pin'))
+    worldV2Trace.event('input.pointer.intercept','pin');
+   status(event,'selection');return;
+  }
   const originPoint=Object.freeze({x:picked.origin.x,y:picked.origin.y});
   if(!controller.beginGesture({...picked,pointer:originPoint,
    mode:picked.mode==='preview'?'preview':
@@ -93,14 +100,19 @@ export function createInputController({
   if(activePointer===null||event.pointerId!==activePointer||
    event===lastMoveEvent)return;
   lastMoveEvent=event;
-  const samples=event.getCoalescedEvents?.();
-  for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
-   const p=point(sample);
-   if(p)controller.updateGesture({
-    x:p.x+(pointerOffset?.x??0),
-    y:p.y+(pointerOffset?.y??0)
-   });
-  }
+  // This timing covers coalesced samples, gesture routing and local
+  // collision prediction. It does not include network RTT or browser paint.
+  const endHandle=worldV2Trace.begin('input.pointer-handle');
+  try{
+   const samples=event.getCoalescedEvents?.();
+   for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
+    const p=point(sample);
+    if(p)controller.updateGesture({
+     x:p.x+(pointerOffset?.x??0),
+     y:p.y+(pointerOffset?.y??0)
+    });
+   }
+  }finally{endHandle()}
   if(!controller.active)release();
   event.preventDefault?.();
  };
