@@ -67,7 +67,7 @@ DECLARE
  dm uuid:='00000000-0000-4000-8000-000000000013';
  campaign uuid:='00000000-0000-4000-8000-000000000001';
  other_campaign uuid:='00000000-0000-4000-8000-000000000002';
- map_id uuid:='00000000-0000-4000-8000-000000000021';
+ test_map uuid:='00000000-0000-4000-8000-000000000021';
  other_map uuid:='00000000-0000-4000-8000-000000000022';
  foreign_map uuid:='00000000-0000-4000-8000-000000000023';
  token uuid:='00000000-0000-4000-8000-000000000101';
@@ -119,20 +119,20 @@ BEGIN
   '[{"dx":0,"dy":2},{"dx":2,"dy":0},{"dx":0,"dy":-2}]');
  PERFORM public.b08_assert(result='{"x":3,"y":1}'::jsonb,
   'A06 real bent safe route reaches same endpoint without crossing wall');
- UPDATE public.map_environments SET live=scene WHERE map_id=map_id;
- result:=public.commit_map_trajectory(map_id,ARRAY[token],ARRAY[]::uuid[],
+ UPDATE public.map_environments SET live=scene WHERE map_id=test_map;
+ result:=public.commit_map_trajectory(test_map,ARRAY[token],ARRAY[]::uuid[],
   '[{"dx":0,"dy":2},{"dx":2,"dy":0},{"dx":0,"dy":-2}]',false);
  PERFORM public.b08_assert(
   (SELECT x=3 AND y=1 FROM public.map_tokens WHERE id=token)
   AND result->'tokens'->0->>'x'='3',
   'A07 real alternate commit_map_trajectory validates each leg and commits once');
- UPDATE public.map_environments SET live='{"objects":[]}' WHERE map_id=map_id;
+ UPDATE public.map_environments SET live='{"objects":[]}' WHERE map_id=test_map;
  UPDATE public.map_tokens SET x=1,y=1 WHERE id=token;
  UPDATE public.map_environments
-  SET live=public.r19_scene(2.5,7.2,9.5) WHERE map_id=map_id;
+  SET live=public.r19_scene(2.5,7.2,9.5) WHERE map_id=test_map;
  err:=NULL;
  BEGIN
-  PERFORM public.commit_map_trajectory(map_id,ARRAY[token],ARRAY[tool],
+  PERFORM public.commit_map_trajectory(test_map,ARRAY[token],ARRAY[tool],
    '[{"dx":2,"dy":0}]',false);
  EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS err=MESSAGE_TEXT;END;
  PERFORM public.b08_assert(
@@ -142,25 +142,25 @@ BEGIN
   'A08 combined token/tool commit rolls back both if tool leg collides');
  err:=NULL;
  BEGIN
-  PERFORM public.move_map_group(map_id,ARRAY[token],ARRAY[]::uuid[],2,0,false);
+  PERFORM public.move_map_group(test_map,ARRAY[token],ARRAY[]::uuid[],2,0,false);
  EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS err=MESSAGE_TEXT;END;
  PERFORM public.b08_assert(
-  (SELECT x=1 FROM public.map_tokens WHERE id=token)
+  (SELECT x=3 FROM public.map_tokens WHERE id=token)
   AND err IS NULL,
   'A09 independent direct group movement still authorizes a safe token route');
  -- Direct group movement must be reset for remaining maps and roles.
- UPDATE public.map_environments SET live='{"objects":[]}' WHERE map_id=map_id;
+ UPDATE public.map_environments SET live='{"objects":[]}' WHERE map_id=test_map;
  UPDATE public.map_tokens SET x=1,y=1 WHERE id=token;
  err:=NULL;
  BEGIN
-  PERFORM public.commit_map_trajectory(map_id,ARRAY[token],ARRAY[]::uuid[],
+  PERFORM public.commit_map_trajectory(test_map,ARRAY[token],ARRAY[]::uuid[],
    '[{"dx":0,"dy":0}]',false);
  EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS err=MESSAGE_TEXT;END;
  PERFORM public.b08_assert(position('Movement route is empty' IN coalesce(err,''))>0,
   'A10 zero-length authorized trajectory fails closed');
  err:=NULL;
  BEGIN
-  PERFORM public.move_map_group(map_id,ARRAY[token],ARRAY[]::uuid[],
+  PERFORM public.move_map_group(test_map,ARRAY[token],ARRAY[]::uuid[],
    1,0,true);
  EXCEPTION WHEN OTHERS THEN GET STACKED DIAGNOSTICS err=MESSAGE_TEXT;END;
  PERFORM public.b08_assert(
@@ -184,11 +184,11 @@ BEGIN
   'Token destination map outside campaign','A17 DM cannot put token in foreign campaign map');
  PERFORM public.r19_expect_tool_map(tool,other_map,NULL,
   'A18 DM can transfer tool onto real same-campaign map without local rules');
- PERFORM public.r19_expect_tool_map(tool,map_id,NULL,
+ PERFORM public.r19_expect_tool_map(tool,test_map,NULL,
   'A19 DM can return tool to its original campaign map');
  PERFORM public.r19_expect_token_map(token,other_map,NULL,
   'A20 DM can transfer token to real same-campaign map');
- PERFORM public.r19_expect_token_map(token,map_id,NULL,
+ PERFORM public.r19_expect_token_map(token,test_map,NULL,
   'A21 DM can return token without changing campaign scope');
  PERFORM public.b08_assert(
   (SELECT x=1 AND y=1 FROM public.map_tokens WHERE id=token)
