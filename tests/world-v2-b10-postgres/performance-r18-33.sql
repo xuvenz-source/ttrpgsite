@@ -67,7 +67,9 @@ BEGIN
     '[{"x":4,"y":1}]'::jsonb,1,1);
    PERFORM public.b08_assert(r->'blocked'='true'::jsonb
     AND r->'accepted'='[]'::jsonb,'R33 baseline wall rejects first crossing');
-   PERFORM public.cancel_world_motion_v2(sid);
+   -- R05 isolated fixture does not install live cancel_world_motion_v2.
+   -- Only time the source-real blocked Advance; leave its actor-bound
+   -- session to transaction rollback. Do not spoof a private cancel RPC.
   PERFORM public.b08_assert(
    (SELECT x=3 AND y=1 FROM public.map_tokens WHERE id=token),
    'R33 wall never moves token into x4');
