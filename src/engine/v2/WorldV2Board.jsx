@@ -7,6 +7,7 @@ import {pickWorldPointerTarget,worldMovementInputAllowed}
 import {wasWorldPointerDownClaimed} from './WorldPointerOwnership.js';
 import {worldGestureSelection} from './GestureSelection.js';
 import {worldV2Trace} from './WorldTrace.js';
+import WorldTraceCapturePanel from './WorldTraceCapturePanel.jsx';
 import {createWorldKeyboardStepper} from './KeyboardStepper.js';
 import {visibleWorldPins} from './WorldPinVisibility.js';
 import Artwork from '../../Artwork.jsx';
@@ -119,6 +120,7 @@ export default function WorldV2Board(props){
  }=props;
  const viewport=useRef(null),board=useRef(null);
  const rendererRef=useRef(null),runtimeRef=useRef(null),roots=useRef(new Map());
+ const keyboardStepperRef=useRef(null);
  // Native pointer listeners can run before a parent supplies every optional
  // prop. Keep the callback ref aligned with the normalized board defaults,
  // not raw props (undefined tools/characters otherwise break token drag).
@@ -441,7 +443,9 @@ export default function WorldV2Board(props){
     latest.current.onMovementCommitted?.();
    },
    onGesture:event=>{
-    // Never expose private movement payloads or coordinates.
+    // Consume server-acknowledged blocked movement locally; never trace
+    // private token paths or coordinates.
+    if(event.type==='blocked')keyboardStepperRef.current?.onBlocked(event);
     if(event.type==='grabbed'||event.type==='approved')setDragIssue(null);
     else if(event.type==='rejected')
      setDragIssue('Movement rejected: verify collision rules and token permissions.');
@@ -579,8 +583,12 @@ export default function WorldV2Board(props){
     return resolveRef.current({target:board.current},null,{keyboard:true});
    }
   });
+  keyboardStepperRef.current=stepper;
   registerV2Step((dx,dy,options)=>stepper.step(dx,dy,options));
-  return()=>{stepper.dispose();registerV2Step(null)};
+  return()=>{
+   if(keyboardStepperRef.current===stepper)keyboardStepperRef.current=null;
+   stepper.dispose();registerV2Step(null);
+  };
  },[registerV2Step,map.id,dmPreview,previewRequested,previewToken?.id,user]);
 
  function startResize(event,token){
@@ -935,5 +943,7 @@ export default function WorldV2Board(props){
    </div>
   </div>
   {spritePortals}
+  {worldV2Trace.enabled&&
+   <WorldTraceCapturePanel isDM={isDM} dmPreview={dmPreview}/>}
  </>;
 }

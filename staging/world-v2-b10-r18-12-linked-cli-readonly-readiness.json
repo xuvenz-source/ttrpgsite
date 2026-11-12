@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "updated": "2026-11-12",
+  "step": "B10-R18-12",
+  "releaseDecision": "NO_GO",
+  "stagingBranch": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "parentHeadSha": "ec8a4e0a6c9117776e93517c61495434a7cb222e",
+  "parentPr": 113,
+  "observedReadOnlyLivePreflight": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "observedDateMelbourne": "2026-11-12",
+    "historicalMigrationCount": 83,
+    "latestMigrationVersion": "20261109171247",
+    "matchingHistoricalSqlBodyFingerprints": 83,
+    "remoteHistoryDrift": 0,
+    "targetR05VersionPresent": false,
+    "liveFunctionDigestsMatch": 7,
+    "totalLiveFunctionDigests": 7,
+    "activeUnexpiredMotionSessions": 0,
+    "partialR05ObjectsPresent": false,
+    "anonPrivateSchemaUsage": false,
+    "authenticatedPrivateSchemaUsage": false,
+    "anonAdvanceExecute": false,
+    "authenticatedAdvanceExecute": true
+  },
+  "operatorCli": {
+    "script": "scripts/release/rehearse-world-v2-r18-12-linked-cli.mjs",
+    "pinnedVersion": "2.81.3",
+    "fixedCommands": [
+      "--version",
+      "migration fetch --linked",
+      "migration list --linked",
+      "db push --dry-run --linked"
+    ],
+    "hasAppliedSql": false,
+    "realAuthenticatedCliExecuted": false,
+    "manualOptInRequired": true,
+    "sqlInstallationAuthorized": false
+  },
+  "gates": {
+    "stagingCi": "pending",
+    "authenticatedMultiplayerCanary": false,
+    "frontendApproved": false,
+    "clientCanaryDeployed": false,
+    "liveLinkedCliRehearsalExecuted": false,
+    "databaseMigrationApproved": false,
+    "databaseMigrationApplied": false,
+    "protectedPostSql24CaseAccepted": false,
+    "freeTierPerformanceAccepted": false
+  },
+  "handoff": "docs/testing/world-v2-r18-12-linked-cli-readonly-runner-2026-11-12.md"
+}

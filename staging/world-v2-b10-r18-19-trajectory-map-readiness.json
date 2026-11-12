@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "step": "B10-R18-19",
+  "date": "2026-11-12",
+  "releaseDecision": "STAGED_NO_GO",
+  "parentPr": 121,
+  "parentHeadSha": "d2d1e038c82e4dc1265171846aa829b1f176fd7c",
+  "stagingBranch": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+  "productionFrontend": {
+    "release": "R18-15",
+    "deploymentId": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "sha": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be"
+  },
+  "productionMainSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "frozenR05MigrationInstalled": false,
+  "newWallSqlInstalled": false,
+  "newGuardSqlInstalled": false,
+  "frontendClearanceCells": 0,
+  "guardedObserverRecovery700ms": false,
+  "sourceIssue": "R18-18 fixture used historical 20261108031754 triggers, final live 20261108055943 triggers include validated per-leg trajectory",
+  "negativeControl": {
+    "originalTriggerUnpublishedMapShortcut": true,
+    "originalTriggerHeldToolShortcut": true,
+    "productionExploitVerified": false
+  },
+  "candidateSql": "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+  "testSql": "tests/world-v2-b10-postgres/trajectory-map-auth-r18-19.sql",
+  "historicalPinnedSha": "c774aa7d13e89aa2d783d8d5fdc6f46326e28206",
+  "finalLivePinnedSha": "2dbb5e3d76ffbfecbb33c739a3a6a7d328baf451",
+  "assertions": {
+    "negativeBaseline": 3,
+    "realTrajectoryAndMapGuard": 22,
+    "isolatedAuthenticatedRoleRlsPattern": 7,
+    "total": 32
+  },
+  "replayOnly": true,
+  "ci": {
+    "node": "pending-exact-head",
+    "codeql": "pending-exact-head",
+    "isolatedPg": "pending-exact-head",
+    "combinedPg": "pending-exact-head"
+  },
+  "remaining": [
+    "campaign_id-only UPDATE trigger coverage and production RLS/foreign keys",
+    "full Auth token/tool map assignment and passive observer LOS revocation",
+    "legacy movement_session_path RPC source-real executable integration",
+    "pinned CLI 83-history parity + separate SQL approval",
+    "separate frontend activation and 700ms observer remain OFF"
+  ],
+  "handoff": "docs/testing/world-v2-r18-19-trajectory-map-authorization-2026-11-12.md"
+}
