@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-12",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+  "releaseBranch": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -413,6 +413,12 @@
       "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
       "note": "R18-20 verified actual live validators already reject token/map mismatches and tool campaign_id changes, corrected prior isolated collision finding; read-only 7 token/2 tool no mismatch. Stages NONAPPLIED token/map campaign identity guard for dual-campaign DM reparent and source-real live legacy movement-session RPC: 20 baseline/guard and 20 session assertions, all rolled back. No production deployment/SQL.",
       "linkedPullRequest": 123
+    },
+    {
+      "name": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "note": "R18-21 DM map upload/calibration/party route source-real PG17 W01-W17 passed in rollback; CRITICAL correct superseded R18-19 map-guard SQL to preserve LIVE World V2 commit_allows_piece_v2 token+tool signed checkpoint bypass. C01-C10 source-real checkpoint regression and exact live normalized function-body-only-delta Node QA; no SQL/production deployment. Frozen R05 kept intact."
     }
   ],
   "features": [
@@ -1371,6 +1377,43 @@
       ],
       "note": "Correction: legacy collision trigger shortcut alone does not prove production exploit; live validate_campaign_tool_write/validate_token_map already check map-campaign affinity. Dual-campaign DM token/map reparent is open absent new guard; added candidate stays NONAPPLIED. Legacy movement RPC S01-S20 uses simulated LOS/stub observer only, real P1/P2 and server migration remain gated.",
       "linkedPullRequest": 123
+    },
+    {
+      "id": "world-v2-b10-r18-21-dm-workflows-live-checkpoint-source-parity",
+      "description": "Review actual DM map upload/routing/map calibration and future copy-as-insert compatibility with campaign affinity. Rebuild staged tool/token map guard against current live signed V2 checkpoint-aware collision trigger definitions (R18-19 originally regressed it), and require full-source normalized guard-only delta plus real private checkpoint token/tool UPDATE acceptance and direct collision denial.",
+      "sources": [
+        "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+        "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+        "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+        "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+        "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+        "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+        "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+        "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+        "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+        "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+        "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+        "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+        "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+        "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+        "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+        "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+        "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+        "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+        "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+        "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+        "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+        "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12"
+      ],
+      "status": "staged",
+      "releaseReady": false,
+      "databaseDependencies": [
+        "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+        "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+        "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+        "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
+      ],
+      "note": "Do NOT merge or apply old PR #122 R18-19 function candidate standalone: it omits LIVE forge_world_v2.commit_allows_piece_v2 and risks double collision/rubberbanding. Only cumulative corrected R18-21 source can be used for future source-real staged SQL rehearsal. Actual authenticated CLI 83-body migration preflight, fresh post-R05 function fingerprints, combined R05->new SQL rehearsal, real P1/P2 Auth LOS and separate SQL/frontend authorizations remain blockers."
     }
   ],
   "databaseDependencies": [
@@ -1685,7 +1728,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+    "releaseBranch": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -1707,9 +1750,10 @@
       "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
       "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
       "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
-      "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12"
+      "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+      "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12"
     ],
-    "stagePolicy": "R18-20 retains all 21 staged branches; live R18-15 frontend strict collision unchanged, main R16 protected, 700ms guarded observer recovery OFF. Full read-only live validator audit found existing tool campaign-id immutability and token/map campaign checks, correcting R18-19's collision-only implication. Stages NONAPPLIED private map/token campaign-ID no-reparent guard after 20 disposable baseline/guard assertions; 20 additional source-real live legacy session/preview tests with simulated observer, not real Auth LOS. No R05/wall/guard/affinity SQL installed. Need approved pinned CLI 83-body reconciliation, distinct SQL and frontend approvals, actual Auth P1/P2 signed LOS and admin/import compatibility. No free-tier cost increase.",
+    "stagePolicy": "B10-R18-21 preserves 22 staged branches. DM source-real party routing/map upload/calibration compatibility and 0.10 wall candidate remain tested in isolated rollback. URGENT correctness correction: original R18-19 SQL copied pre-V2 checkpoint legacy guards and must NEVER be installed; R18-21 updated both function bodies from exact current LIVE pg_get_functiondef with only intended cross-map checks, retaining signed commit_allows_piece_v2. Source-equivalence Node tests and C01-C10 actual private checkpoint SQL must pass. Frozen R05/unversioned candidates all unapplied; R18-15 live unchanged, 700ms guarded recovery OFF. Need independent authenticated CLI 83 history, fully stacked R05->wall->corrected map guard->affinity SQL replay, DM/P1/P2 LOS/observer/cadence acceptance, separate approvals for database then frontend. Never automatically deploy.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
