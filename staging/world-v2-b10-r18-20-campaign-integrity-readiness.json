@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "step": "B10-R18-20",
+  "date": "2026-11-12",
+  "branch": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+  "releaseDecision": "STAGING_NO_GO",
+  "parentPr": 122,
+  "parentHeadSha": "f38da59d218389ddd0bfa7e5d2589ac117c01fd1",
+  "liveFrontend": {
+    "release": "R18-15",
+    "deployment": "dpl_E1P6cNfuswAMH7qAFnSLPrTWN6kQ",
+    "source": "7628a319b8c62bf18a4046fffc7bb09de4"
+  },
+  "mainGit": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "liveHistoryCount": 83,
+  "liveR05Installed": false,
+  "productionFrontendUpdated": false,
+  "sqlCandidateApplied": false,
+  "guarded700msEnabled": false,
+  "sqlCandidates": [
+    "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+    "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+    "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+    "supabase/candidates/world_v2_r18_20_campaign_affinity.sql"
+  ],
+  "sourceLiveMd5": {
+    "validateTokenMap": "8ddb83de264171910132b2da9979f26c",
+    "validateCampaignToolWrite": "3968fd2daec5e268c931cdcf42e9bdc7",
+    "advanceMapMotionSessionPath": "539292b1950d76909c032a056bebee79"
+  },
+  "readOnlyLiveCounts": {
+    "tokens": 7,
+    "tools": 2,
+    "mapCampaignMismatches": 0
+  },
+  "checks": {
+    "campaignBaseline": 10,
+    "campaignCandidate": 10,
+    "legacySession": 20,
+    "allRolledBack": true,
+    "nodeTests": 982
+  },
+  "remaining": [
+    "verify real DM import/map-clone workflows do not rely on campaign_id reparent",
+    "genuine authenticated DM/P1/P2 signed observer and RLS QA",
+    "pinned CLI all 83 remote version/body reconciliation",
+    "approval for SQL migration sequence and separate frontend clearance activation",
+    "free-tier performance and latency cadence work"
+  ],
+  "documentation": "docs/testing/world-v2-r18-20-campaign-integrity-and-legacy-motion-2026-11-12.md"
+}
