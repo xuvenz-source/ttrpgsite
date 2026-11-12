@@ -93,6 +93,10 @@ export function createInputController({
   if(activePointer===null||event.pointerId!==activePointer||
    event===lastMoveEvent)return;
   lastMoveEvent=event;
+  // R18-39: privacy-safe, opt-in aggregate counters. No raw points, ids,
+  // URLs or input event payloads leave this local QA report.
+  const complete=worldV2Trace.enabled?
+   worldV2Trace.begin('input.pointer.processing'):null;
   const samples=event.getCoalescedEvents?.();
   const points=[];
   for(const sample of Array.isArray(samples)&&samples.length?samples:[event]){
@@ -102,6 +106,14 @@ export function createInputController({
     y:p.y+(pointerOffset?.y??0)
    });
   }
+  // Count batches without overflowing the bounded timeline. The values
+  // describe input shape, not the private geometry or authorized route.
+  worldV2Trace.count('input.pointer.move-events');
+  worldV2Trace.count('input.pointer.samples',points.length);
+  if(points.length>1){
+   worldV2Trace.count('input.pointer.batches');
+   worldV2Trace.count('input.pointer.batched-samples',points.length);
+  }else if(points.length===1)worldV2Trace.count('input.pointer.single-events');
   // One browser event cannot paint its intermediate coalesced positions.
   // Retain all grid turns and hysteresis samples in the controller, but
   // evaluate costly visual prediction only for the last visible pointer.
@@ -109,6 +121,7 @@ export function createInputController({
   if(points.length>1&&typeof controller.updateGestureSamples==='function')
    controller.updateGestureSamples(points);
   else for(const p of points)controller.updateGesture(p);
+  complete?.();
   if(!controller.active)release();
   event.preventDefault?.();
  };
