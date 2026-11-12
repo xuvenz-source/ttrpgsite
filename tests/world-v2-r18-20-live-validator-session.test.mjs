@@ -62,7 +62,6 @@ test('R18-20 legacy session tests require actual positive authorized advance, re
   'CREATE TABLE forge_visibility.r20_tick_count',
   'public.advance_map_motion_session_path(',
   'realtime.b07_outbox',
-  'observer_verified_path_status',
   'S02 valid legacy token path updates preview only',
   'S06 live ownership revocation',
   'S07 environment revision',
@@ -74,6 +73,7 @@ test('R18-20 legacy session tests require actual positive authorized advance, re
   'S16 issued tool revision',
   'S17 expired gesture'
  ]) assert.ok(s.includes(x),x);
+ assert.match(read(snapshot),/observer_verified_path_status/);
  assert.deepEqual([...s.matchAll(/'S(\d\d) /g)].map(x=>Number(x[1])),
   Array.from({length:20},(_,i)=>i+1));
  assert.match(s,/^BEGIN;/m);assert.match(s,/^ROLLBACK;\s*$/m);
