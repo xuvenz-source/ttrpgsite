@@ -72,6 +72,10 @@ test('R18-45 incident script is a bounded transactional EXECUTE revoke, NOT sche
 });
 test('R18-45 committed full chain runs BEFORE ACL containment and protected R05 forward recovery',()=>{
  const src=read(post);
+ // Exact finalization API is six positional args everywhere, including all
+ // browser-role ACL checks. No five-arg typo may silently survive CI.
+ assert.doesNotMatch(src,/public\.finalize_world_motion_v2\(uuid,bigint,jsonb,bigint,bigint\)/);
+ assert.match(src,/public\.finalize_world_motion_v2\(uuid,bigint,jsonb,jsonb,bigint,bigint\)/);
  const order=[
   'world_v2_r18_26_step_bbox_prefilter.sql',
   'world_v2_r18_27_commit_empty_work.sql',
