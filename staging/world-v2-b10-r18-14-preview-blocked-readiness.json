@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "step": "B10-R18-14",
+  "date": "2026-11-12",
+  "releaseDecision": "NO_GO",
+  "parentHeadSha": "c1c6b5cc1074b4dcb6fb05a89e3098bfee2a7a9d",
+  "parentPr": 115,
+  "stagingBranch": "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+  "problem": "Repeated blocked player-preview ACKs at unchanged approved token pose scheduled redundant player-effective sight refreshes",
+  "normalDmBaseline": {
+    "authorityBeginP95Ms": 1311.9,
+    "authorityAdvanceP95Ms": 2087.8,
+    "authorityCommitP95Ms": 3950.1,
+    "visibilityRpcP95Ms": 5080.8
+  },
+  "previewBaseline": {
+    "blockedAckEvents": 1352,
+    "approvedEvents": 176,
+    "visibilityRefreshRequests": 1580,
+    "visibilityQueuedEvents": 1576,
+    "actualVisibilityRpcCalls": 46
+  },
+  "changes": [
+    "src/engine/v2/PreviewSightRefresh.js",
+    "src/engine/v2/WorldV2TabletopRuntime.js",
+    "tests/world-v2-r18-14-preview-blocked-sight-dedupe.test.mjs"
+  ],
+  "productionUnchanged": true,
+  "backendMigrationApplied": false,
+  "frontendDeploymentApproved": false,
+  "backendMigrationApproved": false,
+  "actualMultiplayerAcceptance": false,
+  "linkedCliDryRunPerformed": false,
+  "newBuildFlagsEnabled": false,
+  "ci": {
+    "test": "pending",
+    "sql": "pending",
+    "codeql": "pending"
+  },
+  "handoff": "docs/testing/world-v2-r18-14-preview-blocked-refresh-dedupe-2026-11-12.md"
+}
