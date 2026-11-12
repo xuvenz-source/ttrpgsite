@@ -209,7 +209,29 @@ BEGIN
   NOT has_function_privilege('anon',
    'public.commit_world_motion_v2(uuid,bigint,jsonb,bigint,bigint)','EXECUTE'),
   'O16 R05 recovery backup, private ACL, and anon commit denial survive entire chain');
- RAISE NOTICE 'R18-22: 16 ordered R05 plus wall/map/affinity combined assertions PASSED';
+ -- The full sequence must also commit an owned 2x2 MOUNT through the
+ -- ACTUAL post-R05 signed authority RPCs and the current tool trigger.
+ -- The 3.95 wall slightly intersects its outer edge (5% of one cell).
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ ack:=public.begin_world_motion_v2(test_map,
+  jsonb_build_array(jsonb_build_object('kind','tool','id',tool)),
+  '{"x":1,"y":7}'::jsonb,'drag',1,1,false);
+ PERFORM public.b08_assert(ack ? 'sessionId',
+  'O18 actual POST-R05 Begin issues player-owned 2x2 mount session');
+ sid:=(ack->>'sessionId')::uuid;
+ advanced:=public.advance_world_motion_v2(
+  sid,1,'{"x":1,"y":7}'::jsonb,'[{"x":2,"y":7}]'::jsonb,1,1);
+ PERFORM public.b08_assert(
+  advanced->'accepted'='[{"x":2,"y":7}]'::jsonb,
+  'O19 post-R05 B03 authority accepts mount shallow-border movement');
+ committed:=public.commit_world_motion_v2(
+  sid,2,'{"x":2,"y":7}'::jsonb,1,1);
+ PERFORM public.b08_assert(
+  committed->'endpoint'='{"x":2,"y":7}'::jsonb AND
+  (SELECT x=2 AND y=7 FROM public.campaign_tool_issues WHERE id=tool) AND
+  (SELECT status='committed' FROM forge_world_v2.motion_sessions WHERE id=sid),
+  'O20 actual mount canonical commit passes corrected tool checkpoint guard');
+ RAISE NOTICE 'R18-22: 19 ordered install plus live token/tool authority assertions PASSED';
 END $r22_behavior$;
 ROLLBACK;
 
@@ -224,5 +246,5 @@ BEGIN
   to_regprocedure('forge_visibility.guard_campaign_affinity_r18_20()') IS NOT NULL AND
   (SELECT count(*)=0 FROM forge_world_v2.motion_sessions),
   'O17 test-only DML rolled back; R05 and three candidate packages remain installed in third disposable DB');
- RAISE NOTICE 'R18-22: 17 ordered full-stack SQL assertions PASSED; disposable database will be deleted with CI service';
+ RAISE NOTICE 'R18-22: 20 ordered full-stack SQL assertions PASSED; disposable database will be deleted with CI service';
 END $r22_end$;
