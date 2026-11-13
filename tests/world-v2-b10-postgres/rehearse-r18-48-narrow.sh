@@ -64,7 +64,7 @@ r46_psql -f supabase/release-recovery/world_v2_b10_r05_restore_original_authorit
 # run the exact recovery DO (not a simulation) and REQUIRE a drift rejection.
 python3 - <<'PY'
 from pathlib import Path
-source=Path('supabase/release-recovery/world_v2_b10_r18_48_narrow_restore_original_geometry.sql').read_text()
+source=Path('supabase/release-recovery/world_v2_b10_r18_46_restore_original_geometry.sql').read_text()
 start=source.index('DO $r46_recover$')
 end=source.index('END $r46_recover$;',start)+len('END $r46_recover$;')
 assert source.count('DO $r46_recover$')==1
@@ -96,7 +96,7 @@ r46_replacements="$(r46_psql -Atc \
 }
 echo 'R18-46 adversarial source drift REFUSED; all five installed definitions preserved'
 
-r46_psql -f supabase/release-recovery/world_v2_b10_r18_48_narrow_restore_original_geometry.sql
+r46_psql -f supabase/release-recovery/world_v2_b10_r18_46_restore_original_geometry.sql
 r46_psql -f tests/world-v2-b10-postgres/verify-recovered-r18-48-narrow.sql
 
 echo 'R18-48 NARROW PASS: no R26/R27, 4 source replacements + original step validator sealed, 5+4 original definitions recovered and R20 guard remains'
