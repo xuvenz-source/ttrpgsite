@@ -57,13 +57,20 @@ export function parseR51MigrationList({text,remote,pending}={}){
  const values=[];
  for(let line of lines(output)){
   let s=line.trim();
-  if(!s||/^[\s|\-+]+$/.test(s))continue;
-  // A blank *local* column begins with a separator too. Only remove
-  // optional decorative table borders when at least 3 pipes are present.
-  if(s.startsWith('|')&&(s.match(/\|/g)||[]).length>=3)s=s.slice(1).trim();
-  if(s.endsWith('|')&&(s.match(/\|/g)||[]).length>=3)s=s.slice(0,-1).trim();
-  const cols=s.split(/\s*\|\s*/);
-  if(cols.length===3&&/^local$/i.test(cols[0])&&/^remote$/i.test(cols[1])){
+  // Supabase CLI 2.x formats migration list with Unicode box drawing:
+  // LOCAL │ REMOTE │ TIME (UTC), and ───┼───┼─── dividers.
+  // CI's old ASCII-only fixture used | and - instead. Both must be
+  // accepted without ever discarding a blank local or remote column.
+  if(!s||/^[\s|│\-+─━═┼┬┴┌┐└┘├┤╪╤╧╒╕╘╛╞╡]+$/.test(s))continue;
+  if(s.includes('|')&&s.includes('│'))
+   fail('mixed ASCII and Unicode table delimiters');
+  const delimiter=s.includes('│')?'│':'|';
+  const delimiterCount=s.split(delimiter).length-1;
+  if(s.startsWith(delimiter)&&delimiterCount>=3)s=s.slice(1).trim();
+  if(s.endsWith(delimiter)&&delimiterCount>=3)s=s.slice(0,-1).trim();
+  const cols=s.split(delimiter).map(x=>x.trim());
+  if(cols.length===3&&/^local$/i.test(cols[0])&&
+     /^remote$/i.test(cols[1])&&/^time\s*\(utc\)$/i.test(cols[2])){
    if(header)fail('duplicate migration list header');
    header=true;continue;
   }
