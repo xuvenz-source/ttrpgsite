@@ -132,6 +132,20 @@ test('R18-60 refuses missing CLI link, unsafe DB environment and wrong project b
   ...opts,invoke:()=>{throw Error('MUST_NOT_RUN');}
  }),/linked CLI target/);
 });
+test('R18-60 rejects hidden seed, roles or external dotenv BEFORE remote fetch',t=>{
+ const names=['supabase/seed.sql','supabase/roles.sql','supabase/.env',
+  'supabase/.env.local','.env','.env.local'];
+ for(const filename of names){
+  const opts=sandbox(t);
+  const base=join(opts.workspace,filename);
+  writeFileSync(base,'SUPABASE_YES=1\n');
+  let calls=0;
+  assert.throws(()=>runR60ReadOnlyLinkedCli({
+   ...opts,invoke:()=>{calls++;throw Error('MUST_NOT_RUN');}
+  }),/isolation contains seed, roles or extra environment file/);
+  assert.equal(calls,0);
+ }
+});
 test('R18-60 missing private fresh receipts, stale R50 or corrupted history block first',t=>{
  const opts=sandbox(t),calls=[];
  const invoke=()=>{calls.push('wrong');return {status:0,stdout:'2.81.3',stderr:''}};
