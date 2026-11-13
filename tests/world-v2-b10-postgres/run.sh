@@ -65,4 +65,9 @@ bash tests/world-v2-b10-postgres/rehearse-r18-44.sh
 # functions BEFORE R17, install candidate stack, seal and restore 5+4
 # function sources through independent committed recovery transactions.
 bash tests/world-v2-b10-postgres/rehearse-r18-46.sh
+# R18-48: fifth disposable PG17 DB narrows candidates, omitting both
+# R18-26 swept bbox prefilter and R18-27 Commit empty-work changes.
+# Seal four changed sources and unchanged fifth step validator, then
+# rehearse complete post-commit source recovery and hostile drift rejection.
+bash tests/world-v2-b10-postgres/rehearse-r18-48-narrow.sh
 echo 'B10 RELEASE GATE STILL BLOCKED: no reviewed versioned post-R05 migrations or independent DM/P1/P2 Auth/LOS QA.'
