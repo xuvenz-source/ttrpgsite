@@ -1,0 +1,65 @@
+name: World V2 R18-54 disposable source-real fog Commit
+
+on:
+  pull_request:
+    paths:
+      - 'tests/world-v2-b10-postgres/r54-*'
+      - 'tests/world-v2-b10-postgres/rehearse-r05.sh'
+      - '.github/workflows/world-v2-r18-54-fog-commit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fog-commit-source-real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd='pg_isready -U postgres -d postgres'
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: world_v2_b10
+      WORLD_V2_B10_ISOLATED: 'yes'
+    steps:
+      - name: Checkout exact PR head (no deploy)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Refuse external DSN and prepare fresh LOCAL postgres roles
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PGHOST" = '127.0.0.1'
+          test "$PGPORT" = '5432'
+          test "$PGUSER" = 'postgres'
+          test "$PGDATABASE" = 'world_v2_b10'
+          test "$WORLD_V2_B10_ISOLATED" = 'yes'
+          test -z "${DATABASE_URL:-}"
+          test -z "${SUPABASE_DB_URL:-}"
+          test -z "${PGHOSTADDR:-}"
+          test -z "${PGSERVICE:-}"
+          command -v psql
+          command -v createdb
+          psql -X -d postgres -v ON_ERROR_STOP=1 -c 'CREATE ROLE anon NOLOGIN'
+          psql -X -d postgres -v ON_ERROR_STOP=1 -c 'CREATE ROLE authenticated NOLOGIN'
+          createdb -h 127.0.0.1 -p 5432 -U postgres world_v2_b10
+      - name: Source-real R18-42 baseline, R18-54 fog benchmark, R05 rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/world-v2-b10-postgres/rehearse-r05.sh
+          echo 'R18-54 disposable PG17 complete. No live Supabase access.'
