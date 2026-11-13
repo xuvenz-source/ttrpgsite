@@ -7,7 +7,7 @@ set -euo pipefail
 [[ "${PGDATABASE:-}" == "world_v2_b10" ]] || { echo "R05 caller database refused" >&2;exit 64; }
 # Match the R18-22 fixture's defense against external/project DSNs.
 # Only the CI-provided local PostgreSQL 17 service is acceptable.
-[[ -z "${PGSERVICE:-}" && -z "${PGSERVICEFILE:-}" &&
+[[ -z "${PGHOSTADDR:-}" && -z "${PGSERVICE:-}" && -z "${PGSERVICEFILE:-}" &&
    -z "${DATABASE_URL:-}" && -z "${SUPABASE_DB_URL:-}" ]] || {
  echo "R05 unsafe external connection override refused" >&2;exit 64;
 }
