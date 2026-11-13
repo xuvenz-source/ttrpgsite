@@ -32,6 +32,7 @@ test('R18-54 original exact 13 live SQL definitions and hashes are pinned',()=>{
   assert.ok(benchmark.includes(digest),name+' benchmark pin missing');
  }
  assert.equal((live.match(/SET search_path TO ''/g)||[]).length,13);
+ assert.match(live,/R54 refuses non-fixture database or missing isolated test schema/);
 });
 test('R18-54 source-real benchmark executes signed Begin, Advance, Commit only',()=>{
  assert.match(benchmark,/public\.begin_world_motion_v2/);
@@ -67,6 +68,7 @@ test('R18-54 runner limits source-real test to existing disposable R05 DB',()=>{
  assert.match(runner,/WORLD_V2_B10_ISOLATED/);
  assert.match(runner,/PGHOST/);
  assert.match(runner,/PGDATABASE/);
+ assert.match(runner,/PGHOSTADDR/);
  const r42=runner.indexOf('authority-throughput-r18-42.sql');
  const r54=runner.indexOf('r54-fog-commit-source-real.sql');
  const r05=runner.indexOf('versioned-release-r05.sql');
