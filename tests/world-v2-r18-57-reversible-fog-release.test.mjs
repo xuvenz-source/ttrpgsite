@@ -69,7 +69,52 @@ test('R18-57 only audited postgres owner can opt in and private grants must rema
   assert.match(code,/has_function_privilege\('anon',fn,'EXECUTE'\)/);
   assert.match(code,/current_setting\('forge\.r18_57_release_authorization',true\)/);
   assert.match(code,/RAISE EXCEPTION 'R57/);
-  assert.doesNotMatch(code,/\bGRANT\b|\bALTER\s+TABLE\b|\bTRUNCATE\b|\bINSERT\s+INTO\b/i);
+  const guardText=code.slice(0,code.indexOf(' EXECUTE $r57_sql
+  assert.doesNotMatch(code,/\bsupabase db push\b|\bmigration repair\b/i);
+ }
+ assert.match(forward,/sealed_post_83_plus_8_candidate_only/);
+ assert.match(reverse,/sealed_post_83_plus_8_rollback_only/);
+});
+test('R18-57 opt-in stays out of all active migrations and has an independent rollback',()=>{
+ assert.match(forward,/UNVERSIONED \/ OPT-IN \/ NO-GO/);
+ assert.match(reverse,/UNVERSIONED \/ OPT-IN/);
+ assert.match(forward,/One PostgreSQL DO statement is atomic/);
+ assert.match(reverse,/One PostgreSQL DO statement is atomic/);
+ assert.doesNotMatch(forward+reverse,/\\i |\\set /);
+ assert.match(fixture,/supabase\/candidates\/world_v2_r18_57_sync_fog_fastpath_optin.sql/);
+ assert.match(fixture,/supabase\/candidates\/world_v2_r18_57_sync_fog_fastpath_rollback.sql/);
+ assert.match(fixture,/^BEGIN;$/m);
+ assert.match(fixture,/^ROLLBACK;$/m);
+});
+test('R18-57 exercises all eight affected signed recipients, 24 blockers and torch',()=>{
+ assert.match(fixture,/generate_series\(14,19\)/);
+ assert.match(fixture,/generate_series\(1,24\)/);
+ assert.match(fixture,/r57_unmodified_fog_frame/);
+ assert.match(fixture,/source_frame IS NOT DISTINCT FROM candidate_frame/);
+ assert.match(fixture,/newcount>=oldcount\+8/);
+ assert.match(fixture,/R57-07 eight-viewer wall-heavy held-light exact parity/);
+ assert.match(fixture,/R57-08 original wall authority and private geometry protected/);
+ assert.match(fixture,/R57-09 revoked user refused/);
+ assert.match(fixture,/R57-10 exact original source and private privileges restored/);
+ assert.match(fixture,/R57-11 no opt-in, rollback or 91-history test residue persisted/);
+ assert.doesNotMatch(fixture,/\bUPDATE\s+public\.map_tokens\b/i);
+});
+test('R18-57 uses localhost-only test guard and preserves earlier full authority rehearsal',()=>{
+ const a=runner.indexOf('r54-fog-commit-source-real.sql');
+ const b=runner.indexOf('r55-dirty-fog-prototype.sql');
+ const c=runner.indexOf('r56-synchronous-fog-fastpath-benchmark.sql');
+ const d=runner.indexOf('r57-guarded-fog-release-benchmark.sql');
+ const e=runner.indexOf('versioned-release-r05.sql');
+ assert.ok(a>=0&&a<b&&b<c&&c<d&&d<e);
+ assert.match(runner,/WORLD_V2_B10_ISOLATED/);
+ assert.match(runner,/PGHOSTADDR/);
+ assert.match(workflow,/image:\s*postgres:17/);
+ assert.match(workflow,/PGHOST: '127\.0\.0\.1'/);
+ assert.match(workflow,/supabase\/candidates\/world_v2_r18_57_sync_fog_fastpath_\*\.sql/);
+ assert.doesNotMatch(workflow,/SUPABASE_ACCESS_TOKEN|SUPABASE_DB_PASSWORD|VERCEL_TOKEN|service_role/);
+});
+));
+  assert.doesNotMatch(guardText,/\bGRANT\b|\bALTER\s+TABLE\b|\bTRUNCATE\b|\bINSERT\s+INTO\b/i);
   assert.doesNotMatch(code,/\bsupabase db push\b|\bmigration repair\b/i);
  }
  assert.match(forward,/sealed_post_83_plus_8_candidate_only/);
