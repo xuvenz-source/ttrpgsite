@@ -39,7 +39,8 @@ test('R18-54 source-real benchmark executes signed Begin, Advance, Commit only',
  assert.match(benchmark,/public\.commit_world_motion_v2/);
  assert.match(benchmark,/forge_visibility\.authorized_viewer_fog_frame/);
  assert.match(benchmark,/forge_visibility\.bump_viewer_ticks/);
- assert.match(benchmark,/R54-09 revoked fixture viewer/);
+ assert.match(benchmark,/R54-09 original wall blocks unauthorized crossing/);
+ assert.match(benchmark,/R54-10 revoked fixture viewer/);
  assert.match(benchmark,/r54_samples/);
  assert.match(benchmark,/percentile_cont\(0\.95\)/);
  assert.doesNotMatch(benchmark,/\bUPDATE\s+public\.map_tokens\b/i);
@@ -48,7 +49,7 @@ test('R18-54 source-real benchmark executes signed Begin, Advance, Commit only',
 test('R18-54 exact fog fixture is rollback-only and asserts full restoration',()=>{
  assert.match(benchmark,/^BEGIN;$/m);
  assert.match(benchmark,/^ROLLBACK;$/m);
- assert.match(benchmark,/R54-10 rollback removes fog functions\/triggers/);
+ assert.match(benchmark,/R54-11 rollback removes fog functions\/triggers/);
  assert.match(benchmark,/current_database\(\)<>'world_v2_b10_r05'/);
  assert.match(benchmark,/pg_get_functiondef\(to_regprocedure\(row\.signature\)\)/);
  assert.match(benchmark,/forge_visibility_token_tick/);
