@@ -65,7 +65,7 @@ SELECT jsonb_build_object(
   'stats_reset',(SELECT stats_reset FROM extensions.pg_stat_statements_info),
   'track_functions',current_setting('track_functions'),
   'rpc_aggregates',(SELECT coalesce(jsonb_agg(jsonb_build_object(
-   'phase',phase,'calls',calls,'mean_db_ms',mean_db_ms,'max_db_ms') ORDER BY phase),'[]'::jsonb) FROM metrics),
+   'phase',phase,'calls',calls,'mean_db_ms',mean_db_ms,'max_db_ms',max_db_ms) ORDER BY phase),'[]'::jsonb) FROM metrics),
   'waiting_locks_at_snapshot',(SELECT count(*)::integer FROM pg_locks WHERE NOT granted)
  )
 ) AS diagnostic_receipt;
