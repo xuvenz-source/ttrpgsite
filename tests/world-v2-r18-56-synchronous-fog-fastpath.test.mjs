@@ -52,6 +52,8 @@ test('R18-56 differential source-real scenes assert FULL frame equality, not jus
  assert.match(fixture,/expected IS NOT DISTINCT FROM actual/);
  for(const kind of ["'wall'","'door'","'window'","'light'","'malformed-wall'","'malformed-type'"]){
   assert.ok(fixture.includes(kind),'missing '+kind);
+ for(const kind of ['wall-lit','bright-walled','disabled-light','unknown-decoration','malformed-null-object'])
+  assert.ok(fixture.includes(kind),'missing extra sight case '+kind);
  }
  assert.match(fixture,/R56-06 exact authorized fog\/LOS\/exploration equivalence/);
 });
@@ -61,7 +63,8 @@ test('R18-56 signed canonical Commit, observer revisions, solid wall and rollbac
  assert.match(fixture,/public\.commit_world_motion_v2/);
  assert.match(fixture,/R56-12 both variants still perform full synchronous per-viewer refresh/);
  assert.match(fixture,/R56-13 solid wall still blocks and never leaks private geometry/);
- assert.match(fixture,/R56-14 full fixture rollback reverts authorized frames and canonical position/);
+ assert.match(fixture,/R56-14 revoked viewer denied by original and optimized sight/);
+ assert.match(fixture,/R56-15 full fixture rollback reverts authorized frames and canonical position/);
  assert.match(fixture,/^BEGIN;$/m);
  assert.match(fixture,/^ROLLBACK;$/m);
  assert.doesNotMatch(fixture,/\bUPDATE public\.map_tokens\b/i);
