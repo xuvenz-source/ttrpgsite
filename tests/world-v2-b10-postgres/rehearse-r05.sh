@@ -7,7 +7,7 @@ set -euo pipefail
 [[ "${PGDATABASE:-}" == "world_v2_b10" ]] || { echo "R05 caller database refused" >&2;exit 64; }
 # Match the R18-22 fixture's defense against external/project DSNs.
 # Only the CI-provided local PostgreSQL 17 service is acceptable.
-[[ -z "${PGSERVICE:-}" && -z "${PGSERVICEFILE:-}" &&
+[[ -z "${PGHOSTADDR:-}" && -z "${PGSERVICE:-}" && -z "${PGSERVICEFILE:-}" &&
    -z "${DATABASE_URL:-}" && -z "${SUPABASE_DB_URL:-}" ]] || {
  echo "R05 unsafe external connection override refused" >&2;exit 64;
 }
@@ -39,5 +39,8 @@ r05_psql -f /tmp/world_v2_b10_r05_original_commit.sql
 # Benchmark is wrapped in BEGIN / ROLLBACK with a post-rollback assertion.
 # The fixture's private observer publisher is intentionally test-only.
 r05_psql -f tests/world-v2-b10-postgres/authority-throughput-r18-42.sql
+# R18-54: source-real, real-trigger fog-on/off canonical Commit benchmark.
+# Runs inside BEGIN/ROLLBACK and checks all test-time DDL/data disappear.
+r05_psql -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
 r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql
 echo 'B10-R05 PASS: isolated release migration, atomic rollback and manual after-commit restoration'
