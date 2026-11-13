@@ -62,7 +62,7 @@ export function validateR47OfflinePackage({repoRoot=HERE,manifest}={}){
    data.originalR05?.gitBlobSha!=='f4e296725c09055685321726cbe4bc6e09dbce5a'||
    blob(readFileSync(join(root,r05),'utf8'))!==data.originalR05.gitBlobSha)
   fail('existing official R05 migration changed');
- const folder=join(root,pending);
+ const folder=resolve(root,pending); // canonical: no trailing slash before realpath equality
  if(realpathSync(folder)!==folder||!lstatSync(folder).isDirectory())
   fail('staged folder missing or symlinked');
  const actual=readdirSync(folder,{withFileTypes:true});
