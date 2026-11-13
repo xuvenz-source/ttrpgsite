@@ -42,5 +42,8 @@ r05_psql -f tests/world-v2-b10-postgres/authority-throughput-r18-42.sql
 # R18-54: source-real, real-trigger fog-on/off canonical Commit benchmark.
 # Runs inside BEGIN/ROLLBACK and checks all test-time DDL/data disappear.
 r05_psql -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
+# R18-55: ONLY in same disposable DB, prototype fail-closed dirty fog handoff.
+# Real signed Begin/Advance/Commit and original sight functions with rollback.
+r05_psql -f tests/world-v2-b10-postgres/r55-dirty-fog-prototype.sql
 r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql
 echo 'B10-R05 PASS: isolated release migration, atomic rollback and manual after-commit restoration'
