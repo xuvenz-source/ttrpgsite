@@ -30,7 +30,9 @@ export function validateR53FogEvidence({receipt,now=new Date()}={}){
  }else if(receipt?.diagnostic_receipt)receipt=receipt.diagnostic_receipt;
  if(!receipt||receipt.schema!==1||
     receipt.kind!=='B10-R18-53-fog-commit-dependency-readonly'||
-    'decision' in receipt||'safeToApply' in receipt||'releaseApproved' in receipt)
+    'decision' in receipt||'safeToApply' in receipt||
+    'releaseApproved' in receipt||'productionApproval' in receipt||
+    'deploymentApproved' in receipt||'releaseDecision' in receipt)
   fail('invalid or forged release receipt');
  const t=Date.parse(receipt.observed_at),tn=new Date(now).getTime();
  if(!Number.isFinite(t)||!Number.isFinite(tn)||t>tn+120000||tn-t>900000)
