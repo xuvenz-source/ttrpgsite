@@ -82,7 +82,8 @@ BEGIN
  ('forge_visibility.bump_tick(uuid)','adfc0d91e3e7e6011b46a98d14c83ad9'),
  ('forge_visibility.authorized_viewer_fog_frame(uuid,uuid)','ee3356af321fec1a3e167a75c6245e86'),
  ('forge_visibility.tick_tokens()','f6c2eef860141bff253024e0f6d8c7ba'),
- ('forge_visibility.enforce_collision()','7e652f0f2334980ccc724e1748d334ba')
+ ('forge_visibility.enforce_collision()','7e652f0f2334980ccc724e1748d334ba'),
+ ('forge_world_v2.commit_allows_piece_v2(text,uuid,uuid,uuid,integer,integer,integer,integer)','7298cb6051ba259a9c5be1963e1a46a5')
  ) AS expected(signature,hash) LOOP
   IF to_regprocedure(row.signature) IS NULL OR
    md5(pg_get_functiondef(to_regprocedure(row.signature)))<>row.hash
