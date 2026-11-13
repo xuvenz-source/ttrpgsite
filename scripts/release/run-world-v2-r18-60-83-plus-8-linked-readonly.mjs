@@ -13,7 +13,7 @@
  */
 import {spawnSync} from 'node:child_process';
 import {
- readFileSync,copyFileSync,readdirSync,lstatSync,realpathSync,statSync,
+ readFileSync,copyFileSync,readdirSync,lstatSync,realpathSync,statSync,existsSync,
  constants as fsConstants
 } from 'node:fs';
 import {resolve,join,dirname,sep} from 'node:path';
@@ -142,6 +142,16 @@ export function runR60ReadOnlyLinkedCli({
  safeEnv(env);
  const scope=inspectR18IsolatedWorkspace(workspace,{env});
  const root=realpathSync(ROOT);
+ // Fail BEFORE any real CLI network call if local Supabase config might
+ // silently seed roles or read an extra environment/remote target file.
+ for(const name of ['supabase/seed.sql','supabase/roles.sql','supabase/.env',
+  'supabase/.env.local','.env','.env.local']){
+  if(existsSync(join(scope.base,name)))
+   fail('isolation contains seed, roles or extra environment file');
+ }
+ const reviewed=validateR48NarrowPackage({repoRoot:root});
+ if(reviewed?.safeToApply!==false||reviewed.pendingWithR05!==8)
+  fail('reviewed narrow release sources drift before CLI fetch');
  const historical=privateJson(freshSqlDigestsFile,{repoRoot:root,maxBytes:65000});
  const rows=Array.isArray(historical)?historical:historical?.rows;
  const receipt=privateJson(readOnlyReceiptFile,{repoRoot:root,maxBytes:150000});
