@@ -194,7 +194,7 @@ BEGIN
  FROM public.map_viewer_visibility_ticks WHERE map_id=p_map;
  t0:=clock_timestamp();
  c:=public.commit_world_motion_v2(sid,2,'{"x":2,"y":1}'::jsonb,1,1);
- db_ms:=pg_catalog.extract(epoch FROM clock_timestamp()-t0)*1000;
+ db_ms:=extract(epoch FROM clock_timestamp()-t0)*1000;
  SELECT coalesce(sum(revision),0) INTO newcount
  FROM public.map_viewer_visibility_ticks WHERE map_id=p_map;
  PERFORM public.b08_assert(
