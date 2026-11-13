@@ -13,16 +13,10 @@ import {
  isWorldV2TraceEvent,isWorldV2TraceDetail,isWorldV2TraceMetric,
  isWorldV2TraceCounter
 } from '../../src/engine/v2/WorldTrace.js';
+import {WORLD_V2_QA_REQUIRED_CHECKS} from '../../src/engine/v2/WorldV2QaReceipt.js';
 
 const ROLES=Object.freeze(['dm','p1','p2']);
-const CHECKS=Object.freeze({
- dm:['fastArrow','fastDrag','cornerSnap','solidWall','notePinNoLag',
-  'fogEditStable','revocationAction','canonicalConvergence','noMapFlash'],
- p1:['fastArrow','fastDrag','cornerSnap','solidWall','instantRegrab',
-  'privateFog','revocationDenied','safeReconnect','canonicalConvergence','noMapFlash'],
- p2:['passiveObserver','privateFog','revocationNoLeak','safeReconnect',
-  'canonicalConvergence','noMapFlash']
-});
+const CHECKS=WORLD_V2_QA_REQUIRED_CHECKS;
 const RECEIPT_KEYS=new Set(['schema','runCode','role','captureTag',
  'capturedAt','buildSha','independentSignInDeclared',
  'independentBrowserDeclared','previewMode','checks','trace']);
