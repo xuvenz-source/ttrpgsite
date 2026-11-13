@@ -224,7 +224,7 @@ BEGIN
  UPDATE public.map_environments SET live=
   '{"objects":[],"ambient":0,"fog":{"partyShared":false}}'::jsonb WHERE map_id=test_map;
  INSERT INTO public.campaign_tool_map_tokens
- (issue_id,campaign_id,test_map,name,icon,kind,x,y,light_bright,light_dim,light_enabled)
+ (issue_id,campaign_id,map_id,name,icon,kind,x,y,light_bright,light_dim,light_enabled)
  VALUES ('00000000-0000-4000-8000-000000000909'::uuid,
   '00000000-0000-4000-8000-000000000001'::uuid,test_map,
   'fixture torch','torch','torch',8,8,40,20,true);
