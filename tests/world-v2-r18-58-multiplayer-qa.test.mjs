@@ -117,7 +117,7 @@ test('R18-58 event order and p50-p95-max sanity are mandatory; no fabricated per
  invalid(x=>{x[1].trace.durations['authority.commit'].samples=999},/invalid trace duration/);
  invalid(x=>{x[1].trace.events[0].event='pretend.release.approved'},/unknown\/unsafe event/);
 });
-test('R18-58 checker uses trace's real restricted API, never makes network, DB or file writes',()=>{
+test("R18-58 checker uses trace's real restricted API, never makes network, DB or file writes",()=>{
  assert.match(source,/isWorldV2TraceEvent/);
  assert.match(source,/isWorldV2TraceDetail/);
  assert.match(source,/isWorldV2TraceMetric/);
