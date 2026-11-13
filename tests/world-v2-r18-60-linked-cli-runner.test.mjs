@@ -249,7 +249,8 @@ test('R18-61 refuse invalid or backward-moving source clock even when fixtures c
  assert.deepEqual(calls,['--version','migration fetch --linked']);
 });
 test('R18-61 no in-memory injected CLI/verifier can impersonate a real linked operator attestation',()=>{
- assert.match(SRC,/operatorEvidence=invoke===runOfficialCli/);
+ assert.match(SRC,/operatorEvidence=now===undefined && env===process\.env &&/);
+ assert.match(SRC,/invoke===runOfficialCli/);
  assert.match(SRC,/verifyFetchedHistory===exactFetchedHistory/);
  assert.match(SRC,/verifyEvidence===validateR51CliEvidence/);
  assert.match(SRC,/completionClock===systemClock/);
