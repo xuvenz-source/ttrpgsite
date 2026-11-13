@@ -29,7 +29,7 @@ BEGIN
  IF fn IS NULL THEN RAISE EXCEPTION 'R57 rollback: exact fog function signature missing'; END IF;
  SELECT * INTO rowdata FROM pg_proc WHERE oid=fn;
  observed_hash:=md5(pg_get_functiondef(fn));
- IF observed_hash<>'__R57_OPTIMIZED_MD5_PENDING_CI__' OR
+ IF observed_hash<>'f37c8d13e8d48bea123b4c811ae6de4d' OR
   rowdata.prosecdef IS DISTINCT FROM true OR
   NOT (rowdata.proconfig @> ARRAY['search_path=""']::text[]) OR
   pg_get_userbyid(rowdata.proowner)<>'postgres' OR
