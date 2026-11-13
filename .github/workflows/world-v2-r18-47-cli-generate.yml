@@ -1,0 +1,84 @@
+# B10-R18-47. Official CLI filename generation in an UNLINKED scratch
+# directory. This workflow cannot access Supabase or deploy any SQL.
+name: World V2 R18-47 offline official CLI migration shells
+on:
+  push:
+    branches:
+      - stage/world-v2-b10-r18-47-cli-isolated-release-2026-11-13
+    paths:
+      - .github/workflows/world-v2-r18-47-cli-generate.yml
+permissions:
+  contents: read
+jobs:
+  generate-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SUPABASE_ACCESS_TOKEN: ""
+      SUPABASE_DB_PASSWORD: ""
+      DATABASE_URL: ""
+      PGHOST: ""
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate 9 uniquely versioned shells using pinned official Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/b10-r18-47-offline-cli"
+          mkdir -p "$ROOT"
+          cd "$ROOT"
+          # No link, login, Supabase env/remote URL, SQL or Docker.
+          npx --yes supabase@2.81.3 --version
+          npx --yes supabase@2.81.3 migration new --help > /dev/null
+          npx --yes supabase@2.81.3 init
+          for name in \
+            r47_capture_original_sources \
+            r47_wall_edge_clearance \
+            r47_cross_map_collision_guards \
+            r47_campaign_affinity \
+            r47_step_bbox_prefilter \
+            r47_commit_empty_work \
+            r47_atomic_finalize_rpc \
+            r47_blocked_terminal_semantics \
+            r47_seal_release_sources; do
+            npx --yes supabase@2.81.3 migration new "$name"
+            sleep 2
+          done
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const dir=process.env.RUNNER_TEMP+'/b10-r18-47-offline-cli/supabase/migrations';
+          const names=fs.readdirSync(dir).sort();
+          if(names.length!==9||new Set(names.map(s=>s.slice(0,14))).size!==9)
+            throw Error('R47 CLI generated colliding/missing migration versions');
+          const stems=[
+            'r47_capture_original_sources','r47_wall_edge_clearance',
+            'r47_cross_map_collision_guards','r47_campaign_affinity',
+            'r47_step_bbox_prefilter','r47_commit_empty_work',
+            'r47_atomic_finalize_rpc','r47_blocked_terminal_semantics',
+            'r47_seal_release_sources'
+          ];
+          for(let i=0;i<9;i++){
+            if(!/^\\d{14}_[a-z0-9_]+\\.sql$/.test(names[i])||
+              !names[i].endsWith('_'+stems[i]+'.sql')||
+              names[i].slice(0,14)<='20261111023204')
+              throw Error('R47 official filename identity/order invalid '+names[i]);
+          }
+          const report={cliVersion:'2.81.3',linked:false,sqlApplied:false,
+            generation:'official supabase migration new',filenames:names};
+          fs.writeFileSync(process.env.RUNNER_TEMP+
+            '/b10-r18-47-offline-cli/manifest.json',JSON.stringify(report,null,2)+'\n');
+          console.log('R47_OFFICIAL_MANIFEST='+JSON.stringify(report));
+          NODE
+      - name: Upload offline empty shells and names for staging verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: r18-47-official-cli-generated-empty-shells
+          path: |
+            ${{ runner.temp }}/b10-r18-47-offline-cli/manifest.json
+            ${{ runner.temp }}/b10-r18-47-offline-cli/supabase/migrations/*.sql
+          retention-days: 7
