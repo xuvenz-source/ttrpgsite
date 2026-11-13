@@ -135,6 +135,7 @@ function copyPending(root,dir){
 export function runR60ReadOnlyLinkedCli({
  workspace,freshSqlDigestsFile,readOnlyReceiptFile,now=new Date(),
  env=process.env,invoke=runOfficialCli,
+ verifyFetchedHistory=exactFetchedHistory,
  verifyWorkspace=validateR49LinkedWorkspace,
  verifyEvidence=validateR51CliEvidence
 }={}){
@@ -164,7 +165,7 @@ export function runR60ReadOnlyLinkedCli({
  const cliVersion=localResult(0).trim().split(/\r?\n/,1)[0];
  if(cliVersion!==VERSION)fail('only pinned official CLI 2.81.3 is accepted');
  localResult(1); // linked FETCH writes to operator-local isolated folder only.
- exactFetchedHistory(scope.migrationDir,rows);
+ verifyFetchedHistory(scope.migrationDir,rows);
  copyPending(root,scope.migrationDir);
  const checked=verifyWorkspace({
   workspace:scope.base,freshSqlDigests:rows,repoRoot:root
