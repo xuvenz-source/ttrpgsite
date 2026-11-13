@@ -1,5 +1,6 @@
 import React,{useEffect,useState} from 'react';
 import SignupCaptcha from './SignupCaptcha.jsx';
+import {authReturnUrlForOrigin} from './AuthRedirect.js';
 
 const NAME=/^[a-z][a-z0-9_]{2,23}$/i;
 const RESERVED_DOMAIN='accounts.tabletopforge.example.com';
@@ -79,7 +80,7 @@ export function AuthGate({db}){
   e.preventDefault();setError('');setNotice('');setBusy(true);
   try{
    const {error}=await db.auth.signInWithOtp({
-    email:legacyEmail.trim(),options:{emailRedirectTo:location.origin,shouldCreateUser:false}
+    email:legacyEmail.trim(),options:{emailRedirectTo:authReturnUrlForOrigin(window.location.origin),shouldCreateUser:false}
    });
    if(error)throw error;
    setNotice('Sign-in link sent. Check the mailbox for your existing account.');
@@ -93,7 +94,7 @@ export function AuthGate({db}){
   }
   setError('');setNotice('');setBusy(true);
   try{
-   const {error}=await db.auth.signInWithOAuth({provider,options:{redirectTo:location.origin}});
+   const {error}=await db.auth.signInWithOAuth({provider,options:{redirectTo:authReturnUrlForOrigin(window.location.origin)}});
    if(error)throw error;
   }catch(e){
    const msg=errText(e);
