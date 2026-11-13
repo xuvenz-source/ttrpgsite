@@ -45,5 +45,8 @@ r05_psql -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
 # R18-55: ONLY in same disposable DB, prototype fail-closed dirty fog handoff.
 # Real signed Begin/Advance/Commit and original sight functions with rollback.
 r05_psql -f tests/world-v2-b10-postgres/r55-dirty-fog-prototype.sql
+# R18-56: compare exact source-real authorized fog frames and synchronous Commit
+# in another rolled-back test transaction. No unreviewed production mutations.
+r05_psql -f tests/world-v2-b10-postgres/r56-synchronous-fog-fastpath-benchmark.sql
 r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql
 echo 'B10-R05 PASS: isolated release migration, atomic rollback and manual after-commit restoration'
