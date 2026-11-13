@@ -47,7 +47,7 @@ test('R18-49 synthetic narrow 83+8 fixture: only 91 exact files can pass local i
    totalFilesChecked:91,projectIdentityChecked:true});
   assert.throws(()=>validateR49LinkedWorkspace({workspace:f.dir,
    freshSqlDigests:f.rows,repoRoot:root}),
-   /R49 LINKED NO-GO: fresh source SQL digest\/history drift/);
+   /R49 LINKED NO-GO: missing historical migration version/);
  }finally{rmSync(f.dir,{recursive:true,force:true});}
 });
 test('R18-49 refuses changed history, duplicate versions, missing records or forged hashes',()=>{
