@@ -209,7 +209,7 @@ begin
 end $function$;
  $r57_sql$;
 
- IF md5(pg_get_functiondef(to_regprocedure('forge_visibility.authorized_viewer_fog_frame(uuid,uuid)')))<>'__R57_OPTIMIZED_MD5_PENDING_CI__' THEN
+ IF md5(pg_get_functiondef(to_regprocedure('forge_visibility.authorized_viewer_fog_frame(uuid,uuid)')))<>'f37c8d13e8d48bea123b4c811ae6de4d' THEN
   RAISE EXCEPTION 'R57 install: new function source does not match sealed digest';
  END IF;
  IF has_function_privilege('authenticated','forge_visibility.authorized_viewer_fog_frame(uuid,uuid)','EXECUTE') OR
