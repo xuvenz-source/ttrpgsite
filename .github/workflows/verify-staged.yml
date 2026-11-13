@@ -45,3 +45,36 @@ jobs:
         run: deno check supabase/functions/username-register/index.ts
       - name: Type-check username-update Supabase Edge Function
         run: deno check supabase/functions/username-update/index.ts
+
+
+  # R18-48 temporary credential-free official migration version generation.
+  # Remove this job after recording CLI output; never merge or deploy it.
+  r48-offline-seal-shell:
+    if: github.ref == 'refs/heads/stage/world-v2-b10-r18-48-narrow-atomic-release-2026-11-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SUPABASE_ACCESS_TOKEN: ""
+      SUPABASE_DB_PASSWORD: ""
+      DATABASE_URL: ""
+      PGHOST: ""
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate narrow seal filename by exact official Supabase CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -z "${SUPABASE_ACCESS_TOKEN:-}" && -z "${DATABASE_URL:-}" ]]
+          cd "$RUNNER_TEMP"
+          mkdir r48-offline-cli
+          cd r48-offline-cli
+          npx --yes supabase@2.81.3 --version
+          npx --yes supabase@2.81.3 migration new --help >/dev/null
+          npx --yes supabase@2.81.3 init
+          npx --yes supabase@2.81.3 migration new r48_narrow_release_seal
+          find supabase/migrations -maxdepth 1 -name '*.sql' -printf 'R48_OFFICIAL_SHELL=%f\n'
