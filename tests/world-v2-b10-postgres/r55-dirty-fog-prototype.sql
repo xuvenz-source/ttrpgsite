@@ -300,6 +300,31 @@ BEGIN
   forge_visibility.r55_try_authorized_frame(test_map) IS NULL
   AND forge_visibility.r55_refresh_for_caller(test_map) IS NULL,
   'R55-18 postrevocation fresh reads fail closed even with cached row');
+
+ -- A still-authorized player's cached frame must also fail closed when
+ -- token-owner permissions change before a new movement is published.
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ UPDATE forge_visibility.navigation_permission_generations SET generation=generation+1
+ WHERE map_id=test_map;
+ PERFORM public.b08_assert(
+  forge_visibility.r55_try_authorized_frame(test_map) IS NULL,
+  'R55-19 changed permission generation rejects stale signed frame');
+ first_view:=forge_visibility.r55_refresh_for_caller(test_map);
+ PERFORM public.b08_assert(
+  first_view IS NOT NULL AND (first_view->>'permissionGeneration')::bigint=2,
+  'R55-20 refreshed signed fog uses the current permission generation');
+
+ -- Published scene changes likewise invalidate an old frame even without
+ -- a new token movement; geometry itself is never sent through dirty tick.
+ UPDATE public.map_environments SET revision=revision+1 WHERE map_id=test_map;
+ PERFORM public.b08_assert(
+  forge_visibility.r55_try_authorized_frame(test_map) IS NULL,
+  'R55-21 changed environment revision rejects stale signed frame');
+ first_view:=forge_visibility.r55_refresh_for_caller(test_map);
+ PERFORM public.b08_assert(
+  first_view IS NOT NULL AND
+  (first_view->>'navigationEnvironmentRevision')::bigint=2,
+  'R55-22 refreshed fog carries current published environment revision');
 END $r55_candidate_test$;
 
 -- Eight samples per group, local SQL-only; comparison is order-confounded
@@ -328,6 +353,6 @@ BEGIN
   AND to_regclass('forge_visibility.viewer_fog_snapshots') IS NULL
   AND (SELECT x=1 AND y=1 FROM public.map_tokens WHERE id='00000000-0000-4000-8000-000000000101')
   AND (SELECT count(*)=0 FROM forge_world_v2.motion_sessions),
-  'R55-19 all prototype functions/tables/roles/positions rolled back');
+  'R55-23 all prototype functions/tables/roles/positions rolled back');
  RAISE NOTICE 'R55 isolated only: original vs dirty Commit and guarded authenticated recovery tested; RELEASE NO-GO';
 END $r55_postrollback$;
