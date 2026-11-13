@@ -165,6 +165,9 @@ END $r56_baseline$;
 ALTER FUNCTION forge_visibility.authorized_viewer_fog_frame(uuid,uuid)
  RENAME TO r56_original_fog_frame;
 \i tests/world-v2-b10-postgres/r56-synchronous-fog-fastpath-candidate.sql
+-- A public (non-secret) CI source fingerprint; R57 seals this exact generated body.
+SELECT 'R57_OPTIMIZED_SOURCE_MD5' AS diagnostic_key,
+ md5(pg_get_functiondef(to_regprocedure('forge_visibility.authorized_viewer_fog_frame(uuid,uuid)'))) AS diagnostic_md5;
 
 DO $r56_equivalence$
 DECLARE
