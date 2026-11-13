@@ -134,7 +134,7 @@ function copyPending(root,dir){
 }
 
 export function runR60ReadOnlyLinkedCli({
- workspace,freshSqlDigestsFile,readOnlyReceiptFile,now=new Date(),
+ workspace,freshSqlDigestsFile,readOnlyReceiptFile,now=undefined,
  completionClock=systemClock,
  env=process.env,invoke=runOfficialCli,
  verifyFetchedHistory=exactFetchedHistory,
@@ -142,6 +142,7 @@ export function runR60ReadOnlyLinkedCli({
  verifyEvidence=validateR51CliEvidence
 }={}){
  safeEnv(env);
+ const startedAt=now??systemClock();
  const scope=inspectR18IsolatedWorkspace(workspace,{env});
  const root=realpathSync(ROOT);
  // Fail BEFORE any real CLI network call if local Supabase config might
@@ -158,7 +159,7 @@ export function runR60ReadOnlyLinkedCli({
  const rows=Array.isArray(historical)?historical:historical?.rows;
  const receipt=privateJson(readOnlyReceiptFile,{repoRoot:root,maxBytes:150000});
  // This MUST run before any linked CLI command and is only valid for 15m.
- const r50=validateR50ReadOnlyReceipt({receipt,now,repoRoot:root});
+ const r50=validateR50ReadOnlyReceipt({receipt,now:startedAt,repoRoot:root});
  if(r50?.decision!=='NO_GO'||r50?.safeToApply!==false||
     r50.matchedRemoteHistory!==83||r50.matchedAuthorityFunctions!==10)
   fail('fresh current 83-history authority receipt unavailable');
@@ -191,7 +192,7 @@ export function runR60ReadOnlyLinkedCli({
  function checkCurrentAuthority(){
   const completedAt=completionClock();
   if(!(completedAt instanceof Date)||!Number.isFinite(completedAt.getTime())||
-     completedAt.getTime()<new Date(now).getTime())
+     completedAt.getTime()<new Date(startedAt).getTime())
    fail('invalid or regressed receipt clock');
   const current=validateR50ReadOnlyReceipt({receipt,now:completedAt,repoRoot:root});
   if(current?.decision!=='NO_GO'||current.safeToApply!==false||
@@ -213,7 +214,8 @@ export function runR60ReadOnlyLinkedCli({
     report.pendingVersions!==8||report.verifiedDryRunOutputShape!==true)
   fail('official CLI transcript or current authority history did not validate');
  // A unit-test CLI or verifier must never claim actual authenticated proof.
- const operatorEvidence=invoke===runOfficialCli &&
+ const operatorEvidence=now===undefined && env===process.env &&
+  invoke===runOfficialCli &&
   verifyFetchedHistory===exactFetchedHistory &&
   verifyWorkspace===validateR49LinkedWorkspace &&
   verifyEvidence===validateR51CliEvidence &&
