@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'tests/world-v2-b10-postgres/r54-*'
+      - 'tests/world-v2-b10-postgres/r55-*'
       - 'tests/world-v2-b10-postgres/rehearse-r05.sh'
       - '.github/workflows/world-v2-r18-54-fog-commit.yml'
   workflow_dispatch:
