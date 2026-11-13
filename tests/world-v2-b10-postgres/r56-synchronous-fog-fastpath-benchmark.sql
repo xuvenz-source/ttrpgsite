@@ -121,7 +121,7 @@ CREATE TEMP TABLE r56_frame_samples (
 DO $r56_baseline$
 DECLARE
  actor uuid:='00000000-0000-4000-8000-000000000011';
- map_id uuid:='00000000-0000-4000-8000-000000000021';
+ test_map uuid:='00000000-0000-4000-8000-000000000021';
  piece_id uuid:='00000000-0000-4000-8000-000000000101';
  sel jsonb:=jsonb_build_array(jsonb_build_object('kind','token','id',piece_id));
  a jsonb;b jsonb;c jsonb;sid uuid;n integer;before_rev bigint;
@@ -130,17 +130,17 @@ BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
  PERFORM public.b08_assert(
-  jsonb_array_length(forge_visibility.authorized_viewer_fog_frame(map_id,actor)->'visible')>0,
+  jsonb_array_length(forge_visibility.authorized_viewer_fog_frame(test_map,actor)->'visible')>0,
   'R56-01 original source-authorized fog has visible cells');
  FOR n IN 1..8 LOOP
-  a:=public.begin_world_motion_v2(map_id,sel,'{"x":1,"y":1}'::jsonb,'drag',1,1,false);
+  a:=public.begin_world_motion_v2(test_map,sel,'{"x":1,"y":1}'::jsonb,'drag',1,1,false);
   sid:=(a->>'sessionId')::uuid;
   b:=public.advance_world_motion_v2(sid,1,
    '{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb,1,1);
   PERFORM public.b08_assert(b->'accepted'='[{"x":2,"y":1}]'::jsonb,
    'R56-02 original Advance server-authorized');
   SELECT coalesce(sum(revision),0) INTO before_rev
-  FROM public.map_viewer_visibility_ticks WHERE map_id=map_id;
+  FROM public.map_viewer_visibility_ticks WHERE map_id=test_map;
   t0:=clock_timestamp();
   c:=public.commit_world_motion_v2(sid,2,'{"x":2,"y":1}'::jsonb,1,1);
   dt:=extract(epoch FROM clock_timestamp()-t0)*1000;
@@ -148,8 +148,8 @@ BEGIN
    'R56-03 original canonical Commit keeps approved endpoint');
   INSERT INTO pg_temp.r56_commit_samples
   SELECT 'original',n,dt,coalesce(sum(revision),0)-before_rev
-   FROM public.map_viewer_visibility_ticks WHERE map_id=map_id;
-  a:=public.begin_world_motion_v2(map_id,sel,'{"x":2,"y":1}'::jsonb,'drag',1,1,false);
+   FROM public.map_viewer_visibility_ticks WHERE map_id=test_map;
+  a:=public.begin_world_motion_v2(test_map,sel,'{"x":2,"y":1}'::jsonb,'drag',1,1,false);
   sid:=(a->>'sessionId')::uuid;
   b:=public.advance_world_motion_v2(sid,1,
    '{"x":2,"y":1}'::jsonb,'[{"x":1,"y":1}]'::jsonb,1,1);
@@ -170,7 +170,7 @@ DO $r56_equivalence$
 DECLARE
  actor uuid:='00000000-0000-4000-8000-000000000011';
  viewer uuid:='00000000-0000-4000-8000-000000000012';
- map_id uuid:='00000000-0000-4000-8000-000000000021';
+ test_map uuid:='00000000-0000-4000-8000-000000000021';
  cfg record;who uuid;expected jsonb;actual jsonb;
  baseline_fail boolean;optimized_fail boolean;
  t0 timestamptz;i integer;
@@ -201,10 +201,10 @@ BEGIN
   ('malformed-type', '{"objects":[{"name":"untyped"}],"ambient":25,"fog":{"partyShared":false}}'::jsonb)
  ) AS case_data(label,scene)
  LOOP
-  UPDATE public.map_environments SET live=cfg.scene WHERE map_id=map_id;
+  UPDATE public.map_environments SET live=cfg.scene WHERE map_id=test_map;
   FOREACH who IN ARRAY ARRAY[actor,viewer] LOOP
-   expected:=forge_visibility.r56_original_fog_frame(map_id,who);
-   actual:=forge_visibility.authorized_viewer_fog_frame(map_id,who);
+   expected:=forge_visibility.r56_original_fog_frame(test_map,who);
+   actual:=forge_visibility.authorized_viewer_fog_frame(test_map,who);
    PERFORM public.b08_assert(expected IS NOT DISTINCT FROM actual,
     'R56-06 exact authorized fog/LOS/exploration equivalence: '||cfg.label);
   END LOOP;
@@ -213,48 +213,48 @@ BEGIN
  UPDATE public.map_environments SET live=jsonb_build_object(
   'objects',(SELECT jsonb_agg(jsonb_build_object('type','decoration'))
              FROM generate_series(1,121)), 'ambient',25,
-  'fog',jsonb_build_object('partyShared',false)) WHERE map_id=map_id;
- expected:=forge_visibility.r56_original_fog_frame(map_id,actor);
- actual:=forge_visibility.authorized_viewer_fog_frame(map_id,actor);
+  'fog',jsonb_build_object('partyShared',false)) WHERE map_id=test_map;
+ expected:=forge_visibility.r56_original_fog_frame(test_map,actor);
+ actual:=forge_visibility.authorized_viewer_fog_frame(test_map,actor);
  PERFORM public.b08_assert(
   expected IS NOT DISTINCT FROM actual AND
   jsonb_array_length(actual->'visible')=0,
   'R56-07 over-limit 121 object scene never becomes visible');
  -- Enabled portable torch conservatively disables the no-lights shortcut.
  UPDATE public.map_environments SET live=
-  '{"objects":[],"ambient":0,"fog":{"partyShared":false}}'::jsonb WHERE map_id=map_id;
+  '{"objects":[],"ambient":0,"fog":{"partyShared":false}}'::jsonb WHERE map_id=test_map;
  INSERT INTO public.campaign_tool_map_tokens
- (issue_id,campaign_id,map_id,name,icon,kind,x,y,light_bright,light_dim,light_enabled)
+ (issue_id,campaign_id,test_map,name,icon,kind,x,y,light_bright,light_dim,light_enabled)
  VALUES ('00000000-0000-4000-8000-000000000909'::uuid,
-  '00000000-0000-4000-8000-000000000001'::uuid,map_id,
+  '00000000-0000-4000-8000-000000000001'::uuid,test_map,
   'fixture torch','torch','torch',8,8,40,20,true);
- expected:=forge_visibility.r56_original_fog_frame(map_id,actor);
- actual:=forge_visibility.authorized_viewer_fog_frame(map_id,actor);
+ expected:=forge_visibility.r56_original_fog_frame(test_map,actor);
+ actual:=forge_visibility.authorized_viewer_fog_frame(test_map,actor);
  PERFORM public.b08_assert(expected IS NOT DISTINCT FROM actual,
   'R56-08 torch lighting frame exactly preserved');
  DELETE FROM public.campaign_tool_map_tokens
  WHERE issue_id='00000000-0000-4000-8000-000000000909'::uuid;
 
  UPDATE public.map_environments SET live=
-  '{"objects":[],"ambient":25,"fog":{"partyShared":false}}'::jsonb WHERE map_id=map_id;
+  '{"objects":[],"ambient":25,"fog":{"partyShared":false}}'::jsonb WHERE map_id=test_map;
  -- Alternating order of 16 calls controls part of the cache/order bias.
  FOR i IN 1..16 LOOP
   IF i%2=0 THEN
    t0:=clock_timestamp();
-   PERFORM forge_visibility.authorized_viewer_fog_frame(map_id,actor);
+   PERFORM forge_visibility.authorized_viewer_fog_frame(test_map,actor);
    INSERT INTO pg_temp.r56_frame_samples
     VALUES('fastpath',i,extract(epoch FROM clock_timestamp()-t0)*1000);
    t0:=clock_timestamp();
-   PERFORM forge_visibility.r56_original_fog_frame(map_id,actor);
+   PERFORM forge_visibility.r56_original_fog_frame(test_map,actor);
    INSERT INTO pg_temp.r56_frame_samples
     VALUES('original',i,extract(epoch FROM clock_timestamp()-t0)*1000);
   ELSE
    t0:=clock_timestamp();
-   PERFORM forge_visibility.r56_original_fog_frame(map_id,actor);
+   PERFORM forge_visibility.r56_original_fog_frame(test_map,actor);
    INSERT INTO pg_temp.r56_frame_samples
     VALUES('original',i,extract(epoch FROM clock_timestamp()-t0)*1000);
    t0:=clock_timestamp();
-   PERFORM forge_visibility.authorized_viewer_fog_frame(map_id,actor);
+   PERFORM forge_visibility.authorized_viewer_fog_frame(test_map,actor);
    INSERT INTO pg_temp.r56_frame_samples
     VALUES('fastpath',i,extract(epoch FROM clock_timestamp()-t0)*1000);
   END IF;
@@ -264,7 +264,7 @@ END $r56_equivalence$;
 DO $r56_candidate_commit$
 DECLARE
  actor uuid:='00000000-0000-4000-8000-000000000011';
- map_id uuid:='00000000-0000-4000-8000-000000000021';
+ test_map uuid:='00000000-0000-4000-8000-000000000021';
  piece_id uuid:='00000000-0000-4000-8000-000000000101';
  sel jsonb:=jsonb_build_array(jsonb_build_object('kind','token','id',piece_id));
  a jsonb;b jsonb;c jsonb;sid uuid;n integer;before_rev bigint;
@@ -273,14 +273,14 @@ BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
  FOR n IN 1..8 LOOP
-  a:=public.begin_world_motion_v2(map_id,sel,'{"x":1,"y":1}'::jsonb,'drag',1,1,false);
+  a:=public.begin_world_motion_v2(test_map,sel,'{"x":1,"y":1}'::jsonb,'drag',1,1,false);
   sid:=(a->>'sessionId')::uuid;
   b:=public.advance_world_motion_v2(sid,1,
    '{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb,1,1);
   PERFORM public.b08_assert(b->'accepted'='[{"x":2,"y":1}]'::jsonb,
    'R56-09 optimized Advance still validates server-side');
   SELECT coalesce(sum(revision),0) INTO before_rev
-  FROM public.map_viewer_visibility_ticks WHERE map_id=map_id;
+  FROM public.map_viewer_visibility_ticks WHERE map_id=test_map;
   t0:=clock_timestamp();
   c:=public.commit_world_motion_v2(sid,2,'{"x":2,"y":1}'::jsonb,1,1);
   dt:=extract(epoch FROM clock_timestamp()-t0)*1000;
@@ -290,8 +290,8 @@ BEGIN
    'R56-10 optimized canonical Commit returns original endpoint');
   INSERT INTO pg_temp.r56_commit_samples
   SELECT 'fastpath',n,dt,coalesce(sum(revision),0)-before_rev
-  FROM public.map_viewer_visibility_ticks WHERE map_id=map_id;
-  a:=public.begin_world_motion_v2(map_id,sel,'{"x":2,"y":1}'::jsonb,'drag',1,1,false);
+  FROM public.map_viewer_visibility_ticks WHERE map_id=test_map;
+  a:=public.begin_world_motion_v2(test_map,sel,'{"x":2,"y":1}'::jsonb,'drag',1,1,false);
   sid:=(a->>'sessionId')::uuid;
   b:=public.advance_world_motion_v2(sid,1,
    '{"x":2,"y":1}'::jsonb,'[{"x":1,"y":1}]'::jsonb,1,1);
@@ -308,8 +308,8 @@ BEGIN
  UPDATE public.map_environments SET live=
  '{"objects":[{"type":"wall","blocksMovement":true,
  "points":[{"x":2.5,"y":0},{"x":2.5,"y":10}]}],
- "ambient":25,"fog":{"partyShared":false}}'::jsonb WHERE map_id=map_id;
- a:=public.begin_world_motion_v2(map_id,sel,'{"x":1,"y":1}'::jsonb,'drag',1,1,false);
+ "ambient":25,"fog":{"partyShared":false}}'::jsonb WHERE map_id=test_map;
+ a:=public.begin_world_motion_v2(test_map,sel,'{"x":1,"y":1}'::jsonb,'drag',1,1,false);
  sid:=(a->>'sessionId')::uuid;
  b:=public.advance_world_motion_v2(sid,1,
   '{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb,1,1);
