@@ -3,6 +3,16 @@
 -- Disposable PostgreSQL 17 TEST FIXTURE ONLY. Do not include in migrations.
 -- Security assertions check each canonical pg_get_functiondef MD5 after load.
 \set ON_ERROR_STOP on
+-- Direct invocation of captured SECURITY DEFINER source outside the
+-- disposable test fixture is explicitly forbidden.
+DO $r54_original_source_guard$
+BEGIN
+ IF current_database()<>'world_v2_b10_r05'
+ OR to_regprocedure('public.b08_assert(boolean,text)') IS NULL
+ OR to_regclass('forge_visibility.viewer_fog_snapshots') IS NULL
+ THEN RAISE EXCEPTION 'R54 refuses non-fixture database or missing isolated test schema';
+ END IF;
+END $r54_original_source_guard$;
 -- R54 pinned cross2 65c4bff8aaa6ecf38e335a44e95d874e
 CREATE OR REPLACE FUNCTION forge_visibility.cross2(ax double precision, ay double precision, bx double precision, b_y double precision)
  RETURNS double precision
