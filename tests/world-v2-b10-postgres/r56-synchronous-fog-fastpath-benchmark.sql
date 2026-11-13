@@ -271,9 +271,11 @@ DECLARE
  actor uuid:='00000000-0000-4000-8000-000000000011';
  test_map uuid:='00000000-0000-4000-8000-000000000021';
  piece_id uuid:='00000000-0000-4000-8000-000000000101';
+ viewer2 uuid:='00000000-0000-4000-8000-000000000012';
  sel jsonb:=jsonb_build_array(jsonb_build_object('kind','token','id',piece_id));
  a jsonb;b jsonb;c jsonb;sid uuid;n integer;before_rev bigint;
  t0 timestamptz;dt double precision;
+ source_rejected boolean:=false;candidate_rejected boolean:=false;
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
@@ -323,6 +325,20 @@ BEGIN
   AND NOT(b ? 'wallGeometry') AND NOT(b ? 'scene')
   AND (SELECT x=1 AND y=1 FROM public.map_tokens WHERE id=piece_id),
   'R56-13 solid wall still blocks and never leaks private geometry');
+ -- The candidate must preserve the unchanged signed membership check.
+ UPDATE public.campaign_members SET role='spectator'
+ WHERE campaign_id='00000000-0000-4000-8000-000000000001'::uuid
+ AND user_id=viewer2;
+ BEGIN
+  PERFORM forge_visibility.r56_original_fog_frame(test_map,viewer2);
+ EXCEPTION WHEN others THEN source_rejected:=true;
+ END;
+ BEGIN
+  PERFORM forge_visibility.authorized_viewer_fog_frame(test_map,viewer2);
+ EXCEPTION WHEN others THEN candidate_rejected:=true;
+ END;
+ PERFORM public.b08_assert(source_rejected AND candidate_rejected,
+  'R56-14 revoked viewer denied by original and optimized sight');
 END $r56_candidate_commit$;
 
 SELECT variant,count(*) n,
@@ -346,6 +362,6 @@ BEGIN
   (SELECT x=1 AND y=1 FROM public.map_tokens
    WHERE id='00000000-0000-4000-8000-000000000101'::uuid) AND
   (SELECT count(*)=0 FROM forge_world_v2.motion_sessions),
-  'R56-14 full fixture rollback reverts authorized frames and canonical position');
+  'R56-15 full fixture rollback reverts authorized frames and canonical position');
  RAISE NOTICE 'R56 isolated only: ORIGINAL vs guarded synchronous fastpath and security equivalence; RELEASE NO-GO';
 END $r56_clean$;
