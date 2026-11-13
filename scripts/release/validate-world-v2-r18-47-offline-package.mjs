@@ -5,9 +5,9 @@
  */
 import {createHash} from 'node:crypto';
 import {readFileSync,readdirSync,lstatSync,realpathSync} from 'node:fs';
-import {join,resolve} from 'node:path';
+import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-const HERE=resolve(fileURLToPath(import.meta.url),'../..');
+const HERE=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const blob=s=>{
  const b=Buffer.from(s,'utf8');
  return createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex');
