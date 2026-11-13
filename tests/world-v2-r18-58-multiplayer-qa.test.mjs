@@ -94,7 +94,7 @@ test('R18-58 DM preview, same old build, no signed-in declaration or low event c
  assert.equal(verify(x).roleResults.p1.traceCoverage,false);
 });
 test('R18-58 duplicate role, clone capture, mixed run, stale time and impossible future refuse',()=>{
- invalid(x=>{x[1].role='dm'},/duplicate role/);
+ invalid(x=>{x[1].role='dm';x[1].checks={...x[0].checks}},/duplicate role/);
  invalid(x=>{x[2].captureTag=x[0].captureTag},/duplicate role or capture tag/);
  invalid(x=>{x[2].runCode='R58-20261113-999'},/different test runs/);
  invalid(x=>{x[2].capturedAt='2026-11-13T09:00:00.000Z'},/over one hour apart/);
