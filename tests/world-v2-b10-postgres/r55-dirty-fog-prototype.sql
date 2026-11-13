@@ -112,6 +112,10 @@ CREATE TEMP TABLE r55_samples(
  commit_ms double precision NOT NULL CHECK(commit_ms>=0),
  revision_delta bigint NOT NULL CHECK(revision_delta>=0),
  PRIMARY KEY(mode,n));
+CREATE TEMP TABLE r55_refresh_samples(
+ n integer PRIMARY KEY CHECK(n BETWEEN 1 AND 8),
+ p1_refresh_ms double precision NOT NULL CHECK(p1_refresh_ms>=0),
+ p2_refresh_ms double precision NOT NULL CHECK(p2_refresh_ms>=0));
 
 DO $r55_original_run$
 DECLARE
@@ -178,6 +182,7 @@ DECLARE
  first_view jsonb;second_view jsonb;
  seq_before bigint;seq_after bigint;
  started timestamptz;n integer;
+ p1_ms double precision;p2_ms double precision;
 BEGIN
  PERFORM public.b08_assert(
   NOT has_function_privilege('authenticated','forge_visibility.r55_refresh_for_caller(uuid)','EXECUTE')
@@ -230,7 +235,9 @@ BEGIN
    b->>'blocked'='false' AND c->'endpoint'='{"x":1,"y":1}'::jsonb
    AND forge_visibility.r55_try_authorized_frame(test_map) IS NULL,
    'R55-09 second legal motion remains pending/dirty; no stale exposure');
+  started:=clock_timestamp();
   first_view:=forge_visibility.r55_refresh_for_caller(test_map);
+  p1_ms:=extract(epoch FROM clock_timestamp()-started)*1000;
   PERFORM public.b08_assert(
    first_view IS NOT NULL AND (first_view->>'mode')='snapshot'
    AND first_view->>'protocolVersion'='2'
@@ -246,7 +253,10 @@ BEGIN
   PERFORM public.b08_assert(seq_before=seq_after,
    'R55-12 duplicate refresh does not re-publish or recompute');
   PERFORM set_config('request.jwt.claim.sub',viewer2::text,true);
+  started:=clock_timestamp();
   second_view:=forge_visibility.r55_refresh_for_caller(test_map);
+  p2_ms:=extract(epoch FROM clock_timestamp()-started)*1000;
+  INSERT INTO pg_temp.r55_refresh_samples VALUES(n,p1_ms,p2_ms);
   PERFORM public.b08_assert(
    second_view IS NOT NULL AND (second_view->>'mode')='snapshot'
    AND second_view->'visible' IS DISTINCT FROM first_view->'visible',
@@ -294,13 +304,20 @@ END $r55_candidate_test$;
 
 -- Eight samples per group, local SQL-only; comparison is order-confounded
 -- because original is run before candidate, and schema has only two viewers.
-SELECT mode,count(*) samples,
- round(avg(commit_ms)::numeric,3) mean_sql_commit_ms,
- round((percentile_cont(.5) WITHIN GROUP(ORDER BY commit_ms))::numeric,3) p50_ms,
- round((percentile_cont(.95) WITHIN GROUP(ORDER BY commit_ms))::numeric,3) p95_ms,
- round(max(commit_ms)::numeric,3) max_ms,
- min(revision_delta) min_viewer_revision_bumps
-FROM pg_temp.r55_samples GROUP BY mode ORDER BY mode;
+SELECT s.mode,count(*) samples,
+ round(avg(s.commit_ms)::numeric,3) mean_sql_commit_ms,
+ round((percentile_cont(.5) WITHIN GROUP(ORDER BY s.commit_ms))::numeric,3) p50_ms,
+ round((percentile_cont(.95) WITHIN GROUP(ORDER BY s.commit_ms))::numeric,3) p95_ms,
+ round(max(s.commit_ms)::numeric,3) max_ms,
+ round(avg(coalesce(fr.p1_refresh_ms+fr.p2_refresh_ms,0))::numeric,3) mean_refresh_ms,
+ round(avg(s.commit_ms+coalesce(fr.p1_refresh_ms+fr.p2_refresh_ms,0))::numeric,3) mean_commit_plus_refresh_ms,
+ round((percentile_cont(.5) WITHIN GROUP(
+  ORDER BY s.commit_ms+coalesce(fr.p1_refresh_ms+fr.p2_refresh_ms,0)))::numeric,3)
+  p50_commit_plus_refresh_ms,
+ min(s.revision_delta) min_viewer_revision_bumps
+FROM pg_temp.r55_samples s
+LEFT JOIN pg_temp.r55_refresh_samples fr ON s.mode='dirty-only' AND fr.n=s.n
+GROUP BY s.mode ORDER BY s.mode;
 ROLLBACK;
 DO $r55_postrollback$
 BEGIN
