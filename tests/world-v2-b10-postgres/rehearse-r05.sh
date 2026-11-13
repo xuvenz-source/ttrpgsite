@@ -39,5 +39,8 @@ r05_psql -f /tmp/world_v2_b10_r05_original_commit.sql
 # Benchmark is wrapped in BEGIN / ROLLBACK with a post-rollback assertion.
 # The fixture's private observer publisher is intentionally test-only.
 r05_psql -f tests/world-v2-b10-postgres/authority-throughput-r18-42.sql
+# R18-54: source-real, real-trigger fog-on/off canonical Commit benchmark.
+# Runs inside BEGIN/ROLLBACK and checks all test-time DDL/data disappear.
+r05_psql -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
 r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql
 echo 'B10-R05 PASS: isolated release migration, atomic rollback and manual after-commit restoration'
