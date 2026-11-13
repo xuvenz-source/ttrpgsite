@@ -60,7 +60,7 @@ test('R18-51 refuses non-CLI or ambiguous list formatting and detached remote ro
  assert.throws(()=>l({text:list()+'\nERROR: migration history mismatch'}),/contains an error/);
 });
 test('R18-51 refuses extra/missing/reordered SQL, failed execution or fake dry-run',()=>{
- assert.throws(()=>d({text:dry().replace(/dry[\\s-]*run/gi,'CHECK ONLY')}),/missing explicit dry-run/);
+ assert.throws(()=>d({text:dry().replace(/dry[\s-]*run/gi,'CHECK ONLY')}),/missing explicit dry-run/);
  assert.throws(()=>d({text:dry().replace('no migrations were pushed','applying migration')}),/actual migration execution/);
  assert.throws(()=>d({text:dry().replace(files[2],'20261113021015_r47_step_bbox_prefilter.sql')}),/exactly eight reviewed/);
  assert.throws(()=>d({text:dry().replace(' • '+files[4],'')}),/exactly eight reviewed/);
