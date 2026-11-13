@@ -197,6 +197,11 @@ BEGIN
   ('door', '{"objects":[{"type":"door","state":"closed","points":[{"x":6.5,"y":0},{"x":6.5,"y":16}]}],"ambient":25,"fog":{"partyShared":false}}'::jsonb),
   ('window', '{"objects":[{"type":"window","points":[{"x":6.5,"y":0},{"x":6.5,"y":16}]}],"ambient":25,"fog":{"partyShared":false}}'::jsonb),
   ('light', '{"objects":[{"type":"light","enabled":true,"x":6,"y":5,"bright":20,"dim":15}],"ambient":0,"fog":{"partyShared":false}}'::jsonb),
+  ('wall-lit', '{"objects":[{"type":"wall","points":[{"x":6.5,"y":0},{"x":6.5,"y":16}]},{"type":"light","enabled":true,"x":6,"y":5,"bright":20,"dim":15}],"ambient":0,"fog":{"partyShared":false}}'::jsonb),
+  ('bright-walled', '{"objects":[{"type":"wall","points":[{"x":6.5,"y":0},{"x":6.5,"y":16}]}],"ambient":75,"fog":{"partyShared":false}}'::jsonb),
+  ('disabled-light', '{"objects":[{"type":"light","enabled":false,"x":6,"y":5,"bright":20,"dim":15}],"ambient":0,"fog":{"partyShared":false}}'::jsonb),
+  ('unknown-decoration', '{"objects":[{"type":"decoration","x":4,"y":4}],"ambient":25,"fog":{"partyShared":false}}'::jsonb),
+  ('malformed-null-object', '{"objects":[null],"ambient":25,"fog":{"partyShared":false}}'::jsonb),
   ('malformed-wall', '{"objects":[{"type":"wall","points":"invalid"}],"ambient":25,"fog":{"partyShared":false}}'::jsonb),
   ('malformed-type', '{"objects":[{"name":"untyped"}],"ambient":25,"fog":{"partyShared":false}}'::jsonb)
  ) AS case_data(label,scene)
