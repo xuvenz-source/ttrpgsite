@@ -17,7 +17,7 @@ test('R18-55 prototype executes only in disposable R05 PG17 sandbox, never produ
  assert.match(fixture,/current_database\(\)<>'world_v2_b10_r05'/);
  assert.match(fixture,/^BEGIN;$/m);
  assert.match(fixture,/^ROLLBACK;$/m);
- assert.match(fixture,/R55-19 all prototype functions\/tables\/roles\/positions rolled back/);
+ assert.match(fixture,/R55-23 all prototype functions\/tables\/roles\/positions rolled back/);
  assert.match(runner,/WORLD_V2_B10_ISOLATED/);
  assert.match(runner,/PGHOSTADDR/);
  assert.doesNotMatch(candidate+fixture+runner,/\bsupabase\s+(?:db\s+push|migration\s+repair|link)\b/i);
@@ -54,6 +54,10 @@ test('R18-55 never trusts a supplied recipient or mere authenticated role for pr
  assert.doesNotMatch(candidate,/r55_refresh_for_caller\(p_map uuid,\s*p_viewer uuid/);
  assert.match(fixture,/R55-14 unrelated actor cannot request someone else/);
  assert.match(fixture,/R55-18 postrevocation fresh reads fail closed/);
+ assert.match(candidate,/permissionGeneration/);
+ assert.match(candidate,/navigationEnvironmentRevision/);
+ assert.match(fixture,/R55-19 changed permission generation rejects stale signed frame/);
+ assert.match(fixture,/R55-21 changed environment revision rejects stale signed frame/);
 });
 test('R18-55 prevents duplicate refresh or stale frame replay under sequential moves',()=>{
  assert.match(fixture,/R55-11 idempotent same-viewer refresh/);
