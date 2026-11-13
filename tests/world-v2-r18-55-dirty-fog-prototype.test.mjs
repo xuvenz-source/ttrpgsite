@@ -63,6 +63,9 @@ test('R18-55 prevents duplicate refresh or stale frame replay under sequential m
  assert.match(candidate,/\(frame->>'protocolVersion'\) IS DISTINCT FROM '2'/);
  assert.match(candidate,/EXCEPTION WHEN others THEN/);
  assert.match(fixture,/R55-15 exactly 8\+8 original\/candidate/);
+ assert.match(fixture,/r55_refresh_samples/);
+ assert.match(fixture,/p50_commit_plus_refresh_ms/);
+ assert.match(fixture,/mean_commit_plus_refresh_ms/);
 });
 test('R18-55 prototype adds no public privileged API or browser role grants',()=>{
  assert.match(candidate,/REVOKE ALL ON FUNCTION forge_visibility\.r55_refresh_for_caller\(uuid\)/);
