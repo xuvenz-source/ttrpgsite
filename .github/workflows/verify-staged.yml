@@ -45,3 +45,15 @@ jobs:
         run: deno check supabase/functions/username-register/index.ts
       - name: Type-check username-update Supabase Edge Function
         run: deno check supabase/functions/username-update/index.ts
+      - name: R18-47 generate official CLI versions offline (scratch directory only)
+        if: github.ref == 'refs/heads/stage/world-v2-b10-r18-47-cli-isolated-release-2026-11-13'
+        run: bash scripts/release/generate-world-v2-r18-47-offline-cli-shells.sh
+      - name: Archive official empty migration shells and manifest (no credentials)
+        if: github.ref == 'refs/heads/stage/world-v2-b10-r18-47-cli-isolated-release-2026-11-13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: r18-47-pinned-cli-empty-shells
+          path: |
+            ${{ runner.temp }}/b10-r18-47-offline-cli/manifest.json
+            ${{ runner.temp }}/b10-r18-47-offline-cli/supabase/migrations/*.sql
+          retention-days: 7
