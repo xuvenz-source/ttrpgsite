@@ -354,6 +354,59 @@ BEGIN
   'R57-10 exact original source and private privileges restored');
 END $r57_restored$;
 
+-- Source-drift attack: correct GUC/history, altered function properties.
+-- Actual operator DO must reject and leave no authorized candidate in place.
+SAVEPOINT r57_source_drift;
+ALTER FUNCTION forge_visibility.authorized_viewer_fog_frame(uuid,uuid) COST 999;
+SET LOCAL forge.r18_57_release_authorization='sealed_post_83_plus_8_candidate_only';
+\set ON_ERROR_STOP off
+\i supabase/candidates/world_v2_r18_57_sync_fog_fastpath_optin.sql
+\set ON_ERROR_STOP on
+\if :ERROR
+\echo 'R57 PASS: source-drift application rejected'
+\else
+SELECT 1/0 AS r57_source_drift_must_refuse;
+\endif
+ROLLBACK TO SAVEPOINT r57_source_drift;
+
+-- History-drift attack: the exact R18-48 seal version has gone missing.
+SAVEPOINT r57_history_drift;
+DELETE FROM supabase_migrations.schema_migrations
+ WHERE version='20261113024116';
+SET LOCAL forge.r18_57_release_authorization='sealed_post_83_plus_8_candidate_only';
+\set ON_ERROR_STOP off
+\i supabase/candidates/world_v2_r18_57_sync_fog_fastpath_optin.sql
+\set ON_ERROR_STOP on
+\if :ERROR
+\echo 'R57 PASS: missing release migration rejected'
+\else
+SELECT 1/0 AS r57_history_drift_must_refuse;
+\endif
+ROLLBACK TO SAVEPOINT r57_history_drift;
+
+-- Wrong approval attack: separate authorization GUC must be exact.
+SAVEPOINT r57_missing_approval;
+SET LOCAL forge.r18_57_release_authorization='unauthorized';
+\set ON_ERROR_STOP off
+\i supabase/candidates/world_v2_r18_57_sync_fog_fastpath_optin.sql
+\set ON_ERROR_STOP on
+\if :ERROR
+\echo 'R57 PASS: incorrect approval rejected'
+\else
+SELECT 1/0 AS r57_wrong_approval_must_refuse;
+\endif
+ROLLBACK TO SAVEPOINT r57_missing_approval;
+
+DO $r57_negative_gates$
+BEGIN
+ PERFORM public.b08_assert(
+  (SELECT count(*)=91 FROM supabase_migrations.schema_migrations)
+  AND md5(pg_get_functiondef(to_regprocedure(
+   'forge_visibility.authorized_viewer_fog_frame(uuid,uuid)')))=
+   'ee3356af321fec1a3e167a75c6245e86',
+  'R57-11 all three negative operator gates left original source/history intact');
+END $r57_negative_gates$;
+
 ROLLBACK;
 DO $r57_noresidue$
 BEGIN
@@ -364,6 +417,6 @@ BEGIN
   AND (SELECT count(*)=0 FROM forge_world_v2.motion_sessions)
   AND (SELECT x=1 AND y=1 FROM public.map_tokens
    WHERE id='00000000-0000-4000-8000-000000000101'::uuid),
-  'R57-11 no opt-in, rollback or 91-history test residue persisted');
+  'R57-12 no opt-in, rollback or 91-history test residue persisted');
  RAISE NOTICE 'R57: exact 8-viewer signed synchronous fog candidate AND rollback PASS in disposable PG17; RELEASE NO-GO';
 END $r57_noresidue$;
