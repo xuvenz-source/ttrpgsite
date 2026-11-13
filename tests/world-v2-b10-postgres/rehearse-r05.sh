@@ -48,5 +48,8 @@ r05_psql -f tests/world-v2-b10-postgres/r55-dirty-fog-prototype.sql
 # R18-56: compare exact source-real authorized fog frames and synchronous Commit
 # in another rolled-back test transaction. No unreviewed production mutations.
 r05_psql -f tests/world-v2-b10-postgres/r56-synchronous-fog-fastpath-benchmark.sql
+# R18-57: guarded 91-migration-history, eight-viewer wall-heavy opt-in
+# + exact source restoration, all under disposable BEGIN/ROLLBACK.
+r05_psql -f tests/world-v2-b10-postgres/r57-guarded-fog-release-benchmark.sql
 r05_psql -f tests/world-v2-b10-postgres/versioned-release-r05.sql
 echo 'B10-R05 PASS: isolated release migration, atomic rollback and manual after-commit restoration'
