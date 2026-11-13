@@ -190,6 +190,23 @@ BEGIN
   (SELECT min(viewer_delta)>=2 FROM pg_temp.r54_samples WHERE mode='fog-on') AND
   (SELECT max(viewer_delta)=0 FROM pg_temp.r54_samples WHERE mode='fog-off'),
   'R54-08 sixteen paired real commits, distinct fog-on recalculation effects');
+ -- A real source-verified wall must still block the canonical route, and
+ -- an opaque server refusal must not include any private wall geometry.
+ UPDATE public.map_environments SET live=
+  '{"objects":[{"type":"wall","blocksMovement":true,
+   "points":[{"x":2.5,"y":0},{"x":2.5,"y":10}]}],
+   "ambient":25,"fog":{"partyShared":false}}'::jsonb
+ WHERE map_id=test_map;
+ begin_result:=public.begin_world_motion_v2(test_map,selection,
+  '{"x":1,"y":1}'::jsonb,'drag',1,1,false);
+ sid:=(begin_result->>'sessionId')::uuid;
+ adv:=public.advance_world_motion_v2(sid,1,
+  '{"x":1,"y":1}'::jsonb,'[{"x":2,"y":1}]'::jsonb,1,1);
+ PERFORM public.b08_assert(
+  adv->>'blocked'='true' AND jsonb_array_length(adv->'accepted')=0
+  AND NOT(adv ? 'wallGeometry') AND NOT(adv ? 'scene')
+  AND (SELECT x=1 AND y=1 FROM public.map_tokens WHERE id=token),
+  'R54-09 original wall blocks unauthorized crossing without leaking geometry');
  -- Test revocation while all data is in the throwaway transaction.
  UPDATE public.campaign_members SET role='spectator'
  WHERE campaign_id='00000000-0000-4000-8000-000000000001'::uuid AND user_id=viewer2;
@@ -199,7 +216,7 @@ BEGIN
   revoke_rejected:=true;
  END;
  PERFORM public.b08_assert(revoke_rejected,
-  'R54-09 revoked fixture viewer cannot request an authorized fog frame');
+  'R54-10 revoked fixture viewer cannot request an authorized fog frame');
 END $r54_benchmark$;
 -- Advisory 8-paired-sample local SQL-only timings; no network, no live
 -- production token triggers beyond the source-exact selected two; observer
@@ -222,6 +239,6 @@ BEGIN
   (SELECT x=1 AND y=1 FROM public.map_tokens
    WHERE id='00000000-0000-4000-8000-000000000101'::uuid) AND
   (SELECT count(*)=0 FROM forge_world_v2.motion_sessions),
-  'R54-10 rollback removes fog functions/triggers, reverts canonical token and sessions');
+  'R54-11 rollback removes fog functions/triggers, reverts canonical token and sessions');
  RAISE NOTICE 'R18-54 PASS: source-real fog-on vs fog-off one-cell signed Commit; PRIVATE viewer scopes, test-only rollback';
 END $r54_restore$;
