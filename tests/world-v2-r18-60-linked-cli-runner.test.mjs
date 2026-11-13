@@ -104,8 +104,12 @@ test('R18-60 synthetic full command sequence copies exact 83+8 but NEVER approve
  assert.equal(r.sqlPushApproved,false);
  assert.equal(r.productionApproval,false);
  assert.equal(r.independentBrowserDmP1P2Accepted,false);
- assert.equal(r.historicalSqlBodiesValidated,83);
- assert.equal(r.reviewedPendingVersions,8);
+ assert.equal(r.historicalSqlBodiesValidated,0);
+ assert.equal(r.reviewedPendingVersions,0);
+ assert.equal(r.officialReadOnlyCliCommandsExecutedInThisProcess,false);
+ assert.equal(r.linkedCliListAndDryRunValidated,false);
+ assert.equal(r.linkedCliCommandCount,0);
+ assert.equal(r.syntheticTestInputsUsed,true);
  const files=readdirSync(join(opts.workspace,'supabase','migrations'));
  assert.equal(files.length,91);
  assert.equal(files.some(x=>x.includes('step_bbox_prefilter')),false);
@@ -210,4 +214,48 @@ test('R18-60 never prints CLI output/secrets, never invokes SQL or unsafe remote
  assert.match(SRC,/NO-GO: offline\/current linked-CLI evidence unavailable or rejected/);
  assert.doesNotMatch(SRC,/localStorage|sessionStorage|navigator|fetch\(|https\.request|execSync|eval\(/);
  assert.doesNotMatch(SRC,/apply_migration|migration repair|db reset|--include-all|--yes/);
+});
+
+test('R18-61 pre-dry-run freshness recheck blocks expired R50 after slow fetch',t=>{
+ const opts=sandbox(t),calls=[];
+ const late=()=>new Date(Date.now()+16*60000);
+ assert.throws(()=>runR60ReadOnlyLinkedCli({
+  ...opts,invoke:fakeCli({workspace:opts.workspace,log:calls}),
+  verifyFetchedHistory:sourceStub,verifyWorkspace:workspaceStub,
+  verifyEvidence:evidenceStub,completionClock:late
+ }),/stale, future-dated or invalid read-only snapshot/);
+ assert.deepEqual(calls,['--version','migration fetch --linked']);
+});
+test('R18-61 post-dry-run freshness recheck rejects stale completion evidence',t=>{
+ const opts=sandbox(t),calls=[];let ticks=0;
+ const clock=()=>new Date(Date.now()+(++ticks===1?0:16*60000));
+ let evidenceCalls=0;
+ assert.throws(()=>runR60ReadOnlyLinkedCli({
+  ...opts,invoke:fakeCli({workspace:opts.workspace,log:calls}),
+  verifyFetchedHistory:sourceStub,verifyWorkspace:workspaceStub,
+  verifyEvidence:()=>{evidenceCalls++;return evidenceStub()},
+  completionClock:clock
+ }),/stale, future-dated or invalid read-only snapshot/);
+ assert.deepEqual(calls,R60_CLI_ARGV.map(x=>x.join(' ')));
+ assert.equal(evidenceCalls,0);
+});
+test('R18-61 refuse invalid or backward-moving source clock even when fixtures claim success',t=>{
+ const opts=sandbox(t),calls=[];
+ assert.throws(()=>runR60ReadOnlyLinkedCli({
+  ...opts,invoke:fakeCli({workspace:opts.workspace,log:calls}),
+  verifyFetchedHistory:sourceStub,verifyWorkspace:workspaceStub,
+  verifyEvidence:evidenceStub,completionClock:()=>new Date('invalid')
+ }),/invalid or regressed receipt clock/);
+ assert.deepEqual(calls,['--version','migration fetch --linked']);
+});
+test('R18-61 no in-memory injected CLI/verifier can impersonate a real linked operator attestation',()=>{
+ assert.match(SRC,/operatorEvidence=now===undefined && env===process\.env &&/);
+ assert.match(SRC,/invoke===runOfficialCli/);
+ assert.match(SRC,/verifyFetchedHistory===exactFetchedHistory/);
+ assert.match(SRC,/verifyEvidence===validateR51CliEvidence/);
+ assert.match(SRC,/completionClock===systemClock/);
+ assert.match(SRC,/officialReadOnlyCliCommandsExecutedInThisProcess:operatorEvidence/);
+ assert.match(SRC,/syntheticTestInputsUsed:!operatorEvidence/);
+ assert.match(SRC,/const completedAt=checkCurrentAuthority/);
+ assert.match(SRC,/now:completedAt/);
 });

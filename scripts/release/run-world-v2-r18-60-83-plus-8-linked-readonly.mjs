@@ -39,6 +39,7 @@ const HISTORY='staging/world-v2-b10-r18-08-remote-history-content-hashes.json';
 const fail=s=>{throw Error('R60 LINKED CLI NO-GO: '+s)};
 const within=(p,dir)=>p===dir||p.startsWith(dir+sep);
 const md5=bytes=>createHash('md5').update(bytes).digest('hex');
+const systemClock=()=>new Date();
 
 export const R60_CLI_ARGV=Object.freeze([
  Object.freeze(['--version']),
@@ -133,13 +134,15 @@ function copyPending(root,dir){
 }
 
 export function runR60ReadOnlyLinkedCli({
- workspace,freshSqlDigestsFile,readOnlyReceiptFile,now=new Date(),
+ workspace,freshSqlDigestsFile,readOnlyReceiptFile,now=undefined,
+ completionClock=systemClock,
  env=process.env,invoke=runOfficialCli,
  verifyFetchedHistory=exactFetchedHistory,
  verifyWorkspace=validateR49LinkedWorkspace,
  verifyEvidence=validateR51CliEvidence
 }={}){
  safeEnv(env);
+ const startedAt=now??systemClock();
  const scope=inspectR18IsolatedWorkspace(workspace,{env});
  const root=realpathSync(ROOT);
  // Fail BEFORE any real CLI network call if local Supabase config might
@@ -156,7 +159,7 @@ export function runR60ReadOnlyLinkedCli({
  const rows=Array.isArray(historical)?historical:historical?.rows;
  const receipt=privateJson(readOnlyReceiptFile,{repoRoot:root,maxBytes:150000});
  // This MUST run before any linked CLI command and is only valid for 15m.
- const r50=validateR50ReadOnlyReceipt({receipt,now,repoRoot:root});
+ const r50=validateR50ReadOnlyReceipt({receipt,now:startedAt,repoRoot:root});
  if(r50?.decision!=='NO_GO'||r50?.safeToApply!==false||
     r50.matchedRemoteHistory!==83||r50.matchedAuthorityFunctions!==10)
   fail('fresh current 83-history authority receipt unavailable');
@@ -184,23 +187,48 @@ export function runR60ReadOnlyLinkedCli({
     checked.totalFilesChecked!==91||checked.historicalBodiesChecked!==83||
     checked.pendingChecked!==8)
   fail('exact 83+8 isolated versioned workspace did not validate');
+ // A snapshot valid at startup can expire during a long remote fetch.
+ // Check freshness before the remote dry-run and after the CLI returns.
+ function checkCurrentAuthority(){
+  const completedAt=completionClock();
+  if(!(completedAt instanceof Date)||!Number.isFinite(completedAt.getTime())||
+     completedAt.getTime()<new Date(startedAt).getTime())
+   fail('invalid or regressed receipt clock');
+  const current=validateR50ReadOnlyReceipt({receipt,now:completedAt,repoRoot:root});
+  if(current?.decision!=='NO_GO'||current.safeToApply!==false||
+     current.matchedRemoteHistory!==83||current.matchedAuthorityFunctions!==10)
+   fail('R50 authority receipt expired or drifted');
+  return completedAt;
+ }
+ checkCurrentAuthority();
  const list=localResult(2);
  const dry=localResult(3); // LITERAL --dry-run, no argument substitution.
+ const completedAt=checkCurrentAuthority();
  const report=verifyEvidence({
   workspace:scope.base,freshSqlDigests:rows,readOnlyReceipt:receipt,
   migrationListText:list,dryRunText:dry,cliVersion:VERSION,
-  listExitCode:0,dryRunExitCode:0,repoRoot:root,now
+  listExitCode:0,dryRunExitCode:0,repoRoot:root,now:completedAt
  });
  if(report?.decision!=='NO_GO'||report.safeToApply!==false||
     report.verifiedFileBodies!==91||report.matchingHistory!==83||
     report.pendingVersions!==8||report.verifiedDryRunOutputShape!==true)
   fail('official CLI transcript or current authority history did not validate');
+ // A unit-test CLI or verifier must never claim actual authenticated proof.
+ const operatorEvidence=now===undefined && env===process.env &&
+  invoke===runOfficialCli &&
+  verifyFetchedHistory===exactFetchedHistory &&
+  verifyWorkspace===validateR49LinkedWorkspace &&
+  verifyEvidence===validateR51CliEvidence &&
+  completionClock===systemClock;
  return Object.freeze({
   decision:'NO_GO',safeToApply:false,sqlPushApproved:false,
   linkedProject:REF,pinnedCliVersion:VERSION,
-  officialReadOnlyCliCommandsExecutedInThisProcess:true,
-  linkedCliCommandCount:4,historicalSqlBodiesValidated:83,
-  reviewedPendingVersions:8,linkedCliListAndDryRunValidated:true,
+  officialReadOnlyCliCommandsExecutedInThisProcess:operatorEvidence,
+  linkedCliCommandCount:operatorEvidence?4:0,
+  historicalSqlBodiesValidated:operatorEvidence?83:0,
+  reviewedPendingVersions:operatorEvidence?8:0,
+  linkedCliListAndDryRunValidated:operatorEvidence,
+  syntheticTestInputsUsed:!operatorEvidence,
   sourceWorkspaceOutsideRepo:true,
   independentBrowserDmP1P2Accepted:false,
   freeTierPerformanceAccepted:false,
