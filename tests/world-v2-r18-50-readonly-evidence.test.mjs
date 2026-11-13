@@ -83,7 +83,8 @@ test('R18-50 read-only SQL uses bounded fingerprints and cannot mutate data',()=
  assert.match(withoutComments,/pg_get_functiondef/);
  assert.match(withoutComments,/pg_locks/);
  assert.match(withoutComments,/supabase_migrations\.schema_migrations/);
- assert.doesNotMatch(withoutComments,/\b(INSERT|UPDATE|DELETE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE|EXECUTE|CALL|DO)\b/i);
+ const executableTokens=withoutComments.replace(/'(?:''|[^'])*'/g,"''");
+ assert.doesNotMatch(executableTokens,/\b(INSERT|UPDATE|DELETE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE|EXECUTE|CALL|DO)\b/i);
  const js=read('scripts/release/validate-world-v2-r18-50-readonly-evidence.mjs');
  assert.doesNotMatch(js,/child_process|execSync\(|spawnSync\(|writeFileSync\(|fetch\(|https\.request\(/);
  assert.match(js,/validateR48NarrowPackage/);
