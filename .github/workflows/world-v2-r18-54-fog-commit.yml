@@ -6,6 +6,8 @@ on:
       - 'tests/world-v2-b10-postgres/r54-*'
       - 'tests/world-v2-b10-postgres/r55-*'
       - 'tests/world-v2-b10-postgres/r56-*'
+      - 'tests/world-v2-b10-postgres/r57-*'
+      - 'supabase/candidates/world_v2_r18_57_sync_fog_fastpath_*.sql'
       - 'tests/world-v2-b10-postgres/rehearse-r05.sh'
       - '.github/workflows/world-v2-r18-54-fog-commit.yml'
   workflow_dispatch:
