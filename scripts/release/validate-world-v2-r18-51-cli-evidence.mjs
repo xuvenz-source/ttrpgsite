@@ -58,8 +58,10 @@ export function parseR51MigrationList({text,remote,pending}={}){
  for(let line of lines(output)){
   let s=line.trim();
   if(!s||/^[\s|\-+]+$/.test(s))continue;
-  if(s.startsWith('|'))s=s.slice(1).trim();
-  if(s.endsWith('|'))s=s.slice(0,-1).trim();
+  // A blank *local* column begins with a separator too. Only remove
+  // optional decorative table borders when at least 3 pipes are present.
+  if(s.startsWith('|')&&(s.match(/\|/g)||[]).length>=3)s=s.slice(1).trim();
+  if(s.endsWith('|')&&(s.match(/\|/g)||[]).length>=3)s=s.slice(0,-1).trim();
   const cols=s.split(/\s*\|\s*/);
   if(cols.length===3&&/^local$/i.test(cols[0])&&/^remote$/i.test(cols[1])){
    if(header)fail('duplicate migration list header');
