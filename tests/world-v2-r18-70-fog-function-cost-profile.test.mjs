@@ -66,7 +66,7 @@ test('R18-70 tests both original and fastpath in two scenes and balanced reverse
  assert.match(attribution,/authorized_viewer_fog_frame\(test_map,person\)/);
  assert.match(attribution,/PERFORM public\.b08_assert\(viewers=8/);
  assert.match(attribution,/count\(\*\)=8 FROM pg_temp\.r70_function_samples/);
- assert.match(attribution,/count\(DISTINCT \(scenario,variant\)\)=4/);
+ assert.match(attribution,/count\(DISTINCT \(s\.scenario,s\.variant\)\)=4/);
 });
 test('R18-70 does not patch fog functions, collisions, movement rate limit or production migrations',()=>{
  assert.doesNotMatch(attribution,/^\s*(?:CREATE OR REPLACE FUNCTION|GRANT|REVOKE|ALTER FUNCTION|DROP FUNCTION|CREATE ROLE|ALTER ROLE|DISABLE TRIGGER)\b/mi);
