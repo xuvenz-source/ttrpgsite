@@ -245,7 +245,7 @@ END $r76_initial_inline$;
 DO $r76_equivalence$
 DECLARE
  ray record;blocked boolean;ray_n integer:=0;
- s record;reference record;actual jsonb;frame_n integer:=0;
+ fixture_row record;reference record;actual jsonb;frame_n integer:=0;
  test_map uuid:='00000000-0000-4000-8000-000000000021';
 BEGIN
  FOR ray IN SELECT e.expected,s.scene,r.sx,r.sy,r.tx,r.ty,
@@ -264,11 +264,11 @@ BEGIN
  PERFORM public.b08_assert(ray_n=15744,
   'R76-07 all 15744 original vs inline ray booleans including exact epsilon boundaries');
 
- FOR s IN SELECT label,scene FROM pg_temp.r76_scenes ORDER BY label LOOP
-  UPDATE public.map_environments SET live=s.scene WHERE map_id=test_map;
+ FOR fixture_row IN SELECT label,scene FROM pg_temp.r76_scenes ORDER BY label LOOP
+  UPDATE public.map_environments SET live=fixture_row.scene WHERE map_id=test_map;
   FOR reference IN SELECT e.variant,e.viewer,e.expected
    FROM pg_temp.r76_expected_frames e
-   WHERE e.label=s.label ORDER BY e.variant,e.viewer LOOP
+   WHERE e.label=fixture_row.label ORDER BY e.variant,e.viewer LOOP
    IF reference.variant='original' THEN
     actual:=forge_visibility.r57_unmodified_fog_frame(test_map,reference.viewer);
    ELSE
