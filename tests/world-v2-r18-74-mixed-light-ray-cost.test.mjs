@@ -59,7 +59,7 @@ test('R18-74 models exactly one wall and two authored lights with darkness, brig
  assert.match(sql,/jsonb_array_length\(scene->'objects'\)=3/);
  assert.match(sql,/count\(\*\)=2 FROM jsonb_array_elements\(/);
  assert.match(sql,/count\(\*\)=1 FROM jsonb_array_elements\(/);
- assert.match(sql,/'"?objects"?":\[/);
+ assert.match(sql,/\{"objects":\[/);
 });
 
 test('R18-74 attributes ray, is_lit, wall_passes and cross2 calls/self-time only through PG transaction-local statistics',()=>{
