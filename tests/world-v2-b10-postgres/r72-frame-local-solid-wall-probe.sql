@@ -188,9 +188,9 @@ $r72_prepare$;
 BEGIN
  PERFORM public.b08_assert(md5(original)='f37c8d13e8d48bea123b4c811ae6de4d',
   'R72-03 source-exact private R57 patch precondition');
- IF position(a in original)=0 OR position(a in replace(original,a,''))>0 OR
-    position(b in original)=0 OR position(b in replace(original,b,''))>0 OR
-    position(c in original)=0 OR position(c in replace(original,c,''))>0 THEN
+ IF (length(original)-length(replace(original,a,'')))<>length(a)
+ OR (length(original)-length(replace(original,b,'')))<>length(b)
+ OR (length(original)-length(replace(original,c,'')))<>length(c) THEN
   RAISE EXCEPTION 'R72 refuses ambiguous or drifted private source anchors';
  END IF;
  patched:=replace(original,a,a||declarations);
