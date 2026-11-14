@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-78",
+  "recordedOn": "2026-11-15",
+  "kind": "READ_ONLY_RELEASE_GATE_SNAPSHOT",
+  "releaseDecision": "NO_GO",
+  "safeToDeploy": false,
+  "productionApproval": false,
+  "sqlApproval": false,
+  "operationPerformed": "NO_DEPLOY_OR_WRITE",
+  "source": {
+    "repository": "xuvenz-source/ttrpgsite",
+    "sourceParentPr": 179,
+    "sourceParentSha": "23d1d39b0f9f01b50c3c801a783e39371fdd7e80",
+    "mainShaAtObservation": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "branch": "stage/world-v2-b10-r18-78-readonly-release-evidence-2026-11-15"
+  },
+  "liveReadOnly": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "projectState": "ACTIVE_HEALTHY",
+    "postgresVersion": "17.11",
+    "observedAt": "2026-11-14T15:12:23.615177+00:00",
+    "migrationCount": 83,
+    "latestVersion": "20261109171247",
+    "historicalSqlBodiesMatched": 83,
+    "criticalAuthoritySourcesMatched": 10,
+    "r05Installed": false,
+    "atomicFinalizationRpcPresent": false,
+    "campaignAffinityGuardInstalled": false,
+    "activeMotionSessions": 0,
+    "waitingDatabaseLocks": 0,
+    "databaseSessions": 7,
+    "configuredMaxConnections": 60,
+    "limits": "point-in-time catalog and activity evidence; no RAM or browser/network performance proof"
+  },
+  "pendingNarrowRelease": {
+    "manifestPath": "staging/world-v2-b10-r18-48-narrow-pending/manifest.json",
+    "pendingTotal": 8,
+    "versions": [
+      "20261111023204",
+      "20261113021005",
+      "20261113021007",
+      "20261113021010",
+      "20261113021012",
+      "20261113021020",
+      "20261113021022",
+      "20261113024116"
+    ],
+    "excluded": [
+      "20261113021015",
+      "20261113021017"
+    ],
+    "officialLinkedCli": "NOT_PERFORMED",
+    "fullyAuthenticatedHistoryAndDryRun": "NOT_VERIFIED"
+  },
+  "canonicalDeployment": {
+    "hostname": "ttrpgsite.vercel.app",
+    "deploymentId": "dpl_GtaJ4PoxHzXDpN7L46nka8Kqb8mN",
+    "gitSha": "5ca8c83bdef4a5d9870020b0f2b16723f7790e38",
+    "separateNewerProductionTarget": {
+      "deploymentId": "dpl_5GWtYfXnbL4LvkJZqMuKUTStspom",
+      "gitSha": "da078abe7e0e5f28dbb9eeaa5f26fa570fbc7c19",
+      "canonicalAliasAttached": false
+    },
+    "mainSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "r18_58ReceiptPanelInCanonicalBuild": false,
+    "stagedReceiptPanelExists": true,
+    "protectedQaDeployment": "NOT_PERFORMED",
+    "targetBuildForFutureQa": "NOT_SELECTED"
+  },
+  "releaseLedger": {
+    "ledgerPath": "staging/next-release-ledger.json",
+    "lastUpdated": "2026-11-12",
+    "lastTrackedStep": "R18-15",
+    "untrackedLaterStagingRequiresReconciliation": true,
+    "fullNextReleaseBundleReviewed": false
+  },
+  "outstanding": {
+    "officialPinnedCliVersion": "2.81.3",
+    "officialLinkedFetchListDryRun": "NOT_VERIFIED",
+    "independentSignedDmP1PassiveP2": "NOT_VERIFIED",
+    "reviewedRevocationAndHiddenSight": "NOT_VERIFIED",
+    "trueWallCollisionAndInstantRegrab": "NOT_VERIFIED",
+    "browserMovementInputToCommitP95": "NOT_MEASURED",
+    "freeTierPhysicalRamAndLocksUnderMultiplayerLoad": "NOT_MEASURED",
+    "releaseLedgerReconciled": false,
+    "explicitOperatorApproval": false
+  },
+  "supportingTools": {
+    "liveSql": "supabase/release-preflight/world_v2_b10_r18_50_live_readonly_evidence.sql",
+    "liveValidator": "scripts/release/validate-world-v2-r18-50-readonly-evidence.mjs",
+    "linkedWorkspaceValidator": "scripts/release/validate-world-v2-r18-49-linked-workspace.mjs",
+    "cliValidator": "scripts/release/validate-world-v2-r18-51-cli-evidence.mjs",
+    "qaValidator": "scripts/release/validate-world-v2-r18-58-multiplayer-qa.mjs",
+    "qaPanel": "src/engine/v2/WorldTraceCapturePanel.jsx",
+    "stagedCandidate": "supabase/candidates/world_v2_r18_77_inline_cross2_ray_optin.sql",
+    "stagedInverse": "supabase/candidates/world_v2_r18_77_inline_cross2_ray_rollback.sql"
+  }
+}
