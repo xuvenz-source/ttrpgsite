@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-48",
+  "releaseDecision": "NO_GO",
+  "noSqlDeployed": true,
+  "rootMigrationsUntouched": true,
+  "sourceParentSha": "d547025b84cc125ca0e109140ff243d1ad846510",
+  "lastCli": {
+    "version": "2.81.3",
+    "unlinked": true,
+    "runId": 43353868226,
+    "jobId": 131651102473,
+    "generated": "20261113024116_r48_narrow_release_seal.sql"
+  },
+  "baseline": {
+    "remoteMigrations": 83,
+    "latest": "20261109171247",
+    "sqlDigestsMatched": 83,
+    "r05Version": "20261111023204",
+    "r05GitBlob": "f4e296725c09055685321726cbe4bc6e09dbce5a"
+  },
+  "stagedMigrationDirectory": "staging/world-v2-b10-r18-48-narrow-pending/supabase/migrations/",
+  "pending": [
+    {
+      "sequence": 1,
+      "filename": "20261113021005_r47_capture_original_sources.sql",
+      "source": "supabase/candidates/world_v2_r18_46_capture_original_sources.sql",
+      "gitBlobSha": "8b22e5968ce8bdcb71eeb7eb415df6d37f4185c5"
+    },
+    {
+      "sequence": 2,
+      "filename": "20261113021007_r47_wall_edge_clearance.sql",
+      "source": "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+      "gitBlobSha": "c78998da8a9013591f2bb479cca4b222f41ef2d7"
+    },
+    {
+      "sequence": 3,
+      "filename": "20261113021010_r47_cross_map_collision_guards.sql",
+      "source": "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+      "gitBlobSha": "55db7e6b6839d1d8b489203baa11c99264648a55"
+    },
+    {
+      "sequence": 4,
+      "filename": "20261113021012_r47_campaign_affinity.sql",
+      "source": "supabase/candidates/world_v2_r18_20_campaign_affinity.sql",
+      "gitBlobSha": "3980808966ec56ad74120bc4f737c78ddd2056bb"
+    },
+    {
+      "sequence": 5,
+      "filename": "20261113021020_r47_atomic_finalize_rpc.sql",
+      "source": "supabase/candidates/world_v2_r18_28_atomic_finalize.sql",
+      "gitBlobSha": "9f22adbe0de09148a67ba1a1ef0397df1cd85be9"
+    },
+    {
+      "sequence": 6,
+      "filename": "20261113021022_r47_blocked_terminal_semantics.sql",
+      "source": "supabase/candidates/world_v2_r18_30_blocked_final_semantics.sql",
+      "gitBlobSha": "6741a9f31e72bd354818de9d77b9a893aca51c51"
+    },
+    {
+      "sequence": 7,
+      "filename": "20261113024116_r48_narrow_release_seal.sql",
+      "source": "supabase/candidates/world_v2_r18_48_narrow_seal_release_sources.sql",
+      "gitBlobSha": "f2ed50d4b2e1046d1cf2a1bd034abba093625ce8"
+    }
+  ],
+  "intentionallyExcluded": [
+    {
+      "stage": "R18-26",
+      "originalFilename": "20261113021015_r47_step_bbox_prefilter.sql",
+      "reason": "Mixed performance results; original forge_world_v2.step_allowed MD5 retained"
+    },
+    {
+      "stage": "R18-27",
+      "originalFilename": "20261113021017_r47_commit_empty_work.sql",
+      "reason": "Mixed performance results; original R05 commit remains"
+    }
+  ],
+  "expectedPendingTotalWithR05": 8,
+  "sourceSeal": "four historical replacements + unchanged original forge_world_v2.step_allowed; retained R18-20 campaign-affinity guard",
+  "requiredGates": [
+    "Linked CLI fetch of 83 current SQL bodies, 83/83 fresh source digests and dry-run only",
+    "R18-43 client/SQL release sequencing, Vercel two flags OFF until approved",
+    "independent signed DM/P1/passive P2 fog LOS revocation convergence",
+    "Supabase Free cost/lock/latency validation and independent security review"
+  ],
+  "prohibited": [
+    "supabase db push",
+    "MCP apply_migration",
+    "migration repair",
+    "production deployment",
+    "turning on atomic flags"
+  ],
+  "safeToApply": false
+}

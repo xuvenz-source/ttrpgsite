@@ -98,7 +98,10 @@ test('R12 runtime and renderer wiring preserves locked signed-sight and original
  const renderer=readFileSync(new URL('../src/engine/v2/WorldRenderer.js',import.meta.url),'utf8');
  assert.match(runtime,/canonicalHandoff\.observe\(snapshot\)/);
  assert.match(runtime,/canonicalHandoff\.clear\(\)/);
- assert.match(runtime,/event\.type==='committed'&&!dmPreview&&painted===true&&authorized\(\)/);
+ // R18-35 retains the R12 signed canonical handoff only for REAL motion;
+ // a server-ACKed zero-motion collision cannot create a fictitious handoff.
+ assert.match(runtime,/event\.type==='committed'&&!event\.noMotion&&\s*!dmPreview&&painted===true&&authorized\(\)/);
+ assert.match(runtime,/event\.type==='committed'&&!dmPreview&&!event\.noMotion/);
  assert.match(board,/runtimeRef\.current\?\.canonicalGestureOrigin/);
  assert.match(renderer,/const carry=local\?\.handoff&&same\(local\.approved,event\.approved\)/);
  assert.match(renderer,/const prior=carry\?\.anchors\.get\(key\(p\)\)/);

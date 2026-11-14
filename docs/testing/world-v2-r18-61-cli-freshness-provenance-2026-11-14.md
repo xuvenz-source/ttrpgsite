@@ -1,0 +1,22 @@
+# B10-R18-61 — Real operator CLI evidence integrity (no-deploy)
+
+**14 November 2026 Melbourne · exact R18-60 parent `cbffa298460c49fe2589440fd0a360f23c811302` · DRAFT NO-GO.**
+
+## Actual production read-only evidence in this increment
+
+Verified historical source fingerprints directly against connected live Supabase project `lwhwgqaunxbmvyndswze` using a SELECT-only full-outer join of the repository's original 83 (version, name, statement count, SQL-body MD5) records against all currently applied migration records. Actual result: **83 expected; 83 live; 83 exact SQL-body matches; 0 unexpected, 0 missing and 0 altered**. No SQL source bodies, user IDs, credentials, geometry or game data were exported. The official authenticated CLI is **not installed or linked in this execution environment**, so real `migration fetch --linked`, `migration list --linked` and `db push --dry-run --linked` remain unexecuted. A database SELECT digest match is **not** a substitute for linked CLI proof or independent players.
+
+## Two specific R18-60 evidence-integrity gaps corrected
+
+1. **Stale proof window**. The R18-60 runner originally validated the R18-50 authority receipt only at entry and reused that same frozen timestamp to validate the CLI transcripts, even after potentially lengthy remote fetch/list/dry-run operations. R18-61 requires a fresh system-clock check after original-history download and the isolated 91-file R18-49 verification but **before** running list or dry-run. It independently rechecks after the remote dry-run, then passes the actual completion time (not entry time) into the original R18-51 validator. R18-50's hard 15-minute validity and original 83 historical / ten critical function MD5s remain unchanged. Invalid/backward clock is denied. A long run must stop if its evidence expires, not report historical success.
+2. **Synthetic provenance misreporting**. The exported runner supported injected CLI, digest check, workspace checker and output validator for offline CI. A complete fake successful test run originally yielded `officialReadOnlyCliCommandsExecutedInThisProcess:true` and `linkedCliListAndDryRunValidated:true` even though the CLI was mocked. Now those fields, plus the historical-body/approved-pending counts, are true/83/8 **only when the real `runOfficialCli` and all original validators, untampered real clock and actual process environment are used**. Any injected test dependency returns zero genuine-command counts, `syntheticTestInputsUsed:true` and still `decision:NO_GO`. The unit tests explicitly exercise this. This flag is still not an external cryptographic operator attestation; independent reviewer verification remains required.
+
+## Scope and threat model
+
+Only `scripts/release/run-world-v2-r18-60-83-plus-8-linked-readonly.mjs`, its existing test file, and this explanation are changed. **No movement/fog/visibility runtime code, no active migration SQL, no Supabase DDL/DML, no Vercel deployment or feature flags**. The runner still hardcodes official v2.81.3 and its exact four command argv arrays, including literal `db push --dry-run --linked` and never unguarded `db push`. The frozen R18-48 narrow package of exactly 8 pending migrations is unchanged, and the separately optional R18-57 synchronous fog optimization remains excluded.
+
+Four adversarial new tests cover expiration before list/dry-run, expiration after remote dry-run, invalid/backward completion clocks, and synthetic invocation that cannot claim real operator evidence. Existing ten R18-60 tests continue to check project identity, special environment overrides, no hidden seed/roles/dotenv, exclusive 83+8 copy, no wrong CLI version, poisoned SQL history and fail-closed outputs. The main Node suite, Chromium, build, dependency audit, Deno Edge, isolated source-real PG17 and CodeQL must all pass exact final head before the draft PR may be considered engineering-complete.
+
+## Remaining release gates
+
+**PRODUCTION NO-GO** until an authenticated operator actually executes the pinned CLI v2.81.3 R18-60 workflow in a clean external workspace using a current R18-50 receipt, independently verifies the linked project and outputs, and a separate authenticated DM/P1/passive P2 test group validates canonical movement, solid walls, fog/LOS revocation, reconnects, convergence and free-tier RAM/locks/browser RTT. The R18-59 one-click QA UI is staged but **not live**. Do not deploy any R18-61 source, install migrations, switch flags or merge the draft release chain based on this proof alone.

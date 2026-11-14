@@ -14,6 +14,7 @@ const EVENTS=new Set([
  'observer.seal','observer.resync','observer.authorized','observer.invalid-frame',
  'observer.version-change','observer.sequence-gap','observer.late-frame',
  'observer.unknown-piece','observer.frame-accepted',
+ 'observer.guarded-start','observer.guarded-held','observer.guarded-recovered',
  'visibility.revoke','visibility.refresh',
  'visibility.rpc-call','visibility.rpc-tail','visibility.queue',
  'visibility.continuation',
@@ -26,8 +27,15 @@ const EVENTS=new Set([
  'renderer.observer-discontinuity'
 ]);
 const METRICS=new Set(['authority.begin','authority.advance','authority.commit',
- 'authority.cancel','visibility.rpc','visibility.queue-wait',
- 'observer.frame-gap','render.frame']);
+ 'authority.finalize','authority.cancel','movement.release-to-terminal','visibility.rpc','visibility.queue-wait',
+ 'observer.frame-gap','render.frame',
+ // R18-39 opt-in local browser-only CPU measurements, never a server RPC.
+ 'input.pointer.processing','movement.prediction-check']);
+const COUNTERS=new Set([
+ 'input.pointer.move-events','input.pointer.samples','input.pointer.batches',
+ 'input.pointer.batched-samples','input.pointer.single-events',
+ 'movement.prediction-checked','movement.prediction-skipped'
+]);
 const DETAILS=new Set(['','other','ok','error','full','partial','none','initial',
  'revision','drag','touch','keyboard','preview','grabbed','busy','point',
  'selection','begin','lost-capture','pointer-cancel','blur','unmount',
@@ -38,6 +46,9 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'permission-generation-changed','invalid-vision-notice',
  'vision-version-change','invalid-snapshot','context-change','disposed',
  'disconnected','subscribed','sight-retry','sequence-gap','invalid-packet',
+ 'observer-guarded-sight','observer-guarded-timeout',
+ 'observer-guarded-overflow','observer-guarded-invalid',
+ 'observer-guarded-rejected','observer-guarded-stale','observer-guarded-error',
  'version-change','unknown-piece','scene-current','observer-resync',
  'movement-vision-dirty','virtual-preview-step','virtual-preview-final',
  'committed','gesture-failed','scene-resync','board-active',
@@ -50,13 +61,18 @@ const DETAILS=new Set(['','other','ok','error','full','partial','none','initial'
  'gate','hit','owner','roster','current','origin','runtime-inactive','runtime-roster',
  'user','tool-handoff','scene','visibility','input','network',
  'authority','sequence','sprite',
- 'advance','commit','path','invalid-path','invalid-authority-ack',
- 'invalid-commit','begin-failed','invalid-session','path-limit',
+ 'advance','commit','finalize','path','invalid-path','invalid-authority-ack',
+ 'invalid-commit','invalid-final-ack','begin-failed','invalid-session','path-limit',
  'rpc-unavailable','invalid-server-reply','client-contract',
  'session-cancelled','authority-error','reused-commit',
  'keyboard-unmount','map-change','dispose',
  'over-750ms','over-2s','over-5s','coalesced','drained','discarded',
  'covered','fallback','origin-mismatch','backlog']);
+// Privacy allowlist readers for local QA export. No additional trace data.
+export const isWorldV2TraceEvent=name=>EVENTS.has(name);
+export const isWorldV2TraceDetail=detail=>DETAILS.has(detail);
+export const isWorldV2TraceMetric=name=>METRICS.has(name);
+export const isWorldV2TraceCounter=name=>COUNTERS.has(name);
 const clock=()=>typeof performance!=='undefined'&&
  typeof performance.now==='function'?performance.now():Date.now();
 const q=(a,p)=>a.length?Math.round(a[Math.max(0,Math.ceil(a.length*p)-1)]*10)/10:0;
@@ -70,6 +86,14 @@ export function createWorldV2Trace({enabled=false,limit=256,now=clock}={}){
    detail:typeof detail==='string'&&DETAILS.has(detail)?detail:'other'});
   if(events.length>cap)events.shift();
   counts.set(name,Math.min(2147483647,(counts.get(name)||0)+1));
+ }
+ // Opt-in aggregate counters do NOT write per-event timeline entries:
+ // an ordinary pointer burst must never evict useful authority history.
+ // Delta is bounded and cannot carry coordinates, IDs, or arbitrary labels.
+ function count(name,delta=1){
+  if(!enabled||!COUNTERS.has(name)||
+   !Number.isSafeInteger(delta)||delta<1||delta>65536)return;
+  counts.set(name,Math.min(2147483647,(counts.get(name)||0)+delta));
  }
  function begin(name){
   if(!enabled||!METRICS.has(name))return ()=>{};
@@ -96,7 +120,7 @@ export function createWorldV2Trace({enabled=false,limit=256,now=clock}={}){
    events:events.map(x=>({...x})),counts:Object.fromEntries(counts),durations};
  }
  function clear(){resetGeneration++;events.length=0;times.clear();counts.clear()}
- return Object.freeze({enabled:Boolean(enabled),event,begin,snapshot,clear});
+ return Object.freeze({enabled:Boolean(enabled),event,count,begin,snapshot,clear});
 }
 const enabled=typeof window!=='undefined'&&
  typeof window.location?.search==='string'&&

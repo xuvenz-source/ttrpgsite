@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-47",
+  "releaseDecision": "NO_GO",
+  "neverPushFromRepoRoot": true,
+  "officialCli": {
+    "version": "2.81.3",
+    "invocation": "supabase migration new",
+    "runId": 43350078071,
+    "sourceHeadSha": "db0a1de2689fa5fe4199c696ee780335cc6509d5",
+    "offline": true,
+    "linked": false
+  },
+  "live": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "appliedCount": 83,
+    "latestVersion": "20261109171247",
+    "verifiedRemoteContentDigests": 83,
+    "unregisteredR05Version": "20261111023204",
+    "repoRootLocalMigrationFiles": 62,
+    "repoRemoteVersionMatches": 20,
+    "remoteOnlyVersions": 63,
+    "repoOnlyVersions": 35
+  },
+  "stagedMigrationDirectory": "staging/world-v2-b10-r18-47-isolated-pending/supabase/migrations/",
+  "originalR05": {
+    "file": "supabase/migrations/20261111023204_world_v2_b10_integrated_motion.sql",
+    "gitBlobSha": "f4e296725c09055685321726cbe4bc6e09dbce5a",
+    "requiredBefore": true
+  },
+  "packages": [
+    {
+      "index": 1,
+      "filename": "20261113021005_r47_capture_original_sources.sql",
+      "source": "supabase/candidates/world_v2_r18_46_capture_original_sources.sql",
+      "gitBlobSha": "8b22e5968ce8bdcb71eeb7eb415df6d37f4185c5",
+      "gate": "required",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 2,
+      "filename": "20261113021007_r47_wall_edge_clearance.sql",
+      "source": "supabase/candidates/world_v2_r18_17_wall_edge_clearance.sql",
+      "gitBlobSha": "c78998da8a9013591f2bb479cca4b222f41ef2d7",
+      "gate": "required",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 3,
+      "filename": "20261113021010_r47_cross_map_collision_guards.sql",
+      "source": "supabase/candidates/world_v2_r18_19_cross_map_guard.sql",
+      "gitBlobSha": "55db7e6b6839d1d8b489203baa11c99264648a55",
+      "gate": "required",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 4,
+      "filename": "20261113021012_r47_campaign_affinity.sql",
+      "source": "supabase/candidates/world_v2_r18_20_campaign_affinity.sql",
+      "gitBlobSha": "3980808966ec56ad74120bc4f737c78ddd2056bb",
+      "gate": "required",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 5,
+      "filename": "20261113021015_r47_step_bbox_prefilter.sql",
+      "source": "supabase/candidates/world_v2_r18_26_step_bbox_prefilter.sql",
+      "gitBlobSha": "57522d2d801ca69c92a136c5c915c58101644e51",
+      "gate": "performance_no_go",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 6,
+      "filename": "20261113021017_r47_commit_empty_work.sql",
+      "source": "supabase/candidates/world_v2_r18_27_commit_empty_work.sql",
+      "gitBlobSha": "bbc2dcf4c770ce857845691c80bd2c11418c3d77",
+      "gate": "performance_no_go",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 7,
+      "filename": "20261113021020_r47_atomic_finalize_rpc.sql",
+      "source": "supabase/candidates/world_v2_r18_28_atomic_finalize.sql",
+      "gitBlobSha": "9f22adbe0de09148a67ba1a1ef0397df1cd85be9",
+      "gate": "required",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 8,
+      "filename": "20261113021022_r47_blocked_terminal_semantics.sql",
+      "source": "supabase/candidates/world_v2_r18_30_blocked_final_semantics.sql",
+      "gitBlobSha": "6741a9f31e72bd354818de9d77b9a893aca51c51",
+      "gate": "required",
+      "officialCliGenerated": true
+    },
+    {
+      "index": 9,
+      "filename": "20261113021024_r47_seal_release_sources.sql",
+      "source": "supabase/candidates/world_v2_r18_46_seal_release_sources.sql",
+      "gitBlobSha": "d26ede6f5588a57b34e20ab857e5a06c23fa6509",
+      "gate": "required",
+      "officialCliGenerated": true
+    }
+  ],
+  "prohibited": [
+    "production deployment",
+    "supabase migration up",
+    "supabase db push",
+    "supabase migration repair",
+    "MCP apply_migration",
+    "R18-43 atomic Vercel flags",
+    "automatic SQL installation"
+  ],
+  "releaseBlockers": [
+    "83-history fetched SQL and linked CLI --dry-run not executed",
+    "DM/P1/passive-P2 independent fog and revocation QA",
+    "R18-26 and R18-27 mixed performance evidence: no inclusion approval",
+    "free-tier memory and lock stress unknown",
+    "R18-43 client/server release order not certified"
+  ],
+  "notes": "These nine offline CLI-generated filenames package exact reviewed historical SQL blobs in a staging-only directory. They are NOT immediately executable against the live Supabase history and must not be copied into the repo-root migrations directory."
+}

@@ -1,5 +1,6 @@
 import {worldV2Trace} from './WorldTrace.js';
 import {appendGestureBend,expandGestureRoute,gridPoint,takeGestureBatch} from './GesturePath.js';
+import {pointerIntentCell} from './PointerIntentCell.js';
 
 /** V2 gesture orchestration. This is deliberately isolated from live RPCs.
  * Authority adapter MUST be backed by server validation in later phases.
@@ -27,11 +28,56 @@ const validAck=(reply,sessionId,seq,from,targets)=>{
  }
  return true;
 };
+/**
+ * R18-43: a fully validated atomic receipt is the ONLY way to treat a
+ * final Advance as canonical. Auth, fog, collision and canonical writing
+ * remain on the server; no packet may synthesize a successful endpoint.
+ * The two blocked-empty states differ: prior approved steps require the
+ * server's canonical Commit, while no prior steps are a noMotion receipt.
+ */
+export function validAtomicFinalizationAck(reply,sessionId,seq,from,targets,previousMotion=false){
+ if(!reply||reply.version!==2||reply.sessionId!==sessionId||
+   reply.seq!==seq||reply.commitSeq!==seq+1||
+   reply.finalized!==true||typeof reply.blocked!=='boolean'||
+   (reply.noMotion!==undefined&&reply.noMotion!==true)||
+   !Array.isArray(reply.accepted)||
+   Object.keys(reply).some(k=>![
+    'version','sessionId','seq','commitSeq','finalized',
+    'blocked','accepted','endpoint','noMotion'
+   ].includes(k)))return false;
+ const expected=expandGestureRoute(from,targets);
+ if(!expected||reply.accepted.length>expected.length||
+   (!reply.blocked&&reply.accepted.length!==expected.length))return false;
+ if(!reply.accepted.length){
+  if(!reply.blocked||!Object.keys(reply.endpoint||{}).every(
+    key=>['x','y'].includes(key))||
+    Object.keys(reply.endpoint||{}).length!==2||
+    !Number.isSafeInteger(reply.endpoint?.x)||
+    !Number.isSafeInteger(reply.endpoint?.y)||
+    reply.endpoint.x!==from.x||reply.endpoint.y!==from.y)
+   return false;
+  return previousMotion?
+   reply.noMotion===undefined:reply.noMotion===true;
+ }
+ if(reply.noMotion!==undefined)return false;
+ for(let i=0;i<reply.accepted.length;i++){
+  const p=reply.accepted[i],wanted=expected[i];
+  if(!p||!Number.isSafeInteger(p.x)||!Number.isSafeInteger(p.y)||
+    Object.keys(p).some(k=>!['x','y'].includes(k))||
+    p.x!==wanted.x||p.y!==wanted.y)return false;
+ }
+ const endpoint=reply.endpoint,last=reply.accepted.at(-1);
+ return !!endpoint&&Number.isSafeInteger(endpoint.x)&&
+  Number.isSafeInteger(endpoint.y)&&
+  Object.keys(endpoint).length===2&&
+  Object.keys(endpoint).every(k=>['x','y'].includes(k))&&
+  endpoint.x===last.x&&endpoint.y===last.y;
+}
 const noop=()=>{};
 /** Only fixed, non-private rejection classes are exposed to in-memory trace. */
 export function classifyWorldMovementRejection(reason){
  if(['invalid-path','invalid-authority-ack','invalid-commit',
-     'begin-failed','invalid-session','path-limit','authority-error']
+     'invalid-final-ack','begin-failed','invalid-session','path-limit','authority-error']
      .includes(reason))return reason;
  if(reason==='World movement server unavailable')return 'rpc-unavailable';
  if(reason==='Invalid world movement response')return 'invalid-server-reply';
@@ -47,11 +93,14 @@ const predictionReached=(origin,predicted,approved)=>{
   (approved.y-origin.y)*dy>=d-1e-7;
 };
 export function createMovementController({authority,onEvent=noop,canPredict=()=>false,
- trace=worldV2Trace}={}){
+ trace=worldV2Trace,enableAtomicFinalize=false}={}){
  if(!authority||!['begin','advance','commit','cancel'].every(key=>typeof authority[key]==='function')||
   typeof onEvent!=='function'||typeof canPredict!=='function'||
   typeof trace?.event!=='function')
   throw Error('V2 movement requires a complete authority interface');
+ if(typeof enableAtomicFinalize!=='boolean'||
+   (enableAtomicFinalize&&typeof authority.finalize!=='function'))
+  throw Error('Invalid V2 atomic finalize feature gate');
  let active=null,disposed=false,state='Idle',generation=0;
  const emit=(gesture,type,extra={})=>{
   if(type!=='sampled'&&type!=='presented')
@@ -62,10 +111,18 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
  };
  const finish=(g,result)=>{
   if(active===g)active=null;
+  // Measure the entire client lockout after pointer/key release, including
+  // remaining authorized advances, terminal commit, and cancellation.
+  g.releaseTimer?.(result.status==='committed'?'ok':'error');
+  g.releaseTimer=null;
   state=result.status==='committed'?'Committed':
    result.status==='revoked'?'Revoked':
    result.status==='cancelled'?'Cancelled':'Rejected';
-  emit(g,result.status,{reason:result.reason||null});
+  // R18-35: expose only a locally computed, server-ACKed zero-motion
+  // gesture state to the renderer and queued keyboard continuation.
+  // No new RPC, authority path, preview operation or write permission.
+  emit(g,result.status,{reason:result.reason||null,
+   ...(result.noMotion===true?{noMotion:true}:{})});
   if(g.resolveFinish){g.resolveFinish(result);g.resolveFinish=null}
  };
  const cancelSession=g=>{
@@ -91,33 +148,77 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      const snapshot=g.pending.slice();
      const batch=takeGestureBatch(g.approved,snapshot);
      if(!batch||!batch.targets.length){g.phase='path';reject(g,'invalid-path');break}
+     // R18-31: detach ONLY this already-validated batch before its RPC.
+     // Pointer updates during the network wait are then retained as future
+     // input, instead of being accidentally removed by a late Advance ACK.
+     g.pending.splice(0,batch.consumed);
+     g.inFlightTarget={...batch.targets.at(-1)};
      const before={...g.approved},seq=++g.seq;
-     g.phase='advance';
-     const response=await authority.advance({
+     // A final, fully fitting batch can atomically Advance + Commit if
+     // and ONLY if the independently versioned server endpoint is ready.
+     // Open gestures and preview keep their existing authority flow.
+     const finalizing=enableAtomicFinalize&&g.closing&&
+      g.mode!=='preview'&&batch.remaining.length===0;
+     g.phase=finalizing?'finalize':'advance';
+     const request={
       version:2,mapId:g.mapId,sessionId:g.sessionId,gestureId:g.generation,
       seq,from:before,targets:batch.targets,selection:g.selection,
       environmentRevision:g.environmentRevision,permissionGeneration:g.permissionGeneration
-     });
-     if(active!==g)break;
-     if(!validAck(response,g.sessionId,seq,before,batch.targets)){
-      reject(g,'invalid-authority-ack');break;
+     };
+     let response;
+     try{
+      response=await (finalizing?
+       authority.finalize(request):authority.advance(request));
+     }finally{
+      // Future input may start from the submitted target while awaiting.
+      // Clear it even on a failed/cancelled request; rejection remains
+      // governed solely by the existing authoritative ACK checks.
+      g.inFlightTarget=null;
      }
-     g.pending.splice(0,batch.consumed);
+     if(active!==g)break;
+     if(!(finalizing?
+      validAtomicFinalizationAck(response,g.sessionId,seq,before,batch.targets,g.hadMotion):
+      validAck(response,g.sessionId,seq,before,batch.targets))){
+      reject(g,finalizing?'invalid-final-ack':'invalid-authority-ack');break;
+     }
      if(response.accepted.length){
       g.approved={...response.accepted.at(-1)};
       g.hadMotion=true;
      }
      // A denied crossing invalidates the entire unapproved route.
+     // Remember ONLY the explicitly denied, server-ACKed target while
+     // the approved origin remains unchanged. Repeated pointer events on
+     // that exact target must not create an endless collision RPC loop.
      if(response.blocked)g.pending.length=0;
      if(response.blocked||!g.predicted||
        predictionReached(g.origin,g.presented,g.approved)){
        g.presented={...g.approved};g.predicted=false;
       }
       state=g.closing?'Finishing':'Moving';
+      // The denied waypoint is derived solely from the validated ACK
+      // prefix and this client's requested route. It is local input feedback,
+      // never an authorization to reveal a hidden wall or move a sprite.
+      const route=response.blocked?expandGestureRoute(before,batch.targets):null;
+      const blockedAt=route&&response.accepted.length<route.length?
+       {...route[response.accepted.length]}:null;
+      g.blockedRetry=response.blocked&&blockedAt&&
+       ['drag','touch','preview'].includes(g.mode)?{
+        from:{...g.approved},to:{...batch.targets.at(-1)}
+       }:null;
       emit(g,response.blocked?'blocked':'approved',{
        seq,blocked:response.blocked,from:before,
-       accepted:response.accepted.map(p=>({...p}))
+       accepted:response.accepted.map(p=>({...p})),blockedAt
       });
+      if(finalizing){
+       // Commit ALREADY happened in the same server transaction. A second
+       // Commit is forbidden even if the reply arrived after a cancellation.
+       if(active===g){
+        g.seq=seq+1;
+        finish(g,{status:'committed',endpoint:{...g.approved},
+         ...(response.noMotion===true?{noMotion:true}:{})});
+       }
+       break;
+      }
      continue;
     }
     if(!g.closing)break;
@@ -150,6 +251,59 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
     void drain(g);
   }
  }
+ // R18-38: the same existing gesture pipeline is used for every raw
+ // cell crossing. Suppress unpaintable intermediate sampled/presented
+ // callbacks only when a browser event carries multiple coalesced samples.
+ function updatePointer(pointer,publish=true){
+   const g=active;
+   if(disposed||!g||g.closing||!validPoint(pointer))return false;
+   // Hysteresis is only for pointer input. A near-half-cell corner must
+   // not fill the path queue with alternating jitter cells.
+   const cell=['drag','touch','preview'].includes(g.mode)?
+    pointerIntentCell(pointer,g.intentCell):gridPoint(pointer);
+   if(!cell){
+    g.phase='path';reject(g,'path-limit');return false;
+   }
+   g.pointer={...pointer};g.intentCell={...cell};
+   if(g.pending.length===0&&g.blockedRetry&&
+    g.blockedRetry.from.x===g.approved.x&&
+    g.blockedRetry.from.y===g.approved.y&&
+    g.blockedRetry.to.x===cell.x&&g.blockedRetry.to.y===cell.y){
+    // Suppress ONLY the exact previously denied target at this
+    // unchanged server-approved origin. Preserve any queued turns.
+    return true;
+   }
+   g.blockedRetry=null;
+   if(!appendGestureBend(g.pending,cell,g.inFlightTarget??g.approved)){
+    g.phase='path';reject(g,'path-limit');return false;
+   }
+   if(g.pending.length){
+    state='Moving';
+    if(publish)emit(g,'sampled',{intended:cell});
+   }
+   // A synchronous caller-supplied grant check must approve the *entire*
+   // displacement. Default is false: no speculative hidden-wall travel.
+   // Only aggregate counts and CPU durations are recorded in opt-in QA.
+   if(!publish)trace.count?.('movement.prediction-skipped');
+   if(publish){
+   trace.count?.('movement.prediction-checked');
+   const predictionDone=trace.enabled?
+    trace.begin?.('movement.prediction-check'):null;
+   let approvedPrediction=false;
+   try{approvedPrediction=canPredict({
+    mapId:g.mapId,selection:g.selection,from:{...g.approved},
+    to:cell,pointer:{...pointer},mode:g.mode,
+    environmentRevision:g.environmentRevision,
+    permissionGeneration:g.permissionGeneration
+   })===true}catch{}finally{predictionDone?.()}
+   if(approvedPrediction){
+    g.presented={...pointer};g.predicted=true;
+     emit(g,'presented',{predicted:true});
+   }
+   }
+   if(g.sessionId)void drain(g);
+   return true;
+ }
  return {
   get state(){return state},
   get active(){return !!active},
@@ -164,8 +318,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    const g={generation:++generation,mapId,
     selection:selection.map(p=>({kind:p.kind,id:p.id})),origin:{...origin},
     pointer:{...pointer},approved:{...origin},presented:{...origin},
-    pending:[],seq:0,mode,phase:'begin',sessionId:null,closing:false,
-     predicted:false,
+    pending:[],inFlightTarget:null,seq:0,mode,phase:'begin',sessionId:null,closing:false,
+    intentCell:{...origin},blockedRetry:null,releaseTimer:null,
+    predicted:false,
     draining:false,hadMotion:false,resolveFinish:null,finishPromise:null,
     environmentRevision,permissionGeneration};
    active=g;state='Grabbed';
@@ -184,29 +339,16 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    });
    return true;
   },
-  updateGesture(pointer){
-   const g=active;
-   if(disposed||!g||g.closing||!validPoint(pointer))return false;
-   const cell=gridPoint(pointer);
-   if(!cell||!appendGestureBend(g.pending,cell,g.approved)){
-    g.phase='path';reject(g,'path-limit');return false;
-   }
-   g.pointer={...pointer};
-   if(g.pending.length){state='Moving';emit(g,'sampled',{intended:cell})}
-   // A synchronous caller-supplied grant check must approve the *entire*
-   // displacement. Default is false: no speculative hidden-wall travel.
-   let approvedPrediction=false;
-   try{approvedPrediction=canPredict({
-    mapId:g.mapId,selection:g.selection,from:{...g.approved},
-    to:cell,pointer:{...pointer},mode:g.mode,
-    environmentRevision:g.environmentRevision,
-    permissionGeneration:g.permissionGeneration
-   })===true}catch{}
-   if(approvedPrediction){
-    g.presented={...pointer};g.predicted=true;
-     emit(g,'presented',{predicted:true});
-   }
-   if(g.sessionId)void drain(g);
+  updateGesture(pointer){return updatePointer(pointer)},
+  updateGestureSamples(samples){
+   // Preserve every coalesced sample's ordered grid intent, including turns
+   // and reversals. Only the final sub-frame sample may be painted after
+   // this synchronous native pointer event, so only it needs the costly
+   // local collision/prediction check. Existing authority RPCs, permissions,
+   // blocked replies and canonical commits are unchanged.
+   if(!Array.isArray(samples)||!samples.length)return false;
+   for(let i=0;i<samples.length;i++)
+    if(!updatePointer(samples[i],i===samples.length-1))return false;
    return true;
   },
   endGesture(pointer){
@@ -215,7 +357,9 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    if(!g.closing&&pointer&&validPoint(pointer))this.updateGesture(pointer);
    if(active!==g)return Promise.resolve({status:'rejected'});
    if(g.finishPromise)return g.finishPromise;
-   g.closing=true;state='Finishing';emit(g,'released');
+   g.closing=true;state='Finishing';
+   g.releaseTimer=trace.begin?.('movement.release-to-terminal')??null;
+   emit(g,'released');
    g.finishPromise=new Promise(resolve=>{g.resolveFinish=resolve});
    if(g.sessionId)void drain(g);
    return g.finishPromise;

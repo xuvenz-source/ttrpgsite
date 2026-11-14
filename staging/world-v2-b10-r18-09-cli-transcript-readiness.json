@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "updated": "2026-11-11",
+  "step": "B10-R18-09",
+  "releaseDecision": "NO_GO",
+  "productionApproval": false,
+  "databaseApproval": false,
+  "sourceParentPr": 110,
+  "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+  "sourceParentHeadSha": "ee9984804123b8c32709372b1dc2000aa3250be8",
+  "stagingBranch": "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+  "liveReadOnly": {
+    "remoteMigrations": 83,
+    "uniqueVersions": 83,
+    "sqlBodyDigestsMatched": 83,
+    "latestVersion": "20261109171247",
+    "pendingTargetAlreadyRegistered": false
+  },
+  "logParser": {
+    "mode": "OFFLINE_TEXT_ONLY",
+    "cliSourceVersion": "2.81.3",
+    "mustMatchRemoteAndLocalVersions": 83,
+    "allowedPendingVersions": [
+      "20261111023204"
+    ],
+    "allowedPendingFiles": [
+      "20261111023204_world_v2_b10_integrated_motion.sql"
+    ],
+    "safeToApply": false,
+    "authenticatesCliExecution": false
+  },
+  "actualLinkedCliDryRunPerformed": false,
+  "frontendCanaryDeployed": false,
+  "backendMigrationApplied": false,
+  "guardedRecoveryEnabled": false,
+  "runbook": "docs/testing/world-v2-r18-09-cli-transcript-gate-2026-11-11.md",
+  "validator": "scripts/release/validate-world-v2-r18-09-cli-transcripts.mjs"
+}

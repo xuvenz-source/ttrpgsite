@@ -18,10 +18,12 @@ import {createVisibilityController} from './VisibilityController.js';
 import {createWorldRealtimeTransport} from './RealtimeTransport.js';
 import {collisionAllowsStep} from './CollisionSolver.js';
 import {createPreviewAuthority} from './PreviewAuthority.js';
+import {previewApprovedPositionChanged} from './PreviewSightRefresh.js';
 import {canPredictWithinWorldGrants} from './PredictionGrants.js';
 import {worldV2Trace} from './WorldTrace.js';
 import {createCanonicalCommitHandoff} from './CanonicalCommitHandoff.js';
 import {createObserverSightRecovery} from './ObserverSightRecovery.js';
+import {createObserverRecoveryWatch} from './ObserverRecoveryWatch.js';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const uuid=x=>typeof x==='string'&&UUID.test(x);
@@ -61,6 +63,18 @@ export function createWorldV2TabletopRuntime({
    .some(callback=>typeof callback!=='function'))
   throw Error('Invalid V2 tabletop integration');
  const identity=dmPreview?previewViewerId:viewerId;
+ // Opt-in remains OFF in all existing production builds. Preview is local.
+ const observerRecoveryEnabled=!dmPreview&&
+  import.meta.env?.VITE_WORLD_V2_OBSERVER_RECOVERY==='1';
+ // Independent default-OFF rollout: no private path grants new sprites.
+ const guardedObserverEnabled=!dmPreview&&
+  import.meta.env?.VITE_WORLD_V2_OBSERVER_GUARDED_RECOVERY==='1';
+ // R18-43: dual explicit release flags. Neither exists in production.
+ // A DM preview never touches the canonical server finalizer.
+ const atomicFinalizeEnabled=!dmPreview&&
+  import.meta.env?.VITE_WORLD_V2_ATOMIC_FINALIZE==='1'&&
+  import.meta.env?.VITE_WORLD_V2_ATOMIC_FINALIZE_READY==='1';
+ let observerWatch=null,foregroundListener=null,guardedListener=null;
  let disposed=false,started=false,connected=false,starting=null;
  let input=null,stream=null,sceneTransport=null;
  let refreshRevision=0,reloading=null,privateReady=false;
@@ -135,6 +149,10 @@ export function createWorldV2TabletopRuntime({
     }
    privateReady=true;
    canonicalHandoff.observe(snapshot);
+   // Renderer admitted this complete signed sight first. Only now may the
+   // private stream move its cosmetic cursor/roster to the certified state.
+   if(observerRecoveryEnabled||guardedObserverEnabled)
+    stream?.acceptSignedSight(snapshot);
    signal(onAuthorizedRoster,snapshot.visiblePieces,snapshot);
    state('authorized-sight');
    return true;
@@ -157,9 +175,9 @@ export function createWorldV2TabletopRuntime({
     catch{return null}
    },
    getPosition:()=>previewPosition
-  }):createWorldAuthorityClient({db});
+  }):createWorldAuthorityClient({db,atomicFinalizeEnabled});
  const movement=createMovementController({
-  authority,
+  authority,enableAtomicFinalize:atomicFinalizeEnabled,
   canPredict:request=>{
     if(disposed||!authorized())return false;
     if(!isDM)return canPredictWithinWorldGrants({
@@ -197,7 +215,8 @@ export function createWorldV2TabletopRuntime({
    if(disposed)return;
    const painted=renderer.applyLocalMovement(event);
    if(event.type==='grabbed')committedSight=null;
-   if(event.type==='committed'&&!dmPreview&&painted===true&&authorized()){
+   if(event.type==='committed'&&!event.noMotion&&
+     !dmPreview&&painted===true&&authorized()){
     const frame=vision.frame,anchor=event.selection?.[0];
     const signed=frame?.visiblePieces?.find(p=>anchor&&key(p)===key(anchor));
     canonicalHandoff.remember({
@@ -213,16 +232,20 @@ export function createWorldV2TabletopRuntime({
    signal(onGesture,event);
    if(dmPreview&&['approved','blocked'].includes(event.type)&&
     event.selection?.length===1&&event.selection[0].kind==='token'){
-    previewPosition={tokenId:event.selection[0].id,
-     x:event.approved.x,y:event.approved.y};
-    void refreshVisibility('virtual-preview-step');
+    // Blocked ACKs can contain an accepted movement prefix. Only request
+    // fresh player-effective sight when the approved pose actually changes.
+    const tokenId=event.selection[0].id;
+    const moved=previewApprovedPositionChanged(
+     previewPosition,tokenId,event.approved);
+    previewPosition={tokenId,x:event.approved.x,y:event.approved.y};
+    if(moved)void refreshVisibility('virtual-preview-step');
    }
    if(event.type==='committed'&&dmPreview){
     // End the local handoff against a fresh non-mutating player-effective
     // snapshot; never ask the live movement database to commit preview.
     void refreshVisibility('virtual-preview-final');
    }
-   if(event.type==='committed'&&!dmPreview){
+   if(event.type==='committed'&&!dmPreview&&!event.noMotion){
     // Actor's final motion is acknowledged once by Phase 4. The renderer
     // holds its approved endpoint until this authorized snapshot arrives.
     signal(onCommit,{mapId,selection:event.selection,
@@ -345,6 +368,7 @@ export function createWorldV2TabletopRuntime({
    // Phase 10 integration task, never a bypass of recipient channel RLS.
    if(!dmPreview)stream=createWorldRealtimeTransport({
     db,mapId,viewerId:identity,
+    softResyncEnabled:guardedObserverEnabled,
     onResync:async reason=>{
      if(manager.stale){
       if(!await manager.load())throw Error('V2 scene resync failed');
@@ -390,7 +414,48 @@ export function createWorldV2TabletopRuntime({
    });
    if(stream&&(!await stream.start()||disposed))return false;
    if(!await sceneTransport.start()||disposed)return false;
-   started=true;state('started');return true;
+   started=true;
+   // Background tabs may suspend timers beyond the 700ms safety deadline.
+   // Conceal synchronously when a guarded window is backgrounded; on
+   // foreground return reauthorize only if that stream is still locked.
+   if(guardedObserverEnabled&&typeof document!=='undefined'&&
+    document.addEventListener&&!guardedListener){
+    guardedListener=()=>{
+     if(disposed||!stream?.connected)return;
+     if(document.visibilityState==='hidden'&&stream.recovering)
+      void stream.resync('observer-guarded-background');
+     else if(document.visibilityState==='visible'&&stream.locked)
+      void stream.resync('observer-guarded-foreground');
+    };
+    document.addEventListener('visibilitychange',guardedListener);
+   }
+   if(observerRecoveryEnabled&&!observerWatch){
+    const foreground=()=>typeof document==='undefined'||
+     document.visibilityState!=='hidden';
+    observerWatch=createObserverRecoveryWatch({
+     isForeground:foreground,
+     canCheck:()=>!disposed&&started&&stream?.connected===true&&
+      stream?.locked===false&&authorized()&&!movement.active&&
+      !deferredObserverRecovery.pending,
+     check:async()=>{
+      // Only the existing viewer-authenticated sight RPC can correct a
+      // missing final path. No public cursor, client ID, or guessed point.
+      const accepted=await refreshVisibility('observer-budget-recovery');
+      if(!accepted&&!authorized()&&!disposed&&stream?.connected)
+       void stream.resync('observer-budget-recovery-denied');
+      return accepted&&authorized();
+     },
+     onError:error=>signal(onError,error)
+    });
+    if(typeof document!=='undefined'&&document.addEventListener){
+     foregroundListener=()=>{
+      if(foreground())void observerWatch?.resume();
+     };
+     document.addEventListener('visibilitychange',foregroundListener);
+    }
+    observerWatch.start();
+   }
+   state('started');return true;
    })().finally(()=>{if(starting===task)starting=null});
    starting=task;
    return task;
@@ -452,6 +517,15 @@ export function createWorldV2TabletopRuntime({
   async dispose(){
    if(disposed)return;
    disposed=true;started=false;connected=false;privateReady=false;
+   observerWatch?.dispose();observerWatch=null;
+   if(foregroundListener&&typeof document!=='undefined'&&
+    document.removeEventListener)
+    document.removeEventListener('visibilitychange',foregroundListener);
+   foregroundListener=null;
+   if(guardedListener&&typeof document!=='undefined'&&
+    document.removeEventListener)
+    document.removeEventListener('visibilitychange',guardedListener);
+   guardedListener=null;
    deferredObserverRecovery.dispose();
    canonicalHandoff.clear();committedSight=null;
    ++refreshRevision;
