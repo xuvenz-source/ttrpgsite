@@ -255,6 +255,8 @@ END $r57_applied$;
 -- R18-70 only in this original disposable transaction: measure the exact
 -- ray vs light function calls and restore tracking before original R57 tests.
 \i tests/world-v2-b10-postgres/r70-fog-function-cost-profile.sql
+-- R18-71: local ray-geometry shape controls; source/permissions untouched.
+\i tests/world-v2-b10-postgres/r71-wall-ray-shape-cost-controls.sql
 
 DO $r57_compare_and_measure$
 DECLARE
