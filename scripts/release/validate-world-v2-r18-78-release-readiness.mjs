@@ -72,7 +72,7 @@ export function validateR78ReleaseStatus({
   narrow.releaseDecision!=='NO_GO'||narrow.safeToApply!==false||
   narrow.expectedPendingTotalWithR05!==8||
   !Array.isArray(narrow.pending)||narrow.pending.length!==7||
-  !/^\\d{4}-\\d{2}-\\d{2}$/.test(ledger.updated)||
+  !/^\d{4}-\d{2}-\d{2}$/.test(ledger.updated)||
   ledger.updated<'2026-11-12'||!Array.isArray(ledger.branches)||
   !ledger.branches.some(x=>x.name==='stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12')||
   (ledger.updated!=='2026-11-12'&&(
