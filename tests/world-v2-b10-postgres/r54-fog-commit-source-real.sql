@@ -218,6 +218,10 @@ BEGIN
  PERFORM public.b08_assert(revoke_rejected,
   'R54-10 revoked fixture viewer cannot request an authorized fog frame');
 END $r54_benchmark$;
+-- R18-68 runs AFTER all original hostile R54 wall/revocation assertions.
+-- 36×2 new Begin sessions plus original R54 cycles honor the 120/60s cap.
+-- Original fog/collision source and canonical triggers are unchanged.
+\i tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql
 -- Advisory 8-paired-sample local SQL-only timings; no network, no live
 -- production token triggers beyond the source-exact selected two; observer
 -- publisher is the B04 test-only sink. Not a performance release gate.
