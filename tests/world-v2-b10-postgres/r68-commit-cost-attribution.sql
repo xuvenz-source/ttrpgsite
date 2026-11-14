@@ -73,6 +73,11 @@ DECLARE
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
+ -- Populate only the fixture's original per-viewer authorized frames before
+ -- timing; never modify the original function or invent public recipients.
+ PERFORM forge_visibility.authorized_viewer_fog_frame(test_map,actor);
+ PERFORM forge_visibility.authorized_viewer_fog_frame(
+  test_map,'00000000-0000-4000-8000-000000000012'::uuid);
  FOR iteration IN 1..4 LOOP
   FOR cfg IN SELECT scenario,scene FROM pg_temp.r68_scenes
    ORDER BY CASE WHEN iteration%2=0 THEN scenario ELSE
