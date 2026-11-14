@@ -57,7 +57,7 @@ test('R18-69 checks complete original-vs-candidate authorized JSONB, not simple 
 });
 test('R18-69 hostile malformed and overlimit fog fail closed and cannot omit 120 object cap',()=>{
  assert.match(parity,/"points":"bad"/);
- assert.match(parity,/'objects":\[null\]/);
+ assert.match(parity,/"objects":\[null\]/);
  assert.match(parity,/generate_series\(1,121\)/);
  assert.match(parity,/expected->'visible'='\[\]'::jsonb/);
  assert.match(parity,/actual->'visible'='\[\]'::jsonb/);
