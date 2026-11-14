@@ -252,6 +252,9 @@ END $r57_applied$;
 -- for ALL eight fixture viewers under shared, dark, portal and hostile scenes.
 -- This runs only inside this existing disposable BEGIN/ROLLBACK transaction.
 \i tests/world-v2-b10-postgres/r69-eight-viewer-fog-parity.sql
+-- R18-70 only in this original disposable transaction: measure the exact
+-- ray vs light function calls and restore tracking before original R57 tests.
+\i tests/world-v2-b10-postgres/r70-fog-function-cost-profile.sql
 
 DO $r57_compare_and_measure$
 DECLARE
