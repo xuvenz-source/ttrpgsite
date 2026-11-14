@@ -72,8 +72,14 @@ export function validateR78ReleaseStatus({
   narrow.releaseDecision!=='NO_GO'||narrow.safeToApply!==false||
   narrow.expectedPendingTotalWithR05!==8||
   !Array.isArray(narrow.pending)||narrow.pending.length!==7||
-  ledger.updated!=='2026-11-12'||!Array.isArray(ledger.branches)||
-  ledger.branches.some(x=>x.name==='stage/world-v2-b10-r18-77-sealed-inline-cross2-candidate-2026-11-15'))
+  !/^\d{4}-\d{2}-\d{2}$/.test(ledger.updated)||
+  ledger.updated<'2026-11-12'||!Array.isArray(ledger.branches)||
+  !ledger.branches.some(x=>x.name==='stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12')||
+  (ledger.updated!=='2026-11-12'&&(
+   ledger.releaseReconciliation?.decision!=='NO_GO'||
+   ledger.releaseReconciliation?.independentlyAuthorized!==false||
+   ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
+   ledger.releaseReconciliation?.totalLedgerBranches!==ledger.branches.length)))
   fail();
  const names=['20261111023204_world_v2_b10_integrated_motion.sql',
   ...narrow.pending.map(x=>x.filename)];

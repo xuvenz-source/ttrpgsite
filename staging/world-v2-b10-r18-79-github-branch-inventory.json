@@ -1,0 +1,2804 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-79",
+  "recordedOn": "2026-11-15",
+  "sourceKind": "GITHUB_READ_ONLY_BRANCH_AND_PR_METADATA",
+  "releaseDecision": "NO_GO",
+  "safeToRelease": false,
+  "operatorApproved": false,
+  "parent": {
+    "pr": 180,
+    "sha": "5102f62ffe1017a1c7f66df738bee5bfaaaebc38"
+  },
+  "currentPr": 181,
+  "scope": {
+    "repository": "xuvenz-source/ttrpgsite",
+    "branchPages": 3,
+    "prPages": 2,
+    "observedGithubBranchCount": 179,
+    "observedGithubPrCount": 177,
+    "stageFixFeatureBranches": 165,
+    "previousLedgerEntries": 66,
+    "newTrackedBranches": 99,
+    "expectedUpdatedLedgerEntries": 165,
+    "newlyTrackedLaterPrs": 62,
+    "noMatchingPr": 2,
+    "accountNonReleaseBranches": 14
+  },
+  "githubBranchSnapshot": [
+    {
+      "name": "dependabot/github_actions/actions/checkout-7",
+      "sha": "543b4112fbe2f2c7fde69e402f56eeb0ea43d6cf"
+    },
+    {
+      "name": "dependabot/github_actions/actions/setup-node-7",
+      "sha": "f9e421ccbfb67e60dab373e3ebf40ab0baffeb86"
+    },
+    {
+      "name": "dependabot/npm_and_yarn/npm-minor-and-patch-0a9a8d860e",
+      "sha": "63ffa5b7c32cb92aad580e3089864af1354756f8"
+    },
+    {
+      "name": "dependabot/npm_and_yarn/vite-8.3.5",
+      "sha": "7595d523d8083537674ce1f673df1ed51948a66a"
+    },
+    {
+      "name": "dependabot/npm_and_yarn/vitejs/plugin-react-6.2.1",
+      "sha": "7406a0056933e7eddcbd08601e48b39f91b7bc7a"
+    },
+    {
+      "name": "development",
+      "sha": "26765915deac294e154d1aeac05b23496d76de32"
+    },
+    {
+      "name": "feature/compact-tabletop-ui",
+      "sha": "97cb6fa2560b65b15911c7c15def13606bbecedb"
+    },
+    {
+      "name": "feature/token-status-markers",
+      "sha": "00145147c9acfd7f97b568f8cec46d6e7ee49235"
+    },
+    {
+      "name": "feature/weapon-attack-cards",
+      "sha": "713fa4dd440612265d37eb49b5b1dbdc5222e13c"
+    },
+    {
+      "name": "fix/map-token-protected-column-2026-11-09",
+      "sha": "b1422dc08d5dd8c8c418e24f1caa05f56aa50d9b"
+    },
+    {
+      "name": "fix/world-v2-dm-sight-recovery-2026-11-10",
+      "sha": "de04e540e6a935935df55a80cd73b23d737a40f9"
+    },
+    {
+      "name": "fix/world-v2-document-pointer-preview-unassigned-2026-11-10",
+      "sha": "21bf1d3a0f230307e7fd92eec970d71d3ff97371"
+    },
+    {
+      "name": "fix/world-v2-drag-preview-gesture-handoff-2026-11-10",
+      "sha": "56429defa023d33ea9b2802683537048ee84946e"
+    },
+    {
+      "name": "fix/world-v2-live-authority-continuity-2026-11-10",
+      "sha": "ae02168387d36c80f13204a4804b6cf765e8d6a5"
+    },
+    {
+      "name": "fix/world-v2-live-drag-vision-continuity-2026-11-10",
+      "sha": "38e24e32baeba74e801dc96f43d42f9939d67223"
+    },
+    {
+      "name": "fix/world-v2-pointer-keyboard-preview-input-2026-11-10",
+      "sha": "792706585fa002fa925a62845c0c5e287ba489f1"
+    },
+    {
+      "name": "fix/world-v2-serialized-sight-recovery-2026-11-10",
+      "sha": "339365f2de99b7cb8eeffca83db84f687b7ab24d"
+    },
+    {
+      "name": "fix/world-v2-terrain-asset-and-pointer-diagnostics-2026-11-10",
+      "sha": "2641d83769e24221256cdc4fbd6f0efb6b3e8c61"
+    },
+    {
+      "name": "fix/world-v2-unpublished-map-startup-2026-11-10",
+      "sha": "7476b9e45d17b404ea8b40e143d05bc7abae4064"
+    },
+    {
+      "name": "hotfix/world-v2-r10-realtime-envelope-2026-11-11",
+      "sha": "514194edc7984dc08b416d540941cc166bd4f327"
+    },
+    {
+      "name": "hotfix/world-v2-r11-rejection-diagnostics-2026-11-11",
+      "sha": "52be459824d912327aa7e25a27f42777c0f21e2f"
+    },
+    {
+      "name": "hotfix/world-v2-r12-canonical-commit-handoff-2026-11-11",
+      "sha": "9c2efdae6056959d8d7be07f7693102db6f65c88"
+    },
+    {
+      "name": "main",
+      "sha": "90df8c960e79e8d66c322095611427da7bb09de4"
+    },
+    {
+      "name": "ops/deploy-on-release-only-2026-11-07",
+      "sha": "736bba58700b39e219bf5d0d0655aafba4ca38aa"
+    },
+    {
+      "name": "release/combined-dm-tools-handouts-2026-11-07",
+      "sha": "9a145cd460f00d795b510c3f6a4bb139e9147cda"
+    },
+    {
+      "name": "release/realtime-inventory-autosave-2026-11-07",
+      "sha": "aaedecdc1bd81f1ec3494e6e615049ddc5a30623"
+    },
+    {
+      "name": "release/signup-turnstile-2026-11-07",
+      "sha": "185e443b6feb4b896a8f84c0698e2f2a507e9abd"
+    },
+    {
+      "name": "stage/account-settings-map-measurements",
+      "sha": "38dc95fb251faa46d661bd09f3039fa7337d5e7b"
+    },
+    {
+      "name": "stage/attribute-equipment-spell-cards",
+      "sha": "f8a597a799a2062c7cb4ab8397109cc844c7324b"
+    },
+    {
+      "name": "stage/authoritative-fog-collision-foundation-2026-11-07",
+      "sha": "1cdf66208f54bf6d324274d12143026124908d1d"
+    },
+    {
+      "name": "stage/complete-predictive-navigation-and-fog-2026-11-09",
+      "sha": "d5f6c3d10a66129cf2edff9236c633a9fb543918"
+    },
+    {
+      "name": "stage/dm-map-environment-tools",
+      "sha": "768fd860b447592087c48531983965b1e01ef758"
+    },
+    {
+      "name": "stage/dm-tools-refinement-fog-collision-2026-11-07",
+      "sha": "365fff2f30cb4fc08204b92df9b33070711246dc"
+    },
+    {
+      "name": "stage/engineering-workflow-and-ledger-a03-2026-11-10",
+      "sha": "5864e64df1f8c3003e365eeb6282c5200a3a52e8"
+    },
+    {
+      "name": "stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08",
+      "sha": "fd9e01b17fcd3bb041c752b30fee8c7a9d8409b1"
+    },
+    {
+      "name": "stage/infra-security-hardening-2026-11-07",
+      "sha": "e5bf7be749595e85ede34608f4d716fa83958913"
+    },
+    {
+      "name": "stage/initiative-release-ready-2026-11-07",
+      "sha": "f8b514cc2a7077785905badc8f4e23f62f123012"
+    },
+    {
+      "name": "stage/initiative-turn-order-2026-11-07",
+      "sha": "b7a2b22d45694bad0f3cb08d507e094284a85c6b"
+    },
+    {
+      "name": "stage/interactive-pins-held-tools-2026-11-08",
+      "sha": "480ab96aa2466c60c5c2af8ee9ea0a767f125e0e"
+    },
+    {
+      "name": "stage/inventory-cross-transfer-2026-11-08",
+      "sha": "a379bec31664ff9ce0f8817cf3b4d4393fd76307"
+    },
+    {
+      "name": "stage/inventory-grid-item-tiles",
+      "sha": "e08acfcef7c126110fdcaffb7deb4e3bdfd21e0b"
+    },
+    {
+      "name": "stage/live-database-testing-policy-2026-11-07",
+      "sha": "5328b48181990fc9f784ca4127a55d01a4f0925e"
+    },
+    {
+      "name": "stage/live-qa-light-collision-inventory-ui-2026-11-08",
+      "sha": "d3bd95d986bd7e5608bea9601e69931d37611e0d"
+    },
+    {
+      "name": "stage/map-environment-interactions-2026-11-07",
+      "sha": "e9d83939a1a413e7a0747d6fab3b1805aae1c317"
+    },
+    {
+      "name": "stage/map-pins-handouts-folders-2026-11-07",
+      "sha": "cf6c098e450a73964de9d1e94dbb2605e5e63f13"
+    },
+    {
+      "name": "stage/measurement-grid-snap-and-pins",
+      "sha": "b24d80bd46a6a85aa22c6c4b94512e25be702eb7"
+    },
+    {
+      "name": "stage/movement-fog-realtime-memory-redesign-2026-11-08",
+      "sha": "253e05009ef9714656c36bce34b98432d886d040"
+    },
+    {
+      "name": "stage/movement-latency-rubberband-2026-11-08",
+      "sha": "b5ce349b0a7413b711c5db377ac7c03fab1a83c9"
+    },
+    {
+      "name": "stage/next-release-consolidated-2026-11-07",
+      "sha": "228a2eda8b3e90e8e0240af4539fe264e75cbb6a"
+    },
+    {
+      "name": "stage/next-release-consolidated-2026-11-08",
+      "sha": "859629a7c630e8f8a7a13881fb1ed0d3c8d7eb9c"
+    },
+    {
+      "name": "stage/next-release-inventory-token-continuity-2026-11-08",
+      "sha": "d47315c49476fd657f45e35e56fc053729520a4f"
+    },
+    {
+      "name": "stage/password-breach-screen-2026-11-07",
+      "sha": "22c103228fd6d2fe51f61ef4303e3ffad057b3dc"
+    },
+    {
+      "name": "stage/performance-audit-2026-11-07",
+      "sha": "d7f98f4b36b7e36fd0b3221e97feaadaba6a1bf2"
+    },
+    {
+      "name": "stage/player-remote-reconciliation-2026-11-08",
+      "sha": "e780fa86340bf24424f5009645c51c3c2bc88dcf"
+    },
+    {
+      "name": "stage/player-sheets-token-artwork-fog-2026-11-08",
+      "sha": "31de8469aa1a5bacb0b6f7211b21de8b24551c5f"
+    },
+    {
+      "name": "stage/private-artwork-and-anon-grants-2026-11-07",
+      "sha": "a5585c0c5b3e074081c29573da2a475305f9fef9"
+    },
+    {
+      "name": "stage/project-audit-correctness-optimization-2026-11-07",
+      "sha": "f9b3acaa3ebc913d097e364bdfc2395a780b5bb7"
+    },
+    {
+      "name": "stage/realtime-inventories-dm-tabs-compact-weapons-2026-11-07",
+      "sha": "223f9bdbb9913dfef3f9fcf051894367f4005ff3"
+    },
+    {
+      "name": "stage/release-seamless-movement-hotbar-2026-11-08",
+      "sha": "b4c1e5aa409a2f6b63f9173766ea2c0b295d0440"
+    },
+    {
+      "name": "stage/ruler-bends-sheet-popouts-npc-inheritance-dead-status-2026-11-07",
+      "sha": "613046b4eaf8c8dd8b10c03aaec4ccb8c602fc2f"
+    },
+    {
+      "name": "stage/ruler-turns-and-unified-tool-token-movement-2026-11-07",
+      "sha": "25f8cfbdb8c6a3f42972bb0169bdde564bc0e56c"
+    },
+    {
+      "name": "stage/seamless-multiplayer-token-movement-2026-11-08",
+      "sha": "509b7726ea2c813a3846a45d0a94be1647633598"
+    },
+    {
+      "name": "stage/security-audit-and-signup-captcha-2026-11-07",
+      "sha": "b22c7b9af37315766942baa74d7e59ceb9d1e95c"
+    },
+    {
+      "name": "stage/shared-item-preview-collision-2026-11-08",
+      "sha": "478388e6b20e0892249ee8cd36a9705350d6be20"
+    },
+    {
+      "name": "stage/sheet-ruler-env-delete-tools-pins-2026-11-07",
+      "sha": "94d3b56e731095e06002cd93ec77ed65137f439f"
+    },
+    {
+      "name": "stage/solid-wall-drag-and-player-token-no-flash-2026-11-08",
+      "sha": "122baca3b73b74eac31e3522f4dc85c92d636e10"
+    },
+    {
+      "name": "stage/supabase-free-tier-memory-optimizations-2026-11-10",
+      "sha": "8263ddd7a633178346716fa9f2ebefabc735f3d3"
+    },
+    {
+      "name": "stage/supabase-multiplayer-performance-2026-11-08",
+      "sha": "f43a5f5dfc54c9d8468c89a50e650a6dd45c082d"
+    },
+    {
+      "name": "stage/unified-realtime-movement-2026-11-09",
+      "sha": "84170940037b44dccb128fc828aae1c0aa862617"
+    },
+    {
+      "name": "stage/units-tools-issuance-torch-mount-inventories-2026-11-07",
+      "sha": "10a88a714ce8927d0904e59264d7c2181f1d2fb6"
+    },
+    {
+      "name": "stage/universal-roll-hotbar-drag-2026-11-08",
+      "sha": "cc1ae0e532d88e5adb35dca3ff334c4a8900d699"
+    },
+    {
+      "name": "stage/world-engine-v2-2026-11-09",
+      "sha": "bc6fa983e0da3a0556e5aa4671cf57d61b3b91ef"
+    },
+    {
+      "name": "stage/world-runtime-movement-collision-fog-2026-11-08",
+      "sha": "5499e29a56af5bad819617533da34a91f60586ff"
+    },
+    {
+      "name": "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "sha": "ba816658ff26a91c4c1563ef99ecb5f243aaa0ad"
+    },
+    {
+      "name": "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "sha": "718067e58a252ef9ab98e317b349fb0e77914ca4"
+    },
+    {
+      "name": "stage/world-v2-authority-contract-b01-2026-11-10",
+      "sha": "f84743986a380e2d6ec5bfda8deea697d7f0e3e1"
+    },
+    {
+      "name": "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "sha": "012a368a1ce62ed21637bee3eb6597b8930336ef"
+    },
+    {
+      "name": "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "sha": "53f20ce5bb779092db7c654057270b93e6a8a0e4"
+    },
+    {
+      "name": "stage/world-v2-b05-ordered-coalescing-2026-11-11",
+      "sha": "62d92eae16fc8b886c8c62f68cd62f0ca356bbb5"
+    },
+    {
+      "name": "stage/world-v2-b06-certified-local-presentation-2026-11-11",
+      "sha": "9aac3b0cfacf3131a5438fc34e8badb31b9b42e7"
+    },
+    {
+      "name": "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
+      "sha": "48ae888b54682d141a6ec000f450663b1a93362f"
+    },
+    {
+      "name": "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "sha": "eb1af274a1be6d0c48233a4d29b73d92c4545967"
+    },
+    {
+      "name": "stage/world-v2-b09-input-parity-2026-11-11",
+      "sha": "21de65468a013fed7bf59c7803a5089e9b2201b8"
+    },
+    {
+      "name": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "sha": "70a5b40fdd878f100037532373783f280c743ac5"
+    },
+    {
+      "name": "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
+      "sha": "a7275ec1f7103ccb0dc87dd2437b2857c0334533"
+    },
+    {
+      "name": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
+      "sha": "4837f6a61ccbc1fab94226f5b22c2c48a16aa65f"
+    },
+    {
+      "name": "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
+      "sha": "c66148971a75f65503bcd3140e3acaecc7be05c6"
+    },
+    {
+      "name": "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
+      "sha": "ce49a07c6ee30135e6a38f5fbb3e1e98c7b45450"
+    },
+    {
+      "name": "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
+      "sha": "b2267a2fd4b06b82711bb036c5ab04795f702bf4"
+    },
+    {
+      "name": "stage/world-v2-b10-r06-history-safe-canary-2026-11-11",
+      "sha": "8c28466e69ce7685289415e059697c1c3aed77f3"
+    },
+    {
+      "name": "stage/world-v2-b10-r07-live-canary-readiness-2026-11-11",
+      "sha": "d626f8b60f2d76995d40a5167291951800241050"
+    },
+    {
+      "name": "stage/world-v2-b10-r08-live-movement-failure-triage-2026-11-11",
+      "sha": "49f3e6cd4a5980d3a936c0047e501ba26661e133"
+    },
+    {
+      "name": "stage/world-v2-b10-r09-trace-backed-bootstrap-2026-11-11",
+      "sha": "83301b637850a26c86fca496d15887c0e10c7ccc"
+    },
+    {
+      "name": "stage/world-v2-b10-r13-visibility-tail-profiling-2026-11-11",
+      "sha": "11efd611704b4c3452a40e81778e7d218749d089"
+    },
+    {
+      "name": "stage/world-v2-b10-r14-observer-cadence-2026-11-11",
+      "sha": "c29e9cfe06628ed643b1f1ad699b9f7205d7d663"
+    },
+    {
+      "name": "stage/world-v2-b10-r15-keyboard-sight-coalescing-2026-11-11",
+      "sha": "b7a22965bae598d02fb28a2a838fa0a1e06f327d"
+    },
+    {
+      "name": "stage/world-v2-b10-r16-observer-discontinuity-recovery-2026-11-11",
+      "sha": "745c56848a30eb7d4c9e9222f5eeac00e35704ff"
+    },
+    {
+      "name": "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
+      "sha": "6957e2b87cfb7ae63d42b2396d118f6bb281043c"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
+      "sha": "dda0e9e795ccad18697fdb7b532c8addd4b2dd17"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-02-signed-observer-convergence-2026-11-11",
+      "sha": "f917526b75f6079b75b68c8244ef1674053602ce"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-03-terminal-commit-integration-2026-11-11",
+      "sha": "d9f1a24ee7b123a39de3117242a08146436e45d8"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-04-guarded-observer-roster-recovery-2026-11-11",
+      "sha": "2ade6db11469573a35d889e731a1a872c676532a"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-05-consolidated-r17-r18-2026-11-11",
+      "sha": "45b057fc70be78f43c610ee0a9688c7a3bce8fc8"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-06-release-readiness-and-canary-plan-2026-11-11",
+      "sha": "e9bd94e6c435913b51c866a0916a0cc8497a6d5d"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-07-isolated-migration-plan-2026-11-11",
+      "sha": "9072c4abffc81e5b44c8ed2697e54b3e02487ad0"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-08-verified-history-payload-2026-11-11",
+      "sha": "ee9984804123b8c32709372b1dc2000aa3250be8"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-09-cli-transcript-verification-2026-11-11",
+      "sha": "f09d3b0d16138a223f101c3659d2cc40907a69fb"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-10-concealment-priority-2026-11-12",
+      "sha": "28b43c14ddf6ec721680cc7ba0537685d0ed1fc2"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-11-viewer-revocation-auth-gate-2026-11-12",
+      "sha": "ec8a4e0a6c9117776e93517c61495434a7cb222e"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-12-linked-cli-readonly-runner-2026-11-12",
+      "sha": "163b655e2655e35d23abc7ce1a38c83387df048b"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-13-solo-dm-live-test-readiness-2026-11-12",
+      "sha": "c1c6b5cc1074b4dcb6fb05a89e3098bfee2a7a9d"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-14-preview-blocked-refresh-dedupe-2026-11-12",
+      "sha": "96c90f9d38eb4b794f2cb73b0f93c9a3d04ec2e3"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12",
+      "sha": "7628a319b8c62bf18a4046fffc7bb4b8f28d67be"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+      "sha": "48f98e771c526ddd7945f3b5daa1d7d6f78c6a5e"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
+      "sha": "18a6e1ddda5d14b921386be56e04a89d66848475"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+      "sha": "79afb01a68a7c6cc6107e51dd5e97b5e3740a45e"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+      "sha": "d2d1e038c82e4dc1265171846aa829b1f176fd7c"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+      "sha": "f38da59d218389ddd0bfa7e5d2589ac117c01fd1"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+      "sha": "60e4016d0934b42d6fc3342defa5a670ead9afa5"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+      "sha": "5164a4c8af877c88c98ef17b6fea4f3a88af152a"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+      "sha": "e42bfa83a7df01caab61c5ad047ba74ff9f5e37c"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+      "sha": "425f1da12a1f936a87bd04f4f7ef273f1346e220"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+      "sha": "9a0b726cf6e37251fc0f1b8032db65037a8a2742"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-24-qa-only-live-canary-2026-11-12",
+      "sha": "7326c45d80609c00cea5b9dd0593989dd458dd7a"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-25-latency-attribution-2026-11-12",
+      "sha": "b4b2b8c51407c935147af4903f5f618736313643"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+      "sha": "331e04bb78fdb15064bd2a54e3bddb6562cc295a"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
+      "sha": "4947e33a34e124e4584424a0b67b1b8199f72c69"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+      "sha": "6a99ccaabde66978289b7cc053155a1934e17610"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+      "sha": "f1ce095aadbd0927c074a31c7404a9dd98e4452c"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
+      "sha": "4857a2edf1b45dce2089303efc13278a83e6a112"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-31-live-queue-only-2026-11-12",
+      "sha": "d94985e1135822953c9f67d9b46d238facaaaa1f"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-32-collision-input-backpressure-2026-11-12",
+      "sha": "fcea29999b50fe0f2f3b2da46e524fc5c98ecd5b"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-33-actual-rpc-perf-harness-2026-11-12",
+      "sha": "9427eafb851c1fded4727ee7eb855f385945d4ef"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-34-no-motion-sight-reuse-2026-11-12",
+      "sha": "67e478cfe776e942642c35135d66c0016f7e2382"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-35-live-no-motion-canary-2026-11-12",
+      "sha": "5ca8c83bdef4a5d9870020b0f2b16723f7790e38"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-36-approved-drag-presentation-2026-11-12",
+      "sha": "da078abe7e0e5f28dbb9eeaa5f26fa570fbc7c19"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-37-authority-latency-reproduction-2026-11-12",
+      "sha": "d2badfe592473c31d23a8f43926ab78eefa0f0c2"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-38-pointer-batch-prediction-2026-11-12",
+      "sha": "4eb2e93067514425292d1eae2cafb69e73de0f6c"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-39-local-browser-metrics-2026-11-13",
+      "sha": "99798032abd2a68d6fea32475a4b16a604d2080d"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-40-blocked-lateral-rebase-2026-11-13",
+      "sha": "1b33da9bb60252e7964700e9d97b1d05ea452392"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-41-authority-protocol-gate-2026-11-13",
+      "sha": "fb35b290c1aa7de88de59d66f5f232befc783a68"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-42-source-real-authority-benchmark-2026-11-13",
+      "sha": "baf1d9f6574b47f9cb8d4a97ea388a345a84835f"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-43-atomic-terminal-bridge-2026-11-13",
+      "sha": "83efece2ca6bf63034bd224384f85dc54458fbe0"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-44-atomic-backend-rehearsal-2026-11-13",
+      "sha": "9bfdcedb87ecd53ab25b3f4e2349216e0fb4bc58"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-45-migration-preflight-containment-2026-11-13",
+      "sha": "d76fd9aa3c0138f240d107952605cf44cb1d08b1"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-46-complete-forward-recovery-2026-11-13",
+      "sha": "ebe4467de276ec32b1c3c581ca6b8a904fda4e8e"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-47-cli-isolated-release-2026-11-13",
+      "sha": "d547025b84cc125ca0e109140ff243d1ad846510"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-48-narrow-atomic-release-2026-11-13",
+      "sha": "1448d602d2dfdb5bb99b22ff3fb2afc5ed0af031"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-49-linked-dryrun-guard-2026-11-13",
+      "sha": "2b5458dacc850d9ce6dbbd1fa4f11bb73e505cc5"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-50-readonly-evidence-2026-11-13",
+      "sha": "22f91ea18bfeb31ed66146caf665fde67c82de57"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-51-cli-evidence-gate-2026-11-13",
+      "sha": "59bc0db399c0dfdc9f2186419be17a1850414754"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-52-official-cli-output-compat-2026-11-13",
+      "sha": "9ebbb8d0b07d8b3f17589c713d2b00429c0fc690"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-53-commit-fog-dependency-audit-2026-11-13",
+      "sha": "c1523fabca8fc995f4efa5d4ca0c7af53fba35dd"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-54-source-real-fog-pg17-2026-11-13",
+      "sha": "2de5bfdb08d466282078772ec2fd98835f241b1b"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-55-dirty-fog-lazy-guard-2026-11-13",
+      "sha": "eb1f1d58b1af79c16b68804f1906d6a3452a6d47"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-56-synchronous-fog-fastpath-2026-11-13",
+      "sha": "fbc29f9c7c7f893645b3a2073b535e8c2fd8d028"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-57-fog-fastpath-optin-rollback-2026-11-13",
+      "sha": "54aa1964ae54a55f6637a1ddaa9c8ac210aa6128"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-58-multiplayer-qa-attest-2026-11-13",
+      "sha": "c4f80efd92c4c9f1284d500fe61cf37dda37d46f"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-59-qa-receipt-ui-2026-11-13",
+      "sha": "5c8815fa586af4bcf9a9f191d0f066c92a032f82"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-60-operator-linked-cli-2026-11-13",
+      "sha": "cbffa298460c49fe2589440fd0a360f23c811302"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-61-cli-provenance-freshness-2026-11-14",
+      "sha": "b87227d4490a19daf9143758de07f60b83a096b6"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-62-preview-auth-redirect-2026-11-14",
+      "sha": "380e31bda9e20638c3e1f660a2cdf001b8e37c0d"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-67-performance-delta-readonly-2026-11-14",
+      "sha": "1c4593f5eb14ff3d8224bc2982839a818eb135c8"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-68-commit-cost-isolation-2026-11-14",
+      "sha": "934a881fd6e6640ac69c8b553baf0f3561d6aaff"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-69-eight-viewer-fog-parity-2026-11-14",
+      "sha": "e1161f0bd9896be12f40a44c6217e13ed58981d4"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-70-fog-function-cost-profile-2026-11-14",
+      "sha": "e913bacf716ba2da0d51ec186ab0ad52fa726766"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-71-wall-ray-shape-cost-2026-11-14",
+      "sha": "12f631911805e36aa1e96eb9ad9a0006afa7c1da"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-72-local-solid-wall-frame-reduction-2026-11-14",
+      "sha": "2711a7f7fe025693d772c314ef319e8eccd2874a"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-73-live-wall-eligibility-2026-11-14",
+      "sha": "94a4c6d7441b406eb5066ddc344011228ae74389"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-74-mixed-light-ray-cost-2026-11-15",
+      "sha": "84bedb4bae378ff5ac68473c763baa737054f4cc"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-75-inline-cross2-parity-2026-11-15",
+      "sha": "e86138f8a11ae68f7f90aa1d1c3eb3dd96ab61ef"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-76-balanced-cross2-validation-2026-11-15",
+      "sha": "b611513396f0f42293cff3e724c10a4e157f2bd8"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-77-sealed-inline-cross2-candidate-2026-11-15",
+      "sha": "23d1d39b0f9f01b50c3c801a783e39371fdd7e80"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-78-readonly-release-evidence-2026-11-15",
+      "sha": "5102f62ffe1017a1c7f66df738bee5bfaaaebc38"
+    },
+    {
+      "name": "stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15",
+      "sha": "56ce11822f8999fbd2ca2b32613bf811dbf5ec2c"
+    },
+    {
+      "name": "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "sha": "50cd4f9bd56e48c4a1d7fdeb64a35bc54241eb70"
+    },
+    {
+      "name": "stage/world-v2-live-regression-integrated-2026-11-10",
+      "sha": "e53e344461a667c739f7c49ba4a229e6a4361892"
+    },
+    {
+      "name": "stage/world-v2-phase1-instrumentation-2026-11-10",
+      "sha": "0968e2ba0df971221bfefff7c284935674d463df"
+    },
+    {
+      "name": "stage/world-v2-transport-decision-b02-2026-11-10",
+      "sha": "4401e4d1de36dfd9ca5c8693a16778e64b6ebda4"
+    }
+  ],
+  "newlyReconciled": [
+    {
+      "name": "feature/compact-tabletop-ui",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "NO_PR_UNREVIEWED",
+      "observedBranchSha": "97cb6fa2560b65b15911c7c15def13606bbecedb",
+      "linkedPullRequest": null,
+      "pullRequestState": "NO_PR",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "No matching PR; source and owner must be reviewed, not assumed obsolete or release-ready."
+    },
+    {
+      "name": "feature/token-status-markers",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "00145147c9acfd7f97b568f8cec46d6e7ee49235",
+      "linkedPullRequest": 1,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "feature/weapon-attack-cards",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "NO_PR_UNREVIEWED",
+      "observedBranchSha": "713fa4dd440612265d37eb49b5b1dbdc5222e13c",
+      "linkedPullRequest": null,
+      "pullRequestState": "NO_PR",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "No matching PR; source and owner must be reviewed, not assumed obsolete or release-ready."
+    },
+    {
+      "name": "fix/map-token-protected-column-2026-11-09",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "b1422dc08d5dd8c8c418e24f1caa05f56aa50d9b",
+      "linkedPullRequest": 56,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "fix/world-v2-live-authority-continuity-2026-11-10",
+      "status": "closed-unmerged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "CLOSED_UNMERGED_UNVERIFIED",
+      "observedBranchSha": "ae02168387d36c80f13204a4804b6cf765e8d6a5",
+      "linkedPullRequest": 71,
+      "pullRequestState": "closed",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "PR closed without merge; no independent canonical release readiness claim."
+    },
+    {
+      "name": "fix/world-v2-live-drag-vision-continuity-2026-11-10",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "38e24e32baeba74e801dc96f43d42f9939d67223",
+      "linkedPullRequest": 70,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "fix/world-v2-unpublished-map-startup-2026-11-10",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "7476b9e45d17b404ea8b40e143d05bc7abae4064",
+      "linkedPullRequest": 59,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/complete-predictive-navigation-and-fog-2026-11-09",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "d5f6c3d10a66129cf2edff9236c633a9fb543918",
+      "linkedPullRequest": 55,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/engineering-workflow-and-ledger-a03-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "5864e64df1f8c3003e365eeb6282c5200a3a52e8",
+      "linkedPullRequest": 72,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/next-release-consolidated-2026-11-07",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "228a2eda8b3e90e8e0240af4539fe264e75cbb6a",
+      "linkedPullRequest": 36,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/next-release-consolidated-2026-11-08",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "859629a7c630e8f8a7a13881fb1ed0d3c8d7eb9c",
+      "linkedPullRequest": 40,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/release-seamless-movement-hotbar-2026-11-08",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "b4c1e5aa409a2f6b63f9173766ea2c0b295d0440",
+      "linkedPullRequest": 45,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/unified-realtime-movement-2026-11-09",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "84170940037b44dccb128fc828aae1c0aa862617",
+      "linkedPullRequest": 57,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "ba816658ff26a91c4c1563ef99ecb5f243aaa0ad",
+      "linkedPullRequest": 75,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "718067e58a252ef9ab98e317b349fb0e77914ca4",
+      "linkedPullRequest": 73,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-authority-contract-b01-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "f84743986a380e2d6ec5bfda8deea697d7f0e3e1",
+      "linkedPullRequest": 76,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "012a368a1ce62ed21637bee3eb6597b8930336ef",
+      "linkedPullRequest": 78,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "53f20ce5bb779092db7c654057270b93e6a8a0e4",
+      "linkedPullRequest": 79,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b05-ordered-coalescing-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "62d92eae16fc8b886c8c62f68cd62f0ca356bbb5",
+      "linkedPullRequest": 80,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b06-certified-local-presentation-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "9aac3b0cfacf3131a5438fc34e8badb31b9b42e7",
+      "linkedPullRequest": 81,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "48ae888b54682d141a6ec000f450663b1a93362f",
+      "linkedPullRequest": 82,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "eb1af274a1be6d0c48233a4d29b73d92c4545967",
+      "linkedPullRequest": 83,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b09-input-parity-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "21de65468a013fed7bf59c7803a5089e9b2201b8",
+      "linkedPullRequest": 84,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "70a5b40fdd878f100037532373783f280c743ac5",
+      "linkedPullRequest": 85,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r01-core-path-wiring-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "a7275ec1f7103ccb0dc87dd2437b2857c0334533",
+      "linkedPullRequest": 86,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r02-observer-sight-recovery-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "4837f6a61ccbc1fab94226f5b22c2c48a16aa65f",
+      "linkedPullRequest": 87,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r03-terminal-queue-retirement-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "c66148971a75f65503bcd3140e3acaecc7be05c6",
+      "linkedPullRequest": 88,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r04-pr71-migration-rehearsal-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "ce49a07c6ee30135e6a38f5fbb3e1e98c7b45450",
+      "linkedPullRequest": 89,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r05-versioned-release-migration-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "b2267a2fd4b06b82711bb036c5ab04795f702bf4",
+      "linkedPullRequest": 90,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r06-history-safe-canary-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "8c28466e69ce7685289415e059697c1c3aed77f3",
+      "linkedPullRequest": 91,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r07-live-canary-readiness-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "d626f8b60f2d76995d40a5167291951800241050",
+      "linkedPullRequest": 92,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r08-live-movement-failure-triage-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "49f3e6cd4a5980d3a936c0047e501ba26661e133",
+      "linkedPullRequest": 93,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r09-trace-backed-bootstrap-2026-11-11",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "83301b637850a26c86fca496d15887c0e10c7ccc",
+      "linkedPullRequest": 94,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r13-visibility-tail-profiling-2026-11-11",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "11efd611704b4c3452a40e81778e7d218749d089",
+      "linkedPullRequest": 98,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/world-v2-b10-r14-observer-cadence-2026-11-11",
+      "status": "merged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MERGED_GITHUB_UNVERIFIED_CANONICAL_ALIAS",
+      "observedBranchSha": "c29e9cfe06628ed643b1f1ad699b9f7205d7d663",
+      "linkedPullRequest": 99,
+      "pullRequestState": "closed",
+      "prMerged": true,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Historical GitHub merged PR; current canonical feature presence not independently audited; do not re-merge."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "48f98e771c526ddd7945f3b5daa1d7d6f78c6a5e",
+      "linkedPullRequest": 118,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "18a6e1ddda5d14b921386be56e04a89d66848475",
+      "linkedPullRequest": 119,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "79afb01a68a7c6cc6107e51dd5e97b5e3740a45e",
+      "linkedPullRequest": 120,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "d2d1e038c82e4dc1265171846aa829b1f176fd7c",
+      "linkedPullRequest": 121,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "f38da59d218389ddd0bfa7e5d2589ac117c01fd1",
+      "linkedPullRequest": 122,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "60e4016d0934b42d6fc3342defa5a670ead9afa5",
+      "linkedPullRequest": 123,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "5164a4c8af877c88c98ef17b6fea4f3a88af152a",
+      "linkedPullRequest": 124,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "e42bfa83a7df01caab61c5ad047ba74ff9f5e37c",
+      "linkedPullRequest": 125,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "425f1da12a1f936a87bd04f4f7ef273f1346e220",
+      "linkedPullRequest": 126,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "9a0b726cf6e37251fc0f1b8032db65037a8a2742",
+      "linkedPullRequest": 127,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-24-qa-only-live-canary-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+      "linkedPullRequest": 128,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-25-latency-attribution-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "b4b2b8c51407c935147af4903f5f618736313643",
+      "linkedPullRequest": 129,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "EXCLUDED_FROM_NARROW_SQL",
+      "observedBranchSha": "331e04bb78fdb15064bd2a54e3bddb6562cc295a",
+      "linkedPullRequest": 130,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-26/R18-27 omitted by R18-48 narrow package due mixed performance; do not reintroduce."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "EXCLUDED_FROM_NARROW_SQL",
+      "observedBranchSha": "4947e33a34e124e4584424a0b67b1b8199f72c69",
+      "linkedPullRequest": 131,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-26/R18-27 omitted by R18-48 narrow package due mixed performance; do not reintroduce."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "6a99ccaabde66978289b7cc053155a1934e17610",
+      "linkedPullRequest": 132,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "f1ce095aadbd0927c074a31c7404a9dd98e4452c",
+      "linkedPullRequest": 133,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "4857a2edf1b45dce2089303efc13278a83e6a112",
+      "linkedPullRequest": 134,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-31-live-queue-only-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "d94985e1135822953c9f67d9b46d238facaaaa1f",
+      "linkedPullRequest": 135,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-32-collision-input-backpressure-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "fcea29999b50fe0f2f3b2da46e524fc5c98ecd5b",
+      "linkedPullRequest": 136,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-33-actual-rpc-perf-harness-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "9427eafb851c1fded4727ee7eb855f385945d4ef",
+      "linkedPullRequest": 137,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-34-no-motion-sight-reuse-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "67e478cfe776e942642c35135d66c0016f7e2382",
+      "linkedPullRequest": 138,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-35-live-no-motion-canary-2026-11-12",
+      "status": "released",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "CANONICAL_LIVE_UNMERGED",
+      "observedBranchSha": "5ca8c83bdef4a5d9870020b0f2b16723f7790e38",
+      "linkedPullRequest": 139,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Canonical R18-35 live SHA independently verified by R18-78. Unmerged PR does not imply backend migration."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-36-approved-drag-presentation-2026-11-12",
+      "status": "superseded",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "REJECTED_ROLLED_BACK",
+      "observedBranchSha": "da078abe7e0e5f28dbb9eeaa5f26fa570fbc7c19",
+      "linkedPullRequest": 140,
+      "pullRequestState": "closed",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-36 failed live collision/drag acceptance, rolled back from canonical and closed unmerged; permanently exclude by default."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-37-authority-latency-reproduction-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "d2badfe592473c31d23a8f43926ab78eefa0f0c2",
+      "linkedPullRequest": 141,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-38-pointer-batch-prediction-2026-11-12",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "4eb2e93067514425292d1eae2cafb69e73de0f6c",
+      "linkedPullRequest": 142,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-39-local-browser-metrics-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "99798032abd2a68d6fea32475a4b16a604d2080d",
+      "linkedPullRequest": 143,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-40-blocked-lateral-rebase-2026-11-13",
+      "status": "superseded",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "FAILED_SOLO_DM_QA_DIVERGED",
+      "observedBranchSha": "1b33da9bb60252e7964700e9d97b1d05ea452392",
+      "linkedPullRequest": 144,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-40 V2 preview failed DM collision/rapid-movement acceptance; divergent and unapproved."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-41-authority-protocol-gate-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "fb35b290c1aa7de88de59d66f5f232befc783a68",
+      "linkedPullRequest": 145,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-42-source-real-authority-benchmark-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "baf1d9f6574b47f9cb8d4a97ea388a345a84835f",
+      "linkedPullRequest": 146,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-43-atomic-terminal-bridge-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "83efece2ca6bf63034bd224384f85dc54458fbe0",
+      "linkedPullRequest": 147,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-44-atomic-backend-rehearsal-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "9bfdcedb87ecd53ab25b3f4e2349216e0fb4bc58",
+      "linkedPullRequest": 148,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-45-migration-preflight-containment-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "d76fd9aa3c0138f240d107952605cf44cb1d08b1",
+      "linkedPullRequest": 149,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-46-complete-forward-recovery-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "ebe4467de276ec32b1c3c581ca6b8a904fda4e8e",
+      "linkedPullRequest": 150,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-47-cli-isolated-release-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "d547025b84cc125ca0e109140ff243d1ad846510",
+      "linkedPullRequest": 151,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-48-narrow-atomic-release-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "1448d602d2dfdb5bb99b22ff3fb2afc5ed0af031",
+      "linkedPullRequest": 152,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-49-linked-dryrun-guard-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "2b5458dacc850d9ce6dbbd1fa4f11bb73e505cc5",
+      "linkedPullRequest": 153,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-50-readonly-evidence-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "22f91ea18bfeb31ed66146caf665fde67c82de57",
+      "linkedPullRequest": 154,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-51-cli-evidence-gate-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "59bc0db399c0dfdc9f2186419be17a1850414754",
+      "linkedPullRequest": 155,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-52-official-cli-output-compat-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "9ebbb8d0b07d8b3f17589c713d2b00429c0fc690",
+      "linkedPullRequest": 156,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-53-commit-fog-dependency-audit-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "c1523fabca8fc995f4efa5d4ca0c7af53fba35dd",
+      "linkedPullRequest": 157,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-54-source-real-fog-pg17-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "2de5bfdb08d466282078772ec2fd98835f241b1b",
+      "linkedPullRequest": 158,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-55-dirty-fog-lazy-guard-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "eb1f1d58b1af79c16b68804f1906d6a3452a6d47",
+      "linkedPullRequest": 159,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-56-synchronous-fog-fastpath-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "fbc29f9c7c7f893645b3a2073b535e8c2fd8d028",
+      "linkedPullRequest": 160,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-57-fog-fastpath-optin-rollback-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPTIONAL_SQL_NOT_INSTALLED",
+      "observedBranchSha": "54aa1964ae54a55f6637a1ddaa9c8ac210aa6128",
+      "linkedPullRequest": 161,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Optional R18-57/R18-77 guarded SQL candidate, NOT installed or included in required eight versioned migrations."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-58-multiplayer-qa-attest-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "c4f80efd92c4c9f1284d500fe61cf37dda37d46f",
+      "linkedPullRequest": 162,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-59-qa-receipt-ui-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "5c8815fa586af4bcf9a9f191d0f066c92a032f82",
+      "linkedPullRequest": 163,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-60-operator-linked-cli-2026-11-13",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "cbffa298460c49fe2589440fd0a360f23c811302",
+      "linkedPullRequest": 164,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-61-cli-provenance-freshness-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "b87227d4490a19daf9143758de07f60b83a096b6",
+      "linkedPullRequest": 165,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-62-preview-auth-redirect-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "380e31bda9e20638c3e1f660a2cdf001b8e37c0d",
+      "linkedPullRequest": 166,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-67-performance-delta-readonly-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "1c4593f5eb14ff3d8224bc2982839a818eb135c8",
+      "linkedPullRequest": 169,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-68-commit-cost-isolation-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "934a881fd6e6640ac69c8b553baf0f3561d6aaff",
+      "linkedPullRequest": 170,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-69-eight-viewer-fog-parity-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "e1161f0bd9896be12f40a44c6217e13ed58981d4",
+      "linkedPullRequest": 171,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-70-fog-function-cost-profile-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "e913bacf716ba2da0d51ec186ab0ad52fa726766",
+      "linkedPullRequest": 172,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-71-wall-ray-shape-cost-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "12f631911805e36aa1e96eb9ad9a0006afa7c1da",
+      "linkedPullRequest": 173,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-72-local-solid-wall-frame-reduction-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "2711a7f7fe025693d772c314ef319e8eccd2874a",
+      "linkedPullRequest": 174,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-73-live-wall-eligibility-2026-11-14",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "94a4c6d7441b406eb5066ddc344011228ae74389",
+      "linkedPullRequest": 175,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-74-mixed-light-ray-cost-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "84bedb4bae378ff5ac68473c763baa737054f4cc",
+      "linkedPullRequest": 176,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-75-inline-cross2-parity-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "e86138f8a11ae68f7f90aa1d1c3eb3dd96ab61ef",
+      "linkedPullRequest": 177,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-76-balanced-cross2-validation-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "b611513396f0f42293cff3e724c10a4e157f2bd8",
+      "linkedPullRequest": 178,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-77-sealed-inline-cross2-candidate-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPTIONAL_SQL_NOT_INSTALLED",
+      "observedBranchSha": "23d1d39b0f9f01b50c3c801a783e39371fdd7e80",
+      "linkedPullRequest": 179,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Optional R18-57/R18-77 guarded SQL candidate, NOT installed or included in required eight versioned migrations."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-78-readonly-release-evidence-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "5102f62ffe1017a1c7f66df738bee5bfaaaebc38",
+      "linkedPullRequest": 180,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "CURRENT_RECONCILIATION_ONLY",
+      "observedBranchSha": "56ce11822f8999fbd2ca2b32613bf811dbf5ec2c",
+      "linkedPullRequest": 181,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-79 documentation/ledger audit only; no release approval."
+    },
+    {
+      "name": "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "50cd4f9bd56e48c4a1d7fdeb64a35bc54241eb70",
+      "linkedPullRequest": 74,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-transport-decision-b02-2026-11-10",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "OPEN_UNMERGED_NOT_RELEASE_APPROVED",
+      "observedBranchSha": "4401e4d1de36dfd9ca5c8693a16778e64b6ebda4",
+      "linkedPullRequest": 77,
+      "pullRequestState": "open",
+      "prMerged": false,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    }
+  ],
+  "laterPrs": [
+    {
+      "pr": 118,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/118",
+      "title": "[B10-R18-16][NO-GO] Research 10%-cell wall clearance and measure repeated-movement lag",
+      "headBranch": "stage/world-v2-b10-r18-16-wall-clearance-and-cadence-study-2026-11-12",
+      "headSha": "48f98e771c526ddd7945f3b5daa1d7d6f78c6a5e",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 119,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/119",
+      "title": "[B10-R18-17][NO-GO] Stage 0.10-cell authoritative wall clearance and direct-write/client parity",
+      "headBranch": "stage/world-v2-b10-r18-17-authoritative-wall-clearance-parity-2026-11-12",
+      "headSha": "18a6e1ddda5d14b921386be56e04a89d66848475",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 120,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/120",
+      "title": "[B10-R18-17][NO-GO] Paired 0.10-cell wall clearance for V2/client & legacy SQL",
+      "headBranch": "stage/world-v2-b10-r18-17-wall-clearance-parity-candidate-2026-11-12",
+      "headSha": "79afb01a68a7c6cc6107e51dd5e97b5e3740a45e",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 121,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/121",
+      "title": "[B10-R18-18][NO-GO] Verify real token/tool collision triggers and permission changes",
+      "headBranch": "stage/world-v2-b10-r18-18-direct-write-wall-clearance-2026-11-12",
+      "headSha": "d2d1e038c82e4dc1265171846aa829b1f176fd7c",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 122,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/122",
+      "title": "[B10-R18-19][NO-GO] Harden issued-tool map transfers and validate latest trajectory authority",
+      "headBranch": "stage/world-v2-b10-r18-19-trajectory-map-auth-hardening-2026-11-12",
+      "headSha": "f38da59d218389ddd0bfa7e5d2589ac117c01fd1",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 123,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/123",
+      "title": "[B10-R18-20][NO-GO] Source-real full write integrity and legacy movement-session security",
+      "headBranch": "stage/world-v2-b10-r18-20-full-write-integrity-and-legacy-session-2026-11-12",
+      "headSha": "60e4016d0934b42d6fc3342defa5a670ead9afa5",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 124,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/124",
+      "title": "[B10-R18-21][NO-GO] Preserve live V2 signed-commit checkpoints in map guards; DM routing QA",
+      "headBranch": "stage/world-v2-b10-r18-21-dm-workflow-campaign-affinity-release-preflight-2026-11-12",
+      "headSha": "5164a4c8af877c88c98ef17b6fea4f3a88af152a",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 125,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/125",
+      "title": "[B10-R18-22][NO-GO] Rehearse frozen R05 plus all collision/security SQL in one local PG17",
+      "headBranch": "stage/world-v2-b10-r18-22-ordered-post-r05-sql-integration-2026-11-12",
+      "headSha": "e42bfa83a7df01caab61c5ad047ba74ff9f5e37c",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 126,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/126",
+      "title": "[B10-R18-23][NO-GO] Live read-only history/catalog + real Auth release gate",
+      "headBranch": "stage/world-v2-b10-r18-23-live-history-auth-security-gates-2026-11-12",
+      "headSha": "425f1da12a1f936a87bd04f4f7ef273f1346e220",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 127,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/127",
+      "title": "[B10-R18-24][NO-GO] Opt-in privacy-safe multiplayer QA capture",
+      "headBranch": "stage/world-v2-b10-r18-24-multiplayer-diagnostic-capture-2026-11-12",
+      "headSha": "9a0b726cf6e37251fc0f1b8032db65037a8a2742",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 128,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/128",
+      "title": "[R18-24 CANARY] QA-only frontend on deployed R18-15 (no SQL)",
+      "headBranch": "stage/world-v2-b10-r18-24-qa-only-live-canary-2026-11-12",
+      "headSha": "7326c45d80609c00cea5b9dd0593989dd458dd7a",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 129,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/129",
+      "title": "[R18-25][frontend-only] Attribute DM corner / wall / pin latency without movement changes",
+      "headBranch": "stage/world-v2-b10-r18-25-latency-attribution-2026-11-12",
+      "headSha": "b4b2b8c51407c935147af4903f5f618736313643",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 130,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/130",
+      "title": "[B10-R18-26][NO-GO] Differentially verified private server swept-wall prefilter",
+      "headBranch": "stage/world-v2-b10-r18-26-bounded-step-rejection-2026-11-12",
+      "headSha": "331e04bb78fdb15064bd2a54e3bddb6562cc295a",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "EXCLUDED_FROM_NARROW_SQL"
+    },
+    {
+      "pr": 131,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/131",
+      "title": "[B10-R18-27][NO-GO] Prove canonical Commit empty-work fast paths",
+      "headBranch": "stage/world-v2-b10-r18-27-commit-empty-work-2026-11-12",
+      "headSha": "4947e33a34e124e4584424a0b67b1b8199f72c69",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "EXCLUDED_FROM_NARROW_SQL"
+    },
+    {
+      "pr": 132,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/132",
+      "title": "[B10-R18-28][NO-GO] Optional atomic terminal Advance+Commit with exact receipt/revocation",
+      "headBranch": "stage/world-v2-b10-r18-28-atomic-finalize-2026-11-12",
+      "headSha": "6a99ccaabde66978289b7cc053155a1934e17610",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 133,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/133",
+      "title": "[B10-R18-29][NO-GO] Default-OFF atomic terminal client with strict ACK and lost-response safety",
+      "headBranch": "stage/world-v2-b10-r18-29-finalization-client-2026-11-12",
+      "headSha": "f1ce095aadbd0927c074a31c7404a9dd98e4452c",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 134,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/134",
+      "title": "[B10-R18-30][NO-GO] Canonical blocked-final receipts and lossless delayed Advance input",
+      "headBranch": "stage/world-v2-b10-r18-30-blocked-final-contract-2026-11-12",
+      "headSha": "4857a2edf1b45dce2089303efc13278a83e6a112",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 135,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/135",
+      "title": "[B10-R18-31][FRONTEND ONLY] Isolate lossless delayed-Advance queue fix on live R18-24 baseline",
+      "headBranch": "stage/world-v2-b10-r18-31-live-queue-only-2026-11-12",
+      "headSha": "d94985e1135822953c9f67d9b46d238facaaaa1f",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 136,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/136",
+      "title": "[B10-R18-32][FRONTEND-ONLY] Bound collision pointer backlog and suppress repeat denied crossings",
+      "headBranch": "stage/world-v2-b10-r18-32-collision-input-backpressure-2026-11-12",
+      "headSha": "fcea29999b50fe0f2f3b2da46e524fc5c98ecd5b",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 137,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/137",
+      "title": "[B10-R18-33][STAGING ONLY] Measure source-real blocked and sustained movement RPC cost",
+      "headBranch": "stage/world-v2-b10-r18-33-actual-rpc-perf-harness-2026-11-12",
+      "headSha": "9427eafb851c1fded4727ee7eb855f385945d4ef",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 138,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/138",
+      "title": "[B10-R18-34][STAGING ONLY] Skip redundant signed sight refresh after no-motion collision",
+      "headBranch": "stage/world-v2-b10-r18-34-no-motion-sight-reuse-2026-11-12",
+      "headSha": "67e478cfe776e942642c35135d66c0016f7e2382",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 139,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/139",
+      "title": "[R18-35][FRONTEND-ONLY CANARY] Signed no-motion collision continuation on live R18-31",
+      "headBranch": "stage/world-v2-b10-r18-35-live-no-motion-canary-2026-11-12",
+      "headSha": "5ca8c83bdef4a5d9870020b0f2b16723f7790e38",
+      "baseBranch": "stage/world-v2-b10-r18-31-live-queue-only-2026-11-12",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "CANONICAL_LIVE_UNMERGED"
+    },
+    {
+      "pr": 140,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/140",
+      "title": "[REJECTED/ROLLED BACK R18-36] Approved drag snap regressed live movement",
+      "headBranch": "stage/world-v2-b10-r18-36-approved-drag-presentation-2026-11-12",
+      "headSha": "da078abe7e0e5f28dbb9eeaa5f26fa570fbc7c19",
+      "baseBranch": "stage/world-v2-b10-r18-35-live-no-motion-canary-2026-11-12",
+      "state": "closed",
+      "draft": true,
+      "merged": false,
+      "disposition": "REJECTED_ROLLED_BACK"
+    },
+    {
+      "pr": 141,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/141",
+      "title": "[R18-37][NO DEPLOY] Source-real movement latency and authority cap characterization",
+      "headBranch": "stage/world-v2-b10-r18-37-authority-latency-reproduction-2026-11-12",
+      "headSha": "d2badfe592473c31d23a8f43926ab78eefa0f0c2",
+      "baseBranch": "stage/world-v2-b10-r18-35-live-no-motion-canary-2026-11-12",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 142,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/142",
+      "title": "[R18-38][NO DEPLOY] Preserve coalesced pointer path with one cosmetic prediction per browser event",
+      "headBranch": "stage/world-v2-b10-r18-38-pointer-batch-prediction-2026-11-12",
+      "headSha": "4eb2e93067514425292d1eae2cafb69e73de0f6c",
+      "baseBranch": "stage/world-v2-b10-r18-37-authority-latency-reproduction-2026-11-12",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 143,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/143",
+      "title": "[R18-39][PREVIEW ONLY] Measure real pointer coalescing and local collision CPU safely",
+      "headBranch": "stage/world-v2-b10-r18-39-local-browser-metrics-2026-11-13",
+      "headSha": "99798032abd2a68d6fea32475a4b16a604d2080d",
+      "baseBranch": "stage/world-v2-b10-r18-38-pointer-batch-prediction-2026-11-12",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 144,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/144",
+      "title": "[B10-R18-40][STAGING] Rebase newly queued lateral wall intent only after exact blocked ACK",
+      "headBranch": "stage/world-v2-b10-r18-40-blocked-lateral-rebase-2026-11-13",
+      "headSha": "1b33da9bb60252e7964700e9d97b1d05ea452392",
+      "baseBranch": "stage/world-v2-b10-r18-39-local-browser-metrics-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "FAILED_SOLO_DM_QA_DIVERGED"
+    },
+    {
+      "pr": 145,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/145",
+      "title": "[R18-41][NO DEPLOY] Prove authority-serialization bottleneck and gate safe movement protocol redesign",
+      "headBranch": "stage/world-v2-b10-r18-41-authority-protocol-gate-2026-11-13",
+      "headSha": "fb35b290c1aa7de88de59d66f5f232befc783a68",
+      "baseBranch": "stage/world-v2-b10-r18-39-local-browser-metrics-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 146,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/146",
+      "title": "[R18-42][STAGING ONLY] Benchmark real V2 Advance/Commit throughput and bounded 23-cell batching",
+      "headBranch": "stage/world-v2-b10-r18-42-source-real-authority-benchmark-2026-11-13",
+      "headSha": "baf1d9f6574b47f9cb8d4a97ea388a345a84835f",
+      "baseBranch": "stage/world-v2-b10-r18-41-authority-protocol-gate-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 147,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/147",
+      "title": "[R18-43][DRAFT NO-DEPLOY] Double-gated atomic terminal client, exact ACK and retry safety",
+      "headBranch": "stage/world-v2-b10-r18-43-atomic-terminal-bridge-2026-11-13",
+      "headSha": "83efece2ca6bf63034bd224384f85dc54458fbe0",
+      "baseBranch": "stage/world-v2-b10-r18-42-source-real-authority-benchmark-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 148,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/148",
+      "title": "[B10-R18-44][DRAFT][NO-DEPLOY] Rehearse exact atomic server SQL with source-real PG17 ↔ V2 client",
+      "headBranch": "stage/world-v2-b10-r18-44-atomic-backend-rehearsal-2026-11-13",
+      "headSha": "9bfdcedb87ecd53ab25b3f4e2349216e0fb4bc58",
+      "baseBranch": "stage/world-v2-b10-r18-43-atomic-terminal-bridge-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 149,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/149",
+      "title": "[B10-R18-45][DRAFT NO-DEPLOY] Exact migration gate and tested postcommit atomic containment",
+      "headBranch": "stage/world-v2-b10-r18-45-migration-preflight-containment-2026-11-13",
+      "headSha": "d76fd9aa3c0138f240d107952605cf44cb1d08b1",
+      "baseBranch": "stage/world-v2-b10-r18-44-atomic-backend-rehearsal-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 150,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/150",
+      "title": "[B10-R18-46][DRAFT NO-DEPLOY] Recover five exact original wall/step/legacy trigger functions after commit",
+      "headBranch": "stage/world-v2-b10-r18-46-complete-forward-recovery-2026-11-13",
+      "headSha": "ebe4467de276ec32b1c3c581ca6b8a904fda4e8e",
+      "baseBranch": "stage/world-v2-b10-r18-45-migration-preflight-containment-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 151,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/151",
+      "title": "[B10-R18-47][DRAFT NO-DEPLOY] Official CLI versioned isolated SQL package with 83/83 history guard",
+      "headBranch": "stage/world-v2-b10-r18-47-cli-isolated-release-2026-11-13",
+      "headSha": "d547025b84cc125ca0e109140ff243d1ad846510",
+      "baseBranch": "stage/world-v2-b10-r18-46-complete-forward-recovery-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 152,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/152",
+      "title": "[B10-R18-48][DRAFT NO-DEPLOY] Narrow atomic SQL release without R26/R27; source-exact recovery",
+      "headBranch": "stage/world-v2-b10-r18-48-narrow-atomic-release-2026-11-13",
+      "headSha": "1448d602d2dfdb5bb99b22ff3fb2afc5ed0af031",
+      "baseBranch": "stage/world-v2-b10-r18-47-cli-isolated-release-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 153,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/153",
+      "title": "[B10-R18-49][DRAFT NO-DEPLOY] 83+8 offline linked workspace and revocation gates",
+      "headBranch": "stage/world-v2-b10-r18-49-linked-dryrun-guard-2026-11-13",
+      "headSha": "2b5458dacc850d9ce6dbbd1fa4f11bb73e505cc5",
+      "baseBranch": "stage/world-v2-b10-r18-48-narrow-atomic-release-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 154,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/154",
+      "title": "[B10-R18-50][DRAFT NO-DEPLOY] Fresh 83/83 remote read-only evidence and fail-closed release audit",
+      "headBranch": "stage/world-v2-b10-r18-50-readonly-evidence-2026-11-13",
+      "headSha": "22f91ea18bfeb31ed66146caf665fde67c82de57",
+      "baseBranch": "stage/world-v2-b10-r18-49-linked-dryrun-guard-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 155,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/155",
+      "title": "[B10-R18-51][DRAFT NO-DEPLOY] Strict 83+8 CLI evidence gate and multiplayer QA protocol",
+      "headBranch": "stage/world-v2-b10-r18-51-cli-evidence-gate-2026-11-13",
+      "headSha": "59bc0db399c0dfdc9f2186419be17a1850414754",
+      "baseBranch": "stage/world-v2-b10-r18-50-readonly-evidence-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 156,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/156",
+      "title": "[B10-R18-52][DRAFT NO-DEPLOY] Repair official CLI Unicode migration-list verification",
+      "headBranch": "stage/world-v2-b10-r18-52-official-cli-output-compat-2026-11-13",
+      "headSha": "9ebbb8d0b07d8b3f17589c713d2b00429c0fc690",
+      "baseBranch": "stage/world-v2-b10-r18-51-cli-evidence-gate-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 157,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/157",
+      "title": "[B10-R18-53][DRAFT NO-DEPLOY] Pin live synchronous fog-on-Commit dependency and cost audit",
+      "headBranch": "stage/world-v2-b10-r18-53-commit-fog-dependency-audit-2026-11-13",
+      "headSha": "c1523fabca8fc995f4efa5d4ca0c7af53fba35dd",
+      "baseBranch": "stage/world-v2-b10-r18-52-official-cli-output-compat-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 158,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/158",
+      "title": "[B10-R18-54][DRAFT NO-DEPLOY] Source-real PG17 fog-on/off canonical Commit benchmark",
+      "headBranch": "stage/world-v2-b10-r18-54-source-real-fog-pg17-2026-11-13",
+      "headSha": "2de5bfdb08d466282078772ec2fd98835f241b1b",
+      "baseBranch": "stage/world-v2-b10-r18-53-commit-fog-dependency-audit-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 159,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/159",
+      "title": "[B10-R18-55][DRAFT NO-DEPLOY] Transactional fog dirty-marker and actor-bound lazy refresh experiment",
+      "headBranch": "stage/world-v2-b10-r18-55-dirty-fog-lazy-guard-2026-11-13",
+      "headSha": "eb1f1d58b1af79c16b68804f1906d6a3452a6d47",
+      "baseBranch": "stage/world-v2-b10-r18-54-source-real-fog-pg17-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 160,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/160",
+      "title": "[B10-R18-56][DRAFT NO-DEPLOY] Source-real synchronous fog no-obstacle/no-light fast-path",
+      "headBranch": "stage/world-v2-b10-r18-56-synchronous-fog-fastpath-2026-11-13",
+      "headSha": "fbc29f9c7c7f893645b3a2073b535e8c2fd8d028",
+      "baseBranch": "stage/world-v2-b10-r18-55-dirty-fog-lazy-guard-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 161,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/161",
+      "title": "[B10-R18-57][DRAFT NO-DEPLOY] Source-sealed opt-in fog fast-path and reversible SQL gate",
+      "headBranch": "stage/world-v2-b10-r18-57-fog-fastpath-optin-rollback-2026-11-13",
+      "headSha": "54aa1964ae54a55f6637a1ddaa9c8ac210aa6128",
+      "baseBranch": "stage/world-v2-b10-r18-56-synchronous-fog-fastpath-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPTIONAL_SQL_NOT_INSTALLED"
+    },
+    {
+      "pr": 162,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/162",
+      "title": "[B10-R18-58][DRAFT NO-DEPLOY] Independent DM/P1/P2 QA evidence triage and capture gates",
+      "headBranch": "stage/world-v2-b10-r18-58-multiplayer-qa-attest-2026-11-13",
+      "headSha": "c4f80efd92c4c9f1284d500fe61cf37dda37d46f",
+      "baseBranch": "stage/world-v2-b10-r18-57-fog-fastpath-optin-rollback-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 163,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/163",
+      "title": "[B10-R18-59][DRAFT NO-DEPLOY] One-click R58 multiplayer receipt in existing opt-in QA panel",
+      "headBranch": "stage/world-v2-b10-r18-59-qa-receipt-ui-2026-11-13",
+      "headSha": "5c8815fa586af4bcf9a9f191d0f066c92a032f82",
+      "baseBranch": "stage/world-v2-b10-r18-58-multiplayer-qa-attest-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 164,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/164",
+      "title": "[B10-R18-60][DRAFT NO-DEPLOY] Operator-only linked Supabase CLI 83+8 read-only evidence runner",
+      "headBranch": "stage/world-v2-b10-r18-60-operator-linked-cli-2026-11-13",
+      "headSha": "cbffa298460c49fe2589440fd0a360f23c811302",
+      "baseBranch": "stage/world-v2-b10-r18-59-qa-receipt-ui-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 165,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/165",
+      "title": "[B10-R18-61][DRAFT NO-DEPLOY] Linked CLI evidence freshness and synthetic provenance hardening",
+      "headBranch": "stage/world-v2-b10-r18-61-cli-provenance-freshness-2026-11-14",
+      "headSha": "b87227d4490a19daf9143758de07f60b83a096b6",
+      "baseBranch": "stage/world-v2-b10-r18-60-operator-linked-cli-2026-11-13",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 166,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/166",
+      "title": "[B10-R18-62][DRAFT NO-DEPLOY] Same-origin slash-safe Google OAuth preview return",
+      "headBranch": "stage/world-v2-b10-r18-62-preview-auth-redirect-2026-11-14",
+      "headSha": "380e31bda9e20638c3e1f660a2cdf001b8e37c0d",
+      "baseBranch": "stage/world-v2-b10-r18-61-cli-provenance-freshness-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 169,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/169",
+      "title": "[B10-R18-67][DRAFT NO-DEPLOY] Read-only World V2 RPC latency delta capture",
+      "headBranch": "stage/world-v2-b10-r18-67-performance-delta-readonly-2026-11-14",
+      "headSha": "1c4593f5eb14ff3d8224bc2982839a818eb135c8",
+      "baseBranch": "stage/world-v2-b10-r18-62-preview-auth-redirect-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 170,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/170",
+      "title": "[B10-R18-68][DRAFT NO-DEPLOY] Source-real Commit route-depth × fog × wall cost benchmark",
+      "headBranch": "stage/world-v2-b10-r18-68-commit-cost-isolation-2026-11-14",
+      "headSha": "934a881fd6e6640ac69c8b553baf0f3561d6aaff",
+      "baseBranch": "stage/world-v2-b10-r18-67-performance-delta-readonly-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 171,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/171",
+      "title": "[B10-R18-69][DRAFT NO-DEPLOY] 72 exact private fog-frame comparisons across eight viewers",
+      "headBranch": "stage/world-v2-b10-r18-69-eight-viewer-fog-parity-2026-11-14",
+      "headSha": "e1161f0bd9896be12f40a44c6217e13ed58981d4",
+      "baseBranch": "stage/world-v2-b10-r18-68-commit-cost-isolation-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 172,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/172",
+      "title": "[B10-R18-70][DRAFT NO-DEPLOY] Attribute protected fog cost to ray/lighting calls",
+      "headBranch": "stage/world-v2-b10-r18-70-fog-function-cost-profile-2026-11-14",
+      "headSha": "e913bacf716ba2da0d51ec186ab0ad52fa726766",
+      "baseBranch": "stage/world-v2-b10-r18-69-eight-viewer-fog-parity-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 173,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/173",
+      "title": "[B10-R18-71][DRAFT NO-DEPLOY] Isolate repeated wall-ray traversal cost",
+      "headBranch": "stage/world-v2-b10-r18-71-wall-ray-shape-cost-2026-11-14",
+      "headSha": "12f631911805e36aa1e96eb9ad9a0006afa7c1da",
+      "baseBranch": "stage/world-v2-b10-r18-70-fog-function-cost-profile-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 174,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/174",
+      "title": "[B10-R18-72][DRAFT NO-DEPLOY] Test frame-local exact-duplicate solid-wall ray reduction",
+      "headBranch": "stage/world-v2-b10-r18-72-local-solid-wall-frame-reduction-2026-11-14",
+      "headSha": "2711a7f7fe025693d772c314ef319e8eccd2874a",
+      "baseBranch": "stage/world-v2-b10-r18-71-wall-ray-shape-cost-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 175,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/175",
+      "title": "[B10-R18-73][DRAFT NO-DEPLOY] Audit actual published wall eligibility before any fog optimization",
+      "headBranch": "stage/world-v2-b10-r18-73-live-wall-eligibility-2026-11-14",
+      "headSha": "94a4c6d7441b406eb5066ddc344011228ae74389",
+      "baseBranch": "stage/world-v2-b10-r18-72-local-solid-wall-frame-reduction-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 176,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/176",
+      "title": "[B10-R18-74][DRAFT NO-DEPLOY] Attribute source-real mixed wall and lighting fog cost",
+      "headBranch": "stage/world-v2-b10-r18-74-mixed-light-ray-cost-2026-11-15",
+      "headSha": "84bedb4bae378ff5ac68473c763baa737054f4cc",
+      "baseBranch": "stage/world-v2-b10-r18-73-live-wall-eligibility-2026-11-14",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 177,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/177",
+      "title": "[B10-R18-75][DRAFT NO-DEPLOY] Test source-exact inline cross-product ray parity",
+      "headBranch": "stage/world-v2-b10-r18-75-inline-cross2-parity-2026-11-15",
+      "headSha": "e86138f8a11ae68f7f90aa1d1c3eb3dd96ab61ef",
+      "baseBranch": "stage/world-v2-b10-r18-74-mixed-light-ray-cost-2026-11-15",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 178,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/178",
+      "title": "[B10-R18-76][DRAFT NO-DEPLOY] Balanced cross2 benchmark and 15,744-ray adversarial parity",
+      "headBranch": "stage/world-v2-b10-r18-76-balanced-cross2-validation-2026-11-15",
+      "headSha": "b611513396f0f42293cff3e724c10a4e157f2bd8",
+      "baseBranch": "stage/world-v2-b10-r18-75-inline-cross2-parity-2026-11-15",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 179,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/179",
+      "title": "[B10-R18-77][DRAFT NO-DEPLOY] Guarded reversible inline ray candidate and hostile parity",
+      "headBranch": "stage/world-v2-b10-r18-77-sealed-inline-cross2-candidate-2026-11-15",
+      "headSha": "23d1d39b0f9f01b50c3c801a783e39371fdd7e80",
+      "baseBranch": "stage/world-v2-b10-r18-76-balanced-cross2-validation-2026-11-15",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPTIONAL_SQL_NOT_INSTALLED"
+    },
+    {
+      "pr": 180,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/180",
+      "title": "[B10-R18-78][DRAFT NO-DEPLOY] Reconcile live release blockers and signed multiplayer QA",
+      "headBranch": "stage/world-v2-b10-r18-78-readonly-release-evidence-2026-11-15",
+      "headSha": "5102f62ffe1017a1c7f66df738bee5bfaaaebc38",
+      "baseBranch": "stage/world-v2-b10-r18-77-sealed-inline-cross2-candidate-2026-11-15",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "OPEN_UNMERGED_NOT_RELEASE_APPROVED"
+    },
+    {
+      "pr": 181,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/pull/181",
+      "title": "[B10-R18-79][DRAFT NO-DEPLOY] Reconcile 178+ branches, 61 omitted PRs and release safety",
+      "headBranch": "stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15",
+      "headSha": "56ce11822f8999fbd2ca2b32613bf811dbf5ec2c",
+      "baseBranch": "main",
+      "state": "open",
+      "draft": true,
+      "merged": false,
+      "disposition": "CURRENT_RECONCILIATION_ONLY"
+    }
+  ],
+  "exceptional": {
+    "canonicalAlias": "ttrpgsite.vercel.app",
+    "canonicalSha": "5ca8c83bdef4a5d9870020b0f2b16723f7790e38",
+    "rejectedRolledBackPr": 140,
+    "failedPreviewQaPr": 144,
+    "excludedNarrowSqlPrs": [
+      130,
+      131
+    ],
+    "uninstalledOptionalSqlPrs": [
+      161,
+      179
+    ],
+    "parentVerifiedInR78": true
+  },
+  "migrationGate": {
+    "remoteVersionCount": 83,
+    "pendingCount": 8,
+    "officialLinkedCliDryRun": "NOT_DONE",
+    "signedMultiAccountQa": "NOT_DONE",
+    "freeTierRamUnderLoad": "NOT_MEASURED"
+  },
+  "policy": "Read-only snapshot and ledger entries are bookkeeping, NOT bulk-merge approval; no new branch declared release-ready."
+}
