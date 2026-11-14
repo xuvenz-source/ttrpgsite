@@ -131,7 +131,7 @@ test('R76 prints aggregate medians and ranges without exposing private source da
  assert.match(sql,/percentile_cont\(0\.5\) WITHIN GROUP/);
  assert.match(sql,/FROM pg_temp\.r76_cost c GROUP BY c\.scene_label,c\.variant/);
  assert.doesNotMatch(sql,/pg_stat_reset|pg_stat_statements_reset/);
- assert.doesNotMatch(sql,/RAISE NOTICE.*(?:user_id|frame->|coords|geometry|scene->|JWT)/i);
+ assert.doesNotMatch(sql,/RAISE NOTICE.*(?:user_id|frame->|coords|scene->|map_id|JWT|jsonb_build_object)/i);
 });
 test('R76 SAVEPOINT rollback restores all original source, permissions, private fog and signed movement',()=>{
  assert.match(sql,/ROLLBACK TO SAVEPOINT r76_balanced_probe;/);
