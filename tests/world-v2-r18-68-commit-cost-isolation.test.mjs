@@ -1,0 +1,78 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {resolve,dirname,join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const read=p=>readFileSync(join(root,p),'utf8');
+const harness=read('tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql');
+const isolation=read('tests/world-v2-b10-postgres/rehearse-r05.sh');
+const benchmark=read('tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql');
+
+test('R18-68 source-real R54 harness runs benchmark ONLY inside rollback transaction',()=>{
+ const inclusion='\\i tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql';
+ assert.equal(harness.split(inclusion).length,2);
+ const begin=harness.indexOf('BEGIN;');
+ const trigger=harness.indexOf('CREATE TRIGGER forge_visibility_token_tick');
+ const samples=harness.indexOf('CREATE TEMP TABLE r54_samples');
+ const bench=harness.indexOf(inclusion);
+ const r54=harness.indexOf('DO $r54_benchmark$');
+ const rollback=harness.lastIndexOf('ROLLBACK;');
+ assert.ok(begin>=0&&begin<trigger&&trigger<samples&&samples<bench);
+ assert.ok(bench<r54&&r54<rollback);
+ assert.match(isolation,/r54-fog-commit-source-real\.sql/);
+ assert.match(isolation,/WORLD_V2_B10_ISOLATED/);
+ assert.match(isolation,/PGHOSTADDR/);
+ assert.match(isolation,/SUPABASE_DB_URL/);
+});
+test('R18-68 real canonical Commit uses 1/6/12 approved cells and twelve distinct paired scenarios',()=>{
+ assert.match(benchmark,/FOREACH route_depth IN ARRAY/);
+ assert.match(benchmark,/ARRAY\[12,6,1\]/);
+ assert.match(benchmark,/ARRAY\[1,6,12\]/);
+ assert.match(benchmark,/public\.begin_world_motion_v2/);
+ assert.match(benchmark,/public\.advance_world_motion_v2/);
+ assert.match(benchmark,/public\.commit_world_motion_v2/);
+ assert.match(benchmark,/accepted_cells=route_depth/);
+ assert.match(benchmark,/jsonb_array_length\(advance_ack->'accepted'\)=route_depth/);
+ assert.match(benchmark,/count\(\*\)=48 FROM pg_temp\.r68_samples/);
+ assert.match(benchmark,/count\(DISTINCT \(scenario,fog,depth\)\)=12/);
+ assert.match(benchmark,/PRIMARY KEY\(scenario,fog,depth,repeat\)/);
+});
+test('R18-68 cannot erase solid walls, fog privacy or canonical server validation',()=>{
+ assert.match(benchmark,/current_database\(\)<>'world_v2_b10_r05'/);
+ assert.match(benchmark,/current_user<>'postgres'/);
+ assert.match(benchmark,/md5\(pg_get_functiondef\(/);
+ assert.match(benchmark,/forge_player_collision/);
+ assert.match(benchmark,/forge_visibility_token_tick/);
+ assert.match(benchmark,/collision_enforced IS DISTINCT FROM true/);
+ assert.match(benchmark,/viewer_revision_delta/);
+ assert.match(benchmark,/fog_mode='fog-on' AND post_revisions>=pre_revisions\+2/);
+ assert.match(benchmark,/fog_mode='fog-off' AND post_revisions=pre_revisions/);
+ assert.doesNotMatch(benchmark,/DISABLE TRIGGER|DROP FUNCTION|ALTER FUNCTION|REVOKE|GRANT|db push|pg_terminate_backend/);
+});
+test('R18-68 wall-heavy fixture is exactly 24 off-route obstacles and warmup uses original signed frame',()=>{
+ assert.match(benchmark,/generate_series\(1,24\)/);
+ assert.match(benchmark,/14\.1\+\(\(n%3\)::numeric\/10\)/);
+ assert.match(benchmark,/'wall-heavy'/);
+ assert.match(benchmark,/'open'/);
+ assert.match(benchmark,/authorized_viewer_fog_frame\(test_map,actor\)/);
+ assert.match(benchmark,/authorized_viewer_fog_frame\(/);
+ assert.match(benchmark,/PERFORM set_config\('request\.jwt\.claim\.sub'/);
+ assert.match(benchmark,/PERFORM set_config\('request\.jwt\.claim\.role'/);
+});
+test('R18-68 all samples have real reverse canonical reset, original R54 remains unchanged afterward',()=>{
+ assert.match(benchmark,/jsonb_array_length\(advance_ack->'accepted'\)=route_depth/);
+ assert.match(benchmark,/commit_ack->'endpoint'='\{"x":1,"y":1\}'::jsonb/);
+ assert.match(benchmark,/UPDATE forge_visibility\.map_rules SET fog_enforced=true/);
+ assert.match(benchmark,/UPDATE public\.map_environments SET live=/);
+ assert.match(benchmark,/R18-68 PASS: 48 real signed Commit/);
+ assert.match(harness,/R54-09 original wall blocks unauthorized crossing/);
+ assert.match(harness,/R54-10 revoked fixture viewer cannot request/);
+ assert.match(harness,/R18-54 PASS: source-real fog-on vs fog-off/);
+});
+test('R18-68 emits only low-sample local SQL timings and no remote identity',()=>{
+ assert.match(benchmark,/percentile_cont\(0\.95\)/);
+ assert.match(benchmark,/GROUP BY scenario,fog,depth/);
+ assert.match(benchmark,/local warm-cache\/CPU noise/);
+ assert.doesNotMatch(benchmark,/SUPABASE_ACCESS_TOKEN|VITE_SUPABASE|https?:\/\/|CURRENT_USER\(\).*password/i);
+});
