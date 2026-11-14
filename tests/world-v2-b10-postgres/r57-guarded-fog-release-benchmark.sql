@@ -266,6 +266,9 @@ END $r57_applied$;
 -- R18-75: source-derived inline cross-product probe, all inside a local
 -- SAVEPOINT and fully restored BEFORE the original R57 signed Commit suite.
 \i tests/world-v2-b10-postgres/r75-inline-ray-cross2-parity.sql
+-- R18-76: 8-phase ABBA/BAAB source/inline alternation and widened epsilon
+-- hostile privacy parity. Dedicated SAVEPOINT restores source before R57.
+\i tests/world-v2-b10-postgres/r76-balanced-cross2-equivalence.sql
 
 DO $r57_compare_and_measure$
 DECLARE
