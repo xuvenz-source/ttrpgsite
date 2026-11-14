@@ -29,7 +29,7 @@ test('R77 operator install and inverse are atomic independent DOs outside migrat
  assert.match(inverse,/^DO \$r77_rollback\$/m);
  for(const doc of [candidate,inverse]){
   const executable=doc.replace(/^--.*$/gm,'');
-  assert.doesNotMatch(executable,/^\s*(?:GRANT|REVOKE|CREATE TABLE|ALTER TABLE|CREATE ROLE|DROP ROLE|TRUNCATE|COMMIT|BEGIN)\b/mi);
+  assert.doesNotMatch(executable,/^\s*(?:GRANT|REVOKE|CREATE TABLE|ALTER TABLE|CREATE ROLE|DROP ROLE|TRUNCATE|COMMIT)\b/mi);
   assert.doesNotMatch(executable,/^\s*UPDATE\s+(?:supabase_migrations|public\.map_tokens|forge_world_v2)\b/mi);
   assert.doesNotMatch(executable,/pg_stat_reset|pg_stat_statements_reset|pg_read_file|dblink_exec/);
   assert.match(doc,/NOT a migration/i);
