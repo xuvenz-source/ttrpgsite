@@ -38,6 +38,24 @@ Each phase processes three synthetic mixed-light cases: one wall + two lights in
 
 This symmetric within-run ordering addresses—but cannot completely eliminate—noise from compilation, CPU scheduling, cache state, PostgreSQL plan invalidation, profiling overhead and the absence of realistic concurrent players. Underlying function source replacement occurs outside the timed sections and is verified before each phase. No speedup threshold is baked into CI; **correctness and security are hard gates**, performance remains diagnostic.
 
+## Exact-head source-real evidence — 15 November 2026
+
+The first full R18-76 passing run at SHA `2b4d3dddad6f56982f1aaea3878eb701e3cc3ab5` completed all four GitHub workflows: staged Node/Chromium/lint/build/Edge/npm audit (**1,240 tests passed, 0 failed; zero npm production vulnerabilities**, workflow `43604237584`), isolated PostgreSQL movement authority (`43604237675`), disposable source-real PostgreSQL fog/Commit/rollback (`43604237585`) and CodeQL (`43604237602`). The two prior heads were not accepted: the first exposed an overbroad static leak-label matcher, and the source-real run identified a PL/pgSQL fixture-record/table-alias naming collision. Both were **test-harness-only** corrections. No runtime changes or security-test suppressions occurred.
+
+**Source equivalence:** 15,744/15,744 exact original-versus-inlined direct ray outcomes matched across 41 scenes and three ray modes, 656/656 complete private original/fastpath frames matched, 16/16 torch+scene-light private frames matched, revoked viewer remained denied, original ray and `cross2` functions, private ACL, fixture roster and map environment were restored. The original R18-57 signed collision/Commit/recovery/rollback suite subsequently passed within the outer disposable transaction.
+
+**Within-run ABBA+BAAB measurements:** four independently warmed eight-viewer frame sets for **each** variant and synthetic scenario. Times are local, instrumented PostgreSQL 17, NOT remote Supabase, a real multiplayer session or browser p95.
+
+| Synthetic scene | Source mean / median / range (ms) | Inlined mean / median / range (ms) | Observed local mean reduction | Ray calls each | `cross2` calls source → inline |
+|---|---|---|---:|---:|---:|
+| Wall + two lights, dark | 148.175 / 145.696 / 144.666–156.642 | 60.344 / 60.690 / 58.372–61.623 | **59.3%** | 3,414 | 13,404 → 0 |
+| Wall + two lights, dim | 116.105 / 114.334 / 112.943–122.811 | 49.750 / 50.015 / 47.889–51.080 | **57.2%** | 2,611 | 10,192 → 0 |
+| Closed door + two lights, dark | 149.577 / 148.175 / 146.815–155.144 | 61.039 / 61.524 / 57.991–63.115 | **59.2%** | 3,414 | 13,404 → 0 |
+
+This more symmetrical order check **supports** that repeated SQL helper calls are costly in this carefully constructed fixture, rather than merely a source-first cache artifact. It is still not an independently randomized multi-run benchmark: four phase samples per condition on a GitHub runner, function replacement between phases, instrumented profiler overhead and synthetic geometry are meaningful limitations. Removing `cross2` *function calls* does not remove geometric calculations or the actual `ray_blocked` invocations; those double-precision cross products now happen within the private ray loop.
+
+**Engineering recommendation:** carry the evidence into a separate, narrowly reviewed **operator-gated reversible candidate design** only after checking deployment rollback/privilege invariants and hostile geometric/source parity on the exact installable candidate. Do not ship the temporary test's dynamically patched function or bypass real-world QA. User-facing movement and observed collision lag are **not yet validated as improved**.
+
 ## Exit decision and release rules
 
 Required CI on the **exact final PR head**: Node/Chromium/build/lint/Edge/npm audit, source-real PostgreSQL fog/R57 signed Commit+rollback, independently isolated PostgreSQL World V2 movement authority and CodeQL. An exact original source, owner, ACL, role and fixture-restore gate must pass. Record full CI results and any measurements in the step handoff and Issue #168. PR stays draft/unmerged, chained directly to R18-75.
