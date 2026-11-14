@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1675,6 +1675,16 @@
       "linkedPullRequest": 182,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-80 only selects source-identical R18-62 Vercel preview candidate and offline NO_GO-only source/flag guards; no new preview build, V2 branch flags, OAuth redirects, SQL, runtime, production or approved QA. Source review and explicit operator authorization required for any preview rebuild."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "PREVIEW_ONLY_DEPLOYED_PENDING_SIGNED_BROWSER_QA",
+      "linkedPullRequest": 183,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-81: operator-approved exactly two branch-scoped preview Vite flags and one READY protected Git-source deployment of pinned R18-62; no production alias, SQL, migration or global preview flags. Browser V2 selection, OAuth same origin and real independent DM/P1/P2 NOT VERIFIED; backend remains 83 migrations. This is NOT release approval."
     }
   ],
   "features": [
@@ -2780,7 +2790,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2882,9 +2892,10 @@
       "stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10",
-      "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15"
+      "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
+      "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15"
     ],
-    "stagePolicy": "R18-80: R18-79 audited 165 candidate branches in a 179-branch GitHub snapshot, then R18-80 appended one source-only QA preview preflight branch as unapproved staged work (166 total, 101 outstanding review records). The R18-79 snapshot counts are historical, not stale-branch approval. No branch is newly releaseReady. R18-62 existing READY preview source matches full latest frontend tree but is not V2 active under current scoped environment key metadata; requires separate approved two-flag branch-scoped rebuild, real DM/P1/P2, official linked 83+8 Supabase CLI, browser p95, physical Free RAM/locks, and explicit designer release approval. This accounting list is NOT a bulk-merge queue. Never promote rejected R18-36 or failed R18-40; R18-57/77 SQL remains uninstalled.",
+    "stagePolicy": "R18-81: historical R18-79 GitHub 165-branch audit remains frozen; R18-80 source audit and R18-81 preview deployment now appended as 166th and 167th unapproved branches (102 outstanding audit/review records, NOT a bulk-merge queue). R18-81 used exactly two R18-62-branch-scoped preview build keys and one READY protected source-pinned preview deployment. Canonical prod R18-35 remains unchanged, 83 live migrations, no optional R18-57/R18-77 SQL installed. The preview is NOT independently browser-verified V2-active or accepted for collision/fog/auth, and is not integrated R05+seven-migration evidence. Official linked pinned CLI 83+8, independently signed DM/P1/passive P2, browser p95, Free RAM/swap/locks and production operator signoff remain hard NO-GO. Do not bulk merge, promote, enable optional atomic/observer flags or install SQL.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3086,5 +3097,30 @@
     "explicitOperatorApproval": false,
     "independentSignedDmP1P2Accepted": false,
     "officialLinkedCli83Plus8DryRun": false
+  },
+  "releasePreviewActivation": {
+    "schema": 1,
+    "workPackage": "B10-R18-81",
+    "decision": "NO_GO",
+    "priorR79AuditLedgerBranches": 165,
+    "priorR80LedgerBranches": 166,
+    "currentLedgerBranches": 167,
+    "addedBranch": "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
+    "userApprovedScopedPreviewOnly": true,
+    "sourcePreviewSha": "380e31bda9e20638c3e1f660a2cdf001b8e37c0d",
+    "previewDeploymentId": "dpl_Bdek3W7xXVYW3f7QDZpjrDDp9V3F",
+    "previewReady": true,
+    "vercelPreviewProtected": true,
+    "branchScopedV2KeysCreated": 2,
+    "genericPreviewV2KeysCreated": 0,
+    "productionEnvChanged": false,
+    "productionDeploymentChanged": false,
+    "supabaseMigrationCount": 83,
+    "supabaseWritesThisStep": 0,
+    "liveBrowserV2Verified": false,
+    "independentDmP1P2Verified": false,
+    "physicalFreeRamAndLocksUnderLoadMeasured": false,
+    "officialLinkedCli83Plus8DryRun": false,
+    "productionReleaseAuthorization": false
   }
 }
