@@ -11,6 +11,7 @@ const INVENTORY='staging/world-v2-b10-r18-79-github-branch-inventory.json';
 const LEDGER='staging/next-release-ledger.json';
 const BRANCH='stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15';
 const NEXT='stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15';
+const NEXT81='stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15';
 const MAIN='90df8c960e79e8d66c322095611427da7bb09de4';
 const CANONICAL='5ca8c83bdef4a5d9870020b0f2b16723f7790e38';
 const PARENT='5102f62ffe1017a1c7f66df738bee5bfaaaebc38';
@@ -39,14 +40,16 @@ const branchStatus=x=>x==='CANONICAL_LIVE_UNMERGED'?'released':
 export function validateR79Ledger({snapshot,ledger}={}){
  const s=snapshot??JSON.parse(readFileSync(join(ROOT,INVENTORY),'utf8'));
  const l=ledger??JSON.parse(readFileSync(join(ROOT,LEDGER),'utf8'));
- const successor=l?.releaseBranch===NEXT;
+ const successor=[NEXT,NEXT81].includes(l?.releaseBranch);
+ const deployedSuccessor=l?.releaseBranch===NEXT81;
+ const expectedCount=165+(successor?1:0)+(deployedSuccessor?1:0);
  if(s?.schema!==1||s.workPackage!=='B10-R18-79'||
   s.sourceKind!=='GITHUB_READ_ONLY_BRANCH_AND_PR_METADATA'||
   s.recordedOn!=='2026-11-15'||s.releaseDecision!=='NO_GO'||
   s.safeToRelease!==false||s.operatorApproved!==false||
   s.parent?.pr!==180||s.parent.sha!==PARENT||s.currentPr!==181||
   l?.updated!=='2026-11-15'||l.productionBaseSha!==MAIN||
-  ![BRANCH,NEXT].includes(l.releaseBranch)||
+  ![BRANCH,NEXT,NEXT81].includes(l.releaseBranch)||
   l.upcomingRelease?.releaseBranch!==l.releaseBranch||
   l.upcomingRelease.productionBaseSha!==MAIN)fail();
  const scope=s.scope;
@@ -64,7 +67,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   !Array.isArray(s.githubBranchSnapshot)||s.githubBranchSnapshot.length!==179||
   !Array.isArray(s.newlyReconciled)||s.newlyReconciled.length!==99||
   !Array.isArray(s.laterPrs)||s.laterPrs.length!==62||
-  !Array.isArray(l.branches)||l.branches.length!==(successor?166:165))fail();
+  !Array.isArray(l.branches)||l.branches.length!==expectedCount)fail();
 
  const branchByName=new Map(),snapshotNames=[];
  for(const x of s.githubBranchSnapshot){
@@ -75,9 +78,9 @@ export function validateR79Ledger({snapshot,ledger}={}){
  if(!same(snapshotNames,[...snapshotNames].sort((a,b)=>a.localeCompare(b))))fail();
  const allCandidateNames=snapshotNames.filter(stage);
  const ledgerByName=new Map(l.branches.map(x=>[x.name,x]));
- if(ledgerByName.size!==(successor?166:165)||
+ if(ledgerByName.size!==expectedCount||
   !same([...allCandidateNames].sort(),
-   [...ledgerByName.keys()].filter(x=>x!==NEXT).sort()))fail();
+   [...ledgerByName.keys()].filter(x=>x!==NEXT&&x!==NEXT81).sort()))fail();
 
  const added=new Set(),prRefs=new Set(),group={};
  for(const x of s.newlyReconciled){
@@ -165,18 +168,45 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT);
   if(!same(l.releasePreviewPreparation,expected)||
-   !entry||l.branches.at(-1)!==entry||
+   !entry||l.branches.at(deployedSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='PREVIEW_SOURCE_PREFLIGHT_ONLY'||
    entry.linkedPullRequest!==182||entry.productionBaseSha!==MAIN||
    entry.reviewedAgainstCanonicalProduction!==false||
    typeof entry.note!=='string'||
    !entry.note.includes('no new preview build'))fail();
- }else if(l.releasePreviewPreparation!==undefined)fail();
+  }else if(l.releasePreviewPreparation!==undefined)fail();
+ if(deployedSuccessor){
+  const exact={
+   schema:1,workPackage:'B10-R18-81',decision:'NO_GO',
+   priorR79AuditLedgerBranches:165,priorR80LedgerBranches:166,
+   currentLedgerBranches:167,addedBranch:NEXT81,
+   userApprovedScopedPreviewOnly:true,
+   sourcePreviewSha:'380e31bda9e20638c3e1f660a2cdf001b8e37c0d',
+   previewDeploymentId:'dpl_Bdek3W7xXVYW3f7QDZpjrDDp9V3F',
+   previewReady:true,vercelPreviewProtected:true,
+   branchScopedV2KeysCreated:2,genericPreviewV2KeysCreated:0,
+   productionEnvChanged:false,productionDeploymentChanged:false,
+   supabaseMigrationCount:83,supabaseWritesThisStep:0,
+   liveBrowserV2Verified:false,independentDmP1P2Verified:false,
+   physicalFreeRamAndLocksUnderLoadMeasured:false,
+   officialLinkedCli83Plus8DryRun:false,
+   productionReleaseAuthorization:false
+  };
+  const entry=ledgerByName.get(NEXT81);
+  if(!same(l.releasePreviewActivation,exact)||
+   !entry||l.branches.at(-1)!==entry||
+   entry.status!=='staged'||entry.releaseReady!==false||
+   entry.classification!=='PREVIEW_ONLY_DEPLOYED_PENDING_SIGNED_BROWSER_QA'||
+   entry.linkedPullRequest!==183||entry.productionBaseSha!==MAIN||
+   entry.reviewedAgainstCanonicalProduction!==false||
+   !entry.note?.includes('NOT release approval'))fail();
+ }else if(l.releasePreviewActivation!==undefined)fail();
  const out=l.upcomingRelease.outstandingBranches;
- if(!Array.isArray(out)||out.length!==(successor?101:100)||
+ if(!Array.isArray(out)||out.length!==100+(successor?1:0)+(deployedSuccessor?1:0)||
   new Set(out).size!==out.length||
   !out.includes(BRANCH)||(successor&&!out.includes(NEXT))||
+  (deployedSuccessor&&!out.includes(NEXT81))||
   !same([...out].sort(),l.branches.filter(x=>x.status==='staged').map(x=>x.name).sort())||
   !l.upcomingRelease.stagePolicy.includes('NOT a bulk-merge queue'))fail();
  const pr=n=>s.newlyReconciled.find(x=>x.linkedPullRequest===n);
@@ -189,6 +219,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   observedGitHubBranches:179,observedGitHubPullRequests:177,
   previouslyLedgered:66,newlyLedgered:99,totalLedgered:165,
   currentLedgered:l.branches.length,successorAudited:successor,
+  deployedSuccessorAudited:deployedSuccessor,
   laterPRsRecorded:62,unmatchedPRBranches:2,
   outstandingReviewBranches:out.length,
   canonicalLivePr:139,rejectedOrFailed:[140,144],
