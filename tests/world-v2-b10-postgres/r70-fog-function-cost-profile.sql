@@ -126,8 +126,8 @@ BEGIN
  PERFORM public.b08_assert(
   (SELECT count(*)=8 FROM pg_temp.r70_function_samples)
   AND (SELECT min(viewer_count)=8 FROM pg_temp.r70_function_samples)
-  AND (SELECT count(DISTINCT (scenario,variant))=4
-       FROM pg_temp.r70_function_samples)
+  AND (SELECT count(DISTINCT (s.scenario,s.variant))=4
+       FROM pg_temp.r70_function_samples AS s)
   AND (SELECT live='{"objects":[],"ambient":25,"fog":{"partyShared":false}}'::jsonb
        FROM public.map_environments WHERE map_id=test_map),
   'R70-05 2x2x2 isolated function attribution samples and scene restored');
