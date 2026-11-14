@@ -15,7 +15,10 @@ BEGIN
   AND (SELECT count(*)=8 FROM public.campaign_members
    WHERE campaign_id='00000000-0000-4000-8000-000000000001'::uuid
     AND role='player')
-  AND (SELECT count(*)=6 FROM pg_temp.r72_samples)
+  -- R72 measured samples are SAVEPOINT-rolled-back; the 23 source-real
+  -- adversarial scenes were created before that savepoint and persist.
+  AND (SELECT count(*)=0 FROM pg_temp.r72_samples)
+  AND (SELECT count(*)=23 FROM pg_temp.r72_scenes)
   AND to_regprocedure('forge_visibility.r57_unmodified_fog_frame(uuid,uuid)') IS NOT NULL
   AND md5(pg_get_functiondef(to_regprocedure(
    'forge_visibility.authorized_viewer_fog_frame(uuid,uuid)')))
