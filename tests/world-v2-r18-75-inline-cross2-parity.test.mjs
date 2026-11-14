@@ -88,16 +88,16 @@ test('R18-75 checks exact unrounded original/candidate direct rays under all thr
  assert.match(sql,/\(12,6\.50001,7\.5,6\.49999,7\.5\)/);
  assert.match(sql,/VALUES \('vision'\),\('light'\),\('movement'\)/);
  assert.match(sql,/"STR":\{"current":10\}/);
- assert.match(sql,/found IS NOT DISTINCT FROM rec.expected/);
+ assert.match(sql,/result_blocked IS NOT DISTINCT FROM rec.expected/);
  assert.match(sql,/n=2376/);
  assert.match(sql,/R75-12 33 source-real scenes x 12 rays x 3 modes x 2 attributes/);
 });
 
 test('R18-75 compares complete private frame fields across 33 hostile scenes, two implementations and eight viewers',()=>{
- assert.match(sql,/current_frame IS NOT DISTINCT FROM expected.ref_frame/);
+ assert.match(sql,/current_frame IS NOT DISTINCT FROM reference.ref_frame/);
  assert.match(sql,/n=528/);
- assert.match(sql,/r57_unmodified_fog_frame\(\s*test_map,expected\.viewer\)/);
- assert.match(sql,/authorized_viewer_fog_frame\(\s*test_map,expected\.viewer\)/);
+ assert.match(sql,/r57_unmodified_fog_frame\(\s*test_map,reference\.viewer\)/);
+ assert.match(sql,/authorized_viewer_fog_frame\(\s*test_map,reference\.viewer\)/);
  assert.match(sql,/R75-14 33 hostile\/source-real scenes x 8 viewers x 2 frame variants/);
  assert.match(harness,/R57-08 original wall authority and private geometry protected/);
 });
