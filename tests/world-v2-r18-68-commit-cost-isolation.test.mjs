@@ -18,8 +18,9 @@ test('R18-68 source-real R54 harness runs benchmark ONLY inside rollback transac
  const bench=harness.indexOf(inclusion);
  const r54=harness.indexOf('DO $r54_benchmark$');
  const rollback=harness.lastIndexOf('ROLLBACK;');
- assert.ok(begin>=0&&begin<trigger&&trigger<samples&&samples<bench);
- assert.ok(bench<r54&&r54<rollback);
+ assert.ok(begin>=0&&begin<trigger&&trigger<samples&&samples<r54);
+ assert.ok(r54<bench&&bench<rollback);
+ assert.ok(harness.indexOf('R54-10 revoked fixture viewer cannot request')<bench);
  assert.match(isolation,/r54-fog-commit-source-real\.sql/);
  assert.match(isolation,/WORLD_V2_B10_ISOLATED/);
  assert.match(isolation,/PGHOSTADDR/);
@@ -29,12 +30,14 @@ test('R18-68 real canonical Commit uses 1/6/12 approved cells and twelve distinc
  assert.match(benchmark,/FOREACH route_depth IN ARRAY/);
  assert.match(benchmark,/ARRAY\[12,6,1\]/);
  assert.match(benchmark,/ARRAY\[1,6,12\]/);
+ assert.match(benchmark,/FOR iteration IN 1\.\.3 LOOP/);
+ assert.match(benchmark,/SET role='player'/);
  assert.match(benchmark,/public\.begin_world_motion_v2/);
  assert.match(benchmark,/public\.advance_world_motion_v2/);
  assert.match(benchmark,/public\.commit_world_motion_v2/);
  assert.match(benchmark,/accepted_cells=route_depth/);
  assert.match(benchmark,/jsonb_array_length\(advance_ack->'accepted'\)=route_depth/);
- assert.match(benchmark,/count\(\*\)=48 FROM pg_temp\.r68_samples/);
+ assert.match(benchmark,/count\(\*\)=36 FROM pg_temp\.r68_samples/);
  assert.match(benchmark,/count\(DISTINCT \(scenario,fog,depth\)\)=12/);
  assert.match(benchmark,/PRIMARY KEY\(scenario,fog,depth,repeat\)/);
 });
@@ -65,7 +68,7 @@ test('R18-68 all samples have real reverse canonical reset, original R54 remains
  assert.match(benchmark,/commit_ack->'endpoint'='\{"x":1,"y":1\}'::jsonb/);
  assert.match(benchmark,/UPDATE forge_visibility\.map_rules SET fog_enforced=true/);
  assert.match(benchmark,/UPDATE public\.map_environments SET live=/);
- assert.match(benchmark,/R18-68 PASS: 48 real signed Commit/);
+ assert.match(benchmark,/R18-68 PASS: 36 real signed Commit/);
  assert.match(harness,/R54-09 original wall blocks unauthorized crossing/);
  assert.match(harness,/R54-10 revoked fixture viewer cannot request/);
  assert.match(harness,/R18-54 PASS: source-real fog-on vs fog-off/);
