@@ -263,6 +263,9 @@ END $r57_applied$;
 -- R18-74: isolated 1-wall/2-light original-vs-fastpath attribution,
 -- complete private fog parity, local torch/revocation savepoint rollback.
 \i tests/world-v2-b10-postgres/r74-mixed-light-ray-cost-profile.sql
+-- R18-75: source-derived inline cross-product probe, all inside a local
+-- SAVEPOINT and fully restored BEFORE the original R57 signed Commit suite.
+\i tests/world-v2-b10-postgres/r75-inline-ray-cross2-parity.sql
 
 DO $r57_compare_and_measure$
 DECLARE
