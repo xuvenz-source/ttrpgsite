@@ -248,6 +248,11 @@ BEGIN
  'R57-05 actual opt-in candidate sealed source and unchanged ACL');
 END $r57_applied$;
 
+-- R18-69: optional private fog source must match the original full frame
+-- for ALL eight fixture viewers under shared, dark, portal and hostile scenes.
+-- This runs only inside this existing disposable BEGIN/ROLLBACK transaction.
+\i tests/world-v2-b10-postgres/r69-eight-viewer-fog-parity.sql
+
 DO $r57_compare_and_measure$
 DECLARE
  test_map uuid:='00000000-0000-4000-8000-000000000021';
