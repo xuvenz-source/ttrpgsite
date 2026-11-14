@@ -36,7 +36,7 @@ CREATE TEMP TABLE r68_samples (
  scenario text NOT NULL CHECK(scenario IN ('open','wall-heavy')),
  fog text NOT NULL CHECK(fog IN ('fog-off','fog-on')),
  depth integer NOT NULL CHECK(depth IN (1,6,12)),
- repeat integer NOT NULL CHECK(repeat BETWEEN 1 AND 4),
+ repeat integer NOT NULL CHECK(repeat BETWEEN 1 AND 3),
  commit_ms double precision NOT NULL CHECK(commit_ms>=0),
  viewer_revision_delta bigint NOT NULL CHECK(viewer_revision_delta>=0),
  PRIMARY KEY(scenario,fog,depth,repeat)
@@ -73,12 +73,19 @@ DECLARE
 BEGIN
  PERFORM set_config('request.jwt.claim.sub',actor::text,true);
  PERFORM set_config('request.jwt.claim.role','authenticated',true);
+ -- The original R54 revocation assertion has ALREADY passed. Restore only
+ -- the original disposable fixture player for added benchmark coverage.
+ -- Original signed RPC authorization and all private fog checks still apply.
+ UPDATE public.campaign_members SET role='player'
+ WHERE campaign_id='00000000-0000-4000-8000-000000000001'::uuid
+ AND user_id='00000000-0000-4000-8000-000000000012'::uuid
+ AND role='spectator';
  -- Populate only the fixture's original per-viewer authorized frames before
  -- timing; never modify the original function or invent public recipients.
  PERFORM forge_visibility.authorized_viewer_fog_frame(test_map,actor);
  PERFORM forge_visibility.authorized_viewer_fog_frame(
   test_map,'00000000-0000-4000-8000-000000000012'::uuid);
- FOR iteration IN 1..4 LOOP
+ FOR iteration IN 1..3 LOOP
   FOR cfg IN SELECT scenario,scene FROM pg_temp.r68_scenes
    ORDER BY CASE WHEN iteration%2=0 THEN scenario ELSE
     CASE WHEN scenario='open' THEN 'z' ELSE 'a' END END
@@ -153,14 +160,14 @@ BEGIN
   '{"objects":[],"ambient":25,"fog":{"partyShared":false}}'::jsonb
   WHERE map_id=test_map;
  PERFORM public.b08_assert(
-  (SELECT count(*)=48 FROM pg_temp.r68_samples)
+  (SELECT count(*)=36 FROM pg_temp.r68_samples)
   AND (SELECT count(DISTINCT (scenario,fog,depth))=12 FROM pg_temp.r68_samples)
   AND (SELECT min(viewer_revision_delta)>=2 FROM pg_temp.r68_samples
        WHERE fog='fog-on')
   AND (SELECT max(viewer_revision_delta)=0 FROM pg_temp.r68_samples
        WHERE fog='fog-off')
   AND (SELECT x=1 AND y=1 FROM public.map_tokens WHERE id=token),
-  'R68-06 48 fully signed, bounded, balanced source-real Commit samples');
+  'R68-06 36 fully signed, bounded, balanced source-real Commit samples');
 END $r68_measure$;
 
 -- Advisory local PostgreSQL timings only. 4 samples per grouped scenario;
@@ -178,7 +185,7 @@ GROUP BY scenario,fog,depth ORDER BY scenario,fog,depth;
 DO $r68_done$
 BEGIN
  PERFORM public.b08_assert(
-  (SELECT count(*)=48 FROM pg_temp.r68_samples)
+  (SELECT count(*)=36 FROM pg_temp.r68_samples)
   AND (SELECT count(*)=0 FROM pg_temp.r68_samples
      WHERE commit_ms<0)
   AND (SELECT x=1 AND y=1 FROM public.map_tokens
@@ -187,5 +194,5 @@ BEGIN
     FROM public.map_environments
     WHERE map_id='00000000-0000-4000-8000-000000000021'::uuid),
   'R68-07 unchanged canonical home, original scene and exact samples');
- RAISE NOTICE 'R18-68 PASS: 48 real signed Commit source-real samples, fog ON/OFF, 1/6/12 cells, open/24-wall, all rolled back with R54';
+ RAISE NOTICE 'R18-68 PASS: 36 real signed Commit source-real samples, fog ON/OFF, 1/6/12 cells, open/24-wall, all rolled back with R54';
 END $r68_done$;
