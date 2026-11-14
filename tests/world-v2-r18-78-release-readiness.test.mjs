@@ -106,7 +106,8 @@ test('R78 legacy all-true self-reported QA cannot certify independent authentica
  assert.match(source,/missingRoles/);
  assert.match(source,/signedIndependentQaAvailable:false/);
  assert.match(source,/linkedCliInvocationIndependentlyAttested:false/);
- assert.match(source,/freshReadOnlyReceiptValidation:'NOT_SUPPLIED'/);
+ assert.match(source,/let freshAudit='NOT_SUPPLIED'/);
+ assert.match(source,/freshReadOnlyReceiptValidation:freshAudit/);
  assert.match(source,/decision:'NO_GO',safeToDeploy:false,safeToApplySql:false/);
 });
 test('R78 offline status validator never calls networks, SQL, subprocess or writes files',()=>{
