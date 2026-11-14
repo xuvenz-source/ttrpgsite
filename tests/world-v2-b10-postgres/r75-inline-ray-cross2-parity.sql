@@ -306,7 +306,7 @@ END $r75_patch_ray$;
 -- Actual original vs inlined boolean outcomes for all three ray modes.
 DO $r75_direct_ray_parity$
 DECLARE
- rec record;found boolean;n integer:=0;
+ rec record;result_blocked boolean;n integer:=0;
 BEGIN
  FOR rec IN SELECT e.label,e.ray_case,e.mode,e.vals_case,e.expected,
    s.scene,r.sx,r.sy,r.tx,r.ty,
@@ -316,9 +316,9 @@ BEGIN
   JOIN pg_temp.r75_scenes s ON s.label=e.label
   JOIN pg_temp.r75_rays r ON r.ray_case=e.ray_case
   ORDER BY e.label,e.ray_case,e.mode,e.vals_case LOOP
-  found:=forge_visibility.ray_blocked(
+  result_blocked:=forge_visibility.ray_blocked(
    rec.scene,rec.sx,rec.sy,rec.tx,rec.ty,rec.mode,rec.vals);
-  PERFORM public.b08_assert(found IS NOT DISTINCT FROM rec.expected,
+  PERFORM public.b08_assert(result_blocked IS NOT DISTINCT FROM rec.expected,
    'R75-11 exact unrounded source/inlined boolean ray parity');
   n:=n+1;
  END LOOP;
@@ -331,22 +331,22 @@ END $r75_direct_ray_parity$;
 DO $r75_private_frame_parity$
 DECLARE
  test_map uuid:='00000000-0000-4000-8000-000000000021';
- s record;expected record;current_frame jsonb;n int:=0;
+ s record;reference record;current_frame jsonb;n int:=0;
 BEGIN
  FOR s IN SELECT label,scene FROM pg_temp.r75_scenes ORDER BY label LOOP
   UPDATE public.map_environments SET live=s.scene WHERE map_id=test_map;
-  FOR expected IN SELECT variant,viewer,expected AS ref_frame
-   FROM pg_temp.r75_expected_frames
-   WHERE label=s.label ORDER BY variant,viewer LOOP
-   IF expected.variant='original' THEN
+  FOR reference IN SELECT e.variant,e.viewer,e.expected AS ref_frame
+   FROM pg_temp.r75_expected_frames e
+   WHERE e.label=s.label ORDER BY e.variant,e.viewer LOOP
+   IF reference.variant='original' THEN
     current_frame:=forge_visibility.r57_unmodified_fog_frame(
-     test_map,expected.viewer);
+     test_map,reference.viewer);
    ELSE
     current_frame:=forge_visibility.authorized_viewer_fog_frame(
-     test_map,expected.viewer);
+     test_map,reference.viewer);
    END IF;
    PERFORM public.b08_assert(
-    current_frame IS NOT DISTINCT FROM expected.ref_frame,
+    current_frame IS NOT DISTINCT FROM reference.ref_frame,
     'R75-13 complete source/inlined private fog JSONB equality');
    n:=n+1;
   END LOOP;
