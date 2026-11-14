@@ -237,13 +237,13 @@ BEGIN
  END LOOP;
  PERFORM public.b08_assert(
   (SELECT count(*)=24 FROM pg_temp.r74_cost)
-  AND (SELECT count(DISTINCT (label,variant))=12 FROM pg_temp.r74_cost)
+  AND (SELECT count(DISTINCT (c.label,c.variant))=12 FROM pg_temp.r74_cost c)
   AND (SELECT min(viewer_count)=8 FROM pg_temp.r74_cost)
-  AND (SELECT count(*)=4 FROM pg_temp.r74_cost
-   WHERE label='mixed-wall-dark' AND is_lit_calls>0)
-  AND (SELECT count(*)=2 FROM pg_temp.r74_cost
-   WHERE label='mixed-wall-bright' AND variant='fastpath'
-   AND is_lit_calls=0),
+  AND (SELECT count(*)=4 FROM pg_temp.r74_cost c
+   WHERE c.label='mixed-wall-dark' AND c.is_lit_calls>0)
+  AND (SELECT count(*)=2 FROM pg_temp.r74_cost c
+   WHERE c.label='mixed-wall-bright' AND c.variant='fastpath'
+   AND c.is_lit_calls=0),
   'R74-06 6x2x2 eight-viewer samples and dark/bright lighting calls');
 END $r74_profile$;
 SET LOCAL track_functions='none';
