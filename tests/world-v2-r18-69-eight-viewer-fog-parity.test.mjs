@@ -56,7 +56,7 @@ test('R18-69 checks complete original-vs-candidate authorized JSONB, not simple 
  assert.doesNotMatch(parity,/coalesce\(jsonb_array_length\(expected->'visible'/);
 });
 test('R18-69 hostile malformed and overlimit fog fail closed and cannot omit 120 object cap',()=>{
- assert.match(parity,/'points":"bad"/);
+ assert.match(parity,/"points":"bad"/);
  assert.match(parity,/'objects":\[null\]/);
  assert.match(parity,/generate_series\(1,121\)/);
  assert.match(parity,/expected->'visible'='\[\]'::jsonb/);
@@ -74,7 +74,8 @@ test('R18-69 original R57 source parity, revoked viewer and rollback remain inta
 });
 test('R18-69 no candidate changes, live migrations, role grants or session tokens',()=>{
  assert.doesNotMatch(parity,/^\s*(?:GRANT|REVOKE|ALTER FUNCTION|CREATE OR REPLACE FUNCTION|DROP FUNCTION|CREATE ROLE)\b/mi);
- assert.doesNotMatch(parity,/oauth|JWT|sessionStorage|access_token|service_role|https?:\/\//i);
+ assert.doesNotMatch(parity,/oauth|sessionStorage|access_token|service_role|SUPABASE_ACCESS_TOKEN|https?:\/\//i);
+ assert.match(parity,/pg_catalog\.set_config\('request\.jwt\.claim\.sub'/);
  assert.match(parity,/UPDATE public\.map_environments SET live=/);
  assert.match(parity,/CREATE TEMP TABLE r69_parity_counts/);
  assert.match(parity,/original scene before R18-57's existing bench\/hostile cases/);
