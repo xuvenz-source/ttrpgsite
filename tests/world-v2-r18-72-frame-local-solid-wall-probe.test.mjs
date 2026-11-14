@@ -59,9 +59,9 @@ test('R18-72 only reduces exact simple, static walls; all mixed malformed and co
 });
 test('R18-72 source probe is derived from exact live function, changes only the private frame call and returns to original via savepoint',()=>{
  assert.match(experiment,/pg_get_functiondef/);
- assert.match(experiment,/position\(a in original\)/);
- assert.match(experiment,/position\(b in original\)/);
- assert.match(experiment,/position\(c in original\)/);
+ assert.match(experiment,/length\(original\)-length\(replace\(original,a,''\)\)/);
+ assert.match(experiment,/length\(original\)-length\(replace\(original,b,''\)\)/);
+ assert.match(experiment,/length\(original\)-length\(replace\(original,c,''\)\)/);
  assert.match(experiment,/EXECUTE patched;/);
  assert.match(experiment,/SAVEPOINT r72_candidate_only;/);
  assert.match(experiment,/ROLLBACK TO SAVEPOINT r72_candidate_only;/);
