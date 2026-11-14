@@ -260,6 +260,9 @@ END $r57_applied$;
 -- R18-72: bounded, frame-local solid-wall deduplication SOURCE-REAL PROBE;
 -- function change is SAVEPOINT-rolled-back before original R57 tests.
 \i tests/world-v2-b10-postgres/r72-frame-local-solid-wall-probe.sql
+-- R18-74: isolated 1-wall/2-light original-vs-fastpath attribution,
+-- complete private fog parity, local torch/revocation savepoint rollback.
+\i tests/world-v2-b10-postgres/r74-mixed-light-ray-cost-profile.sql
 
 DO $r57_compare_and_measure$
 DECLARE
