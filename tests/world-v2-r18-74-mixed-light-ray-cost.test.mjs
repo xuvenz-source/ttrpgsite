@@ -84,10 +84,10 @@ test('R18-74 has balanced variants and exactly 192 instrumented protected eight-
  assert.match(sql,/r57_unmodified_fog_frame\(test_map,person\)/);
  assert.match(sql,/authorized_viewer_fog_frame\(test_map,person\)/);
  assert.match(sql,/count\(\*\)=24 FROM pg_temp\.r74_cost/);
- assert.match(sql,/count\(DISTINCT \(label,variant\)\)=12/);
+ assert.match(sql,/count\(DISTINCT \(c\.label,c\.variant\)\)=12 FROM pg_temp\.r74_cost c/);
  assert.match(sql,/R74-06 6x2x2 eight-viewer samples/);
- assert.match(sql,/label='mixed-wall-bright' AND variant='fastpath'/);
- assert.match(sql,/label='mixed-wall-dark' AND is_lit_calls>0/);
+ assert.match(sql,/c\.label='mixed-wall-bright' AND c\.variant='fastpath'/);
+ assert.match(sql,/c\.label='mixed-wall-dark' AND c\.is_lit_calls>0/);
 });
 
 test('R18-74 checks 80 complete original-versus-fastpath private frames and no heuristic or cell counts',()=>{
