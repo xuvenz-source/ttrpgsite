@@ -32,11 +32,12 @@ test('R79 all 179 GitHub branches, 177 PRs, 99 new entries reconcile exactly; no
  assert.equal(x.previouslyLedgered,66);
  assert.equal(x.newlyLedgered,99);
  assert.equal(x.totalLedgered,165);
- assert.equal(x.currentLedgered,166);
+ assert.equal(x.currentLedgered,167);
  assert.equal(x.successorAudited,true);
+ assert.equal(x.deployedSuccessorAudited,true);
  assert.equal(x.laterPRsRecorded,62);
  assert.equal(x.unmatchedPRBranches,2);
- assert.equal(x.outstandingReviewBranches,101);
+ assert.equal(x.outstandingReviewBranches,102);
  assert.equal(x.operatorApproved,false);
  assert.equal(x.linkedCli83Plus8Accepted,false);
  assert.equal(x.independentDmP1P2Accepted,false);
@@ -113,15 +114,19 @@ test('R79 forbids false release approval, external CLI attestations and metadata
  badLedger(x=>x.releaseReconciliation.migrationsAppliedByThisStep=8);
  badLedger(x=>x.releaseReconciliation.frontendDeploymentsByThisStep=1);
 });
-test('R79 frozen 100-branch audit and 101st later unapproved QA preflight remain a non-merge queue',()=>{
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,101);
+test('R79 frozen 100-branch audit, R80 preflight and R81 protected preview remain unapproved',()=>{
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,102);
  assert.ok(ledger.upcomingRelease.stagePolicy.includes('NOT a bulk-merge queue'));
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15');
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15');
  assert.equal(ledger.releaseReconciliation.totalLedgerBranches,165);
  assert.equal(ledger.releasePreviewPreparation.currentLedgerBranches,166);
+ assert.equal(ledger.releasePreviewActivation.currentLedgerBranches,167);
+ assert.equal(ledger.releasePreviewActivation.previewDeploymentId,'dpl_Bdek3W7xXVYW3f7QDZpjrDDp9V3F');
+ assert.equal(ledger.releasePreviewActivation.productionReleaseAuthorization,false);
+ assert.equal(ledger.branches.at(-2).linkedPullRequest,182);
  assert.equal(ledger.branches.at(-1).status,'staged');
  assert.equal(ledger.branches.at(-1).releaseReady,false);
- assert.equal(ledger.branches.at(-1).linkedPullRequest,182);
+ assert.equal(ledger.branches.at(-1).linkedPullRequest,183);
  assert.equal(row(139).status,'released');
  assert.ok(!ledger.upcomingRelease.outstandingBranches.includes(row(139).name));
  assert.ok(!ledger.upcomingRelease.outstandingBranches.includes(row(140).name));
@@ -130,6 +135,11 @@ test('R79 frozen 100-branch audit and 101st later unapproved QA preflight remain
  badLedger(x=>x.upcomingRelease.outstandingBranches.pop());
  badLedger(x=>x.releaseBranch='main');
  badLedger(x=>x.releasePreviewPreparation.newPreviewDeployed=true);
+ badLedger(x=>x.releasePreviewActivation.previewDeploymentId='dpl_other');
+ badLedger(x=>x.releasePreviewActivation.productionDeploymentChanged=true);
+ badLedger(x=>x.releasePreviewActivation.liveBrowserV2Verified=true);
+ badLedger(x=>x.releasePreviewActivation.independentDmP1P2Verified=true);
+ badLedger(x=>x.releasePreviewActivation.productionReleaseAuthorization=true);
  badLedger(x=>x.releasePreviewPreparation.previewConfigChangesMade=true);
  badLedger(x=>x.branches.at(-1).releaseReady=true);
  badLedger(x=>x.branches.at(-1).status='released');
