@@ -257,6 +257,9 @@ END $r57_applied$;
 \i tests/world-v2-b10-postgres/r70-fog-function-cost-profile.sql
 -- R18-71: local ray-geometry shape controls; source/permissions untouched.
 \i tests/world-v2-b10-postgres/r71-wall-ray-shape-cost-controls.sql
+-- R18-72: bounded, frame-local solid-wall deduplication SOURCE-REAL PROBE;
+-- function change is SAVEPOINT-rolled-back before original R57 tests.
+\i tests/world-v2-b10-postgres/r72-frame-local-solid-wall-probe.sql
 
 DO $r57_compare_and_measure$
 DECLARE
