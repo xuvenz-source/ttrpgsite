@@ -10,6 +10,7 @@ const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const INVENTORY='staging/world-v2-b10-r18-79-github-branch-inventory.json';
 const LEDGER='staging/next-release-ledger.json';
 const BRANCH='stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15';
+const NEXT='stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15';
 const MAIN='90df8c960e79e8d66c322095611427da7bb09de4';
 const CANONICAL='5ca8c83bdef4a5d9870020b0f2b16723f7790e38';
 const PARENT='5102f62ffe1017a1c7f66df738bee5bfaaaebc38';
@@ -38,13 +39,15 @@ const branchStatus=x=>x==='CANONICAL_LIVE_UNMERGED'?'released':
 export function validateR79Ledger({snapshot,ledger}={}){
  const s=snapshot??JSON.parse(readFileSync(join(ROOT,INVENTORY),'utf8'));
  const l=ledger??JSON.parse(readFileSync(join(ROOT,LEDGER),'utf8'));
+ const successor=l?.releaseBranch===NEXT;
  if(s?.schema!==1||s.workPackage!=='B10-R18-79'||
   s.sourceKind!=='GITHUB_READ_ONLY_BRANCH_AND_PR_METADATA'||
   s.recordedOn!=='2026-11-15'||s.releaseDecision!=='NO_GO'||
   s.safeToRelease!==false||s.operatorApproved!==false||
   s.parent?.pr!==180||s.parent.sha!==PARENT||s.currentPr!==181||
   l?.updated!=='2026-11-15'||l.productionBaseSha!==MAIN||
-  l.releaseBranch!==BRANCH||l.upcomingRelease?.releaseBranch!==BRANCH||
+  ![BRANCH,NEXT].includes(l.releaseBranch)||
+  l.upcomingRelease?.releaseBranch!==l.releaseBranch||
   l.upcomingRelease.productionBaseSha!==MAIN)fail();
  const scope=s.scope;
  if(scope?.repository!=='xuvenz-source/ttrpgsite'||
@@ -61,7 +64,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   !Array.isArray(s.githubBranchSnapshot)||s.githubBranchSnapshot.length!==179||
   !Array.isArray(s.newlyReconciled)||s.newlyReconciled.length!==99||
   !Array.isArray(s.laterPrs)||s.laterPrs.length!==62||
-  !Array.isArray(l.branches)||l.branches.length!==165)fail();
+  !Array.isArray(l.branches)||l.branches.length!==(successor?166:165))fail();
 
  const branchByName=new Map(),snapshotNames=[];
  for(const x of s.githubBranchSnapshot){
@@ -72,8 +75,9 @@ export function validateR79Ledger({snapshot,ledger}={}){
  if(!same(snapshotNames,[...snapshotNames].sort((a,b)=>a.localeCompare(b))))fail();
  const allCandidateNames=snapshotNames.filter(stage);
  const ledgerByName=new Map(l.branches.map(x=>[x.name,x]));
- if(ledgerByName.size!==165||
-  !same([...allCandidateNames].sort(),[...ledgerByName.keys()].sort()))fail();
+ if(ledgerByName.size!==(successor?166:165)||
+  !same([...allCandidateNames].sort(),
+   [...ledgerByName.keys()].filter(x=>x!==NEXT).sort()))fail();
 
  const added=new Set(),prRefs=new Set(),group={};
  for(const x of s.newlyReconciled){
@@ -147,9 +151,32 @@ export function validateR79Ledger({snapshot,ledger}={}){
   l.lastRelease?.productionCommit!=='55d5d704c47c60f04100ce13fb81a5d4357b999e'||
   ledgerByName.get('stage/world-v2-b10-r18-15-drag-corner-collision-settle-2026-11-12')?.status!=='staged'||
   ledgerByName.get('stage/fog-pending-tick-dedupe-and-memory-audit-2026-11-08')?.status!=='released')fail();
+ if(successor){
+  const expected={
+   schema:1,workPackage:'B10-R18-80',decision:'NO_GO',
+   originalR79AuditLedgerBranches:165,currentLedgerBranches:166,
+   addedBranch:NEXT,
+   candidatePreviewGitSha:'380e31bda9e20638c3e1f660a2cdf001b8e37c0d',
+   existingReadyPreviewId:'dpl_Pk7zo5VLppWs6hjc6WKsp4bMH2ZC',
+   existingPreviewV2Ready:false,previewConfigChangesMade:false,
+   newPreviewDeployed:false,productionDeployed:false,
+   explicitOperatorApproval:false,independentSignedDmP1P2Accepted:false,
+   officialLinkedCli83Plus8DryRun:false
+  };
+  const entry=ledgerByName.get(NEXT);
+  if(!same(l.releasePreviewPreparation,expected)||
+   !entry||l.branches.at(-1)!==entry||
+   entry.status!=='staged'||entry.releaseReady!==false||
+   entry.classification!=='PREVIEW_SOURCE_PREFLIGHT_ONLY'||
+   entry.linkedPullRequest!==182||entry.productionBaseSha!==MAIN||
+   entry.reviewedAgainstCanonicalProduction!==false||
+   typeof entry.note!=='string'||
+   !entry.note.includes('no new preview build'))fail();
+ }else if(l.releasePreviewPreparation!==undefined)fail();
  const out=l.upcomingRelease.outstandingBranches;
- if(!Array.isArray(out)||out.length!==100||new Set(out).size!==100||
-  !out.includes(BRANCH)||
+ if(!Array.isArray(out)||out.length!==(successor?101:100)||
+  new Set(out).size!==out.length||
+  !out.includes(BRANCH)||(successor&&!out.includes(NEXT))||
   !same([...out].sort(),l.branches.filter(x=>x.status==='staged').map(x=>x.name).sort())||
   !l.upcomingRelease.stagePolicy.includes('NOT a bulk-merge queue'))fail();
  const pr=n=>s.newlyReconciled.find(x=>x.linkedPullRequest===n);
@@ -161,8 +188,9 @@ export function validateR79Ledger({snapshot,ledger}={}){
   snapshotOnly:true,authenticatedExternalProvenanceVerified:false,
   observedGitHubBranches:179,observedGitHubPullRequests:177,
   previouslyLedgered:66,newlyLedgered:99,totalLedgered:165,
+  currentLedgered:l.branches.length,successorAudited:successor,
   laterPRsRecorded:62,unmatchedPRBranches:2,
-  outstandingReviewBranches:100,
+  outstandingReviewBranches:out.length,
   canonicalLivePr:139,rejectedOrFailed:[140,144],
   optionalUninstalledSqlPrs:[161,179],
   linkedCli83Plus8Accepted:false,
