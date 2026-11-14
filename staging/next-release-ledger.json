@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1665,6 +1665,16 @@
       "prMerged": false,
       "reviewedAgainstCanonicalProduction": false,
       "note": "Open staged source; safe release inclusion NOT proven by PR state, tests or ancestry."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "PREVIEW_SOURCE_PREFLIGHT_ONLY",
+      "linkedPullRequest": 182,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-80 only selects source-identical R18-62 Vercel preview candidate and offline NO_GO-only source/flag guards; no new preview build, V2 branch flags, OAuth redirects, SQL, runtime, production or approved QA. Source review and explicit operator authorization required for any preview rebuild."
     }
   ],
   "features": [
@@ -2770,7 +2780,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2871,9 +2881,10 @@
       "stage/world-v2-b10-r18-78-readonly-release-evidence-2026-11-15",
       "stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15",
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
-      "stage/world-v2-transport-decision-b02-2026-11-10"
+      "stage/world-v2-transport-decision-b02-2026-11-10",
+      "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15"
     ],
-    "stagePolicy": "R18-79: 179 GitHub branch and 177 PR observations; 99 previously untracked stage/fix/feature branches dispositioned, none release-ready. Open staged work is NOT a bulk-merge queue. Current canonical R18-35 live SHA differs from main and newer rejected R18-36 target; R18-40 failed preview; R18-26/27 omitted; R18-57/77 optional SQL not installed. Exact authorized official CLI 83+8, signed independent DM/P1/P2 acceptance, p95, Free RAM/locks and explicit operator signoff remain blockers. No deployment, merge or SQL.",
+    "stagePolicy": "R18-80: R18-79 audited 165 candidate branches in a 179-branch GitHub snapshot, then R18-80 appended one source-only QA preview preflight branch as unapproved staged work (166 total, 101 outstanding review records). The R18-79 snapshot counts are historical, not stale-branch approval. No branch is newly releaseReady. R18-62 existing READY preview source matches full latest frontend tree but is not V2 active under current scoped environment key metadata; requires separate approved two-flag branch-scoped rebuild, real DM/P1/P2, official linked 83+8 Supabase CLI, browser p95, physical Free RAM/locks, and explicit designer release approval. This accounting list is NOT a bulk-merge queue. Never promote rejected R18-36 or failed R18-40; R18-57/77 SQL remains uninstalled.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3058,5 +3069,22 @@
     "freeTierPhysicalRamUnderLoadAccepted": false,
     "migrationsAppliedByThisStep": 0,
     "frontendDeploymentsByThisStep": 0
+  },
+  "releasePreviewPreparation": {
+    "schema": 1,
+    "workPackage": "B10-R18-80",
+    "decision": "NO_GO",
+    "originalR79AuditLedgerBranches": 165,
+    "currentLedgerBranches": 166,
+    "addedBranch": "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
+    "candidatePreviewGitSha": "380e31bda9e20638c3e1f660a2cdf001b8e37c0d",
+    "existingReadyPreviewId": "dpl_Pk7zo5VLppWs6hjc6WKsp4bMH2ZC",
+    "existingPreviewV2Ready": false,
+    "previewConfigChangesMade": false,
+    "newPreviewDeployed": false,
+    "productionDeployed": false,
+    "explicitOperatorApproval": false,
+    "independentSignedDmP1P2Accepted": false,
+    "officialLinkedCli83Plus8DryRun": false
   }
 }
