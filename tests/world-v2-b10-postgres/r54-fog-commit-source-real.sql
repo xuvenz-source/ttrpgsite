@@ -109,10 +109,6 @@ CREATE TEMP TABLE r54_samples(
  duration_ms double precision NOT NULL CHECK(duration_ms>=0),
  viewer_delta bigint NOT NULL CHECK(viewer_delta>=0),
  PRIMARY KEY(mode,iteration));
--- R18-68 inherits this source-exact original R54 fog/collision fixture and
--- its OPEN transaction, then restores home/scene before the original test.
--- This is local, bounded, and rolled back with R54; never a live migration.
-\i tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql
 DO $r54_benchmark$
 DECLARE
  actor uuid:='00000000-0000-4000-8000-000000000011';
@@ -222,6 +218,10 @@ BEGIN
  PERFORM public.b08_assert(revoke_rejected,
   'R54-10 revoked fixture viewer cannot request an authorized fog frame');
 END $r54_benchmark$;
+-- R18-68 runs AFTER all original hostile R54 wall/revocation assertions.
+-- 36×2 new Begin sessions plus original R54 cycles honor the 120/60s cap.
+-- Original fog/collision source and canonical triggers are unchanged.
+\i tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql
 -- Advisory 8-paired-sample local SQL-only timings; no network, no live
 -- production token triggers beyond the source-exact selected two; observer
 -- publisher is the B04 test-only sink. Not a performance release gate.
