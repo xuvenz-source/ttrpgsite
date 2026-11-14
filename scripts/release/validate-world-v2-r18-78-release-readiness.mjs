@@ -79,7 +79,24 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.decision!=='NO_GO'||
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
-   ledger.releaseReconciliation?.totalLedgerBranches!==ledger.branches.length)))
+   ledger.releaseReconciliation?.totalLedgerBranches!==165||
+   ![165,166].includes(ledger.branches.length)||
+   (ledger.branches.length===166&&(
+    ledger.releasePreviewPreparation?.decision!=='NO_GO'||
+    ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
+    ledger.releasePreviewPreparation?.originalR79AuditLedgerBranches!==165||
+    ledger.releasePreviewPreparation?.currentLedgerBranches!==166||
+    ledger.releasePreviewPreparation?.addedBranch!==
+     'stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15'||
+    ledger.releasePreviewPreparation?.previewConfigChangesMade!==false||
+    ledger.releasePreviewPreparation?.newPreviewDeployed!==false||
+    ledger.releasePreviewPreparation?.productionDeployed!==false||
+    ledger.releasePreviewPreparation?.explicitOperatorApproval!==false||
+    ledger.releasePreviewPreparation?.officialLinkedCli83Plus8DryRun!==false||
+    ledger.branches.at(-1)?.name!==
+     'stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15'||
+    ledger.branches.at(-1)?.status!=='staged'||
+    ledger.branches.at(-1)?.releaseReady!==false)))))
   fail();
  const names=['20261111023204_world_v2_b10_integrated_motion.sql',
   ...narrow.pending.map(x=>x.filename)];
