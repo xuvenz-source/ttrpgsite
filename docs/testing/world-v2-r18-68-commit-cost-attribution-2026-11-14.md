@@ -11,13 +11,13 @@ The installed original `public.commit_world_motion_v2` revalidates all server-ac
 ## Engineering scope
 
 - Add `tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql`; it runs **ONLY** inside the existing R18-54 source-real **`BEGIN ... ROLLBACK`** disposable PostgreSQL 17 fixture after original source MD5 checks and exact real token collision/fog triggers are installed.
-- Add exactly one `\i` inclusion immediately before R18-54's original benchmark. The new test returns the canonical token and fixture scene to their original positions and settings; then **all existing** R18-54 wall-block, private fog, player-revocation and rollback assertions run unchanged.
+- Add exactly one `\i` inclusion immediately after R18-54's original signed wall and revocation assertions. The new test returns the canonical token and fixture scene to their original positions and settings; The **unchanged** R18-54 wall-block, private fog and player-revocation assertions run **first**; only then does the additional benchmark restore the original disposable P2 fixture role to player so the source-real fog tests may continue. The same outer transaction rolls back all test-only data and schema changes.
 - Add focused static guards checking the 48-sample experiment, pinned production function hashes, signed Begin/Advance/Commit, fog-only viewer tick effects, no fake collision-disable, and that R18-54's original hostile cases remain.
 - **No** changes in `supabase/migrations`, `supabase/candidates`, live RPCs, permissions, V2 client code, renderer, Vercel or Supabase. The tests run exclusively in a throwaway local GitHub Actions PostgreSQL 17 instance with the existing explicit host, port and database checks.
 
 ## Exact controlled test
 
-4 repetitions × 2 scenarios × 2 fog modes × 3 movement depths = **48 timed original Commit calls**. A matching untimed reverse Commit follows each timed call, so every sample starts from the same server-authorized origin.
+3 repetitions × 2 scenarios × 2 fog modes × 3 movement depths = **36 timed original Commit calls**. A matching untimed reverse Commit follows each timed call, so every sample starts from the same server-authorized origin.
 
 | Dimension | Values |
 |---|---|
@@ -29,11 +29,18 @@ The installed original `public.commit_world_motion_v2` revalidates all server-ac
 | Timing | Server-side PostgreSQL `clock_timestamp` around original Commit |
 | Fog observer consequence | Original scoped viewer revision changes only for fog-on |
 | Source integrity | Original production Commit and fog MD5 must match exactly |
-| Output | Scenario, fog mode, depth, count, mean/median/p95/max SQL milliseconds (four synthetic-fixture samples only) |
+| Output | Scenario, fog mode, depth, count, mean/median/p95/max SQL milliseconds (three synthetic-fixture samples only) |
 
 The wall-heavy map uses **24** barriers at x≈14.2–14.3 and y=3..15, outside the y=1 route ending at x=13. Obstacles are therefore tested for **cost**, not bypassed; existing R18-54 tests still require real walls to stop movement without leaking geometry. The 1/6/12-cell Advances must approve **every cell** and the successful Commit must write the exact approved final position. Fog-on must refresh at least two protected fixture observers. No fake player access or recipient authorization is created.
 
-The order of scenes, fog modes and route lengths reverses on alternating repetitions to reduce (not eliminate) warm-cache order bias. This **is not an external latency SLA**: four samples per condition are too few for stable p95, and the disposable fixture does not model all production token triggers, real 3-browser streaming, hosted Supabase Free RAM or network RTT. Compare directional costs only; never claim a browser p95 or guarantee. The CI artifact/log has timings and counts, not token IDs, map geometry, JWTs or private fog frames.
+The order of scenes, fog modes and route lengths reverses on alternating repetitions to reduce (not eliminate) warm-cache order bias. This **is not an external latency SLA**: three samples per condition are too few for stable p95, and the disposable fixture does not model all production token triggers, real 3-browser streaming, hosted Supabase Free RAM or network RTT. Compare directional costs only; never claim a browser p95 or guarantee. The CI artifact/log has timings and counts, not token IDs, map geometry, JWTs or private fog frames.
+
+
+## Real engine rate limiter preserved
+
+The first CI attempt ran all 48 signed benchmark samples **before** R18-54, so the original R18-54 test later hit the real Begin budget (**120 player session starts in 60 seconds**). The R18-68 samples themselves and their signed return paths passed, but the unchanged original test failed after the extra load; that attempt is **not** an engineering pass.
+
+The corrected experiment runs **after** the original R18-54 revocation and blocked-wall tests, and reduces the workload to **36 timed forward plus 36 untimed reverse** Commits. Together with R18-54's existing 16 forward/16 reverse and its blocked-wall Begin, this remains below the original 120-session threshold during the fast fixture run. The benchmark restores **only the disposable P2 fixture membership** after R18-54 has already asserted revocation; no production code, original source functions, rate budgets, actor permissions or public grants are altered. CI must verify the source-real PG17 test end-to-end at the final exact commit.
 
 ## Decision gate after CI
 
