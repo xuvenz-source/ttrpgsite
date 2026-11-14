@@ -70,7 +70,7 @@ test('R18-69 original R57 source parity, revoked viewer and rollback remain inta
  assert.match(r57,/R57-09 revoked user refused by both original and optimized/);
  assert.match(r57,/R57-10 exact original source and private privileges restored/);
  assert.match(r57,/R57 PASS: source-drift application rejected/);
- assert.match(r57,/R57 PASS: history-drift application rejected/);
+ assert.match(r57,/R57 PASS: missing release migration rejected/);
 });
 test('R18-69 no candidate changes, live migrations, role grants or session tokens',()=>{
  assert.doesNotMatch(parity,/^\s*(?:GRANT|REVOKE|ALTER FUNCTION|CREATE OR REPLACE FUNCTION|DROP FUNCTION|CREATE ROLE)\b/mi);
