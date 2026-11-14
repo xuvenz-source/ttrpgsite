@@ -269,6 +269,9 @@ END $r57_applied$;
 -- R18-76: 8-phase ABBA/BAAB source/inline alternation and widened epsilon
 -- hostile privacy parity. Dedicated SAVEPOINT restores source before R57.
 \i tests/world-v2-b10-postgres/r76-balanced-cross2-equivalence.sql
+-- R18-77: actual unversioned operator-gated candidate and inverse rehearsal,
+-- with complete hostile private-frame parity and explicit failure gates.
+\i tests/world-v2-b10-postgres/r77-operator-sealed-inline-cross2-rehearsal.sql
 
 DO $r57_compare_and_measure$
 DECLARE
