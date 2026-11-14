@@ -20,6 +20,24 @@ The test compares all **2,376 Boolean rays**, all **528 full private frames** an
 
 The main probe SAVEPOINT is rolled back in full, including its transient ray function and sample rows. The test checks the exact original source digests, security metadata, viewer roster, empty torch fixture, original map environment and restored `track_functions='none'` before unchanged R18-57 signed collision/Commit/negative and rollback tests. **No new migration, installable candidate, production SQL, grant or runtime code is created.**
 
+## Source-real PostgreSQL measurements — first exact-head run
+
+The source-real fog workflow passed on commit `3f135aa3853b6f4a613c964f80ab9d4d7a8e1f13`. All four independent workflows succeeded: Node/Chromium/build/lint/audit/Edge **1,230 passed, zero failed**, zero npm production vulnerabilities; source-real R54–R57 fog and rollback; isolated PostgreSQL V2 authority; and CodeQL.
+
+The test compared **2,376/2,376 original-vs-inlined direct rays**, **528/528 complete original private fog frames**, **16/16 complete torch/scene-light frames**, and explicitly denied a revoked fixture viewer. The exact original `ray_blocked` and `cross2` function MD5s, owner, ACL, volatility and security attributes were restored by SAVEPOINT rollback before the pre-existing signed R57 Commit/collision/rollback suite, which also passed.
+
+**Instrumented PostgreSQL 17 means, two sequential eight-viewer repetitions per variant** — separate source baseline was completed before the inline candidate was installed. These are intentionally *not interleaved or statistically independent*, and instrumentation adds overhead.
+
+| Synthetic scene | Source mean 8-frame elapsed | Inline mean 8-frame elapsed | Reduction observed | `ray_blocked` calls (both) | `cross2` calls (source → inline) |
+|---|---:|---:|---:|---:|---:|
+| 1 wall + 2 lights, dark | 245.117 ms | 92.899 ms | 62.1% | 3,414 | 13,404 → 0 |
+| 1 wall + 2 lights, dim | 190.422 ms | 73.994 ms | 61.1% | 2,611 | 10,192 → 0 |
+| Closed door + 2 lights, dark | 248.593 ms | 93.445 ms | 62.4% | 3,414 | 13,404 → 0 |
+
+For dark wall+lights, exclusive `ray_blocked` self-time was **66.484 ms source → 46.338 ms inlined**; `cross2` separately attributed self-time **121.557 ms source → 0 ms helper calls inlined**. This is consistent with material SQL helper-invocation overhead in the isolated fixture, but the arithmetic now executes inside the ray function and there can be other timings/costs. Never sum function self-time and call it entire client latency. A baseline-first, then inlined, sampling order is susceptible to cache and compiler warm-up effects; use a separately balanced A/B/A or B/A/B experiment before asserting production causal improvement.
+
+**Decision:** Source-equivalent *under this bounded adversarial fixture*: PASS. The result justifies a separately reviewed reversible *candidate design*, not deployment. Before touching runtime, expand hostile float-boundary, condition-specific, malformed geometry and light-path parity; include source-real round-trip alternating order and require authentication, signed movement authority, runtime memory and real browser QA gates.
+
 ## Exit and release gates
 
 All four exact-head workflows must succeed: Node/Chromium/build/lint/Deno Edge/dependency audit; source-real PostgreSQL R18-54–R18-57 signed fog/rollback; isolated PostgreSQL movement authority; CodeQL. Any original-vs-inlined mismatch or missing/changed privileges **fails the step**, not a reason to relax the original source or visibility.
