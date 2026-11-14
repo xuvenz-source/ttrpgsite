@@ -109,6 +109,10 @@ CREATE TEMP TABLE r54_samples(
  duration_ms double precision NOT NULL CHECK(duration_ms>=0),
  viewer_delta bigint NOT NULL CHECK(viewer_delta>=0),
  PRIMARY KEY(mode,iteration));
+-- R18-68 inherits this source-exact original R54 fog/collision fixture and
+-- its OPEN transaction, then restores home/scene before the original test.
+-- This is local, bounded, and rolled back with R54; never a live migration.
+\i tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql
 DO $r54_benchmark$
 DECLARE
  actor uuid:='00000000-0000-4000-8000-000000000011';
