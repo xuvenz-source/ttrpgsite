@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1755,6 +1755,16 @@
       "linkedPullRequest": 190,
       "reviewedAgainstCanonicalProduction": false,
       "note": "B10-R18-88 stages only read-only 83+8 source/prerequisite checks, exact R57/R77 and inverse Git seals, and sixth disposable local PostgreSQL 17 partial/combined installation savepoint rollback. Current linked Supabase remains at 83 migrations; no official pinned linked CLI 83+8 fetch/list/dry-run, independent signed DM/P1/P2, hosted Free RAM/locks or QA operator release authorization. Never apply candidate SQL or change preview/production alias; release NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "LIVE_83_BODY_AND_10_AUTHORITY_FINGERPRINT_QA_ISOLATION_CLI_READONLY_ATTESTATION",
+      "linkedPullRequest": 191,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-89 performs connected Supabase R50 SELECT-only 83/83 exact original historical SQL digest/statement count/name match plus 10/10 critical authority function fingerprints. Free organization: one accessible project and only main branch; separate QA backend unverified. A source-only offline CLI operator plan and validator pin v2.81.3 and forbid any remote SQL push except verified --dry-run. Official independently credentialed linked CLI not run, 83+8 release remains NO_GO. No SQL, paid infrastructure, preview or production deploy."
     }
   ],
   "features": [
@@ -2860,7 +2870,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2970,9 +2980,10 @@
       "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
       "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
       "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15",
-      "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15"
+      "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
+      "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15"
     ],
-    "stagePolicy": "R18-88: keep frozen historical R79 count 165; 174 ledger branches, 109 unapproved outstanding (NOT a bulk-merge queue). Candidate R57+R77 source and independent inverse pinned by exact original Git blobs and backed by an additional local-only sixth R54 savepoint rehearsal; no hosted SQL. Live Supabase at 83, still lacks eight reviewed migrations and authenticated official pinned v2.81.3 linked fetch/list/dry-run, independent DM/P1/passive P2/fast regrab, browser p95 and Free RAM/locks under load. Combined candidate only for possible later separately approved protected QA deployment. Original collision/sight/revocation must remain authoritative. NO_GO.",
+    "stagePolicy": "R18-89: historic R79 frozen 165, now 175 ledger branches and 110 unapproved outstanding (NOT bulk merge). Live R50 catalog read-only 83/83 SQL history digests and 10/10 critical authority fingerprints verified, no migration drift. Supabase org Free, connected account sees one project/main branch; no isolated QA backend verified. R48 8 pending versions still missing; official pinned 2.81.3 credentialed linked fetch/list/db push --dry-run remains NO_GO, independent DM/P1/P2, browser p95 and Free physical RAM/locks remain NO_GO. R57/R77 candidate still not installed; no migration apply or permanent QA/production changes.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3433,6 +3444,44 @@
     "productionReleased": false,
     "rootMigrationFilesModified": false,
     "runtimeFilesModified": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseLinkedCliQaAttestation": {
+    "schema": 1,
+    "workPackage": "B10-R18-89",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 174,
+    "currentLedgerBranches": 175,
+    "addedBranch": "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
+    "parentPr": 190,
+    "parentSha": "8461b38a498eb1244407b232a1f700314a54d2fd",
+    "manifest": "staging/world-v2-b10-r18-89-readonly-qa-prerequisites/manifest.json",
+    "operatorPlan": "staging/world-v2-b10-r18-89-readonly-qa-prerequisites/operator-cli-plan.json",
+    "readOnlyLiveReceiptObservedAt": "2026-11-15T10:11:42.699481+00:00",
+    "historicalSqlDigestsReadOnlyMatched": 83,
+    "criticalAuthoritySourceMd5Matched": 10,
+    "liveRegisteredMigrations": 83,
+    "requiredRegisteredMigrations": 91,
+    "originalR05Absent": true,
+    "linkedSupabasePlan": "free",
+    "connectedAccessibleProjects": 1,
+    "connectedVisibleNonMainBranches": 0,
+    "isolatedQaBackendVerified": false,
+    "officialPinnedCliVersion": "2.81.3",
+    "officialAuthenticatedCliExecuted": false,
+    "officialLinkedMigrationFetchListDryRunVerified": false,
+    "readOnlyCliPlanPinned": true,
+    "credentialedCliRunnerProvisioned": false,
+    "independentAuthenticatedDmP1P2Verified": false,
+    "browserP95Accepted": false,
+    "physicalFreeMemoryAndLockLoadAccepted": false,
+    "explicitSqlOperatorApproval": false,
+    "rootMigrationFilesModified": false,
+    "runtimeFilesModified": false,
+    "migrationApplied": false,
+    "liveSupabaseSqlWritten": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
     "productionReleaseAuthorized": false
   }
 }
