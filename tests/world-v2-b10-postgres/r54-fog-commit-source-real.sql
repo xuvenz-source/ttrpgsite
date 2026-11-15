@@ -229,6 +229,12 @@ END $r54_benchmark$;
 -- Original fog/collision source and canonical triggers are unchanged.
 -- R18-83 adds ONLY before/after transaction-function statistics around
 -- this preexisting R68 signed workload. No extra sessions or Commit calls.
+-- R86 fourth pass uses the existing R54 16 signed Commit pairs, then
+-- a separately source-sealed 8-viewer candidate matrix. It does NOT
+-- replay R68/R84/R85, so the unchanged 120 gesture cap is preserved.
+\if :{?r86_matrix}
+\i tests/world-v2-b10-postgres/r86-full-trigger-eight-viewer-candidate-matrix.sql
+\else
 \if :{?r84_full}
 \i tests/world-v2-b10-postgres/r84-commit-function-profile-start.sql
 \else
@@ -245,6 +251,7 @@ END $r54_benchmark$;
 \endif
 \else
 \i tests/world-v2-b10-postgres/r83-commit-function-profile-finish.sql
+\endif
 \endif
 -- Advisory 8-paired-sample local SQL-only timings; no network, no live
 -- production token triggers beyond the source-exact selected two; observer
@@ -269,6 +276,12 @@ BEGIN
   to_regclass('pg_temp.r85_phase_samples') IS NULL AND
   to_regclass('pg_temp.r85_function_before') IS NULL AND
   to_regclass('pg_temp.r85_function_delta') IS NULL AND
+  to_regclass('pg_temp.r86_matrix_scenes') IS NULL AND
+  to_regclass('pg_temp.r86_matrix_samples') IS NULL AND
+  to_regprocedure('forge_visibility.r86_frozen_original_ray(jsonb,double precision,double precision,double precision,double precision,text,jsonb)') IS NULL AND
+  to_regprocedure('forge_visibility.r86_frozen_original_frame(uuid,uuid)') IS NULL AND
+  to_regprocedure('pg_temp.r86_signed_probe(text)') IS NULL AND
+  to_regclass('supabase_migrations.schema_migrations') IS NULL AND
   to_regprocedure('public.validate_campaign_tool_write()') IS NULL AND
   to_regprocedure('public.protect_token_fields()') IS NULL AND
   NOT EXISTS (SELECT 1 FROM pg_trigger t
