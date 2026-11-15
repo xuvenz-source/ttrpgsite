@@ -1,6 +1,6 @@
 /**
  * B10-R18-90: validate captured --help of the EXACT pinned Supabase CLI.
- * No child_process, network access, SQL, credentials, GitHub API or writable
+ * No process spawning, network access, SQL, credentials, GitHub API or writable
  * filesystem calls. This verifies CLI *syntax only*, NEVER linked history.
  */
 import {readFileSync,lstatSync} from 'node:fs';
