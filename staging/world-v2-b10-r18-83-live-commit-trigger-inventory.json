@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-83",
+  "observedAtUTC": "2026-11-15T03:21:29Z",
+  "source": "SUPABASE_READ_ONLY_PG_CATALOG_AND_PG_STAT_STATEMENTS",
+  "releaseDecision": "NO_GO",
+  "operatorApprovedToDeploy": false,
+  "safeToInstall": false,
+  "projectId": "lwhwgqaunxbmvyndswze",
+  "postgresMajorVersion": 17,
+  "registeredMigrations": 83,
+  "liveSettings": {
+    "trackFunctions": "none",
+    "trackIoTiming": "off",
+    "settingsModified": false
+  },
+  "liveTriggerInventory": {
+    "mapTokens": {
+      "totalEnabledUpdateTriggers": 10,
+      "firedByPositionOnlyUpdate": [
+        "forge_player_collision",
+        "forge_visibility_token_tick",
+        "npc_token_sheet_items_rpc_only",
+        "tokens_protected",
+        "tokens_touch",
+        "tokens_validate"
+      ],
+      "notFiredByPositionOnlyUpdate": [
+        "combat_sync_token_change",
+        "forge_navigation_token_permissions",
+        "tokens_validate_statuses",
+        "world_v2_token_roster_changed"
+      ]
+    },
+    "campaignToolIssues": {
+      "totalEnabledUpdateTriggers": 5,
+      "firedByPositionOnlyUpdate": [
+        "campaign_tool_items_rpc_only",
+        "campaign_tool_sync_map",
+        "campaign_tool_validate_issue",
+        "forge_tool_collision"
+      ],
+      "notFiredByPositionOnlyUpdate": [
+        "forge_navigation_tool_permissions"
+      ]
+    }
+  },
+  "originalTokenTriggerDefinitions": {
+    "forge_visibility.enforce_collision()": "7e652f0f2334980ccc724e1748d334ba",
+    "forge_visibility.tick_tokens()": "f6c2eef860141bff253024e0f6d8c7ba",
+    "public.reject_direct_sheet_inventory_overwrite()": "14c6e5f2f18d473a807c8f5a4bd3277d",
+    "public.protect_token_fields()": "188ca42e10f52115511eba0a594c29c6",
+    "public.touch_updated_at()": "8639838030b589f3caeaf247e9aa9986",
+    "public.validate_token_map()": "8ddb83de264171910132b2da9979f26c"
+  },
+  "syntheticR54Fixture": {
+    "database": "world_v2_b10_r05",
+    "installedRealMovementTriggers": [
+      "forge_player_collision",
+      "forge_visibility_token_tick"
+    ],
+    "missingLivePositionTriggerPaths": [
+      "npc_token_sheet_items_rpc_only",
+      "tokens_protected",
+      "tokens_touch",
+      "tokens_validate"
+    ],
+    "fullProductionTriggerParity": false,
+    "originallyBenchmarkedSignedCommits": 72,
+    "addedR83SignedCommits": 0,
+    "tracking": "SET LOCAL track_functions=all inside disposable R54 ROLLBACK only",
+    "sourceOriginalCommitMD5": "f87014e7a967d1db1262dabe9e125552"
+  },
+  "baseline": {
+    "browserSource": "R18-81 QA SOLO DM (R18-62 SHA)",
+    "browserGestures": 7,
+    "browserAdvanceP95Ms": 740.1,
+    "browserCommitP95Ms": 1451.7,
+    "browserReleaseToTerminalP95Ms": 2226.1,
+    "sqlCumulativeStatsResetUTC": "2026-11-05T09:51:43Z",
+    "liveCommitCallsHistorical": 535,
+    "liveCommitMeanSQLMs": 305.46,
+    "liveCommitMaxSQLMs": 3673.67,
+    "liveAdvanceCallsHistorical": 1840,
+    "liveAdvanceMeanSQLMs": 63.6,
+    "liveVisibilityCallsHistorical": 1413,
+    "liveVisibilityMeanSQLMs": 43.44,
+    "liveSqlTimingsMatchedToBrowserRequests": false
+  },
+  "sampledInfrastructure": {
+    "instantaneousSessions": 7,
+    "instantaneousLockWaiters": 0,
+    "actualFreeTierPhysicalRamAndSwapMeasured": false,
+    "metadataContainsPrivateMapOrSight": false
+  },
+  "deployment": {
+    "permanentQAHost": "ttrpgsite-qa-ttrpg-site.vercel.app",
+    "currentPreviewBuildId": "dpl_Bdek3W7xXVYW3f7QDZpjrDDp9V3F",
+    "currentPreviewGitSha": "380e31bda9e20638c3e1f660a2cdf001b8e37c0d",
+    "newPreviewDeployed": false,
+    "productionDeployed": false,
+    "supabaseSqlWritten": false,
+    "migrationApplied": false,
+    "authorizedIndependentPlayersVerified": false,
+    "officialLinkedCLI83Plus8DryRunVerified": false
+  }
+}
