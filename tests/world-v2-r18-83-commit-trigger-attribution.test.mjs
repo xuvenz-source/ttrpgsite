@@ -106,7 +106,9 @@ test('R83 profiler wraps existing workload without creating additional signed se
  assert.ok(positions[2]<runner.lastIndexOf('\nROLLBACK;'));
  assert.match(runner,/to_regclass\('pg_temp\.r83_functions_before'\) IS NULL/);
  assert.match(runner,/to_regclass\('pg_temp\.r83_function_delta'\) IS NULL/);
- assert.doesNotMatch(start+finish,/public\.begin_world_motion_v2\s*\(|public\.advance_world_motion_v2\s*\(|public\.commit_world_motion_v2\s*\(/);
+ // Source fingerprint guards contain literal regprocedure signatures;
+ // prohibit actual extra signed RPC execution, not harmless digest strings.
+ assert.doesNotMatch(start+finish,/(?:PERFORM|:=|SELECT)\s+public\.(?:begin|advance|commit)_world_motion_v2\s*\(/);
 });
 test('R83 records source user-function deltas and signed Commit/trigger counts but never invents browser p95',()=>{
  assert.match(finish,/pg_stat_xact_user_functions after_stats/);
@@ -115,7 +117,7 @@ test('R83 records source user-function deltas and signed Commit/trigger counts b
  assert.match(finish,/fog_trigger_calls>=72/);
  assert.match(finish,/collision_trigger_calls>=72/);
  assert.match(finish,/track_functions'\)<>'all'/);
- assert.match(finish,/source-real function profile/i);
+ assert.match(finish,/xact-scoped function profile/i);
  assert.doesNotMatch(finish,/CREATE OR REPLACE FUNCTION|DROP FUNCTION|DROP TRIGGER|DISABLE TRIGGER|GRANT EXECUTE|INSERT INTO public|UPDATE public\.map_tokens/);
  assert.equal(record.baseline.browserCommitP95Ms,1451.7);
  assert.equal(record.baseline.browserReleaseToTerminalP95Ms,2226.1);
