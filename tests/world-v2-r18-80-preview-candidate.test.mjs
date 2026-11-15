@@ -20,7 +20,12 @@ test('R80 pins entire byte-exact R18-62 frontend source tree and build files wit
  assert.equal(r.productionSafeToDeploy,false);
  assert.equal(r.safeToDeployPreviewWithoutApproval,false);
  assert.equal(r.candidateSourceGitSha,'380e31bda9e20638c3e1f660a2cdf001b8e37c0d');
- assert.equal(r.candidateSourceIdenticalToLatestStageAtAudit,true);
+ assert.equal(r.candidateSourceIdenticalToLatestStageAtAudit,true,
+  'the original R18-80 point-in-time Vercel comparison must be preserved');
+ assert.equal(r.currentCheckoutIdenticalToR18_62,false,
+  'the R18-82 branch is NOT identical to the deployed R18-62 frontend');
+ assert.equal(r.currentCheckoutReviewedR18_82Amendment,true,
+  'only the exact source-reviewed R18-82 controller tree may replace the old checked-out tree');
  assert.equal(r.activePreviewV2BuildVerified,false);
  assert.equal(r.needsApprovedPreviewRebuild,true);
  assert.equal(r.needsScopedPreviewFlagConfiguration,true);
@@ -34,6 +39,8 @@ test('R80 compares whole src tree and immutable build blob pins, not just filena
  assert.match(validator,/gitDigest\('tree',Buffer\.concat\(parts\)\)/);
  assert.match(validator,/gitBlobOid\(readFileSync\(join\(root,path\)\)\)/);
  assert.match(validator,/546cfbaca75a16a447f740a24d1ef59e0a489f59/);
+ assert.match(validator,/f5fe610d80b604897aad6fdc4020ab8cf8797844/);
+ assert.match(validator,/ae4dfd43bef0f5b06e42c72c10848d0637c48252/);
  bad(x=>x.candidate.sourceParity.srcTreeSha='a'.repeat(40));
  bad(x=>x.candidate.sourceParity.packageJsonBlobSha='a'.repeat(40));
  bad(x=>x.candidate.sourceParity.viteConfigBlobSha='b'.repeat(40));
