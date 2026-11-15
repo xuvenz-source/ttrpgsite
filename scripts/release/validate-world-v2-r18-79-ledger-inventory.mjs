@@ -487,7 +487,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT90);
   if(!same(l.releasePinnedCliOfflineHelp,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-3:readOnlyCaptureSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='PINNED_SUPABASE_CLI_V2_81_3_OFFLINE_FLAG_VERIFICATION_NO_CREDENTIALS'||
    entry.linkedPullRequest!==192||entry.productionBaseSha!==MAIN||
