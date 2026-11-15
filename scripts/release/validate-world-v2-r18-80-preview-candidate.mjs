@@ -13,6 +13,11 @@ import {fileURLToPath} from 'node:url';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const RECORD='staging/world-v2-b10-r18-80-qa-preview-candidate.json';
 const FRONTEND_TREE='546cfbaca75a16a447f740a24d1ef59e0a489f59';
+// R18-82 is a separate source-review amendment, NOT the deployed R18-62
+// preview. Preserve the historic tree and pin the exact one-controller
+// successor; never silently re-label the original READY Vercel build.
+const R18_82_SRC_TREE='f5fe610d80b604897aad6fdc4020ab8cf8797844';
+const R18_82_CONTROLLER_BLOB='ae4dfd43bef0f5b06e42c72c10848d0637c48252';
 const SHA62='380e31bda9e20638c3e1f660a2cdf001b8e37c0d';
 const SHA79='e3b791ea7ba478b9220bc5ddb111b628cec36348';
 const fail=()=>{throw Error('R80 PREVIEW NO-GO: source, deployment or authorization evidence drift')};
@@ -72,7 +77,11 @@ export function validateR80QaCandidate({record,repoRoot=ROOT}={}){
   sp.migrationsChangedSinceR18_62!==0||
   sp.backendCandidateFilesAddedSinceR18_62!==2)fail();
  const root=resolve(repoRoot);
- if(treeDigest(join(root,'src')).toString('hex')!==FRONTEND_TREE)fail();
+ const checkedSrcTree=treeDigest(join(root,'src')).toString('hex');
+ const isReviewedR18_82=checkedSrcTree===R18_82_SRC_TREE&&
+  gitBlobOid(readFileSync(join(root,'src/engine/v2/MovementController.js')))===
+   R18_82_CONTROLLER_BLOB;
+ if(checkedSrcTree!==FRONTEND_TREE&&!isReviewedR18_82)fail();
  for(const [path,known] of [
   ['index.html',sp.indexHtmlBlobSha],
   ['package.json',sp.packageJsonBlobSha],
@@ -171,7 +180,12 @@ export function validateR80QaCandidate({record,repoRoot=ROOT}={}){
   productionSafeToDeploy:false,
   candidateSourceGitSha:SHA62,
   candidatePreviewId:c.deployedPreviewId,
+  // The R18-80 source-parity claim is HISTORICAL and was true when
+  // captured. The R18-82 source is explicitly a different checkout and
+  // has NOT been deployed to the protected permanent QA alias.
   candidateSourceIdenticalToLatestStageAtAudit:true,
+  currentCheckoutIdenticalToR18_62:checkedSrcTree===FRONTEND_TREE,
+  currentCheckoutReviewedR18_82Amendment:isReviewedR18_82,
   activePreviewV2BuildVerified:false,
   needsScopedPreviewFlagConfiguration:true,
   needsApprovedPreviewRebuild:true,
