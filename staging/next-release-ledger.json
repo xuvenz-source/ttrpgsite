@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1725,6 +1725,16 @@
       "linkedPullRequest": 187,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-85 adds separate third roll-back-only PG17 full 6/4 trigger replay to isolate actual signed Begin+Advance versus original Commit function timing with four bounded extra sessions and two wall-heavy fog states. Preserves original R68 72 signed token Commits and historical R83/R84 fixtures without runtime change. Results are synthetic request samples, not network/browser/RLS/Free load proofs; never install or deploy. Release NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "DISPOSABLE_EIGHT_VIEWER_FULL_TRIGGER_R57_R77_FROZEN_SOURCE_CANDIDATE_MATRIX",
+      "linkedPullRequest": 188,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-86 compares original, R57 sealed synchronous private fog, R77 sealed inline ray, and combined R57+R77 in a fourth independent rollback-only PostgreSQL 17 full 6-token/4-tool-trigger session. Eight synthetic fixture viewers, sealed operator-gated source/inverses, 192 full original-ray/source-frozen JSONB frame comparisons and eight signed canonical Commit cycles are local CI plans, not hosted/browser/RLS/Free-tier release evidence; NEVER install or deploy. Production NO_GO."
     }
   ],
   "features": [
@@ -2830,7 +2840,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2937,9 +2947,10 @@
       "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15",
       "stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15",
       "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
-      "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15"
+      "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
+      "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15"
     ],
-    "stagePolicy": "R18-85: frozen R18-79 historical 165 remains untouched; 171 ledger branches with 106 unapproved outstanding reviews (NOT a bulk-merge queue). R18-83/84 baseline and R18-85 original signed per-phase attribution are locally disposable PostgreSQL 17 evidence only; the test-only observer sink, limited viewers and synthetic local function costs do not certify live multiplayer, production RLS, RAM or latency. R18-81 solo DM wall/rapid movement still performance FAIL. Official pinned linked Supabase CLI 83+8 dry-run, independently authenticated DM/P1/passive P2 fog/collision/revocation/observer QA, actual browser p95 and Free RAM/locks, and explicit operator release approval all remain NO_GO. No live SQL, migration or Vercel alias change.",
+    "stagePolicy": "R18-86: retain original frozen R79 inventory of 165; 172 ledger branches, 107 unapproved review branches (NOT bulk-merge authorization). Test-only fourth PostgreSQL-17 pass compares 4 original/opt-in candidate modes under all 6 token/4 tool movement triggers and independently frozen private ray/frame references across eight synthetic viewers. Prior R83/R84/R85 test runs remain unchanged, and original browser lag around walls/frequent input remains FAIL. Official pinned Supabase 83+8 linked dry-run, independent authenticated DM/P1/passive P2, browser p95, Free RAM/locks, and explicit operator authorization are hard NO_GO. No live SQL, migrations, production/QA aliases or paid tier change.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3282,6 +3293,45 @@
     "officialLinkedCli83Plus8Accepted": false,
     "independentSignedDmP1P2Accepted": false,
     "freeTierLoadRamAccepted": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseFogCandidateMatrix": {
+    "schema": 1,
+    "workPackage": "B10-R18-86",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 171,
+    "currentLedgerBranches": 172,
+    "addedBranch": "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
+    "directParentPr": 187,
+    "directParentSha": "57b3916b34313070698e3ca1e13827e3154e4142",
+    "preservedR83R84R85Runs": true,
+    "fixtureDatabase": "world_v2_b10_r05",
+    "fourModes": [
+      "original",
+      "r57",
+      "r77",
+      "combined"
+    ],
+    "originalTokenPositionTriggers": 6,
+    "originalToolPositionTriggers": 4,
+    "sourceFrozenOriginalFogAndRay": true,
+    "syntheticFixtureViewerCount": 8,
+    "plannedFullFrameComparisons": 192,
+    "plannedSignedCanonicalCommits": 8,
+    "syntheticMigrationHistoryNotCliProof": true,
+    "sourceSealedActualCandidateInstallAndInverse": true,
+    "testOnlyRollback": true,
+    "originalAuthorizerOrCollisionBypassed": false,
+    "original120GestureCapBypassed": false,
+    "fullHostedRlsParityEstablished": false,
+    "independentSignedDmP1P2Accepted": false,
+    "officialLinkedCli83Plus8Verified": false,
+    "browserMovementAccepted": false,
+    "freeTierRamAndLockLoadAccepted": false,
+    "liveSupabaseSqlWritten": false,
+    "sqlMigrationApplied": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
     "productionReleaseAuthorized": false
   }
 }
