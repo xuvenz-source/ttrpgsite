@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167].includes(ledger.branches.length)||
+   ![165,166,167,168].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -93,11 +93,11 @@ export function validateR78ReleaseStatus({
     ledger.releasePreviewPreparation?.productionDeployed!==false||
     ledger.releasePreviewPreparation?.explicitOperatorApproval!==false||
     ledger.releasePreviewPreparation?.officialLinkedCli83Plus8DryRun!==false||
-    ledger.branches.at(ledger.branches.length===167?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.name!==
      'stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===167?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===167?-2:-1)?.releaseReady!==false))||
-   (ledger.branches.length===167&&(
+    ledger.branches.at(ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.releaseReady!==false))||
+   (ledger.branches.length>=167&&(
     ledger.releasePreviewActivation?.workPackage!=='B10-R18-81'||
     ledger.releasePreviewActivation?.decision!=='NO_GO'||
     ledger.releasePreviewActivation?.priorR80LedgerBranches!==166||
@@ -112,10 +112,31 @@ export function validateR78ReleaseStatus({
     ledger.releasePreviewActivation?.liveBrowserV2Verified!==false||
     ledger.releasePreviewActivation?.independentDmP1P2Verified!==false||
     ledger.releasePreviewActivation?.productionReleaseAuthorization!==false||
-    ledger.branches.at(-1)?.name!==
+    ledger.branches.at(ledger.branches.length===168?-2:-1)?.name!==
      'stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15'||
+    ledger.branches.at(ledger.branches.length===168?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===168?-2:-1)?.releaseReady!==false))||
+   (ledger.branches.length===168&&(
+    ledger.releaseMovementDiagnostic?.workPackage!=='B10-R18-82'||
+    ledger.releaseMovementDiagnostic?.decision!=='NO_GO'||
+    ledger.releaseMovementDiagnostic?.previousLedgerBranches!==167||
+    ledger.releaseMovementDiagnostic?.currentLedgerBranches!==168||
+    ledger.releaseMovementDiagnostic?.sourceFailedPreviewId!==
+     'dpl_Bdek3W7xXVYW3f7QDZpjrDDp9V3F'||
+    ledger.releaseMovementDiagnostic?.browserAdvanceP95Ms!==740.1||
+    ledger.releaseMovementDiagnostic?.browserCommitP95Ms!==1451.7||
+    ledger.releaseMovementDiagnostic?.browserReleaseToTerminalP95Ms!==2226.1||
+    ledger.releaseMovementDiagnostic?.touchesServerProtocol!==false||
+    ledger.releaseMovementDiagnostic?.productionDeployed!==false||
+    ledger.releaseMovementDiagnostic?.previewDeployed!==false||
+    ledger.releaseMovementDiagnostic?.supabaseMigrationApplied!==false||
+    ledger.releaseMovementDiagnostic?.candidatePerformanceVerifiedInBrowser!==false||
+    ledger.releaseMovementDiagnostic?.releaseAuthorized!==false||
+    ledger.branches.at(-1)?.name!==
+     'stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15'||
     ledger.branches.at(-1)?.status!=='staged'||
     ledger.branches.at(-1)?.releaseReady!==false)))))
+
 
   fail();
  const names=['20261111023204_world_v2_b10_integrated_motion.sql',
