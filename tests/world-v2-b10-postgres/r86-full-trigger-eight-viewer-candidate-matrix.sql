@@ -25,7 +25,10 @@ BEGIN
    AND NOT t.tgisinternal AND t.tgenabled='O' AND (t.tgtype & 16)=16)
  OR (SELECT x=1 AND y=1 FROM public.map_tokens
     WHERE id='00000000-0000-4000-8000-000000000101'::uuid) IS DISTINCT FROM true
- OR (SELECT count(*)<>0 FROM forge_world_v2.motion_sessions WHERE status='active')
+ -- R54's already verified opaque blocked-wall Advance deliberately leaves
+ -- ONE active, unmoved rejected-wall session; it is not an authorization grant.
+ -- Do not discard/Commit it or silently weaken original rate limits.
+ OR (SELECT count(*)<>1 FROM forge_world_v2.motion_sessions WHERE status='active')
  THEN RAISE EXCEPTION 'R86 refuses nonisolated, source-drifted or incomplete six/four trigger fixture';END IF;
 END $r86_preflight$;
 
