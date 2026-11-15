@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1735,6 +1735,16 @@
       "linkedPullRequest": 188,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-86 compares original, R57 sealed synchronous private fog, R77 sealed inline ray, and combined R57+R77 in a fourth independent rollback-only PostgreSQL 17 full 6-token/4-tool-trigger session. Eight synthetic fixture viewers, sealed operator-gated source/inverses, 192 full original-ray/source-frozen JSONB frame comparisons and eight signed canonical Commit cycles are local CI plans, not hosted/browser/RLS/Free-tier release evidence; NEVER install or deploy. Production NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "BALANCED_SIGNED_FOUR_MODE_PRIVATE_FOG_CANDIDATE_COST_PROFILE",
+      "linkedPullRequest": 189,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-87 adds fifth independently rolled-back full source-real PostgreSQL 17 original signed canonical Commit benchmark: 4x4 Latin square and original/combined ABBA+BAAB; 24 measured forward signed Commits + 24 signed returns, eight private viewer exact frames each, original 6 token and 4 tool triggers, authentic source-sealed R57/R77 candidate install/inverse between modes. No runtime, production migration, live SQL, QA deployment or physical Free-tier load accepted. Synthetic local speed only; release NO_GO."
     }
   ],
   "features": [
@@ -2840,7 +2850,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2948,9 +2958,10 @@
       "stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15",
       "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
       "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
-      "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15"
+      "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
+      "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15"
     ],
-    "stagePolicy": "R18-86: retain original frozen R79 inventory of 165; 172 ledger branches, 107 unapproved review branches (NOT a bulk-merge queue). Test-only fourth PostgreSQL-17 pass compares 4 original/opt-in candidate modes under all 6 token/4 tool movement triggers and independently frozen private ray/frame references across eight synthetic viewers. Prior R83/R84/R85 test runs remain unchanged, and original browser lag around walls/frequent input remains FAIL. Official pinned Supabase 83+8 linked dry-run, independent authenticated DM/P1/passive P2, browser p95, Free RAM/locks, and explicit operator authorization are hard NO_GO. No live SQL, migrations, production/QA aliases or paid tier change.",
+    "stagePolicy": "R18-87: preserve historical 165-ledger R79 release audit, now 173 ledger branches with 108 unapproved outstanding (NOT a bulk-merge queue). Fifth independent disposable PG17 source-exact signed full-trigger 24 balanced forward/24 reverse Commit repetitions across original/R57/R77/combined maintain eight-viewer private fog exact frames, original rate limiting and separately operator-gated candidate inverse. Static local p50 is NOT browser/p95/hosted Free RAM evidence. User DM wall/fast motion still FAIL. Official pinned Supabase CLI 83+8 fetch/list/dry-run, independent authenticated DM/P1/passive P2 fog/collision/revocation, real browser performance/Free RAM/locks and separate operator release approval remain hard NO-GO. No permanent QA or production deployment.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3327,6 +3338,51 @@
     "independentSignedDmP1P2Accepted": false,
     "officialLinkedCli83Plus8Verified": false,
     "browserMovementAccepted": false,
+    "freeTierRamAndLockLoadAccepted": false,
+    "liveSupabaseSqlWritten": false,
+    "sqlMigrationApplied": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseBalancedCandidateBenchmark": {
+    "schema": 1,
+    "workPackage": "B10-R18-87",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 172,
+    "currentLedgerBranches": 173,
+    "addedBranch": "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15",
+    "sourceParentPr": 188,
+    "sourceParentSha": "45bd82800362d4eeb434cc58f1dae29b3631a9f7",
+    "preservedR83ThroughR86IndependentPasses": true,
+    "fixtureDatabase": "world_v2_b10_r05",
+    "fourModes": [
+      "original",
+      "r57",
+      "r77",
+      "combined"
+    ],
+    "counterbalancedLatinPhases": 16,
+    "originalCombinedAbbaBaabPhases": 8,
+    "measuredSignedOriginalCommitSamples": 24,
+    "signedCanonicalReturnCommits": 24,
+    "signedSessionsAdded": 48,
+    "originalMotionRateCapPerMinute": 120,
+    "syntheticFixtureViewerCount": 8,
+    "expectedSourceExactFullFrameComparisons": 192,
+    "originalTokenPositionTriggers": 6,
+    "originalToolPositionTriggers": 4,
+    "sourceFrozenOriginalFogAndRay": true,
+    "sourceSealedActualCandidateInstallAndInversePerPhase": true,
+    "candidateSourceOrPermissionsRelaxed": false,
+    "originalAuthorizerOrCollisionBypassed": false,
+    "original120GestureCapBypassed": false,
+    "testOnlyRollback": true,
+    "localSampleProvesHostedSpeedup": false,
+    "browserP95AcceptanceProven": false,
+    "fullHostedRlsParityEstablished": false,
+    "officialLinkedCli83Plus8Verified": false,
+    "independentSignedDmP1P2Accepted": false,
     "freeTierRamAndLockLoadAccepted": false,
     "liveSupabaseSqlWritten": false,
     "sqlMigrationApplied": false,

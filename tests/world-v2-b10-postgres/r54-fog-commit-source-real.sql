@@ -278,6 +278,9 @@ BEGIN
   to_regclass('pg_temp.r85_function_delta') IS NULL AND
   to_regclass('pg_temp.r86_matrix_scenes') IS NULL AND
   to_regclass('pg_temp.r86_matrix_samples') IS NULL AND
+  to_regclass('pg_temp.r87_expected_schedule') IS NULL AND
+  to_regclass('pg_temp.r87_balanced_samples') IS NULL AND
+  to_regprocedure('pg_temp.r87_signed_sample(integer,text)') IS NULL AND
   to_regprocedure('forge_visibility.r86_frozen_original_ray(jsonb,double precision,double precision,double precision,double precision,text,jsonb)') IS NULL AND
   to_regprocedure('forge_visibility.r86_frozen_original_frame(uuid,uuid)') IS NULL AND
   to_regprocedure('pg_temp.r86_signed_probe(text)') IS NULL AND
