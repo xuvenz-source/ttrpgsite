@@ -15,6 +15,7 @@ import {validateR88CombinedQa} from './validate-world-v2-r18-88-combined-qa.mjs'
 import {validateR50ReadOnlyReceipt} from './validate-world-v2-r18-50-readonly-evidence.mjs';
 const ROOT=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const PATH='staging/world-v2-b10-r18-89-readonly-qa-prerequisites/manifest.json';
+const PLAN='staging/world-v2-b10-r18-89-readonly-qa-prerequisites/operator-cli-plan.json';
 const REF='lwhwgqaunxbmvyndswze';
 const BRANCH='stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15';
 const VERSIONS=[
@@ -28,7 +29,7 @@ const bools=(o,allow)=>o&&Object.keys(o).length===allow.length&&
  allow.every(k=>Object.hasOwn(o,k));
 
 export function validateR89ReadOnlyPrerequisites({
- repoRoot=ROOT,manifest,freshR50Receipt,now=new Date()
+ repoRoot=ROOT,manifest,operatorPlan,freshR50Receipt,now=new Date()
 }={}){
  const root=realpathSync(resolve(repoRoot));
  const r88=validateR88CombinedQa({repoRoot:root});
@@ -104,6 +105,48 @@ export function validateR89ReadOnlyPrerequisites({
  if(!m.operation||m.operation.catalogSelectOnly!==true||
     !all(m.operation,ops,false))
   fail('an executable or deployment action is misrepresented as read-only');
+
+ const plan=operatorPlan??JSON.parse(readFileSync(join(root,PLAN),'utf8'));
+ const expectedCommands=[
+  'supabase --version',
+  'supabase migration fetch --help',
+  'supabase migration list --help',
+  'supabase db push --help',
+  'supabase link --project-ref lwhwgqaunxbmvyndswze',
+  'supabase migration fetch --linked',
+  'node scripts/release/validate-world-v2-r18-49-linked-workspace.mjs --workspace=<disjoint-workspace> --fresh-sql-digests=<fresh-private-r50-history-json>',
+  'supabase migration list --linked',
+  'supabase db push --linked --dry-run',
+  'node scripts/release/validate-world-v2-r18-51-cli-evidence.mjs --workspace=<disjoint-workspace> --fresh-sql-digests=<fresh-private-r50-history-json> --receipt=<fresh-private-r50-receipt.json> --migration-list=<captured-cli-list.txt> --dry-run-output=<captured-cli-dry-run.txt> --cli-version=2.81.3 --list-exit=0 --dry-run-exit=0'
+ ];
+ const allowedForbidden=[
+  'supabase db push','supabase migration repair','supabase migration up',
+  'supabase db reset','supabase db push --include-all',
+  'supabase db push --linked --yes'
+ ];
+ const stages=plan?.cli?.commands;
+ if(plan?.schema!==1||plan.workPackage!=='B10-R18-89'||
+  plan.kind!=='OPERATOR_READONLY_LINKED_CLI_PLAN_ONLY'||
+  plan.decision!=='NO_GO'||plan.isExecutable!==false||
+  plan.executedAgainstRemote!==false||
+  plan.cli.version!=='2.81.3'||plan.cli.projectRef!==REF||
+  plan.cli.isolation!=='temporary workspace disjoint from source checkout'||
+  plan.cli.requiresIndependentCredentials!==true||
+  plan.cli.requiresVersionHelpInspection!==true||
+  !Array.isArray(stages)||stages.length!==10||
+  stages.some((x,i)=>x.order!==i+1||x.command!==expectedCommands[i]||
+   x.network!==(i===4||i===5||i===7||i===8)||
+   x.writesRemote!==false||typeof x.expected!=='string'||
+   x.expected.length<10)||
+  !exact(plan.forbidden,allowedForbidden)||
+  !all(plan.conditions,[
+   'realCliHelpChecked','localIsolatedWorkspaceBuilt',
+   'officialAuthenticatedCliExecuted','officialOutputIndependentlyAttested',
+   'historicalSqlBodiesFetchedThroughCli',
+   'completeReadOnlyReceiptFreshlyValidatedInCliRun',
+   'independentTwoPlayerPlusDmQA','sharedBackendApproval',
+   'productionReleaseAuthorized'],false))
+  fail('operator CLI protocol mutated, network target changed, or unverified proof elevated');
  const result={workPackage:'B10-R18-89',decision:'NO_GO',
   safeToApply:false,sourceOnly:true,linkedProjectRef:REF,
   frozenCatalogHistoricalMatches:83,frozenCatalogAuthorityMatches:10,
