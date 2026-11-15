@@ -98,6 +98,20 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  };
  assert.equal(approvedAtomicTerminal.priorReviewedBlobSha,
   'bc83ad6dbb3543b538864440484b12d46494c6a0');
+ // R18-82 explicitly amends the R18-43 source on the real failed DM trace.
+ // It only defers the very first Advance until all samples in ONE native
+ // coalesced browser event have been queued. The signed RPC and Commit
+ // contracts are unchanged; all historical SHA pins above remain intact.
+ const approvedCoalescedDispatch={
+  path:approvedAtomicTerminal.path,
+  priorReviewedBlobSha:approvedAtomicTerminal.reviewedBlobSha,
+  workPackage:'B10-R18-82-NATIVE-BURST-SIGNED-ADVANCE',
+  reviewedBlobSha:'ae4dfd43bef0f5b06e42c72c10848d0637c48252'
+ };
+ assert.equal(approvedCoalescedDispatch.priorReviewedBlobSha,
+  'e91d8a76b95f18d07bba188608ed88fae657324f');
+ assert.equal(approvedCoalescedDispatch.workPackage,
+  'B10-R18-82-NATIVE-BURST-SIGNED-ADVANCE');
  // The keyboard source is transplanted byte-for-byte from the reviewed
  // R18-34 signed-sight change, not from the cumulative SQL staging branch.
  const approvedLiveKeyboardAmendment={
@@ -122,8 +136,8 @@ test('R18-05 consolidates EXACT R17 runtime files and keeps R18 recovery default
  assert.equal(approvedQaAmendment.workPackage,'B10-R18-24');
  for(const [path,sha] of Object.entries(frozen)){
   const checked=blobSha(readFileSync(new URL('../'+path,import.meta.url),'utf8'));
-  assert.equal(checked,path===approvedAtomicTerminal.path?
-   approvedAtomicTerminal.reviewedBlobSha:
+  assert.equal(checked,path===approvedCoalescedDispatch.path?
+   approvedCoalescedDispatch.reviewedBlobSha:
    path===approvedQaAmendment.path?approvedQaAmendment.reviewedBlobSha:
    path===approvedLiveKeyboardAmendment.path?
    approvedLiveKeyboardAmendment.reviewedBlobSha:sha,
