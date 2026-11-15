@@ -12,6 +12,36 @@ DECLARE
  sig_ray text:='forge_visibility.ray_blocked(jsonb,double precision,double precision,double precision,double precision,text,jsonb)';
  prior_starts bigint;
 BEGIN
+ -- Partition the fail-closed preflight into bounded named checkpoints.
+ -- Only booleans and fixture counts are asserted; no fog/frame values logged.
+ PERFORM public.b08_assert(
+  current_database()='world_v2_b10_r05' AND current_user='postgres'
+  AND to_regclass('pg_temp.r86_matrix_samples') IS NOT NULL
+  AND (SELECT count(*)=4 FROM pg_temp.r86_matrix_samples)
+  AND to_regclass('pg_temp.r87_balanced_samples') IS NULL
+  AND to_regclass('supabase_migrations.schema_migrations') IS NOT NULL
+  AND (SELECT count(*)=91 FROM supabase_migrations.schema_migrations)
+  AND to_regprocedure('forge_visibility.r86_frozen_original_frame(uuid,uuid)') IS NOT NULL
+  AND to_regprocedure('forge_visibility.r86_frozen_original_ray(jsonb,double precision,double precision,double precision,double precision,text,jsonb)') IS NOT NULL,
+  'R87-00a local R86 transaction, frozen source functions and synthetic history');
+ PERFORM public.b08_assert(
+  md5(pg_get_functiondef(to_regprocedure(sig_fog)))='ee3356af321fec1a3e167a75c6245e86'
+  AND md5(pg_get_functiondef(to_regprocedure(sig_ray)))='a9fc198168c29fd5d80041b05337017e'
+  AND (SELECT count(*)=6 FROM pg_trigger t WHERE t.tgrelid='public.map_tokens'::regclass
+   AND NOT t.tgisinternal AND t.tgenabled='O' AND (t.tgtype & 16)=16)
+  AND (SELECT count(*)=4 FROM pg_trigger t WHERE t.tgrelid='public.campaign_tool_issues'::regclass
+   AND NOT t.tgisinternal AND t.tgenabled='O' AND (t.tgtype & 16)=16)
+  AND (SELECT x=1 AND y=1 FROM public.map_tokens
+   WHERE id='00000000-0000-4000-8000-000000000101'::uuid)
+  AND (SELECT count(*)=8 FROM public.campaign_members
+   WHERE campaign_id='00000000-0000-4000-8000-000000000001'::uuid AND role='player'),
+  'R87-00b original function digests, 6/4 triggers, token canonical and 8 viewer roles');
+ PERFORM public.b08_assert(
+  (SELECT count(*)=1 FROM forge_world_v2.motion_sessions WHERE status='active')
+  AND has_schema_privilege('postgres','forge_visibility','USAGE')
+  AND NOT has_schema_privilege('authenticated','forge_visibility','USAGE')
+  AND NOT has_schema_privilege('anon','forge_visibility','USAGE'),
+  'R87-00c pending hostile signed session and private fog ACL remain unaltered');
  IF current_database()<>'world_v2_b10_r05' OR current_user<>'postgres'
  OR to_regclass('pg_temp.r86_matrix_samples') IS NULL
  OR (SELECT count(*)<>4 FROM pg_temp.r86_matrix_samples)
