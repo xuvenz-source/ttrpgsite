@@ -38,16 +38,12 @@ CREATE TABLE public.npc_templates (
 CREATE TABLE public.campaign_tool_templates (
  id uuid PRIMARY KEY, campaign_id uuid NOT NULL
 );
-CREATE TABLE public.campaigns (
- id uuid PRIMARY KEY, active_map_id uuid,
- token_status_catalog jsonb NOT NULL DEFAULT '[]'::jsonb,
- token_quick_fields jsonb NOT NULL DEFAULT '[]'::jsonb,
- sheet_template jsonb NOT NULL DEFAULT '{}'::jsonb
-);
-INSERT INTO public.campaigns(id,active_map_id) VALUES (
- '00000000-0000-4000-8000-000000000001'::uuid,
- '00000000-0000-4000-8000-000000000021'::uuid
-);
+-- B07 already creates and seeds public.campaigns; preserve it rather
+-- than duplicate the campaign or silently alter the original source fixture.
+ALTER TABLE public.campaigns
+ ADD COLUMN token_status_catalog jsonb NOT NULL DEFAULT '[]'::jsonb,
+ ADD COLUMN token_quick_fields jsonb NOT NULL DEFAULT '[]'::jsonb,
+ ADD COLUMN sheet_template jsonb NOT NULL DEFAULT '{}'::jsonb;
 CREATE OR REPLACE FUNCTION public.is_campaign_member(p_campaign uuid)
  RETURNS boolean LANGUAGE sql STABLE SET search_path TO ''
  AS $ SELECT EXISTS(SELECT 1 FROM public.campaign_members
