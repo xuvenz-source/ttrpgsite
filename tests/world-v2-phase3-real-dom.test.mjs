@@ -42,7 +42,21 @@ async function browserPage(path){
  child.stderr.on('data',data=>{
   browserErrors=(browserErrors+String(data)).slice(-1500);
  });
- let port=null,ws=null;
+ let port=null,ws=null,disposed=false;
+ // SIGKILL merely requests termination; Chrome descendants may still
+ // write the profile. Await OS child close before recursive removal.
+ const childClosed=new Promise(resolve=>{
+  child.once('close',resolve);
+  child.once('error',resolve);
+ });
+ const shutdown=async()=>{
+  if(disposed)return;
+  disposed=true;
+  try{ws?.close()}catch{}
+  try{child.kill('SIGKILL')}catch{}
+  await Promise.race([childClosed,delay(2500)]);
+  await rm(dir,{recursive:true,force:true,maxRetries:20,retryDelay:100});
+ };
  try{
   for(let attempt=0;attempt<180;attempt++){
    if(child.exitCode!==null)throw Error('Chromium terminated before DevTools connected: '+browserErrors);
@@ -88,12 +102,10 @@ async function browserPage(path){
    if(result.exceptionDetails)throw Error('Chromium evaluate exception');
    return result.result.value;
   };
-  return {send,evaluate,async close(){
-   ws?.close();child.kill('SIGKILL');await rm(dir,{recursive:true,force:true});
-  }};
+  return {send,evaluate,close:shutdown};
  }catch(error){
-  ws?.close();child.kill('SIGKILL');
-  await rm(dir,{recursive:true,force:true});throw error;
+  await shutdown();
+  throw error;
  }
 }
 test('actual Chromium DOM pointer capture: player, DM unlocked, preview, locked editor',async t=>{
