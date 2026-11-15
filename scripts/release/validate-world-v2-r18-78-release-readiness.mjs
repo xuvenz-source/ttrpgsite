@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167,168,169,170,171,172,173,174,175].includes(ledger.branches.length)||
+   ![165,166,167,168,169,170,171,172,173,174,175,176].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -93,10 +93,10 @@ export function validateR78ReleaseStatus({
     ledger.releasePreviewPreparation?.productionDeployed!==false||
     ledger.releasePreviewPreparation?.explicitOperatorApproval!==false||
     ledger.releasePreviewPreparation?.officialLinkedCli83Plus8DryRun!==false||
-    ledger.branches.at(ledger.branches.length===175?-10:ledger.branches.length===174?-9:ledger.branches.length===173?-8:ledger.branches.length===172?-7:ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-11:ledger.branches.length===175?-10:ledger.branches.length===174?-9:ledger.branches.length===173?-8:ledger.branches.length===172?-7:ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.name!==
      'stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-10:ledger.branches.length===174?-9:ledger.branches.length===173?-8:ledger.branches.length===172?-7:ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-10:ledger.branches.length===174?-9:ledger.branches.length===173?-8:ledger.branches.length===172?-7:ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-11:ledger.branches.length===175?-10:ledger.branches.length===174?-9:ledger.branches.length===173?-8:ledger.branches.length===172?-7:ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-11:ledger.branches.length===175?-10:ledger.branches.length===174?-9:ledger.branches.length===173?-8:ledger.branches.length===172?-7:ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=167&&(
     ledger.releasePreviewActivation?.workPackage!=='B10-R18-81'||
     ledger.releasePreviewActivation?.decision!=='NO_GO'||
@@ -112,10 +112,10 @@ export function validateR78ReleaseStatus({
     ledger.releasePreviewActivation?.liveBrowserV2Verified!==false||
     ledger.releasePreviewActivation?.independentDmP1P2Verified!==false||
     ledger.releasePreviewActivation?.productionReleaseAuthorization!==false||
-    ledger.branches.at(ledger.branches.length===175?-9:ledger.branches.length===174?-8:ledger.branches.length===173?-7:ledger.branches.length===172?-6:ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-10:ledger.branches.length===175?-9:ledger.branches.length===174?-8:ledger.branches.length===173?-7:ledger.branches.length===172?-6:ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.name!==
      'stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-9:ledger.branches.length===174?-8:ledger.branches.length===173?-7:ledger.branches.length===172?-6:ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-9:ledger.branches.length===174?-8:ledger.branches.length===173?-7:ledger.branches.length===172?-6:ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-10:ledger.branches.length===175?-9:ledger.branches.length===174?-8:ledger.branches.length===173?-7:ledger.branches.length===172?-6:ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-10:ledger.branches.length===175?-9:ledger.branches.length===174?-8:ledger.branches.length===173?-7:ledger.branches.length===172?-6:ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=168&&(
     ledger.releaseMovementDiagnostic?.workPackage!=='B10-R18-82'||
     ledger.releaseMovementDiagnostic?.decision!=='NO_GO'||
@@ -132,10 +132,10 @@ export function validateR78ReleaseStatus({
     ledger.releaseMovementDiagnostic?.supabaseMigrationApplied!==false||
     ledger.releaseMovementDiagnostic?.candidatePerformanceVerifiedInBrowser!==false||
     ledger.releaseMovementDiagnostic?.releaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===175?-8:ledger.branches.length===174?-7:ledger.branches.length===173?-6:ledger.branches.length===172?-5:ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-9:ledger.branches.length===175?-8:ledger.branches.length===174?-7:ledger.branches.length===173?-6:ledger.branches.length===172?-5:ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.name!==
      'stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-8:ledger.branches.length===174?-7:ledger.branches.length===173?-6:ledger.branches.length===172?-5:ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-8:ledger.branches.length===174?-7:ledger.branches.length===173?-6:ledger.branches.length===172?-5:ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-9:ledger.branches.length===175?-8:ledger.branches.length===174?-7:ledger.branches.length===173?-6:ledger.branches.length===172?-5:ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-9:ledger.branches.length===175?-8:ledger.branches.length===174?-7:ledger.branches.length===173?-6:ledger.branches.length===172?-5:ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=169&&(
     ledger.releaseCommitAttribution?.workPackage!=='B10-R18-83'||
     ledger.releaseCommitAttribution?.decision!=='NO_GO'||
@@ -156,10 +156,10 @@ export function validateR78ReleaseStatus({
     ledger.releaseCommitAttribution?.performanceAcceptedInBrowser!==false||
     ledger.releaseCommitAttribution?.officialCli83Plus8Verified!==false||
     ledger.releaseCommitAttribution?.productionReleaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===175?-7:ledger.branches.length===174?-6:ledger.branches.length===173?-5:ledger.branches.length===172?-4:ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-8:ledger.branches.length===175?-7:ledger.branches.length===174?-6:ledger.branches.length===173?-5:ledger.branches.length===172?-4:ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.name!==
      'stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-7:ledger.branches.length===174?-6:ledger.branches.length===173?-5:ledger.branches.length===172?-4:ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-7:ledger.branches.length===174?-6:ledger.branches.length===173?-5:ledger.branches.length===172?-4:ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-8:ledger.branches.length===175?-7:ledger.branches.length===174?-6:ledger.branches.length===173?-5:ledger.branches.length===172?-4:ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-8:ledger.branches.length===175?-7:ledger.branches.length===174?-6:ledger.branches.length===173?-5:ledger.branches.length===172?-4:ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=170&&(
     ledger.releaseFullTriggerFidelity?.workPackage!=='B10-R18-84'||
     ledger.releaseFullTriggerFidelity?.decision!=='NO_GO'||
@@ -176,10 +176,10 @@ export function validateR78ReleaseStatus({
     ledger.releaseFullTriggerFidelity?.productionDeployed!==false||
     ledger.releaseFullTriggerFidelity?.performanceAcceptedInBrowser!==false||
     ledger.releaseFullTriggerFidelity?.productionReleaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===175?-6:ledger.branches.length===174?-5:ledger.branches.length===173?-4:ledger.branches.length===172?-3:ledger.branches.length===171?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-7:ledger.branches.length===175?-6:ledger.branches.length===174?-5:ledger.branches.length===173?-4:ledger.branches.length===172?-3:ledger.branches.length===171?-2:-1)?.name!==
      'stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-6:ledger.branches.length===174?-5:ledger.branches.length===173?-4:ledger.branches.length===172?-3:ledger.branches.length===171?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-6:ledger.branches.length===174?-5:ledger.branches.length===173?-4:ledger.branches.length===172?-3:ledger.branches.length===171?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-7:ledger.branches.length===175?-6:ledger.branches.length===174?-5:ledger.branches.length===173?-4:ledger.branches.length===172?-3:ledger.branches.length===171?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-7:ledger.branches.length===175?-6:ledger.branches.length===174?-5:ledger.branches.length===173?-4:ledger.branches.length===172?-3:ledger.branches.length===171?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=171&&(
     ledger.releaseCommitPhaseIsolation?.workPackage!=='B10-R18-85'||
     ledger.releaseCommitPhaseIsolation?.decision!=='NO_GO'||
@@ -202,10 +202,10 @@ export function validateR78ReleaseStatus({
     ledger.releaseCommitPhaseIsolation?.independentSignedDmP1P2Accepted!==false||
     ledger.releaseCommitPhaseIsolation?.freeTierLoadRamAccepted!==false||
     ledger.releaseCommitPhaseIsolation?.productionReleaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===175?-5:ledger.branches.length===174?-4:ledger.branches.length===173?-3:ledger.branches.length===172?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-6:ledger.branches.length===175?-5:ledger.branches.length===174?-4:ledger.branches.length===173?-3:ledger.branches.length===172?-2:-1)?.name!==
      'stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-5:ledger.branches.length===174?-4:ledger.branches.length===173?-3:ledger.branches.length===172?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-5:ledger.branches.length===174?-4:ledger.branches.length===173?-3:ledger.branches.length===172?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-6:ledger.branches.length===175?-5:ledger.branches.length===174?-4:ledger.branches.length===173?-3:ledger.branches.length===172?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-6:ledger.branches.length===175?-5:ledger.branches.length===174?-4:ledger.branches.length===173?-3:ledger.branches.length===172?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=172&&(
     ledger.releaseFogCandidateMatrix?.workPackage!=='B10-R18-86'||
     ledger.releaseFogCandidateMatrix?.decision!=='NO_GO'||
@@ -228,10 +228,10 @@ export function validateR78ReleaseStatus({
     ledger.releaseFogCandidateMatrix?.productionDeployed!==false||
     ledger.releaseFogCandidateMatrix?.browserMovementAccepted!==false||
     ledger.releaseFogCandidateMatrix?.productionReleaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===175?-4:ledger.branches.length===174?-3:ledger.branches.length===173?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-5:ledger.branches.length===175?-4:ledger.branches.length===174?-3:ledger.branches.length===173?-2:-1)?.name!==
      'stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-4:ledger.branches.length===174?-3:ledger.branches.length===173?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-4:ledger.branches.length===174?-3:ledger.branches.length===173?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-5:ledger.branches.length===175?-4:ledger.branches.length===174?-3:ledger.branches.length===173?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-5:ledger.branches.length===175?-4:ledger.branches.length===174?-3:ledger.branches.length===173?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=173&&(
     ledger.releaseBalancedCandidateBenchmark?.workPackage!=='B10-R18-87'||
     ledger.releaseBalancedCandidateBenchmark?.decision!=='NO_GO'||
@@ -265,10 +265,10 @@ export function validateR78ReleaseStatus({
     ledger.releaseBalancedCandidateBenchmark?.previewDeployed!==false||
     ledger.releaseBalancedCandidateBenchmark?.productionDeployed!==false||
     ledger.releaseBalancedCandidateBenchmark?.productionReleaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===175?-3:ledger.branches.length===174?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-4:ledger.branches.length===175?-3:ledger.branches.length===174?-2:-1)?.name!==
      'stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-3:ledger.branches.length===174?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-3:ledger.branches.length===174?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===176?-4:ledger.branches.length===175?-3:ledger.branches.length===174?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-4:ledger.branches.length===175?-3:ledger.branches.length===174?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=174&&(
     ledger.releaseCombinedQaPreflight?.workPackage!=='B10-R18-88'||
     ledger.releaseCombinedQaPreflight?.decision!=='NO_GO'||
@@ -298,11 +298,11 @@ export function validateR78ReleaseStatus({
     ledger.releaseCombinedQaPreflight?.rootMigrationFilesModified!==false||
     ledger.releaseCombinedQaPreflight?.runtimeFilesModified!==false||
     ledger.releaseCombinedQaPreflight?.productionReleaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===175?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-3:ledger.branches.length===175?-2:-1)?.name!==
      'stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===175?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===175?-2:-1)?.releaseReady!==false))||
-   (ledger.branches.length===175&&(
+    ledger.branches.at(ledger.branches.length===176?-3:ledger.branches.length===175?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-3:ledger.branches.length===175?-2:-1)?.releaseReady!==false))||
+   (ledger.branches.length>=175&&(
     ledger.releaseLinkedCliQaAttestation?.workPackage!=='B10-R18-89'||
     ledger.releaseLinkedCliQaAttestation?.decision!=='NO_GO'||
     ledger.releaseLinkedCliQaAttestation?.previousLedgerBranches!==174||
@@ -333,8 +333,40 @@ export function validateR78ReleaseStatus({
     ledger.releaseLinkedCliQaAttestation?.previewDeployed!==false||
     ledger.releaseLinkedCliQaAttestation?.productionDeployed!==false||
     ledger.releaseLinkedCliQaAttestation?.productionReleaseAuthorized!==false||
-    ledger.branches.at(-1)?.name!==
+    ledger.branches.at(ledger.branches.length===176?-2:-1)?.name!==
      'stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15'||
+    ledger.branches.at(ledger.branches.length===176?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===176?-2:-1)?.releaseReady!==false))||
+   (ledger.branches.length===176&&(
+    ledger.releasePinnedCliOfflineHelp?.workPackage!=='B10-R18-90'||
+    ledger.releasePinnedCliOfflineHelp?.decision!=='NO_GO'||
+    ledger.releasePinnedCliOfflineHelp?.previousLedgerBranches!==175||
+    ledger.releasePinnedCliOfflineHelp?.currentLedgerBranches!==176||
+    ledger.releasePinnedCliOfflineHelp?.parentPr!==191||
+    ledger.releasePinnedCliOfflineHelp?.originalPinnedCliVersion!=='2.81.3'||
+    ledger.releasePinnedCliOfflineHelp?.offlineHelpSurfaceCount!==4||
+    ledger.releasePinnedCliOfflineHelp?.authenticationUsed!==false||
+    ledger.releasePinnedCliOfflineHelp?.projectCredentialsSupplied!==false||
+    ledger.releasePinnedCliOfflineHelp?.officialLinkedCliDryRunVerified!==false||
+    ledger.releasePinnedCliOfflineHelp?.historicalSqlBodiesIndependentlyFetchedViaCli!==false||
+    ledger.releasePinnedCliOfflineHelp?.liveRegisteredMigrations!==83||
+    ledger.releasePinnedCliOfflineHelp?.requiredMigrations!==91||
+    ledger.releasePinnedCliOfflineHelp?.priorReadOnlyHistoryMatched!==83||
+    ledger.releasePinnedCliOfflineHelp?.priorReadOnlyAuthorityMatched!==10||
+    ledger.releasePinnedCliOfflineHelp?.isolatedQaBackendVerified!==false||
+    ledger.releasePinnedCliOfflineHelp?.independentSignedDmP1P2Accepted!==false||
+    ledger.releasePinnedCliOfflineHelp?.browserP95Accepted!==false||
+    ledger.releasePinnedCliOfflineHelp?.freeTierRamLockLoadAccepted!==false||
+    ledger.releasePinnedCliOfflineHelp?.sqlMigrationApplied!==false||
+    ledger.releasePinnedCliOfflineHelp?.liveSupabaseSqlWritten!==false||
+    ledger.releasePinnedCliOfflineHelp?.runtimeFilesChanged!==false||
+    ledger.releasePinnedCliOfflineHelp?.rootMigrationFilesChanged!==false||
+    ledger.releasePinnedCliOfflineHelp?.previewDeployed!==false||
+    ledger.releasePinnedCliOfflineHelp?.productionDeployed!==false||
+    ledger.releasePinnedCliOfflineHelp?.paidInfrastructureCreated!==false||
+    ledger.releasePinnedCliOfflineHelp?.productionReleaseAuthorized!==false||
+    ledger.branches.at(-1)?.name!==
+     'stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15'||
     ledger.branches.at(-1)?.status!=='staged'||
     ledger.branches.at(-1)?.releaseReady!==false)))))
 
