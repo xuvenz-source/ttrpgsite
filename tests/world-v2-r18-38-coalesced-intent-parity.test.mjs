@@ -88,10 +88,17 @@ test('R18-38 batched prediction is final-pointer-only while server-validated ben
  };
  const old=await run(false),batch=await run(true);
  assert.deepEqual(batch.result.endpoint,old.result.endpoint);
- assert.deepEqual(wire(batch.calls),wire(old.calls),
-  'server Advance sequence and all ordered corner/reversal bends unchanged');
- assert.deepEqual(batch.signedEvents,old.signedEvents);
- assert.deepEqual(batch.calls.commit,old.calls.commit);
+ // R18-82: one browser event now fills the bounded signed batch BEFORE
+ // dispatch. Comparing raw RPC sequences is intentionally obsolete: fewer
+ // Advances must cover the identical ordered authorized cells and endpoint.
+ assert.ok(old.calls.advance.length>batch.calls.advance.length);
+ assert.equal(batch.calls.advance.length,1);
+ assert.deepEqual(batch.signedEvents.flatMap(e=>e.accepted),
+  old.signedEvents.flatMap(e=>e.accepted),
+  'batch optimization must preserve every signed corner and reversal');
+ assert.equal(batch.calls.commit.length,1);
+ assert.equal(old.calls.commit.length,1);
+ assert.deepEqual(batch.calls.commit[0].endpoint,old.calls.commit[0].endpoint);
  assert.equal(old.checks,points.length);
  assert.equal(batch.checks,1);
  assert.deepEqual(batch.lastPresentation,points.at(-1));
