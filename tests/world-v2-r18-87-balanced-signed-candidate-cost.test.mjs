@@ -101,7 +101,7 @@ test('R87 refuses original signed session limiter bypass and does not overclaim 
  assert.match(sample,/prior_starts NOT BETWEEN 40 AND 48/);
  assert.match(sample,/prior_starts\+48<=120/);
  assert.match(sample,/current_starts<=120/);
- assert.match(sample,/originalMotionRateCapPerMinute/); // embedded? no
+ assert.match(sample,/R87-01 original 120-session rolling budget/);
  assert.match(sample,/SELECT variant,count\(\*\) AS n,/);
  assert.match(sample,/percentile_cont\(0.50\)/);
  assert.doesNotMatch(sample,/percentile_cont\(0.95\)|production_p95|browser_p95/i);
