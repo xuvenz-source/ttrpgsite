@@ -34,6 +34,14 @@ test('R87 pins original exact operator-gated candidate install and inverse sourc
  assert.match(sample,/a9fc198168c29fd5d80041b05337017e/);
  assert.match(sample,/has_inline:=position/);
  assert.match(sample,/R87 selected mode drifted private original\/sealed source or ACL/);
+ // Read-only live pg_catalog confirms the ray has NULL proacl (default
+ // function EXECUTE), while the private schema prevents anon/authenticated
+ // USAGE. The fog frame itself is explicitly postgres-only. Enforce exact
+ // inherited ACLs; never misrepresent default EXECUTE as private revocation.
+ assert.match(sample,/p\.proacl IS NOT NULL FROM pg_proc/);
+ assert.match(sample,/proacl::text IS DISTINCT FROM '\{postgres=X\/postgres\}'/);
+ assert.match(sample,/has_schema_privilege\('authenticated','forge_visibility','USAGE'\)/);
+ assert.match(sample,/has_schema_privilege\('anon','forge_visibility','USAGE'\)/);
  assert.doesNotMatch(sample,/CREATE OR REPLACE FUNCTION forge_visibility\.authorized_viewer_fog_frame|CREATE OR REPLACE FUNCTION forge_visibility\.ray_blocked/);
 });
 
