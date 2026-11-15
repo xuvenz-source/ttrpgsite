@@ -111,10 +111,12 @@ test('R85 prints only bounded counters and synthetic timings without claiming br
  assert.match(phase,/RAISE NOTICE 'R18-85 PASS: signed wall-heavy Commit phase isolation/);
  assert.doesNotMatch(phase,/https?:\/\/|SUPABASE_DB_URL|DATABASE_URL|dblink|postgres\.com|SUPABASE_SERVICE_ROLE_KEY/);
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15');
- assert.equal(ledger.branches.length,171);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,106);
- assert.equal(ledger.branches.at(-1).linkedPullRequest,187);
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15');
+ assert.equal(ledger.branches.length,172);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,107);
+ assert.equal(ledger.branches.at(-2).linkedPullRequest,187);
+ assert.equal(ledger.branches.at(-2).releaseReady,false);
+ assert.equal(ledger.branches.at(-1).linkedPullRequest,188);
  assert.equal(ledger.branches.at(-1).releaseReady,false);
  const state=ledger.releaseCommitPhaseIsolation;
  assert.equal(state.workPackage,'B10-R18-85');
