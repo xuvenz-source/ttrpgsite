@@ -39,11 +39,6 @@ function harness({mode='drag',prediction=()=>false,advance=req=>approved(req),
  });
  return {controller,begin,calls,events};
 }
-function wire(calls){
- return calls.advance.map(req=>({
-  seq:req.seq,from:req.from,targets:req.targets
- }));
-}
 const points=[
  P(2.01,2.01),P(2.11,2.04),P(2.19,2.09),
  P(3.04,2.01),P(3.17,2.09),P(3.33,2.14),
