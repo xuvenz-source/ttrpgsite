@@ -78,11 +78,12 @@ test('R90 executable workflow has no remote SQL, operator secrets, or live crede
 test('R90 NO-GO proof keeps official CLI and signed multiplayer gates blocked',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  const manifest=JSON.parse(read('staging/world-v2-b10-r18-90-cli-help/manifest.json'));
- assert.equal(ledger.branches.length,176);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,111);
- assert.equal(ledger.branches.at(-1).linkedPullRequest,192);
+ assert.equal(ledger.branches.length,177);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,112);
+ assert.equal(ledger.branches.at(-2).linkedPullRequest,192);
+ assert.equal(ledger.branches.at(-1).linkedPullRequest,193);
  assert.equal(ledger.branches.at(-1).releaseReady,false);
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15');
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15');
  assert.equal(ledger.releasePinnedCliOfflineHelp.decision,'NO_GO');
  assert.equal(ledger.releasePinnedCliOfflineHelp.authenticationUsed,false);
  assert.equal(ledger.releasePinnedCliOfflineHelp.officialLinkedCliDryRunVerified,false);
