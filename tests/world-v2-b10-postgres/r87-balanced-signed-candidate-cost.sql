@@ -165,8 +165,15 @@ BEGIN
  OR (p_variant IN('r77','combined')) IS DISTINCT FROM has_inline
  OR (p_variant IN('original','r57')) IS DISTINCT FROM
     (md5(ray_source)='a9fc198168c29fd5d80041b05337017e')
+ -- Live pg_catalog: the original ray has NULL proacl (default PUBLIC
+ -- EXECUTE) but PRIVATE forge_visibility schema denies anon/authenticated
+ -- USAGE; the frame itself has postgres-only EXECUTE. Preserve BOTH
+ -- exact source ACL shapes, never invent tighter privileges than live.
+ OR (SELECT p.proacl IS NOT NULL FROM pg_proc p WHERE p.oid=to_regprocedure(sig_ray))
+ OR (SELECT p.proacl::text IS DISTINCT FROM '{postgres=X/postgres}'
+     FROM pg_proc p WHERE p.oid=to_regprocedure(sig_fog))
  OR has_function_privilege('authenticated',to_regprocedure(sig_fog),'EXECUTE')
- OR has_function_privilege('anon',to_regprocedure(sig_ray),'EXECUTE')
+ OR has_function_privilege('anon',to_regprocedure(sig_fog),'EXECUTE')
  OR has_schema_privilege('authenticated','forge_visibility','USAGE')
  OR has_schema_privilege('anon','forge_visibility','USAGE')
  THEN RAISE EXCEPTION 'R87 selected mode drifted private original/sealed source or ACL';END IF;
