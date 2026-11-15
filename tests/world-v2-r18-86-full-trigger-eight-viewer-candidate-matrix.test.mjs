@@ -102,17 +102,18 @@ test('R86 checks private grants, rolls back sealed candidates, and prints no sen
 });
 
 test('R86 ledger cannot turn synthetic history or a single local Commit into release approval',()=>{
- assert.equal(ledger.branches.length,176);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,111);
+ assert.equal(ledger.branches.length,177);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,112);
  assert.equal(ledger.releaseBranch,
-  'stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15');
- assert.equal(ledger.branches.at(-5).linkedPullRequest,188);
- assert.equal(ledger.branches.at(-4).releaseReady,false);
- assert.equal(ledger.branches.at(-4).linkedPullRequest,189);
+  'stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15');
+ assert.equal(ledger.branches.at(-6).linkedPullRequest,188);
+ assert.equal(ledger.branches.at(-5).releaseReady,false);
+ assert.equal(ledger.branches.at(-5).linkedPullRequest,189);
  assert.equal(ledger.branches.at(-1).releaseReady,false);
- assert.equal(ledger.branches.at(-3).linkedPullRequest,190);
- assert.equal(ledger.branches.at(-2).linkedPullRequest,191);
- assert.equal(ledger.branches.at(-1).linkedPullRequest,192);
+ assert.equal(ledger.branches.at(-4).linkedPullRequest,190);
+ assert.equal(ledger.branches.at(-3).linkedPullRequest,191);
+ assert.equal(ledger.branches.at(-2).linkedPullRequest,192);
+ assert.equal(ledger.branches.at(-1).linkedPullRequest,193);
  const x=ledger.releaseFogCandidateMatrix;
  assert.equal(x.workPackage,'B10-R18-86');
  assert.equal(x.decision,'NO_GO');
