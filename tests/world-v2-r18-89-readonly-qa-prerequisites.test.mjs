@@ -109,11 +109,12 @@ test('R89 continues to use original R49/R50/R51 evidence validators and R48 narr
  assert.match(s,/receiptOriginIndependentlyAttested=false/);
  assert.doesNotMatch(s,/spawn|child_process|fetch\(|https?\.request|writeFile|unlink|execSync|apply_migration/);
  const l=JSON.parse(file('staging/next-release-ledger.json'));
- assert.equal(l.branches.length,175);
- assert.equal(l.upcomingRelease.outstandingBranches.length,110);
- assert.equal(l.branches.at(-1).linkedPullRequest,191);
+ assert.equal(l.branches.length,176);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,111);
+ assert.equal(l.branches.at(-2).linkedPullRequest,191);
+ assert.equal(l.branches.at(-1).linkedPullRequest,192);
  assert.equal(l.branches.at(-1).releaseReady,false);
- assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15');
+ assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15');
  assert.equal(l.releaseLinkedCliQaAttestation.decision,'NO_GO');
  assert.equal(l.releaseLinkedCliQaAttestation.historicalSqlDigestsReadOnlyMatched,83);
  assert.equal(l.releaseLinkedCliQaAttestation.criticalAuthoritySourceMd5Matched,10);

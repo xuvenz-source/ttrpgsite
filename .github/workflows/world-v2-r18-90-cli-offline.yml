@@ -1,0 +1,75 @@
+name: World V2 R18-90 pinned Supabase CLI offline flag verification
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'stage/**'
+    paths:
+      - '.github/workflows/world-v2-r18-90-cli-offline.yml'
+      - 'scripts/release/validate-world-v2-r18-90-pinned-cli-help.mjs'
+      - 'tests/world-v2-r18-90-pinned-cli-help.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-original-cli-v2-81-3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # No linked project is ever contacted; shadow any inherited secrets.
+      SUPABASE_ACCESS_TOKEN: ''
+      SUPABASE_DB_PASSWORD: ''
+      SUPABASE_PROJECT_ID: ''
+      SUPABASE_DB_URL: ''
+      DATABASE_URL: ''
+      PGHOST: ''
+      PGHOSTADDR: ''
+      PGSERVICE: ''
+      SUPABASE_YES: ''
+    steps:
+      - name: Checkout only for the pure offline --help validator
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Set up Node 24 for the pinned npm CLI package
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install exact Supabase v2.81.3 into disposable runner directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$SUPABASE_ACCESS_TOKEN"
+          test -z "$SUPABASE_DB_PASSWORD"
+          test -z "$SUPABASE_PROJECT_ID"
+          test -z "$SUPABASE_DB_URL"
+          test -z "$DATABASE_URL"
+          test -z "$PGHOST"
+          test -z "$PGHOSTADDR"
+          test -z "$PGSERVICE"
+          test -z "$SUPABASE_YES"
+          test ! -e "$HOME/.supabase/access-token"
+          test ! -e "$GITHUB_WORKSPACE/supabase/.temp/project-ref"
+          CLI_ROOT="$RUNNER_TEMP/r90-cli"
+          mkdir -p "$CLI_ROOT"
+          npm install --prefix "$CLI_ROOT" --no-save --no-audit --no-fund supabase@2.81.3
+          test -x "$CLI_ROOT/node_modules/.bin/supabase"
+          echo "CLI_ROOT=$CLI_ROOT" >> "$GITHUB_ENV"
+      - name: Inspect actual pinned version and command help WITHOUT signing in or linking
+        shell: bash
+        run: |
+          set -euo pipefail
+          CLI="$CLI_ROOT/node_modules/.bin/supabase"
+          "$CLI" --version > "$RUNNER_TEMP/r90-version.txt"
+          "$CLI" migration fetch --help > "$RUNNER_TEMP/r90-fetch-help.txt"
+          "$CLI" migration list --help > "$RUNNER_TEMP/r90-list-help.txt"
+          "$CLI" db push --help > "$RUNNER_TEMP/r90-push-help.txt"
+          "$CLI" link --help > "$RUNNER_TEMP/r90-link-help.txt"
+          node scripts/release/validate-world-v2-r18-90-pinned-cli-help.mjs \
+            --version-file="$RUNNER_TEMP/r90-version.txt" \
+            --fetch-help="$RUNNER_TEMP/r90-fetch-help.txt" \
+            --list-help="$RUNNER_TEMP/r90-list-help.txt" \
+            --push-help="$RUNNER_TEMP/r90-push-help.txt" \
+            --link-help="$RUNNER_TEMP/r90-link-help.txt"
+          echo "R18-90 offline CLI help PASS. No linked CLI, no SQL and no deployment."
