@@ -276,9 +276,16 @@ test('R18-31 source diff is limited to queue ownership; server/fog wire unchange
  assert.equal(reviewedMetrics,'bc83ad6dbb3543b538864440484b12d46494c6a0');
  // Atomic terminal branch is gated OFF by default; existing Advance/Commit
  // queue contract tests remain unchanged.
- assert.equal(blob,'e91d8a76b95f18d07bba188608ed88fae657324f');
+ // R18-43 is a historical frozen runtime; R18-82 explicitly reviewed
+ // one exact native coalesced-event dispatch change on top, with no server
+ // RPC/permission/fog contract changes. Preserve both SHA-1s as provenance.
+ const auditedR18_43='e91d8a76b95f18d07bba188608ed88fae657324f';
+ const auditedR18_82='ae4dfd43bef0f5b06e42c72c10848d0637c48252';
+ assert.equal(auditedR18_43,'e91d8a76b95f18d07bba188608ed88fae657324f');
+ assert.equal(blob,auditedR18_82);
  assert.match(source,/updateGestureSamples\(samples\)/);
- assert.match(source,/updatePointer\(samples\[i\],i===samples\.length-1\)/);
+ assert.match(source,/!updatePointer\(samples\[i\],i===samples\.length-1,true\)/);
+ assert.match(source,/if\(g\.sessionId&&!deferAdvance\)void drain\(g\)/);
  assert.match(source,/result\.noMotion===true\?\{noMotion:true\}:\{\}/);
  assert.match(source,/g\.pending\.splice\(0,batch\.consumed\);\s*g\.inFlightTarget=/);
  assert.match(source,/g\.inFlightTarget\?\?g\.approved/);
