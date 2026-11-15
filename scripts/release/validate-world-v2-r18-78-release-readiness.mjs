@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167,168,169,170].includes(ledger.branches.length)||
+   ![165,166,167,168,169,170,171].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -93,10 +93,10 @@ export function validateR78ReleaseStatus({
     ledger.releasePreviewPreparation?.productionDeployed!==false||
     ledger.releasePreviewPreparation?.explicitOperatorApproval!==false||
     ledger.releasePreviewPreparation?.officialLinkedCli83Plus8DryRun!==false||
-    ledger.branches.at(ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.name!==
      'stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===171?-6:ledger.branches.length===170?-5:ledger.branches.length===169?-4:ledger.branches.length===168?-3:ledger.branches.length===167?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=167&&(
     ledger.releasePreviewActivation?.workPackage!=='B10-R18-81'||
     ledger.releasePreviewActivation?.decision!=='NO_GO'||
@@ -112,10 +112,10 @@ export function validateR78ReleaseStatus({
     ledger.releasePreviewActivation?.liveBrowserV2Verified!==false||
     ledger.releasePreviewActivation?.independentDmP1P2Verified!==false||
     ledger.releasePreviewActivation?.productionReleaseAuthorization!==false||
-    ledger.branches.at(ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.name!==
      'stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===171?-5:ledger.branches.length===170?-4:ledger.branches.length===169?-3:ledger.branches.length===168?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=168&&(
     ledger.releaseMovementDiagnostic?.workPackage!=='B10-R18-82'||
     ledger.releaseMovementDiagnostic?.decision!=='NO_GO'||
@@ -132,10 +132,10 @@ export function validateR78ReleaseStatus({
     ledger.releaseMovementDiagnostic?.supabaseMigrationApplied!==false||
     ledger.releaseMovementDiagnostic?.candidatePerformanceVerifiedInBrowser!==false||
     ledger.releaseMovementDiagnostic?.releaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.name!==
      'stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.releaseReady!==false))||
+    ledger.branches.at(ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===171?-4:ledger.branches.length===170?-3:ledger.branches.length===169?-2:-1)?.releaseReady!==false))||
    (ledger.branches.length>=169&&(
     ledger.releaseCommitAttribution?.workPackage!=='B10-R18-83'||
     ledger.releaseCommitAttribution?.decision!=='NO_GO'||
@@ -156,11 +156,11 @@ export function validateR78ReleaseStatus({
     ledger.releaseCommitAttribution?.performanceAcceptedInBrowser!==false||
     ledger.releaseCommitAttribution?.officialCli83Plus8Verified!==false||
     ledger.releaseCommitAttribution?.productionReleaseAuthorized!==false||
-    ledger.branches.at(ledger.branches.length===170?-2:-1)?.name!==
+    ledger.branches.at(ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.name!==
      'stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15'||
-    ledger.branches.at(ledger.branches.length===170?-2:-1)?.status!=='staged'||
-    ledger.branches.at(ledger.branches.length===170?-2:-1)?.releaseReady!==false))||
-   (ledger.branches.length===170&&(
+    ledger.branches.at(ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===171?-3:ledger.branches.length===170?-2:-1)?.releaseReady!==false))||
+   (ledger.branches.length>=170&&(
     ledger.releaseFullTriggerFidelity?.workPackage!=='B10-R18-84'||
     ledger.releaseFullTriggerFidelity?.decision!=='NO_GO'||
     ledger.releaseFullTriggerFidelity?.previousLedgerBranches!==169||
@@ -176,8 +176,34 @@ export function validateR78ReleaseStatus({
     ledger.releaseFullTriggerFidelity?.productionDeployed!==false||
     ledger.releaseFullTriggerFidelity?.performanceAcceptedInBrowser!==false||
     ledger.releaseFullTriggerFidelity?.productionReleaseAuthorized!==false||
-    ledger.branches.at(-1)?.name!==
+    ledger.branches.at(ledger.branches.length===171?-2:-1)?.name!==
      'stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15'||
+    ledger.branches.at(ledger.branches.length===171?-2:-1)?.status!=='staged'||
+    ledger.branches.at(ledger.branches.length===171?-2:-1)?.releaseReady!==false))||
+   (ledger.branches.length===171&&(
+    ledger.releaseCommitPhaseIsolation?.workPackage!=='B10-R18-85'||
+    ledger.releaseCommitPhaseIsolation?.decision!=='NO_GO'||
+    ledger.releaseCommitPhaseIsolation?.priorLedgerBranches!==170||
+    ledger.releaseCommitPhaseIsolation?.currentLedgerBranches!==171||
+    ledger.releaseCommitPhaseIsolation?.sourceParentPr!==186||
+    ledger.releaseCommitPhaseIsolation?.fullSourceRealTokenTriggers!==6||
+    ledger.releaseCommitPhaseIsolation?.fullSourceRealToolTriggers!==4||
+    ledger.releaseCommitPhaseIsolation?.additionalSignedSessions!==4||
+    ledger.releaseCommitPhaseIsolation?.pairedFogStateCount!==2||
+    ledger.releaseCommitPhaseIsolation?.testTransactionRollback!==true||
+    ledger.releaseCommitPhaseIsolation?.liveTrackFunctionsChanged!==false||
+    ledger.releaseCommitPhaseIsolation?.fullHostedRlsParityEstablished!==false||
+    ledger.releaseCommitPhaseIsolation?.supabaseSqlWritten!==false||
+    ledger.releaseCommitPhaseIsolation?.sqlMigrationApplied!==false||
+    ledger.releaseCommitPhaseIsolation?.previewDeployed!==false||
+    ledger.releaseCommitPhaseIsolation?.productionDeployed!==false||
+    ledger.releaseCommitPhaseIsolation?.browserReleasePerformanceAccepted!==false||
+    ledger.releaseCommitPhaseIsolation?.officialLinkedCli83Plus8Accepted!==false||
+    ledger.releaseCommitPhaseIsolation?.independentSignedDmP1P2Accepted!==false||
+    ledger.releaseCommitPhaseIsolation?.freeTierLoadRamAccepted!==false||
+    ledger.releaseCommitPhaseIsolation?.productionReleaseAuthorized!==false||
+    ledger.branches.at(-1)?.name!==
+     'stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15'||
     ledger.branches.at(-1)?.status!=='staged'||
     ledger.branches.at(-1)?.releaseReady!==false)))))
 
