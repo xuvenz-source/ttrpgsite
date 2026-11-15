@@ -27,6 +27,10 @@ A new credential-free isolated CI job `.github/workflows/world-v2-r18-94-dom-cap
 
 The original test still runs actual CDP pointer movement for player, DM unlocked, preview, locked editor and nested status button, including start/move/end, marquee exclusion, document capture ownership, actual browser capture, editor refusal and status control checks. There is no relaxed assertion, flag/feature bypass or production movement logic modification. R94's `tests/world-v2-r18-94-phase3-chromium-cleanup.test.mjs` statically locks shutdown and the original assertions.
 
+### R79 immutability audit maintenance uncovered by the now-completing general suite
+
+Once the Chromium teardown was fixed, the general Node run **completed** and exposed a separate source-only ledger validator defect: the original R91 historical entry was still checked with a brittle `branches.at(-2)` index even after R92–R94 were added. It did not indicate a released migration or changed fog permission. R18-94 replaces **all 15 cumulative R80–R94 successor-relative ledger positions** with fixed array positions **165–179**, derived from the frozen original 165-entry R79 inventory and each sequential staged successor. The existing explicit entry classification, source parent SHA, NO_GO records and latest-release membership checks remain in place. Additional static tests require every fixed index and reject any return of a moving `branches.at(...)` ladder in R79.
+
 The existing R18-92 R12 isolated real Chromium job continues unchanged, so both browser lifecycle tests have independent checks. Full Node suite, lint, Vite/npm audit, original isolated PG movement authority, disposable source-real R54/R83–R88 fog/Commit/rollback, pinned v2.81.3 CLI help and CodeQL must be green on the **exact final SHA** before declaring engineering PASS. A single isolated Chrome PASS does not substitute for the full general suite.
 
 ## Infrastructure and production boundary
