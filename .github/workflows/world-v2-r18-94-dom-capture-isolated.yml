@@ -1,0 +1,47 @@
+name: World V2 R18-94 isolated real Chromium DOM capture regression
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'stage/**'
+    paths:
+      - '.github/workflows/world-v2-r18-94-dom-capture-isolated.yml'
+      - 'tests/world-v2-phase3-real-dom.test.mjs'
+      - 'tests/browser/world-v2-phase3.html'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-dom-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      SUPABASE_ACCESS_TOKEN: ''
+      SUPABASE_DB_PASSWORD: ''
+      SUPABASE_DB_URL: ''
+      DATABASE_URL: ''
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install local test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify actual browser installed
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium
+          test -z "$SUPABASE_ACCESS_TOKEN"
+          test -z "$DATABASE_URL"
+      - name: Isolate all player, DM, preview, locked-editor pointer-capture assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=8s 140s \
+            node --test --test-concurrency=1 --test-reporter=tap \
+            --test-name-pattern='actual Chromium DOM pointer capture: player, DM unlocked, preview, locked editor' \
+            tests/world-v2-phase3-real-dom.test.mjs
