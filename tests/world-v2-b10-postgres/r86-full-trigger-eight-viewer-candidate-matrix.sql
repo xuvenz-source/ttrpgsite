@@ -340,6 +340,14 @@ BEGIN
  RAISE NOTICE 'R18-86 PASS: original/R57/R77/combined, eight viewers, 192 independently frozen complete frames, 6+4 full triggers, unchanged private ACL, outer rollback; NOT real browser speed or production RLS';
 END $r86_finish$;
 
+-- R87 fifth isolated pass: AFTER R86's four-mode full-frame parity, run
+-- an additional 24 balanced original-signed forward Commit samples plus 24
+-- signed reversals with R57/R77 sealed source+inverse between every phase.
+-- The R86 fourth-pass file remains functionally unchanged when flag omitted.
+\if :{?r87_balanced}
+\i tests/world-v2-b10-postgres/r87-balanced-signed-candidate-cost.sql
+\endif
+
 -- Only aggregate variant labels and synthetic SQL execution timings; no
 -- sight JSON, geometry, actor/token identifiers or private frame values.
 SELECT variant,affected_viewers,full_frame_pairs,signed_commits,ray_calls,
