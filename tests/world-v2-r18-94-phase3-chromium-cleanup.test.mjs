@@ -50,6 +50,13 @@ test('R94 isolated test cannot skip real Chromium nor run beyond bounded watchdo
  assert.doesNotMatch(ci,/\$\{\{\s*secrets\./);
 });
 
+test('R94 R79 historical branch positions use fixed source-frozen indices, not cumulative successor offsets',()=>{
+ const validator=read('scripts/release/validate-world-v2-r18-79-ledger-inventory.mjs');
+ for(let index=165;index<=179;index++)
+  assert.match(validator,new RegExp('l\\.branches\\\\['+index+'\\\\]!==entry'));
+ assert.doesNotMatch(validator,/l\.branches\.at\(/);
+});
+
 test('R94 release ledger and manifest are never permitted to authorize SQL or deployment',()=>{
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-94-phase3-chromium/manifest.json'));
