@@ -456,7 +456,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT89);
   if(!same(l.releaseLinkedCliQaAttestation,exact)||
-   !entry||l.branches.at(pinnedCliHelpSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(readOnlyCaptureSuccessor?-3:pinnedCliHelpSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='LIVE_83_BODY_AND_10_AUTHORITY_FINGERPRINT_QA_ISOLATION_CLI_READONLY_ATTESTATION'||
    entry.linkedPullRequest!==191||entry.productionBaseSha!==MAIN||
