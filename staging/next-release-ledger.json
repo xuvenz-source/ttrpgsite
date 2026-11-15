@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1715,6 +1715,16 @@
       "linkedPullRequest": 186,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-84 adds separate rolled-back PG17 source-original six token/four tool x/y trigger fixture alongside preserved R18-83 two-trigger baseline; unchanged 72 signed token Commits and narrow hostile issued-tool signed Commit checks. Never deploys client, SQL, migrations, preview, aliases or flags. Test-only table/role scaffolding does not certify full hosted RLS/production timing, independent DM/P1/P2 or performance improvement. NO production release approval."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "SIGNED_CANONICAL_COMMIT_AND_PRIVATE_FOG_PHASE_COST_ATTRIBUTION",
+      "linkedPullRequest": 187,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-85 adds separate third roll-back-only PG17 full 6/4 trigger replay to isolate actual signed Begin+Advance versus original Commit function timing with four bounded extra sessions and two wall-heavy fog states. Preserves original R68 72 signed token Commits and historical R83/R84 fixtures without runtime change. Results are synthetic request samples, not network/browser/RLS/Free load proofs; never install or deploy. Release NO_GO."
     }
   ],
   "features": [
@@ -2820,7 +2830,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2926,9 +2936,10 @@
       "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
       "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15",
       "stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15",
-      "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15"
+      "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
+      "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15"
     ],
-    "stagePolicy": "R18-84: R18-79 historical inventory stays 165; 170 tracked ledger branches, 105 unapproved outstanding review records (NOT a bulk-merge queue). Exact R18-83 two-trigger profile is preserved, with separately rolled-back source-pinned six-token/four-tool position trigger benchmark and hostile issued-tool tests. Source-real PostgreSQL fixture is not proof of hosted RLS, browser performance, or release readiness; R18-81 signed-in DM browser still failed near walls and rapid movement. Official pinned Supabase CLI 83+8, independent DM/P1/passive P2 fog/collision/revocation, browser p95, Free RAM/locks, and operator approval remain hard NO-GO. No prod or permanent QA alias promotion.",
+    "stagePolicy": "R18-85: frozen R18-79 historical 165 remains untouched; 171 ledger branches with 106 unapproved outstanding reviews (NOT a bulk-merge queue). R18-83/84 baseline and R18-85 original signed per-phase attribution are locally disposable PostgreSQL 17 evidence only; the test-only observer sink, limited viewers and synthetic local function costs do not certify live multiplayer, production RLS, RAM or latency. R18-81 solo DM wall/rapid movement still performance FAIL. Official pinned linked Supabase CLI 83+8 dry-run, independently authenticated DM/P1/passive P2 fog/collision/revocation/observer QA, actual browser p95 and Free RAM/locks, and explicit operator release approval all remain NO_GO. No live SQL, migration or Vercel alias change.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3238,6 +3249,39 @@
     "independentSignedDmP1P2Accepted": false,
     "officialLinkedCli83Plus8Verified": false,
     "freeTierRamAndLockLoadAccepted": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseCommitPhaseIsolation": {
+    "schema": 1,
+    "workPackage": "B10-R18-85",
+    "decision": "NO_GO",
+    "priorLedgerBranches": 170,
+    "currentLedgerBranches": 171,
+    "addedBranch": "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
+    "sourceParentPr": 186,
+    "sourceParentSha": "76a66177a834acfc54afce4f3731d8442df3c953",
+    "originalR68SignedTokenCommitsPreserved": 72,
+    "historicalR83AndR84ProfilesPreserved": true,
+    "fullSourceRealTokenTriggers": 6,
+    "fullSourceRealToolTriggers": 4,
+    "additionalSignedSessions": 4,
+    "pairedFogStateCount": 2,
+    "environment": "DISPOSABLE_LOCAL_POSTGRESQL_17_ONLY",
+    "phases": [
+      "begin_advance",
+      "commit"
+    ],
+    "liveTrackFunctionsChanged": false,
+    "testTransactionRollback": true,
+    "fullHostedRlsParityEstablished": false,
+    "productionDeployed": false,
+    "previewDeployed": false,
+    "supabaseSqlWritten": false,
+    "sqlMigrationApplied": false,
+    "browserReleasePerformanceAccepted": false,
+    "officialLinkedCli83Plus8Accepted": false,
+    "independentSignedDmP1P2Accepted": false,
+    "freeTierLoadRamAccepted": false,
     "productionReleaseAuthorized": false
   }
 }

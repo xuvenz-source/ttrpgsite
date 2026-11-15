@@ -238,6 +238,11 @@ END $r54_benchmark$;
 \if :{?r84_full}
 \i tests/world-v2-b10-postgres/r84-commit-function-profile-finish.sql
 \i tests/world-v2-b10-postgres/r84-issued-tool-hostile.sql
+-- Optional THIRD disposable run: R85 per-original-signed-RPC phase counters.
+-- Guarded by both r84_full + r85_phase in the local rehearsal script only.
+\if :{?r85_phase}
+\i tests/world-v2-b10-postgres/r85-signed-commit-phase-attribution.sql
+\endif
 \else
 \i tests/world-v2-b10-postgres/r83-commit-function-profile-finish.sql
 \endif
@@ -261,6 +266,9 @@ BEGIN
   to_regclass('pg_temp.r84_function_delta') IS NULL AND
   to_regclass('pg_temp.r84_tool_samples') IS NULL AND
   to_regclass('pg_temp.r84_tool_function_delta') IS NULL AND
+  to_regclass('pg_temp.r85_phase_samples') IS NULL AND
+  to_regclass('pg_temp.r85_function_before') IS NULL AND
+  to_regclass('pg_temp.r85_function_delta') IS NULL AND
   to_regprocedure('public.validate_campaign_tool_write()') IS NULL AND
   to_regprocedure('public.protect_token_fields()') IS NULL AND
   NOT EXISTS (SELECT 1 FROM pg_trigger t
