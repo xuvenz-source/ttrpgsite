@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1775,6 +1775,16 @@
       "linkedPullRequest": 192,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-90 validates exact 2.81.3 Supabase CLI command help with credential-free disposable GitHub CI. NO authenticated linked CLI, migration fetch/list, db push dry-run, live SQL, paid infrastructure or QA/production deployments. Actual original database history remains 83 (8 pending), only one shared Free project and no confirmed QA backend. NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "MANUAL_ONLY_LINKED_CLI_READONLY_CAPTURE_AFTER_R49_R50_R90_GATES",
+      "linkedPullRequest": 193,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-91 stages an operator-initiated, credential-local Node runner; only after fresh R50 83/83 SQL history and 10/10 authority checks plus disjoint R49 91-file source seal, invoke pinned CLI 2.81.3 --version/help, migration list --linked and db push --linked --dry-run. Script cannot link, fetch, repair, apply, deploy or print private CLI evidence. No actual authenticated operator CLI execution, no linked SQL changes, no QA/performance acceptance. Release NO_GO."
     }
   ],
   "features": [
@@ -2880,7 +2890,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2992,9 +3002,10 @@
       "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15",
       "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
       "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
-      "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15"
+      "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
+      "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15"
     ],
-    "stagePolicy": "R18-90: preserve frozen R79 historical 165 branches, now 176 ledger branches and 111 unapproved outstanding (NOT a bulk-merge queue). A credential-free disposable GitHub runner verifies only original pinned Supabase CLI 2.81.3 version and read-only --help for migration fetch/list, db push --linked --dry-run and link; NOT authenticated CLI or database evidence. Live R89 83/83 stored historical SQL fingerprints and 10/10 authority sources matched but eight pending not installed. No separate QA backend verified on Free. Multiplayer signed DM/P1/P2, browser p95, Free RAM/locks, operator SQL approval remain NO_GO. Never install R57/R77 or change permanent QA/production aliases.",
+    "stagePolicy": "R18-91: preserve frozen R79 original history 165; 177 ledger branches and 112 unapproved outstanding (NOT a bulk-merge queue). Stage ONLY an operator-local strict R49/R50/R51/R90 gated authenticated CLI list/dry-run capture, not an automatic run or SQL change. Linked project still 83 migrations with eight pending, live read-only 83/83 history and 10/10 authority function matches, combined R57+R77 not installed. No trusted operator credentials in this session, no independently isolated QA backend on shared Supabase Free, no actual DM/P1/P2 or browser p95 and physical Free RAM/locks. All releases NO_GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3524,6 +3535,43 @@
     "liveSupabaseSqlWritten": false,
     "runtimeFilesChanged": false,
     "rootMigrationFilesChanged": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
+    "paidInfrastructureCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseLinkedCliOperatorCapture": {
+    "schema": 1,
+    "workPackage": "B10-R18-91",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 176,
+    "currentLedgerBranches": 177,
+    "addedBranch": "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
+    "parentPr": 192,
+    "parentSha": "7c28ee15d835a0f1eb916215efaea9265ec48d7a",
+    "manifest": "staging/world-v2-b10-r18-91-operator-capture/manifest.json",
+    "runner": "scripts/release/run-world-v2-r18-91-linked-cli-readonly.mjs",
+    "sourceOnlyManualOperatorRunner": true,
+    "originalPinnedCliVersion": "2.81.3",
+    "original83HistoricalFilesRequired": true,
+    "originalEightPendingRequired": true,
+    "sourceExactR49R50R51R90ValidatorsRequired": true,
+    "strictLinkedListBeforeDryRun": true,
+    "approvedRemoteCommandCount": 2,
+    "authenticatedLinkedCliExecutedByChatGPT": false,
+    "linkedCliDryRunIndependentlyAttested": false,
+    "priorReadOnlyLiveHistoryMatched": 83,
+    "priorReadOnlyAuthorityMatched": 10,
+    "liveRegisteredMigrations": 83,
+    "requiredMigrations": 91,
+    "separateQaBackendVerified": false,
+    "signedDmP1PassiveP2Accepted": false,
+    "browserP95Accepted": false,
+    "freeRamAndLockLoadAccepted": false,
+    "operatorReleasePermission": false,
+    "liveSqlWritten": false,
+    "rootMigrationFilesChanged": false,
+    "runtimeFilesChanged": false,
     "previewDeployed": false,
     "productionDeployed": false,
     "paidInfrastructureCreated": false,
