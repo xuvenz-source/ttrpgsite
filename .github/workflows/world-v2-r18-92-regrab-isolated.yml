@@ -1,0 +1,52 @@
+name: World V2 R18-92 isolated R12 rapid-regrab Chromium regression
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'stage/**'
+    paths:
+      - '.github/workflows/world-v2-r18-92-regrab-isolated.yml'
+      - 'tests/world-v2-real-react-board-drag.test.mjs'
+      - 'tests/browser/world-v2-real-board.jsx'
+      - 'src/engine/v2/CanonicalCommitHandoff.js'
+      - 'src/engine/v2/WorldV2Board.jsx'
+      - 'src/engine/v2/WorldV2TabletopRuntime.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-rapid-regrab-in-real-chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      SUPABASE_ACCESS_TOKEN: ''
+      SUPABASE_DB_PASSWORD: ''
+      SUPABASE_PROJECT_ID: ''
+      SUPABASE_DB_URL: ''
+      DATABASE_URL: ''
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install only local development dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify browser exists; never silently skip the target test
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium
+          test -z "$SUPABASE_ACCESS_TOKEN"
+          test -z "$SUPABASE_DB_PASSWORD"
+          test -z "$DATABASE_URL"
+      - name: Isolate R12 real React drag/regrab using immediate TAP diagnostics and bounded process lifetime
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=8s 140s \
+            node --test --test-concurrency=1 --test-reporter=tap \
+            --test-name-pattern='R12 real React V2 player can drag again before lagged signed sight catches up' \
+            tests/world-v2-real-react-board-drag.test.mjs

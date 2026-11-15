@@ -22,6 +22,7 @@ const NEXT88='stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15
 const NEXT89='stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15';
 const NEXT90='stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15';
 const NEXT91='stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15';
+const NEXT92='stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16';
 const MAIN='90df8c960e79e8d66c322095611427da7bb09de4';
 const CANONICAL='5ca8c83bdef4a5d9870020b0f2b16723f7790e38';
 const PARENT='5102f62ffe1017a1c7f66df738bee5bfaaaebc38';
@@ -50,30 +51,31 @@ const branchStatus=x=>x==='CANONICAL_LIVE_UNMERGED'?'released':
 export function validateR79Ledger({snapshot,ledger}={}){
  const s=snapshot??JSON.parse(readFileSync(join(ROOT,INVENTORY),'utf8'));
  const l=ledger??JSON.parse(readFileSync(join(ROOT,LEDGER),'utf8'));
- const successor=[NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const deployedSuccessor=[NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const failedPreviewSuccessor=[NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const commitProfileSuccessor=[NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const fullTriggerSuccessor=[NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const phaseIsolationSuccessor=[NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const candidateMatrixSuccessor=[NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const balancedCostSuccessor=[NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const combinedQaSuccessor=[NEXT88,NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const linkedCliQaSuccessor=[NEXT89,NEXT90,NEXT91].includes(l?.releaseBranch);
- const pinnedCliHelpSuccessor=[NEXT90,NEXT91].includes(l?.releaseBranch);
- const readOnlyCaptureSuccessor=l?.releaseBranch===NEXT91;
+ const successor=[NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const deployedSuccessor=[NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const failedPreviewSuccessor=[NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const commitProfileSuccessor=[NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const fullTriggerSuccessor=[NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const phaseIsolationSuccessor=[NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const candidateMatrixSuccessor=[NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const balancedCostSuccessor=[NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const combinedQaSuccessor=[NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const linkedCliQaSuccessor=[NEXT89,NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const pinnedCliHelpSuccessor=[NEXT90,NEXT91,NEXT92].includes(l?.releaseBranch);
+ const readOnlyCaptureSuccessor=[NEXT91,NEXT92].includes(l?.releaseBranch);
+ const regrabHarnessSuccessor=l?.releaseBranch===NEXT92;
  const expectedCount=165+(successor?1:0)+(deployedSuccessor?1:0)+
   (failedPreviewSuccessor?1:0)+(commitProfileSuccessor?1:0)+
   (fullTriggerSuccessor?1:0)+(phaseIsolationSuccessor?1:0)+
   (candidateMatrixSuccessor?1:0)+(balancedCostSuccessor?1:0)+
-  (combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0);
+  (combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0)+(regrabHarnessSuccessor?1:0);
  if(s?.schema!==1||s.workPackage!=='B10-R18-79'||
   s.sourceKind!=='GITHUB_READ_ONLY_BRANCH_AND_PR_METADATA'||
   s.recordedOn!=='2026-11-15'||s.releaseDecision!=='NO_GO'||
   s.safeToRelease!==false||s.operatorApproved!==false||
   s.parent?.pr!==180||s.parent.sha!==PARENT||s.currentPr!==181||
   l?.updated!=='2026-11-15'||l.productionBaseSha!==MAIN||
-  ![BRANCH,NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91].includes(l.releaseBranch)||
+  ![BRANCH,NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92].includes(l.releaseBranch)||
   l.upcomingRelease?.releaseBranch!==l.releaseBranch||
   l.upcomingRelease.productionBaseSha!==MAIN)fail();
  const scope=s.scope;
@@ -104,7 +106,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
  const ledgerByName=new Map(l.branches.map(x=>[x.name,x]));
  if(ledgerByName.size!==expectedCount||
   !same([...allCandidateNames].sort(),
-   [...ledgerByName.keys()].filter(x=>x!==NEXT&&x!==NEXT81&&x!==NEXT82&&x!==NEXT83&&x!==NEXT84&&x!==NEXT85&&x!==NEXT86&&x!==NEXT87&&x!==NEXT88&&x!==NEXT89&&x!==NEXT90&&x!==NEXT91).sort()))fail();
+   [...ledgerByName.keys()].filter(x=>x!==NEXT&&x!==NEXT81&&x!==NEXT82&&x!==NEXT83&&x!==NEXT84&&x!==NEXT85&&x!==NEXT86&&x!==NEXT87&&x!==NEXT88&&x!==NEXT89&&x!==NEXT90&&x!==NEXT91&&x!==NEXT92).sort()))fail();
 
  const added=new Set(),prRefs=new Set(),group={};
  for(const x of s.newlyReconciled){
@@ -192,7 +194,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT);
   if(!same(l.releasePreviewPreparation,expected)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-12:pinnedCliHelpSuccessor?-11:linkedCliQaSuccessor?-10:combinedQaSuccessor?-9:balancedCostSuccessor?-8:candidateMatrixSuccessor?-7:phaseIsolationSuccessor?-6:fullTriggerSuccessor?-5:commitProfileSuccessor?-4:failedPreviewSuccessor?-3:deployedSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-13:readOnlyCaptureSuccessor?-12:pinnedCliHelpSuccessor?-11:linkedCliQaSuccessor?-10:combinedQaSuccessor?-9:balancedCostSuccessor?-8:candidateMatrixSuccessor?-7:phaseIsolationSuccessor?-6:fullTriggerSuccessor?-5:commitProfileSuccessor?-4:failedPreviewSuccessor?-3:deployedSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='PREVIEW_SOURCE_PREFLIGHT_ONLY'||
    entry.linkedPullRequest!==182||entry.productionBaseSha!==MAIN||
@@ -219,7 +221,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT81);
   if(!same(l.releasePreviewActivation,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-11:pinnedCliHelpSuccessor?-10:linkedCliQaSuccessor?-9:combinedQaSuccessor?-8:balancedCostSuccessor?-7:candidateMatrixSuccessor?-6:phaseIsolationSuccessor?-5:fullTriggerSuccessor?-4:commitProfileSuccessor?-3:failedPreviewSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-12:readOnlyCaptureSuccessor?-11:pinnedCliHelpSuccessor?-10:linkedCliQaSuccessor?-9:combinedQaSuccessor?-8:balancedCostSuccessor?-7:candidateMatrixSuccessor?-6:phaseIsolationSuccessor?-5:fullTriggerSuccessor?-4:commitProfileSuccessor?-3:failedPreviewSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='PREVIEW_ONLY_DEPLOYED_PENDING_SIGNED_BROWSER_QA'||
    entry.linkedPullRequest!==183||entry.productionBaseSha!==MAIN||
@@ -246,7 +248,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT82);
   if(!same(l.releaseMovementDiagnostic,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-10:pinnedCliHelpSuccessor?-9:linkedCliQaSuccessor?-8:combinedQaSuccessor?-7:balancedCostSuccessor?-6:candidateMatrixSuccessor?-5:phaseIsolationSuccessor?-4:fullTriggerSuccessor?-3:commitProfileSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-11:readOnlyCaptureSuccessor?-10:pinnedCliHelpSuccessor?-9:linkedCliQaSuccessor?-8:combinedQaSuccessor?-7:balancedCostSuccessor?-6:candidateMatrixSuccessor?-5:phaseIsolationSuccessor?-4:fullTriggerSuccessor?-3:commitProfileSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='COALESCED_ADVANCE_SOURCE_FIX_PREVIEW_PERFORMANCE_FAILED'||
    entry.linkedPullRequest!==184||entry.productionBaseSha!==MAIN||
@@ -276,7 +278,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT83);
   if(!same(l.releaseCommitAttribution,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-9:pinnedCliHelpSuccessor?-8:linkedCliQaSuccessor?-7:combinedQaSuccessor?-6:balancedCostSuccessor?-5:candidateMatrixSuccessor?-4:phaseIsolationSuccessor?-3:fullTriggerSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-10:readOnlyCaptureSuccessor?-9:pinnedCliHelpSuccessor?-8:linkedCliQaSuccessor?-7:combinedQaSuccessor?-6:balancedCostSuccessor?-5:candidateMatrixSuccessor?-4:phaseIsolationSuccessor?-3:fullTriggerSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='ORIGINAL_COMMIT_TRIGGER_COVERAGE_AND_DISPOSABLE_FUNCTION_PROFILE'||
    entry.linkedPullRequest!==185||entry.productionBaseSha!==MAIN||
@@ -303,7 +305,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT84);
   if(!same(l.releaseFullTriggerFidelity,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-8:pinnedCliHelpSuccessor?-7:linkedCliQaSuccessor?-6:combinedQaSuccessor?-5:balancedCostSuccessor?-4:candidateMatrixSuccessor?-3:phaseIsolationSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-9:readOnlyCaptureSuccessor?-8:pinnedCliHelpSuccessor?-7:linkedCliQaSuccessor?-6:combinedQaSuccessor?-5:balancedCostSuccessor?-4:candidateMatrixSuccessor?-3:phaseIsolationSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='DISPOSABLE_SOURCE_REAL_FULL_POSITION_TRIGGER_COVERAGE'||
    entry.linkedPullRequest!==186||entry.productionBaseSha!==MAIN||
@@ -332,7 +334,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT85);
   if(!same(l.releaseCommitPhaseIsolation,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-7:pinnedCliHelpSuccessor?-6:linkedCliQaSuccessor?-5:combinedQaSuccessor?-4:balancedCostSuccessor?-3:candidateMatrixSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-8:readOnlyCaptureSuccessor?-7:pinnedCliHelpSuccessor?-6:linkedCliQaSuccessor?-5:combinedQaSuccessor?-4:balancedCostSuccessor?-3:candidateMatrixSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='SIGNED_CANONICAL_COMMIT_AND_PRIVATE_FOG_PHASE_COST_ATTRIBUTION'||
    entry.linkedPullRequest!==187||entry.productionBaseSha!==MAIN||
@@ -364,7 +366,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT86);
   if(!same(l.releaseFogCandidateMatrix,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-6:pinnedCliHelpSuccessor?-5:linkedCliQaSuccessor?-4:combinedQaSuccessor?-3:balancedCostSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-7:readOnlyCaptureSuccessor?-6:pinnedCliHelpSuccessor?-5:linkedCliQaSuccessor?-4:combinedQaSuccessor?-3:balancedCostSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='DISPOSABLE_EIGHT_VIEWER_FULL_TRIGGER_R57_R77_FROZEN_SOURCE_CANDIDATE_MATRIX'||
    entry.linkedPullRequest!==188||entry.productionBaseSha!==MAIN||
@@ -396,7 +398,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT87);
   if(!same(l.releaseBalancedCandidateBenchmark,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-5:pinnedCliHelpSuccessor?-4:linkedCliQaSuccessor?-3:combinedQaSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-6:readOnlyCaptureSuccessor?-5:pinnedCliHelpSuccessor?-4:linkedCliQaSuccessor?-3:combinedQaSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='BALANCED_SIGNED_FOUR_MODE_PRIVATE_FOG_CANDIDATE_COST_PROFILE'||
    entry.linkedPullRequest!==189||entry.productionBaseSha!==MAIN||
@@ -425,7 +427,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT88);
   if(!same(l.releaseCombinedQaPreflight,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-4:pinnedCliHelpSuccessor?-3:linkedCliQaSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-5:readOnlyCaptureSuccessor?-4:pinnedCliHelpSuccessor?-3:linkedCliQaSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='COMBINED_SEALED_QA_PREFLIGHT_AND_ATOMIC_SAVEPOINT_ROLLBACK'||
    entry.linkedPullRequest!==190||entry.productionBaseSha!==MAIN||
@@ -456,7 +458,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT89);
   if(!same(l.releaseLinkedCliQaAttestation,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-3:pinnedCliHelpSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-4:readOnlyCaptureSuccessor?-3:pinnedCliHelpSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='LIVE_83_BODY_AND_10_AUTHORITY_FINGERPRINT_QA_ISOLATION_CLI_READONLY_ATTESTATION'||
    entry.linkedPullRequest!==191||entry.productionBaseSha!==MAIN||
@@ -485,7 +487,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT90);
   if(!same(l.releasePinnedCliOfflineHelp,exact)||
-   !entry||l.branches.at(readOnlyCaptureSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-3:readOnlyCaptureSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='PINNED_SUPABASE_CLI_V2_81_3_OFFLINE_FLAG_VERIFICATION_NO_CREDENTIALS'||
    entry.linkedPullRequest!==192||entry.productionBaseSha!==MAIN||
@@ -517,18 +519,45 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT91);
   if(!same(l.releaseLinkedCliOperatorCapture,exact)||
-   !entry||l.branches.at(-1)!==entry||
+   !entry||l.branches.at(regrabHarnessSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='MANUAL_ONLY_LINKED_CLI_READONLY_CAPTURE_AFTER_R49_R50_R90_GATES'||
    entry.linkedPullRequest!==193||entry.productionBaseSha!==MAIN||
    entry.reviewedAgainstCanonicalProduction!==false||
    !entry.note?.includes('NO_GO'))fail();
  }else if(l.releaseLinkedCliOperatorCapture!==undefined)fail();
+ if(regrabHarnessSuccessor){
+  const exact={
+   schema:1,workPackage:'B10-R18-92',decision:'NO_GO',
+   previousLedgerBranches:177,currentLedgerBranches:178,addedBranch:NEXT92,
+   parentPr:193,parentSha:'6e293f52c38d0f4410cf5d8f53922021aa3c6b05',
+   manifest:'staging/world-v2-b10-r18-92-regrab-ci-cleanup/manifest.json',
+   originalCancelledGeneralRun:43713696848,originalIsolatedEnotemptyRun:43719325470,
+   isolatedChromiumR12CheckAdded:true,chromiumChildProcessCloseAwaited:true,
+   temporaryProfileRemoveRetried:true,assertionDisabledOrSkipped:false,
+   realGameplayRuntimeModified:false,originalFogCollisionAuthorityChanged:false,
+   productionSqlMigrationsModified:false,liveRegisteredMigrations:83,requiredMigrations:91,
+   independentLinkedCli83Plus8DryRunAttested:false,combinedR57R77CandidateInstalled:false,
+   independentDmP1P2BrowserPerformanceAccepted:false,
+   physicalFreeRamAndLocksAccepted:false,separateQaBackendVerified:false,
+   operatorReleaseApproved:false,databaseSqlWritten:false,
+   previewDeployed:false,productionDeployed:false,
+   paidInfrastructureCreated:false,productionReleaseAuthorized:false
+  };
+  const entry=ledgerByName.get(NEXT92);
+  if(!same(l.releaseReactRegrabHarnessRepair,exact)||
+   !entry||l.branches.at(-1)!==entry||
+   entry.status!=='staged'||entry.releaseReady!==false||
+   entry.classification!=='R12_REAL_CHROMIUM_PROFILE_CLEANUP_RACE_REGRESSION_DIAGNOSTICS_NO_RUNTIME_CHANGE'||
+   entry.linkedPullRequest!==194||entry.productionBaseSha!==MAIN||
+   entry.reviewedAgainstCanonicalProduction!==false||
+   !entry.note?.includes('NO_GO'))fail();
+ }else if(l.releaseReactRegrabHarnessRepair!==undefined)fail();
  const out=l.upcomingRelease.outstandingBranches;
  if(!Array.isArray(out)||out.length!==100+(successor?1:0)+
   (deployedSuccessor?1:0)+(failedPreviewSuccessor?1:0)+
   (commitProfileSuccessor?1:0)+(fullTriggerSuccessor?1:0)+
-  (phaseIsolationSuccessor?1:0)+(candidateMatrixSuccessor?1:0)+(balancedCostSuccessor?1:0)+(combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0)||
+  (phaseIsolationSuccessor?1:0)+(candidateMatrixSuccessor?1:0)+(balancedCostSuccessor?1:0)+(combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0)+(regrabHarnessSuccessor?1:0)||
   new Set(out).size!==out.length||
   !out.includes(BRANCH)||(successor&&!out.includes(NEXT))||
   (deployedSuccessor&&!out.includes(NEXT81))||
@@ -542,6 +571,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   (linkedCliQaSuccessor&&!out.includes(NEXT89))||
   (pinnedCliHelpSuccessor&&!out.includes(NEXT90))||
   (readOnlyCaptureSuccessor&&!out.includes(NEXT91))||
+  (regrabHarnessSuccessor&&!out.includes(NEXT92))||
   !same([...out].sort(),l.branches.filter(x=>x.status==='staged').map(x=>x.name).sort())||
   !l.upcomingRelease.stagePolicy.includes('NOT a bulk-merge queue'))fail();
  const pr=n=>s.newlyReconciled.find(x=>x.linkedPullRequest===n);
@@ -565,6 +595,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
    linkedCliQaSuccessorAudited:linkedCliQaSuccessor,
    pinnedCliHelpSuccessorAudited:pinnedCliHelpSuccessor,
    readOnlyCaptureSuccessorAudited:readOnlyCaptureSuccessor,
+   regrabHarnessSuccessorAudited:regrabHarnessSuccessor,
   laterPRsRecorded:62,unmatchedPRBranches:2,
   outstandingReviewBranches:out.length,
   canonicalLivePr:139,rejectedOrFailed:[140,144],

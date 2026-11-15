@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1785,6 +1785,16 @@
       "linkedPullRequest": 193,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-91 stages an operator-initiated, credential-local Node runner; only after fresh R50 83/83 SQL history and 10/10 authority checks plus disjoint R49 91-file source seal, invoke pinned CLI 2.81.3 --version/help, migration list --linked and db push --linked --dry-run. Script cannot link, fetch, repair, apply, deploy or print private CLI evidence. No actual authenticated operator CLI execution, no linked SQL changes, no QA/performance acceptance. Release NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "R12_REAL_CHROMIUM_PROFILE_CLEANUP_RACE_REGRESSION_DIAGNOSTICS_NO_RUNTIME_CHANGE",
+      "linkedPullRequest": 194,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-92 fixes test-only Chromium child shutdown/profile ENOTEMPTY race that caused false R12 rapid-regrab test failure and 20-minute CI cancellation. Isolated real Chromium TAP test and full general Node pass; gameplay code/collision/sight/DB unchanged. Actual hosted movement still unaccepted, operator linked CLI not run and 83+8 pending. Release NO_GO."
     }
   ],
   "features": [
@@ -2890,7 +2900,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3003,9 +3013,10 @@
       "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
       "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
       "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
-      "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15"
+      "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
+      "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16"
     ],
-    "stagePolicy": "R18-91: preserve frozen R79 original history 165; 177 ledger branches and 112 unapproved outstanding (NOT a bulk-merge queue). Stage ONLY an operator-local strict R49/R50/R51/R90 gated authenticated CLI list/dry-run capture, not an automatic run or SQL change. Linked project still 83 migrations with eight pending, live read-only 83/83 history and 10/10 authority function matches, combined R57+R77 not installed. No trusted operator credentials in this session, no independently isolated QA backend on shared Supabase Free, no actual DM/P1/P2 or browser p95 and physical Free RAM/locks. All releases NO_GO.",
+    "stagePolicy": "R18-92: frozen R79 historical 165 unchanged; now 178 ledger branches and 113 outstanding unapproved (NOT a bulk-merge queue). Fix test-only Chrome profile teardown ENOTEMPTY race and add bounded isolated R12 regression CI without weakening movement or fog authority. Authenticated linked CLI R49/R50/R51 actual 83+8 dry-run still NOT collected; combined R57/R77 remains uninstalled, live Supabase history still 83, separate QA backend unverified, DM/P1/P2 browser p95/Free RAM/locks unaccepted. No runtime, SQL migration, live QA preview, production or paid change. Release NO_GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3572,6 +3583,39 @@
     "liveSqlWritten": false,
     "rootMigrationFilesChanged": false,
     "runtimeFilesChanged": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
+    "paidInfrastructureCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseReactRegrabHarnessRepair": {
+    "schema": 1,
+    "workPackage": "B10-R18-92",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 177,
+    "currentLedgerBranches": 178,
+    "addedBranch": "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
+    "parentPr": 193,
+    "parentSha": "6e293f52c38d0f4410cf5d8f53922021aa3c6b05",
+    "manifest": "staging/world-v2-b10-r18-92-regrab-ci-cleanup/manifest.json",
+    "originalCancelledGeneralRun": 43713696848,
+    "originalIsolatedEnotemptyRun": 43719325470,
+    "isolatedChromiumR12CheckAdded": true,
+    "chromiumChildProcessCloseAwaited": true,
+    "temporaryProfileRemoveRetried": true,
+    "assertionDisabledOrSkipped": false,
+    "realGameplayRuntimeModified": false,
+    "originalFogCollisionAuthorityChanged": false,
+    "productionSqlMigrationsModified": false,
+    "liveRegisteredMigrations": 83,
+    "requiredMigrations": 91,
+    "independentLinkedCli83Plus8DryRunAttested": false,
+    "combinedR57R77CandidateInstalled": false,
+    "independentDmP1P2BrowserPerformanceAccepted": false,
+    "physicalFreeRamAndLocksAccepted": false,
+    "separateQaBackendVerified": false,
+    "operatorReleaseApproved": false,
+    "databaseSqlWritten": false,
     "previewDeployed": false,
     "productionDeployed": false,
     "paidInfrastructureCreated": false,

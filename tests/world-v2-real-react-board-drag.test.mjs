@@ -20,7 +20,22 @@ async function browser(path){
   '--disable-dev-shm-usage','--no-first-run','--no-default-browser-check',
   '--user-data-dir='+dir,'--remote-debugging-port=0','about:blank'],
   {stdio:['ignore','ignore','pipe']});
- let ws,port=0;let err='';
+ let ws,port=0;let err='',disposed=false;
+ // Chrome writes its profile from child processes after SIGKILL is sent.
+ // Wait for the OS 'close' event before deleting the profile. Otherwise
+ // rm() can race Chrome and throw ENOTEMPTY, leaving CI's test worker alive.
+ const processClosed=new Promise(resolve=>{
+  proc.once('close',resolve);
+  proc.once('error',resolve);
+ });
+ const shutdown=async()=>{
+  if(disposed)return;
+  disposed=true;
+  try{ws?.close()}catch{}
+  try{proc.kill('SIGKILL')}catch{}
+  await Promise.race([processClosed,delay(2500)]);
+  await rm(dir,{recursive:true,force:true,maxRetries:20,retryDelay:100});
+ };
  proc.stderr.on('data',x=>{err=(err+String(x)).slice(-2000)});
  try{
   for(let i=0;i<160;i++){
@@ -66,11 +81,9 @@ async function browser(path){
    if(result.exceptionDetails)throw Error(result.exceptionDetails.text||'Browser script error');
    return result.result.value;
   };
-  return {send,evaluate,async close(){
-   ws?.close();proc.kill('SIGKILL');await rm(dir,{recursive:true,force:true});
-  }};
+  return {send,evaluate,close:shutdown};
  }catch(e){
-  ws?.close();proc.kill('SIGKILL');await rm(dir,{recursive:true,force:true});
+  await shutdown();
   throw e;
  }
 }

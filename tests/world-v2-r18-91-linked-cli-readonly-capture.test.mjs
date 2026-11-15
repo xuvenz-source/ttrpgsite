@@ -141,12 +141,13 @@ test('R91 requires operator-only arguments, does not run on GitHub PR CI, and pr
   /run-world-v2-r18-91-linked-cli-readonly\.mjs/);
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-91-operator-capture/manifest.json'));
- assert.equal(l.branches.length,177);
- assert.equal(l.upcomingRelease.outstandingBranches.length,112);
- assert.equal(l.branches.at(-1).linkedPullRequest,193);
+ assert.equal(l.branches.length,178);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,113);
+ assert.equal(l.branches.at(-2).linkedPullRequest,193);
+ assert.equal(l.branches.at(-1).linkedPullRequest,194);
  assert.equal(l.branches.at(-1).releaseReady,false);
  assert.equal(l.releaseBranch,
-  'stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15');
+  'stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16');
  assert.equal(l.releaseLinkedCliOperatorCapture.workPackage,'B10-R18-91');
  assert.equal(l.releaseLinkedCliOperatorCapture.decision,'NO_GO');
  assert.equal(l.releaseLinkedCliOperatorCapture.authenticatedLinkedCliExecutedByChatGPT,false);
