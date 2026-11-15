@@ -2950,7 +2950,7 @@
       "stage/world-v2-b10-r18-85-signed-commit-phase-attribution-2026-11-15",
       "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15"
     ],
-    "stagePolicy": "R18-86: retain original frozen R79 inventory of 165; 172 ledger branches, 107 unapproved review branches (NOT bulk-merge authorization). Test-only fourth PostgreSQL-17 pass compares 4 original/opt-in candidate modes under all 6 token/4 tool movement triggers and independently frozen private ray/frame references across eight synthetic viewers. Prior R83/R84/R85 test runs remain unchanged, and original browser lag around walls/frequent input remains FAIL. Official pinned Supabase 83+8 linked dry-run, independent authenticated DM/P1/passive P2, browser p95, Free RAM/locks, and explicit operator authorization are hard NO_GO. No live SQL, migrations, production/QA aliases or paid tier change.",
+    "stagePolicy": "R18-86: retain original frozen R79 inventory of 165; 172 ledger branches, 107 unapproved review branches (NOT a bulk-merge queue). Test-only fourth PostgreSQL-17 pass compares 4 original/opt-in candidate modes under all 6 token/4 tool movement triggers and independently frozen private ray/frame references across eight synthetic viewers. Prior R83/R84/R85 test runs remain unchanged, and original browser lag around walls/frequent input remains FAIL. Official pinned Supabase 83+8 linked dry-run, independent authenticated DM/P1/passive P2, browser p95, Free RAM/locks, and explicit operator authorization are hard NO_GO. No live SQL, migrations, production/QA aliases or paid tier change.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
