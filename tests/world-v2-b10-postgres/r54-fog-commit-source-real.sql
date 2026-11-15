@@ -221,7 +221,11 @@ END $r54_benchmark$;
 -- R18-68 runs AFTER all original hostile R54 wall/revocation assertions.
 -- 36×2 new Begin sessions plus original R54 cycles honor the 120/60s cap.
 -- Original fog/collision source and canonical triggers are unchanged.
+-- R18-83 adds ONLY before/after transaction-function statistics around
+-- this preexisting R68 signed workload. No extra sessions or Commit calls.
+\i tests/world-v2-b10-postgres/r83-commit-function-profile-start.sql
 \i tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql
+\i tests/world-v2-b10-postgres/r83-commit-function-profile-finish.sql
 -- Advisory 8-paired-sample local SQL-only timings; no network, no live
 -- production token triggers beyond the source-exact selected two; observer
 -- publisher is the B04 test-only sink. Not a performance release gate.
@@ -237,6 +241,8 @@ DO $r54_restore$
 BEGIN
  PERFORM public.b08_assert(
   to_regclass('forge_visibility.viewer_fog_snapshots') IS NULL AND
+  to_regclass('pg_temp.r83_functions_before') IS NULL AND
+  to_regclass('pg_temp.r83_function_delta') IS NULL AND
   to_regprocedure('forge_visibility.bump_viewer_ticks(uuid,uuid[])') IS NULL AND
   NOT EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
     WHERE c.relname='map_tokens' AND t.tgname='forge_visibility_token_tick') AND
