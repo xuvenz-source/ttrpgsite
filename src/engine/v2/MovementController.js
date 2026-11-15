@@ -254,7 +254,7 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
  // R18-38: the same existing gesture pipeline is used for every raw
  // cell crossing. Suppress unpaintable intermediate sampled/presented
  // callbacks only when a browser event carries multiple coalesced samples.
- function updatePointer(pointer,publish=true){
+ function updatePointer(pointer,publish=true,deferAdvance=false){
    const g=active;
    if(disposed||!g||g.closing||!validPoint(pointer))return false;
    // Hysteresis is only for pointer input. A near-half-cell corner must
@@ -301,7 +301,11 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
      emit(g,'presented',{predicted:true});
    }
    }
-   if(g.sessionId)void drain(g);
+   // R18-82: A native browser event can contain multiple coalesced samples.
+   // Never dispatch a signed Advance from an intermediate sample before its
+   // ordered bends are assembled. This does not alter grants, server path
+   // validation, max 24-cell batches, ACK order, or canonical Commit.
+   if(g.sessionId&&!deferAdvance)void drain(g);
    return true;
  }
  return {
@@ -346,10 +350,21 @@ export function createMovementController({authority,onEvent=noop,canPredict=()=>
    // this synchronous native pointer event, so only it needs the costly
    // local collision/prediction check. Existing authority RPCs, permissions,
    // blocked replies and canonical commits are unchanged.
-   if(!Array.isArray(samples)||!samples.length)return false;
-   for(let i=0;i<samples.length;i++)
-    if(!updatePointer(samples[i],i===samples.length-1))return false;
-   return true;
+   if(!Array.isArray(samples)||!samples.length||
+    // Reject an invalid native burst atomically. A malformed intermediate
+    // sample must never dispatch an already partially assembled route.
+    !samples.every(validPoint))return false;
+   const g=active;
+   if(!g)return false;
+   for(let i=0;i<samples.length;i++){
+    if(active!==g||!updatePointer(samples[i],i===samples.length-1,true))
+     return false;
+   }
+   // One already-authorized, serialized Advance starts after the complete
+   // native event. New samples received during its wait remain queued under
+   // the existing R18-31 in-flight isolation and server-ACK validation.
+   if(active===g&&g.sessionId)void drain(g);
+   return active===g;
   },
   endGesture(pointer){
    const g=active;
