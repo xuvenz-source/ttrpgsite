@@ -43,10 +43,11 @@ test('R92 isolated R12 React test cannot silently skip Chromium or hang the enti
 test('R92 original sight/collision and pending 83+8 release gates remain NO_GO',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-92-regrab-ci-cleanup/manifest.json'));
- assert.equal(ledger.branches.length,178);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,113);
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16');
- assert.equal(ledger.branches.at(-1).linkedPullRequest,194);
+ assert.equal(ledger.branches.length,179);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,114);
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-93-cli-streams-positive-offline-2026-11-16');
+ assert.equal(ledger.branches.at(-2).linkedPullRequest,194);
+ assert.equal(ledger.branches.at(-1).linkedPullRequest,195);
  assert.equal(ledger.branches.at(-1).releaseReady,false);
  assert.equal(ledger.releaseReactRegrabHarnessRepair.workPackage,'B10-R18-92');
  assert.equal(ledger.releaseReactRegrabHarnessRepair.decision,'NO_GO');

@@ -147,6 +147,28 @@ export function captureR91ReadOnly({preflight,cliVersion,cliHelp,
   explicitSqlOperatorApproval:false,productionReleaseAuthorized:false
  });
 }
+/** Collect a SUCCESSFUL pinned CLI command's public text channels.
+ * Supabase CLI uses stderr for some informational output. Reading only
+ * stdout could falsely reject its authentic read-only dry-run. We require
+ * both streams to be bounded and safe, with no raw output ever printed.
+ * This does NOT prove that a source-frozen or authenticated CLI ran.
+ */
+export function collectR91CliOutput({args,status,stdout,stderr,error,signal}={}){
+ if(!Array.isArray(args)||!R91_COMMANDS.some(item=>item.length===args.length&&
+   item.every((part,i)=>part===args[i])))
+  fail('unapproved CLI command');
+ if(error||signal||status!==0||
+  typeof stdout!=='string'||typeof stderr!=='string'||
+  stdout.length>OUTPUT_CAP||stderr.length>OUTPUT_CAP)
+  fail('pinned read-only CLI command failed; inspect privately on operator machine');
+ const chunks=[stdout,stderr].filter(x=>x.trim());
+ const combined=chunks.join('\n').replace(/\r\n/g,'\n');
+ if(!combined.trim()||combined.length>OUTPUT_CAP||
+  /[\0\x1b]/.test(combined)||
+  /(?:sb_secret_[a-z0-9]+|sbp_[a-f0-9]+|SUPABASE_ACCESS_TOKEN\s*=|(?:postgres|postgresql):\/\/)/i.test(combined))
+  fail('pinned CLI returned unsafe or missing captured text');
+ return Object.freeze({status:0,stdout:combined});
+}
 export function executeR91Cli(binary,args,cwd,env=process.env){
  if(!R91_COMMANDS.some(item=>item.length===args.length&&
    item.every((part,i)=>part===args[i])))fail('unapproved CLI command');
@@ -154,11 +176,7 @@ export function executeR91Cli(binary,args,cwd,env=process.env){
   cwd,env,encoding:'utf8',shell:false,windowsHide:true,
   timeout:90000,maxBuffer:OUTPUT_CAP+4096,stdio:['ignore','pipe','pipe']
  });
- if(p.error||p.signal||p.status!==0||
-  typeof p.stdout!=='string'||p.stdout.length>OUTPUT_CAP||
-  typeof p.stderr!=='string'||p.stderr.length>OUTPUT_CAP)
-  fail('pinned read-only CLI command failed; inspect privately on operator machine');
- return {status:0,stdout:p.stdout};
+ return collectR91CliOutput({args,...p});
 }
 function input(k,args){
  const vals=args.filter(x=>x.startsWith('--'+k+'='));

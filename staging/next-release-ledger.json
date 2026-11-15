@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
+  "releaseBranch": "stage/world-v2-b10-r18-93-cli-streams-positive-offline-2026-11-16",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1795,6 +1795,16 @@
       "linkedPullRequest": 194,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-92 fixes test-only Chromium child shutdown/profile ENOTEMPTY race that caused false R12 rapid-regrab test failure and 20-minute CI cancellation. Isolated real Chromium TAP test and full general Node pass; gameplay code/collision/sight/DB unchanged. Actual hosted movement still unaccepted, operator linked CLI not run and 83+8 pending. Release NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-93-cli-streams-positive-offline-2026-11-16",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "R91_CLI_OUTPUT_CHANNEL_PARITY_POSITIVE_SYNTHETIC_83_PLUS_8_REHEARSAL",
+      "linkedPullRequest": 195,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-93 repairs operator CLI stdout/stderr capture, proves positive 83 synthetic history+8 frozen pending R49 file validation and positive R51 list/dry-run parsing with harmless no-network CLI stub, while source-exact R49 rejects synthetic bodies. No actual official authenticated linked CLI run, migration apply, QA, movement runtime or paid changes. All releases NO_GO."
     }
   ],
   "features": [
@@ -2900,7 +2910,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
+    "releaseBranch": "stage/world-v2-b10-r18-93-cli-streams-positive-offline-2026-11-16",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3014,9 +3024,10 @@
       "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
       "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
       "stage/world-v2-b10-r18-91-readonly-cli-capture-gate-2026-11-15",
-      "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16"
+      "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
+      "stage/world-v2-b10-r18-93-cli-streams-positive-offline-2026-11-16"
     ],
-    "stagePolicy": "R18-92: frozen R79 historical 165 unchanged; now 178 ledger branches and 113 outstanding unapproved (NOT a bulk-merge queue). Fix test-only Chrome profile teardown ENOTEMPTY race and add bounded isolated R12 regression CI without weakening movement or fog authority. Authenticated linked CLI R49/R50/R51 actual 83+8 dry-run still NOT collected; combined R57/R77 remains uninstalled, live Supabase history still 83, separate QA backend unverified, DM/P1/P2 browser p95/Free RAM/locks unaccepted. No runtime, SQL migration, live QA preview, production or paid change. Release NO_GO.",
+    "stagePolicy": "R18-93: frozen R79 original 165 retained; now 179 ledger branches and 114 unapproved outstanding (NOT a bulk-merge queue). Operator-only CLI accepts bounded stdout+stderr, and synthetic local 83+8 success tests confirm parsing/IO, but NO genuine operator source-exact linked CLI 83+8 fetch/list/db push --linked --dry-run attestation. Supabase still original 83, combined R57/R77 uninstalled, no separate backend, independent signed DM/P1/passive P2, browser p95 or Free RAM/locks evidence. No migrations, runtime, production or QA deployment, privileges or paid infrastructure. Release NO_GO.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3616,6 +3627,44 @@
     "separateQaBackendVerified": false,
     "operatorReleaseApproved": false,
     "databaseSqlWritten": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
+    "paidInfrastructureCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseCliOutputPositiveRehearsal": {
+    "schema": 1,
+    "workPackage": "B10-R18-93",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 178,
+    "currentLedgerBranches": 179,
+    "addedBranch": "stage/world-v2-b10-r18-93-cli-streams-positive-offline-2026-11-16",
+    "parentPr": 194,
+    "parentSha": "57a40017443eed36d097951ef186e7ba8500236b",
+    "manifest": "staging/world-v2-b10-r18-93-operator-cli-streams/manifest.json",
+    "operatorRunner": "scripts/release/run-world-v2-r18-91-linked-cli-readonly.mjs",
+    "boundedCliStdoutAndStderr": true,
+    "cliOutputSecretGuardMaintained": true,
+    "acceptedRemoteCommandCount": 2,
+    "realCliReadOnlyDryRunExecuted": false,
+    "positiveSyntheticHistoricalFiles": 83,
+    "positiveSyntheticPendingFiles": 8,
+    "positiveSyntheticR49AndR51Checks": true,
+    "syntheticHistoryRejectedByFrozenOriginal": true,
+    "officialAuthenticatedCliProofCollected": false,
+    "liveRegisteredMigrations": 83,
+    "requiredMigrations": 91,
+    "originalHistoryReadOnlySourceMatched": 83,
+    "originalCriticalFunctionsReadOnlyMatched": 10,
+    "combinedR57R77Installed": false,
+    "independentSignedDmP1P2Passed": false,
+    "realBrowserP95Accepted": false,
+    "freeRamAndLocksMeasured": false,
+    "separateQaBackendVerified": false,
+    "operatorReleaseApproved": false,
+    "sourceSqlMigrationsModified": false,
+    "gameplayRuntimeModified": false,
+    "sharedSupabaseSqlApplied": false,
     "previewDeployed": false,
     "productionDeployed": false,
     "paidInfrastructureCreated": false,
