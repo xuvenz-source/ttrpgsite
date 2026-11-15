@@ -30,6 +30,30 @@ ALTER TABLE public.campaign_tool_issues
  ADD COLUMN template_id uuid,
  ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
 
+-- Only dependency tables absent from B04, not fake replacements for the
+-- protected source functions. All stay inside the disposable transaction.
+CREATE TABLE public.npc_templates (
+ id uuid PRIMARY KEY, campaign_id uuid NOT NULL
+);
+CREATE TABLE public.campaign_tool_templates (
+ id uuid PRIMARY KEY, campaign_id uuid NOT NULL
+);
+CREATE TABLE public.campaigns (
+ id uuid PRIMARY KEY, active_map_id uuid,
+ token_status_catalog jsonb NOT NULL DEFAULT '[]'::jsonb,
+ token_quick_fields jsonb NOT NULL DEFAULT '[]'::jsonb,
+ sheet_template jsonb NOT NULL DEFAULT '{}'::jsonb
+);
+INSERT INTO public.campaigns(id,active_map_id) VALUES (
+ '00000000-0000-4000-8000-000000000001'::uuid,
+ '00000000-0000-4000-8000-000000000021'::uuid
+);
+CREATE OR REPLACE FUNCTION public.is_campaign_member(p_campaign uuid)
+ RETURNS boolean LANGUAGE sql STABLE SET search_path TO ''
+ AS $ SELECT EXISTS(SELECT 1 FROM public.campaign_members
+  WHERE campaign_id=p_campaign AND user_id=auth.uid()
+  AND role IN ('dm','player')) $;
+
 -- The source is not rewritten for the fixture. Strict MD5 guard below.
 \i tests/world-v2-b10-postgres/r84-live-position-trigger-functions.sql
 
