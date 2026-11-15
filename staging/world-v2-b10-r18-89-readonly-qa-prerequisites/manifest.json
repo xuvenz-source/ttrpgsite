@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-89",
+  "kind": "CONNECTED_READONLY_HISTORY_AND_QA_ISOLATION_ATTESTATION",
+  "releaseDecision": "NO_GO",
+  "safeToApply": false,
+  "sourceParent": {
+    "pr": 190,
+    "sha": "8461b38a498eb1244407b232a1f700314a54d2fd"
+  },
+  "sourceBranch": "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
+  "sourceScope": "read-only live audit evidence, offline verifier and authenticated CLI operator protocol",
+  "project": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "organizationPlan": "free",
+    "observedAt": "2026-11-15T10:11:42.699481+00:00",
+    "readOnlyEvidenceSource": "connected Supabase SELECT-only R18-50 authority/migration receipt",
+    "historicalVersionsRegistered": 83,
+    "historicalVersionsUnique": 83,
+    "historicalVersionsMatchingFrozenNamesCountsAndSqlMd5": 83,
+    "historicalVersionDriftCount": 0,
+    "latestVersion": "20261109171247",
+    "criticalAuthorityFunctionsVerified": 10,
+    "criticalAuthorityFunctionDriftCount": 0,
+    "r05Installed": false,
+    "atomicFinalizationRpcInstalled": false,
+    "activeMovementSessions": 0,
+    "waitingDatabaseLocks": 0,
+    "databaseSessionsAtObservation": 7,
+    "configuredMaxConnections": 60,
+    "anonInternalSchemaUsage": false,
+    "authenticatedInternalSchemaUsage": false,
+    "anonCommitExecute": false,
+    "authenticatedCommitExecute": true,
+    "liveDatabaseWritePerformed": false,
+    "liveMigrationApplied": false
+  },
+  "isolation": {
+    "connectedAccessibleProjectCountAtObservation": 1,
+    "connectedVisibleBranches": [
+      "main"
+    ],
+    "verifiedSeparateQaDatabase": false,
+    "permanentQaUrlIsIndependentBackend": false,
+    "futureBackendEnvironmentNotProvisioned": true,
+    "qaIsolationReady": false,
+    "planVerificationOnly": true,
+    "createdNewProject": false,
+    "createdPaidBranch": false
+  },
+  "cli": {
+    "officialPinnedVersion": "2.81.3",
+    "authenticatedLinkedInvocationPerformed": false,
+    "officialVersionHelpVerifiedInRealCli": false,
+    "linkedMigrationFetchPerformed": false,
+    "officialLinkedMigrationListPerformed": false,
+    "officialLinkedDbPushDryRunPerformed": false,
+    "officialHistoryBodyVerificationThroughCli": false,
+    "requiredRemoteHistoryCount": 83,
+    "requiredPendingMigrationCount": 8,
+    "requiredSourceManifest": "staging/world-v2-b10-r18-48-narrow-pending/manifest.json",
+    "existingWorkspaceVerifier": "scripts/release/validate-world-v2-r18-49-linked-workspace.mjs",
+    "existingReceiptVerifier": "scripts/release/validate-world-v2-r18-50-readonly-evidence.mjs",
+    "existingCliOutputVerifier": "scripts/release/validate-world-v2-r18-51-cli-evidence.mjs",
+    "requireIsolatedTemporaryWorkspace": true,
+    "neverRunDbPushWithoutDryRun": true,
+    "cliV3RemoteDefaultCompatibilityRisk": true,
+    "pendingVersions": [
+      "20261111023204",
+      "20261113021005",
+      "20261113021007",
+      "20261113021010",
+      "20261113021012",
+      "20261113021020",
+      "20261113021022",
+      "20261113024116"
+    ]
+  },
+  "candidate": {
+    "combinedR57R77SelectedForFutureQaOnly": true,
+    "installedOnSharedBackend": false,
+    "sourceSealedByR18_88": true,
+    "hasTestedDisposableAtomicRollback": true,
+    "realPostCommitRollbackProven": false,
+    "permanentQaDeploymentChanged": false,
+    "productionChanged": false
+  },
+  "releaseGates": {
+    "officialPinnedLinkedCliDryRun": false,
+    "signedIndependentDmP1PassiveP2": false,
+    "trueFogCollisionRevocationAndRegrab": false,
+    "browserP50P95AndObserverConvergence": false,
+    "physicalFreeRamSwapCpuAndLocksUnderLoad": false,
+    "separateQaOrSharedBackendOperatorSafetyReview": false,
+    "independentSecurityApproval": false,
+    "explicitOperatorSqlAndDeploymentApproval": false
+  },
+  "operation": {
+    "catalogSelectOnly": true,
+    "sqlApplied": false,
+    "migrationHistoryRepaired": false,
+    "secretsReadOrCommitted": false,
+    "runnerExecutedAgainstLinkedCli": false,
+    "runtimeFilesChanged": false,
+    "rootMigrationFilesChanged": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
+    "releaseAuthorized": false
+  }
+}

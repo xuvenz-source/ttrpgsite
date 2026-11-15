@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-89",
+  "kind": "OPERATOR_READONLY_LINKED_CLI_PLAN_ONLY",
+  "decision": "NO_GO",
+  "isExecutable": false,
+  "executedAgainstRemote": false,
+  "cli": {
+    "version": "2.81.3",
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "isolation": "temporary workspace disjoint from source checkout",
+    "requiresIndependentCredentials": true,
+    "requiresVersionHelpInspection": true,
+    "commands": [
+      {
+        "order": 1,
+        "command": "supabase --version",
+        "network": false,
+        "writesRemote": false,
+        "expected": "2.81.3"
+      },
+      {
+        "order": 2,
+        "command": "supabase migration fetch --help",
+        "network": false,
+        "writesRemote": false,
+        "expected": "confirm fetch and linked targeting supported on pinned binary"
+      },
+      {
+        "order": 3,
+        "command": "supabase migration list --help",
+        "network": false,
+        "writesRemote": false,
+        "expected": "confirm --linked targets intended project"
+      },
+      {
+        "order": 4,
+        "command": "supabase db push --help",
+        "network": false,
+        "writesRemote": false,
+        "expected": "confirm --linked AND --dry-run flags"
+      },
+      {
+        "order": 5,
+        "command": "supabase link --project-ref lwhwgqaunxbmvyndswze",
+        "network": true,
+        "writesRemote": false,
+        "expected": "link only isolated local workspace; identity verify"
+      },
+      {
+        "order": 6,
+        "command": "supabase migration fetch --linked",
+        "network": true,
+        "writesRemote": false,
+        "expected": "local-only historical SQL file materialization; exact 83 source bodies"
+      },
+      {
+        "order": 7,
+        "command": "node scripts/release/validate-world-v2-r18-49-linked-workspace.mjs --workspace=<disjoint-workspace> --fresh-sql-digests=<fresh-private-r50-history-json>",
+        "network": false,
+        "writesRemote": false,
+        "expected": "check exactly 83 originals + 8 pending and project identity"
+      },
+      {
+        "order": 8,
+        "command": "supabase migration list --linked",
+        "network": true,
+        "writesRemote": false,
+        "expected": "91 local versus 83 remote; 8 exact pending"
+      },
+      {
+        "order": 9,
+        "command": "supabase db push --linked --dry-run",
+        "network": true,
+        "writesRemote": false,
+        "expected": "8 exact staged files only, NO SQL execution"
+      },
+      {
+        "order": 10,
+        "command": "node scripts/release/validate-world-v2-r18-51-cli-evidence.mjs --workspace=<disjoint-workspace> --fresh-sql-digests=<fresh-private-r50-history-json> --receipt=<fresh-private-r50-receipt.json> --migration-list=<captured-cli-list.txt> --dry-run-output=<captured-cli-dry-run.txt> --cli-version=2.81.3 --list-exit=0 --dry-run-exit=0",
+        "network": false,
+        "writesRemote": false,
+        "expected": "strict output parsing, source-check and fresh R50 receipt; NO_GO only"
+      }
+    ]
+  },
+  "conditions": {
+    "realCliHelpChecked": false,
+    "localIsolatedWorkspaceBuilt": false,
+    "officialAuthenticatedCliExecuted": false,
+    "officialOutputIndependentlyAttested": false,
+    "historicalSqlBodiesFetchedThroughCli": false,
+    "completeReadOnlyReceiptFreshlyValidatedInCliRun": false,
+    "independentTwoPlayerPlusDmQA": false,
+    "sharedBackendApproval": false,
+    "productionReleaseAuthorized": false
+  },
+  "forbidden": [
+    "supabase db push",
+    "supabase migration repair",
+    "supabase migration up",
+    "supabase db reset",
+    "supabase db push --include-all",
+    "supabase db push --linked --yes"
+  ],
+  "notes": "The exact command 'supabase db push --linked --dry-run' is permitted ONLY once R49 verification and help/target checks pass; forbidden entries mean any invocation missing --dry-run or adding unsafe flags. This plan is not a script and does not run commands. CLI capture/validation arguments are placeholders requiring operator-supplied private evidence; run offline validators from the original source checkout and the CLI only from its disjoint temporary workspace. Exact --help and target verification are mandatory before any network call."
+}
