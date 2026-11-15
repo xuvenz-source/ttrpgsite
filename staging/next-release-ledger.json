@@ -2983,7 +2983,7 @@
       "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
       "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15"
     ],
-    "stagePolicy": "R18-89: historic R79 frozen 165, now 175 ledger branches and 110 unapproved outstanding (NOT bulk merge). Live R50 catalog read-only 83/83 SQL history digests and 10/10 critical authority fingerprints verified, no migration drift. Supabase org Free, connected account sees one project/main branch; no isolated QA backend verified. R48 8 pending versions still missing; official pinned 2.81.3 credentialed linked fetch/list/db push --dry-run remains NO_GO, independent DM/P1/P2, browser p95 and Free physical RAM/locks remain NO_GO. R57/R77 candidate still not installed; no migration apply or permanent QA/production changes.",
+    "stagePolicy": "R18-89: historic R79 frozen 165, now 175 ledger branches and 110 unapproved outstanding (NOT a bulk-merge queue). Live R50 catalog read-only 83/83 SQL history digests and 10/10 critical authority fingerprints verified, no migration drift. Supabase org Free, connected account sees one project/main branch; no isolated QA backend verified. R48 8 pending versions still missing; official pinned 2.81.3 credentialed linked fetch/list/db push --dry-run remains NO_GO, independent DM/P1/P2, browser p95 and Free physical RAM/locks remain NO_GO. R57/R77 candidate still not installed; no migration apply or permanent QA/production changes.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
