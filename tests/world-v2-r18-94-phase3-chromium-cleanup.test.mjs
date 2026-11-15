@@ -53,7 +53,7 @@ test('R94 isolated test cannot skip real Chromium nor run beyond bounded watchdo
 test('R94 R79 historical branch positions use fixed source-frozen indices, not cumulative successor offsets',()=>{
  const validator=read('scripts/release/validate-world-v2-r18-79-ledger-inventory.mjs');
  for(let index=165;index<=179;index++)
-  assert.match(validator,new RegExp('l\\.branches\\\\['+index+'\\\\]!==entry'));
+  assert.ok(validator.includes('l.branches['+index+']!==entry'), 'frozen index '+index+' must be checked');
  assert.doesNotMatch(validator,/l\.branches\.at\(/);
 });
 
