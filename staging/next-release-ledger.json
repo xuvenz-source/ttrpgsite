@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1705,6 +1705,16 @@
       "linkedPullRequest": 185,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-83 read-only live pg_catalog inventory reveals 6 of 10 map_tokens UPDATE triggers fire for x/y versus just two represented in R54/R68 source-real fixture; issued tools have 4 of 5 x/y triggers. Staged only a disposable PG17 xact function-cost profile around the existing 72 signed R68 Commits; NO production/preview deploy, SQL write or feature flags. Browser DM still fails Commit p95 1451.7ms; no full production trigger parity, no release authorization."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "DISPOSABLE_SOURCE_REAL_FULL_POSITION_TRIGGER_COVERAGE",
+      "linkedPullRequest": 186,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-84 adds separate rolled-back PG17 source-original six token/four tool x/y trigger fixture alongside preserved R18-83 two-trigger baseline; unchanged 72 signed token Commits and narrow hostile issued-tool signed Commit checks. Never deploys client, SQL, migrations, preview, aliases or flags. Test-only table/role scaffolding does not certify full hosted RLS/production timing, independent DM/P1/P2 or performance improvement. NO production release approval."
     }
   ],
   "features": [
@@ -2810,7 +2820,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2915,9 +2925,10 @@
       "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
       "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
       "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15",
-      "stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15"
+      "stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15",
+      "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15"
     ],
-    "stagePolicy": "R18-83: frozen R18-79 branch inventory at 165 preserved; 169 staged/released tracked branch records, 104 unapproved outstanding review records (NOT a bulk-merge queue). R18-81 protected preview still serves signed-in DM performance-failed source; R18-82 coalesced Advance source fix not deployed. R18-83 uses read-only live trigger introspection and disposable PG17 72-original-Commit xact stats ONLY; original R54 benchmark exercises 2 of 6 actual live map_tokens x/y UPDATE triggers and cannot certify full production Commit cost. Next R18-84 full six-of-six token / four-of-four issued-tool trigger parity before any canonical movement optimization. Official pinned CLI 83+8, real DM/P1/passive P2 fog/collision/revocation, browser p95, Free RAM/locks and operator approval remain hard NO-GO. No public production or protected QA alias promotion.",
+    "stagePolicy": "R18-84: R18-79 historical inventory stays 165; 170 tracked ledger branches, 105 unapproved outstanding review records (NOT a bulk-merge queue). Exact R18-83 two-trigger profile is preserved, with separately rolled-back source-pinned six-token/four-tool position trigger benchmark and hostile issued-tool tests. Source-real PostgreSQL fixture is not proof of hosted RLS, browser performance, or release readiness; R18-81 signed-in DM browser still failed near walls and rapid movement. Official pinned Supabase CLI 83+8, independent DM/P1/passive P2 fog/collision/revocation, browser p95, Free RAM/locks, and operator approval remain hard NO-GO. No prod or permanent QA alias promotion.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3198,6 +3209,35 @@
     "performanceAcceptedInBrowser": false,
     "independentlyAuthenticatedP1P2Verified": false,
     "officialCli83Plus8Verified": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseFullTriggerFidelity": {
+    "schema": 1,
+    "workPackage": "B10-R18-84",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 169,
+    "currentLedgerBranches": 170,
+    "addedBranch": "stage/world-v2-b10-r18-84-full-commit-trigger-fidelity-2026-11-15",
+    "originalR83TokenMovementTriggerCount": 2,
+    "liveTokenPositionTriggerCount": 6,
+    "fullFixtureTokenPositionTriggerCount": 6,
+    "liveToolPositionTriggerCount": 4,
+    "fullFixtureToolPositionTriggerCount": 4,
+    "exactLiveTriggerFunctionSourcesPinned": 10,
+    "originalR68SignedTokenCommitsRetained": 72,
+    "separateOriginalR83BenchmarkPreserved": true,
+    "additionalSignedToolCommitsPlanned": 8,
+    "testOnlyRollback": true,
+    "fixtureEquivalentToFullProductionRLS": false,
+    "liveSourceFunctionStatsChanged": false,
+    "liveDatabaseSqlWritten": false,
+    "sqlMigrationApplied": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
+    "performanceAcceptedInBrowser": false,
+    "independentSignedDmP1P2Accepted": false,
+    "officialLinkedCli83Plus8Verified": false,
+    "freeTierRamAndLockLoadAccepted": false,
     "productionReleaseAuthorized": false
   }
 }

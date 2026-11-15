@@ -103,6 +103,12 @@ CREATE TRIGGER forge_player_collision
  BEFORE UPDATE OF x,y,span_x,span_y,map_id ON public.map_tokens
  FOR EACH ROW EXECUTE FUNCTION forge_visibility.enforce_collision();
 
+-- Default R18-83 replay is untouched. The opt-in R18-84 second pass adds
+-- exact original source x/y trigger paths in this same disposable ROLLBACK.
+\if :{?r84_full}
+\i tests/world-v2-b10-postgres/r84-full-position-trigger-fixture.sql
+\endif
+
 CREATE TEMP TABLE r54_samples(
  mode text NOT NULL CHECK(mode IN ('fog-off','fog-on')),
  iteration integer NOT NULL CHECK(iteration BETWEEN 1 AND 8),
@@ -223,9 +229,18 @@ END $r54_benchmark$;
 -- Original fog/collision source and canonical triggers are unchanged.
 -- R18-83 adds ONLY before/after transaction-function statistics around
 -- this preexisting R68 signed workload. No extra sessions or Commit calls.
+\if :{?r84_full}
+\i tests/world-v2-b10-postgres/r84-commit-function-profile-start.sql
+\else
 \i tests/world-v2-b10-postgres/r83-commit-function-profile-start.sql
+\endif
 \i tests/world-v2-b10-postgres/r68-commit-cost-attribution.sql
+\if :{?r84_full}
+\i tests/world-v2-b10-postgres/r84-commit-function-profile-finish.sql
+\i tests/world-v2-b10-postgres/r84-issued-tool-hostile.sql
+\else
 \i tests/world-v2-b10-postgres/r83-commit-function-profile-finish.sql
+\endif
 -- Advisory 8-paired-sample local SQL-only timings; no network, no live
 -- production token triggers beyond the source-exact selected two; observer
 -- publisher is the B04 test-only sink. Not a performance release gate.
@@ -243,6 +258,14 @@ BEGIN
   to_regclass('forge_visibility.viewer_fog_snapshots') IS NULL AND
   to_regclass('pg_temp.r83_functions_before') IS NULL AND
   to_regclass('pg_temp.r83_function_delta') IS NULL AND
+  to_regclass('pg_temp.r84_function_delta') IS NULL AND
+  to_regclass('pg_temp.r84_tool_samples') IS NULL AND
+  to_regclass('pg_temp.r84_tool_function_delta') IS NULL AND
+  to_regprocedure('public.validate_campaign_tool_write()') IS NULL AND
+  to_regprocedure('public.protect_token_fields()') IS NULL AND
+  NOT EXISTS (SELECT 1 FROM pg_trigger t
+    WHERE t.tgrelid='public.campaign_tool_issues'::regclass
+    AND t.tgname='forge_tool_collision') AND
   to_regprocedure('forge_visibility.bump_viewer_ticks(uuid,uuid[])') IS NULL AND
   NOT EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
     WHERE c.relname='map_tokens' AND t.tgname='forge_visibility_token_tick') AND
