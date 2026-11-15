@@ -13,6 +13,7 @@ const BRANCH='stage/world-v2-b10-r18-79-release-ledger-reconciliation-2026-11-15
 const NEXT='stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15';
 const NEXT81='stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15';
 const NEXT82='stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15';
+const NEXT83='stage/world-v2-b10-r18-83-commit-trigger-attribution-2026-11-15';
 const MAIN='90df8c960e79e8d66c322095611427da7bb09de4';
 const CANONICAL='5ca8c83bdef4a5d9870020b0f2b16723f7790e38';
 const PARENT='5102f62ffe1017a1c7f66df738bee5bfaaaebc38';
@@ -41,18 +42,19 @@ const branchStatus=x=>x==='CANONICAL_LIVE_UNMERGED'?'released':
 export function validateR79Ledger({snapshot,ledger}={}){
  const s=snapshot??JSON.parse(readFileSync(join(ROOT,INVENTORY),'utf8'));
  const l=ledger??JSON.parse(readFileSync(join(ROOT,LEDGER),'utf8'));
- const successor=[NEXT,NEXT81,NEXT82].includes(l?.releaseBranch);
- const deployedSuccessor=[NEXT81,NEXT82].includes(l?.releaseBranch);
- const failedPreviewSuccessor=l?.releaseBranch===NEXT82;
+ const successor=[NEXT,NEXT81,NEXT82,NEXT83].includes(l?.releaseBranch);
+ const deployedSuccessor=[NEXT81,NEXT82,NEXT83].includes(l?.releaseBranch);
+ const failedPreviewSuccessor=[NEXT82,NEXT83].includes(l?.releaseBranch);
+ const commitProfileSuccessor=l?.releaseBranch===NEXT83;
  const expectedCount=165+(successor?1:0)+(deployedSuccessor?1:0)+
-  (failedPreviewSuccessor?1:0);
+  (failedPreviewSuccessor?1:0)+(commitProfileSuccessor?1:0);
  if(s?.schema!==1||s.workPackage!=='B10-R18-79'||
   s.sourceKind!=='GITHUB_READ_ONLY_BRANCH_AND_PR_METADATA'||
   s.recordedOn!=='2026-11-15'||s.releaseDecision!=='NO_GO'||
   s.safeToRelease!==false||s.operatorApproved!==false||
   s.parent?.pr!==180||s.parent.sha!==PARENT||s.currentPr!==181||
   l?.updated!=='2026-11-15'||l.productionBaseSha!==MAIN||
-  ![BRANCH,NEXT,NEXT81,NEXT82].includes(l.releaseBranch)||
+  ![BRANCH,NEXT,NEXT81,NEXT82,NEXT83].includes(l.releaseBranch)||
   l.upcomingRelease?.releaseBranch!==l.releaseBranch||
   l.upcomingRelease.productionBaseSha!==MAIN)fail();
  const scope=s.scope;
@@ -83,7 +85,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
  const ledgerByName=new Map(l.branches.map(x=>[x.name,x]));
  if(ledgerByName.size!==expectedCount||
   !same([...allCandidateNames].sort(),
-   [...ledgerByName.keys()].filter(x=>x!==NEXT&&x!==NEXT81&&x!==NEXT82).sort()))fail();
+   [...ledgerByName.keys()].filter(x=>x!==NEXT&&x!==NEXT81&&x!==NEXT82&&x!==NEXT83).sort()))fail();
 
  const added=new Set(),prRefs=new Set(),group={};
  for(const x of s.newlyReconciled){
@@ -171,7 +173,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT);
   if(!same(l.releasePreviewPreparation,expected)||
-   !entry||l.branches.at(failedPreviewSuccessor?-3:deployedSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(commitProfileSuccessor?-4:failedPreviewSuccessor?-3:deployedSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='PREVIEW_SOURCE_PREFLIGHT_ONLY'||
    entry.linkedPullRequest!==182||entry.productionBaseSha!==MAIN||
@@ -198,7 +200,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT81);
   if(!same(l.releasePreviewActivation,exact)||
-   !entry||l.branches.at(failedPreviewSuccessor?-2:-1)!==entry||
+   !entry||l.branches.at(commitProfileSuccessor?-3:failedPreviewSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='PREVIEW_ONLY_DEPLOYED_PENDING_SIGNED_BROWSER_QA'||
    entry.linkedPullRequest!==183||entry.productionBaseSha!==MAIN||
@@ -225,20 +227,52 @@ export function validateR79Ledger({snapshot,ledger}={}){
   };
   const entry=ledgerByName.get(NEXT82);
   if(!same(l.releaseMovementDiagnostic,exact)||
-   !entry||l.branches.at(-1)!==entry||
+   !entry||l.branches.at(commitProfileSuccessor?-2:-1)!==entry||
    entry.status!=='staged'||entry.releaseReady!==false||
    entry.classification!=='COALESCED_ADVANCE_SOURCE_FIX_PREVIEW_PERFORMANCE_FAILED'||
    entry.linkedPullRequest!==184||entry.productionBaseSha!==MAIN||
    entry.reviewedAgainstCanonicalProduction!==false||
    !entry.note?.includes('Not deployed'))fail();
  }else if(l.releaseMovementDiagnostic!==undefined)fail();
+ if(commitProfileSuccessor){
+  const exact={
+   schema:1,workPackage:'B10-R18-83',decision:'NO_GO',
+   previousLedgerBranches:168,currentLedgerBranches:169,addedBranch:NEXT83,
+   actualLiveTokenPositionTriggerCount:6,
+   disposableSourceRealTokenTriggerCount:2,
+   actualLiveToolPositionTriggerCount:4,
+   newSignedCommitSessions:0,
+   existingSignedCommitCallsProfiled:72,
+   browserDMSignedCommitP95Ms:1451.7,
+   historicalLiveCommitSQLMeanMs:305.46,
+   liveTrackFunctions:'none',changedLiveTrackFunctions:false,
+   R83TemporaryProfiler:'PG17_SOURCE_REAL_ONLY_SET_LOCAL_AND_ROLLBACK',
+   fullLiveTriggerCoverageVerified:false,
+   productionDeployed:false,previewDeployed:false,
+   supabaseSqlWritten:false,sqlMigrationApplied:false,
+   performanceAcceptedInBrowser:false,
+   independentlyAuthenticatedP1P2Verified:false,
+   officialCli83Plus8Verified:false,
+   productionReleaseAuthorized:false
+  };
+  const entry=ledgerByName.get(NEXT83);
+  if(!same(l.releaseCommitAttribution,exact)||
+   !entry||l.branches.at(-1)!==entry||
+   entry.status!=='staged'||entry.releaseReady!==false||
+   entry.classification!=='ORIGINAL_COMMIT_TRIGGER_COVERAGE_AND_DISPOSABLE_FUNCTION_PROFILE'||
+   entry.linkedPullRequest!==185||entry.productionBaseSha!==MAIN||
+   entry.reviewedAgainstCanonicalProduction!==false||
+   !entry.note?.includes('NO production/preview deploy'))fail();
+ }else if(l.releaseCommitAttribution!==undefined)fail();
  const out=l.upcomingRelease.outstandingBranches;
  if(!Array.isArray(out)||out.length!==100+(successor?1:0)+
-  (deployedSuccessor?1:0)+(failedPreviewSuccessor?1:0)||
+  (deployedSuccessor?1:0)+(failedPreviewSuccessor?1:0)+
+  (commitProfileSuccessor?1:0)||
   new Set(out).size!==out.length||
   !out.includes(BRANCH)||(successor&&!out.includes(NEXT))||
   (deployedSuccessor&&!out.includes(NEXT81))||
   (failedPreviewSuccessor&&!out.includes(NEXT82))||
+  (commitProfileSuccessor&&!out.includes(NEXT83))||
   !same([...out].sort(),l.branches.filter(x=>x.status==='staged').map(x=>x.name).sort())||
   !l.upcomingRelease.stagePolicy.includes('NOT a bulk-merge queue'))fail();
  const pr=n=>s.newlyReconciled.find(x=>x.linkedPullRequest===n);
@@ -253,6 +287,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   currentLedgered:l.branches.length,successorAudited:successor,
   deployedSuccessorAudited:deployedSuccessor,
   failedPreviewSuccessorAudited:failedPreviewSuccessor,
+  commitProfileSuccessorAudited:commitProfileSuccessor,
   laterPRsRecorded:62,unmatchedPRBranches:2,
   outstandingReviewBranches:out.length,
   canonicalLivePr:139,rejectedOrFailed:[140,144],
