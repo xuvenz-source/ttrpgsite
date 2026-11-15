@@ -29,6 +29,21 @@ Across the R18-87 extension this is **24 measured forward Commit samples, 24 unt
 
 CI prints bounded per-variant local PostgreSQL **median, mean, minimum, maximum and named ray-call counts**; it also prints group-specific summaries. No authored scene, JWT, user IDs, private frames or map geometry are emitted. Do not label local n=4/8 medians as browser p95 or claim a production speedup without separate signed three-party live measurements. The test intentionally does not assert a performance winner: an incidental noisy runner must not create a false security acceptance.
 
+## Verified balanced local measurement and attribution
+
+The complete fifth-pass source-real PostgreSQL 17 CI sample, timestamped 15 November 2026 at 08:31 UTC, passed `R87-10`, with 24 timed original signed canonical Commits, 24 untimed signed return Commits, **192 full eight-viewer source-frozen private frame equalities**, six original token and four tool movement triggers, all source-sealed inverses restored and the outer R54 ROLLBACK.
+
+| Source implementation | Signed timed samples | Local median Commit | Local mean | Min–max | Mean original-named ray calls |
+|---|---:|---:|---:|---:|---:|
+| Original | 8 | **660.041 ms** | 662.219 ms | 654.375–679.922 ms | 1,854 |
+| Sealed R57 | 4 | **279.786 ms** | 279.873 ms | 279.341–280.580 ms | 789 |
+| Sealed R77 | 4 | **279.918 ms** | 281.348 ms | 277.063–288.492 ms | 1,854 |
+| Sealed R57 + R77 | 8 | **120.616 ms** | 120.328 ms | 118.830–121.231 ms | 789 |
+
+The local combined-vs-original sample median ratio is approximately **5.47×**, with about **81.7% lower local instrumented Commit duration**. The group-order check was directionally consistent: ABBA original/combined group means **655.842/119.112 ms** (two samples each); BAAB **659.903/120.616 ms** (two samples each). Neither of these tiny groups is a population confidence interval; this is one CI runner, one wall-heavy scenario and synthetic membership data. Do **not** publish these figures as real-user movement speed or p95. Source originals and both candidate inverses were used, not mocked. This is an eligible *candidate selection*, not authorization to apply SQL.
+
+**Verified privilege nuance from linked Supabase SELECT-only catalog on the same date:** `forge_visibility.ray_blocked` has **NULL `proacl`**, so function-level EXECUTE follows PostgreSQL's default PUBLIC privilege, but both `anon` and `authenticated` lack **USAGE on the private `forge_visibility` schema**. Conversely, `authorized_viewer_fog_frame` has explicit `{postgres=X/postgres}` grants. R18-87 checks these exact real-source privilege shapes and the inaccessible private schema before every timed Commit; neither candidate changes privileges. A blanket assertion that the ray helper already had revoked function EXECUTE would be incorrect.
+
 ## Release and operator gates
 
 Neither R18-57 nor R18-77 may be installed on the project before all mandatory gates. R18-87 is not an opt-in feature deployment and does not alter production clients, public RPCs, roles, Supabase migrations, official migration history, switches, Vercel aliases, or the permanent QA preview.
