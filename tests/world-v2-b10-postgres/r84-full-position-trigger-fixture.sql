@@ -46,9 +46,9 @@ ALTER TABLE public.campaigns
  ADD COLUMN sheet_template jsonb NOT NULL DEFAULT '{}'::jsonb;
 CREATE OR REPLACE FUNCTION public.is_campaign_member(p_campaign uuid)
  RETURNS boolean LANGUAGE sql STABLE SET search_path TO ''
- AS $ SELECT EXISTS(SELECT 1 FROM public.campaign_members
+ AS $r84_member$ SELECT EXISTS(SELECT 1 FROM public.campaign_members
   WHERE campaign_id=p_campaign AND user_id=auth.uid()
-  AND role IN ('dm','player')) $;
+  AND role IN ('dm','player')) $r84_member$;
 
 -- The source is not rewritten for the fixture. Strict MD5 guard below.
 \i tests/world-v2-b10-postgres/r84-live-position-trigger-functions.sql
