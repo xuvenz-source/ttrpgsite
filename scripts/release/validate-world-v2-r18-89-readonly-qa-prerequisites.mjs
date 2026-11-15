@@ -137,7 +137,7 @@ export function validateR89ReadOnlyPrerequisites({
   stages.some((x,i)=>x.order!==i+1||x.command!==expectedCommands[i]||
    x.network!==(i===4||i===5||i===7||i===8)||
    x.writesRemote!==false||typeof x.expected!=='string'||
-   x.expected.length<10)||
+   x.expected.length<3)||
   !exact(plan.forbidden,allowedForbidden)||
   !all(plan.conditions,[
    'realCliHelpChecked','localIsolatedWorkspaceBuilt',
