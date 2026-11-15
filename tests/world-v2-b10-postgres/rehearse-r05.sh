@@ -59,6 +59,10 @@ r05_psql -v r84_full=1 -v r86_matrix=1 -f tests/world-v2-b10-postgres/r54-fog-co
 # measured actor-signed Commits plus 24 actor-signed returns (within 120 cap).
 # Genuine original R57/R77 operator-gated candidates and inverses only.
 r05_psql -v r84_full=1 -v r86_matrix=1 -v r87_balanced=1 -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
+# R18-88 sixth independent disposable PG17 run: after original R86 signed
+# 8-viewer source parity, prove partial and combined candidate installations
+# are atomically undone with SAVEPOINT; do not replay R87 or issue live SQL.
+r05_psql -v r84_full=1 -v r86_matrix=1 -v r88_atomic=1 -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
 # R18-55: ONLY in same disposable DB, prototype fail-closed dirty fog handoff.
 # Real signed Begin/Advance/Commit and original sight functions with rollback.
 r05_psql -f tests/world-v2-b10-postgres/r55-dirty-fog-prototype.sql

@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-88",
+  "kind": "READ_ONLY_SEALED_COMBINED_QA_CANDIDATE_PREFLIGHT",
+  "decision": "NO_GO",
+  "candidateReadyToApply": false,
+  "productionReleaseAuthorized": false,
+  "source": {
+    "repo": "xuvenz-source/ttrpgsite",
+    "parentPr": 189,
+    "parentSha": "26e6887f223653f2426f87145c3a86828ec41c1d",
+    "headBranch": "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
+    "scope": "tests + offline verification + source-only QA planning",
+    "sourceSealed": true,
+    "runtimeFilesChanged": false,
+    "rootMigrationsChanged": false
+  },
+  "project": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "readOnlyObservedDate": "2026-11-15",
+    "liveRegisteredMigrations": 83,
+    "liveNewestVersion": "20261109171247",
+    "liveFogFunctionMd5": "ee3356af321fec1a3e167a75c6245e86",
+    "liveRayFunctionMd5": "a9fc198168c29fd5d80041b05337017e",
+    "liveFogAcl": "{postgres=X/postgres}",
+    "liveRayAcl": null,
+    "anonPrivateSchemaUsage": false,
+    "authenticatedPrivateSchemaUsage": false,
+    "activeSessions": 0,
+    "waitingLocksAtObservation": 0
+  },
+  "pendingMigrations": {
+    "expectedTotalAfterPrerequisites": 91,
+    "expectedNewCount": 8,
+    "requiredFirst": "20261111023204",
+    "requiredLast": "20261113024116",
+    "versions": [
+      "20261111023204",
+      "20261113021005",
+      "20261113021007",
+      "20261113021010",
+      "20261113021012",
+      "20261113021020",
+      "20261113021022",
+      "20261113024116"
+    ],
+    "stagedManifest": "staging/world-v2-b10-r18-48-narrow-pending/manifest.json",
+    "requiredOriginalR05GitBlob": "f4e296725c09055685321726cbe4bc6e09dbce5a",
+    "excludedUnapprovedVersions": [
+      "20261113021015",
+      "20261113021017"
+    ],
+    "officialLinkedCliVersion": "2.81.3",
+    "officialLinkedHistoryFetchAndDryRunVerified": false,
+    "mustNotUseDefaultV3CliTarget": true,
+    "requiresPhysicalApplyBeforeCandidate": true
+  },
+  "candidate": {
+    "installOrder": [
+      {
+        "path": "supabase/candidates/world_v2_r18_57_sync_fog_fastpath_optin.sql",
+        "gitBlobSha": "6adf9a0b43e833c1b7f13befaca458b14781f74b",
+        "guard": "sealed_post_83_plus_8_candidate_only"
+      },
+      {
+        "path": "supabase/candidates/world_v2_r18_77_inline_cross2_ray_optin.sql",
+        "gitBlobSha": "06a0e142608dcd53aefe739c451230ac906c51df",
+        "guard": "sealed_post_83_plus_8_ray_inline_candidate_only"
+      }
+    ],
+    "rollbackOrder": [
+      {
+        "path": "supabase/candidates/world_v2_r18_77_inline_cross2_ray_rollback.sql",
+        "gitBlobSha": "6320a8a6a0e61ec8127891576a81f025b4c17027",
+        "guard": "sealed_post_83_plus_8_ray_inline_rollback_only"
+      },
+      {
+        "path": "supabase/candidates/world_v2_r18_57_sync_fog_fastpath_rollback.sql",
+        "gitBlobSha": "66745cc8305b8ff11cfac58a18c3864d2052ae3e",
+        "guard": "sealed_post_83_plus_8_rollback_only"
+      }
+    ],
+    "atomicProcedure": "ONE explicit transaction after separate operator review; do not auto-commit",
+    "dryRunOnlyFixture": "tests/world-v2-b10-postgres/r88-combined-savepoint-rollback.sql",
+    "rootMigrationsExcluded": true,
+    "anyPublicGrantChange": false,
+    "synchronousPrivateSightPreserved": true,
+    "originalCanonicalCollisionPreserved": true,
+    "originalFogMd5": "ee3356af321fec1a3e167a75c6245e86",
+    "originalRayMd5": "a9fc198168c29fd5d80041b05337017e",
+    "newFogMd5": "f37c8d13e8d48bea123b4c811ae6de4d",
+    "canarySqlApplied": false,
+    "rollbackTestedOnlyOnDisposableFixture": true
+  },
+  "requiredGates": {
+    "authenticatedPinnedOfficialLinkedCli83Plus8": false,
+    "fetchedHistoricalSqlBodiesMatch83": false,
+    "independentMultiuserDmP1PassiveP2": false,
+    "authenticatedQaPreviewWithExactBuild": false,
+    "wallCollisionRevocationFogAndInstantRegrab": false,
+    "browserLatencyP95AndObserverConvergence": false,
+    "freeTierRamCpuSwapLocksUnderLoad": false,
+    "separateOperatorApproval": false,
+    "productionPermission": false
+  },
+  "deployment": {
+    "permanentQaPreviewChanged": false,
+    "productionChanged": false,
+    "supabaseWritePerformed": false,
+    "migrationApplied": false,
+    "vercelEnvironmentChanged": false,
+    "runtimeFlagsEnabled": false,
+    "releaseState": "BLOCKED",
+    "qaTargetBuild": null
+  }
+}

@@ -347,6 +347,11 @@ END $r86_finish$;
 \if :{?r87_balanced}
 \i tests/world-v2-b10-postgres/r87-balanced-signed-candidate-cost.sql
 \endif
+-- R18-88 independently disposable sixth R54 pass, after the original R86
+-- four-mode parity but without repeating R87 48 extra actor sessions.
+\if :{?r88_atomic}
+\i tests/world-v2-b10-postgres/r88-combined-savepoint-rollback.sql
+\endif
 
 -- Only aggregate variant labels and synthetic SQL execution timings; no
 -- sight JSON, geometry, actor/token identifiers or private frame values.
