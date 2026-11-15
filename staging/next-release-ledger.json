@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1765,6 +1765,16 @@
       "linkedPullRequest": 191,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-89 performs connected Supabase R50 SELECT-only 83/83 exact original historical SQL digest/statement count/name match plus 10/10 critical authority function fingerprints. Free organization: one accessible project and only main branch; separate QA backend unverified. A source-only offline CLI operator plan and validator pin v2.81.3 and forbid any remote SQL push except verified --dry-run. Official independently credentialed linked CLI not run, 83+8 release remains NO_GO. No SQL, paid infrastructure, preview or production deploy."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "PINNED_SUPABASE_CLI_V2_81_3_OFFLINE_FLAG_VERIFICATION_NO_CREDENTIALS",
+      "linkedPullRequest": 192,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-90 validates exact 2.81.3 Supabase CLI command help with credential-free disposable GitHub CI. NO authenticated linked CLI, migration fetch/list, db push dry-run, live SQL, paid infrastructure or QA/production deployments. Actual original database history remains 83 (8 pending), only one shared Free project and no confirmed QA backend. NO_GO."
     }
   ],
   "features": [
@@ -2870,7 +2880,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2981,9 +2991,10 @@
       "stage/world-v2-b10-r18-86-full-trigger-eight-viewer-candidate-matrix-2026-11-15",
       "stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15",
       "stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15",
-      "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15"
+      "stage/world-v2-b10-r18-89-linked-cli-qa-prerequisite-attestation-2026-11-15",
+      "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15"
     ],
-    "stagePolicy": "R18-89: historic R79 frozen 165, now 175 ledger branches and 110 unapproved outstanding (NOT a bulk-merge queue). Live R50 catalog read-only 83/83 SQL history digests and 10/10 critical authority fingerprints verified, no migration drift. Supabase org Free, connected account sees one project/main branch; no isolated QA backend verified. R48 8 pending versions still missing; official pinned 2.81.3 credentialed linked fetch/list/db push --dry-run remains NO_GO, independent DM/P1/P2, browser p95 and Free physical RAM/locks remain NO_GO. R57/R77 candidate still not installed; no migration apply or permanent QA/production changes.",
+    "stagePolicy": "R18-90: preserve frozen R79 historical 165 branches, now 176 ledger branches and 111 unapproved outstanding (NOT a bulk-merge queue). A credential-free disposable GitHub runner verifies only original pinned Supabase CLI 2.81.3 version and read-only --help for migration fetch/list, db push --linked --dry-run and link; NOT authenticated CLI or database evidence. Live R89 83/83 stored historical SQL fingerprints and 10/10 authority sources matched but eight pending not installed. No separate QA backend verified on Free. Multiplayer signed DM/P1/P2, browser p95, Free RAM/locks, operator SQL approval remain NO_GO. Never install R57/R77 or change permanent QA/production aliases.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3482,6 +3493,40 @@
     "liveSupabaseSqlWritten": false,
     "previewDeployed": false,
     "productionDeployed": false,
+    "productionReleaseAuthorized": false
+  },
+  "releasePinnedCliOfflineHelp": {
+    "schema": 1,
+    "workPackage": "B10-R18-90",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 175,
+    "currentLedgerBranches": 176,
+    "addedBranch": "stage/world-v2-b10-r18-90-pinned-cli-offline-help-2026-11-15",
+    "parentPr": 191,
+    "parentSha": "e380933f43850b7884996fa0241e36ee70db66e8",
+    "manifest": "staging/world-v2-b10-r18-90-cli-help/manifest.json",
+    "offlineWorkflow": ".github/workflows/world-v2-r18-90-cli-offline.yml",
+    "originalPinnedCliVersion": "2.81.3",
+    "offlineHelpSurfaceCount": 4,
+    "authenticationUsed": false,
+    "projectCredentialsSupplied": false,
+    "officialLinkedCliDryRunVerified": false,
+    "historicalSqlBodiesIndependentlyFetchedViaCli": false,
+    "liveRegisteredMigrations": 83,
+    "requiredMigrations": 91,
+    "priorReadOnlyHistoryMatched": 83,
+    "priorReadOnlyAuthorityMatched": 10,
+    "isolatedQaBackendVerified": false,
+    "independentSignedDmP1P2Accepted": false,
+    "browserP95Accepted": false,
+    "freeTierRamLockLoadAccepted": false,
+    "sqlMigrationApplied": false,
+    "liveSupabaseSqlWritten": false,
+    "runtimeFilesChanged": false,
+    "rootMigrationFilesChanged": false,
+    "previewDeployed": false,
+    "productionDeployed": false,
+    "paidInfrastructureCreated": false,
     "productionReleaseAuthorized": false
   }
 }
