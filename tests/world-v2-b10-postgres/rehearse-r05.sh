@@ -46,6 +46,10 @@ r05_psql -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
 # transaction, but with all 6 real map-token and 4 issued-tool x/y triggers.
 # The original R18-83 two-trigger run and measurements remain unchanged.
 r05_psql -v r84_full=1 -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
+# R18-85 third independent, rolled-back full-trigger replay with bounded
+# four additional signed sessions for per-RPC Begin+Advance vs Commit
+# function statistics. The original R83 and R84 passes remain untouched.
+r05_psql -v r84_full=1 -v r85_phase=1 -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
 # R18-55: ONLY in same disposable DB, prototype fail-closed dirty fog handoff.
 # Real signed Begin/Advance/Commit and original sight functions with rollback.
 r05_psql -f tests/world-v2-b10-postgres/r55-dirty-fog-prototype.sql
