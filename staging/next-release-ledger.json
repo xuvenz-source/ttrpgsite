@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
+  "releaseBranch": "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1685,6 +1685,16 @@
       "linkedPullRequest": 183,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-81: operator-approved exactly two branch-scoped preview Vite flags and one READY protected Git-source deployment of pinned R18-62; no production alias, SQL, migration or global preview flags. Browser V2 selection, OAuth same origin and real independent DM/P1/P2 NOT VERIFIED; backend remains 83 migrations. This is NOT release approval."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "COALESCED_ADVANCE_SOURCE_FIX_PREVIEW_PERFORMANCE_FAILED",
+      "linkedPullRequest": 184,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-82: real signed-in DM QA FAILED wall/fast movement; 740.1ms Advance p95, 1451.7ms Commit p95, 2226.1ms terminal p95. Stage-only coalesced native-event Advance dispatch correction; does not change Commit or backend. Not deployed, not proven faster, no P1/P2 proof. Preserve fog/collision security and official 83+8 SQL gates; production NO_GO."
     }
   ],
   "features": [
@@ -2790,7 +2800,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
+    "releaseBranch": "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -2893,9 +2903,10 @@
       "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
       "stage/world-v2-transport-decision-b02-2026-11-10",
       "stage/world-v2-b10-r18-80-preview-activation-preflight-2026-11-15",
-      "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15"
+      "stage/world-v2-b10-r18-81-v2-preview-activation-2026-11-15",
+      "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15"
     ],
-    "stagePolicy": "R18-81: historical R18-79 GitHub 165-branch audit remains frozen; R18-80 source audit and R18-81 preview deployment now appended as 166th and 167th unapproved branches (102 outstanding audit/review records, NOT a bulk-merge queue). R18-81 used exactly two R18-62-branch-scoped preview build keys and one READY protected source-pinned preview deployment. Canonical prod R18-35 remains unchanged, 83 live migrations, no optional R18-57/R18-77 SQL installed. The preview is NOT independently browser-verified V2-active or accepted for collision/fog/auth, and is not integrated R05+seven-migration evidence. Official linked pinned CLI 83+8, independently signed DM/P1/passive P2, browser p95, Free RAM/swap/locks and production operator signoff remain hard NO-GO. Do not bulk merge, promote, enable optional atomic/observer flags or install SQL.",
+    "stagePolicy": "R18-82: preserve frozen R18-79 165-branch audit, R18-80 166th preview preflight and R18-81 167th actual protected READY preview; R18-82 is 168th *unapproved* stage/source-only movement correction, with 103 outstanding audit/review entries NOT a bulk-merge queue. R18-81 actual preview tested by solo DM and FAILED real wall/fast movement; source R18-62 remains served on stable QA alias. New R18-82 code only packs the full coalesced native pointer event before dispatching signed Advance; does not speed up slow Commit or authorize any movement without server signed ACK. Do not promote until real preview source review, official pinned linked CLI 83+8, independently signed DM/P1/passive P2 fog/collision, browser p95, physical Free RAM/locks and operator approval. No live database, production, preview or Vercel env mutation during R18-82.",
     "databaseReleaseVersion": null,
     "additionalDatabaseReleaseVersions": []
   },
@@ -3122,5 +3133,33 @@
     "physicalFreeRamAndLocksUnderLoadMeasured": false,
     "officialLinkedCli83Plus8DryRun": false,
     "productionReleaseAuthorization": false
+  },
+  "releaseMovementDiagnostic": {
+    "schema": 1,
+    "workPackage": "B10-R18-82",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 167,
+    "currentLedgerBranches": 168,
+    "addedBranch": "stage/world-v2-b10-r18-82-coalesced-advance-dispatch-2026-11-15",
+    "sourceFailedPreviewId": "dpl_Bdek3W7xXVYW3f7QDZpjrDDp9V3F",
+    "sourceFailedPreviewSha": "380e31bda9e20638c3e1f660a2cdf001b8e37c0d",
+    "observedRole": "dm",
+    "independentSignedPlayersVerified": false,
+    "observedGestureCount": 7,
+    "observedAdvanceCalls": 23,
+    "browserAdvanceP95Ms": 740.1,
+    "browserCommitP95Ms": 1451.7,
+    "browserReleaseToTerminalP95Ms": 2226.1,
+    "optimization": "DEFER_ADVANCE_UNTIL_NATIVE_COALESCED_EVENT_COMPLETE",
+    "touchesServerProtocol": false,
+    "changesCanonicalCommit": false,
+    "changesFogAuthorization": false,
+    "productionDeployed": false,
+    "previewDeployed": false,
+    "supabaseMigrationApplied": false,
+    "optionalAtomicFinalizationEnabled": false,
+    "candidatePerformanceVerifiedInBrowser": false,
+    "officialCli83Plus8DryRunVerified": false,
+    "releaseAuthorized": false
   }
 }
