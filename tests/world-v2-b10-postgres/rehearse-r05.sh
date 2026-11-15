@@ -54,6 +54,11 @@ r05_psql -v r84_full=1 -v r85_phase=1 -f tests/world-v2-b10-postgres/r54-fog-com
 # 4 source-sealed candidate modes and frozen ORIGINAL ray/frame reference.
 # Deliberately skips R68/R84/R85 replay in this fourth run: no rate bypass.
 r05_psql -v r84_full=1 -v r86_matrix=1 -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
+# R18-87 fifth independent disposable full-trigger pass: preserve the R86
+# 4-mode complete private frame qualification, add 24 balanced source-sealed
+# measured actor-signed Commits plus 24 actor-signed returns (within 120 cap).
+# Genuine original R57/R77 operator-gated candidates and inverses only.
+r05_psql -v r84_full=1 -v r86_matrix=1 -v r87_balanced=1 -f tests/world-v2-b10-postgres/r54-fog-commit-source-real.sql
 # R18-55: ONLY in same disposable DB, prototype fail-closed dirty fog handoff.
 # Real signed Begin/Advance/Commit and original sight functions with rollback.
 r05_psql -f tests/world-v2-b10-postgres/r55-dirty-fog-prototype.sql
