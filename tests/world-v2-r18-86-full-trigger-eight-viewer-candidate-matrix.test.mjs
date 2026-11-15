@@ -102,14 +102,15 @@ test('R86 checks private grants, rolls back sealed candidates, and prints no sen
 });
 
 test('R86 ledger cannot turn synthetic history or a single local Commit into release approval',()=>{
- assert.equal(ledger.branches.length,173);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,108);
+ assert.equal(ledger.branches.length,174);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,109);
  assert.equal(ledger.releaseBranch,
-  'stage/world-v2-b10-r18-87-balanced-signed-candidate-cost-2026-11-15');
- assert.equal(ledger.branches.at(-2).linkedPullRequest,188);
+  'stage/world-v2-b10-r18-88-combined-qa-release-preflight-2026-11-15');
+ assert.equal(ledger.branches.at(-3).linkedPullRequest,188);
  assert.equal(ledger.branches.at(-2).releaseReady,false);
- assert.equal(ledger.branches.at(-1).linkedPullRequest,189);
+ assert.equal(ledger.branches.at(-2).linkedPullRequest,189);
  assert.equal(ledger.branches.at(-1).releaseReady,false);
+ assert.equal(ledger.branches.at(-1).linkedPullRequest,190);
  const x=ledger.releaseFogCandidateMatrix;
  assert.equal(x.workPackage,'B10-R18-86');
  assert.equal(x.decision,'NO_GO');
