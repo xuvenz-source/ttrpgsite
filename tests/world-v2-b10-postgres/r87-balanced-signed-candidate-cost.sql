@@ -41,11 +41,12 @@ BEGIN
   AND NOT has_schema_privilege('authenticated','forge_visibility','USAGE')
   AND NOT has_schema_privilege('anon','forge_visibility','USAGE'),
   'R87-00c original private fog schema ACL remains unaltered');
- RAISE NOTICE 'R87 bounded post-R86 pending signed sessions: %',
-  (SELECT count(*) FROM forge_world_v2.motion_sessions WHERE status='active');
+ -- R86's four genuine signed forward/reverse cycles reconcile and expire
+ -- the original R54 blocked-wall pending session. Require ZERO remaining
+ -- active sessions, never reuse an unconfirmed or hostile gesture.
  PERFORM public.b08_assert(
-  (SELECT count(*)=1 FROM forge_world_v2.motion_sessions WHERE status='active'),
-  'R87-00d original R54 hostile pending signed session post R86 signed probes');
+  (SELECT count(*)=0 FROM forge_world_v2.motion_sessions WHERE status='active'),
+  'R87-00d original authority cleared prior rejected-wall session; zero stale active gestures');
  IF current_database()<>'world_v2_b10_r05' OR current_user<>'postgres'
  OR to_regclass('pg_temp.r86_matrix_samples') IS NULL
  OR (SELECT count(*)<>4 FROM pg_temp.r86_matrix_samples)
@@ -66,7 +67,7 @@ BEGIN
   WHERE id='00000000-0000-4000-8000-000000000101'::uuid) IS DISTINCT FROM true
  OR (SELECT count(*)<>8 FROM public.campaign_members
   WHERE campaign_id='00000000-0000-4000-8000-000000000001'::uuid AND role='player')
- OR (SELECT count(*)<>1 FROM forge_world_v2.motion_sessions WHERE status='active')
+ OR (SELECT count(*)<>0 FROM forge_world_v2.motion_sessions WHERE status='active')
  OR NOT has_schema_privilege('postgres','forge_visibility','USAGE')
  OR has_schema_privilege('authenticated','forge_visibility','USAGE')
  OR has_schema_privilege('anon','forge_visibility','USAGE')
