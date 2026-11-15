@@ -37,11 +37,15 @@ BEGIN
    WHERE campaign_id='00000000-0000-4000-8000-000000000001'::uuid AND role='player'),
   'R87-00b original function digests, 6/4 triggers, token canonical and 8 viewer roles');
  PERFORM public.b08_assert(
-  (SELECT count(*)=1 FROM forge_world_v2.motion_sessions WHERE status='active')
-  AND has_schema_privilege('postgres','forge_visibility','USAGE')
+  has_schema_privilege('postgres','forge_visibility','USAGE')
   AND NOT has_schema_privilege('authenticated','forge_visibility','USAGE')
   AND NOT has_schema_privilege('anon','forge_visibility','USAGE'),
-  'R87-00c pending hostile signed session and private fog ACL remain unaltered');
+  'R87-00c original private fog schema ACL remains unaltered');
+ RAISE NOTICE 'R87 bounded post-R86 pending signed sessions: %',
+  (SELECT count(*) FROM forge_world_v2.motion_sessions WHERE status='active');
+ PERFORM public.b08_assert(
+  (SELECT count(*)=1 FROM forge_world_v2.motion_sessions WHERE status='active'),
+  'R87-00d original R54 hostile pending signed session post R86 signed probes');
  IF current_database()<>'world_v2_b10_r05' OR current_user<>'postgres'
  OR to_regclass('pg_temp.r86_matrix_samples') IS NULL
  OR (SELECT count(*)<>4 FROM pg_temp.r86_matrix_samples)
