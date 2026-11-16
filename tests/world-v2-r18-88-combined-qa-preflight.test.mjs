@@ -108,7 +108,7 @@ test('R88 live preflight SQL is SELECT-only, bounded, privacy-safe and explicitl
 test('R88 release ledger successor still blocks actual root migration and production/QA promotion',()=>{
  const l=JSON.parse(file('staging/next-release-ledger.json'));
  assert.equal(l.branches.length,182);
- assert.equal(l.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,117);
  assert.equal(l.branches.at(-8).linkedPullRequest,190);
  assert.equal(l.branches.at(-7).linkedPullRequest,191);
  assert.equal(l.branches.at(-6).linkedPullRequest,192);
