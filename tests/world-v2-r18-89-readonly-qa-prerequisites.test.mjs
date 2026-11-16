@@ -109,7 +109,7 @@ test('R89 continues to use original R49/R50/R51 evidence validators and R48 narr
  assert.match(s,/receiptOriginIndependentlyAttested=false/);
  assert.doesNotMatch(s,/spawn|child_process|fetch\(|https?\.request|writeFile|unlink|execSync|apply_migration/);
  const l=JSON.parse(file('staging/next-release-ledger.json'));
- assert.equal(l.branches.length,181);
+ assert.equal(l.branches.length,182);
  assert.equal(l.upcomingRelease.outstandingBranches.length,116);
  assert.equal(l.branches.at(-7).linkedPullRequest,191);
  assert.equal(l.branches.at(-6).linkedPullRequest,192);
