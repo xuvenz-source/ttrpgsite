@@ -102,7 +102,7 @@ test('R86 checks private grants, rolls back sealed candidates, and prints no sen
 });
 
 test('R86 ledger cannot turn synthetic history or a single local Commit into release approval',()=>{
- assert.equal(ledger.branches.length,181);
+ assert.equal(ledger.branches.length,182);
  assert.equal(ledger.upcomingRelease.outstandingBranches.length,116);
  assert.equal(ledger.releaseBranch,
   'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
