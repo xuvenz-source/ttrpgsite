@@ -119,7 +119,7 @@ test('R84 tests signed tool authority, wall blocking, revocation and protected f
 
 test('R84 is never deployment authority, SQL migration, linked CLI or browser acceptance',()=>{
  assert.equal(ledger.branches.length,182);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,117);
  assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
  const record=ledger.releaseFullTriggerFidelity;
  assert.equal(record.decision,'NO_GO');
