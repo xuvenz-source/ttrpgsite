@@ -60,12 +60,12 @@ test('R94 R79 historical branch positions use fixed source-frozen indices, not c
 test('R94 release ledger and manifest are never permitted to authorize SQL or deployment',()=>{
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-94-phase3-chromium/manifest.json'));
- assert.equal(l.branches.length,182);
- assert.equal(l.upcomingRelease.outstandingBranches.length,117);
- assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16');
- assert.equal(l.branches.at(-3).linkedPullRequest,196);
- assert.equal(l.branches.at(-2).linkedPullRequest,197);
- assert.equal(l.branches.at(-1).releaseReady,false);
+ assert.equal(l.branches.length,183);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,118);
+ assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-97-qa-schema-bootstrap-preflight-2026-11-16');
+ assert.equal(l.branches.at(-4).linkedPullRequest,196);
+ assert.equal(l.branches.at(-3).linkedPullRequest,197);
+ assert.equal(l.branches.at(-2).releaseReady,false);
  assert.equal(l.releasePhase3ChromeTeardown.decision,'NO_GO');
  assert.equal(l.releasePhase3ChromeTeardown.chromeChildCloseWaited,true);
  assert.equal(l.releasePhase3ChromeTeardown.testSkippedOrWeakened,false);
