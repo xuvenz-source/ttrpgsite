@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16",
+  "releaseBranch": "stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1825,6 +1825,16 @@
       "linkedPullRequest": 197,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-95 real connected cost quote: independent second Supabase Free project in Xuven $0/month, development branch $0.01344/hour (prohibited). Existing Vercel Supabase env values apply to production, preview and development; current preview NOT independently isolated. Project and Vercel creation not approved or executed; no private keys, SQL or new OAuth accounts. NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "INDEPENDENT_ZERO_COST_QA_BACKEND_AND_UNDEPLOYED_VERCEL_CONFIGURATION_ONLY",
+      "linkedPullRequest": 198,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-96: operator confirmed Xuven and the $0/month new Supabase project quote; created healthy independent QA ref bgydsamxypjslergfpla with zero migrations and unlinked protected Vercel project prj_49bkFS9Ti4FoPa38LjNNxjgEaZwX with QA-only preview/development env. No SQL, auth, frontend deploy or existing Vercel changes. NO_GO."
     }
   ],
   "features": [
@@ -2930,7 +2940,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16",
+    "releaseBranch": "stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3047,7 +3057,8 @@
       "stage/world-v2-b10-r18-92-r12-regrab-ci-diagnostics-2026-11-16",
       "stage/world-v2-b10-r18-93-cli-streams-positive-offline-2026-11-16",
       "stage/world-v2-b10-r18-94-phase3-chromium-shutdown-2026-11-16",
-      "stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16"
+      "stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16",
+      "stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16"
     ],
     "stagePolicy": "R18-95: preserve original frozen R79 165 branches; now 181 ledger branches and 116 unapproved outstanding (NOT a bulk-merge queue). Linked Supabase org Xuven Free, one visible project, cost quoted $0/month for independent second project and $0.01344/hour for paid branch (reject). Vercel project shared VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY env targets production/preview/development, so no isolated backend exists. Only stage source-only project/QA isolation plan; wait for user to choose org explicitly, no creation/deploy, independent Auth and 83+8 migrations, real signed DM/P1/P2 performance, Free RAM/locks remain unverified. Shared Supabase and permanent QA/production NO_GO.",
     "databaseReleaseVersion": null,
@@ -3759,6 +3770,37 @@
     "authRedirectAndRlsValidated": false,
     "liveDatabaseSqlApplied": false,
     "qaPreviewRepointed": false,
+    "productionDeployed": false,
+    "paidInfrastructureCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseQaProvisioning": {
+    "schema": 1,
+    "workPackage": "B10-R18-96",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 181,
+    "currentLedgerBranches": 182,
+    "addedBranch": "stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16",
+    "parentPr": 197,
+    "parentSha": "abfbceddef010eef7cca246bcd6e67bc5e09827f",
+    "manifest": "staging/world-v2-b10-r18-96-free-qa-provisioning/manifest.json",
+    "validator": "scripts/release/validate-world-v2-r18-96-qa-provisioning.mjs",
+    "organizationId": "uukoiflquxqdszrzgoyg",
+    "qaSupabaseRef": "bgydsamxypjslergfpla",
+    "qaVercelProjectId": "prj_49bkFS9Ti4FoPa38LjNNxjgEaZwX",
+    "qaRegisteredMigrations": 0,
+    "newProjectMonthlyUsd": 0,
+    "qaVercelDeployments": 0,
+    "qaVercelGitLinked": false,
+    "qaVercelPreviewDevOnly": true,
+    "qaAuthProvidersConfigured": false,
+    "operatorExplicitlyConfirmed": true,
+    "existingVercelEnvEdited": false,
+    "existingQaAliasChanged": false,
+    "officialLinkedCli83Plus8DryRun": false,
+    "independentDmP1P2Validated": false,
+    "qaFrontendDeployed": false,
+    "productionSqlApplied": false,
     "productionDeployed": false,
     "paidInfrastructureCreated": false,
     "productionReleaseAuthorized": false
