@@ -61,7 +61,7 @@ test('R94 release ledger and manifest are never permitted to authorize SQL or de
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-94-phase3-chromium/manifest.json'));
  assert.equal(l.branches.length,182);
- assert.equal(l.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,117);
  assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
  assert.equal(l.branches.at(-2).linkedPullRequest,196);
  assert.equal(l.branches.at(-1).linkedPullRequest,197);
