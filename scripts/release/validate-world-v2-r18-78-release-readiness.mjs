@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181].includes(ledger.branches.length)||
+   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -504,7 +504,7 @@ export function validateR78ReleaseStatus({
      'stage/world-v2-b10-r18-94-phase3-chromium-shutdown-2026-11-16'||
     ledger.branches[179]?.status!=='staged'||
     ledger.branches[179]?.releaseReady!==false))||
-   (ledger.branches.length===181&&(
+   (ledger.branches.length>=181&&(
     ledger.releaseFreeQaIsolation?.workPackage!=='B10-R18-95'||
     ledger.releaseFreeQaIsolation?.decision!=='NO_GO'||
     ledger.releaseFreeQaIsolation?.previousLedgerBranches!==180||
@@ -539,7 +539,37 @@ export function validateR78ReleaseStatus({
     ledger.branches[180]?.name!==
      'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16'||
     ledger.branches[180]?.status!=='staged'||
-    ledger.branches[180]?.releaseReady!==false)))))
+    ledger.branches[180]?.releaseReady!==false))||
+   (ledger.branches.length===182&&(
+    ledger.releaseQaProvisioning?.workPackage!=='B10-R18-96'||
+    ledger.releaseQaProvisioning?.decision!=='NO_GO'||
+    ledger.releaseQaProvisioning?.previousLedgerBranches!==181||
+    ledger.releaseQaProvisioning?.currentLedgerBranches!==182||
+    ledger.releaseQaProvisioning?.parentPr!==197||
+    ledger.releaseQaProvisioning?.parentSha!=='abfbceddef010eef7cca246bcd6e67bc5e09827f'||
+    ledger.releaseQaProvisioning?.organizationId!=='uukoiflquxqdszrzgoyg'||
+    ledger.releaseQaProvisioning?.qaSupabaseRef!=='bgydsamxypjslergfpla'||
+    ledger.releaseQaProvisioning?.qaVercelProjectId!=='prj_49bkFS9Ti4FoPa38LjNNxjgEaZwX'||
+    ledger.releaseQaProvisioning?.qaRegisteredMigrations!==0||
+    ledger.releaseQaProvisioning?.newProjectMonthlyUsd!==0||
+    ledger.releaseQaProvisioning?.qaVercelDeployments!==0||
+    ledger.releaseQaProvisioning?.qaVercelGitLinked!==false||
+    ledger.releaseQaProvisioning?.qaVercelPreviewDevOnly!==true||
+    ledger.releaseQaProvisioning?.qaAuthProvidersConfigured!==false||
+    ledger.releaseQaProvisioning?.operatorExplicitlyConfirmed!==true||
+    ledger.releaseQaProvisioning?.existingVercelEnvEdited!==false||
+    ledger.releaseQaProvisioning?.existingQaAliasChanged!==false||
+    ledger.releaseQaProvisioning?.officialLinkedCli83Plus8DryRun!==false||
+    ledger.releaseQaProvisioning?.independentDmP1P2Validated!==false||
+    ledger.releaseQaProvisioning?.qaFrontendDeployed!==false||
+    ledger.releaseQaProvisioning?.productionSqlApplied!==false||
+    ledger.releaseQaProvisioning?.productionDeployed!==false||
+    ledger.releaseQaProvisioning?.paidInfrastructureCreated!==false||
+    ledger.releaseQaProvisioning?.productionReleaseAuthorized!==false||
+    ledger.branches[181]?.name!==
+     'stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16'||
+    ledger.branches[181]?.status!=='staged'||
+    ledger.branches[181]?.releaseReady!==false)))))
 
 
   fail();
