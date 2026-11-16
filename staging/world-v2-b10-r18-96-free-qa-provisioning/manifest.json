@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-96",
+  "decision": "NO_GO",
+  "parentPr": 197,
+  "parentSha": "abfbceddef010eef7cca246bcd6e67bc5e09827f",
+  "observedDateLocal": "2026-11-16",
+  "evidenceType": "LIVE_CONNECTED_PROVIDER_METADATA",
+  "authorization": {
+    "organizationExplicitlyConfirmed": true,
+    "organizationId": "uukoiflquxqdszrzgoyg",
+    "onlyVerifiedZeroCostResources": true
+  },
+  "cost": {
+    "supabaseProjectMonthlyUsd": 0,
+    "paidBranchCreated": false,
+    "vercelAdditionalProjectMonthlyPriceVerified": false,
+    "vercelDeploymentsCreated": 0
+  },
+  "production": {
+    "supabaseRef": "lwhwgqaunxbmvyndswze",
+    "supabasePostflightStatus": "ACTIVE_HEALTHY",
+    "vercelProjectId": "prj_JvLavoId5bra74h24BDL7ZyMKizN",
+    "existingVercelEnvironmentVariablesEdited": false,
+    "existingQaAliasRepointed": false,
+    "productionSqlApplied": false,
+    "productionDeploymentCreated": false
+  },
+  "qaSupabase": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "name": "Tabletop Forge QA",
+    "organizationId": "uukoiflquxqdszrzgoyg",
+    "region": "ap-northeast-1",
+    "status": "ACTIVE_HEALTHY",
+    "apiUrl": "https://bgydsamxypjslergfpla.supabase.co",
+    "postgresMajor": 17,
+    "registeredMigrations": 0,
+    "modernPublishableKeyAvailable": true,
+    "keyValueRecorded": false,
+    "productionUserOrCampaignDataCopied": false
+  },
+  "qaVercel": {
+    "projectId": "prj_49bkFS9Ti4FoPa38LjNNxjgEaZwX",
+    "name": "tabletop-forge-qa",
+    "teamId": "team_x0HgomZNnFpGbnYWHgut76AX",
+    "framework": "vite",
+    "linkedGitRepository": false,
+    "live": false,
+    "deploymentCount": 0,
+    "protectedByVercelAuthentication": true,
+    "environmentMetadata": [
+      {
+        "key": "VITE_SUPABASE_URL",
+        "target": [
+          "preview",
+          "development"
+        ],
+        "type": "encrypted"
+      },
+      {
+        "key": "VITE_SUPABASE_PUBLISHABLE_KEY",
+        "target": [
+          "preview",
+          "development"
+        ],
+        "type": "encrypted"
+      }
+    ],
+    "qaPublishableKeyConfigured": true,
+    "productionTargetVariablesSet": false,
+    "serviceRoleOrSecretKeyConfigured": false
+  },
+  "unverifiedGates": {
+    "original83SchemasBootstrapped": false,
+    "pendingEightInstalled": false,
+    "optionalR57R77Installed": false,
+    "qaAuthenticationAndRedirectsVerified": false,
+    "hostedSignedDmP1PassiveP2Validated": false,
+    "signedFogAndCollisionAcceptance": false,
+    "browserP95AndRealtimeAccepted": false,
+    "freeTierRamSwapLocksMeasured": false,
+    "officialLinkedCli83Plus8DryRun": false,
+    "productionReleaseAuthorized": false
+  }
+}
