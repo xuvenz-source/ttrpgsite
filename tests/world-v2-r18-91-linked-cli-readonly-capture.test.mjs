@@ -141,15 +141,16 @@ test('R91 requires operator-only arguments, does not run on GitHub PR CI, and pr
   /run-world-v2-r18-91-linked-cli-readonly\.mjs/);
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-91-operator-capture/manifest.json'));
- assert.equal(l.branches.length,180);
- assert.equal(l.upcomingRelease.outstandingBranches.length,115);
- assert.equal(l.branches.at(-4).linkedPullRequest,193);
- assert.equal(l.branches.at(-3).linkedPullRequest,194);
- assert.equal(l.branches.at(-2).linkedPullRequest,195);
- assert.equal(l.branches.at(-1).linkedPullRequest,196);
+ assert.equal(l.branches.length,181);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(l.branches.at(-5).linkedPullRequest,193);
+ assert.equal(l.branches.at(-4).linkedPullRequest,194);
+ assert.equal(l.branches.at(-3).linkedPullRequest,195);
+ assert.equal(l.branches.at(-2).linkedPullRequest,196);
+ assert.equal(l.branches.at(-1).linkedPullRequest,197);
  assert.equal(l.branches.at(-1).releaseReady,false);
  assert.equal(l.releaseBranch,
-  'stage/world-v2-b10-r18-94-phase3-chromium-shutdown-2026-11-16');
+  'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
  assert.equal(l.releaseLinkedCliOperatorCapture.workPackage,'B10-R18-91');
  assert.equal(l.releaseLinkedCliOperatorCapture.decision,'NO_GO');
  assert.equal(l.releaseLinkedCliOperatorCapture.authenticatedLinkedCliExecutedByChatGPT,false);

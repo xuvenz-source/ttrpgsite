@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-95",
+  "decision": "NO_GO",
+  "parentPr": 196,
+  "parentSha": "a447e6bb52fd804cb8feafdc6aa37e949b5b706c",
+  "sourceOnly": true,
+  "observedDateLocal": "2026-11-16",
+  "organization": {
+    "id": "uukoiflquxqdszrzgoyg",
+    "name": "Xuven",
+    "plan": "free",
+    "activeVisibleProjectCount": 1,
+    "ownerAdminLimitIndependentlyVerified": false
+  },
+  "productionProject": {
+    "ref": "lwhwgqaunxbmvyndswze",
+    "region": "ap-northeast-1",
+    "registeredMigrations": 83,
+    "latestMigration": "20261109171247",
+    "fogFunctionMd5": "ee3356af321fec1a3e167a75c6245e86",
+    "rayFunctionMd5": "a9fc198168c29fd5d80041b05337017e"
+  },
+  "vercelProject": {
+    "id": "prj_JvLavoId5bra74h24BDL7ZyMKizN",
+    "name": "ttrpgsite",
+    "teamId": "team_x0HgomZNnFpGbnYWHgut76AX",
+    "previewProtectionEnabled": true,
+    "observedEnvMetadataOnly": true,
+    "sharedSupabaseEnvKeys": [
+      {
+        "key": "VITE_SUPABASE_URL",
+        "target": [
+          "production",
+          "preview",
+          "development"
+        ]
+      },
+      {
+        "key": "VITE_SUPABASE_PUBLISHABLE_KEY",
+        "target": [
+          "production",
+          "preview",
+          "development"
+        ]
+      }
+    ],
+    "currentPreviewIsolatedBackendVerified": false
+  },
+  "pricing": {
+    "freeProjectMonthlyUsd": 0,
+    "branchHourlyUsd": 0.01344,
+    "currency": "USD",
+    "freeActiveProjectLimit": 2,
+    "additionalCostAuthorized": false
+  },
+  "qaProposal": {
+    "route": "SECOND_FREE_SUPABASE_PROJECT_SEPARATE_VERCEL_QA_PROJECT",
+    "preferredOrganizationId": "uukoiflquxqdszrzgoyg",
+    "preferredRegion": "ap-northeast-1",
+    "name": "Tabletop Forge QA",
+    "newSupabaseProjectRef": null,
+    "newVercelProjectId": null,
+    "existingVercelSharedVarsWillChange": false,
+    "newBackendCreated": false,
+    "newFrontendCreated": false,
+    "authRedirectsConfigured": false,
+    "original83Bootstrapped": false,
+    "pendingEightApplied": false,
+    "candidateR57R77Installed": false,
+    "testAccountsAreProductionAccounts": false,
+    "operatorConfirmedOrganization": false,
+    "operatorAuthorizedBackendCreate": false,
+    "qaSourceShaDeployed": false,
+    "independentDmP1P2Accepted": false,
+    "physicalFreeMemoryAccepted": false,
+    "productionTouched": false
+  },
+  "unverifiedGates": {
+    "authenticatedOriginal83CliFetch": false,
+    "linked83Plus8DryRun": false,
+    "accountOwnerAdminFreeQuota": false,
+    "independentSupabaseUrlAndKey": false,
+    "qaOnlyAuthRedirectAllowlist": false,
+    "independentQaRlsAndSignedSight": false,
+    "originalSourceParity": false,
+    "rollback": false,
+    "realHostedBrowserLatency": false,
+    "freePhysicalRamAndLocks": false,
+    "productionRelease": false
+  }
+}
