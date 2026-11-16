@@ -102,7 +102,7 @@ test('R95 pure validator has no network, CLI execution, secret retrieval or side
 test('R95 release ledger remains draft and original release NO-GO',()=>{
  const ledger=JSON.parse(readFileSync(join(ROOT,'staging/next-release-ledger.json')));
  assert.equal(ledger.branches.length,182);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,117);
  assert.equal(ledger.releaseBranch,
   'stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16');
  assert.equal(ledger.branches.at(-2).linkedPullRequest,197);
