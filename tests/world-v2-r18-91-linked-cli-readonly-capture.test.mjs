@@ -142,7 +142,7 @@ test('R91 requires operator-only arguments, does not run on GitHub PR CI, and pr
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-91-operator-capture/manifest.json'));
  assert.equal(l.branches.length,182);
- assert.equal(l.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,117);
  assert.equal(l.branches.at(-5).linkedPullRequest,193);
  assert.equal(l.branches.at(-4).linkedPullRequest,194);
  assert.equal(l.branches.at(-3).linkedPullRequest,195);
