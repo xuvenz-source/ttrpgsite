@@ -79,7 +79,7 @@ test('R90 NO-GO proof keeps official CLI and signed multiplayer gates blocked',(
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  const manifest=JSON.parse(read('staging/world-v2-b10-r18-90-cli-help/manifest.json'));
  assert.equal(ledger.branches.length,182);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,117);
  assert.equal(ledger.branches.at(-6).linkedPullRequest,192);
  assert.equal(ledger.branches.at(-5).linkedPullRequest,193);
  assert.equal(ledger.branches.at(-4).linkedPullRequest,194);
