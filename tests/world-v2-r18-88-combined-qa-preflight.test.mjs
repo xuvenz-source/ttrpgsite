@@ -107,17 +107,18 @@ test('R88 live preflight SQL is SELECT-only, bounded, privacy-safe and explicitl
 
 test('R88 release ledger successor still blocks actual root migration and production/QA promotion',()=>{
  const l=JSON.parse(file('staging/next-release-ledger.json'));
- assert.equal(l.branches.length,180);
- assert.equal(l.upcomingRelease.outstandingBranches.length,115);
- assert.equal(l.branches.at(-7).linkedPullRequest,190);
- assert.equal(l.branches.at(-6).linkedPullRequest,191);
- assert.equal(l.branches.at(-5).linkedPullRequest,192);
- assert.equal(l.branches.at(-4).linkedPullRequest,193);
- assert.equal(l.branches.at(-3).linkedPullRequest,194);
- assert.equal(l.branches.at(-2).linkedPullRequest,195);
- assert.equal(l.branches.at(-1).linkedPullRequest,196);
+ assert.equal(l.branches.length,181);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,116);
+ assert.equal(l.branches.at(-8).linkedPullRequest,190);
+ assert.equal(l.branches.at(-7).linkedPullRequest,191);
+ assert.equal(l.branches.at(-6).linkedPullRequest,192);
+ assert.equal(l.branches.at(-5).linkedPullRequest,193);
+ assert.equal(l.branches.at(-4).linkedPullRequest,194);
+ assert.equal(l.branches.at(-3).linkedPullRequest,195);
+ assert.equal(l.branches.at(-2).linkedPullRequest,196);
+ assert.equal(l.branches.at(-1).linkedPullRequest,197);
  assert.equal(l.branches.at(-1).releaseReady,false);
- assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-94-phase3-chromium-shutdown-2026-11-16');
+ assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
  assert.equal(l.releaseCombinedQaPreflight.workPackage,'B10-R18-88');
  assert.equal(l.releaseCombinedQaPreflight.decision,'NO_GO');
  assert.equal(l.releaseCombinedQaPreflight.officialLinkedCli83Plus8Verified,false);
