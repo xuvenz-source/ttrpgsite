@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-97",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "parentPr": 198,
+  "parentSha": "5d51d1b1e64179a0a4944e54e06b68cd6db900ea",
+  "observedDateLocal": "2026-11-16",
+  "scope": "READ_ONLY_ORIGINAL_HISTORY_PARITY_AND_QA_BOOTSTRAP_BLOCKERS",
+  "original": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 83,
+    "latestMigration": "20261109171247",
+    "frozenHistoryFile": "staging/world-v2-b10-r18-08-remote-history-content-hashes.json",
+    "liveSelectOnlyMatchedDigests": 83,
+    "liveSelectOnlyMismatchCount": 0,
+    "sqlBodiesFetchedToIsolatedWorkspace": false,
+    "cliLinkedFetchExecuted": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "publicApplicationTables": 0,
+    "bootstrapSqlApplied": false,
+    "productionDataImported": false
+  },
+  "repository": {
+    "rootMigrationDirectory": "supabase/migrations",
+    "rootSqlFiles": 62,
+    "wellFormedTimestampedSqlFiles": 56,
+    "invalidTimestampedSqlFiles": [
+      "20261106_spellcasting.sql",
+      "20261106_token_reference_codes.sql",
+      "20261106_token_status_effects.sql",
+      "20261106_ui_scale_preferences.sql",
+      "20261106_visual_macros.sql",
+      "20261106_weapon_attack_cards.sql"
+    ],
+    "duplicateTimestampVersion": "20261109000500",
+    "historicalVersionsWithRootFile": 20,
+    "originalHistoricalVersionsMissingInRoot": 63,
+    "rootTimestampedSqlFilesNotHistorical": 36,
+    "originalHistoryBodiesFullyReconstructed": false,
+    "rootDirectorySafeToPush": false
+  },
+  "sealedPending": {
+    "baselinePath": "staging/world-v2-b10-r18-48-narrow-pending/manifest.json",
+    "originalR05": "20261111023204_world_v2_b10_integrated_motion.sql",
+    "stagedNarrowPending": 7,
+    "totalWithR05": 8,
+    "candidateR57R77Included": false,
+    "appliedOnQa": false
+  },
+  "requiredGates": {
+    "recoverOriginal83SqlBodies": false,
+    "verifyAll83FetchedBodyHashes": false,
+    "verifyNoProductionSecretsOrDataInHistoricalSql": false,
+    "inspectPortabilityAuthRealtimeExtensions": false,
+    "qaScopedWorkspaceSourceAndProjectGuard": false,
+    "independentlyVerifiedQaOnlyDryRun": false,
+    "syntheticPostgresBootstrapRollback": false,
+    "approvedQaOnlySchemaInstall": false,
+    "qaEightPendingSeparateReview": false,
+    "qaOAuthAndSignedMultiplayerAcceptance": false,
+    "productionReleaseAuthorized": false
+  },
+  "changes": {
+    "originalProjectModified": false,
+    "qaDatabaseModified": false,
+    "existingVercelProjectModified": false,
+    "qaVercelDeploymentCreated": false,
+    "paidResourceCreated": false,
+    "productionDeployed": false
+  }
+}
