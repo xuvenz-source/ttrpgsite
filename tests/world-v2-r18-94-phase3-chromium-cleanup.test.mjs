@@ -60,7 +60,7 @@ test('R94 R79 historical branch positions use fixed source-frozen indices, not c
 test('R94 release ledger and manifest are never permitted to authorize SQL or deployment',()=>{
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-94-phase3-chromium/manifest.json'));
- assert.equal(l.branches.length,181);
+ assert.equal(l.branches.length,182);
  assert.equal(l.upcomingRelease.outstandingBranches.length,116);
  assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
  assert.equal(l.branches.at(-2).linkedPullRequest,196);
