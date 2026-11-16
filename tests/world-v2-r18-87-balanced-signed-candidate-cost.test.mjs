@@ -118,7 +118,7 @@ test('R87 refuses original signed session limiter bypass and does not overclaim 
 });
 
 test('R87 ledger is another draft, never approval for migration, QA alias or production',()=>{
- assert.equal(ledger.branches.length,181);
+ assert.equal(ledger.branches.length,182);
  assert.equal(ledger.upcomingRelease.outstandingBranches.length,116);
  assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
  assert.equal(ledger.branches.at(-9).linkedPullRequest,189);
