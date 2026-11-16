@@ -43,7 +43,7 @@ test('R92 isolated R12 React test cannot silently skip Chromium or hang the enti
 test('R92 original sight/collision and pending 83+8 release gates remain NO_GO',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-92-regrab-ci-cleanup/manifest.json'));
- assert.equal(ledger.branches.length,181);
+ assert.equal(ledger.branches.length,182);
  assert.equal(ledger.upcomingRelease.outstandingBranches.length,116);
  assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-95-free-isolated-qa-project-preflight-2026-11-16');
  assert.equal(ledger.branches.at(-4).linkedPullRequest,194);
