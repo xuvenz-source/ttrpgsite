@@ -118,9 +118,9 @@ test('R84 tests signed tool authority, wall blocking, revocation and protected f
 });
 
 test('R84 is never deployment authority, SQL migration, linked CLI or browser acceptance',()=>{
- assert.equal(ledger.branches.length,190);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,125);
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17');
+ assert.equal(ledger.branches.length,191);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,126);
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17');
  const record=ledger.releaseFullTriggerFidelity;
  assert.equal(record.decision,'NO_GO');
  assert.equal(record.fullFixtureTokenPositionTriggerCount,6);
@@ -135,21 +135,21 @@ test('R84 is never deployment authority, SQL migration, linked CLI or browser ac
   assert.equal(record[k],false,k);
  assert.equal(record.testOnlyRollback,true);
  assert.equal(record.separateOriginalR83BenchmarkPreserved,true);
- assert.equal(ledger.branches.at(-21).linkedPullRequest,186);
+ assert.equal(ledger.branches.at(-22).linkedPullRequest,186);
+ assert.equal(ledger.branches.at(-20).releaseReady,false);
+ assert.equal(ledger.branches.at(-21).linkedPullRequest,187);
  assert.equal(ledger.branches.at(-19).releaseReady,false);
- assert.equal(ledger.branches.at(-20).linkedPullRequest,187);
+ assert.equal(ledger.branches.at(-20).linkedPullRequest,188);
  assert.equal(ledger.branches.at(-18).releaseReady,false);
- assert.equal(ledger.branches.at(-19).linkedPullRequest,188);
- assert.equal(ledger.branches.at(-17).releaseReady,false);
- assert.equal(ledger.branches.at(-18).linkedPullRequest,189);
- assert.equal(ledger.branches.at(-9).releaseReady,false);
- assert.equal(ledger.branches.at(-17).linkedPullRequest,190);
- assert.equal(ledger.branches.at(-16).linkedPullRequest,191);
- assert.equal(ledger.branches.at(-15).linkedPullRequest,192);
- assert.equal(ledger.branches.at(-14).linkedPullRequest,193);
- assert.equal(ledger.branches.at(-13).linkedPullRequest,194);
- assert.equal(ledger.branches.at(-12).linkedPullRequest,195);
- assert.equal(ledger.branches.at(-11).linkedPullRequest,196);
- assert.equal(ledger.branches.at(-10).linkedPullRequest,197);
+ assert.equal(ledger.branches.at(-19).linkedPullRequest,189);
+ assert.equal(ledger.branches.at(-10).releaseReady,false);
+ assert.equal(ledger.branches.at(-18).linkedPullRequest,190);
+ assert.equal(ledger.branches.at(-17).linkedPullRequest,191);
+ assert.equal(ledger.branches.at(-16).linkedPullRequest,192);
+ assert.equal(ledger.branches.at(-15).linkedPullRequest,193);
+ assert.equal(ledger.branches.at(-14).linkedPullRequest,194);
+ assert.equal(ledger.branches.at(-13).linkedPullRequest,195);
+ assert.equal(ledger.branches.at(-12).linkedPullRequest,196);
+ assert.equal(ledger.branches.at(-11).linkedPullRequest,197);
  assert.doesNotMatch(fixture+tool+start+finish,/https?:\/\/|DATABASE_URL|SUPABASE_DB_URL|dblink/);
 });
