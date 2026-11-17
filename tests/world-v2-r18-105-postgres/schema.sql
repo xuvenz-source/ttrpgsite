@@ -3,8 +3,8 @@
 -- This is NOT a backup or complete historical Supabase schema.
 \set ON_ERROR_STOP on
 DO $guard$ BEGIN
- IF current_database() <> 'world_v2_r18_105' OR
-    inet_server_addr() IS DISTINCT FROM '127.0.0.1'::inet THEN
+ IF current_database() <> 'world_v2_r18_105' OR current_user <> 'postgres' OR
+    inet_server_addr() IS NULL THEN
   RAISE EXCEPTION 'R105 refuses non-disposable PostgreSQL address/database';
  END IF;
 END $guard$;
