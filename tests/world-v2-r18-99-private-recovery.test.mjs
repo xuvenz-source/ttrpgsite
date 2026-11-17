@@ -177,11 +177,11 @@ test('R99 source stays no-network/no-write and staged release ledger remains NO_
  assert.doesNotMatch(source,/\b(?:fetch|spawn|apply_migration|writeFileSync)\s*\(/);
  assert.doesNotMatch(local,/\b(?:fetch|spawn|execSync|apply_migration|writeFileSync)\s*\(/);
  const ledger=JSON.parse(readFileSync(join(ROOT,'staging/next-release-ledger.json'),'utf8'));
- assert.equal(ledger.branches.length,191);
- assert.equal(ledger.branches.at(-8).linkedPullRequest,200);
- assert.equal(ledger.branches.at(-7).linkedPullRequest,201);
- assert.equal(ledger.branches.at(-7).releaseReady,false);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,126);
+ assert.equal(ledger.branches.length,192);
+ assert.equal(ledger.branches.at(-9).linkedPullRequest,200);
+ assert.equal(ledger.branches.at(-8).linkedPullRequest,201);
+ assert.equal(ledger.branches.at(-8).releaseReady,false);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,127);
  assert.equal(ledger.releasePrivateRecoveryAttestation.decision,'NO_GO');
  assert.equal(ledger.releasePrivateRecoveryAttestation.operatorAuthenticatedFetchVerified,false);
  assert.equal(ledger.releasePrivateRecoveryAttestation.qaRegisteredMigrations,0);

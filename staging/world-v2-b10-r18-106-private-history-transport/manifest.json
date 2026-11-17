@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-106",
+  "decision": "NO_GO",
+  "parentPr": 207,
+  "parentSha": "e1d954a81142d3c13b9f2c4057c06b8ffea78b42",
+  "observedDateLocal": "2026-11-17",
+  "scope": "CLI_V2_81_3_83_HISTORY_SERIALIZATION_SOURCE_LOCK_AND_PRIVATE_WORKSPACE_PREFLIGHT",
+  "cli": {
+    "tag": "v2.81.3",
+    "commitSha": "bce705147ae90b9bddd6dfc24986744ced1d97d4",
+    "repository": "supabase/cli",
+    "sourcePath": "internal/migration/fetch/fetch.go",
+    "sourceBlobSha": "cb78c70d8e248bea96831e2156773039129fef13",
+    "outputName": "<version>_<name>.sql",
+    "joinSeparator": ";\n",
+    "finalTerminator": ";\n",
+    "emptyDirectoryBeforeFetch": true,
+    "sourceVerifiedByGitHubTag": true,
+    "claimSignedOperatorSessionVerified": false
+  },
+  "historical": {
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "expectedOriginalMigrations": 83,
+    "latestVersion": "20261109171247",
+    "originalStoredSqlBytes": 709936,
+    "cliReconstructedSqlBytes": 710102,
+    "terminalBytesPerMigration": 2,
+    "frozenR08Path": "staging/world-v2-b10-r18-08-remote-history-content-hashes.json",
+    "frozenR08BlobSha": "89013c6315f84b5ff226947e83b0cf417f1cb52f",
+    "frozenR101Path": "staging/world-v2-b10-r18-101-history-risk-audit/metadata-index.json",
+    "frozenR101BlobSha": "67fdae5b0e151d994c1542d373aeddaafe88f7dc",
+    "originalSqlRetrievedInThisTask": false,
+    "qaSqlReplayed": false
+  },
+  "safety": {
+    "privateWorkspaceMustBeOutsideGit": true,
+    "privateWorkspaceInitiallyEmpty": true,
+    "privateWorkspaceOperatorMustLinkOriginal": true,
+    "qaTargetMustNotBeLinkedDuringSourceFetch": true,
+    "mayNotCopyProductionUserRows": true,
+    "forbidMigrationRepair": true,
+    "forbidUnreviewedDbPush": true,
+    "pendingEightSqlExcluded": true,
+    "signedAuthenticatedSessionNotYetAttested": true
+  },
+  "gates": {
+    "realOperatorAuthenticatedCliFetchCompleted": false,
+    "original83BodiesLocallyMd5Verified": false,
+    "original83BodySecurityReviewed": false,
+    "qaMirrorIndependentlyVerified": false,
+    "qaOnlyDryRunAuthenticated": false,
+    "qaHistoricalSchemaInstallApproved": false,
+    "qaHistorical83Installed": false,
+    "pendingEightInstalled": false,
+    "qaSignedDmP1P2Acceptance": false,
+    "qaVercelDeployed": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "originalSqlUnchanged": true,
+    "qaSqlUnchanged": true,
+    "noRawHistoricalSqlInGitOrChat": true,
+    "noSecretsCommitted": true,
+    "noProductionOrQaVercelDeployment": true,
+    "noPaidResources": true,
+    "noMerge": true,
+    "noProductionDeploy": true
+  }
+}

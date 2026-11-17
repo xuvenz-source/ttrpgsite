@@ -107,11 +107,11 @@ test('R105 Node source checker uses no SQL execution, network or shell invocatio
 });
 test('R105 release ledger extends immutable historical QA/production NO_GO records',()=>{
  const l=read('staging/next-release-ledger.json');
- assert.equal(l.branches.length,191);
- assert.equal(l.upcomingRelease.outstandingBranches.length,126);
- assert.equal(l.branches.at(-2).linkedPullRequest,206);
- assert.equal(l.branches.at(-1).linkedPullRequest,207);
- assert.equal(l.branches.at(-1).releaseReady,false);
+ assert.equal(l.branches.length,192);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,127);
+ assert.equal(l.branches.at(-3).linkedPullRequest,206);
+ assert.equal(l.branches.at(-2).linkedPullRequest,207);
+ assert.equal(l.branches.at(-2).releaseReady,false);
  assert.equal(l.releaseFogGuardIsolatedPg17.decision,'NO_GO');
  assert.equal(l.releaseFogGuardIsolatedPg17.verifiedRuntimeRunId,44058183100);
  assert.equal(l.releaseFogGuardIsolatedPg17.disposablePg17RuntimePassed,true);

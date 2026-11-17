@@ -96,11 +96,11 @@ test('R101 static validator is offline and source-only',()=>{
 });
 test('R101 immutable release ledger records one staged NO_GO risk index only',()=>{
  const l=json('staging/next-release-ledger.json');
- assert.equal(l.branches.length,191);
- assert.equal(l.branches.at(-6).linkedPullRequest,202);
- assert.equal(l.branches.at(-5).linkedPullRequest,203);
- assert.equal(l.branches.at(-5).releaseReady,false);
- assert.equal(l.upcomingRelease.outstandingBranches.length,126);
+ assert.equal(l.branches.length,192);
+ assert.equal(l.branches.at(-7).linkedPullRequest,202);
+ assert.equal(l.branches.at(-6).linkedPullRequest,203);
+ assert.equal(l.branches.at(-6).releaseReady,false);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,127);
  assert.equal(l.releaseHistoricalSqlRiskAudit.decision,'NO_GO');
  assert.equal(l.releaseHistoricalSqlRiskAudit.historicalOriginalCount,83);
  assert.equal(l.releaseHistoricalSqlRiskAudit.privilegedRpcReviewCompleted,false);

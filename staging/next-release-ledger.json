@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17",
+  "releaseBranch": "stage/world-v2-b10-r18-106-private-history-transport-preflight-2026-11-17",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1925,6 +1925,16 @@
       "linkedPullRequest": 207,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-105 executed exact staged R104 candidate in disposable PostgreSQL17 with SHA-extracted original SQL functions, historical combat RLS, synthetic JWT-GUC identities and adversarial map/actor tests. Verified original leak, fixed isolation, anon denied, legitimate roster intact, source rollback reintroduces leak and reapply restores guard. No signed hosted QA tests, no original/QA SQL, NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-106-private-history-transport-preflight-2026-11-17",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "PINNED_CLI_V2_81_3_HISTORY_TRANSPORT_AND_PRIVATE_OPERATOR_WORKSPACE_NO_SQL",
+      "linkedPullRequest": 208,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-106 reconciles 83 original MD5 versions/names, 709936 stored bytes plus 166 CLI terminal bytes to 710102 remote read-only total, pinned upstream v2.81.3 fetch.go Git blob, and owner-only empty private operator workspace scaffold. No authenticated original 83-file SQL recovery; no QA installation, SQL writes or deployment. NO_GO."
     }
   ],
   "features": [
@@ -3030,7 +3040,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17",
+    "releaseBranch": "stage/world-v2-b10-r18-106-private-history-transport-preflight-2026-11-17",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3157,7 +3167,8 @@
       "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
       "stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17",
       "stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17",
-      "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17"
+      "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17",
+      "stage/world-v2-b10-r18-106-private-history-transport-preflight-2026-11-17"
     ],
     "stagePolicy": "R18-95: preserve original frozen R79 165 branches; now 181 ledger branches and 116 unapproved outstanding (NOT a bulk-merge queue). Linked Supabase org Xuven Free, one visible project, cost quoted $0/month for independent second project and $0.01344/hour for paid branch (reject). Vercel project shared VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY env targets production/preview/development, so no isolated backend exists. Only stage source-only project/QA isolation plan; wait for user to choose org explicitly, no creation/deploy, independent Auth and 83+8 migrations, real signed DM/P1/P2 performance, Free RAM/locks remain unverified. Shared Supabase and permanent QA/production NO_GO.",
     "databaseReleaseVersion": null,
@@ -4201,6 +4212,39 @@
     "pendingEightInstalled": false,
     "productionOrQaVercelChanged": false,
     "originalOrQaSqlWritten": false,
+    "paidResourcesCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releasePrivateHistoryTransport": {
+    "schema": 1,
+    "workPackage": "B10-R18-106",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 191,
+    "currentLedgerBranches": 192,
+    "addedBranch": "stage/world-v2-b10-r18-106-private-history-transport-preflight-2026-11-17",
+    "parentPr": 207,
+    "parentSha": "e1d954a81142d3c13b9f2c4057c06b8ffea78b42",
+    "manifest": "staging/world-v2-b10-r18-106-private-history-transport/manifest.json",
+    "validator": "scripts/release/validate-world-v2-r18-106-history-transport.mjs",
+    "workspaceScaffold": "scripts/release/prepare-world-v2-r18-106-private-workspace.mjs",
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "cliVersion": "2.81.3",
+    "pinnedCliSourceCommit": "bce705147ae90b9bddd6dfc24986744ced1d97d4",
+    "pinnedCliFetchBlob": "cb78c70d8e248bea96831e2156773039129fef13",
+    "originalRowsReconciled": 83,
+    "originalStoredSqlBytes": 709936,
+    "expectedFetchedSqlBytes": 710102,
+    "cliTerminalBytesAdded": 166,
+    "original83PrivateFilesRecovered": false,
+    "operatorSessionIndependentlyAuthenticated": false,
+    "original83SecurityReviewed": false,
+    "qaRegisteredMigrations": 0,
+    "qaOnlyDryRunPerformed": false,
+    "qaSqlApplied": false,
+    "pendingEightInstalled": false,
+    "qaVercelDeployed": false,
+    "originalOrQaSqlModified": false,
     "paidResourcesCreated": false,
     "productionReleaseAuthorized": false
   }

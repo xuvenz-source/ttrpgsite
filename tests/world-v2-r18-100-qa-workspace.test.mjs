@@ -235,11 +235,11 @@ test('R100 static source remains NO_GO and ledger retains original QA isolation'
  assert.doesNotMatch(source,/\b(?:fetch|spawn|execSync|writeFileSync)\s*\(/);
  assert.doesNotMatch(offline,/\b(?:fetch|spawn|execSync|writeFileSync)\s*\(/);
  const ledger=read('staging/next-release-ledger.json');
- assert.equal(ledger.branches.length,191);
- assert.equal(ledger.branches.at(-7).linkedPullRequest,201);
- assert.equal(ledger.branches.at(-6).linkedPullRequest,202);
- assert.equal(ledger.branches.at(-6).releaseReady,false);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,126);
+ assert.equal(ledger.branches.length,192);
+ assert.equal(ledger.branches.at(-8).linkedPullRequest,201);
+ assert.equal(ledger.branches.at(-7).linkedPullRequest,202);
+ assert.equal(ledger.branches.at(-7).releaseReady,false);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,127);
  assert.equal(ledger.releaseQaOnlyBaselinePreflight.decision,'NO_GO');
  assert.equal(ledger.releaseQaOnlyBaselinePreflight.qaRegisteredMigrations,0);
  assert.equal(ledger.releaseQaOnlyBaselinePreflight.qaDryRunExecuted,false);
