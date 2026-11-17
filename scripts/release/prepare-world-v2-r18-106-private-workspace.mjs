@@ -18,7 +18,7 @@ const ORIGINAL='lwhwgqaunxbmvyndswze';
 const QA='bgydsamxypjslergfpla';
 const fail=s=>{throw Error('R106 PRIVATE WORKSPACE NO-GO: '+s)};
 const inside=(p,q)=>q===p||q.startsWith(p+sep);
-const config='[db.migrations]\nenabled = true\n\n[db.seed]\nenabled = false\n';
+const config='project_id = "r106-private-recovery"\n\n[db.migrations]\nenabled = true\n\n[db.seed]\nenabled = false\n';
 export function prepareR106PrivateWorkspace({
  workspace,repoRoot=ROOT,env=process.env
 }={}){
