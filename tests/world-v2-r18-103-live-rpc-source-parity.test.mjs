@@ -34,7 +34,7 @@ test('R103 detects altered SHA-256, byte counts, grants, file pointers and sourc
  fails((m,i)=>i.functions[0].bodySha256='0'.repeat(64));
  fails((m,i)=>i.functions[0].bodyBytes+=1);
  fails((m,i)=>i.functions[0].anonExecute=true);
- fails((m,i)=>i.functions[0].authExecute=false);
+ fails((m,i)=>i.functions.find(x=>x.name==='cancel_world_motion_v2').authExecute=false);
  fails((m,i)=>i.functions[0].source='raw SQL');
  fails((m,i)=>i.verifiedSourceMatches[0].expectedSourceSha256='0'.repeat(64));
  fails((m,i)=>i.verifiedSourceMatches[0].individualAuthorizationApproved=true);
