@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-104",
+  "decision": "NO_GO",
+  "projectRef": "bgydsamxypjslergfpla",
+  "caseCount": 12,
+  "note": "Planned signed-user QA acceptance only. These are not live tests, synthetic performance claims or evidence that candidate SQL was applied.",
+  "cases": [
+    {
+      "id": "FOG-01",
+      "actor": "anon",
+      "scenario": "known fog-enabled map",
+      "expected": "Function EXECUTE privilege denied; no result",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-02",
+      "actor": "nonmember",
+      "scenario": "known campaign A map with fog enabled",
+      "expected": "FALSE, no status distinction versus inaccessible/unknown map",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-03",
+      "actor": "nonmember",
+      "scenario": "known campaign A map with fog disabled",
+      "expected": "FALSE, no status distinction versus inaccessible/unknown map",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-04",
+      "actor": "dm",
+      "scenario": "DM queries an authorized campaign map with fog enabled",
+      "expected": "TRUE, preserving DM fog status",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-05",
+      "actor": "dm",
+      "scenario": "DM queries an authorized campaign map with fog disabled",
+      "expected": "FALSE, preserving DM fog status",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-06",
+      "actor": "player",
+      "scenario": "Assigned current campaign map with fog enabled",
+      "expected": "TRUE, preserving active-player visibility behavior",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-07",
+      "actor": "player",
+      "scenario": "Assigned current campaign map with fog disabled",
+      "expected": "FALSE, preserving active-player visibility behavior",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-08",
+      "actor": "player",
+      "scenario": "Same campaign map not assigned to this player and fog enabled",
+      "expected": "FALSE, no non-assigned map status",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-09",
+      "actor": "revoked",
+      "scenario": "Former member queries previously assigned map with fog enabled",
+      "expected": "FALSE immediately after membership revocation",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "FOG-10",
+      "actor": "authenticated",
+      "scenario": "Unknown/nonexistent UUID",
+      "expected": "FALSE without inferring any map or campaign metadata",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "POLICY-01",
+      "actor": "player",
+      "scenario": "Map combat RLS nonfog authorized map versus fog enabled authorized map",
+      "expected": "Preserve roster access for assigned nonfog map; reject player roster access under fog",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    },
+    {
+      "id": "MOTION-01",
+      "actor": "player",
+      "scenario": "P1 attempts to end P2 movement session plus preview identifiers",
+      "expected": "P1 session cleanup is actor-scoped; P2 sessions and previews remain intact",
+      "status": "NOT_RUN",
+      "signedAccountTested": false,
+      "sqlInstalled": false
+    }
+  ],
+  "hostPrerequisite": "Separate approved QA schema bootstrap, security review and isolated rollback rehearsal, with signed DM/P1/P2/outsider accounts.",
+  "signedCasesExecuted": 0,
+  "securityAccepted": false
+}
