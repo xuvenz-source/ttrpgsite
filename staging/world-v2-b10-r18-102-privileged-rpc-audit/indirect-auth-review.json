@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-102",
+  "decision": "NO_GO",
+  "provenance": "SQL SELECT-only server-side regex call-name candidates; these do NOT prove runtime call paths or authorization correctness",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "indirectIdentityTargets": [
+    {
+      "name": "get_campaign_sheet_inventory",
+      "helperCandidates": [
+        "public.can_edit_campaign_sheet_inventory"
+      ],
+      "directIdentityText": false,
+      "scopeText": true,
+      "reviewFocus": "permission helper chain, campaign and character-sheet ownership"
+    },
+    {
+      "name": "get_dm_map_npc_values",
+      "helperCandidates": [
+        "public.is_campaign_dm"
+      ],
+      "directIdentityText": false,
+      "scopeText": true,
+      "reviewFocus": "DM-only NPC values must not leak to other signed players"
+    },
+    {
+      "name": "get_npc_token_values",
+      "helperCandidates": [
+        "public.is_campaign_dm"
+      ],
+      "directIdentityText": false,
+      "scopeText": true,
+      "reviewFocus": "token/campaign affinity and DM-only NPC visibility"
+    },
+    {
+      "name": "is_map_fog_published",
+      "helperCandidates": [],
+      "directIdentityText": false,
+      "scopeText": false,
+      "reviewFocus": "decide whether publication status is intentionally safe for any signed user"
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "helperCandidates": [
+        "public.can_edit_campaign_sheet"
+      ],
+      "directIdentityText": false,
+      "scopeText": true,
+      "reviewFocus": "field-level write authorization, campaign and source binding"
+    },
+    {
+      "name": "preview_map_motion",
+      "helperCandidates": [
+        "forge_visibility.dispatch_movement_preview"
+      ],
+      "directIdentityText": false,
+      "scopeText": false,
+      "reviewFocus": "dispatch authorization, collision truth, viewer sight and rate-limits"
+    },
+    {
+      "name": "publish_map_environment",
+      "helperCandidates": [
+        "forge_visibility.bump_tick",
+        "public.is_campaign_dm"
+      ],
+      "directIdentityText": false,
+      "scopeText": true,
+      "reviewFocus": "DM-only environment publish and permission-generation revocation"
+    }
+  ],
+  "missingScopeTextTargets": [
+    "cancel_world_motion_v2",
+    "end_authorized_navigation_gesture",
+    "end_map_motion_previews",
+    "end_map_motion_sessions",
+    "get_world_visibility_v2",
+    "is_map_fog_published",
+    "preview_map_motion"
+  ],
+  "helperMetadata": [
+    {
+      "schema": "forge_visibility",
+      "name": "bump_tick",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "owner": "postgres",
+      "authExecute": false,
+      "anonExecute": false,
+      "emptySearchPath": true,
+      "directAuthText": false,
+      "scopeText": true
+    },
+    {
+      "schema": "forge_visibility",
+      "name": "dispatch_movement_preview",
+      "arguments": "p_map uuid, p_kind text, p_piece uuid, p_x integer, p_y integer, p_seq bigint, p_ignore_collision boolean",
+      "securityDefiner": true,
+      "owner": "postgres",
+      "authExecute": false,
+      "anonExecute": false,
+      "emptySearchPath": true,
+      "directAuthText": true,
+      "scopeText": true
+    },
+    {
+      "schema": "public",
+      "name": "can_edit_campaign_sheet",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid",
+      "securityDefiner": true,
+      "owner": "postgres",
+      "authExecute": false,
+      "anonExecute": false,
+      "emptySearchPath": true,
+      "directAuthText": true,
+      "scopeText": true
+    },
+    {
+      "schema": "public",
+      "name": "can_edit_campaign_sheet_inventory",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text",
+      "securityDefiner": true,
+      "owner": "postgres",
+      "authExecute": false,
+      "anonExecute": false,
+      "emptySearchPath": true,
+      "directAuthText": false,
+      "scopeText": true
+    },
+    {
+      "schema": "public",
+      "name": "is_campaign_dm",
+      "arguments": "c uuid",
+      "securityDefiner": true,
+      "owner": "postgres",
+      "authExecute": true,
+      "anonExecute": false,
+      "emptySearchPath": true,
+      "directAuthText": true,
+      "scopeText": true
+    }
+  ],
+  "outcomes": {
+    "functionSourceReviewed": false,
+    "indirectAuthCallChainsVerified": false,
+    "crossUserPermissionTestsPerformed": false,
+    "privilegedRpcPermissionsApproved": false
+  }
+}
