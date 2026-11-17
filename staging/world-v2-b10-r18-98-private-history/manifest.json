@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-98",
+  "decision": "NO_GO",
+  "parentPr": 199,
+  "parentSha": "f0c1d8e957a38be014caa72b6a483cae7522c3c8",
+  "observedDateLocal": "2026-11-17",
+  "scope": "OPERATOR_PRIVATE_PINNED_HISTORICAL_FETCH_SOURCE_ONLY",
+  "source": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "readOnlyMigrationRows": 83,
+    "readOnlySqlBodyDigestsMatched": 83,
+    "readOnlySqlDigestMismatches": 0,
+    "latestMigration": "20261109171247",
+    "authoritativeFrozenDigests": "staging/world-v2-b10-r18-08-remote-history-content-hashes.json",
+    "rawSqlBodiesExposedToChat": false,
+    "rawSqlBodiesCommittedToGit": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "applicationTables": 0,
+    "migrationApplied": false,
+    "productionDataImported": false
+  },
+  "artifacts": {
+    "privateValidator": "scripts/release/validate-world-v2-r18-98-private-history.mjs",
+    "privateFetchRunner": "scripts/release/run-world-v2-r18-98-private-history-fetch.mjs",
+    "sourceVerifier": "scripts/release/validate-world-v2-r18-98-source.mjs",
+    "tests": "tests/world-v2-r18-98-private-history.test.mjs",
+    "runbook": "docs/testing/world-v2-r18-98-operator-private-history-2026-11-17.md",
+    "importedCliVersion": "2.81.3",
+    "originalHistoricalFilesRequired": 83,
+    "allowedRemoteCommand": "migration fetch --linked",
+    "pendingEightFilesFetchedOrApplied": false,
+    "historicalSqlBodyFilesInRepository": false
+  },
+  "gates": {
+    "operatorAuthenticatedCliFetchCompleted": false,
+    "original83PrivateFilesMD5Verified": false,
+    "privateWorkspaceInspectedForSecretsAndData": false,
+    "sourceExactQaOnlyWorkspacePrepared": false,
+    "qaOnlyLinkedDryRunVerified": false,
+    "qaBootstrapReviewedApproved": false,
+    "qaSqlApplied": false,
+    "qaAuthConfigured": false,
+    "signedHostedDMAndPlayersAccepted": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "productionSqlUnchanged": true,
+    "qaSqlUnchanged": true,
+    "originalVercelConfigUnchanged": true,
+    "qaVercelUndeployed": true,
+    "noPaidInfrastructure": true,
+    "noMerges": true,
+    "noProductionDeploy": true
+  }
+}
