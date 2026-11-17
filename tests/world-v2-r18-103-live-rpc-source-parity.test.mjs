@@ -81,11 +81,11 @@ test('R103 source validator has no network, SQL execution or shell writes',()=>{
 });
 test('R103 release ledger records source-only NO_GO 189-stage successor',()=>{
  const l=json('staging/next-release-ledger.json');
- assert.equal(l.branches.length,189);
- assert.equal(l.upcomingRelease.outstandingBranches.length,124);
- assert.equal(l.branches.at(-2).linkedPullRequest,204);
- assert.equal(l.branches.at(-1).linkedPullRequest,205);
- assert.equal(l.branches.at(-1).releaseReady,false);
+ assert.equal(l.branches.length,190);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,125);
+ assert.equal(l.branches.at(-3).linkedPullRequest,204);
+ assert.equal(l.branches.at(-2).linkedPullRequest,205);
+ assert.equal(l.branches.at(-2).releaseReady,false);
  assert.equal(l.releaseRpcSourceParity.decision,'NO_GO');
  assert.equal(l.releaseRpcSourceParity.liveFunctionFingerprints,20);
  assert.equal(l.releaseRpcSourceParity.exactRepoSourceMatches,6);
