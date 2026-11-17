@@ -9,7 +9,7 @@
     {
       "id": "FOG-01",
       "actor": "anon",
-      "scenario": "known fog-enabled map",
+      "scenario": "Anonymous account supplies a known fog-enabled map UUID",
       "expected": "Function EXECUTE privilege denied; no result",
       "status": "NOT_RUN",
       "signedAccountTested": false,
@@ -90,7 +90,7 @@
     {
       "id": "FOG-10",
       "actor": "authenticated",
-      "scenario": "Unknown/nonexistent UUID",
+      "scenario": "Signed account supplies an unknown or nonexistent map UUID",
       "expected": "FALSE without inferring any map or campaign metadata",
       "status": "NOT_RUN",
       "signedAccountTested": false,
