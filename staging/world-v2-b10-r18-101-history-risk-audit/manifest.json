@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-101",
+  "decision": "NO_GO",
+  "parentPr": 202,
+  "parentSha": "7e40da1dec18fd2d2f2558e0b0ace24dc74a8239",
+  "observedDateLocal": "2026-11-17",
+  "scope": "ORIGINAL_83_STORED_SQL_METADATA_ONLY_PORTABILITY_AND_SECURITY_TRIAGE",
+  "original": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "registeredHistory": 83,
+    "bodyMd5MatchesFrozenBaseline": 83,
+    "rawSqlReturned": false,
+    "sqlOrDataChanged": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "publicApplicationTables": 0,
+    "sqlOrDataChanged": false
+  },
+  "metadataIndex": {
+    "path": "staging/world-v2-b10-r18-101-history-risk-audit/metadata-index.json",
+    "entries": 83,
+    "storedSqlBytes": 709936,
+    "largestSqlBytes": 48527,
+    "flagCounts": {
+      "auth_refs": 12,
+      "data_dml": 51,
+      "security_definer": 66,
+      "storage_realtime": 30,
+      "access_control": 65,
+      "environment_change": 4,
+      "hardcoded_endpoint": 0,
+      "auth_calls": 63,
+      "routine_execute_acl": 43,
+      "user_metadata_token": 1,
+      "schema_qualified_inserts": 24
+    },
+    "classificationIsHeuristic": true,
+    "originalSqlBodiesInGit": false
+  },
+  "originalSecurityAdvisors": {
+    "rlsEnabledNoPolicy": {
+      "level": "INFO",
+      "count": 15,
+      "url": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    },
+    "authenticatedDefinerExecutable": {
+      "level": "WARN",
+      "count": 67,
+      "url": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+    },
+    "leakedPasswordProtection": {
+      "level": "WARN",
+      "count": 1,
+      "url": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+    },
+    "validatedAsVulnerabilities": false
+  },
+  "qaSecurityAdvisors": {
+    "lintCategories": 0,
+    "securityApprovalGranted": false
+  },
+  "releaseGates": {
+    "original83PrivateSqlRecovered": false,
+    "sourceSessionAuthenticatedIndependently": false,
+    "historicalPrivilegedFunctionsReviewed": false,
+    "historicalDataBackfillsReviewed": false,
+    "authStorageRealtimePortabilityReviewed": false,
+    "qaOnlySchemaSecurityReviewPassed": false,
+    "qaLinkedDryRunCompleted": false,
+    "qa83MigrationsInstalled": false,
+    "pendingEightInstalled": false,
+    "qaVercelDeployed": false,
+    "independentSignedGameplayAccepted": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "originalSqlUnchanged": true,
+    "qaSqlUnchanged": true,
+    "productionVercelUnchanged": true,
+    "qaVercelUndeployed": true,
+    "noRawSqlCommitted": true,
+    "noSecretsCommitted": true,
+    "noPaidResources": true,
+    "noMerge": true,
+    "noProductionDeploy": true
+  }
+}
