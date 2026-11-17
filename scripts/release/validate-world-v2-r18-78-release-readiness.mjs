@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190].includes(ledger.branches.length)||
+   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -776,7 +776,7 @@ export function validateR78ReleaseStatus({
      'stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17'||
     ledger.branches[188]?.status!=='staged'||
     ledger.branches[188]?.releaseReady!==false))||
-   (ledger.branches.length===190&&(
+   (ledger.branches.length>=190&&(
     ledger.releaseFogStatusPrivacyGuard?.workPackage!=='B10-R18-104'||
     ledger.releaseFogStatusPrivacyGuard?.decision!=='NO_GO'||
     ledger.releaseFogStatusPrivacyGuard?.previousLedgerBranches!==189||
@@ -812,7 +812,41 @@ export function validateR78ReleaseStatus({
     ledger.branches[189]?.name!==
      'stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17'||
     ledger.branches[189]?.status!=='staged'||
-    ledger.branches[189]?.releaseReady!==false)))))
+    ledger.branches[189]?.releaseReady!==false))||
+   (ledger.branches.length===191&&(
+    ledger.releaseFogGuardIsolatedPg17?.workPackage!=='B10-R18-105'||
+    ledger.releaseFogGuardIsolatedPg17?.decision!=='NO_GO'||
+    ledger.releaseFogGuardIsolatedPg17?.previousLedgerBranches!==190||
+    ledger.releaseFogGuardIsolatedPg17?.currentLedgerBranches!==191||
+    ledger.releaseFogGuardIsolatedPg17?.parentPr!==206||
+    ledger.releaseFogGuardIsolatedPg17?.parentSha!=='0c4928ada3d51421e7f5b4f68dc9c7a6688be1c8'||
+    ledger.releaseFogGuardIsolatedPg17?.originalProjectRef!=='lwhwgqaunxbmvyndswze'||
+    ledger.releaseFogGuardIsolatedPg17?.qaProjectRef!=='bgydsamxypjslergfpla'||
+    ledger.releaseFogGuardIsolatedPg17?.verifiedRuntimeRunId!==44058183100||
+    ledger.releaseFogGuardIsolatedPg17?.verifiedRuntimeSha!=='a4bcc530722b7f7c6ead4ec2ca00e83b1af4f00a'||
+    ledger.releaseFogGuardIsolatedPg17?.disposablePg17RuntimePassed!==true||
+    ledger.releaseFogGuardIsolatedPg17?.originalFogMetadataOracleReproduced!==true||
+    ledger.releaseFogGuardIsolatedPg17?.candidateNonmemberIsolationPassed!==true||
+    ledger.releaseFogGuardIsolatedPg17?.realCombatRlsPolicyPreservedInFixture!==true||
+    ledger.releaseFogGuardIsolatedPg17?.actorScopedMotionCleanupPassedInFixture!==true||
+    ledger.releaseFogGuardIsolatedPg17?.sourceRollbackReintroducedDisclosure!==true||
+    ledger.releaseFogGuardIsolatedPg17?.candidateReapplyClosedDisclosure!==true||
+    ledger.releaseFogGuardIsolatedPg17?.fixtureHasSyntheticAuthOnly!==true||
+    ledger.releaseFogGuardIsolatedPg17?.qaRegisteredMigrations!==0||
+    ledger.releaseFogGuardIsolatedPg17?.signedHostedSecurityAccepted!==false||
+    ledger.releaseFogGuardIsolatedPg17?.original83SqlPrivatelyRecovered!==false||
+    ledger.releaseFogGuardIsolatedPg17?.hostedCandidateApplied!==false||
+    ledger.releaseFogGuardIsolatedPg17?.qaOnlySchemaDryRunPassed!==false||
+    ledger.releaseFogGuardIsolatedPg17?.qaSchemaInstalled!==false||
+    ledger.releaseFogGuardIsolatedPg17?.pendingEightInstalled!==false||
+    ledger.releaseFogGuardIsolatedPg17?.productionOrQaVercelChanged!==false||
+    ledger.releaseFogGuardIsolatedPg17?.originalOrQaSqlWritten!==false||
+    ledger.releaseFogGuardIsolatedPg17?.paidResourcesCreated!==false||
+    ledger.releaseFogGuardIsolatedPg17?.productionReleaseAuthorized!==false||
+    ledger.branches[190]?.name!==
+     'stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17'||
+    ledger.branches[190]?.status!=='staged'||
+    ledger.branches[190]?.releaseReady!==false)))))
 
 
   fail();

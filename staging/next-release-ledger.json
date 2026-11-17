@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17",
+  "releaseBranch": "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1915,6 +1915,16 @@
       "linkedPullRequest": 206,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-104 verified four more exact Git/live SHA-256 SQL function bodies, confirmed signed-user fog status metadata oracle on known map UUID, staged unapplied campaign-map membership guard preserving map_combats policy grants, and confirmed actor-bound motion session+preview source. QA 0 migrations; 12 signed cases NOT_RUN. Original/QA unchanged. NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "DISPOSABLE_PG17_SYNTHETIC_FOG_RLS_CANDIDATE_RUNTIME_AND_ROLLBACK_NO_HOST_SQL",
+      "linkedPullRequest": 207,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-105 executed exact staged R104 candidate in disposable PostgreSQL17 with SHA-extracted original SQL functions, historical combat RLS, synthetic JWT-GUC identities and adversarial map/actor tests. Verified original leak, fixed isolation, anon denied, legitimate roster intact, source rollback reintroduces leak and reapply restores guard. No signed hosted QA tests, no original/QA SQL, NO_GO."
     }
   ],
   "features": [
@@ -3020,7 +3030,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17",
+    "releaseBranch": "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3146,7 +3156,8 @@
       "stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17",
       "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
       "stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17",
-      "stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17"
+      "stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17",
+      "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17"
     ],
     "stagePolicy": "R18-95: preserve original frozen R79 165 branches; now 181 ledger branches and 116 unapproved outstanding (NOT a bulk-merge queue). Linked Supabase org Xuven Free, one visible project, cost quoted $0/month for independent second project and $0.01344/hour for paid branch (reject). Vercel project shared VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY env targets production/preview/development, so no isolated backend exists. Only stage source-only project/QA isolation plan; wait for user to choose org explicitly, no creation/deploy, independent Auth and 83+8 migrations, real signed DM/P1/P2 performance, Free RAM/locks remain unverified. Shared Supabase and permanent QA/production NO_GO.",
     "databaseReleaseVersion": null,
@@ -4153,6 +4164,43 @@
     "originalVercelChanged": false,
     "qaVercelDeployed": false,
     "secretsOrRawLiveSqlExported": false,
+    "paidResourcesCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseFogGuardIsolatedPg17": {
+    "schema": 1,
+    "workPackage": "B10-R18-105",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 190,
+    "currentLedgerBranches": 191,
+    "addedBranch": "stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17",
+    "parentPr": 206,
+    "parentSha": "0c4928ada3d51421e7f5b4f68dc9c7a6688be1c8",
+    "manifest": "staging/world-v2-b10-r18-105-isolated-fog-test/manifest.json",
+    "isolatedWorkflow": ".github/workflows/world-v2-r18-105-fog-guard-isolated.yml",
+    "isolatedRunner": "tests/world-v2-r18-105-postgres/run.sh",
+    "validator": "scripts/release/validate-world-v2-r18-105-isolated-fog-test.mjs",
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "verifiedRuntimeRunId": 44058183100,
+    "verifiedRuntimeSha": "a4bcc530722b7f7c6ead4ec2ca00e83b1af4f00a",
+    "disposablePg17RuntimePassed": true,
+    "originalFogMetadataOracleReproduced": true,
+    "candidateNonmemberIsolationPassed": true,
+    "realCombatRlsPolicyPreservedInFixture": true,
+    "actorScopedMotionCleanupPassedInFixture": true,
+    "sourceRollbackReintroducedDisclosure": true,
+    "candidateReapplyClosedDisclosure": true,
+    "fixtureHasSyntheticAuthOnly": true,
+    "qaRegisteredMigrations": 0,
+    "signedHostedSecurityAccepted": false,
+    "original83SqlPrivatelyRecovered": false,
+    "hostedCandidateApplied": false,
+    "qaOnlySchemaDryRunPassed": false,
+    "qaSchemaInstalled": false,
+    "pendingEightInstalled": false,
+    "productionOrQaVercelChanged": false,
+    "originalOrQaSqlWritten": false,
     "paidResourcesCreated": false,
     "productionReleaseAuthorized": false
   }
