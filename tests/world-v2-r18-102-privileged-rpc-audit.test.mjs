@@ -90,11 +90,11 @@ test('R102 offline validator has no network, SQL execution or mutating steps',()
 });
 test('R102 release ledger remains strict NO_GO and previous R101 source seal survives',()=>{
  const l=json('staging/next-release-ledger.json');
- assert.equal(l.branches.length,191);
- assert.equal(l.upcomingRelease.outstandingBranches.length,126);
- assert.equal(l.branches.at(-5).linkedPullRequest,203);
- assert.equal(l.branches.at(-4).linkedPullRequest,204);
- assert.equal(l.branches.at(-4).releaseReady,false);
+ assert.equal(l.branches.length,192);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,127);
+ assert.equal(l.branches.at(-6).linkedPullRequest,203);
+ assert.equal(l.branches.at(-5).linkedPullRequest,204);
+ assert.equal(l.branches.at(-5).releaseReady,false);
  assert.equal(l.releasePrivilegedRpcAudit.decision,'NO_GO');
  assert.equal(l.releasePrivilegedRpcAudit.authenticatedPrivilegedRpcCount,67);
  assert.equal(l.releasePrivilegedRpcAudit.anonymousExecutablePrivilegedRpcs,0);

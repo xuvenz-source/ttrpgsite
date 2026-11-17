@@ -103,11 +103,11 @@ test('R104 validator has no DB connector, networking, shell or SQL execution pat
 });
 test('R104 release ledger stays NO_GO, 190 staged and 125 outstanding',()=>{
  const l=json('staging/next-release-ledger.json');
- assert.equal(l.branches.length,191);
- assert.equal(l.upcomingRelease.outstandingBranches.length,126);
- assert.equal(l.branches.at(-3).linkedPullRequest,205);
- assert.equal(l.branches.at(-2).linkedPullRequest,206);
- assert.equal(l.branches.at(-2).releaseReady,false);
+ assert.equal(l.branches.length,192);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,127);
+ assert.equal(l.branches.at(-4).linkedPullRequest,205);
+ assert.equal(l.branches.at(-3).linkedPullRequest,206);
+ assert.equal(l.branches.at(-3).releaseReady,false);
  assert.equal(l.releaseFogStatusPrivacyGuard.decision,'NO_GO');
  assert.equal(l.releaseFogStatusPrivacyGuard.newLiveSourceMatches,4);
  assert.equal(l.releaseFogStatusPrivacyGuard.candidatePreparedNotApplied,true);
