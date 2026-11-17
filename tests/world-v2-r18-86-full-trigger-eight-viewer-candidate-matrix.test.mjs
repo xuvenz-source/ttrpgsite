@@ -102,22 +102,22 @@ test('R86 checks private grants, rolls back sealed candidates, and prints no sen
 });
 
 test('R86 ledger cannot turn synthetic history or a single local Commit into release approval',()=>{
- assert.equal(ledger.branches.length,187);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,122);
+ assert.equal(ledger.branches.length,188);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,123);
  assert.equal(ledger.releaseBranch,
-  'stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17');
- assert.equal(ledger.branches.at(-16).linkedPullRequest,188);
- assert.equal(ledger.branches.at(-14).releaseReady,false);
- assert.equal(ledger.branches.at(-15).linkedPullRequest,189);
- assert.equal(ledger.branches.at(-6).releaseReady,false);
- assert.equal(ledger.branches.at(-14).linkedPullRequest,190);
- assert.equal(ledger.branches.at(-13).linkedPullRequest,191);
- assert.equal(ledger.branches.at(-12).linkedPullRequest,192);
- assert.equal(ledger.branches.at(-11).linkedPullRequest,193);
- assert.equal(ledger.branches.at(-10).linkedPullRequest,194);
- assert.equal(ledger.branches.at(-9).linkedPullRequest,195);
- assert.equal(ledger.branches.at(-8).linkedPullRequest,196);
- assert.equal(ledger.branches.at(-7).linkedPullRequest,197);
+  'stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17');
+ assert.equal(ledger.branches.at(-17).linkedPullRequest,188);
+ assert.equal(ledger.branches.at(-15).releaseReady,false);
+ assert.equal(ledger.branches.at(-16).linkedPullRequest,189);
+ assert.equal(ledger.branches.at(-7).releaseReady,false);
+ assert.equal(ledger.branches.at(-15).linkedPullRequest,190);
+ assert.equal(ledger.branches.at(-14).linkedPullRequest,191);
+ assert.equal(ledger.branches.at(-13).linkedPullRequest,192);
+ assert.equal(ledger.branches.at(-12).linkedPullRequest,193);
+ assert.equal(ledger.branches.at(-11).linkedPullRequest,194);
+ assert.equal(ledger.branches.at(-10).linkedPullRequest,195);
+ assert.equal(ledger.branches.at(-9).linkedPullRequest,196);
+ assert.equal(ledger.branches.at(-8).linkedPullRequest,197);
  const x=ledger.releaseFogCandidateMatrix;
  assert.equal(x.workPackage,'B10-R18-86');
  assert.equal(x.decision,'NO_GO');
