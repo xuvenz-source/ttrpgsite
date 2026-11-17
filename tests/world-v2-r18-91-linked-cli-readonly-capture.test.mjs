@@ -141,16 +141,16 @@ test('R91 requires operator-only arguments, does not run on GitHub PR CI, and pr
   /run-world-v2-r18-91-linked-cli-readonly\.mjs/);
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-91-operator-capture/manifest.json'));
- assert.equal(l.branches.length,184);
- assert.equal(l.upcomingRelease.outstandingBranches.length,119);
- assert.equal(l.branches.at(-8).linkedPullRequest,193);
- assert.equal(l.branches.at(-7).linkedPullRequest,194);
- assert.equal(l.branches.at(-6).linkedPullRequest,195);
- assert.equal(l.branches.at(-5).linkedPullRequest,196);
- assert.equal(l.branches.at(-4).linkedPullRequest,197);
- assert.equal(l.branches.at(-3).releaseReady,false);
+ assert.equal(l.branches.length,185);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,120);
+ assert.equal(l.branches.at(-9).linkedPullRequest,193);
+ assert.equal(l.branches.at(-8).linkedPullRequest,194);
+ assert.equal(l.branches.at(-7).linkedPullRequest,195);
+ assert.equal(l.branches.at(-6).linkedPullRequest,196);
+ assert.equal(l.branches.at(-5).linkedPullRequest,197);
+ assert.equal(l.branches.at(-4).releaseReady,false);
  assert.equal(l.releaseBranch,
-  'stage/world-v2-b10-r18-98-private-history-recovery-2026-11-17');
+  'stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17');
  assert.equal(l.releaseLinkedCliOperatorCapture.workPackage,'B10-R18-91');
  assert.equal(l.releaseLinkedCliOperatorCapture.decision,'NO_GO');
  assert.equal(l.releaseLinkedCliOperatorCapture.authenticatedLinkedCliExecutedByChatGPT,false);

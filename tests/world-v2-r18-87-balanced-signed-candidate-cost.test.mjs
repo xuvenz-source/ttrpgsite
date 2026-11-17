@@ -118,19 +118,19 @@ test('R87 refuses original signed session limiter bypass and does not overclaim 
 });
 
 test('R87 ledger is another draft, never approval for migration, QA alias or production',()=>{
- assert.equal(ledger.branches.length,184);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,119);
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-98-private-history-recovery-2026-11-17');
- assert.equal(ledger.branches.at(-12).linkedPullRequest,189);
- assert.equal(ledger.branches.at(-3).releaseReady,false);
- assert.equal(ledger.branches.at(-11).linkedPullRequest,190);
- assert.equal(ledger.branches.at(-10).linkedPullRequest,191);
- assert.equal(ledger.branches.at(-9).linkedPullRequest,192);
- assert.equal(ledger.branches.at(-8).linkedPullRequest,193);
- assert.equal(ledger.branches.at(-7).linkedPullRequest,194);
- assert.equal(ledger.branches.at(-6).linkedPullRequest,195);
- assert.equal(ledger.branches.at(-5).linkedPullRequest,196);
- assert.equal(ledger.branches.at(-4).linkedPullRequest,197);
+ assert.equal(ledger.branches.length,185);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,120);
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17');
+ assert.equal(ledger.branches.at(-13).linkedPullRequest,189);
+ assert.equal(ledger.branches.at(-4).releaseReady,false);
+ assert.equal(ledger.branches.at(-12).linkedPullRequest,190);
+ assert.equal(ledger.branches.at(-11).linkedPullRequest,191);
+ assert.equal(ledger.branches.at(-10).linkedPullRequest,192);
+ assert.equal(ledger.branches.at(-9).linkedPullRequest,193);
+ assert.equal(ledger.branches.at(-8).linkedPullRequest,194);
+ assert.equal(ledger.branches.at(-7).linkedPullRequest,195);
+ assert.equal(ledger.branches.at(-6).linkedPullRequest,196);
+ assert.equal(ledger.branches.at(-5).linkedPullRequest,197);
  const x=ledger.releaseBalancedCandidateBenchmark;
  assert.equal(x.workPackage,'B10-R18-87');
  assert.equal(x.decision,'NO_GO');
