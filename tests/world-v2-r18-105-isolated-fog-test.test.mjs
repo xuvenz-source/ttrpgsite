@@ -86,7 +86,7 @@ test('R105 actual PostgreSQL SQL fixtures simulate role isolation and record ori
  const rollback=readFileSync(join(ROOT,root+'rollback-observation.sql'),'utf8');
  const reapply=readFileSync(join(ROOT,root+'reapply-observation.sql'),'utf8');
  assert.match(baseline,/ORIGINAL SOURCE BASELINE PASS/);
- assert.match(patched,/FOREIGN/i.test(patched)?/foreign/i:/R105/);
+ assert.match(patched,/foreign_motion/i);
  assert.match(patched,/SET LOCAL ROLE authenticated/);
  assert.match(patched,/map_combats/);
  assert.match(patched,/end_map_motion_sessions/);
