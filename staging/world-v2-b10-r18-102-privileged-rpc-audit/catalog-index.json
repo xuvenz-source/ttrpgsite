@@ -1,0 +1,1574 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-102",
+  "decision": "NO_GO",
+  "provenance": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "observedLocalDate": "2026-11-17",
+    "source": "SELECT-only pg_proc/catalog metadata and current Supabase security advisors",
+    "rawFunctionDefinitionsReturned": false,
+    "sqlOrPermissionsChanged": false,
+    "advisorRule": "authenticated_security_definer_function_executable"
+  },
+  "interpretation": "Live callable-function metadata. Boolean markers are only text matches in routine bodies, not proof of actual authorization checks or of vulnerabilities. Individual source and cross-account tests have NOT been performed.",
+  "totals": {
+    "catalogFunctions": 67,
+    "advisorWarnings": 67,
+    "allPublicDefinerFunctions": 85,
+    "authenticatedCallable": 67,
+    "anonymousCallable": 0,
+    "publicAclCallable": 0,
+    "emptyConfiguredSearchPath": 67,
+    "postgresOwned": 67,
+    "directAuthIdentityMarker": 60,
+    "scopeMarker": 60,
+    "fogVisionMarker": 31,
+    "movementMarker": 44,
+    "dynamicSqlMarker": 0,
+    "functionsWithoutDirectAuthIdentity": 7,
+    "functionsWithoutScopeMarker": 7
+  },
+  "functions": [
+    {
+      "schema": "public",
+      "name": "add_map_combat_tokens",
+      "identityArguments": "p_map uuid, p_tokens uuid[]",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "advance_authorized_navigation_gesture",
+      "identityArguments": "p_session uuid, p_dx integer, p_dy integer, p_seq bigint",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "advance_authorized_navigation_gesture_batch",
+      "identityArguments": "p_session uuid, p_targets jsonb, p_seq bigint",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "advance_map_motion_session",
+      "identityArguments": "p_session uuid, p_x integer, p_y integer, p_seq bigint",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "advance_map_motion_session_path",
+      "identityArguments": "p_session uuid, p_path jsonb, p_seq bigint",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "advance_world_motion_v2",
+      "identityArguments": "p_session uuid, p_seq bigint, p_from jsonb, p_targets jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "apply_token_quick_changes",
+      "identityArguments": "p_token uuid, p_changes jsonb",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "begin_authorized_navigation_gesture",
+      "identityArguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "begin_map_combat",
+      "identityArguments": "p_map uuid, p_tokens uuid[], p_field text, p_mode text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "begin_map_motion_session",
+      "identityArguments": "p_map uuid, p_kind text, p_piece uuid, p_ignore_collision boolean",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "begin_world_motion_v2",
+      "identityArguments": "p_map uuid, p_selection jsonb, p_origin jsonb, p_mode text, p_environment_revision bigint, p_permission_generation bigint, p_collision_override boolean",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "can_observe_map_position",
+      "identityArguments": "p_map uuid, px double precision, py double precision",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "can_observe_map_token",
+      "identityArguments": "p_token uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "can_player_place_map_piece",
+      "identityArguments": "p_map uuid, px double precision, py double precision",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "can_view_campaign_map",
+      "identityArguments": "p_campaign uuid, p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "cancel_world_motion_v2",
+      "identityArguments": "p_session uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": false,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "cast_collection_spell",
+      "identityArguments": "p_campaign_id uuid, p_source_id uuid, p_collection_id text, p_entry_id text, p_source_type text, p_mode text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "claim_campaign_sheet_item",
+      "identityArguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_takeover boolean",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "claim_campaign_tool_item",
+      "identityArguments": "p_issue uuid, p_item uuid, p_takeover boolean",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "collect_campaign_map_pin",
+      "identityArguments": "p_pin uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "command_map_combat",
+      "identityArguments": "p_map uuid, p_action text, p_entry uuid, p_score integer",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "commit_world_motion_v2",
+      "identityArguments": "p_session uuid, p_seq bigint, p_endpoint jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "create_campaign",
+      "identityArguments": "p_name text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "dm_give_inventory_item",
+      "identityArguments": "p_character uuid, p_inventory_field text, p_item jsonb",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "end_authorized_navigation_gesture",
+      "identityArguments": "p_session uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": false,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "end_map_motion_previews",
+      "identityArguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": false,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "end_map_motion_sessions",
+      "identityArguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": false,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_authorized_map_combat",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_authorized_map_fog",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_authorized_map_fog_delta",
+      "identityArguments": "p_map uuid, p_base_epoch uuid, p_base_revision bigint, p_base_sequence bigint",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_authorized_map_fog_v2",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_authorized_map_light_masks",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_authorized_map_light_masks_v2",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_authorized_map_navigation",
+      "identityArguments": "p_map uuid, p_kind text, p_piece uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_campaign_account_names",
+      "identityArguments": "p_campaign uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_campaign_sheet_inventory",
+      "identityArguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": false,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_dm_map_npc_values",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": false,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_npc_token_values",
+      "identityArguments": "p_token uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": false,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_token_encumbrance_badges",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_token_monitor_values",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_token_quick_values",
+      "identityArguments": "p_token uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_world_observer_cursor_v2",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_world_scene_v2",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "get_world_visibility_v2",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": false,
+        "fogVisionText": true,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "is_campaign_dm",
+      "identityArguments": "c uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "is_campaign_member",
+      "identityArguments": "c uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "is_map_fog_published",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "s",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": false,
+        "scopeText": false,
+        "fogVisionText": true,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "join_campaign",
+      "identityArguments": "p_invite_code text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "move_entire_party_to_map",
+      "identityArguments": "p_campaign uuid, p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "mutate_campaign_sheet_item",
+      "identityArguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_row jsonb, p_remove boolean",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "mutate_campaign_tool_item",
+      "identityArguments": "p_issue uuid, p_item uuid, p_row jsonb, p_remove boolean",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "patch_campaign_sheet_noninventory",
+      "identityArguments": "p_campaign uuid, p_source text, p_source_id uuid, p_values jsonb, p_meta jsonb",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": false,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "patch_campaign_tool_details",
+      "identityArguments": "p_issue uuid, p_lit boolean, p_attrs jsonb",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "post_token_reference",
+      "identityArguments": "p_token uuid, p_code text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "preview_map_motion",
+      "identityArguments": "p_map uuid, p_kind text, p_piece uuid, p_x integer, p_y integer, p_seq bigint, p_ignore_collision boolean",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": false,
+        "scopeText": false,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "preview_world_visibility_at_v2",
+      "identityArguments": "p_map uuid, p_viewer uuid, p_token uuid, p_x integer, p_y integer",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "preview_world_visibility_v2",
+      "identityArguments": "p_map uuid, p_viewer uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "publish_map_environment",
+      "identityArguments": "p_map uuid, p_action text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": false,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "release_campaign_sheet_item",
+      "identityArguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "release_campaign_tool_item",
+      "identityArguments": "p_issue uuid, p_item uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "roll_dice",
+      "identityArguments": "p_campaign_id uuid, p_expression text, p_label text, p_character_id uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "roll_equipment_weapon",
+      "identityArguments": "p_campaign_id uuid, p_source_type text, p_source_id uuid, p_field_id text, p_weapon_id text",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "roll_map_combat_initiative",
+      "identityArguments": "p_map uuid, p_entry uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": true,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "roll_map_npc_initiative",
+      "identityArguments": "p_map uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "run_tabletop_macro",
+      "identityArguments": "p_macro_id uuid",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "set_token_quick_value",
+      "identityArguments": "p_token uuid, p_field text, p_part text, p_value numeric",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": true,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "transfer_campaign_inventory_item",
+      "identityArguments": "p_campaign uuid, p_sheet uuid, p_field text, p_issue uuid, p_item uuid, p_direction text, p_x integer, p_y integer",
+      "ownerRole": "postgres",
+      "volatility": "v",
+      "grants": {
+        "authenticatedExecute": true,
+        "anonExecute": false,
+        "publicExecuteAcl": false
+      },
+      "securityDefiner": true,
+      "configuredSearchPath": "",
+      "markers": {
+        "directAuthIdentity": true,
+        "scopeText": true,
+        "fogVisionText": false,
+        "movementText": false,
+        "dynamicSqlText": false
+      },
+      "sourceReviewed": false,
+      "permissionReviewApproved": false
+    }
+  ]
+}

@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17",
+  "releaseBranch": "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1885,6 +1885,16 @@
       "linkedPullRequest": 203,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-101 audited original 83 migration SQL bodies server-side, committed only 83 frozen-hash-matched metadata/regex risk flags, no SQL bodies. 66 SECURITY DEFINER-containing files, 51 DML pattern files; Supabase live advisors 67 authenticated-definer WARN, 15 RLS INFO, 1 leaked-password WARN. Privileged RPC security/source portability not reviewed, QA 0 migrations/0 tables, NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "READ_ONLY_67_SECURITY_DEFINER_RPC_CATALOG_AND_INDIRECT_AUTH_TRIAGE_NO_SQL",
+      "linkedPullRequest": 204,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-102 reconciled 67 current authenticated-executable SECURITY DEFINER functions to adviser 67 WARN; 0 anon EXECUTE and 0 PUBLIC grants, 67 empty search_path, seven no direct auth.uid/auth.jwt text, seven no scope text. Five helper catalog entries inspected; no source-body review, cross-account tests or SQL change. QA remains empty; NO_GO."
     }
   ],
   "features": [
@@ -2990,7 +3000,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17",
+    "releaseBranch": "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3113,7 +3123,8 @@
       "stage/world-v2-b10-r18-98-private-history-recovery-2026-11-17",
       "stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17",
       "stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17",
-      "stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17"
+      "stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17",
+      "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17"
     ],
     "stagePolicy": "R18-95: preserve original frozen R79 165 branches; now 181 ledger branches and 116 unapproved outstanding (NOT a bulk-merge queue). Linked Supabase org Xuven Free, one visible project, cost quoted $0/month for independent second project and $0.01344/hour for paid branch (reject). Vercel project shared VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY env targets production/preview/development, so no isolated backend exists. Only stage source-only project/QA isolation plan; wait for user to choose org explicitly, no creation/deploy, independent Auth and 83+8 migrations, real signed DM/P1/P2 performance, Free RAM/locks remain unverified. Shared Supabase and permanent QA/production NO_GO.",
     "databaseReleaseVersion": null,
@@ -4011,6 +4022,43 @@
     "originalVercelChanged": false,
     "qaVercelDeployed": false,
     "paidInfrastructureCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releasePrivilegedRpcAudit": {
+    "schema": 1,
+    "workPackage": "B10-R18-102",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 187,
+    "currentLedgerBranches": 188,
+    "addedBranch": "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
+    "parentPr": 203,
+    "parentSha": "7b5b38be2bd8dee99dba7765969e0c55a2f9c16b",
+    "manifest": "staging/world-v2-b10-r18-102-privileged-rpc-audit/manifest.json",
+    "catalogIndex": "staging/world-v2-b10-r18-102-privileged-rpc-audit/catalog-index.json",
+    "indirectReview": "staging/world-v2-b10-r18-102-privileged-rpc-audit/indirect-auth-review.json",
+    "validator": "scripts/release/validate-world-v2-r18-102-privileged-rpc-audit.mjs",
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "authenticatedPrivilegedRpcCount": 67,
+    "anonymousExecutablePrivilegedRpcs": 0,
+    "publicExecuteAclGrants": 0,
+    "emptyConfiguredSearchPathFunctions": 67,
+    "unreviewedDirectIdentityFunctions": 7,
+    "functionsWithoutScopeText": 7,
+    "helperMetadataRecords": 5,
+    "qaRegisteredMigrations": 0,
+    "privilegedRpcSecurityApproved": false,
+    "operatorPrivateSqlRecoveryCompleted": false,
+    "signedCrossUserAuthorizationTestsPassed": false,
+    "qaOnlyDryRunCompleted": false,
+    "qaSchemaInstalled": false,
+    "pendingEightInstalled": false,
+    "rawSqlOrSecretsCommitted": false,
+    "originalPermissionsModified": false,
+    "originalOrQaSqlWritten": false,
+    "originalVercelChanged": false,
+    "qaVercelDeployed": false,
+    "paidResourcesCreated": false,
     "productionReleaseAuthorized": false
   }
 }

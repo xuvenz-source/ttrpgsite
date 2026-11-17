@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-102",
+  "decision": "NO_GO",
+  "parentPr": 203,
+  "parentSha": "7b5b38be2bd8dee99dba7765969e0c55a2f9c16b",
+  "observedLocalDate": "2026-11-17",
+  "scope": "LIVE_AUTHENTICATED_SECURITY_DEFINER_RPC_CATALOG_AND_INDIRECT_AUTH_TRIAGE",
+  "original": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "historicalMigrations": 83,
+    "providerAdvisorWarnings": 67,
+    "catalogMatchedAdvisorFunctions": 67,
+    "publicSecurityDefiners": 85,
+    "anonExecutableSecurityDefiners": 0,
+    "privilegeChangesApplied": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "publicApplicationTables": 0,
+    "sqlChanged": false
+  },
+  "files": {
+    "catalogIndex": "staging/world-v2-b10-r18-102-privileged-rpc-audit/catalog-index.json",
+    "catalogGitBlobSha": "c076de1c51d7d2a6ecf9eeb4f8986cc5c8885ab2",
+    "indirectReview": "staging/world-v2-b10-r18-102-privileged-rpc-audit/indirect-auth-review.json",
+    "validator": "scripts/release/validate-world-v2-r18-102-privileged-rpc-audit.mjs",
+    "tests": "tests/world-v2-r18-102-privileged-rpc-audit.test.mjs",
+    "runbook": "docs/testing/world-v2-r18-102-privileged-rpc-review-2026-11-17.md"
+  },
+  "results": {
+    "authenticatedFunctions": 67,
+    "postgresOwned": 67,
+    "emptySearchPath": 67,
+    "anonExecutable": 0,
+    "publicExecuteGranted": 0,
+    "directIdentityText": 60,
+    "withoutDirectIdentityText": 7,
+    "withoutScopeText": 7,
+    "fogVisionText": 31,
+    "movementText": 44,
+    "indirectHelperCandidatesTraced": 7,
+    "extraNonAuthCallablePublicDefiners": 18
+  },
+  "gates": {
+    "fullPrivilegedFunctionSourceReviewComplete": false,
+    "indirectAuthCallChainsVerified": false,
+    "signedCrossUserFogMovementNocAccessTestsPassed": false,
+    "rollbackPrepared": false,
+    "original83SqlPrivateRecoveryComplete": false,
+    "qaOnlyDryRunComplete": false,
+    "qaSchemaInstalled": false,
+    "pendingEightInstalled": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "originalDatabaseUnchanged": true,
+    "qaDatabaseUnchanged": true,
+    "existingVercelUnchanged": true,
+    "qaVercelUndeployed": true,
+    "noSqlDefinitionsExported": true,
+    "noSecretsCommitted": true,
+    "noPaidResource": true,
+    "noMerge": true,
+    "noProductionDeploy": true
+  }
+}
