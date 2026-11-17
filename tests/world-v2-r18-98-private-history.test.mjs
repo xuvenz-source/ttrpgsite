@@ -173,7 +173,7 @@ test('R98 synthetic operator runner performs only 3 whitelisted commands, never 
   commands.push(args.join(' '));
   if(args.join(' ')==='--version')return {status:0,stdout:'2.81.3\n',stderr:''};
   if(args.join(' ')==='migration fetch --help')return {
-   status:0,stdout:'Usage: supabase migration fetch [flags]\n --linked  From linked project\n',stderr:''
+   status:0,stdout:'Usage:\n  supabase migration fetch [flags]\n --linked  From linked project\n',stderr:''
   };
   return {status:0,stdout:'PRIVATE HISTORY BODY',stderr:''};
  };
