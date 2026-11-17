@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-103",
+  "decision": "NO_GO",
+  "providerProjectRef": "bgydsamxypjslergfpla",
+  "scenarioCount": 17,
+  "hostPrecondition": "QA original 83 historical schema must be privately recovered, reviewed, dry-run and separately approved for installation",
+  "note": "Cases describe future signed DM/P1/P2/nonmember testing. No account testing or SQL execution occurred in this source-only work package.",
+  "cases": [
+    {
+      "id": "FOG-01",
+      "rpc": "public.is_map_fog_published",
+      "scenario": "Non-member queries another campaign map UUID",
+      "expectedPolicy": "Do not disclose confidential fog/map existence unless explicit policy accepts public status",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "FOG-02",
+      "rpc": "public.get_world_visibility_v2",
+      "scenario": "P1 queries a map exclusive to P2's campaign",
+      "expectedPolicy": "No P2 map visibility, sight, exploration or roster",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "FOG-03",
+      "rpc": "public.get_world_visibility_v2",
+      "scenario": "P1 and P2 query same map with separate vision tokens",
+      "expectedPolicy": "No private cross-viewer sight, fog memory or stream cursor",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "FOG-04",
+      "rpc": "forge_world_v2.visibility_frame_v2",
+      "scenario": "DM previews P1 while tracking real P1 exploration",
+      "expectedPolicy": "DM preview does not persist exploration or grant private sight to unrelated viewers",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "FOG-05",
+      "rpc": "forge_world_v2.viewer_on_map",
+      "scenario": "Previously authorized account is revoked from campaign",
+      "expectedPolicy": "Revoked account has no map role, tokens or private stream",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "MOVE-01",
+      "rpc": "public.preview_map_motion",
+      "scenario": "P1 submits another campaign token/map UUID",
+      "expectedPolicy": "No foreign-token movement, path inference or geometry leak",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "MOVE-02",
+      "rpc": "forge_visibility.dispatch_movement_preview",
+      "scenario": "Non-DM requests wall collision override",
+      "expectedPolicy": "Collision override and blocked wall moves must be denied",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "MOVE-03",
+      "rpc": "public.cancel_world_motion_v2",
+      "scenario": "P1 passes live P2 motion session UUID",
+      "expectedPolicy": "Cannot cancel or inspect another actor session",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "MOVE-04",
+      "rpc": "public.end_authorized_navigation_gesture",
+      "scenario": "P1 passes P2 active gesture UUID",
+      "expectedPolicy": "Cannot release or modify another actor's gesture",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "MOVE-05",
+      "rpc": "public.end_map_motion_previews",
+      "scenario": "P1 submits P2 map and token IDs",
+      "expectedPolicy": "Cannot terminate another actor's preview",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "MOVE-06",
+      "rpc": "public.end_map_motion_sessions",
+      "scenario": "P1 submits P2 token IDs after DM rights revoked",
+      "expectedPolicy": "Cannot terminate, commit or observe another player's session",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "MOVE-07",
+      "rpc": "public.get_world_visibility_v2",
+      "scenario": "P1 token rights revoked before next movement/sight request",
+      "expectedPolicy": "No stale authorized visibility survives revocation",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "NPC-01",
+      "rpc": "public.get_dm_map_npc_values",
+      "scenario": "Signed non-DM calls NPC values on a campaign map",
+      "expectedPolicy": "No private NPC values returned to player",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "NPC-02",
+      "rpc": "public.get_npc_token_values",
+      "scenario": "DM of campaign A asks for NPC in campaign B",
+      "expectedPolicy": "No cross-campaign NPC values returned",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "SHEET-01",
+      "rpc": "public.get_campaign_sheet_inventory",
+      "scenario": "P1 requests another campaign and source/field",
+      "expectedPolicy": "No foreign inventory contents returned",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "SHEET-02",
+      "rpc": "public.patch_campaign_sheet_noninventory",
+      "scenario": "P1 writes another player's sheet fields",
+      "expectedPolicy": "No unauthorized sheet mutation or metadata leak",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    },
+    {
+      "id": "ENV-01",
+      "rpc": "public.publish_map_environment",
+      "scenario": "Non-DM attempts environment or fog publish action",
+      "expectedPolicy": "No map, fog, permission or revision mutation",
+      "status": "NOT_RUN",
+      "signedAccountsExercised": false,
+      "privateSqlExecuted": false
+    }
+  ],
+  "allHostedCasesExecuted": false,
+  "authorizationAccepted": false
+}
