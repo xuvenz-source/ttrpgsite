@@ -34,10 +34,10 @@ test('R106 official v2.81.3 transport reconciles all 83 MD5 names and 710102 fet
 test('R106 serializes same name and exact statement separator/terminator as official Go fetch',()=>{
  const row=serializeR106SyntheticHistory({
   version:'20261105110307',name:'tabletop_foundation',
-  statements:['select 1','select E\\'héllo\\'','select 3']
+  statements:['select 1',"select 'héllo'",'select 3']
  });
  assert.equal(row.filename,'20261105110307_tabletop_foundation.sql');
- assert.equal(row.body.toString('utf8'),"select 1;\nselect E\\'héllo\\';\nselect 3;\n");
+ assert.equal(row.body.toString('utf8'),"select 1;\nselect 'héllo';\nselect 3;\n");
  assert.equal(row.md5,createHash('md5').update(row.body).digest('hex'));
  assert.equal(row.body.at(-2),59); // semicolon
  assert.equal(row.body.at(-1),10); // LF
