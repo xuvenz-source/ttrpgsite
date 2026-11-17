@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184].includes(ledger.branches.length)||
+   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -599,7 +599,7 @@ export function validateR78ReleaseStatus({
      'stage/world-v2-b10-r18-97-qa-schema-bootstrap-preflight-2026-11-16'||
     ledger.branches[182]?.status!=='staged'||
     ledger.branches[182]?.releaseReady!==false))||
-   (ledger.branches.length===184&&(
+   (ledger.branches.length>=184&&(
     ledger.releasePrivateHistoryRecovery?.workPackage!=='B10-R18-98'||
     ledger.releasePrivateHistoryRecovery?.decision!=='NO_GO'||
     ledger.releasePrivateHistoryRecovery?.previousLedgerBranches!==183||
@@ -624,7 +624,33 @@ export function validateR78ReleaseStatus({
     ledger.branches[183]?.name!==
      'stage/world-v2-b10-r18-98-private-history-recovery-2026-11-17'||
     ledger.branches[183]?.status!=='staged'||
-    ledger.branches[183]?.releaseReady!==false)))))
+    ledger.branches[183]?.releaseReady!==false))||
+   (ledger.branches.length===185&&(
+    ledger.releasePrivateRecoveryAttestation?.workPackage!=='B10-R18-99'||
+    ledger.releasePrivateRecoveryAttestation?.decision!=='NO_GO'||
+    ledger.releasePrivateRecoveryAttestation?.previousLedgerBranches!==184||
+    ledger.releasePrivateRecoveryAttestation?.currentLedgerBranches!==185||
+    ledger.releasePrivateRecoveryAttestation?.parentPr!==200||
+    ledger.releasePrivateRecoveryAttestation?.parentSha!=='8405f928644bd2c0dc03ddf0c43417dc63d8425e'||
+    ledger.releasePrivateRecoveryAttestation?.originalProjectRef!=='lwhwgqaunxbmvyndswze'||
+    ledger.releasePrivateRecoveryAttestation?.qaProjectRef!=='bgydsamxypjslergfpla'||
+    ledger.releasePrivateRecoveryAttestation?.originalHistoryMatched!==83||
+    ledger.releasePrivateRecoveryAttestation?.qaRegisteredMigrations!==0||
+    ledger.releasePrivateRecoveryAttestation?.localReceiptComparatorStaged!==true||
+    ledger.releasePrivateRecoveryAttestation?.operatorAuthenticatedFetchVerified!==false||
+    ledger.releasePrivateRecoveryAttestation?.privateSqlBodiesRecovered!==false||
+    ledger.releasePrivateRecoveryAttestation?.privateExact83VerificationCompleted!==false||
+    ledger.releasePrivateRecoveryAttestation?.qaScopedDryRun!==false||
+    ledger.releasePrivateRecoveryAttestation?.rawSqlOrSecretsCommitted!==false||
+    ledger.releasePrivateRecoveryAttestation?.originalOrQaSqlWritten!==false||
+    ledger.releasePrivateRecoveryAttestation?.originalVercelChanged!==false||
+    ledger.releasePrivateRecoveryAttestation?.qaVercelDeployed!==false||
+    ledger.releasePrivateRecoveryAttestation?.paidInfrastructureCreated!==false||
+    ledger.releasePrivateRecoveryAttestation?.productionReleaseAuthorized!==false||
+    ledger.branches[184]?.name!==
+     'stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17'||
+    ledger.branches[184]?.status!=='staged'||
+    ledger.branches[184]?.releaseReady!==false)))))
 
 
   fail();
