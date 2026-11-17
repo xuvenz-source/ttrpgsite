@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
+  "releaseBranch": "stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1895,6 +1895,16 @@
       "linkedPullRequest": 204,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-102 reconciled 67 current authenticated-executable SECURITY DEFINER functions to adviser 67 WARN; 0 anon EXECUTE and 0 PUBLIC grants, 67 empty search_path, seven no direct auth.uid/auth.jwt text, seven no scope text. Five helper catalog entries inspected; no source-body review, cross-account tests or SQL change. QA remains empty; NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "SELECT_ONLY_LIVE_RPC_SHA256_20_SOURCE_PARITY_SIX_AND_UNRUN_SIGNED_ACCEPTANCE_NO_SQL",
+      "linkedPullRequest": 205,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-103 compared six Git SQL function source bodies byte-for-byte/SHA-256 to live pg_proc, verified 20 function SHA-256 metadata fingerprints, and staged 17 unrun signed-user cases. Fog publication policy/actor-session review remain open, QA 0 migrations. No SQL/deploy or security approval; NO_GO."
     }
   ],
   "features": [
@@ -3000,7 +3010,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
+    "releaseBranch": "stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3124,7 +3134,8 @@
       "stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17",
       "stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17",
       "stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17",
-      "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17"
+      "stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17",
+      "stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17"
     ],
     "stagePolicy": "R18-95: preserve original frozen R79 165 branches; now 181 ledger branches and 116 unapproved outstanding (NOT a bulk-merge queue). Linked Supabase org Xuven Free, one visible project, cost quoted $0/month for independent second project and $0.01344/hour for paid branch (reject). Vercel project shared VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY env targets production/preview/development, so no isolated backend exists. Only stage source-only project/QA isolation plan; wait for user to choose org explicitly, no creation/deploy, independent Auth and 83+8 migrations, real signed DM/P1/P2 performance, Free RAM/locks remain unverified. Shared Supabase and permanent QA/production NO_GO.",
     "databaseReleaseVersion": null,
@@ -4057,6 +4068,38 @@
     "originalPermissionsModified": false,
     "originalOrQaSqlWritten": false,
     "originalVercelChanged": false,
+    "qaVercelDeployed": false,
+    "paidResourcesCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseRpcSourceParity": {
+    "schema": 1,
+    "workPackage": "B10-R18-103",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 188,
+    "currentLedgerBranches": 189,
+    "addedBranch": "stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17",
+    "parentPr": 204,
+    "parentSha": "defe689af62951bcf04b30d3a09483ec805548fb",
+    "manifest": "staging/world-v2-b10-r18-103-live-source-parity/manifest.json",
+    "metadataIndex": "staging/world-v2-b10-r18-103-live-source-parity/metadata-index.json",
+    "signedMatrix": "staging/world-v2-b10-r18-103-live-source-parity/signed-authorization-matrix.json",
+    "validator": "scripts/release/validate-world-v2-r18-103-live-rpc-source-parity.mjs",
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "liveFunctionFingerprints": 20,
+    "exactRepoSourceMatches": 6,
+    "plannedSignedCases": 17,
+    "qaRegisteredMigrations": 0,
+    "unauthorizedFogPublicationPolicyResolved": false,
+    "allFunctionSourceSecurityReviewed": false,
+    "signedAcceptanceCompleted": false,
+    "original83SqlRecovered": false,
+    "qaOnlyDryRunPerformed": false,
+    "qaSqlApplied": false,
+    "pendingEightInstalled": false,
+    "rawSqlOrSecretsCommitted": false,
+    "originalSqlOrGrantsModified": false,
     "qaVercelDeployed": false,
     "paidResourcesCreated": false,
     "productionReleaseAuthorized": false
