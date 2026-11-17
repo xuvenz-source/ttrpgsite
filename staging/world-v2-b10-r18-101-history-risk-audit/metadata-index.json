@@ -1,0 +1,1623 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-101",
+  "kind": "HISTORICAL_SQL_METADATA_ONLY_REGEX_FLAGS",
+  "provenance": {
+    "project_ref": "lwhwgqaunxbmvyndswze",
+    "observed_date": "2026-11-17",
+    "baseline": "staging/world-v2-b10-r18-08-remote-history-content-hashes.json",
+    "query_mode": "READ_ONLY_AGGREGATE_ON_DATABASE_SERVER_NO_RAW_SQL_RETURNED",
+    "manual_security_review_performed": false
+  },
+  "interpretation": "Per-migration regex presence in stored SQL bodies, not executed effects, vulnerabilities or proof of safe replay; categories overlap; no original SQL text is included",
+  "metrics": {
+    "history_count": 83,
+    "total_sql_bytes": 709936,
+    "largest_sql_bytes": 48527,
+    "flagged_file_counts": {
+      "auth_refs": 12,
+      "data_dml": 51,
+      "security_definer": 66,
+      "storage_realtime": 30,
+      "access_control": 65,
+      "environment_change": 4,
+      "hardcoded_endpoint": 0,
+      "auth_calls": 63,
+      "routine_execute_acl": 43,
+      "user_metadata_token": 1,
+      "schema_qualified_inserts": 24
+    }
+  },
+  "flags": [
+    "auth_refs",
+    "data_dml",
+    "security_definer",
+    "storage_realtime",
+    "access_control",
+    "environment_change",
+    "hardcoded_endpoint",
+    "auth_calls",
+    "routine_execute_acl",
+    "user_metadata_token",
+    "schema_qualified_inserts"
+  ],
+  "entries": [
+    {
+      "version": "20261105110307",
+      "name": "tabletop_foundation",
+      "sql_bytes": 4376,
+      "body_md5": "ff92a441cce21e90fa48237fe2a70d27",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": true,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105111843",
+      "name": "tabletop_rls_permissions",
+      "sql_bytes": 5255,
+      "body_md5": "3cbfec016db1c9c5061efc75250e17cf",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105111916",
+      "name": "tabletop_functions_and_map_storage",
+      "sql_bytes": 7569,
+      "body_md5": "0a0d4b464fe8eec5060f9dba0ac58a12",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261105112023",
+      "name": "lock_down_trigger_functions",
+      "sql_bytes": 212,
+      "body_md5": "5fd9eee6b1bbf803888fd76fafc915a8",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105112515",
+      "name": "enable_tabletop_realtime",
+      "sql_bytes": 356,
+      "body_md5": "74de25ab1c27b5fb44b9a80f11dd2147",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": true,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105112628",
+      "name": "restrict_player_character_visibility",
+      "sql_bytes": 272,
+      "body_md5": "b50fa918647a212f67b5e8a1d8f399ac",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105114239",
+      "name": "add_npc_bestiary_and_character_artwork",
+      "sql_bytes": 6479,
+      "body_md5": "812000ff52cfd06c144249338dee7028",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261105121107",
+      "name": "token_grid_footprint_sizes",
+      "sql_bytes": 674,
+      "body_md5": "eca7ef6a588ecf2583be80a440aac5d9",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105121723",
+      "name": "sync_updated_character_art_to_placed_tokens",
+      "sql_bytes": 658,
+      "body_md5": "fdf67c92280195e91c3d2ec9b77947d2",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105133019",
+      "name": "create_personal_token_libraries",
+      "sql_bytes": 2511,
+      "body_md5": "1df0fa6ad320f727b619ee718f2788e2",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": false,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261105142051",
+      "name": "allow_players_to_place_own_characters_on_active_map",
+      "sql_bytes": 669,
+      "body_md5": "104f8e0b1d5f83c3bdee3fdf868c6bbb",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105143416",
+      "name": "map_calibration_source_dimensions_and_realtime",
+      "sql_bytes": 1530,
+      "body_md5": "b14d0008e88ccb3f1822abfae35123d7",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": false,
+        "storage_realtime": true,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105144953",
+      "name": "token_display_layout_and_private_resource_views",
+      "sql_bytes": 3124,
+      "body_md5": "936e98ff264ac1c351b97d753070821c",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105145039",
+      "name": "refresh_map_tokens_when_character_resources_change",
+      "sql_bytes": 578,
+      "body_md5": "2bfa14e17de3cdb80ba9ec9f87565671",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105151706",
+      "name": "read_current_maximum_resource_fields_for_token_monitors",
+      "sql_bytes": 2480,
+      "body_md5": "0146cbb456e3558d2f5c07e5259c4ae2",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105153016",
+      "name": "account_keybindings_and_campaign_macro_hotbars",
+      "sql_bytes": 2041,
+      "body_md5": "c754f301e427d36a1c310c598b261719",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105162813",
+      "name": "dm_selected_token_quick_edit_fields_and_secure_updates",
+      "sql_bytes": 5463,
+      "body_md5": "d76d895ae21b0fb42233aadc12665802",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105163409",
+      "name": "allow_only_dm_approved_quick_resource_changes_on_controlled_npcs",
+      "sql_bytes": 3429,
+      "body_md5": "43eb0a54431daeb908fd03b319782484",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105163541",
+      "name": "reconnect_legacy_token_monitor_fields_to_unique_sheet_ids",
+      "sql_bytes": 1672,
+      "body_md5": "f66b31351017002baa9d0bfaeb398331",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105164144",
+      "name": "atomic_batch_token_quick_adjustments",
+      "sql_bytes": 6958,
+      "body_md5": "a7b108f97fb47e937524b5960767e01c",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261105165418",
+      "name": "throttle_public_username_account_creation",
+      "sql_bytes": 1216,
+      "body_md5": "e6ad02b672bb09f77c74930d83937fba",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106033810",
+      "name": "token_status_effects_20261106",
+      "sql_bytes": 10728,
+      "body_md5": "92e1773c316b5c028da9fd68814c1497",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106033824",
+      "name": "ui_scale_preferences_20261106",
+      "sql_bytes": 368,
+      "body_md5": "ca0e925e64dc49b5106e125fe72f65e3",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106061941",
+      "name": "spellcasting_20261106",
+      "sql_bytes": 10373,
+      "body_md5": "3d13a28dadd562fcaa696ca2e02e5f51",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106061954",
+      "name": "visual_macros_20261106",
+      "sql_bytes": 7625,
+      "body_md5": "d1596f08c6a7aac2f34c4601ae8cbe68",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106074744",
+      "name": "20261106_weapon_attack_cards",
+      "sql_bytes": 8089,
+      "body_md5": "5b8ed6efc661f09cba001ea9b5841d03",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106074748",
+      "name": "20261106_token_reference_codes",
+      "sql_bytes": 9129,
+      "body_md5": "a1ab266a771dae6c6594bc03777b3b3d",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106074750",
+      "name": "20261106_multiple_character_sheets",
+      "sql_bytes": 1604,
+      "body_md5": "739d7471fbdeb305d7cfd82046f48d4f",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106074754",
+      "name": "20261106_private_player_maps",
+      "sql_bytes": 9802,
+      "body_md5": "c532aae49f5224b505187e6f74ee64a0",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106074757",
+      "name": "20261106_macro_crit_thresholds",
+      "sql_bytes": 6505,
+      "body_md5": "77ff0fdf692b89771562d45a614f3ded",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106090848",
+      "name": "20261106_campaign_account_names",
+      "sql_bytes": 963,
+      "body_md5": "5f7a80a172be6ad6baa397653cf96fdb",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": true,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106090851",
+      "name": "20261106_dm_ability_modifiers",
+      "sql_bytes": 6503,
+      "body_md5": "40f2fb98801b05ec57507fc3ab628d81",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106090857",
+      "name": "20261106_linked_attack_macros",
+      "sql_bytes": 11610,
+      "body_md5": "67bc695da2d4963d131149182f6777d1",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261106105547",
+      "name": "dm_distribute_inventory_items",
+      "sql_bytes": 3269,
+      "body_md5": "4a7569ebb1da55ec924e9cd47ef7d3e1",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106105551",
+      "name": "token_encumbrance_badges",
+      "sql_bytes": 5049,
+      "body_md5": "c67756fa3b0dca9a9e59d83c09fa26c3",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106105555",
+      "name": "sheet_quickcode_values",
+      "sql_bytes": 4853,
+      "body_md5": "033f8c56f5931246ab5a033616f3dfe1",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106105559",
+      "name": "npc_structure_trigger_fix",
+      "sql_bytes": 1175,
+      "body_md5": "fd9f409dccd4e8bcef3dbe3859bf6724",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106105604",
+      "name": "move_entire_party_map",
+      "sql_bytes": 1172,
+      "body_md5": "f676a44e50861a0899fddd69a2db0029",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106105608",
+      "name": "private_live_movement",
+      "sql_bytes": 1154,
+      "body_md5": "a5e5f1ba1593aa242942e603dc946900",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106105612",
+      "name": "private_map_quick_status",
+      "sql_bytes": 7348,
+      "body_md5": "614ca024ec3af2d514782daa2d701ba8",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261106160353",
+      "name": "sidebar_menu_preferences",
+      "sql_bytes": 1731,
+      "body_md5": "dcc8de1d60f899a9683e8dfb94b9d13a",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261107030341",
+      "name": "dm_map_environment_layers",
+      "sql_bytes": 2155,
+      "body_md5": "77f97001aba009d64c71b8f2ff794a46",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261107051546",
+      "name": "remove_unused_anon_preference_and_map_grants",
+      "sql_bytes": 1241,
+      "body_md5": "1269b2757b5c28185fa75ab1a6045dcd",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261107052003",
+      "name": "map_combat_initiative",
+      "sql_bytes": 19921,
+      "body_md5": "124c8d9cb89019a36347a22350391c30",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107081654",
+      "name": "npc_template_inheritance_and_dead_status",
+      "sql_bytes": 6165,
+      "body_md5": "818bb4fe186c57f63c2106e7d403328f",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261107081736",
+      "name": "campaign_tools_issuance",
+      "sql_bytes": 16433,
+      "body_md5": "b74b00d23c4ad6e8ad7a06bedaa50471",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107081754",
+      "name": "campaign_pins_and_handouts",
+      "sql_bytes": 12855,
+      "body_md5": "a4b3fa94e04026b3af28dad5a1fc546c",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107095343",
+      "name": "campaign_tool_item_collaboration",
+      "sql_bytes": 11508,
+      "body_md5": "dd243ecf4195f55bc95cd6b457f97175",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107095350",
+      "name": "campaign_sheet_inventory_collaboration",
+      "sql_bytes": 18635,
+      "body_md5": "259f1373afcee6170981622d237dd9a7",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107110539",
+      "name": "authoritative_fog_collision_release",
+      "sql_bytes": 47414,
+      "body_md5": "a67828f6a05ae8ab16cde5dccdc6a4bd",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": true,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107113749",
+      "name": "campaign_pin_icon_expansion",
+      "sql_bytes": 387,
+      "body_md5": "03b66659236086eef70fa849f42a9be6",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261107135138",
+      "name": "fog_visibility_batch_optimization",
+      "sql_bytes": 6007,
+      "body_md5": "253875711435f7a2f02e18577667e176",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261107150259",
+      "name": "inventory_lease_expiry_qualification",
+      "sql_bytes": 3976,
+      "body_md5": "b4d743a7de93c5c1d106c3ecd0ec87fb",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107150305",
+      "name": "holdable_campaign_tools",
+      "sql_bytes": 14218,
+      "body_md5": "14db78c877c8459669a05a4bb18a0ea2",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": true,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107164822",
+      "name": "player_owned_token_artwork",
+      "sql_bytes": 5244,
+      "body_md5": "60b9b560b093de3e778274201ca9a284",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261107164849",
+      "name": "macro_quickcode_resolution",
+      "sql_bytes": 10237,
+      "body_md5": "a226560d87f8b25b8cbe8c27108ac617",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261107173054",
+      "name": "nonfog_token_movement_tick_optimization",
+      "sql_bytes": 1487,
+      "body_md5": "fa006e4851fbf6a2b4f136058e5c724d",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261108031754",
+      "name": "world_runtime_movement_fog_collision_20261108",
+      "sql_bytes": 48527,
+      "body_md5": "29b256061318321a65fea5ea5252442a",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261108052335",
+      "name": "campaign_cross_inventory_item_transfers",
+      "sql_bytes": 10825,
+      "body_md5": "c648b6f6edd38cbe47bcddd622fdfb96",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261108055943",
+      "name": "world_runtime_single_write_trajectory",
+      "sql_bytes": 14914,
+      "body_md5": "35e8415aa823db772b99e27e7e1ea0c1",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261108091818",
+      "name": "observer_and_per_viewer_visibility_release_20261108",
+      "sql_bytes": 26216,
+      "body_md5": "ac0e744569de05a47a0cef476b6c9c63",
+      "flags": {
+        "auth_refs": true,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261108111759",
+      "name": "unified_movement_fog_realtime_memory_20261108",
+      "sql_bytes": 28511,
+      "body_md5": "14e06f76ca6cbefaac326b785f1e86b7",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261108112135",
+      "name": "fix_motion_session_record_alias_20261108",
+      "sql_bytes": 7209,
+      "body_md5": "9a79037f79f46fd0ee704916fb933b9e",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261108112252",
+      "name": "guard_stationary_motion_collision_20261108",
+      "sql_bytes": 7372,
+      "body_md5": "734d18449707a51581479332c671194e",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261108112544",
+      "name": "fix_motion_step_count_builtin_20261108",
+      "sql_bytes": 7357,
+      "body_md5": "b2b45cab8be476c6c18c53d3d03a4b5e",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261108162852",
+      "name": "dm_map_npc_protected_columns",
+      "sql_bytes": 852,
+      "body_md5": "487e4aaa4b250d3ee3adb605f2b5188b",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109000100",
+      "name": "authorized_predictive_navigation",
+      "sql_bytes": 21883,
+      "body_md5": "564ceb82e2ee90fe222d4d409c984390",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109000200",
+      "name": "private_verified_visibility_deltas",
+      "sql_bytes": 11713,
+      "body_md5": "5a4ad0a8584065e10bde086eec89d995",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": true
+      }
+    },
+    {
+      "version": "20261109000300",
+      "name": "navigation_scene_revisions",
+      "sql_bytes": 5649,
+      "body_md5": "b6cce3c9cb324fc62be078beff3c723c",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109000400",
+      "name": "concealed_navigation_gestures",
+      "sql_bytes": 11392,
+      "body_md5": "9d8ccd6f9cf4eef566a6174df480278b",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109082328",
+      "name": "unified_movement_batched_concealed_navigation_20261109000500",
+      "sql_bytes": 13447,
+      "body_md5": "26278109c90a28c1b5b69ee5f044aa76",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109082332",
+      "name": "unified_movement_batched_motion_observer_visibility_20261109000600",
+      "sql_bytes": 9709,
+      "body_md5": "5058ce8aabb41aa73988dfbb8f09e8a8",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109082344",
+      "name": "unified_movement_authorized_dm_observer_paths_20261109000700",
+      "sql_bytes": 8246,
+      "body_md5": "422a643aba8cc1721e223f0218d1ac6e",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109082347",
+      "name": "unified_movement_dm_held_torch_authorized_motion_20261109000800",
+      "sql_bytes": 8591,
+      "body_md5": "7ec1f1b1d3eb11a134f8eda16bb4c8cc",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162313",
+      "name": "world_engine_v2_motion_authority",
+      "sql_bytes": 30685,
+      "body_md5": "ac0ce97f57ef55cba036fb29bc49429f",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": true,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162326",
+      "name": "world_engine_v2_private_observer_stream",
+      "sql_bytes": 12020,
+      "body_md5": "f6d04ca078a5e32058b1a8b2fa3464aa",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162330",
+      "name": "world_engine_v2_static_scene_publication",
+      "sql_bytes": 7516,
+      "body_md5": "84c22634ffd65b773e7eb3220d8fe5cd",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162334",
+      "name": "world_engine_v2_vision_geometry",
+      "sql_bytes": 20270,
+      "body_md5": "108743cefb8cb2b11e88b806d86f32e6",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162343",
+      "name": "world_engine_v2_visibility_snapshots",
+      "sql_bytes": 14998,
+      "body_md5": "15e88aaaf52497c7a630ff2714bda606",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162347",
+      "name": "world_engine_v2_visibility_invalidation",
+      "sql_bytes": 15356,
+      "body_md5": "bb61588972f1a51b7957995a462c3b87",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": true,
+        "security_definer": true,
+        "storage_realtime": true,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": true,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162352",
+      "name": "world_engine_v2_vision_roster_invalidation",
+      "sql_bytes": 7458,
+      "body_md5": "ee9b8c965d39d02e9822cced0699102c",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": true,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": false,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109162357",
+      "name": "world_engine_v2_legacy_commit_checkpoint",
+      "sql_bytes": 9719,
+      "body_md5": "1431f6c02113bdfcf4941214fac0b9d3",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": true,
+        "storage_realtime": false,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    },
+    {
+      "version": "20261109171247",
+      "name": "free_tier_rls_initplan_optimization_20261110050000",
+      "sql_bytes": 5046,
+      "body_md5": "645c609ca0383af0195097bfbd0475c0",
+      "flags": {
+        "auth_refs": false,
+        "data_dml": false,
+        "security_definer": false,
+        "storage_realtime": true,
+        "access_control": false,
+        "environment_change": false,
+        "hardcoded_endpoint": false,
+        "auth_calls": true,
+        "routine_execute_acl": false,
+        "user_metadata_token": false,
+        "schema_qualified_inserts": false
+      }
+    }
+  ]
+}
