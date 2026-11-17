@@ -78,16 +78,16 @@ test('R90 executable workflow has no remote SQL, operator secrets, or live crede
 test('R90 NO-GO proof keeps official CLI and signed multiplayer gates blocked',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  const manifest=JSON.parse(read('staging/world-v2-b10-r18-90-cli-help/manifest.json'));
- assert.equal(ledger.branches.length,190);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,125);
- assert.equal(ledger.branches.at(-15).linkedPullRequest,192);
- assert.equal(ledger.branches.at(-14).linkedPullRequest,193);
- assert.equal(ledger.branches.at(-13).linkedPullRequest,194);
- assert.equal(ledger.branches.at(-12).linkedPullRequest,195);
- assert.equal(ledger.branches.at(-11).linkedPullRequest,196);
- assert.equal(ledger.branches.at(-10).linkedPullRequest,197);
- assert.equal(ledger.branches.at(-9).releaseReady,false);
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17');
+ assert.equal(ledger.branches.length,191);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,126);
+ assert.equal(ledger.branches.at(-16).linkedPullRequest,192);
+ assert.equal(ledger.branches.at(-15).linkedPullRequest,193);
+ assert.equal(ledger.branches.at(-14).linkedPullRequest,194);
+ assert.equal(ledger.branches.at(-13).linkedPullRequest,195);
+ assert.equal(ledger.branches.at(-12).linkedPullRequest,196);
+ assert.equal(ledger.branches.at(-11).linkedPullRequest,197);
+ assert.equal(ledger.branches.at(-10).releaseReady,false);
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17');
  assert.equal(ledger.releasePinnedCliOfflineHelp.decision,'NO_GO');
  assert.equal(ledger.releasePinnedCliOfflineHelp.authenticationUsed,false);
  assert.equal(ledger.releasePinnedCliOfflineHelp.officialLinkedCliDryRunVerified,false);
