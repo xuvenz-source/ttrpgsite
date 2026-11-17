@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-103",
+  "decision": "NO_GO",
+  "parentPr": 204,
+  "parentSha": "defe689af62951bcf04b30d3a09483ec805548fb",
+  "observedLocalDate": "2026-11-17",
+  "scope": "LIVE_20_RPC_SHA256_SOURCE_FINGERPRINT_AND_SIX_SOURCE_EQUALITY_REVIEW",
+  "original": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "historicalMigrationCount": 83,
+    "liveFunctionsFingerprintVerified": 20,
+    "exactRepositoryBodyParityConfirmed": 6,
+    "rawLiveFunctionSourceExported": false,
+    "sqlOrPermissionChanges": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "publicApplicationTables": 0,
+    "sqlChanged": false
+  },
+  "evidence": {
+    "index": "staging/world-v2-b10-r18-103-live-source-parity/metadata-index.json",
+    "indexGitBlobSha": "788a96c8c75a7734c628b3d969cf0ad8cd1609a4",
+    "testMatrix": "staging/world-v2-b10-r18-103-live-source-parity/signed-authorization-matrix.json",
+    "validator": "scripts/release/validate-world-v2-r18-103-live-rpc-source-parity.mjs",
+    "test": "tests/world-v2-r18-103-live-rpc-source-parity.test.mjs",
+    "runbook": "docs/testing/world-v2-r18-103-live-rpc-source-parity-2026-11-17.md",
+    "targetFunctionCount": 12,
+    "privateHelperFunctionCount": 8,
+    "exactRepoSourceParityCount": 6,
+    "unauthorizedPublicationPolicyOpen": true,
+    "motionSessionActorPatternNotDetected": 1,
+    "allFunctionsFullyReviewed": false
+  },
+  "gates": {
+    "isMapFogPublishedPolicyResolved": false,
+    "endMapMotionSessionsAuthorizationSourceReviewed": false,
+    "allTwentySourceFunctionsIndividuallyReviewed": false,
+    "signedDmP1P2OutsiderTestsPassed": false,
+    "crossCampaignNpcSheetTestsPassed": false,
+    "private83HistoricalSqlRecovered": false,
+    "historicalSqlPortabilitySecurityApproved": false,
+    "qaOnlyDryRunPerformed": false,
+    "qaOriginal83SqlInstalled": false,
+    "pendingEightInstalled": false,
+    "qaFrontendDeployed": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "productionSqlUnchanged": true,
+    "qaSqlUnchanged": true,
+    "originalVercelUnchanged": true,
+    "qaVercelUndeployed": true,
+    "noRawLiveSqlOrSecretsExported": true,
+    "noPaidResource": true,
+    "noMerge": true,
+    "noProductionDeployment": true
+  }
+}
