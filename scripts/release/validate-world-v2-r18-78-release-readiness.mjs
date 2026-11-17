@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187].includes(ledger.branches.length)||
+   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -681,7 +681,7 @@ export function validateR78ReleaseStatus({
      'stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17'||
     ledger.branches[185]?.status!=='staged'||
     ledger.branches[185]?.releaseReady!==false))||
-   (ledger.branches.length===187&&(
+   (ledger.branches.length>=187&&(
     ledger.releaseHistoricalSqlRiskAudit?.workPackage!=='B10-R18-101'||
     ledger.releaseHistoricalSqlRiskAudit?.decision!=='NO_GO'||
     ledger.releaseHistoricalSqlRiskAudit?.previousLedgerBranches!==186||
@@ -712,7 +712,41 @@ export function validateR78ReleaseStatus({
     ledger.branches[186]?.name!==
      'stage/world-v2-b10-r18-101-original-history-risk-classification-2026-11-17'||
     ledger.branches[186]?.status!=='staged'||
-    ledger.branches[186]?.releaseReady!==false)))))
+    ledger.branches[186]?.releaseReady!==false))||
+   (ledger.branches.length===188&&(
+    ledger.releasePrivilegedRpcAudit?.workPackage!=='B10-R18-102'||
+    ledger.releasePrivilegedRpcAudit?.decision!=='NO_GO'||
+    ledger.releasePrivilegedRpcAudit?.previousLedgerBranches!==187||
+    ledger.releasePrivilegedRpcAudit?.currentLedgerBranches!==188||
+    ledger.releasePrivilegedRpcAudit?.parentPr!==203||
+    ledger.releasePrivilegedRpcAudit?.parentSha!=='7b5b38be2bd8dee99dba7765969e0c55a2f9c16b'||
+    ledger.releasePrivilegedRpcAudit?.originalProjectRef!=='lwhwgqaunxbmvyndswze'||
+    ledger.releasePrivilegedRpcAudit?.qaProjectRef!=='bgydsamxypjslergfpla'||
+    ledger.releasePrivilegedRpcAudit?.authenticatedPrivilegedRpcCount!==67||
+    ledger.releasePrivilegedRpcAudit?.anonymousExecutablePrivilegedRpcs!==0||
+    ledger.releasePrivilegedRpcAudit?.publicExecuteAclGrants!==0||
+    ledger.releasePrivilegedRpcAudit?.emptyConfiguredSearchPathFunctions!==67||
+    ledger.releasePrivilegedRpcAudit?.unreviewedDirectIdentityFunctions!==7||
+    ledger.releasePrivilegedRpcAudit?.functionsWithoutScopeText!==7||
+    ledger.releasePrivilegedRpcAudit?.helperMetadataRecords!==5||
+    ledger.releasePrivilegedRpcAudit?.qaRegisteredMigrations!==0||
+    ledger.releasePrivilegedRpcAudit?.privilegedRpcSecurityApproved!==false||
+    ledger.releasePrivilegedRpcAudit?.operatorPrivateSqlRecoveryCompleted!==false||
+    ledger.releasePrivilegedRpcAudit?.signedCrossUserAuthorizationTestsPassed!==false||
+    ledger.releasePrivilegedRpcAudit?.qaOnlyDryRunCompleted!==false||
+    ledger.releasePrivilegedRpcAudit?.qaSchemaInstalled!==false||
+    ledger.releasePrivilegedRpcAudit?.pendingEightInstalled!==false||
+    ledger.releasePrivilegedRpcAudit?.rawSqlOrSecretsCommitted!==false||
+    ledger.releasePrivilegedRpcAudit?.originalPermissionsModified!==false||
+    ledger.releasePrivilegedRpcAudit?.originalOrQaSqlWritten!==false||
+    ledger.releasePrivilegedRpcAudit?.originalVercelChanged!==false||
+    ledger.releasePrivilegedRpcAudit?.qaVercelDeployed!==false||
+    ledger.releasePrivilegedRpcAudit?.paidResourcesCreated!==false||
+    ledger.releasePrivilegedRpcAudit?.productionReleaseAuthorized!==false||
+    ledger.branches[187]?.name!==
+     'stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17'||
+    ledger.branches[187]?.status!=='staged'||
+    ledger.branches[187]?.releaseReady!==false)))))
 
 
   fail();
