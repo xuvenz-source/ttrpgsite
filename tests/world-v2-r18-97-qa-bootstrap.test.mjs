@@ -72,13 +72,13 @@ test('R97 ledger stays draft and historical R96 provisioning receipt is unchange
  const previous=JSON.parse(readFileSync(join(ROOT,
   'staging/world-v2-b10-r18-96-free-qa-provisioning/manifest.json'),'utf8'));
  assert.equal(previous.qaSupabase.registeredMigrations,0);
- assert.equal(ledger.branches.length,183);
- assert.equal(ledger.branches.at(-2).linkedPullRequest,198);
- assert.equal(ledger.branches.at(-1).linkedPullRequest,199);
- assert.equal(ledger.branches.at(-1).releaseReady,false);
+ assert.equal(ledger.branches.length,184);
+ assert.equal(ledger.branches.at(-3).linkedPullRequest,198);
+ assert.equal(ledger.branches.at(-2).linkedPullRequest,199);
+ assert.equal(ledger.branches.at(-2).releaseReady,false);
  assert.equal(ledger.releaseQaSchemaPreflight.decision,'NO_GO');
  assert.equal(ledger.releaseQaSchemaPreflight.originalHashesMatched,83);
  assert.equal(ledger.releaseQaSchemaPreflight.qaRegisteredMigrations,0);
  assert.equal(ledger.releaseQaSchemaPreflight.rootHistoryMissingVersions,63);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,118);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,119);
 });
