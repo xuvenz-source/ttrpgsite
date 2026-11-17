@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-99",
+  "decision": "NO_GO",
+  "parentPr": 200,
+  "parentSha": "8405f928644bd2c0dc03ddf0c43417dc63d8425e",
+  "observedDateLocal": "2026-11-17",
+  "source": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 83,
+    "readOnlyHistoricalDigestMatches": 83,
+    "readOnlyMismatchCount": 0,
+    "sqlBodiesReturnedToChat": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "bootstrapApplied": false
+  },
+  "evidence": {
+    "previousManifest": "staging/world-v2-b10-r18-98-private-history/manifest.json",
+    "offlineVerifier": "scripts/release/validate-world-v2-r18-99-private-recovery.mjs",
+    "sourceVerifier": "scripts/release/validate-world-v2-r18-99-source.mjs",
+    "operatorReceiptCaptured": false,
+    "private83BodyAuditExecutedByOperator": false,
+    "verifiedOperatorSessionProvenance": false,
+    "actualAuthCliFetchCompleted": false,
+    "qaOnlyDryRunPerformed": false
+  },
+  "safeguards": {
+    "approvedCliVersion": "2.81.3",
+    "requiredHistoricalFiles": 83,
+    "pendingEightExcluded": true,
+    "rawSqlCommitted": false,
+    "credentialsCommitted": false,
+    "paidResourceCreated": false,
+    "productionOrQaSqlModified": false,
+    "originalVercelModified": false,
+    "qaVercelDeployed": false,
+    "merged": false,
+    "productionReleaseAuthorized": false
+  }
+}

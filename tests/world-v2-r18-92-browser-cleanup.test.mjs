@@ -43,14 +43,14 @@ test('R92 isolated R12 React test cannot silently skip Chromium or hang the enti
 test('R92 original sight/collision and pending 83+8 release gates remain NO_GO',()=>{
  const ledger=JSON.parse(read('staging/next-release-ledger.json'));
  const m=JSON.parse(read('staging/world-v2-b10-r18-92-regrab-ci-cleanup/manifest.json'));
- assert.equal(ledger.branches.length,184);
- assert.equal(ledger.upcomingRelease.outstandingBranches.length,119);
- assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-98-private-history-recovery-2026-11-17');
- assert.equal(ledger.branches.at(-7).linkedPullRequest,194);
- assert.equal(ledger.branches.at(-6).linkedPullRequest,195);
- assert.equal(ledger.branches.at(-5).linkedPullRequest,196);
- assert.equal(ledger.branches.at(-4).linkedPullRequest,197);
- assert.equal(ledger.branches.at(-3).releaseReady,false);
+ assert.equal(ledger.branches.length,185);
+ assert.equal(ledger.upcomingRelease.outstandingBranches.length,120);
+ assert.equal(ledger.releaseBranch,'stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17');
+ assert.equal(ledger.branches.at(-8).linkedPullRequest,194);
+ assert.equal(ledger.branches.at(-7).linkedPullRequest,195);
+ assert.equal(ledger.branches.at(-6).linkedPullRequest,196);
+ assert.equal(ledger.branches.at(-5).linkedPullRequest,197);
+ assert.equal(ledger.branches.at(-4).releaseReady,false);
  assert.equal(ledger.releaseReactRegrabHarnessRepair.workPackage,'B10-R18-92');
  assert.equal(ledger.releaseReactRegrabHarnessRepair.decision,'NO_GO');
  assert.equal(ledger.releaseReactRegrabHarnessRepair.productionReleaseAuthorized,false);
