@@ -21,7 +21,7 @@ REVOKE ALL ON SCHEMA forge_visibility FROM PUBLIC, anon, authenticated;
 CREATE OR REPLACE FUNCTION auth.uid()
 RETURNS uuid LANGUAGE sql STABLE SET search_path=''
 AS $auth_fixture$
- SELECT pg_catalog.nullif(pg_catalog.current_setting('request.jwt.claim.sub',true),'')::uuid;
+ SELECT NULLIF(pg_catalog.current_setting('request.jwt.claim.sub',true),'')::uuid;
 $auth_fixture$;
 REVOKE ALL ON FUNCTION auth.uid() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, anon;
