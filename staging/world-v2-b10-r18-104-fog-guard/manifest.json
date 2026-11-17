@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-104",
+  "decision": "NO_GO",
+  "parentPr": 205,
+  "parentSha": "2508e16fd5256d51d751df358c7f55d3394fc604",
+  "observedLocalDate": "2026-11-17",
+  "scope": "SOURCE_EXACT_FOG_STATUS_METADATA_DISCLOSURE_AND_ACTOR_BOUND_MOTION_CLEANUP_REVIEW",
+  "original": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "historicalMigrations": 83,
+    "sqlUnchanged": true,
+    "exposedFogStatusAuthenticatedOnly": true,
+    "fogStatusHasDirectMembershipGuard": false,
+    "privateMapRulesAnonSelectable": false,
+    "privateMapRulesAuthenticatedSelectable": false,
+    "rlsCombatPolicyCallers": 1,
+    "allNewExactSourceParityFunctions": 4,
+    "priorR103ExactSourceParityFunctions": 6
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "publicApplicationTables": 0,
+    "sqlUnchanged": true
+  },
+  "sourceFindings": {
+    "fogStatusSourceLevelMetadataOracle": true,
+    "runUserDisclosureReproduction": false,
+    "cleanupSessionActorIsAuthenticatedCaller": true,
+    "cleanupPreviewActorIsAuthenticatedCaller": true,
+    "viewCampaignMapUsesCallerMembership": true,
+    "availablePolicyConsumer": "public.map_combats.dm or nonfog viewers read combat roster",
+    "trueCollisionOrFogSecuritySignedVerified": false
+  },
+  "candidate": {
+    "path": "staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql",
+    "gitBlobSha": "c84d7cf8b0958621f11ec273cb36361e2501a77f",
+    "intendedVisibility": "ASSIGNED_MAP_PLAYER_OR_CAMPAIGN_DM",
+    "primaryGuard": "public.can_view_campaign_map",
+    "sameCampaignRuleJoin": true,
+    "retainsAuthenticatedExecute": true,
+    "forbidsAnonAndPublicExecute": true,
+    "preservesMapCombatPolicy": true,
+    "appliedToAnyDatabase": false,
+    "postApplyVerified": false,
+    "rollbackExecuted": false
+  },
+  "evidence": {
+    "signedMatrix": "staging/world-v2-b10-r18-104-fog-guard/signed-acceptance-matrix.json",
+    "validator": "scripts/release/validate-world-v2-r18-104-fog-guard.mjs",
+    "tests": "tests/world-v2-r18-104-fog-guard.test.mjs",
+    "runbook": "docs/testing/world-v2-r18-104-fog-status-disclosure-and-actor-bound-cleanup-2026-11-17.md",
+    "exactNewRepoLiveFunctionMatches": 4,
+    "plannedSignedCases": 12,
+    "sourceOnly": true
+  },
+  "gates": {
+    "original83PrivatelyRecovered": false,
+    "allPrivilegedRpcsReviewed": false,
+    "fogStatusCandidateSqlApproved": false,
+    "standalonePg17CandidateAppliedAndRolledBack": false,
+    "signedFogStatusPolicyPassed": false,
+    "signedMovementCleanupIsolationPassed": false,
+    "qaOnlyHistoricalDryRunPassed": false,
+    "qaSchemaInstalled": false,
+    "pendingEightInstalled": false,
+    "qaVercelDeployed": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "originalSqlAndGrantsUnchanged": true,
+    "qaSqlAndGrantsUnchanged": true,
+    "existingVercelUnchanged": true,
+    "noRawLiveFunctionBodiesExported": true,
+    "noSecretsCommitted": true,
+    "noPaidResources": true,
+    "noMerge": true,
+    "noProductionDeploy": true
+  }
+}

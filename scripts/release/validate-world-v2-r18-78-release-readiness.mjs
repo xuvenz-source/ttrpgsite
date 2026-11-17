@@ -80,7 +80,7 @@ export function validateR78ReleaseStatus({
    ledger.releaseReconciliation?.independentlyAuthorized!==false||
    ledger.releaseReconciliation?.releaseCandidatesApproved!==0||
    ledger.releaseReconciliation?.totalLedgerBranches!==165||
-   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189].includes(ledger.branches.length)||
+   ![165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190].includes(ledger.branches.length)||
    (ledger.branches.length>=166&&(
     ledger.releasePreviewPreparation?.decision!=='NO_GO'||
     ledger.releasePreviewPreparation?.workPackage!=='B10-R18-80'||
@@ -747,7 +747,7 @@ export function validateR78ReleaseStatus({
      'stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17'||
     ledger.branches[187]?.status!=='staged'||
     ledger.branches[187]?.releaseReady!==false))||
-   (ledger.branches.length===189&&(
+   (ledger.branches.length>=189&&(
     ledger.releaseRpcSourceParity?.workPackage!=='B10-R18-103'||
     ledger.releaseRpcSourceParity?.decision!=='NO_GO'||
     ledger.releaseRpcSourceParity?.previousLedgerBranches!==188||
@@ -775,7 +775,44 @@ export function validateR78ReleaseStatus({
     ledger.branches[188]?.name!==
      'stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17'||
     ledger.branches[188]?.status!=='staged'||
-    ledger.branches[188]?.releaseReady!==false)))))
+    ledger.branches[188]?.releaseReady!==false))||
+   (ledger.branches.length===190&&(
+    ledger.releaseFogStatusPrivacyGuard?.workPackage!=='B10-R18-104'||
+    ledger.releaseFogStatusPrivacyGuard?.decision!=='NO_GO'||
+    ledger.releaseFogStatusPrivacyGuard?.previousLedgerBranches!==189||
+    ledger.releaseFogStatusPrivacyGuard?.currentLedgerBranches!==190||
+    ledger.releaseFogStatusPrivacyGuard?.parentPr!==205||
+    ledger.releaseFogStatusPrivacyGuard?.parentSha!=='2508e16fd5256d51d751df358c7f55d3394fc604'||
+    ledger.releaseFogStatusPrivacyGuard?.originalProjectRef!=='lwhwgqaunxbmvyndswze'||
+    ledger.releaseFogStatusPrivacyGuard?.qaProjectRef!=='bgydsamxypjslergfpla'||
+    ledger.releaseFogStatusPrivacyGuard?.originalHistoricalMigrations!==83||
+    ledger.releaseFogStatusPrivacyGuard?.qaRegisteredMigrations!==0||
+    ledger.releaseFogStatusPrivacyGuard?.newLiveSourceMatches!==4||
+    ledger.releaseFogStatusPrivacyGuard?.totalGitLiveSourceMatches!==10||
+    ledger.releaseFogStatusPrivacyGuard?.plannedSignedCases!==12||
+    ledger.releaseFogStatusPrivacyGuard?.sourceLevelFogStatusExposureConfirmed!==true||
+    ledger.releaseFogStatusPrivacyGuard?.sessionAndPreviewActorSourceBindingConfirmed!==true||
+    ledger.releaseFogStatusPrivacyGuard?.fogStatusCandidatePreservesRlsConsumer!==true||
+    ledger.releaseFogStatusPrivacyGuard?.candidatePreparedNotApplied!==true||
+    ledger.releaseFogStatusPrivacyGuard?.original83SqlPrivatelyRecovered!==false||
+    ledger.releaseFogStatusPrivacyGuard?.candidatePg17RuntimeTestPassed!==false||
+    ledger.releaseFogStatusPrivacyGuard?.candidateAppliedToAnyDatabase!==false||
+    ledger.releaseFogStatusPrivacyGuard?.signedFogAuthorizationAccepted!==false||
+    ledger.releaseFogStatusPrivacyGuard?.signedMotionCleanupAccepted!==false||
+    ledger.releaseFogStatusPrivacyGuard?.qaOnlyHistoricalDryRunCompleted!==false||
+    ledger.releaseFogStatusPrivacyGuard?.qaSchemaInstalled!==false||
+    ledger.releaseFogStatusPrivacyGuard?.pendingEightInstalled!==false||
+    ledger.releaseFogStatusPrivacyGuard?.originalSqlOrGrantsModified!==false||
+    ledger.releaseFogStatusPrivacyGuard?.qaSqlOrGrantsModified!==false||
+    ledger.releaseFogStatusPrivacyGuard?.originalVercelChanged!==false||
+    ledger.releaseFogStatusPrivacyGuard?.qaVercelDeployed!==false||
+    ledger.releaseFogStatusPrivacyGuard?.secretsOrRawLiveSqlExported!==false||
+    ledger.releaseFogStatusPrivacyGuard?.paidResourcesCreated!==false||
+    ledger.releaseFogStatusPrivacyGuard?.productionReleaseAuthorized!==false||
+    ledger.branches[189]?.name!==
+     'stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17'||
+    ledger.branches[189]?.status!=='staged'||
+    ledger.branches[189]?.releaseReady!==false)))))
 
 
   fail();
