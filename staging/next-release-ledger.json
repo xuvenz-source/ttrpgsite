@@ -2,7 +2,7 @@
   "schema": 1,
   "updated": "2026-11-15",
   "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-  "releaseBranch": "stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17",
+  "releaseBranch": "stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17",
   "policy": "Include every previously staged release-ready component in one approved production update. No deployment during staging. Unready components must be identified and explicitly deferred, never silently skipped.",
   "branches": [
     {
@@ -1865,6 +1865,16 @@
       "linkedPullRequest": 201,
       "reviewedAgainstCanonicalProduction": false,
       "note": "R18-99 private R98 receipt/file digest comparator with strict false provenance and release gates; original 83 migration metadata matches, QA still 0 registered migrations; no operator authenticated fetch, no original/QA SQL or Vercel deploy. NO_GO."
+    },
+    {
+      "name": "stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17",
+      "status": "staged",
+      "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+      "releaseReady": false,
+      "classification": "QA_ONLY_PRIVATE_83_HISTORY_MIRROR_AND_PINNED_DRY_RUN_SOURCE_PREFLIGHT_NO_SQL",
+      "linkedPullRequest": 202,
+      "reviewedAgainstCanonicalProduction": false,
+      "note": "R18-100 prepared strict QA-only source-exact 83-history private mirror and pinned v2.81.3 dry-run-only CLI utility. Original bodies not authentically fetched, QA empty and undeployed. No source SQL, QA SQL, pending eight migration install, or production changes. NO_GO."
     }
   ],
   "features": [
@@ -2970,7 +2980,7 @@
   ],
   "upcomingRelease": {
     "productionBaseSha": "90df8c960e79e8d66c322095611427da7bb09de4",
-    "releaseBranch": "stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17",
+    "releaseBranch": "stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17",
     "outstandingBranches": [
       "stage/world-v2-b10-r17-blocked-keyboard-rebase-2026-11-11",
       "stage/world-v2-b10-r18-01-observer-delivery-audit-2026-11-11",
@@ -3091,7 +3101,8 @@
       "stage/world-v2-b10-r18-96-free-qa-provisioning-2026-11-16",
       "stage/world-v2-b10-r18-97-qa-schema-bootstrap-preflight-2026-11-16",
       "stage/world-v2-b10-r18-98-private-history-recovery-2026-11-17",
-      "stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17"
+      "stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17",
+      "stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17"
     ],
     "stagePolicy": "R18-95: preserve original frozen R79 165 branches; now 181 ledger branches and 116 unapproved outstanding (NOT a bulk-merge queue). Linked Supabase org Xuven Free, one visible project, cost quoted $0/month for independent second project and $0.01344/hour for paid branch (reject). Vercel project shared VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY env targets production/preview/development, so no isolated backend exists. Only stage source-only project/QA isolation plan; wait for user to choose org explicitly, no creation/deploy, independent Auth and 83+8 migrations, real signed DM/P1/P2 performance, Free RAM/locks remain unverified. Shared Supabase and permanent QA/production NO_GO.",
     "databaseReleaseVersion": null,
@@ -3920,6 +3931,39 @@
     "rawSqlOrSecretsCommitted": false,
     "originalOrQaSqlWritten": false,
     "originalVercelChanged": false,
+    "qaVercelDeployed": false,
+    "paidInfrastructureCreated": false,
+    "productionReleaseAuthorized": false
+  },
+  "releaseQaOnlyBaselinePreflight": {
+    "schema": 1,
+    "workPackage": "B10-R18-100",
+    "decision": "NO_GO",
+    "previousLedgerBranches": 185,
+    "currentLedgerBranches": 186,
+    "addedBranch": "stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17",
+    "parentPr": 201,
+    "parentSha": "890be220775dd0fe60be927c05937a25a371cda8",
+    "manifest": "staging/world-v2-b10-r18-100-qa-only-preflight/manifest.json",
+    "offlineValidator": "scripts/release/validate-world-v2-r18-100-qa-workspace.mjs",
+    "operatorCliRunner": "scripts/release/run-world-v2-r18-100-qa-dry-run.mjs",
+    "sourceValidator": "scripts/release/validate-world-v2-r18-100-source.mjs",
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "historicalOriginalCount": 83,
+    "qaRegisteredMigrations": 0,
+    "privateMirrorValidatorStaged": true,
+    "qaDryRunOnlyRunnerStaged": true,
+    "originalSqlBodiesRecovered": false,
+    "original83PrivateCaptureVerified": false,
+    "qaPrivateMirrorBuilt": false,
+    "qaDryRunExecuted": false,
+    "qaOriginal83Installed": false,
+    "pendingEightInstalled": false,
+    "rawOriginalSqlCommitted": false,
+    "qaSqlApplied": false,
+    "originalSqlApplied": false,
+    "existingVercelChanged": false,
     "qaVercelDeployed": false,
     "paidInfrastructureCreated": false,
     "productionReleaseAuthorized": false

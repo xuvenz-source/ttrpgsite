@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-100",
+  "decision": "NO_GO",
+  "parentPr": 201,
+  "parentSha": "890be220775dd0fe60be927c05937a25a371cda8",
+  "observedDateLocal": "2026-11-17",
+  "scope": "PRIVATE_QA_ONLY_83_HISTORY_MIRROR_AND_PINNED_DRY_RUN_PREPARATION",
+  "original": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "historicalMigrationCount": 83,
+    "sourceBodiesRecoveredByOperator": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "registeredMigrations": 0,
+    "publicApplicationTables": 0,
+    "previewVercelProjectId": "prj_49bkFS9Ti4FoPa38LjNNxjgEaZwX",
+    "previewDeployments": 0
+  },
+  "artifacts": {
+    "validator": "scripts/release/validate-world-v2-r18-100-qa-workspace.mjs",
+    "runner": "scripts/release/run-world-v2-r18-100-qa-dry-run.mjs",
+    "sourceValidator": "scripts/release/validate-world-v2-r18-100-source.mjs",
+    "tests": "tests/world-v2-r18-100-qa-workspace.test.mjs",
+    "runbook": "docs/testing/world-v2-r18-100-qa-only-bootstrap-preflight-2026-11-17.md",
+    "expectedOriginalSqlFiles": 83,
+    "pendingSqlFilesExcluded": 8,
+    "cliVersion": "2.81.3",
+    "allowedDryRunCommand": "db push --dry-run --linked"
+  },
+  "gates": {
+    "operatorPrivate83BodyRecoveryCompleted": false,
+    "originalCaptureCrosschecked": false,
+    "originalSqlSecurityReviewCompleted": false,
+    "qaWorkspaceSourceExactPrepared": false,
+    "qaLinkedRefIndependentlyRechecked": false,
+    "qaDryRunPerformed": false,
+    "qaOriginal83BootstrapApproved": false,
+    "qaOriginal83SqlInstalled": false,
+    "qaPendingEightInstalled": false,
+    "qaAuthenticationAndMultiplayerVerified": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "originalSqlUnchanged": true,
+    "qaSqlUnchanged": true,
+    "existingVercelConfigUnchanged": true,
+    "qaVercelUndeployed": true,
+    "privateBodiesNotCommitted": true,
+    "credentialsNotCommitted": true,
+    "noPaidResource": true,
+    "noMerge": true,
+    "noProductionDeploy": true
+  }
+}
