@@ -35,6 +35,7 @@ const NEXT101='stage/world-v2-b10-r18-101-original-history-risk-classification-2
 const NEXT102='stage/world-v2-b10-r18-102-privileged-rpc-permissions-audit-2026-11-17';
 const NEXT103='stage/world-v2-b10-r18-103-live-rpc-source-parity-2026-11-17';
 const NEXT104='stage/world-v2-b10-r18-104-fog-status-privacy-guard-2026-11-17';
+const NEXT105='stage/world-v2-b10-r18-105-fog-guard-isolated-pg17-2026-11-17';
 const MAIN='90df8c960e79e8d66c322095611427da7bb09de4';
 const CANONICAL='5ca8c83bdef4a5d9870020b0f2b16723f7790e38';
 const PARENT='5102f62ffe1017a1c7f66df738bee5bfaaaebc38';
@@ -63,43 +64,44 @@ const branchStatus=x=>x==='CANONICAL_LIVE_UNMERGED'?'released':
 export function validateR79Ledger({snapshot,ledger}={}){
  const s=snapshot??JSON.parse(readFileSync(join(ROOT,INVENTORY),'utf8'));
  const l=ledger??JSON.parse(readFileSync(join(ROOT,LEDGER),'utf8'));
- const successor=[NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const deployedSuccessor=[NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const failedPreviewSuccessor=[NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const commitProfileSuccessor=[NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const fullTriggerSuccessor=[NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const phaseIsolationSuccessor=[NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const candidateMatrixSuccessor=[NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const balancedCostSuccessor=[NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const combinedQaSuccessor=[NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const linkedCliQaSuccessor=[NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const pinnedCliHelpSuccessor=[NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const readOnlyCaptureSuccessor=[NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const regrabHarnessSuccessor=[NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const cliStreamsSuccessor=[NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const phase3ChromeSuccessor=[NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const freeQaSuccessor=[NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const qaProvisionSuccessor=[NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const qaSchemaSuccessor=[NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const privateHistorySuccessor=[NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const privateAttestationSuccessor=[NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const qaBaselineSuccessor=[NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const historyRiskSuccessor=[NEXT101,NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const privilegedRpcSuccessor=[NEXT102,NEXT103,NEXT104].includes(l?.releaseBranch);
- const rpcParitySuccessor=[NEXT103,NEXT104].includes(l?.releaseBranch);
- const fogPrivacySuccessor=l?.releaseBranch===NEXT104;
+ const successor=[NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const deployedSuccessor=[NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const failedPreviewSuccessor=[NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const commitProfileSuccessor=[NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const fullTriggerSuccessor=[NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const phaseIsolationSuccessor=[NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const candidateMatrixSuccessor=[NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const balancedCostSuccessor=[NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const combinedQaSuccessor=[NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const linkedCliQaSuccessor=[NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const pinnedCliHelpSuccessor=[NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const readOnlyCaptureSuccessor=[NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const regrabHarnessSuccessor=[NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const cliStreamsSuccessor=[NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const phase3ChromeSuccessor=[NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const freeQaSuccessor=[NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const qaProvisionSuccessor=[NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const qaSchemaSuccessor=[NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const privateHistorySuccessor=[NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const privateAttestationSuccessor=[NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const qaBaselineSuccessor=[NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const historyRiskSuccessor=[NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const privilegedRpcSuccessor=[NEXT102,NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const rpcParitySuccessor=[NEXT103,NEXT104,NEXT105].includes(l?.releaseBranch);
+ const fogPrivacySuccessor=[NEXT104,NEXT105].includes(l?.releaseBranch);
+ const isolatedFogSuccessor=l?.releaseBranch===NEXT105;
  const expectedCount=165+(successor?1:0)+(deployedSuccessor?1:0)+
   (failedPreviewSuccessor?1:0)+(commitProfileSuccessor?1:0)+
   (fullTriggerSuccessor?1:0)+(phaseIsolationSuccessor?1:0)+
   (candidateMatrixSuccessor?1:0)+(balancedCostSuccessor?1:0)+
-  (combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0)+(regrabHarnessSuccessor?1:0)+(cliStreamsSuccessor?1:0)+(phase3ChromeSuccessor?1:0)+(freeQaSuccessor?1:0)+(qaProvisionSuccessor?1:0)+(qaSchemaSuccessor?1:0)+(privateHistorySuccessor?1:0)+(privateAttestationSuccessor?1:0)+(qaBaselineSuccessor?1:0)+(historyRiskSuccessor?1:0)+(privilegedRpcSuccessor?1:0)+(rpcParitySuccessor?1:0)+(fogPrivacySuccessor?1:0);
+  (combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0)+(regrabHarnessSuccessor?1:0)+(cliStreamsSuccessor?1:0)+(phase3ChromeSuccessor?1:0)+(freeQaSuccessor?1:0)+(qaProvisionSuccessor?1:0)+(qaSchemaSuccessor?1:0)+(privateHistorySuccessor?1:0)+(privateAttestationSuccessor?1:0)+(qaBaselineSuccessor?1:0)+(historyRiskSuccessor?1:0)+(privilegedRpcSuccessor?1:0)+(rpcParitySuccessor?1:0)+(fogPrivacySuccessor?1:0)+(isolatedFogSuccessor?1:0);
  if(s?.schema!==1||s.workPackage!=='B10-R18-79'||
   s.sourceKind!=='GITHUB_READ_ONLY_BRANCH_AND_PR_METADATA'||
   s.recordedOn!=='2026-11-15'||s.releaseDecision!=='NO_GO'||
   s.safeToRelease!==false||s.operatorApproved!==false||
   s.parent?.pr!==180||s.parent.sha!==PARENT||s.currentPr!==181||
   l?.updated!=='2026-11-15'||l.productionBaseSha!==MAIN||
-  ![BRANCH,NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104].includes(l.releaseBranch)||
+  ![BRANCH,NEXT,NEXT81,NEXT82,NEXT83,NEXT84,NEXT85,NEXT86,NEXT87,NEXT88,NEXT89,NEXT90,NEXT91,NEXT92,NEXT93,NEXT94,NEXT95,NEXT96,NEXT97,NEXT98,NEXT99,NEXT100,NEXT101,NEXT102,NEXT103,NEXT104,NEXT105].includes(l.releaseBranch)||
   l.upcomingRelease?.releaseBranch!==l.releaseBranch||
   l.upcomingRelease.productionBaseSha!==MAIN)fail();
  const scope=s.scope;
@@ -130,7 +132,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
  const ledgerByName=new Map(l.branches.map(x=>[x.name,x]));
  if(ledgerByName.size!==expectedCount||
   !same([...allCandidateNames].sort(),
-   [...ledgerByName.keys()].filter(x=>x!==NEXT&&x!==NEXT81&&x!==NEXT82&&x!==NEXT83&&x!==NEXT84&&x!==NEXT85&&x!==NEXT86&&x!==NEXT87&&x!==NEXT88&&x!==NEXT89&&x!==NEXT90&&x!==NEXT91&&x!==NEXT92&&x!==NEXT93&&x!==NEXT94&&x!==NEXT95&&x!==NEXT96&&x!==NEXT97&&x!==NEXT98&&x!==NEXT99&&x!==NEXT100&&x!==NEXT101&&x!==NEXT102&&x!==NEXT103&&x!==NEXT104).sort()))fail();
+   [...ledgerByName.keys()].filter(x=>x!==NEXT&&x!==NEXT81&&x!==NEXT82&&x!==NEXT83&&x!==NEXT84&&x!==NEXT85&&x!==NEXT86&&x!==NEXT87&&x!==NEXT88&&x!==NEXT89&&x!==NEXT90&&x!==NEXT91&&x!==NEXT92&&x!==NEXT93&&x!==NEXT94&&x!==NEXT95&&x!==NEXT96&&x!==NEXT97&&x!==NEXT98&&x!==NEXT99&&x!==NEXT100&&x!==NEXT101&&x!==NEXT102&&x!==NEXT103&&x!==NEXT104&&x!==NEXT105).sort()))fail();
 
  const added=new Set(),prRefs=new Set(),group={};
  for(const x of s.newlyReconciled){
@@ -945,11 +947,53 @@ export function validateR79Ledger({snapshot,ledger}={}){
    entry.reviewedAgainstCanonicalProduction!==false||
    !entry.note?.includes('NO_GO'))fail();
  }else if(l.releaseFogStatusPrivacyGuard!==undefined)fail();
+ if(isolatedFogSuccessor){
+  const exact={
+   schema:1,workPackage:'B10-R18-105',decision:'NO_GO',
+   previousLedgerBranches:190,currentLedgerBranches:191,addedBranch:NEXT105,
+   parentPr:206,parentSha:'0c4928ada3d51421e7f5b4f68dc9c7a6688be1c8',
+   manifest:'staging/world-v2-b10-r18-105-isolated-fog-test/manifest.json',
+   isolatedWorkflow:'.github/workflows/world-v2-r18-105-fog-guard-isolated.yml',
+   isolatedRunner:'tests/world-v2-r18-105-postgres/run.sh',
+   validator:'scripts/release/validate-world-v2-r18-105-isolated-fog-test.mjs',
+   originalProjectRef:'lwhwgqaunxbmvyndswze',
+   qaProjectRef:'bgydsamxypjslergfpla',
+   verifiedRuntimeRunId:44058183100,
+   verifiedRuntimeSha:'a4bcc530722b7f7c6ead4ec2ca00e83b1af4f00a',
+   disposablePg17RuntimePassed:true,
+   originalFogMetadataOracleReproduced:true,
+   candidateNonmemberIsolationPassed:true,
+   realCombatRlsPolicyPreservedInFixture:true,
+   actorScopedMotionCleanupPassedInFixture:true,
+   sourceRollbackReintroducedDisclosure:true,
+   candidateReapplyClosedDisclosure:true,
+   fixtureHasSyntheticAuthOnly:true,
+   qaRegisteredMigrations:0,
+   signedHostedSecurityAccepted:false,
+   original83SqlPrivatelyRecovered:false,
+   hostedCandidateApplied:false,
+   qaOnlySchemaDryRunPassed:false,
+   qaSchemaInstalled:false,
+   pendingEightInstalled:false,
+   productionOrQaVercelChanged:false,
+   originalOrQaSqlWritten:false,
+   paidResourcesCreated:false,
+   productionReleaseAuthorized:false
+  };
+  const entry=ledgerByName.get(NEXT105);
+  if(!same(l.releaseFogGuardIsolatedPg17,exact)||!entry||
+   l.branches[190]!==entry||entry.status!=='staged'||
+   entry.releaseReady!==false||
+   entry.classification!=='DISPOSABLE_PG17_SYNTHETIC_FOG_RLS_CANDIDATE_RUNTIME_AND_ROLLBACK_NO_HOST_SQL'||
+   entry.linkedPullRequest!==207||entry.productionBaseSha!==MAIN||
+   entry.reviewedAgainstCanonicalProduction!==false||
+   !entry.note?.includes('NO_GO'))fail();
+ }else if(l.releaseFogGuardIsolatedPg17!==undefined)fail();
  const out=l.upcomingRelease.outstandingBranches;
  if(!Array.isArray(out)||out.length!==100+(successor?1:0)+
   (deployedSuccessor?1:0)+(failedPreviewSuccessor?1:0)+
   (commitProfileSuccessor?1:0)+(fullTriggerSuccessor?1:0)+
-  (phaseIsolationSuccessor?1:0)+(candidateMatrixSuccessor?1:0)+(balancedCostSuccessor?1:0)+(combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0)+(regrabHarnessSuccessor?1:0)+(cliStreamsSuccessor?1:0)+(phase3ChromeSuccessor?1:0)+(freeQaSuccessor?1:0)+(qaProvisionSuccessor?1:0)+(qaSchemaSuccessor?1:0)+(privateHistorySuccessor?1:0)+(privateAttestationSuccessor?1:0)+(qaBaselineSuccessor?1:0)+(historyRiskSuccessor?1:0)+(privilegedRpcSuccessor?1:0)+(rpcParitySuccessor?1:0)+(fogPrivacySuccessor?1:0)||
+  (phaseIsolationSuccessor?1:0)+(candidateMatrixSuccessor?1:0)+(balancedCostSuccessor?1:0)+(combinedQaSuccessor?1:0)+(linkedCliQaSuccessor?1:0)+(pinnedCliHelpSuccessor?1:0)+(readOnlyCaptureSuccessor?1:0)+(regrabHarnessSuccessor?1:0)+(cliStreamsSuccessor?1:0)+(phase3ChromeSuccessor?1:0)+(freeQaSuccessor?1:0)+(qaProvisionSuccessor?1:0)+(qaSchemaSuccessor?1:0)+(privateHistorySuccessor?1:0)+(privateAttestationSuccessor?1:0)+(qaBaselineSuccessor?1:0)+(historyRiskSuccessor?1:0)+(privilegedRpcSuccessor?1:0)+(rpcParitySuccessor?1:0)+(fogPrivacySuccessor?1:0)+(isolatedFogSuccessor?1:0)||
   new Set(out).size!==out.length||
   !out.includes(BRANCH)||(successor&&!out.includes(NEXT))||
   (deployedSuccessor&&!out.includes(NEXT81))||
@@ -976,6 +1020,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
   (privilegedRpcSuccessor&&!out.includes(NEXT102))||
   (rpcParitySuccessor&&!out.includes(NEXT103))||
   (fogPrivacySuccessor&&!out.includes(NEXT104))||
+  (isolatedFogSuccessor&&!out.includes(NEXT105))||
   !same([...out].sort(),l.branches.filter(x=>x.status==='staged').map(x=>x.name).sort())||
   !l.upcomingRelease.stagePolicy.includes('NOT a bulk-merge queue'))fail();
  const pr=n=>s.newlyReconciled.find(x=>x.linkedPullRequest===n);
@@ -1012,6 +1057,7 @@ export function validateR79Ledger({snapshot,ledger}={}){
    privilegedRpcSuccessorAudited:privilegedRpcSuccessor,
    rpcParitySuccessorAudited:rpcParitySuccessor,
    fogPrivacySuccessorAudited:fogPrivacySuccessor,
+   isolatedFogSuccessorAudited:isolatedFogSuccessor,
   laterPRsRecorded:62,unmatchedPRBranches:2,
   outstandingReviewBranches:out.length,
   canonicalLivePr:139,rejectedOrFailed:[140,144],

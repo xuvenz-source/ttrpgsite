@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-105",
+  "decision": "NO_GO",
+  "parentPr": 206,
+  "parentSha": "0c4928ada3d51421e7f5b4f68dc9c7a6688be1c8",
+  "observedLocalDate": "2026-11-17",
+  "scope": "DISPOSABLE_POSTGRES17_REAL_FOG_CANDIDATE_COMBAT_RLS_AND_ORIGINAL_SOURCE_ROLLBACK",
+  "original": {
+    "projectRef": "lwhwgqaunxbmvyndswze",
+    "status": "ACTIVE_HEALTHY",
+    "migrationHistory": 83,
+    "sqlOrGrantsChanged": false
+  },
+  "qa": {
+    "projectRef": "bgydsamxypjslergfpla",
+    "status": "ACTIVE_HEALTHY",
+    "migrations": 0,
+    "publicAppTables": 0,
+    "sqlOrGrantsChanged": false
+  },
+  "source": {
+    "candidate": "staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql",
+    "candidateGitBlobSha": "c84d7cf8b0958621f11ec273cb36361e2501a77f",
+    "fourVerifiedOriginalFunctionBodies": true,
+    "originalCombatRosterPolicyExtractedFromGit": true,
+    "fixtureFilesGitBlobs": {
+      ".github/workflows/world-v2-r18-105-fog-guard-isolated.yml": "2bd7420d025f8fac4ea9c3fc49ad0f3c57a82126",
+      "tests/world-v2-r18-105-postgres/schema.sql": "e1864df68e4aa6a6640dd9acc965f6f38c8d78d9",
+      "tests/world-v2-r18-105-postgres/extract_sources.py": "e4a1dc6b0bae612dfe6e4c74aa54851824ba1d36",
+      "tests/world-v2-r18-105-postgres/baseline.sql": "807728845daf4d01900dd52bbccd665f7df2f95a",
+      "tests/world-v2-r18-105-postgres/post-candidate.sql": "fe9c2a4045048661469166f517ca0cdc9296c4ed",
+      "tests/world-v2-r18-105-postgres/rollback-observation.sql": "ff3d880b5f17026bccf028a5d0e17562fae1703d",
+      "tests/world-v2-r18-105-postgres/reapply-observation.sql": "e1161c5b6d5bb4de9ed8cdcd19fd81e4c41daa75",
+      "tests/world-v2-r18-105-postgres/run.sh": "e6a92d934fef4905216f86e18e77e5dba4f17503"
+    },
+    "sourceSealCount": 8,
+    "originalPrivate83HistoryRecovered": false,
+    "syntheticAuthUidUsed": true,
+    "syntheticIsCampaignDmUsed": true,
+    "fullOriginalSchemaInstalled": false
+  },
+  "priorIsolatedProof": {
+    "workflowRunId": 44058183100,
+    "workflowRunUrl": "https://github.com/xuvenz-source/ttrpgsite/actions/runs/44058183100",
+    "frozenCommit": "a4bcc530722b7f7c6ead4ec2ca00e83b1af4f00a",
+    "outcome": "SUCCESS",
+    "databaseEngine": "PostgreSQL 17",
+    "sourceSha256AndPolicyExtracted": true,
+    "originalFogStatusOracleReproduced": true,
+    "stagedCandidateAppliedToDisposableOnly": true,
+    "anonExecuteDenied": true,
+    "nonmemberCrossCampaignFogDenied": true,
+    "validDmAndAssignedMapPreserved": true,
+    "combatRosterRlsNonfogPreserved": true,
+    "actorBoundP1P2CleanupPreserved": true,
+    "originalSourceRestoreReintroducedOracle": true,
+    "candidateReapplyClosedOracle": true,
+    "userSignedSupabaseSessionsExecuted": false,
+    "originalOrQaHostedSqlWritten": false
+  },
+  "acceptance": {
+    "previousSignedMatrix": "staging/world-v2-b10-r18-104-fog-guard/signed-acceptance-matrix.json",
+    "actualSignedAccountCasesExecuted": 0,
+    "actualSignedAccountCasesPlanned": 12,
+    "verifiedFixtureKind": "SYNTHETIC_JWT_GUC_NOT_HOSTED_AUTH_SESSION",
+    "runnableOnlyInGitHubDisposableContainer": true,
+    "terminalReleaseDecision": "NO_GO"
+  },
+  "gates": {
+    "private83OriginalSqlRetrieved": false,
+    "completeHistoricalSecurityReviewPassed": false,
+    "independentlyAuthenticatedQaSchemaDryRunPassed": false,
+    "qaSchemaInstalled": false,
+    "fogCandidateApprovedForHostedApplication": false,
+    "realDmP1P2OutsiderAcceptancePassed": false,
+    "realFogVisibilityAndCollisionAcceptancePassed": false,
+    "qaVercelDeployed": false,
+    "pendingEightSqlInstalled": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "noOriginalSqlWrites": true,
+    "noQaSqlWrites": true,
+    "noOriginalAuthChanges": true,
+    "noOriginalVercelChanges": true,
+    "noQaVercelDeployments": true,
+    "noSecretOrUserDataExports": true,
+    "noPaidResources": true,
+    "noMerge": true,
+    "noProductionDeploy": true
+  }
+}

@@ -1,0 +1,56 @@
+name: World V2 R18-105 isolated fog-status privacy guard PostgreSQL 17
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-105-*'
+    paths:
+      - 'tests/world-v2-r18-105-postgres/**'
+      - 'staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql'
+      - '.github/workflows/world-v2-r18-105-fog-guard-isolated.yml'
+      - 'supabase/migrations/20261106180100_private_player_maps.sql'
+      - 'supabase/migrations/20261107110539_authoritative_fog_collision_release.sql'
+      - 'supabase/migrations/20261108031754_world_runtime_movement_fog_collision_20261108.sql'
+      - 'supabase/migrations/20261108111759_unified_movement_fog_realtime_memory_20261108.sql'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-104-*'
+    paths:
+      - 'tests/world-v2-r18-105-postgres/**'
+      - 'staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql'
+      - '.github/workflows/world-v2-r18-105-fog-guard-isolated.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgresql17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r105_disposable_only
+          POSTGRES_DB: world_v2_r18_105
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_105"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R105_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_105
+      PGUSER: postgres
+      PGPASSWORD: r105_disposable_only
+    steps:
+      - name: Checkout exact source candidate with no hosted SQL credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove original fog metadata leak, candidate isolation and source rollback in disposable PostgreSQL 17
+        shell: bash
+        run: bash tests/world-v2-r18-105-postgres/run.sh
