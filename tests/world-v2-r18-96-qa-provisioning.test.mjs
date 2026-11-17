@@ -84,8 +84,8 @@ test('R96 historical preflight remains unchanged; new ledger is staged and NO_GO
  const l=JSON.parse(read('staging/next-release-ledger.json'));
  assert.equal(before.qaProposal.newBackendCreated,false);
  assert.equal(before.qaProposal.operatorConfirmedOrganization,false);
- assert.equal(l.branches.length,185);
- assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-99-private-recovery-attestation-2026-11-17');
+ assert.equal(l.branches.length,186);
+ assert.equal(l.releaseBranch,'stage/world-v2-b10-r18-100-qa-baseline-workspace-preflight-2026-11-17');
  assert.equal(l.branches[180].linkedPullRequest,197);
  assert.equal(l.branches[181].linkedPullRequest,198);
  assert.equal(l.branches[181].releaseReady,false);
@@ -93,5 +93,5 @@ test('R96 historical preflight remains unchanged; new ledger is staged and NO_GO
  assert.equal(l.releaseQaProvisioning.decision,'NO_GO');
  assert.equal(l.releaseQaProvisioning.qaRegisteredMigrations,0);
  assert.equal(l.releaseQaProvisioning.productionReleaseAuthorized,false);
- assert.equal(l.upcomingRelease.outstandingBranches.length,120);
+ assert.equal(l.upcomingRelease.outstandingBranches.length,121);
 });
