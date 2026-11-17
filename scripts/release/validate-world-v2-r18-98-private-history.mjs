@@ -53,7 +53,7 @@ const flag=(text,section,wanted)=>{
  const setting=lines.slice(locations[0]+1,end)
   .filter(x=>/^\s*enabled\s*=/.test(x));
  if(setting.length!==1||!new RegExp('^\\s*enabled\\s*=\\s*'+
-  (wanted?'true':'false')+'\\s*(?:#.*)?)
+  (wanted?'true':'false')+'\\s*(?:#.*)?$').test(setting[0]))
   fail('unsafe migration/seed config');
 };
 export function validateR98Environment(env=process.env){
