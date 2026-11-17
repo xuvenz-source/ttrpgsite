@@ -86,6 +86,12 @@ export function validateR102PrivilegedRpc(m,index,review,{repoRoot=ROOT}={}){
  const raw=readFileSync(join(root,expectedFiles.catalogIndex));
  const blob=createHash('sha1').update('blob '+raw.length+'\0').update(raw).digest('hex');
  if(blob!==BLOB)fail('catalog Git blob content was not the verified 67-source snapshot');
+ // Reject altered in-memory/parsing input even when the disk blob is genuine.
+ // A Git-blob hash alone does not authenticate a separately supplied object.
+ if(!same(index,JSON.parse(raw.toString('utf8'))))
+  fail('caller supplied RPC metadata differs from immutable verified blob');
+ if(!same(review,read(root,expectedFiles.indirectReview)))
+  fail('caller supplied helper review differs from staged source evidence');
  if(!keys(index,['schema','workPackage','decision','provenance',
   'interpretation','totals','functions'])||
   index.schema!==1||index.workPackage!=='B10-R18-102'||

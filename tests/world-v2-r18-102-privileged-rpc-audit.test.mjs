@@ -48,6 +48,7 @@ test('R102 fails closed against fake permission changes, auth source claims or e
  fails((m,i,r)=>i.functions[0].permissionReviewApproved=true);
  fails((m,i,r)=>i.functions[0].rawSqlDefinition='SELECT secret');
  fails((m,i,r)=>i.functions[0].identityArguments='-- tampered');
+ fails((m,i,r)=>r.indirectIdentityTargets[0].reviewFocus='manually approved');
 });
 test('R102 rejects changes to catalog flags, total counts and critical missing auth targets',()=>{
  fails((m,i,r)=>i.totals.directAuthIdentityMarker=67);
