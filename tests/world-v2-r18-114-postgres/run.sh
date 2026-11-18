@@ -50,8 +50,13 @@ deny "auth-direct-private-helper" 'permission denied' \
 deny "auth-direct-private-movement" 'permission denied' \
  "SET ROLE authenticated; SELECT forge_visibility.dispatch_movement_preview('00000000-0000-4000-8000-000000000201','token','00000000-0000-4000-8000-000000000401',3,2,1,false);"
 
+# Preserve and execute the exact original reader first to prove the
+# historical UUID churn. Apply repair candidate ONLY in scratch PG17.
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-r18-114-postgres/verify-inventory-uuid-baseline.sql
+psql -X -v ON_ERROR_STOP=1 -f staging/world-v2-b10-r18-114-inventory-uuid-guard/unapplied-inventory-uuid-five-segment-guard.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-r18-114-postgres/verify-sheet.sql
+psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-r18-114-postgres/verify-inventory-uuid-candidate.sql
 psql -X -v ON_ERROR_STOP=1 -f tests/world-v2-r18-114-postgres/verify-movement.sql
 
-echo 'R114 SOURCE-EXACT PG17 PASS: sheet authorization, inventory integrity, movement authority, replay and revocation.'
+echo 'R114 PG17 PASS: source-exact original UUID churn reproduced; scratch-only candidate and sheet/movement authorization tested.'
 echo 'R114 NO_GO: synthetic DM/identity and viewer stubs, no hosted signed users, no original/QA SQL or deployment.'
