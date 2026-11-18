@@ -35,7 +35,14 @@ BEGIN
   PERFORM 1 FROM public.campaigns AS c
    WHERE c.id=OLD.campaign_id FOR UPDATE;
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Campaign missing' USING ERRCODE='42501';
+    -- A campaign DELETE has already removed this parent row before its
+    -- ON DELETE CASCADE invokes this member's BEFORE DELETE trigger.
+    -- Its removal also deletes any existing revocation by FK CASCADE;
+    -- creating a new tombstone for a nonexistent campaign is invalid.
+    -- With the enforced campaign_members(campaign_id) FK, an ordinary
+    -- member delete cannot encounter an already-orphaned campaign.
+    -- Do NOT use pg_trigger_depth(): nested service RPCs are also triggers.
+    RETURN OLD;
   END IF;
 
   INSERT INTO forge_security.campaign_member_revocations(campaign_id,user_id,removed_at)

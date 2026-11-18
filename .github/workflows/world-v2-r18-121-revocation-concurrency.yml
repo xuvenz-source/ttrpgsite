@@ -1,0 +1,96 @@
+name: World V2 R18-121 revocation concurrency and cascade scratch PG17
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-121-*'
+    paths:
+      - '.github/workflows/world-v2-r18-121-revocation-concurrency.yml'
+      - 'tests/world-v2-r18-121-postgres/**'
+      - 'tests/world-v2-r18-121-membership-source-boundary.test.mjs'
+      - 'staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql'
+      - 'staging/world-v2-b10-r18-121-membership-deletion-concurrency-audit/**'
+      - 'docs/testing/world-v2-r18-121-member-removal-concurrency-cascade-2026-11-19.md'
+      - 'tests/world-v2-r18-121-membership-source-boundary.test.mjs'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-120-*'
+    paths:
+      - '.github/workflows/world-v2-r18-121-revocation-concurrency.yml'
+      - 'tests/world-v2-r18-121-postgres/**'
+      - 'staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql'
+      - 'staging/world-v2-b10-r18-121-membership-deletion-concurrency-audit/**'
+      - 'docs/testing/world-v2-r18-121-member-removal-concurrency-cascade-2026-11-19.md'
+      - 'tests/world-v2-r18-121-membership-source-boundary.test.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  scratch-pg17-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r121_disposable_only
+          POSTGRES_DB: world_v2_r18_121
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_121"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R121_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_121
+      PGPASSWORD: r121_disposable_only
+    steps:
+      - name: Checkout tracked synthetic source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify cascade, concurrent join/remove and revocation order
+        shell: bash
+        run: bash tests/world-v2-r18-121-postgres/run.sh
+
+  inherited-r120-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r120_disposable_only
+          POSTGRES_DB: world_v2_r18_120
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_120"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R120_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_120
+      PGPASSWORD: r120_disposable_only
+    steps:
+      - name: Checkout tracked synthetic source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Recheck original 35 SQL scenarios and nine ACL denials on amended prototype
+        shell: bash
+        run: bash tests/world-v2-r18-120-postgres/run.sh
+      - name: Verify inherited R120 security contract tests
+        shell: bash
+        run: node --test tests/world-v2-r18-120-revocation-contract.test.mjs
+      - name: Verify application membership-source boundary and cascade/race safety assertions
+        shell: bash
+        run: node --test tests/world-v2-r18-121-membership-source-boundary.test.mjs
