@@ -34,7 +34,7 @@
     "rootAppDmRemovalReinstatementUiPresent": false,
     "dmCampaignSectionAvailable": true,
     "memberRealtimeDeleteInsertSubscriptionPresent": false,
-    "newClientContractPath": "src/CampaignMemberAdminContract.js",
+    "newClientContractPath": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/CampaignMemberAdminContract.js",
     "newClientContractImportedByLiveApp": false,
     "clientFeatureEnabled": false,
     "requiresFreshSignedIdentity": true,
@@ -50,7 +50,9 @@
     "neverOptimisticallyMutatesRoster": true,
     "networkIndeterminateWriteRequiresReconciliation": true,
     "supabaseSdkInternalPostRetriesPotentiallyEnabled": true,
-    "removedRosterMaxRows": 100
+    "removedRosterMaxRows": 100,
+    "runtimeSrcTreeModified": false,
+    "r80R81ByteExactSourceTreePreserved": true
   },
   "scratchSql": {
     "unappliedPath": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
@@ -78,7 +80,8 @@
     "unauthAclDenialChecksPassed": false,
     "standardBuildAndStaticChecksPassed": false,
     "actualPrivateOriginalJoinFunctionTestedWithNewContract": false,
-    "signedRealSupabaseAuthTestsPassed": false
+    "signedRealSupabaseAuthTestsPassed": false,
+    "r80R81SourceDriftFixedByRelocation": true
   },
   "releaseBlockers": [
     "product revocation versus voluntary-leave policy not explicitly ratified",
