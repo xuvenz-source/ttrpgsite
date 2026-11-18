@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-115",
+  "decision": "NO_GO",
+  "date": "2026-11-18",
+  "parentPr": 217,
+  "parentSha": "05532c1830dd0931c974920708424e667b2481e8",
+  "originalRef": "lwhwgqaunxbmvyndswze",
+  "qaRef": "bgydsamxypjslergfpla",
+  "originalRegisteredMigrations": 83,
+  "qaRegisteredMigrations": 0,
+  "qaPublicApplicationTables": 0,
+  "isolatedFixture": {
+    "platform": "GITHUB_ACTIONS_EPHEMERAL_POSTGRES17",
+    "usesR114SourceVerifiedFixture": true,
+    "postgresName": "world_v2_r18_114",
+    "syntheticAuthClaims": true,
+    "syntheticDmHelper": true,
+    "noSignedHostedSessions": true,
+    "noOriginalSqlExecuted": true,
+    "noQaSqlExecuted": true,
+    "noPrivate83SqlRead": true
+  },
+  "liveFunctionMetadata": [
+    {
+      "name": "can_edit_campaign_sheet",
+      "md5": "5a8fed2bdc8427c884f89440c0eebe03",
+      "bytes": 790,
+      "authenticatedExec": false,
+      "anonymousExec": false
+    },
+    {
+      "name": "claim_campaign_sheet_item",
+      "md5": "d7932b1e0c2141833537301d75d262e4",
+      "bytes": 1379,
+      "authenticatedExec": true,
+      "anonymousExec": false
+    },
+    {
+      "name": "release_campaign_sheet_item",
+      "md5": "f7bc314718884312ce3e1ca48331429f",
+      "bytes": 271,
+      "authenticatedExec": true,
+      "anonymousExec": false
+    },
+    {
+      "name": "mutate_campaign_sheet_item",
+      "md5": "d2e4affcf04808423830f443ce93e530",
+      "bytes": 2752,
+      "authenticatedExec": true,
+      "anonymousExec": false
+    }
+  ],
+  "leaseTestPlan": {
+    "interleavedTestCases": 23,
+    "realParallelTransactionStressDone": false,
+    "ownerAndDmDistinctLeases": true,
+    "dmTakeoverChecks": true,
+    "leaseExpiryChecks": true,
+    "forgedIdRejected": true,
+    "membershipRevocationBaselineReproductionPlanned": true
+  },
+  "proposedRevocationRepair": {
+    "path": "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql",
+    "patchScope": "ONE_ADDITIONAL_HELPER_MEMBERSHIP_PRECONDITION",
+    "versionedMigrationCreated": false,
+    "approved": false,
+    "appliedToOriginal": false,
+    "appliedToQa": false
+  },
+  "existingUuidRepair": {
+    "path": "staging/world-v2-b10-r18-114-inventory-uuid-guard/unapplied-inventory-uuid-five-segment-guard.sql",
+    "appliedToOriginal": false,
+    "appliedToQa": false
+  },
+  "knownFogStatusOracleStillPresent": true,
+  "releaseGates": {
+    "independentOperatorSourceAttestation": false,
+    "all83PrivateSqlSemanticReviewApproved": false,
+    "all67AuthenticatedDefinerRpcAuthorizationApproved": false,
+    "signedMultiAccountTestsPassed": false,
+    "qaHistoricalSqlInstallAuthorized": false,
+    "qaHistoricalSqlInstalled": false,
+    "productionSqlChangeAuthorized": false,
+    "productionReleaseAuthorized": false
+  },
+  "noOriginalOrQaSqlMutation": true,
+  "noVercelDeployment": true,
+  "noPaidResources": true,
+  "noMerge": true
+}
