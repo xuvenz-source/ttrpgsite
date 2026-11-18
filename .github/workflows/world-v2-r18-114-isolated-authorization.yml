@@ -6,6 +6,8 @@ on:
       - 'stage/world-v2-b10-r18-114-*'
     paths:
       - 'tests/world-v2-r18-114-postgres/**'
+      - 'staging/world-v2-b10-r18-114-inventory-uuid-guard/**'
+      - 'tests/world-v2-r18-114-inventory-uuid-guard.test.mjs'
       - '.github/workflows/world-v2-r18-114-isolated-authorization.yml'
       - 'supabase/migrations/20261107095350_campaign_sheet_inventory_collaboration.sql'
       - 'supabase/migrations/20261106180100_private_player_maps.sql'
@@ -16,6 +18,8 @@ on:
       - 'stage/world-v2-b10-r18-113-*'
     paths:
       - 'tests/world-v2-r18-114-postgres/**'
+      - 'staging/world-v2-b10-r18-114-inventory-uuid-guard/**'
+      - 'tests/world-v2-r18-114-inventory-uuid-guard.test.mjs'
       - '.github/workflows/world-v2-r18-114-isolated-authorization.yml'
 
 permissions:
