@@ -4,7 +4,7 @@
  * NEVER includes or accesses original historical SQL or real invite codes.
  */
 import assert from 'node:assert/strict';
-import {runR119IsolatedFixtureWithDdl}
+import {runR119IsolatedFixtureWithDdl,r119CurrentSanitizedFailure}
  from '../../scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs';
 
 const synthetic=String.raw`
@@ -45,3 +45,28 @@ assert.deepEqual(receipt.outcomes,{
 });
 assert.equal(receipt.productionReleaseAuthorized,false);
 console.log('R119 SYNTHETIC DOCKER FIXTURE PASS: ephemeral PG17 joined, revoked and rejoined; NO hosted SQL, no original source, NO_GO.');
+
+const rejectedSynthetic=synthetic.replace(
+ ' SELECT id INTO target FROM public.campaigns',
+ " RAISE EXCEPTION 'SYNTHETIC_ONLY_ERROR_DO_NOT_EXPORT';\n SELECT id INTO target FROM public.campaigns"
+);
+assert.notEqual(rejectedSynthetic,synthetic);
+let rejected=false;
+try{
+ runR119IsolatedFixtureWithDdl(rejectedSynthetic);
+}catch(error){
+ rejected=true;
+ assert.match(String(error),/R119 PRIVATE INVITATION FIXTURE NO-GO/);
+}
+assert.equal(rejected,true,'synthetic deliberately failing invite RPC must be rejected');
+const diagnostic=r119CurrentSanitizedFailure();
+assert.equal(diagnostic.decision,'NO_GO');
+assert.equal(diagnostic.reportStatus,'ERROR');
+assert.equal(diagnostic.safeFailureStage,'invitation_behavior_checks');
+assert.equal(diagnostic.safeBehaviorStep,'first_join_rpc');
+assert.equal(diagnostic.safeFailureCode,'first_join_rpc_failed');
+assert.equal(diagnostic.safePostgresSqlstate,'P0001');
+assert.equal(diagnostic.privateSqlExported,false);
+assert.equal(diagnostic.originalOrQaSqlExecuted,false);
+assert.doesNotMatch(JSON.stringify(diagnostic),/SYNTHETIC_ONLY_ERROR_DO_NOT_EXPORT/);
+console.log('R119 SYNTHETIC DIAGNOSTICS PASS: expected user-function error reduced to safe stage and PostgreSQL SQLSTATE only.');
