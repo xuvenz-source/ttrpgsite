@@ -19,6 +19,7 @@ uuid_campaign='00000000-0000-4000-8000-000000000101'
 uuid_dm='00000000-0000-4000-8000-000000000301'
 uuid_p1='00000000-0000-4000-8000-000000000302'
 uuid_p2='00000000-0000-4000-8000-000000000303'
+uuid_p3='00000000-0000-4000-8000-000000000305'
 invite='a1b2c3d4e5f60708'
 
 psql -X -v ON_ERROR_STOP=1 -q -f tests/world-v2-r18-120-postgres/setup.sql > "$scratch/setup.log"
@@ -30,7 +31,7 @@ psql -X -v ON_ERROR_STOP=1 -q -f tests/world-v2-r18-121-postgres/campaign-cascad
 # Actor helper: only fixed synthetic UUIDs, no user-controlled input.
 as_actor(){
  local actor="$1" expr="$2"
- psql -X -q -v ON_ERROR_STOP=1 -v VERBOSITY=sqlstate -c "BEGIN; SET LOCAL ROLE authenticated; SELECT pg_catalog.set_config('request.jwt.claim.sub','$actor',true); SELECT $expr; COMMIT;"
+ psql -X -q -v ON_ERROR_STOP=1 -v VERBOSITY=sqlstate -c "BEGIN; SET LOCAL statement_timeout='8s'; SET LOCAL ROLE authenticated; SELECT pg_catalog.set_config('request.jwt.claim.sub','$actor',true); SELECT $expr; COMMIT;"
 }
 count_query(){ psql -X -A -t -q -v ON_ERROR_STOP=1 -c "$1"; }
 wait_marker(){
@@ -48,6 +49,7 @@ as_actor "$uuid_p1" "public.join_campaign('$invite')" > "$scratch/first-join.log
 # transaction open. A simultaneous old-invite join must wait, then fail 42501.
 cat > "$scratch/removing.sql" <<SQL
 BEGIN;
+SET LOCAL statement_timeout='8s';
 SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','$uuid_dm',true);
 SELECT public.dm_remove_campaign_player('$uuid_campaign','$uuid_p1');
@@ -71,6 +73,7 @@ wait "$remove_pid" || fail "remove transaction failed"
 # removed+tombstoned, not a stale rejoined player.
 cat > "$scratch/joining.sql" <<SQL
 BEGIN;
+SET LOCAL statement_timeout='8s';
 SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','$uuid_p2',true);
 SELECT public.join_campaign('$invite');
@@ -85,5 +88,15 @@ as_actor "$uuid_dm" "public.dm_remove_campaign_player('$uuid_campaign','$uuid_p2
 wait "$join_pid" || fail "join transaction failed"
 [[ "$(count_query "SELECT count(*) FROM public.campaign_members WHERE campaign_id='$uuid_campaign' AND user_id='$uuid_p2'")" == "0" ]] || fail "P2 still member after DM removal"
 [[ "$(count_query "SELECT count(*) FROM forge_security.campaign_member_revocations WHERE campaign_id='$uuid_campaign' AND user_id='$uuid_p2'")" == "1" ]] || fail "P2 revocation missing"
-echo "R121 SCRATCH CONCURRENCY PASS: DM-remove-first and join-first orderings both enforce revocation."
+# ROLLBACK: membership removal and revocation must be atomic.
+as_actor "$uuid_p3" "public.join_campaign('$invite')" > "$scratch/join-p3.log"
+psql -X -q -v ON_ERROR_STOP=1 -c "BEGIN; SET LOCAL statement_timeout='8s'; SET LOCAL ROLE authenticated; SELECT pg_catalog.set_config('request.jwt.claim.sub','$uuid_dm',true); SELECT public.dm_remove_campaign_player('$uuid_campaign','$uuid_p3'); ROLLBACK;" > "$scratch/rolled-back-remove.log"
+[[ "$(count_query "SELECT count(*) FROM public.campaign_members WHERE campaign_id='$uuid_campaign' AND user_id='$uuid_p3'")" == "1" ]] || fail "rollback lost active P3 membership"
+[[ "$(count_query "SELECT count(*) FROM forge_security.campaign_member_revocations WHERE campaign_id='$uuid_campaign' AND user_id='$uuid_p3'")" == "0" ]] || fail "rollback left a ghost revocation"
+
+# CASCADE WITH EXISTING TOMBSTONES: campaign A has revoked P1/P2 and active P3.
+psql -X -q -v ON_ERROR_STOP=1 -c "SET statement_timeout='8s'; DELETE FROM public.campaigns WHERE id='$uuid_campaign';" > "$scratch/cascade-with-revocations.log"
+[[ "$(count_query "SELECT count(*) FROM public.campaign_members WHERE campaign_id='$uuid_campaign'")" == "0" ]] || fail "campaign cascade retained members"
+[[ "$(count_query "SELECT count(*) FROM forge_security.campaign_member_revocations WHERE campaign_id='$uuid_campaign'")" == "0" ]] || fail "campaign cascade retained tombstones"
+echo "R121 SCRATCH CONCURRENCY PASS: two real session orderings, rollback atomicity and both campaign deletion cascades."
 echo "R121 NO_GO: synthetic representative RPC only; no original source or hosted SQL executed."
