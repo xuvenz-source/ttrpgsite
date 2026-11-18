@@ -11,14 +11,15 @@ import re
 import sys
 
 ROOT=pathlib.Path(__file__).resolve().parents[2]
-MIGRATION=ROOT/"supabase/migrations/20261107095350_campaign_sheet_inventory_collaboration.sql"
+BASELINE=ROOT/"supabase/migrations/20261107095350_campaign_sheet_inventory_collaboration.sql"
+CLAIM_FIX=ROOT/"supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql"
 EXPECTED=(
  ("claim_campaign_sheet_item","d7932b1e0c2141833537301d75d262e4",1379,
-  "uuid,text,uuid,text,uuid,boolean"),
+  "uuid,text,uuid,text,uuid,boolean",CLAIM_FIX),
  ("release_campaign_sheet_item","f7bc314718884312ce3e1ca48331429f",271,
-  "uuid,text,uuid,text,uuid"),
+  "uuid,text,uuid,text,uuid",BASELINE),
  ("mutate_campaign_sheet_item","d2e4affcf04808423830f443ce93e530",2752,
-  "uuid,text,uuid,text,uuid,jsonb,boolean")
+  "uuid,text,uuid,text,uuid,jsonb,boolean",BASELINE)
 )
 
 def fail():
@@ -42,10 +43,9 @@ def main():
          target.parent.parent == pathlib.Path("/tmp") and
          target.name=="source-exact-lease-functions.sql"):
   fail()
- sql=MIGRATION.read_text(encoding="utf8")
  fragments=[]
- for name,md5,size,args in EXPECTED:
-  ddl,body=get(sql,name)
+ for name,md5,size,args,source_path in EXPECTED:
+  ddl,body=get(source_path.read_text(encoding="utf8"),name)
   raw=body.encode("utf8")
   if len(raw)!=size or hashlib.md5(raw).hexdigest()!=md5:fail()
   if not re.search(r"\bSECURITY\s+DEFINER\b",ddl,re.I) or "search_path=''" not in ddl:
