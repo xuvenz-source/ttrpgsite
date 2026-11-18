@@ -21,7 +21,13 @@ GitHub Actions runs `postgres:17` in its own disposable service, with exact loca
 
 The `auth.uid()`, `is_campaign_dm` and `is_campaign_member` implementations are **synthetic fixture helpers**; they are not direct live-source bodies and use unsiged mock GUC identity claims. The test is NOT a hosted Supabase signed-session acceptance, and does not prove every tool mutation/transfer/release RPC. The fixture includes separate campaigns, DMs, players, an outsider, private/shared tool inventories, two per-campaign NPC maps, and a deliberately mismatched cross-campaign token that must not leak.
 
-### Coverage, pending CI execution
+### Actual disposable PG17 verification
+
+[GitHub workflow #44262622655](https://github.com/xuvenz-source/ttrpgsite/actions/runs/44262622655) **SUCCESS**. Its log reports source fingerprint checks passed, **28/28** synthetic campaign/NPC/tool authorization cases passed, and **3/3** actual PostgreSQL role-level ACL denials passed. It also re-ran the prior R114/R115 source-backed fixtures. Confirmed in the log: revoked DM could not read own campaign NPC data or refresh privileged tool claims; revoked player-owner could not claim private/shared tools; membership restoration allowed the expected actions.
+
+This is a positive **scope-limited** finding: under synthetic `is_campaign_member`, `is_campaign_dm` and `auth.uid()`, the two selected source-bound callers reject revoked actors. The original-source membership revocation gap in character sheet authorization (#220) is unaffected, and it is not evidence that all campaign/tool RPCs are safe. No real signed Supabase token, real campaign removal, tool mutation/release or invitation flow was tested.
+
+### Coverage — tested in CI
 
 - 28 tool/NPC synthetic permission scenarios: owner, private vs shared, cross-campaign DM, outsider, null identity, unknown issue, null item, explicit DM takeover, anti-steal, NPC read for correct DM only, revoked DM NPC and tool denial, revoked player-owner denial, revoked shared-tool owner denial, restored membership and successful rejoin.
 - Three actual PostgreSQL role-level denial checks: anonymous tool claim EXECUTE, anonymous NPC read EXECUTE, and authenticated direct update on tool-item lease table.
