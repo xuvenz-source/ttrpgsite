@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {
- extractR119PrivateJoinDefinitions,boundR119PrivateJoinDdl,sanitizedR119Receipt,r119SanitizedFailureReceipt
+ extractR119PrivateJoinDefinitions,boundR119PrivateJoinDdl,sanitizedR119Receipt,r119SanitizedFailureReceipt,r119ValidateSyntheticInviteFormats
 } from '../scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs';
 
 const source=readFileSync(new URL('../scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs',import.meta.url),'utf8');
@@ -21,6 +21,21 @@ const outcomes=Object.fromEntries([
  'rotatedNewInviteAddedMember','nullActorChangedMemberCount',
  'anonymousJoinCallable','crossCampaignMembershipLeaked'
 ].map(k=>[k,false]));
+test('R119 actual-join-compatible invite data uses 8 lowercase random bytes as hex',()=>{
+ const good={
+  inviteA:'a1b2c3d4e5f60708',inviteB:'b1c2d3e4f5a60708',
+  newInviteA:'c1d2e3f4a5b60708',invalid:'f0e0d0c0b0a00000'
+ };
+ assert.equal(r119ValidateSyntheticInviteFormats(good),true);
+ assert.equal(r119ValidateSyntheticInviteFormats({...good,inviteA:'A1B2C3D4E5F60708'}),false);
+ assert.equal(r119ValidateSyntheticInviteFormats({...good,inviteB:good.inviteA}),false);
+ assert.equal(r119ValidateSyntheticInviteFormats({...good,inviteA:'too-short'}),false);
+ assert.equal(r119ValidateSyntheticInviteFormats({...good,inviteA:'g1b2c3d4e5f60708'}),false);
+ const fixture=readFileSync(new URL('../tests/world-v2-r18-119/synthetic-docker-run.mjs',import.meta.url),'utf8');
+ assert.match(fixture,/WHERE invite_code=lower\(trim\(p_invite_code\)\) FOR UPDATE/);
+ assert.doesNotMatch(fixture,/lower\(invite_code\)=lower\(trim\(p_invite_code\)\)/);
+ assert.match(source,/if\(!r119ValidateSyntheticInviteFormats\(V\)\)fail\(\)/);
+});
 test('R119 source must match the latest of 2 recovered function definitions',()=>{
  const original=DDL('old','BEGIN\nRETURN NULL;\nEND;\n');
  const latest=DDL('latest',body);
