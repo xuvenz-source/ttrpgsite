@@ -47,7 +47,17 @@
     "sourceOriginalJoinPrivateSqlExported": false,
     "scratchScenarioStatements": 35,
     "actualRoleAclDenials": 9,
-    "scratchCiPassed": false
+    "scratchCiPassed": true,
+    "isolatedCiEvidence": {
+      "workflowRunId": 44343916024,
+      "postgresVersion": 17,
+      "conclusion": "success",
+      "sqlScenarioCountPassed": 35,
+      "directAclDenialsPassed": 9,
+      "realSignedAuthUsed": false,
+      "actualOriginalJoinFunctionUsed": false,
+      "originalAndQaSqlModified": false
+    }
   },
   "outstandingRisk": [
     "Original join_campaign body remains private and is NOT included in CI; R119 source-exact private test already verified rejoin",
