@@ -1,0 +1,161 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-110",
+  "decision": "NO_GO",
+  "parentPr": 211,
+  "parentSha": "8f4de32594137513c9bae1ed139e1ded5d5bacdc",
+  "observedLocalDate": "2026-11-18",
+  "scope": "LIVE_ORIGINAL_READ_ONLY_PG_CATALOG_SECURITY_OBSERVATION_AND_UNRELEASED_FOG_FIX_GATE",
+  "provenance": {
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "method": "SUPABASE_READ_ONLY_SELECT_PG_CATALOG_AND_SECURITY_ADVISORS",
+    "originalFunctionSqlBodiesExported": false,
+    "originalHistorySqlExported": false,
+    "credentialsExported": false
+  },
+  "catalog": {
+    "originalRegisteredMigrations": 83,
+    "qaRegisteredMigrations": 0,
+    "qaPublicApplicationTables": 0,
+    "originalPublicTables": 31,
+    "originalPublicTablesMissingRls": 0,
+    "originalExposedTablesMissingRls": 0,
+    "originalPublicViews": 0,
+    "originalExposedNonInvokerViews": 0,
+    "schemaDefinerSummary": [
+      {
+        "schema": "public",
+        "definers": 85,
+        "authenticatedCallable": 67,
+        "anonCallable": 0,
+        "anonGrantedButSchemaDenied": 0
+      },
+      {
+        "schema": "forge_visibility",
+        "definers": 23,
+        "authenticatedCallable": 0,
+        "anonCallable": 0,
+        "anonGrantedButSchemaDenied": 7
+      },
+      {
+        "schema": "forge_world_v2",
+        "definers": 24,
+        "authenticatedCallable": 0,
+        "anonCallable": 0,
+        "anonGrantedButSchemaDenied": 0
+      }
+    ],
+    "publicCallableDefinerPostgresOwned": 67,
+    "publicCallableDefinersWithConfiguredSearchPath": 67,
+    "publicCallableDefinersWithoutDirectAuthUidText": 7,
+    "privateVisibilityAnonFunctionGrantsWithoutSchemaUsage": [
+      "enforce_collision",
+      "enforce_tool_collision",
+      "is_lit",
+      "point_visible",
+      "tick_combat",
+      "tick_tokens",
+      "tick_tools"
+    ],
+    "sevenPrivilegeReviewTargets": [
+      {
+        "name": "get_campaign_sheet_inventory",
+        "bytes": 1950,
+        "source_md5": "5f47826bc6673b92a0cbc277b1b77c51"
+      },
+      {
+        "name": "get_dm_map_npc_values",
+        "bytes": 263,
+        "source_md5": "32bb20cc485a57d24a50b13a64cecab0"
+      },
+      {
+        "name": "get_npc_token_values",
+        "bytes": 141,
+        "source_md5": "d492c33eddc090ea9a1bcfed7602807e"
+      },
+      {
+        "name": "is_map_fog_published",
+        "bytes": 102,
+        "source_md5": "084a62df8ed72d3e5fffbfce9507ff0f"
+      },
+      {
+        "name": "patch_campaign_sheet_noninventory",
+        "bytes": 2364,
+        "source_md5": "f988c6d7a05c441e45746491278ccff4"
+      },
+      {
+        "name": "preview_map_motion",
+        "bytes": 110,
+        "source_md5": "2956971f75ba69858989ca80b53d4bbe"
+      },
+      {
+        "name": "publish_map_environment",
+        "bytes": 3836,
+        "source_md5": "847d71e3382c05d2802c965c532ff225"
+      }
+    ],
+    "securityAdvisors": [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 15
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 67
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1
+      }
+    ]
+  },
+  "frozenPrivateRecovery": {
+    "operatorLocal83Verified": true,
+    "operatorR99HashMatched": true,
+    "operatorR108ScanDone": true,
+    "operatorR109TriageDone": true,
+    "aggregateSha256": "fe31759c142602047c1813d8ba1868f734138b8f94c773f7f1b6106b5b6bb783",
+    "rawPrivateSqlInRepository": false,
+    "operatorSessionIndependentlyAttested": false,
+    "perFunctionPrivateSqlSecurityReviewed": false
+  },
+  "fogGuard": {
+    "historicalSourceMetadataOracleConfirmed": true,
+    "disposablePostgres17FixtureReproduced": true,
+    "stagedCandidateBlocksOracleInSyntheticFixture": true,
+    "candidatePath": "staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql",
+    "candidateGitBlobSha": "c84d7cf8b0958621f11ec273cb36361e2501a77f",
+    "candidateAppliedToOriginal": false,
+    "candidateAppliedToQa": false,
+    "signedHostedAcceptanceExecuted": 0,
+    "signedHostedAcceptanceRequired": 12,
+    "originalFunctionRestoreIsSafeRollback": false
+  },
+  "releaseGates": {
+    "privateAll83SemanticAuditApproved": false,
+    "independentOperatorAuthAttested": false,
+    "all67AuthenticatedDefinerRpcsReviewed": false,
+    "internalFunctionExecuteGrantsReviewed": false,
+    "signedFogAndCampaignAuthorizationAccepted": false,
+    "QAOnly83HistoryDryRunApproved": false,
+    "QAOriginal83SchemaInstalled": false,
+    "fogGuardQaPatchVerified": false,
+    "pendingEightMigrationsInstalled": false,
+    "DMPlayerCrossAccountAccepted": false,
+    "freeTierPerformanceAccepted": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "originalSqlUnchanged": true,
+    "qaSqlUnchanged": true,
+    "privateSqlNeverExported": true,
+    "sourceOnlyCode": true,
+    "noProductionOrQaVercelDeployment": true,
+    "noPaidResources": true,
+    "noMerges": true
+  }
+}
