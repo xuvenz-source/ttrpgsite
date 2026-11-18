@@ -35,6 +35,14 @@ This distinguishes **voluntary departure** from **DM-imposed removal** and preve
 
 **Caution:** This is not a production migration candidate ready to install. The **current original `join_campaign` SQL body is deliberately not exported to CI**. The CI stub models the R119-observed legacy membership INSERT and duplicate behavior, and the new triggers are being verified against that representative pattern. The R119 source-exact test is separate evidence. An actual migration needs a trusted semantic review of the private source and reconciliation with all app/Edge/administrative membership modification paths.
 
+## Executed test evidence (scratch only)
+
+[Disposable PostgreSQL 17 workflow #44343916024](https://github.com/xuvenz-source/ttrpgsite/actions/runs/44343916024) completed **SUCCESS**. Its actual log includes `R120 PG17 CONTRACT PASS: 35/35 real SQL synthetic membership and revocation scenarios` and `R120 SCRATCH PG17 PASS: 35 scenario statements; 9 SQL permission denials`.
+
+The behavior verified **in scratch**: a current DM can delete a player's membership; the removal tombstone persists; unchanged and rotated generic invitations cannot rejoin that account; a never-removed player can still join; a voluntary player leave clears its own tombstone for a legitimate later return; only the same campaign's DM can explicitly reinstate a removed member, without creating a new arbitrary player; duplicate DM joins retain the DM role; even direct administrator deletion creates a tombstone. Nine real database ACL probes rejected anonymous RPC calls, direct membership insert/delete and direct tombstone access.
+
+**Scope limit:** The installed scratch `join_campaign` is a representative, non-original stub. The user's earlier R119 private source-exact receipt separately proved the current original join function permits stale-invite rejoining without this guard. This R120 test does not independently install the new guard alongside that exact private source, replay the 83 actual migrations, test concurrency or use signed Supabase Auth users. No claims of production readiness.
+
 ## Isolated tests and release gates
 
 The R18-120 GitHub Actions workflow uses a disposable, standalone `postgres:17` CI service with fixed synthetic credentials and loopback-only connection. No Supabase project reference, key, migration or real user is connected. The SQL matrix covers 35 independent scenarios for first join, idempotent DM, removal, stale invitation denial, direct administrative delete fail-closed behavior, voluntary leave/rejoin, new player eligibility, DM-only reinstatement, cross-campaign privilege boundaries, and invalid/rotated codes. Nine direct PostgreSQL permission-denial probes validate anonymous RPC and authenticated table access restrictions.
