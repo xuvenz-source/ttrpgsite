@@ -34,6 +34,7 @@ const V=Object.freeze({
  newInviteA:'C1D2E3F4A5B60708',invalid:'F0E0D0C0B0A00000'
 });
 const fail=()=>{throw Error('R119 PRIVATE INVITATION FIXTURE NO-GO')};
+let safeStage='initial_checks';
 const digest=(alg,value)=>createHash(alg).update(value,'utf8').digest('hex');
 export function extractR119PrivateJoinDefinitions(sql){
  if(typeof sql!=='string'||Buffer.byteLength(sql,'utf8')>12*1024*1024)fail();
@@ -62,7 +63,7 @@ export function boundR119PrivateJoinDdl({definitions,live}={}){
    !/\bRETURNS\s+uuid\b/i.test(latest.ddl)||
    !/\bLANGUAGE\s+plpgsql\b/i.test(latest.ddl)||
    !/\bSECURITY\s+DEFINER\b/i.test(latest.ddl)||
-   !/\bSET\s+search_path\s*=\s*(?:''|"")/i.test(latest.ddl))fail();
+   !/\bSET\s+search_path\s*(?:=|TO)\s*(?:''|"")(?=\s|AS\b|$)/i.test(latest.ddl))fail();
  return latest.ddl;
 }
 function checkEnv(env){
@@ -73,6 +74,7 @@ function checkEnv(env){
   'SUPABASE_SERVICE_ROLE_KEY','SUPABASE_SECRET_KEY'])if(env[k])fail();
 }
 function originalJoinDdl(workspace){
+ safeStage='source_history_integrity';
  const audit=inspectR118PrivateInvitations({workspace});
  if(audit.decision!=='NO_GO'||audit.originalHistoricalFilesVerified!==83||
     audit.privateR111DocketReverified!==true||audit.functions.length!==2||
@@ -90,6 +92,7 @@ function originalJoinDdl(workspace){
   if(digest('md5',sql)!==row.fetched_sql_md5)fail();
   defs.push(...extractR119PrivateJoinDefinitions(sql));
  }
+ safeStage='source_function_definition';
  return boundR119PrivateJoinDdl({
   definitions:defs,live:R118_TARGETS.find(x=>x.name==='join_campaign')
  });
@@ -188,10 +191,12 @@ export function sanitizedR119Receipt(obs,{sourceVerified=false}={}){
  });
 }
 export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}={}){
+ safeStage='scratch_preflight';
  if(typeof originalDdl!=='string'||originalDdl.length<1||originalDdl.length>128000)fail();
  const name='world-v2-r18-119-'+randomBytes(5).toString('hex');
  let active=false;
  try{
+  safeStage='docker_launch';
   const started=docker(['run','-d','--rm','--network','none','--read-only',
    '--user','999:999','--tmpfs','/var/lib/postgresql/data:rw,uid=999,gid=999,mode=0700',
    '--tmpfs','/var/run/postgresql:rw,uid=999,gid=999,mode=0777',
@@ -202,6 +207,7 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
    {timeout:120000});
   if(!started.ok)fail();
   active=true;
+  safeStage='postgres_ready';
   let ready=false;
   for(let i=0;i<70;i++){
    // Official postgres image runs a temporary bootstrap server with
@@ -213,10 +219,14 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
    }
    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,350);
   }
-  if(!ready||!sqlExec(name,schema()).ok)fail();
+  if(!ready)fail();
+  safeStage='synthetic_schema_setup';
+  if(!sqlExec(name,schema()).ok)fail();
+  safeStage='source_function_install';
   if(!sqlExec(name,originalDdl+
    '\nREVOKE ALL ON FUNCTION public.join_campaign(text) FROM PUBLIC,anon,authenticated;'+
    '\nGRANT EXECUTE ON FUNCTION public.join_campaign(text) TO authenticated;').ok)fail();
+  safeStage='invitation_behavior_checks';
   const first=sqlExec(name,actorQuery(V.player1,V.inviteA)).ok;
   if(!first||!hasMember(name,V.campaignA,V.player1)||
    memberRole(name,V.campaignA,V.player1)!=='player')fail();
@@ -259,6 +269,7 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
  }
 }
 function runPrivateFixture(workspace){
+ safeStage='safe_environment';
  checkEnv(process.env);
  const source=originalJoinDdl(workspace);
  return runR119IsolatedFixtureWithDdl(source,{sourceVerified:true});
@@ -273,7 +284,15 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   process.stdout.write(JSON.stringify(
    runPrivateFixture(args[0].slice('--workspace='.length)),null,2)+'\n');
  }catch{
-  process.stderr.write('R119 PRIVATE INVITATION FIXTURE NO-GO: private source or local Docker check failed. Never upload SQL, private docket, DB logs, invite codes or secrets.\n');
+  // Fail closed with a non-empty sanitized receipt. No raw error text, SQL,
+  // Docker logs, private file paths, invitation values or user records.
+  process.stdout.write(JSON.stringify({
+   schema:1,workPackage:'B10-R18-119',decision:'NO_GO',
+   reportStatus:'ERROR',safeFailureStage:safeStage,
+   sourceDetailsIncluded:false,privateSqlExported:false,
+   originalOrQaSqlExecuted:false,productionReleaseAuthorized:false
+  },null,2)+'\n');
+  process.stderr.write('R119 PRIVATE INVITATION FIXTURE NO-GO: sanitized failure report generated. Do not share SQL or raw logs.\n');
   process.exitCode=1;
  }
 }
