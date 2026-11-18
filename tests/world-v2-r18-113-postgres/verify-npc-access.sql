@@ -14,7 +14,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000401'::uuid,'00000000-0000-4000-8000-000000000406'::uuid] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000401'::uuid,'00000000-0000-4000-8000-000000000406'::uuid] THEN
   RAISE EXCEPTION 'R113 DM_A_ALLOWED_OWN_NPCS wrong NPC row access'; END IF;
  IF values_found IS DISTINCT FROM '[{"private":"A-one"},{"private":"A-two"}]'::jsonb THEN RAISE EXCEPTION 'R113 DM_A_ALLOWED_OWN_NPCS unexpected private payload'; END IF;
 END $assert$;
@@ -27,7 +27,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
   RAISE EXCEPTION 'R113 PLAYER_A_DENIED_OWN_NPCS wrong NPC row access'; END IF;
  IF values_found IS NOT NULL THEN RAISE EXCEPTION 'R113 PLAYER_A_DENIED_OWN_NPCS unexpected private payload'; END IF;
 END $assert$;
@@ -40,7 +40,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
   RAISE EXCEPTION 'R113 DM_B_DENIED_CROSS_CAMPAIGN wrong NPC row access'; END IF;
  IF values_found IS NOT NULL THEN RAISE EXCEPTION 'R113 DM_B_DENIED_CROSS_CAMPAIGN unexpected private payload'; END IF;
 END $assert$;
@@ -53,7 +53,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000204');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000405'::uuid] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000405'::uuid] THEN
   RAISE EXCEPTION 'R113 DM_B_ALLOWED_OWN_CAMPAIGN wrong NPC row access'; END IF;
  IF values_found IS DISTINCT FROM '[{"private":"B-one"}]'::jsonb THEN RAISE EXCEPTION 'R113 DM_B_ALLOWED_OWN_CAMPAIGN unexpected private payload'; END IF;
 END $assert$;
@@ -66,7 +66,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000204');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
   RAISE EXCEPTION 'R113 DM_A_DENIED_CROSS_CAMPAIGN wrong NPC row access'; END IF;
  IF values_found IS NOT NULL THEN RAISE EXCEPTION 'R113 DM_A_DENIED_CROSS_CAMPAIGN unexpected private payload'; END IF;
 END $assert$;
@@ -79,7 +79,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
   RAISE EXCEPTION 'R113 OUTSIDER_DENIED wrong NPC row access'; END IF;
  IF values_found IS NOT NULL THEN RAISE EXCEPTION 'R113 OUTSIDER_DENIED unexpected private payload'; END IF;
 END $assert$;
@@ -92,7 +92,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000299');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
   RAISE EXCEPTION 'R113 DM_A_UNKNOWN_MAP wrong NPC row access'; END IF;
  IF values_found IS NOT NULL THEN RAISE EXCEPTION 'R113 DM_A_UNKNOWN_MAP unexpected private payload'; END IF;
 END $assert$;
@@ -105,7 +105,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','',true);
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
   RAISE EXCEPTION 'R113 NULL_IDENTITY_DENIED wrong NPC row access'; END IF;
  IF values_found IS NOT NULL THEN RAISE EXCEPTION 'R113 NULL_IDENTITY_DENIED unexpected private payload'; END IF;
 END $assert$;
@@ -121,7 +121,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000401'::uuid,'00000000-0000-4000-8000-000000000406'::uuid] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000401'::uuid,'00000000-0000-4000-8000-000000000406'::uuid] THEN
   RAISE EXCEPTION 'R113 DM_BEFORE_REVOCATION wrong NPC row access'; END IF;
  IF values_found IS DISTINCT FROM '[{"private":"A-one"},{"private":"A-two"}]'::jsonb THEN RAISE EXCEPTION 'R113 DM_BEFORE_REVOCATION unexpected private payload'; END IF;
 END $assert$;
@@ -135,7 +135,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-00
 DO $assert$ DECLARE ids uuid[]; values_found jsonb; BEGIN
  SELECT pg_catalog.array_agg(token_id ORDER BY token_id), pg_catalog.jsonb_agg(npc_values ORDER BY token_id)
  INTO ids,values_found FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
- IF pg_catalog.coalesce(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
+ IF COALESCE(ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN
   RAISE EXCEPTION 'R113 DM_AFTER_REVOCATION_DENIED wrong NPC row access'; END IF;
  IF values_found IS NOT NULL THEN RAISE EXCEPTION 'R113 DM_AFTER_REVOCATION_DENIED unexpected private payload'; END IF;
 END $assert$;
