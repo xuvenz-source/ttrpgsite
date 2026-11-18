@@ -1,0 +1,56 @@
+name: World V2 R18-115 isolated PostgreSQL17 lease and revocation
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-115-*'
+    paths:
+      - 'tests/world-v2-r18-115-postgres/**'
+      - 'staging/world-v2-b10-r18-115-revocation-guard/**'
+      - '.github/workflows/world-v2-r18-115-isolated-lease.yml'
+      - 'tests/world-v2-r18-114-postgres/**'
+      - 'staging/world-v2-b10-r18-114-inventory-uuid-guard/**'
+      - 'supabase/migrations/20261107095350_campaign_sheet_inventory_collaboration.sql'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-114-*'
+    paths:
+      - 'tests/world-v2-r18-115-postgres/**'
+      - 'staging/world-v2-b10-r18-115-revocation-guard/**'
+      - '.github/workflows/world-v2-r18-115-isolated-lease.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgresql17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r114_disposable_only
+          POSTGRES_DB: world_v2_r18_114
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_114"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R114_ISOLATED: 'yes'
+      R115_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_114
+      PGUSER: postgres
+      PGPASSWORD: r114_disposable_only
+    steps:
+      - name: Checkout source without hosted Supabase secrets
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run R114 source checks and R115 original lease/candidate permission tests
+        shell: bash
+        run: bash tests/world-v2-r18-115-postgres/run.sh
