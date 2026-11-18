@@ -57,7 +57,7 @@
   "scratchSql": {
     "unappliedPath": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
     "isForwardMigration": false,
-    "installedOnlyInDisposablePg17": false,
+    "installedOnlyInDisposablePg17": true,
     "dmOnlyRemovedMemberList": true,
     "rejectedCrossCampaignIdentity": true,
     "returnsOnlyRemovedUserIdAndRemovedAt": true,
@@ -76,12 +76,27 @@
   },
   "testGate": {
     "clientMockRpcTestsCount": 16,
-    "postgreSql17DmListTestsPassed": false,
-    "unauthAclDenialChecksPassed": false,
-    "standardBuildAndStaticChecksPassed": false,
+    "postgreSql17DmListTestsPassed": true,
+    "unauthAclDenialChecksPassed": true,
+    "standardBuildAndStaticChecksPassed": true,
     "actualPrivateOriginalJoinFunctionTestedWithNewContract": false,
     "signedRealSupabaseAuthTestsPassed": false,
-    "r80R81SourceDriftFixedByRelocation": true
+    "r80R81SourceDriftFixedByRelocation": true,
+    "immutableMembershipKeysRegressionPassed": true,
+    "r80R81ByteExactSourceChecksPassedAfterStagingRelocation": true,
+    "syntheticSqlEvidence": {
+      "workflowRun": 44355265531,
+      "result": "success",
+      "rpcGuard": "dm-only removed roster",
+      "directAclDenialsPassed": 3,
+      "realHostedAuth": false
+    },
+    "standardVerificationEvidence": {
+      "workflowRun": 44355265582,
+      "result": "success",
+      "originalSrcTreeUnchanged": true
+    },
+    "releaseAuthorizationGranted": false
   },
   "releaseBlockers": [
     "product revocation versus voluntary-leave policy not explicitly ratified",
