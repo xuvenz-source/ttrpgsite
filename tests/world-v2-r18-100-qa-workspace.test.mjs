@@ -199,7 +199,10 @@ test('R100 synthetic preview executes only CLI version, help and guarded dry run
  const runner=(_binary,args)=>{
   const cmd=args.join(' ');
   calls.push(cmd);
-  if(cmd==='--version')return {status:0,stdout:'2.81.3\n',stderr:''};
+  if(cmd==='--version')return {
+   status:0,stdout:'2.81.3\n',
+   stderr:'A new version of Supabase CLI is available: v3.2.0 (currently installed v2.81.3)\n'
+  };
   if(cmd==='db push --help')return {
    status:0,stdout:'supabase db push --dry-run --linked\n',stderr:''
   };
