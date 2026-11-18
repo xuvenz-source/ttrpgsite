@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-118",
+  "decision": "NO_GO",
+  "date": "2026-11-18",
+  "parentPr": 222,
+  "parentSha": "b17e3adc4a9417e7ac9e8d076d4c31be82f16382",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "originalRegisteredMigrations": 83,
+  "qaRegisteredMigrations": 0,
+  "sourceBodyDownloadedFromOriginal": false,
+  "inviteCodesOrUserRowsRead": false,
+  "originalLiveReadOnlyStructuralEvidence": {
+    "createCampaign": {
+      "functionName": "create_campaign",
+      "bodyBytes": 475,
+      "bodyMd5": "9a12043761641127b6f60304eea876c5",
+      "bodySha256": "0ea1e01ba784dfa78e92c8e82a3ca2b2d28a19920f5286cc7423d1e891be645f",
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "directAuthUidText": true,
+      "insertsMembershipText": true,
+      "mentionsDmRoleLiteral": true
+    },
+    "joinCampaign": {
+      "functionName": "join_campaign",
+      "bodyBytes": 742,
+      "bodyMd5": "9fd65eca8e3160acd7a674931aad51c5",
+      "bodySha256": "5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655",
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "directAuthUidText": true,
+      "insertMembershipText": true,
+      "inviteCodeMarker": true,
+      "trimInputText": true,
+      "lowerInputText": true,
+      "notExistsGuardText": true,
+      "mentionsPlayerRoleLiteral": true,
+      "mentionsDmRoleLiteral": false,
+      "onConflictDoNothingText": true,
+      "onConflictDoUpdateText": false,
+      "separateRevocationTableReferenceText": false,
+      "revocationVocabularyText": false,
+      "updatesInviteCodeText": false
+    },
+    "campaignsInviteCode": {
+      "columnType": "text",
+      "uniqueConstraintPresent": true,
+      "defaultUsesRandomBytes": true,
+      "defaultUsesHexEncoding": true,
+      "defaultEntropyBytes": 8,
+      "actualInvitationValuesRead": false
+    },
+    "memberships": {
+      "rlsEnabled": true,
+      "primaryKeyColumns": [
+        "campaign_id",
+        "user_id"
+      ],
+      "roleCheckValues": [
+        "dm",
+        "player"
+      ]
+    },
+    "dedicatedBanOrJoinRequestTableObserved": false
+  },
+  "interpretation": {
+    "onConflictDoNothingPreventsRoleUpdateInThatClause": true,
+    "onConflictDoesNotProveNoPrivilegeEscalationInOtherCode": true,
+    "revocationVocabAbsentDoesNotProveNoRejoinCheck": true,
+    "tokenEntropyEstimateBits": 64,
+    "unchangedInviteCodePotentiallyReusableByRevokedMember": "REQUIRES_EXACT_SOURCE_AND_SIGNED_QA_TEST",
+    "riskClassification": "CREDIBLE_UNVERIFIED_INVITE_REUSE_AUTHORIZATION_RISK",
+    "confirmedHostedExploit": false
+  },
+  "proposedSecurityPolicy": {
+    "status": "PROPOSED_NOT_IMPLEMENTED",
+    "dmRemovalMustPersistAgainstStaleGlobalInvite": true,
+    "explicitDmReapprovalNeededForPreviouslyRemovedActor": true,
+    "newPlayersMayJoinUsingCurrentlyValidInvite": true,
+    "existingDmRoleMustNeverBeDemotedOnIdempotentJoin": true,
+    "revokedGlobalInviteMustFailForAllUsers": true,
+    "noUserMetadataClaimsAsAuthorization": true,
+    "doNotAuthorizeReleaseBasedOnProposedPolicy": true
+  },
+  "privateLocalVerification": {
+    "operatorOnlyScript": "scripts/release/inspect-world-v2-r18-118-private-invitations.mjs",
+    "rechecksOriginal83Fingerprint": true,
+    "rechecksPrivateR111Docket": true,
+    "comparesCurrentLiveSha256Md5Length": true,
+    "sourceSqlReadOnlyInOperatorPrivateWorkspace": true,
+    "privateSourceExportPermitted": false,
+    "actualOperatorReceiptReceived": false,
+    "humanSemanticReviewApproved": false,
+    "requiresIndependentOperatorSessionAttestation": true
+  },
+  "tests": {
+    "syntheticExtractorAndPrivacyUnitTestsStaged": true,
+    "actualOriginalInvitationBodyExecuted": false,
+    "signedHostedInviteSessionsExecuted": false
+  },
+  "releaseGates": {
+    "privateR118ReceiptVerified": false,
+    "sourceExactCurrentInvitationsReviewedByTrustedHuman": false,
+    "revokedUserRejoinPolicyApproved": false,
+    "originalOperatorAuthenticatedIndependently": false,
+    "all83PrivateSqlSecurityReviewed": false,
+    "all67ExposedPrivilegedRpcAuthorizationReviewed": false,
+    "knownHostedFogStatusLeakFixed": false,
+    "knownHostedInventoryUuidChurnFixed": false,
+    "knownHostedSheetRevokedOwnerGapFixed": false,
+    "qaOnlyMigrationDryRunAuthorized": false,
+    "qaSchemaInstallationAuthorized": false,
+    "signedQaRejoinTestsPassed": false,
+    "productionReleaseAuthorized": false
+  },
+  "authorizedQaSqlWrites": false,
+  "authorizedProductionWrites": false,
+  "noMerge": true,
+  "noPaidInfrastructure": true
+}
