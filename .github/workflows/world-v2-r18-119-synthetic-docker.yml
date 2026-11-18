@@ -30,6 +30,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Preload synthetic-only PostgreSQL17 image on disposable CI runner
+        shell: bash
+        run: docker pull postgres:17 >/dev/null
       - name: Exercise ephemeral no-network Postgres with synthetic invite function only
         shell: bash
         run: node tests/world-v2-r18-119/synthetic-docker-run.mjs
