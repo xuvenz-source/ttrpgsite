@@ -156,7 +156,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000301',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000405'::uuid] THEN RAISE EXCEPTION 'R116 DM_A_ONLY_OWN_NPC: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000405'::uuid] THEN RAISE EXCEPTION 'R116 DM_A_ONLY_OWN_NPC: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
@@ -166,7 +166,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000302',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 PLAYER_CANNOT_READ_PRIVATE_NPC: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 PLAYER_CANNOT_READ_PRIVATE_NPC: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
@@ -176,7 +176,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000304',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 DM_B_DENIED_FOREIGN_NPC: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 DM_B_DENIED_FOREIGN_NPC: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
@@ -186,7 +186,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000304',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000204');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000404'::uuid] THEN RAISE EXCEPTION 'R116 DM_B_OWN_CAMPAIGN_NPC: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000404'::uuid] THEN RAISE EXCEPTION 'R116 DM_B_OWN_CAMPAIGN_NPC: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
@@ -196,7 +196,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000301',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000204');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 DM_A_DENIED_OTHER_CAMPAIGN_NPC: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 DM_A_DENIED_OTHER_CAMPAIGN_NPC: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
@@ -208,7 +208,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000301',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 REMOVED_DM_NPC_READ_REVOKED: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 REMOVED_DM_NPC_READ_REVOKED: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
@@ -232,7 +232,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000301',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000405'::uuid] THEN RAISE EXCEPTION 'R116 RESTORED_DM_NPC_READ: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY['00000000-0000-4000-8000-000000000405'::uuid] THEN RAISE EXCEPTION 'R116 RESTORED_DM_NPC_READ: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
@@ -278,7 +278,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000302',true);
 DO $assert$ DECLARE got uuid; got_ids uuid[]; blocked boolean:=false; BEGIN
 SELECT pg_catalog.array_agg(token_id ORDER BY token_id) INTO got_ids FROM public.get_dm_map_npc_values('00000000-0000-4000-8000-000000000201');
-IF pg_catalog.coalesce(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 REVOKED_PLAYER_CANNOT_READ_NPC: NPC cross-campaign/role access';END IF;
+IF COALESCE(got_ids,ARRAY[]::uuid[]) IS DISTINCT FROM ARRAY[]::uuid[] THEN RAISE EXCEPTION 'R116 REVOKED_PLAYER_CANNOT_READ_NPC: NPC cross-campaign/role access';END IF;
 END $assert$;
 COMMIT;
 
