@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {
- extractR119PrivateJoinDefinitions,boundR119PrivateJoinDdl,sanitizedR119Receipt
+ extractR119PrivateJoinDefinitions,boundR119PrivateJoinDdl,sanitizedR119Receipt,r119SanitizedFailureReceipt
 } from '../scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs';
 
 const source=readFileSync(new URL('../scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs',import.meta.url),'utf8');
@@ -42,7 +42,7 @@ test('R119 accepts either safe PostgreSQL empty search_path form but rejects non
    /R119 PRIVATE INVITATION FIXTURE NO-GO/);
 });
 test('R119 failed private runs produce only non-empty safe stage indicators, not raw errors',()=>{
- assert.match(source,/reportStatus:'ERROR',safeFailureStage:safeStage/);
+ assert.match(source,/r119SanitizedFailureReceipt\(/);
  assert.match(source,/sourceDetailsIncluded:false,privateSqlExported:false/);
  assert.match(source,/safeStage='source_history_integrity'/);
  assert.match(source,/safeStage='source_function_definition'/);
@@ -83,6 +83,29 @@ test('R119 synthetic evidence is sanitized and always NO_GO, even if source-exac
  assert.equal(b.decision,'NO_GO');
  assert.equal(b.revokedPlayerInviteReuseObservedInSyntheticSourceExactTest,false);
  assert.throws(()=>sanitizedR119Receipt({...outcomes,removedPlayerRejoinedWithUnchangedInvite:'YES'}),/R119 PRIVATE INVITATION FIXTURE NO-GO/);
+});
+test('R119 sanitized Docker failure classifications reveal no raw source or local paths',()=>{
+ for(const code of ['docker_cli_unavailable','docker_local_daemon_unavailable_or_denied',
+   'docker_postgres17_image_missing','docker_container_launch_rejected']){
+  const r=r119SanitizedFailureReceipt('docker_preflight',code);
+  assert.equal(r.reportStatus,'ERROR');
+  assert.equal(r.decision,'NO_GO');
+  assert.equal(r.safeFailureCode,code);
+  assert.equal(r.privateSqlExported,false);
+  assert.equal(r.originalOrQaSqlExecuted,false);
+  assert.equal(r.productionReleaseAuthorized,false);
+  assert.doesNotMatch(JSON.stringify(r),/password|sqlBody|docker\.sock|privateHistory|A1B2C3D4E5F60708/);
+ }
+ assert.equal(r119SanitizedFailureReceipt('anythingFromRawStderr','api-key').safeFailureCode,
+  'not_classified');
+ assert.equal(r119SanitizedFailureReceipt('anythingFromRawStderr','api-key').safeFailureStage,
+  'initial_checks');
+ const sourcePreflight=source.indexOf('preflightLocalDocker();');
+ const sourceLoad=source.indexOf('const source=originalJoinDdl(workspace);');
+ assert.ok(sourcePreflight>0 && sourceLoad>sourcePreflight);
+ assert.match(source,/docker\(\['image','inspect','postgres:17'\]\)/);
+ assert.match(source,/docker\(\['info','--format','\{\{\.ServerVersion\}\}'\]\)/);
+ assert.match(source,/\['run','--pull=never','-d','--rm','--network','none'/);
 });
 test('R119 local scratch runner prohibits hosted DB target, network, ports, host mounts, release',()=>{
  for(const phrase of [
