@@ -1,0 +1,56 @@
+name: World V2 R18-117 disposable tool edit and revocation
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-117-*'
+    paths:
+      - 'tests/world-v2-r18-117-postgres/**'
+      - 'tests/world-v2-r18-117-*.test.mjs'
+      - '.github/workflows/world-v2-r18-117-isolated-tool-edits.yml'
+      - 'supabase/migrations/20261107095343_campaign_tool_item_collaboration.sql'
+      - 'tests/world-v2-r18-116-postgres/**'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-116-*'
+    paths:
+      - 'tests/world-v2-r18-117-postgres/**'
+      - '.github/workflows/world-v2-r18-117-isolated-tool-edits.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgresql17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r114_disposable_only
+          POSTGRES_DB: world_v2_r18_114
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_114"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R114_ISOLATED: 'yes'
+      R115_ISOLATED: 'yes'
+      R116_ISOLATED: 'yes'
+      R117_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_114
+      PGUSER: postgres
+      PGPASSWORD: r114_disposable_only
+    steps:
+      - name: Checkout only source, without Supabase credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run tool edit and revoke role tests in temporary PostgreSQL17
+        shell: bash
+        run: bash tests/world-v2-r18-117-postgres/run.sh
