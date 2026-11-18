@@ -72,10 +72,13 @@
   "noHostedDeployment": true,
   "latestOperatorReceipt": {
     "schema": 1,
+    "workPackage": "B10-R18-119",
     "decision": "NO_GO",
     "reportStatus": "ERROR",
     "safeFailureStage": "invitation_behavior_checks",
-    "safeFailureCode": "not_classified",
+    "safeFailureCode": "first_join_rpc_failed",
+    "safeBehaviorStep": "first_join_rpc",
+    "safePostgresSqlstate": "42P01",
     "sourceDetailsIncluded": false,
     "privateSqlExported": false,
     "originalOrQaSqlExecuted": false,
@@ -101,5 +104,19 @@
     "syntheticSqlstateExpected": "P0001",
     "actualSourceJoinBehaviorEstablished": false,
     "privateSqlHistoryExported": false
+  },
+  "missingRelationFixtureRepair": {
+    "source": "ORIGINAL_PG_PROC_AND_CATALOG_METADATA_SELECT_ONLY",
+    "observedPgErrorCode": "42P01",
+    "originalJoinReadsAndInsertsCharacters": true,
+    "previousFixtureMissingCharacters": true,
+    "originalCharactersColumnTypesAndFksCheckedWithoutRows": true,
+    "scratchCreatesSyntheticAuthUsersOnly": true,
+    "scratchCreatesPublicCharactersWithRls": true,
+    "scratchCharactersDirectAppGrantsDenied": true,
+    "syntheticCiMockExercisesCharacterDependency": true,
+    "syntheticCiNegativeMissingRelationSqlstateExpected": "42P01",
+    "privateOriginalSourceFunctionRetestedByOperator": false,
+    "hostedSqlModified": false
   }
 }
