@@ -40,8 +40,8 @@
     "supabaseConnectionsUsed": false,
     "scenarioCount": 28,
     "actualAclDenialCount": 3,
-    "scenariosExecuted": false,
-    "aclDenialsExecuted": false,
+    "scenariosExecuted": true,
+    "aclDenialsExecuted": true,
     "trueParallelTransactionStress": false,
     "realCampaignInviteJoinTested": false,
     "productionOrQaDatabaseMutated": false
@@ -72,5 +72,19 @@
   "qaSqlModified": false,
   "originalSqlModified": false,
   "noPaidInfrastructure": true,
-  "noMerge": true
+  "noMerge": true,
+  "isolatedEvidence": {
+    "workflowRunId": 44262622655,
+    "completed": true,
+    "conclusion": "success",
+    "sourceToolFingerprintVerified": true,
+    "npcDirectParityAnchorVerified": true,
+    "syntheticScenariosPassed": 28,
+    "postgresRoleAclDenialsPassed": 3,
+    "testedRevokedDmNpcAndToolDenied": true,
+    "testedRevokedOwnerToolDenied": true,
+    "testedRestoredMembership": true,
+    "originalOrQaSqlModified": false,
+    "productionApproved": false
+  }
 }
