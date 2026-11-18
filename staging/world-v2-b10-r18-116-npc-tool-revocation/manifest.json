@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-116",
+  "decision": "NO_GO",
+  "localDate": "2026-11-18",
+  "parentPr": 219,
+  "parentSha": "920cd0801b098d3c5de4e8e36a1aa5dca82d1add",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "originalRegisteredMigrations": 83,
+  "qaRegisteredMigrations": 0,
+  "scope": "SOURCE_BOUND_TOOL_CLAIM_AND_NPC_DM_REVOKED_MEMBER_POSTGRES17_TEST",
+  "sourceAnchors": [
+    {
+      "name": "public.claim_campaign_tool_item(uuid,uuid,boolean)",
+      "path": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
+      "bodyMd5": "570c89cc5b88bc739c56825eeb227449",
+      "bodyBytes": 1693,
+      "identity": "READ_ONLY_LIVE_PG_PROC_MD5_AND_BYTES",
+      "directLiveBodyParityAttested": false
+    },
+    {
+      "name": "public.get_dm_map_npc_values(uuid)",
+      "path": "supabase/migrations/20261109000500_dm_map_npc_protected_columns.sql",
+      "bodySha256": "5e5c0657353a54f4812ee5b547e4575bf666f2e8c72a3fe1b6918cfff8293de5",
+      "bodyBytes": 263,
+      "identity": "R103_PREVIOUSLY_ATTESTED_DIRECT_LIVE_SOURCE_EQUALITY",
+      "directLiveBodyParityAttested": true
+    }
+  ],
+  "testFixture": {
+    "platform": "DISPOSABLE_GITHUB_ACTIONS_POSTGRES17",
+    "reusesR115ScratchRegression": true,
+    "syntheticAuthUid": true,
+    "syntheticIsCampaignDm": true,
+    "syntheticIsCampaignMember": true,
+    "signedHostedSessionsTested": false,
+    "toolAndNpcSqlReadFromTrackedGitOnly": true,
+    "private83HistoricalSqlAccessed": false,
+    "supabaseConnectionsUsed": false,
+    "scenarioCount": 28,
+    "actualAclDenialCount": 3,
+    "scenariosExecuted": false,
+    "aclDenialsExecuted": false,
+    "trueParallelTransactionStress": false,
+    "realCampaignInviteJoinTested": false,
+    "productionOrQaDatabaseMutated": false
+  },
+  "relatedPriorIssues": {
+    "revokedCharacterOwnerGap": 220,
+    "inventoryUuidChurn": 218,
+    "fogStatusMetadataOracleStillUnfixed": true
+  },
+  "remainingReview": [
+    "Join campaign invitation and rejoin authorization semantic review",
+    "All 67 authenticated privileged RPC source and signed negative tests",
+    "Tool mutation/release paths and active leases after membership removal",
+    "Real signed DM and P1/P2 revocation tests for NPC/tool/campaign management",
+    "Private 83-file historical SQL and transport attestation",
+    "Safe QA-only migration bootstrap and free-tier acceptance"
+  ],
+  "releaseGates": {
+    "independentOperatorSourceAttested": false,
+    "all83PrivateSqlReviewed": false,
+    "all67PrivilegedRPCsReviewed": false,
+    "qaHistoricalMigrationDryRunAuthorized": false,
+    "qaSchemaInstalled": false,
+    "signedHostedMultiAccountAcceptance": false,
+    "productionReleaseAuthorized": false
+  },
+  "sourceOnly": true,
+  "qaSqlModified": false,
+  "originalSqlModified": false,
+  "noPaidInfrastructure": true,
+  "noMerge": true
+}
