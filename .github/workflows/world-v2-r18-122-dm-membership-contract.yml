@@ -1,0 +1,55 @@
+name: World V2 R18-122 DM membership management contract scratch PG17
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-122-*'
+    paths:
+      - '.github/workflows/world-v2-r18-122-dm-membership-contract.yml'
+      - 'tests/world-v2-r18-122-**'
+      - 'tests/world-v2-r18-122-postgres/**'
+      - 'staging/world-v2-b10-r18-122-dm-membership-admin-contract/**'
+      - 'docs/testing/world-v2-r18-122-dm-membership-admin-contract-2026-11-19.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-121-*'
+    paths:
+      - '.github/workflows/world-v2-r18-122-dm-membership-contract.yml'
+      - 'tests/world-v2-r18-122-**'
+      - 'staging/world-v2-b10-r18-122-dm-membership-admin-contract/**'
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-pg17-rpc-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r122_disposable_only
+          POSTGRES_DB: world_v2_r18_122
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_122"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R122_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_122
+      PGPASSWORD: r122_disposable_only
+    steps:
+      - name: Checkout tracked source only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify synthetic DM-only list and revoked key-update protection
+        run: bash tests/world-v2-r18-122-postgres/run.sh
+      - name: Verify dormant frontend RPC contract and authority boundaries
+        run: node --test tests/world-v2-r18-122-member-admin-contract.test.mjs
