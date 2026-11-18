@@ -20,6 +20,15 @@ BEGIN
  IF target IS NULL THEN RAISE EXCEPTION 'Invalid code';END IF;
  INSERT INTO public.campaign_members(campaign_id,user_id,role)
  VALUES(target,actor,'player') ON CONFLICT DO NOTHING;
+ -- The live original join RPC also reads/inserts public.characters.
+ -- Keep the synthetic smoke fixture honest about that table dependency.
+ IF NOT EXISTS(
+  SELECT 1 FROM public.characters ch
+  WHERE ch.campaign_id=target AND ch.user_id=actor
+ ) THEN
+  INSERT INTO public.characters(campaign_id,user_id,name)
+   VALUES(target,actor,'Synthetic character');
+ END IF;
  RETURN target;
 END;
 $synthetic_ci$;
@@ -70,3 +79,25 @@ assert.equal(diagnostic.privateSqlExported,false);
 assert.equal(diagnostic.originalOrQaSqlExecuted,false);
 assert.doesNotMatch(JSON.stringify(diagnostic),/SYNTHETIC_ONLY_ERROR_DO_NOT_EXPORT/);
 console.log('R119 SYNTHETIC DIAGNOSTICS PASS: expected user-function error reduced to safe stage and PostgreSQL SQLSTATE only.');
+
+const missingRelationSynthetic=synthetic.replace(
+ ' SELECT id INTO target FROM public.campaigns',
+ ' PERFORM 1 FROM public.fixture_relation_deliberately_absent;\n SELECT id INTO target FROM public.campaigns'
+);
+assert.notEqual(missingRelationSynthetic,synthetic);
+let missingRejected=false;
+try{
+ runR119IsolatedFixtureWithDdl(missingRelationSynthetic);
+}catch(error){
+ missingRejected=true;
+ assert.match(String(error),/R119 PRIVATE INVITATION FIXTURE NO-GO/);
+}
+assert.equal(missingRejected,true);
+const missingDiagnostic=r119CurrentSanitizedFailure();
+assert.equal(missingDiagnostic.safeFailureStage,'invitation_behavior_checks');
+assert.equal(missingDiagnostic.safeBehaviorStep,'first_join_rpc');
+assert.equal(missingDiagnostic.safeFailureCode,'first_join_rpc_failed');
+assert.equal(missingDiagnostic.safePostgresSqlstate,'42P01');
+assert.doesNotMatch(JSON.stringify(missingDiagnostic),/fixture_relation_deliberately_absent/);
+console.log('R119 SYNTHETIC MISSING-RELATION PASS: SQLSTATE 42P01 classified safely with no relation name or private SQL emitted.');
+
