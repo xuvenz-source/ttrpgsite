@@ -31,29 +31,7 @@ begin
  for entry in select value from jsonb_array_elements(items) loop
   if jsonb_typeof(entry)<>'object' then raise exception 'Invalid inventory item';end if;
   if coalesce(entry->>'_inventoryId','') !~
-   '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} then
-   entry:=entry || jsonb_build_object('_inventoryId',gen_random_uuid()::text);
-   dirty:=true;
-  end if;
-  normalized:=normalized || jsonb_build_array(entry);
- end loop;
- if dirty then
-  if p_source='character' then
-   update public.characters set
-    field_values=jsonb_set(coalesce(field_values,'{}'::jsonb),array[p_field],normalized,true)
-   where id=p_source_id and campaign_id=p_campaign;
-  elsif p_source='npc_template' then
-   update public.npc_templates set
-    field_values=jsonb_set(coalesce(field_values,'{}'::jsonb),array[p_field],normalized,true)
-   where id=p_source_id and campaign_id=p_campaign;
-  else
-   update public.map_tokens set
-    npc_values=jsonb_set(coalesce(npc_values,'{}'::jsonb),array[p_field],normalized,true)
-   where id=p_source_id and campaign_id=p_campaign;
-  end if;
- end if;
- return normalized;
-end $get$; then
+   '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' then
    entry:=entry || jsonb_build_object('_inventoryId',gen_random_uuid()::text);
    dirty:=true;
   end if;
