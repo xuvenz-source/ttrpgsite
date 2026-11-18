@@ -43,6 +43,11 @@ export function runR98Command({binary,args,cwd,env=process.env,runner=spawnSync}
  // filenames, identifiers, credentials and SQL must never appear in a receipt.
  if(args[0]==='migration'&&args[1]==='fetch'&&args[2]==='--linked')
   return Object.freeze({ok:true,outputDiscarded:true});
+ // v2.81.3 prints the pinned version to stdout, but its upstream update
+ // advisory goes to stderr. Never mix advisories into version identity.
+ // Retain strict exit-code/size checks above and exact stdout check below.
+ if(args.length===1&&args[0]==='--version')
+  return Object.freeze({ok:true,text:p.stdout});
  return Object.freeze({ok:true,text:p.stdout+'\n'+p.stderr});
 }
 export function captureR98History({workspace,binary,env=process.env,
