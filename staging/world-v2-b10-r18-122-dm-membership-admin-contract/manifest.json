@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-122",
+  "decision": "NO_GO",
+  "date": "2026-11-19",
+  "prParent": 227,
+  "parentSha": "b0612076d68346c05faa148bbfc4982b178ccca9",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "confirmedLiveCatalogReadOnly": {
+    "authenticatedCampaignMembersGrants": [
+      "SELECT"
+    ],
+    "serviceRoleCampaignMembersGrants": [
+      "DELETE",
+      "INSERT",
+      "REFERENCES",
+      "SELECT",
+      "TRIGGER",
+      "TRUNCATE",
+      "UPDATE"
+    ],
+    "ordinaryAuthenticatedMemberDeleteRlsPolicyPresent": false,
+    "dmRemovalReinstatementLeaveRpcPresent": false,
+    "getCampaignAccountNamesIsDefinerAndReadsAuthUsersAndMembers": true,
+    "actualHostedRemovalExploitObserved": false
+  },
+  "appIntegration": {
+    "trackedAppEdgeJsTsFilesScannedByParent": 174,
+    "trackedCampaignMemberReaders": [
+      "src/TabletopApp.jsx",
+      "src/PersonalTokenLibrary.jsx"
+    ],
+    "rootAppDmRemovalReinstatementUiPresent": false,
+    "dmCampaignSectionAvailable": true,
+    "memberRealtimeDeleteInsertSubscriptionPresent": false,
+    "newClientContractPath": "src/CampaignMemberAdminContract.js",
+    "newClientContractImportedByLiveApp": false,
+    "clientFeatureEnabled": false,
+    "requiresFreshSignedIdentity": true,
+    "localIsDmHintIsNotServerAuthorization": true,
+    "serverRpcNames": [
+      "dm_remove_campaign_player",
+      "dm_reinstate_campaign_player",
+      "leave_campaign",
+      "dm_list_removed_campaign_players"
+    ],
+    "noDirectMembershipTableMutations": true,
+    "noClientServiceRoleKey": true,
+    "neverOptimisticallyMutatesRoster": true,
+    "networkIndeterminateWriteRequiresReconciliation": true,
+    "supabaseSdkInternalPostRetriesPotentiallyEnabled": true,
+    "removedRosterMaxRows": 100
+  },
+  "scratchSql": {
+    "unappliedPath": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
+    "isForwardMigration": false,
+    "installedOnlyInDisposablePg17": false,
+    "dmOnlyRemovedMemberList": true,
+    "rejectedCrossCampaignIdentity": true,
+    "returnsOnlyRemovedUserIdAndRemovedAt": true,
+    "privateLedgerDirectReadGrantToAuthenticated": false,
+    "revocationInsertGateInherited": true,
+    "revocationMemberIdUpdateGuardAdded": true,
+    "serviceRoleTruncateGrantHostExists": true,
+    "truncateBypassesRowDeleteTriggers": true,
+    "truncateGrantRemovedFromOriginal": false,
+    "authUserCascadeRetentionReviewed": false,
+    "productionSecurityReviewComplete": false
+  },
+  "testGate": {
+    "clientMockRpcTestsCount": 16,
+    "postgreSql17DmListTestsPassed": false,
+    "unauthAclDenialChecksPassed": false,
+    "standardBuildAndStaticChecksPassed": false,
+    "actualPrivateOriginalJoinFunctionTestedWithNewContract": false,
+    "signedRealSupabaseAuthTestsPassed": false
+  },
+  "releaseBlockers": [
+    "product revocation versus voluntary-leave policy not explicitly ratified",
+    "R18-120 original parent SQL includes inherited prototype; only R18-121 child fixes campaign FK delete cascade",
+    "DM roster UI not wired to unapplied server APIs",
+    "no real signed DM/P1/P2/outsider QA membership tests",
+    "need full service_role external/Admin removal/UPDATE/TRUNCATE path audit",
+    "app membership revocation stale Realtime, fog, handout, chat, sheet and token cache ejection not implemented",
+    "Supabase SDK transport may retry POST; idempotency and ambiguous commit recovery unverified",
+    "Auth user cascade semantics and direct UPDATE lock ordering unverified",
+    "private human review of all 83 original migration SQL bodies remains pending",
+    "independent original operator session attestation pending",
+    "67 elevated callable RPC security audit incomplete",
+    "R18-104 original fog status metadata oracle unresolved",
+    "R18-114 inventory UUID churn unresolved",
+    "R18-115 revoked owner sheet authorization gap unresolved",
+    "QA bootstrap/migration replay not approved"
+  ],
+  "noHostedSqlExecuted": true,
+  "noOriginalOrQaSqlMutation": true,
+  "noMerge": true,
+  "noDeployment": true,
+  "noPaidInfrastructure": true,
+  "productionReleaseAuthorized": false
+}
