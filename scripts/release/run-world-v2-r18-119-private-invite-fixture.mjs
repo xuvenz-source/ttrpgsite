@@ -235,9 +235,9 @@ function runPrivateFixture(workspace){
   const oldAccepted=hasMember(name,V.campaignA,V.player2);
   sqlExec(name,actorQuery(V.player2,V.newInviteA));
   const newAccepted=hasMember(name,V.campaignA,V.player2);
-  const before=scalar(name,'COUNT(*) FROM public.campaign_members');
+  const before=scalar(name,'(SELECT COUNT(*) FROM public.campaign_members)');
   sqlExec(name,actorQuery('',V.newInviteA));
-  const after=scalar(name,'COUNT(*) FROM public.campaign_members');
+  const after=scalar(name,'(SELECT COUNT(*) FROM public.campaign_members)');
   const anon=sqlExec(name,actorQuery(V.outsider,V.newInviteA,'anon')).ok;
   const cross=hasMember(name,V.campaignB,V.player1)||
     hasMember(name,V.campaignB,V.player2)||
