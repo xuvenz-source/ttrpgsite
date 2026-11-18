@@ -160,7 +160,7 @@ function memberRole(name,campaign,actor){
  return scalar(name,'(SELECT role FROM public.campaign_members WHERE campaign_id='+
   quote(campaign)+' AND user_id='+quote(actor)+')');
 }
-export function sanitizedR119Receipt(obs){
+export function sanitizedR119Receipt(obs,{sourceVerified=false}={}){
  const fields=['firstJoinSucceeded','firstJoinIsPlayer',
   'duplicateJoinPreservedPlayerRole','dmDuplicatePreservedDmRole',
   'removedPlayerRejoinedWithUnchangedInvite','invalidInviteAddedMember',
@@ -171,7 +171,7 @@ export function sanitizedR119Receipt(obs){
  return Object.freeze({
   schema:1,workPackage:'B10-R18-119',decision:'NO_GO',
   sourceProjectRef:ORIGINAL,qaProjectRef:QA,
-  currentOriginalJoinSha256VerifiedLocally:true,
+  currentOriginalJoinSha256VerifiedLocally:sourceVerified===true,
   syntheticPg17NoNetworkContainer:true,noHostBindMounts:true,
   sourceSqlOutputOrLogsExported:false,
   realSignedSupabaseAuthExercised:false,
@@ -187,7 +187,7 @@ export function sanitizedR119Receipt(obs){
   productionReleaseAuthorized:false
  });
 }
-export function runR119IsolatedFixtureWithDdl(originalDdl){
+export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}={}){
  if(typeof originalDdl!=='string'||originalDdl.length<1||originalDdl.length>128000)fail();
  const name='world-v2-r18-119-'+randomBytes(5).toString('hex');
  let active=false;
@@ -249,7 +249,7 @@ export function runR119IsolatedFixtureWithDdl(originalDdl){
    rotatedNewInviteAddedMember:newAccepted,
    nullActorChangedMemberCount:before!==after,
    anonymousJoinCallable:anon,crossCampaignMembershipLeaked:cross
-  });
+  },{sourceVerified});
  }finally{
   if(active)docker(['rm','-f',name],{timeout:20000});
  }
@@ -257,7 +257,7 @@ export function runR119IsolatedFixtureWithDdl(originalDdl){
 function runPrivateFixture(workspace){
  checkEnv(process.env);
  const source=originalJoinDdl(workspace);
- return runR119IsolatedFixtureWithDdl(source);
+ return runR119IsolatedFixtureWithDdl(source,{sourceVerified:true});
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{
