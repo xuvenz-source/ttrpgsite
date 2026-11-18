@@ -41,8 +41,8 @@ def main():
   ddl,body=extract(src,name)
   raw=body.encode("utf8")
   if len(raw)!=size or hashlib.md5(raw).hexdigest()!=md5:fail()
-  if not re.search(r"\bsecurity\s+definer\b",ddl,re.I) or
-   not re.search(r"\bsearch_path\s*=\s*''",ddl,re.I):fail()
+  if (not re.search(r"\bsecurity\s+definer\b",ddl,re.I) or
+      not re.search(r"\bsearch_path\s*=\s*''",ddl,re.I)):fail()
   if name != "release_campaign_tool_item":
    if "public.is_campaign_member(target.campaign_id)" not in body:fail()
   elif "holder_id=actor" not in body:fail()
