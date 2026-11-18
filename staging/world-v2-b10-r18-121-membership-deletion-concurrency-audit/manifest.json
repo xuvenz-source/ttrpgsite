@@ -34,7 +34,13 @@
       "supabase/functions/username-register/index.ts",
       "supabase/functions/username-update/index.ts"
     ],
-    "serviceRoleMembershipRemovalCodeProvenAbsent": false
+    "serviceRoleMembershipRemovalCodeProvenAbsent": false,
+    "membershipReferenceFiles": [
+      "src/PersonalTokenLibrary.jsx",
+      "src/TabletopApp.jsx"
+    ],
+    "directMembershipWritePatternScanMethod": "Immediate .from('campaign_members').delete|insert|update|upsert on 174 tracked app/Edge JS/TS files",
+    "tokenLibraryMembershipUse": "READ_ONLY_CAMP_MEMBER_CHECK_BEFORE_ASSET_ACCESS"
   },
   "cascade": {
     "initialInheritedR120ScratchTest": "FAIL_CAMPAIGN_MISSING",
@@ -62,8 +68,13 @@
     "lockOrderDeadlockRiskForDirectAdminDeleteStillOpen": true,
     "parallelJoinVsCampaignDeletionNotExercised": true,
     "highContentionLoadAndRetryNotExercised": true,
-    "lastObservedPassingCodeSha": "e47334d52142779d34b12c6b99fff6d3259acd39",
-    "finalHeadCiPassed": false
+    "lastObservedPassingCodeSha": "0ae0dab4b5669fe7b8ffcc455f48f3ce5d360061",
+    "finalHeadCiPassed": false,
+    "isolatedCiPassRun": 44349276946,
+    "legacyR120ContractRegressionPassed": true,
+    "inheritedR120SqlScenarioCountPassed": 35,
+    "inheritedR120AclDenialsPassed": 9,
+    "standaloneSourceInventoryTestsPassed": 3
   },
   "openGates": {
     "productDmRemovalPolicyExplicitlyApproved": false,
