@@ -1,0 +1,38 @@
+name: World V2 R18-119 synthetic isolated invitation Docker
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-119-*'
+    paths:
+      - 'scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs'
+      - 'tests/world-v2-r18-119/**'
+      - '.github/workflows/world-v2-r18-119-synthetic-docker.yml'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-118-*'
+    paths:
+      - 'scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs'
+      - 'tests/world-v2-r18-119/**'
+      - '.github/workflows/world-v2-r18-119-synthetic-docker.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-no-network-pg17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout only tracked public source without original history or secrets
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preload synthetic-only PostgreSQL17 image on disposable CI runner
+        shell: bash
+        run: docker pull postgres:17 >/dev/null
+      - name: Exercise ephemeral no-network Postgres with synthetic invite function only
+        shell: bash
+        run: node tests/world-v2-r18-119/synthetic-docker-run.mjs
