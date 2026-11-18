@@ -30,6 +30,16 @@ The original harness had a single broad stage spanning every first-join, duplica
 
 The private current-original invitation source **has not passed the scenario** and will require another sanitized operator receipt after the final exact-commit CI verifies. Do not modify or export the private 83-file SQL history. A failing source-exact synthetic test does **not** automatically mean the hosted function is defective; test harness schema, simulated auth context and source semantics must be distinguished.
 
+## Third operator receipt: SQLSTATE 42P01 — missing scratch dependency
+
+The latest sanitized-only operator report has `decision:NO_GO`, `safeFailureStage:invitation_behavior_checks`, `safeFailureStep:first_join_rpc` (receipt field actually `safeBehaviorStep`), `safeFailureCode:first_join_rpc_failed` and PostgreSQL SQLSTATE **`42P01`**, which means an undefined table/relation. The exact current private-source RPC DDL was installed in local scratch PostgreSQL but could **not** complete the first joined-player call. No authorized rejoin result or hosted user test exists.
+
+**Read-only original `pg_proc` relation-identifier extraction** (no SQL body/source excerpts) determined that `public.join_campaign` reads and inserts into `public.characters`, as well as referring to `public.campaigns` and `public.campaign_members`. The R119 scratch fixture mistakenly created only the latter two tables. Original `pg_attribute` and `pg_constraint` metadata, queried without fetching any user/campaign rows, established that `characters` has the required UUID `id`, `campaign_id`, `user_id`, text `name`, JSONB `field_values`, timestamp `updated_at`, and nullable portrait/token paths, with foreign keys to `campaigns` and `auth.users`.
+
+**Scratch-only correction:** create a minimal `auth.users` table populated with only the fixed fictitious five test actor UUIDs; create an isolated `public.characters` relation with those verified column types/default constraints and RLS; grant no direct public/anon/authenticated character-table access. The source-exact `join_campaign` continues running as the exact original SECURITY DEFINER with no weakening of source-hash checks, network isolation or release gates. The **synthetic-only CI mock** now performs an analogous character lookup/insertion, and an intentional missing-relation negative test requires the safe `42P01` SQLSTATE with no table name or SQL leak.
+
+This is a **test-fixture dependency**, not evidence of a bug or exploitation in the original hosted function. A new operator-only sanitized receipt remains necessary to establish actual original-source invitation/rejoining behavior. No private SQL files, live account data, migrations, or hosted original/QA SQL were modified.
+
 ## R18-119 local, source-exact test
 
 `scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs` is **operator-only**. It first rechecks the same original 83-file recovery and private R111 docket using the approved R18-118 private verifier, then reads the tracked frozen migration manifest. It extracts exactly the most recent `public.join_campaign(p_invite_code text)` function definition and demands both current original MD5 and SHA-256, exact body length, plpgsql, UUID return type, SECURITY DEFINER and empty search_path.
