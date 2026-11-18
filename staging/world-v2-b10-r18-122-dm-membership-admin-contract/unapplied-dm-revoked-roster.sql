@@ -32,13 +32,27 @@ REVOKE ALL ON FUNCTION public.dm_list_removed_campaign_players(uuid)
 GRANT EXECUTE ON FUNCTION public.dm_list_removed_campaign_players(uuid)
   TO authenticated;
 
--- An administrator's UPDATE of a membership's key must not bypass the INSERT
--- revocation guard. This is scratch-only and needs lock-order review before
--- any production migration. Direct role UPDATE by service_role is still a
--- privileged administration workflow requiring independent authorization.
+-- Raw membership identity reassignment is a removal of OLD's access
+-- without a row DELETE. If allowed, it bypasses the OLD account's tombstone
+-- even when NEW is not revoked. Fail closed on *all* key changes; privileged
+-- migration of player identity needs a separately audited transaction.
+-- Role-only UPDATE remains an independent privileged service-role risk.
+CREATE FUNCTION forge_security.reject_campaign_member_identity_update()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $identity$
+BEGIN
+ IF OLD.campaign_id IS DISTINCT FROM NEW.campaign_id OR
+    OLD.user_id IS DISTINCT FROM NEW.user_id THEN
+   RAISE EXCEPTION 'Membership identity immutable' USING ERRCODE='42501';
+ END IF;
+ RETURN NEW;
+END
+$identity$;
+REVOKE ALL ON FUNCTION forge_security.reject_campaign_member_identity_update()
+ FROM PUBLIC,anon,authenticated;
 CREATE TRIGGER v2_campaign_member_update_identity_revocation_gate
 BEFORE UPDATE OF campaign_id,user_id ON public.campaign_members
-FOR EACH ROW EXECUTE FUNCTION forge_security.reject_revoked_member_insertion();
+FOR EACH ROW EXECUTE FUNCTION forge_security.reject_campaign_member_identity_update();
 
 COMMIT;
 
