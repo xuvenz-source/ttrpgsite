@@ -6,7 +6,6 @@ on:
       - 'stage/world-v2-b10-r18-122-*'
     paths:
       - '.github/workflows/world-v2-r18-122-dm-membership-contract.yml'
-      - 'src/CampaignMemberAdminContract.js'
       - 'tests/world-v2-r18-122-**'
       - 'tests/world-v2-r18-122-postgres/**'
       - 'staging/world-v2-b10-r18-122-dm-membership-admin-contract/**'
@@ -16,7 +15,6 @@ on:
       - 'stage/world-v2-b10-r18-121-*'
     paths:
       - '.github/workflows/world-v2-r18-122-dm-membership-contract.yml'
-      - 'src/CampaignMemberAdminContract.js'
       - 'tests/world-v2-r18-122-**'
       - 'staging/world-v2-b10-r18-122-dm-membership-admin-contract/**'
 
