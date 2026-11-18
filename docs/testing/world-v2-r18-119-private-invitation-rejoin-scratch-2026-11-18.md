@@ -17,6 +17,19 @@ A read-only live `pg_proc` query checked only booleans (not SQL body or campaign
 
 The source-only repair normalizes all four invented fixture invite codes to 16-character lowercase hex, refuses uppercase/malformed/duplicate code fixtures, and updates the synthetic CI mock to use `invite_code = lower(trim(p_invite_code))` instead of the more permissive `lower(invite_code) = lower(trim(p_invite_code))`. This preserves exact original SQL fingerprint gating, local no-network Docker isolation, the private 83-SQL history, and hosted release NO_GO. Synthetic CI passing still does not mean the exact operator-only source test has run successfully; a new sanitized operator receipt is required.
 
+## Second operator diagnostic and targeted failure instrumentation
+
+The operator's latest sanitized `r119-sanitized.json` again returned `decision:NO_GO`, `reportStatus:ERROR`, `safeFailureStage:invitation_behavior_checks`, `safeFailureCode:not_classified`. The earlier canonical lowercase synthetic invitation correction did not resolve the error. The report contains no behavior outcomes; **no authorization or rejoin result can be concluded**.
+
+The original harness had a single broad stage spanning every first-join, duplicate join, membership removal, rejoin and rotation scenario, and suppressed the SQLSTATE. A new **source-only diagnostic improvement**, still on this draft PR:
+- Records a strictly whitelisted `safeBehaviorStep` (including `first_join_rpc`, `first_join_membership`, `first_join_role`, `membership_remove`, `revoked_rejoin` and subsequent safe fixture phases).
+- Captures only the five-character PostgreSQL SQLSTATE, using `psql`'s `VERBOSITY=sqlstate` setting, never a private source SQL message, invite code, Docker log, user row or file path.
+- Classifies first-join execution failures separately from a missing synthetic membership row or wrong player role. Unrecognized failure codes and steps become `not_classified` / `not_started`.
+- Keeps `decision:NO_GO` and `originalOrQaSqlExecuted:false` in the fail-closed receipt, with no original or QA SQL write.
+- Exercises a *deliberately failing synthetic-only* PostgreSQL invitation RPC in isolated GitHub CI, proving the diagnostic becomes the safe `first_join_rpc` step and SQLSTATE `P0001` without exporting the exception message.
+
+The private current-original invitation source **has not passed the scenario** and will require another sanitized operator receipt after the final exact-commit CI verifies. Do not modify or export the private 83-file SQL history. A failing source-exact synthetic test does **not** automatically mean the hosted function is defective; test harness schema, simulated auth context and source semantics must be distinguished.
+
 ## R18-119 local, source-exact test
 
 `scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs` is **operator-only**. It first rechecks the same original 83-file recovery and private R111 docket using the approved R18-118 private verifier, then reads the tracked frozen migration manifest. It extracts exactly the most recent `public.join_campaign(p_invite_code text)` function definition and demands both current original MD5 and SHA-256, exact body length, plpgsql, UUID return type, SECURITY DEFINER and empty search_path.
