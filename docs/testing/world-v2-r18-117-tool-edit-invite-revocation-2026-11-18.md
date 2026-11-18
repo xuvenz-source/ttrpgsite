@@ -24,6 +24,14 @@ The executable test suite checks:
 
 This is **interleaved sequential** testing, not simultaneous true-parallel load. It inherits the earlier R114/R115/R116 fixture, including its scratch-only inventory UUID correction and revoked-character-sheet permission candidate, both unapplied to hosted databases.
 
+## Actual isolated CI verification
+
+[PostgreSQL 17 workflow #44264469228](https://github.com/xuvenz-source/ttrpgsite/actions/runs/44264469228) completed SUCCESS, with exact run log statements `R117: 3 tool edit/release function bodies verified to current original pg_proc MD5 and byte counts`, `R117 TOOL EDITS: 33/33 ... PASS` and `R117 DISPOSABLE PG17 PASS`. The five actual ACL checks returned expected permission-denied errors. These executable tests exercised tool edits, lease ownership and release, DM-only mount attribute updates, revoked actor denial, lawful cleanup and restored membership. They did not call `join_campaign` or `create_campaign`.
+
+[Standard staged verification #44264469276](https://github.com/xuvenz-source/ttrpgsite/actions/runs/44264469276) completed SUCCESS: lint checks, frontend tests, production build **without deployment**, dependency security audit, and both Edge Function type checks.
+
+The first isolated run was stopped by a Python extractor syntax error before R117 permissions ran; the extractor condition was fixed without loosening the source hash guards, and the subsequent verified run passed. An observed executable PASS is scoped to these synthetic identities and fixture schemas only. No hosted schema installation, migration or signed Auth operation occurred.
+
 ## Invitation/rejoining: deliberately NOT certified
 
 Read-only original `pg_proc` confirmed:
