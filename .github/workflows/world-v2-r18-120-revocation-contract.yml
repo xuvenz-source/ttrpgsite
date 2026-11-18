@@ -1,0 +1,57 @@
+name: World V2 R18-120 membership revocation scratch PostgreSQL17
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-120-*'
+    paths:
+      - '.github/workflows/world-v2-r18-120-revocation-contract.yml'
+      - 'staging/world-v2-b10-r18-120-revocation-contract/**'
+      - 'tests/world-v2-r18-120-postgres/**'
+      - 'tests/world-v2-r18-120-revocation-contract.test.mjs'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-119-*'
+    paths:
+      - '.github/workflows/world-v2-r18-120-revocation-contract.yml'
+      - 'staging/world-v2-b10-r18-120-revocation-contract/**'
+      - 'tests/world-v2-r18-120-postgres/**'
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-postgresql17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r120_disposable_only
+          POSTGRES_DB: world_v2_r18_120
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_120"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      GITHUB_ACTIONS: 'true'
+      R120_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_120
+      PGUSER: postgres
+      PGPASSWORD: r120_disposable_only
+    steps:
+      - name: Checkout tracked staging source only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run isolated membership/DM security scenario matrix
+        shell: bash
+        run: bash tests/world-v2-r18-120-postgres/run.sh
+      - name: Verify source-only release gates
+        shell: bash
+        run: node --test tests/world-v2-r18-120-revocation-contract.test.mjs
