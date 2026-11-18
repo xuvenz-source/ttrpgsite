@@ -1,0 +1,271 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-112",
+  "decision": "NO_GO",
+  "date": "2026-11-18",
+  "source": "READ_ONLY_ORIGINAL_PG_PROC_BOOLEAN_HELPER_CANDIDATES_AND_PRIOR_LIVE_EXACT_GIT_PARITY",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "registeredOriginalMigrations": 83,
+  "registeredQaMigrations": 0,
+  "sourceProjectSqlModified": false,
+  "qaProjectSqlModified": false,
+  "privilegedFunctions": [
+    {
+      "name": "get_campaign_sheet_inventory",
+      "sourceBytes": 1950,
+      "sourceMd5": "5f47826bc6673b92a0cbc277b1b77c51",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "helperCandidateReferences": [
+        "public.can_edit_campaign_sheet_inventory"
+      ],
+      "authorizationApproved": false,
+      "signedCrossAccountTestsPassed": false
+    },
+    {
+      "name": "get_dm_map_npc_values",
+      "sourceBytes": 263,
+      "sourceMd5": "32bb20cc485a57d24a50b13a64cecab0",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "helperCandidateReferences": [
+        "public.is_campaign_dm"
+      ],
+      "authorizationApproved": false,
+      "signedCrossAccountTestsPassed": false
+    },
+    {
+      "name": "get_npc_token_values",
+      "sourceBytes": 141,
+      "sourceMd5": "d492c33eddc090ea9a1bcfed7602807e",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "helperCandidateReferences": [
+        "public.is_campaign_dm"
+      ],
+      "authorizationApproved": false,
+      "signedCrossAccountTestsPassed": false
+    },
+    {
+      "name": "is_map_fog_published",
+      "sourceBytes": 102,
+      "sourceMd5": "084a62df8ed72d3e5fffbfce9507ff0f",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "helperCandidateReferences": [],
+      "authorizationApproved": false,
+      "signedCrossAccountTestsPassed": false
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "sourceBytes": 2364,
+      "sourceMd5": "f988c6d7a05c441e45746491278ccff4",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "helperCandidateReferences": [
+        "public.can_edit_campaign_sheet"
+      ],
+      "authorizationApproved": false,
+      "signedCrossAccountTestsPassed": false
+    },
+    {
+      "name": "preview_map_motion",
+      "sourceBytes": 110,
+      "sourceMd5": "2956971f75ba69858989ca80b53d4bbe",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "helperCandidateReferences": [
+        "forge_visibility.dispatch_movement_preview"
+      ],
+      "authorizationApproved": false,
+      "signedCrossAccountTestsPassed": false
+    },
+    {
+      "name": "publish_map_environment",
+      "sourceBytes": 3836,
+      "sourceMd5": "847d71e3382c05d2802c965c532ff225",
+      "authenticatedCallable": true,
+      "anonymousCallable": false,
+      "securityDefiner": true,
+      "ownerRole": "postgres",
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "helperCandidateReferences": [
+        "public.is_campaign_dm",
+        "forge_visibility.bump_tick"
+      ],
+      "authorizationApproved": false,
+      "signedCrossAccountTestsPassed": false
+    }
+  ],
+  "helpers": [
+    {
+      "schema": "public",
+      "name": "can_edit_campaign_sheet",
+      "sourceBytes": 790,
+      "sourceMd5": "5a8fed2bdc8427c884f89440c0eebe03",
+      "securityDefiner": true,
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": true,
+      "authenticatedCallable": false,
+      "authenticatedSchemaUsage": true,
+      "helperCandidateReferences": [
+        "public.is_campaign_dm"
+      ],
+      "authorizationApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "can_edit_campaign_sheet_inventory",
+      "sourceBytes": 427,
+      "sourceMd5": "0f45ba1e88b16997f82d67110252be9c",
+      "securityDefiner": true,
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "authenticatedCallable": false,
+      "authenticatedSchemaUsage": true,
+      "helperCandidateReferences": [
+        "public.can_edit_campaign_sheet"
+      ],
+      "authorizationApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "can_view_campaign_map",
+      "sourceBytes": 448,
+      "sourceMd5": "cf708e7eaa9f2a4493e94bcc1fb63d98",
+      "securityDefiner": true,
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": true,
+      "authenticatedCallable": true,
+      "authenticatedSchemaUsage": true,
+      "helperCandidateReferences": [],
+      "authorizationApproved": false
+    },
+    {
+      "schema": "public",
+      "name": "is_campaign_dm",
+      "sourceBytes": 148,
+      "sourceMd5": "a9dc5287aa552c0d39c3793daadafb19",
+      "securityDefiner": true,
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": true,
+      "authenticatedCallable": true,
+      "authenticatedSchemaUsage": true,
+      "helperCandidateReferences": [],
+      "authorizationApproved": false
+    },
+    {
+      "schema": "forge_visibility",
+      "name": "bump_tick",
+      "sourceBytes": 475,
+      "sourceMd5": "af1bae044976db69c23d9765e7533b03",
+      "securityDefiner": true,
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": false,
+      "authenticatedCallable": false,
+      "authenticatedSchemaUsage": false,
+      "helperCandidateReferences": [],
+      "authorizationApproved": false
+    },
+    {
+      "schema": "forge_visibility",
+      "name": "dispatch_movement_preview",
+      "sourceBytes": 6397,
+      "sourceMd5": "59ea9ae8fe24b401bda9536f35606c99",
+      "securityDefiner": true,
+      "configuredEmptySearchPath": true,
+      "directAuthUidText": true,
+      "authenticatedCallable": false,
+      "authenticatedSchemaUsage": false,
+      "helperCandidateReferences": [
+        "public.is_campaign_dm",
+        "public.can_view_campaign_map"
+      ],
+      "authorizationApproved": false
+    }
+  ],
+  "repositorySourceAnchors": [
+    {
+      "name": "get_dm_map_npc_values",
+      "repoPath": "supabase/migrations/20261109000500_dm_map_npc_protected_columns.sql",
+      "liveSourceSha256": "5e5c0657353a54f4812ee5b547e4575bf666f2e8c72a3fe1b6918cfff8293de5",
+      "bytes": 263,
+      "requiredSourceGuards": [
+        "joins_map_and_campaign",
+        "dm_helper",
+        "npc_only",
+        "map_scoped"
+      ]
+    },
+    {
+      "name": "dispatch_movement_preview",
+      "repoPath": "supabase/migrations/20261108091818_observer_and_per_viewer_visibility_release_20261108.sql",
+      "liveSourceSha256": "b897f48495a9a8add788741b64bf4a52c9cd5b9c1969d6e6dd50dadd8965063c",
+      "bytes": 6397,
+      "requiredSourceGuards": [
+        "direct_identity",
+        "map_viewer_permission",
+        "wall_override_dm",
+        "token_owner_and_visibility"
+      ]
+    }
+  ],
+  "knownVulnerability": {
+    "rpc": "is_map_fog_published",
+    "historicalSourceFogStatusOracle": true,
+    "sourceHashMatchedPrior": true,
+    "disposablePg17Reproduced": true,
+    "r104CandidateBlobSha": "c84d7cf8b0958621f11ec273cb36361e2501a77f",
+    "candidateAppliedToOriginal": false,
+    "candidateAppliedToQa": false,
+    "signedHostedCasesExecuted": 0
+  },
+  "requiredSignedCases": [
+    "NPC-01",
+    "NPC-02",
+    "SHEET-01",
+    "SHEET-02",
+    "MOVE-01",
+    "MOVE-02",
+    "ENV-01",
+    "FOG-01"
+  ],
+  "gate": {
+    "sourceMarkersAreHeuristics": true,
+    "exactTwoGitSourceBodyParityFromR103": true,
+    "private83SqlHumanAuditComplete": false,
+    "privilegedSevenSemanticReviewApproved": false,
+    "independentOperatorLoginAttested": false,
+    "hostedSignedAuthAccepted": false,
+    "qa83HistoryDryRunApproved": false,
+    "qaSchemaInstallAuthorized": false,
+    "productionReleaseAuthorized": false,
+    "noSQLOrCredentialsExported": true
+  }
+}
