@@ -40,6 +40,7 @@ test('R121 traverses app + Edge source and fails if direct membership writes byp
  console.log('R121 SOURCE INVENTORY: scanned '+all.length+
   ' app/Edge JS/TS files; '+memberReferences.length+
   ' reference campaign_members; no direct member writes found in immediate .from().write() pattern.');
+ console.log('R121 MEMBERSHIP REFERENCE FILES: '+memberReferences.join(', '));
 });
 test('R121 scratch trigger preserves FK cascade and ordinary member revocation',()=>{
  assert.match(prototype,/CREATE TRIGGER v2_campaign_member_delete_tombstone/);
