@@ -184,6 +184,7 @@ function schema(){
   'CREATE ROLE authenticated NOLOGIN;',
   'CREATE ROLE anon NOLOGIN;',
   'CREATE SCHEMA auth;',
+  'CREATE TABLE auth.users(id uuid PRIMARY KEY);',
   'CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path=',
   "'' AS $uid$ SELECT NULLIF(pg_catalog.current_setting('request.jwt.claim.sub',true),'')::uuid $uid$;",
   'REVOKE ALL ON FUNCTION auth.uid() FROM PUBLIC,anon;',
@@ -192,9 +193,17 @@ function schema(){
   'GRANT USAGE ON SCHEMA public TO anon;',
   'CREATE TABLE public.campaigns(id uuid PRIMARY KEY,owner_id uuid NOT NULL,name text NOT NULL,invite_code text NOT NULL UNIQUE);',
   "CREATE TABLE public.campaign_members(campaign_id uuid NOT NULL REFERENCES public.campaigns(id) ON DELETE CASCADE,user_id uuid NOT NULL,role text NOT NULL DEFAULT 'player' CHECK(role IN ('dm','player')),joined_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(campaign_id,user_id));",
+  // The exact original join_campaign function reads AND inserts characters.
+  // The previous scratch fixture omitted this relation entirely (SQLSTATE 42P01).
+  // Only verified live column types/default requirements are mirrored here;
+  // no original or real user rows, and no private recovered history is replayed.
+  "CREATE TABLE public.characters(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),campaign_id uuid NOT NULL REFERENCES public.campaigns(id) ON DELETE CASCADE,user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,name text NOT NULL DEFAULT 'Character',field_values jsonb NOT NULL DEFAULT '{}'::jsonb,updated_at timestamptz NOT NULL DEFAULT now(),portrait_path text,token_path text);",
   'ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;',
   'ALTER TABLE public.campaign_members ENABLE ROW LEVEL SECURITY;',
-  'REVOKE ALL ON public.campaigns,public.campaign_members FROM PUBLIC,anon,authenticated;',
+  'ALTER TABLE public.characters ENABLE ROW LEVEL SECURITY;',
+  'REVOKE ALL ON public.campaigns,public.campaign_members,public.characters FROM PUBLIC,anon,authenticated;',
+  'INSERT INTO auth.users(id) VALUES ('+
+   [V.dmA,V.dmB,V.player1,V.player2,V.outsider].map(quote).join('),(')+');',
   'INSERT INTO public.campaigns(id,owner_id,name,invite_code) VALUES ('+
    [quote(V.campaignA),quote(V.dmA),quote('Synthetic A'),quote(V.inviteA)].join(',')+
    '),('+[quote(V.campaignB),quote(V.dmB),quote('Synthetic B'),quote(V.inviteB)].join(',')+');',
