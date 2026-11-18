@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {
  CAMPAIGN_MEMBER_ADMIN_LIVE_ENABLED, CAMPAIGN_MEMBER_ADMIN_RPC_NAMES,
  createCampaignMemberAdminContract
-} from '../src/CampaignMemberAdminContract.js';
+} from '../staging/world-v2-b10-r18-122-dm-membership-admin-contract/CampaignMemberAdminContract.js';
 
 const C='00000000-0000-4000-8000-000000000101';
 const OTHER='00000000-0000-4000-8000-000000000102';
