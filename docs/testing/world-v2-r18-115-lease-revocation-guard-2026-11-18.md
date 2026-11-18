@@ -20,6 +20,21 @@ The R115 workflow runs the entire R114 source-exact original getter reproduction
 
 The **separate, unapplied R18-115 candidate** `staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql` changes one helper precondition to require a current campaign membership row for the actor. It is NOT a versioned migration. Its exact DDL is checked against the current Git source by Node tests; all other logic and restricted EXECUTE grants remain intact. The scratch-only candidate must reject the removed user's claim/GET/mutate/PATCH, allow the removed user to release an existing lease for cleanup, retain DM editing and cross-campaign denial, and allow a properly rejoined player to resume access.
 
+## Actual CI findings — verified
+
+GitHub Actions disposable [R18-115 workflow #44259576324](https://github.com/xuvenz-source/ttrpgsite/actions/runs/44259576324) completed SUCCESS and logged:
+
+- `R115: three source-exact original lease-function MD5/byte identities confirmed`
+- `R115 BASELINE: 23 source-exact claim/mutate/release cases, including revoked-member sheet access, reproduced in scratch`
+- `R115 CANDIDATE PASS: revoked player denied claim/get/mutate/patch, self lease cleanup allowed, DM and restored player retained`
+- `R115 PG17 PASS` followed by explicit `R115 NO_GO`.
+
+**Important source-provenance correction:** the original November 7 migration's `claim_campaign_sheet_item` definition is *not* the current live source (1,340 bytes), because the later applied November 8 migration `supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql` qualified the `lease.expires_at` reference. The latest tracked function body is 1,379 bytes and equals the original catalog MD5 `d7932b1e0c2141833537301d75d262e4`. The extractor now **requires** this latest Git body rather than weakening or bypassing identity checks. The `release_campaign_sheet_item` and `mutate_campaign_sheet_item` bodies remain pinned to the November 7 migration and match the corresponding live catalog checks.
+
+**Security conclusion:** In the exact source-based synthetic fixture, removal of P1's membership row did not revoke sheet access while `characters.user_id` still referenced P1. Original claim, inventory GET and sheet PATCH succeeded. Adding one membership predicate to the `can_edit_campaign_sheet` helper stopped claim, GET, mutate and PATCH after removal, while preserving DM access, lease release cleanup and rejoined-player access. This is a **confirmed source-level authorization defect in isolation**, not an observed original-hosted attack or proof of real signed Auth remediation.
+
+**Release decision unchanged:** The scratch candidate is not an approved migration, and both original/QA remain unchanged; separate review, signed accounts and safe QA migration installation are still required.
+
 ## Deployment safety and rollback plan — NOT AUTHORIZED
 
 Both R18-114 and R18-115 candidates remain distinct source-only patches. Historical `supabase/migrations` files MUST NOT be edited to rewrite already-applied history. Any future release must:
