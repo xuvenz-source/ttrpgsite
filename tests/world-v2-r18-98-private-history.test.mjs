@@ -171,7 +171,10 @@ test('R98 synthetic operator runner performs only 3 whitelisted commands, never 
  const commands=[];
  const runner=(_binary,args,_options)=>{
   commands.push(args.join(' '));
-  if(args.join(' ')==='--version')return {status:0,stdout:'2.81.3\n',stderr:''};
+  if(args.join(' ')==='--version')return {
+   status:0,stdout:'2.81.3\n',
+   stderr:'A new version of Supabase CLI is available: v3.2.0 (currently installed v2.81.3)\n'
+  };
   if(args.join(' ')==='migration fetch --help')return {
    status:0,stdout:'Usage:\n  supabase migration fetch [flags]\n --linked  From linked project\n',stderr:''
   };
