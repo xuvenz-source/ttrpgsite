@@ -30,9 +30,19 @@ const V=Object.freeze({
  player1:'00000000-0000-4000-8000-000000000302',
  player2:'00000000-0000-4000-8000-000000000303',
  outsider:'00000000-0000-4000-8000-000000000305',
- inviteA:'A1B2C3D4E5F60708',inviteB:'B1C2D3E4F5A60708',
- newInviteA:'C1D2E3F4A5B60708',invalid:'F0E0D0C0B0A00000'
+ inviteA:'a1b2c3d4e5f60708',inviteB:'b1c2d3e4f5a60708',
+ newInviteA:'c1d2e3f4a5b60708',invalid:'f0e0d0c0b0a00000'
 });
+// The live campaigns.invite_code default is encode(gen_random_bytes(8),'hex'),
+// and the exact current join function compares the stored raw code to
+// lower(trim(input)). All synthetic stored codes MUST be canonical lowercase.
+export function r119ValidateSyntheticInviteFormats(codes){
+ if(!codes||typeof codes!=='object')return false;
+ const keys=['inviteA','inviteB','newInviteA','invalid'];
+ const vals=keys.map(k=>codes[k]);
+ return vals.every(v=>typeof v==='string'&&/^[0-9a-f]{16}$/.test(v))&&
+   new Set(vals).size===keys.length;
+}
 const fail=()=>{throw Error('R119 PRIVATE INVITATION FIXTURE NO-GO')};
 let safeStage='initial_checks';
 let safeFailureCode='not_classified';
@@ -225,6 +235,7 @@ export function sanitizedR119Receipt(obs,{sourceVerified=false}={}){
 }
 export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}={}){
  safeStage='scratch_preflight';
+ if(!r119ValidateSyntheticInviteFormats(V))fail();
  if(typeof originalDdl!=='string'||originalDdl.length<1||originalDdl.length>128000)fail();
  const name='world-v2-r18-119-'+randomBytes(5).toString('hex');
  let active=false;
