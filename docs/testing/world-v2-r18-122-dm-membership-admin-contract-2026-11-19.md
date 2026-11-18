@@ -14,7 +14,7 @@
 
 ## Staged source-only client contract (NOT wired into runtime)
 
-`src/CampaignMemberAdminContract.js` exports a **dormant** `createCampaignMemberAdminContract({db,context,onReconcile})` adapter. Neither `TabletopApp.jsx` nor `TabletopSidebar.jsx` imports or calls it. `CAMPAIGN_MEMBER_ADMIN_LIVE_ENABLED` remains false.
+`staging/world-v2-b10-r18-122-dm-membership-admin-contract/CampaignMemberAdminContract.js` exports a **dormant** `createCampaignMemberAdminContract({db,context,onReconcile})` adapter. Neither `TabletopApp.jsx` nor `TabletopSidebar.jsx` imports or calls it. `CAMPAIGN_MEMBER_ADMIN_LIVE_ENABLED` remains false.
 
 - Four **exact** server RPC names: `dm_remove_campaign_player`, `dm_reinstate_campaign_player`, `leave_campaign`, `dm_list_removed_campaign_players`.
 - Local hints check the active campaign ID, signed actor ID, DM status, active membership role and player target. Client hints are **not authorization**; every privileged SQL function must check the current `auth.uid()` and persisted DM membership itself.
@@ -24,7 +24,7 @@
 - The DM-only removed-list response validates at most 100 unique synthetic-compatible UUIDs with valid removal timestamps, never uses direct ledger SELECT or exposes email/user metadata. Server-side permission remains authoritative.
 - The current SDK's PostgREST transport can retry POST requests internally; the wrapper does not explicitly retry, but **that does not guarantee exactly-once delivery**. The final migration and UI design must make actions idempotent or return an authoritative reconciliation receipt, especially after ambiguous network responses.
 
-The unmounted controller and its 15+ isolated tests stage only the integration **contract**. They do **not** implement or enable a functional DM management interface.
+The controller is deliberately outside the release-pinned `src/` tree to preserve R80/R81 byte-exact frontend gates. The unmounted controller and its 16 isolated tests stage only the integration **contract**. They do **not** implement or enable a functional DM management interface.
 
 ## Scratch-only DM revoked roster and secondary write guard
 
