@@ -43,7 +43,7 @@
     "rejoinsAfterDmRemovalTestPlanned": true,
     "testsFirstJoinAndRoleIdempotence": true,
     "testsCodeRotationInvalidAndCrossCampaign": true,
-    "actualOperatorFixtureReceiptReceived": false
+    "actualOperatorFixtureReceiptReceived": true
   },
   "invitationRejoinRisk": {
     "status": "UNVERIFIED_POSSIBLE_REVOCATION_REJOIN_BYPASS",
@@ -69,5 +69,27 @@
   "originalSqlChanged": false,
   "noMerge": true,
   "noPaidInfrastructure": true,
-  "noHostedDeployment": true
+  "noHostedDeployment": true,
+  "latestOperatorReceipt": {
+    "schema": 1,
+    "decision": "NO_GO",
+    "reportStatus": "ERROR",
+    "safeFailureStage": "invitation_behavior_checks",
+    "safeFailureCode": "not_classified",
+    "sourceDetailsIncluded": false,
+    "privateSqlExported": false,
+    "originalOrQaSqlExecuted": false,
+    "productionReleaseAuthorized": false,
+    "originalJoinBehaviorVerified": false
+  },
+  "identifiedFixtureDefect": {
+    "priorStoredSyntheticInviteFormat": "uppercase hex characters",
+    "currentOriginalJoinNormalization": "stored invite_code = lower(trim(p_invite_code))",
+    "liveStoredInviteDefault": "encode(gen_random_bytes(8),'hex')",
+    "updatedSyntheticFormat": "lowercase 16-character hex",
+    "syntheticDockerMockNowMatchesRawStoredCodeComparison": true,
+    "verifiedCurrentOriginalSqlBodyExported": false,
+    "privateExactSourceRejoinScenarioRetestedByOperator": false,
+    "productionCodeChangeRequiredByThisFinding": false
+  }
 }
