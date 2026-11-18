@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-120",
+  "decision": "NO_GO",
+  "date": "2026-11-19",
+  "parentPr": 225,
+  "parentSha": "61efecebdb135da3bdb522e446a52fdc92e4a6f3",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "sourceEvidence": {
+    "r119OriginalJoinSourceExactSha256": "5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655",
+    "r119OriginalJoinSyntheticReceiptAccepted": true,
+    "removedPlayerRejoinedViaUnchangedInvite": true,
+    "realSignedHostedUsersTested": false,
+    "currentOriginalMembershipRlsDeletePolicyPresent": false,
+    "originalPublicMembershipDeleteRpcFound": false,
+    "liveServiceRoleRemovalMechanismReviewed": false,
+    "original83PrivateHistoryHumanSemanticReviewComplete": false
+  },
+  "proposedPolicy": {
+    "status": "PROPOSED_ONLY_UNAPPROVED",
+    "voluntaryLeaveAllowsFutureValidInvite": true,
+    "dmRemovalBlocksAllGenericInvitesUntilReinstatement": true,
+    "dmExplicitReinstatementRequired": true,
+    "existingDmCannotBeDemotedByIdempotentInvite": true,
+    "serverSideTombstonePersistsWhenServiceRoleDirectlyDeletes": true,
+    "noClientOrUserMetadataAuthorizesMembership": true,
+    "appliesOnlyNewPostgresSyntheticFixture": true
+  },
+  "prototype": {
+    "path": "staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql",
+    "type": "UNAPPLIED_SCRATCH_ONLY_NOT_VERSIONED_MIGRATION",
+    "newPrivateSchema": "forge_security",
+    "newPrivateTable": "forge_security.campaign_member_revocations",
+    "additiveTriggers": [
+      "v2_campaign_member_delete_tombstone",
+      "v2_campaign_member_insert_revocation_gate"
+    ],
+    "newPrivilegedRpc": [
+      "leave_campaign(uuid)",
+      "dm_remove_campaign_player(uuid,uuid)",
+      "dm_reinstate_campaign_player(uuid,uuid)"
+    ],
+    "directTombstoneGrantsToAuthenticated": false,
+    "sqlCandidateSourceReviewedByIndependentHuman": false,
+    "syntheticJoinFunctionIsOriginalCurrentLiveBody": false,
+    "sourceOriginalJoinPrivateSqlExported": false,
+    "scratchScenarioStatements": 35,
+    "actualRoleAclDenials": 9,
+    "scratchCiPassed": true,
+    "isolatedCiEvidence": {
+      "workflowRunId": 44343916024,
+      "postgresVersion": 17,
+      "conclusion": "success",
+      "sqlScenarioCountPassed": 35,
+      "directAclDenialsPassed": 9,
+      "realSignedAuthUsed": false,
+      "actualOriginalJoinFunctionUsed": false,
+      "originalAndQaSqlModified": false
+    }
+  },
+  "outstandingRisk": [
+    "Original join_campaign body remains private and is NOT included in CI; R119 source-exact private test already verified rejoin",
+    "Existing application and service-role membership deletion paths not source-verified; direct delete compatibility and use of semantic leave/remove RPCs require integration review",
+    "Deadlock/retry behavior under concurrent join vs direct member deletion, campaign cascade and revocation-trigger ordering not verified",
+    "Privilege tables, grants, helper function ownership and row security require independent review",
+    "Rejoining must not restore stale fog/map/handout subscriptions or character-sheet privileged access without current membership",
+    "R18-115 revoked character-sheet owner flaw remains unapplied and independently blocks release",
+    "Migration installation only after trusted review of original 83 historical files, independent operator session attestation and QA approval",
+    "All 67 privileged authenticated-callable RPCs not exhaustively reviewed"
+  ],
+  "releaseGates": {
+    "productRevocationPolicyExplicitlyApproved": false,
+    "independentHumanSqlSecurityReviewPassed": false,
+    "private83OriginalMigrationSqlAudited": false,
+    "realSignedAuthQaAcceptancePassed": false,
+    "qaOnlyHistoricalInstallAuthorized": false,
+    "qaSchemaInstalled": false,
+    "originalFogStatusOracleFixed": false,
+    "inventoryUuidChurnFixed": false,
+    "revokedSheetOwnerGapFixed": false,
+    "all67PrivilegedRpcReviewsPassed": false,
+    "productionReleaseAuthorized": false
+  },
+  "originalSqlModified": false,
+  "qaSqlModified": false,
+  "noMerge": true,
+  "noPaidInfrastructure": true,
+  "noProductionDeployment": true
+}
