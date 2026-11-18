@@ -135,7 +135,7 @@ test('R119 invitation failure report isolates step and SQLSTATE with no raw mess
  assert.equal(r.privateSqlExported,false);
  assert.equal(r.originalOrQaSqlExecuted,false);
  assert.equal(r.productionReleaseAuthorized,false);
- assert.doesNotMatch(JSON.stringify(r),/\\/private\\/secret\\.sql|do not reveal|rawSql|secret|sneaky\\/path/);
+ assert.doesNotMatch(JSON.stringify(r),/secret|do not reveal|rawSql|sneaky/);
  const tampered=r119SanitizedFailureReceipt('invitation_behavior_checks',
   'reason:/private/secret',{behaviorStep:'sneaky/path',sqlstate:'P0001 ERROR private'});
  assert.equal(tampered.safeFailureCode,'not_classified');
