@@ -34,7 +34,9 @@
       "md5": "d7932b1e0c2141833537301d75d262e4",
       "bytes": 1379,
       "authenticatedExec": true,
-      "anonymousExec": false
+      "anonymousExec": false,
+      "latestAppliedSourcePath": "supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql",
+      "priorUnqualifiedSourceExcluded": true
     },
     {
       "name": "release_campaign_sheet_item",
@@ -58,7 +60,10 @@
     "dmTakeoverChecks": true,
     "leaseExpiryChecks": true,
     "forgedIdRejected": true,
-    "membershipRevocationBaselineReproductionPlanned": true
+    "membershipRevocationBaselineReproductionPlanned": false,
+    "revokedOwnerClaimGetPatchBaselineConfirmedInSyntheticPg17": true,
+    "interleavedLeaseAndTakeoverCasesPassed": true,
+    "noRealParallelLoadTestDone": true
   },
   "proposedRevocationRepair": {
     "path": "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql",
@@ -66,7 +71,10 @@
     "versionedMigrationCreated": false,
     "approved": false,
     "appliedToOriginal": false,
-    "appliedToQa": false
+    "appliedToQa": false,
+    "disposablePg17CandidateBlocksRevokedOwner": true,
+    "disposablePg17DmAndRejoinPreserved": true,
+    "disposablePg17OrphanedLeaseCleanupPreserved": true
   },
   "existingUuidRepair": {
     "path": "staging/world-v2-b10-r18-114-inventory-uuid-guard/unapplied-inventory-uuid-five-segment-guard.sql",
@@ -87,5 +95,14 @@
   "noOriginalOrQaSqlMutation": true,
   "noVercelDeployment": true,
   "noPaidResources": true,
-  "noMerge": true
+  "noMerge": true,
+  "disposablePg17Evidence": {
+    "workflowRunId": 44259576324,
+    "sourceExactLeaseBodiesVerified": 3,
+    "sourceGitToLiveMd5LengthsMatched": true,
+    "baselineRevokedOwnerAccessReproduced": true,
+    "isolatedCandidateTestPassed": true,
+    "roleSessionsSimulated": true,
+    "realHostedSignedSessionsTested": false
+  }
 }
