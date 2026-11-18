@@ -128,13 +128,13 @@ function schema(){
   'ALTER TABLE public.campaigns ENABLE ROW LEVEL SECURITY;',
   'ALTER TABLE public.campaign_members ENABLE ROW LEVEL SECURITY;',
   'REVOKE ALL ON public.campaigns,public.campaign_members FROM PUBLIC,anon,authenticated;',
-  'COMMIT;',
   'INSERT INTO public.campaigns(id,owner_id,name,invite_code) VALUES ('+
    [quote(V.campaignA),quote(V.dmA),quote('Synthetic A'),quote(V.inviteA)].join(',')+
    '),('+[quote(V.campaignB),quote(V.dmB),quote('Synthetic B'),quote(V.inviteB)].join(',')+');',
   'INSERT INTO public.campaign_members(campaign_id,user_id,role) VALUES ('+
    [quote(V.campaignA),quote(V.dmA),quote('dm')].join(',')+
-   '),('+[quote(V.campaignB),quote(V.dmB),quote('dm')].join(',')+');'
+   '),('+[quote(V.campaignB),quote(V.dmB),quote('dm')].join(',')+');',
+  'COMMIT;'
  ].join('\n');
 }
 function actorQuery(actor,invite,role='authenticated'){
@@ -203,8 +203,12 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
   if(!started.ok)fail();
   active=true;
   let ready=false;
-  for(let i=0;i<50;i++){
-   if(docker(['exec',name,'pg_isready','-U','postgres','-d',DB],{timeout:3000}).ok){
+  for(let i=0;i<70;i++){
+   // Official postgres image runs a temporary bootstrap server with
+   // listen_addresses='' before stopping it and starting the final server.
+   // pg_isready alone can return SUCCESS during that temporary phase.
+   const server=sqlExec(name,'SHOW listen_addresses;',true);
+   if(server.ok&&server.stdout.trim()!==''){
     ready=true;break;
    }
    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,350);
