@@ -374,6 +374,10 @@ function runPrivateFixture(workspace){
  const source=originalJoinDdl(workspace);
  return runR119IsolatedFixtureWithDdl(source,{sourceVerified:true});
 }
+export function r119CurrentSanitizedFailure(){
+ return r119SanitizedFailureReceipt(safeStage,safeFailureCode,
+  {behaviorStep:safeBehaviorStep,sqlstate:safePostgresSqlstate});
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{
   const args=process.argv.slice(2);
@@ -386,9 +390,7 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  }catch{
   // Fail closed with a non-empty sanitized receipt. No raw error text, SQL,
   // Docker logs, private file paths, invitation values or user records.
-  process.stdout.write(JSON.stringify(r119SanitizedFailureReceipt(
-   safeStage,safeFailureCode,
-   {behaviorStep:safeBehaviorStep,sqlstate:safePostgresSqlstate}),null,2)+'\n');
+  process.stdout.write(JSON.stringify(r119CurrentSanitizedFailure(),null,2)+'\n');
   process.stderr.write('R119 PRIVATE INVITATION FIXTURE NO-GO: sanitized failure report generated. Do not share SQL or raw logs.\n');
   process.exitCode=1;
  }
