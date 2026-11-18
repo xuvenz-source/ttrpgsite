@@ -76,7 +76,7 @@
     "realInvitationsUsed": false,
     "originalSqlBodiesOrAuthRowsExported": false,
     "private83HistoricalFilesRead": false,
-    "executed": false
+    "executed": true
   },
   "knownIssues": {
     "fogStatusMetadataOracleUnfixed": true,
@@ -99,5 +99,23 @@
     "noMerges": true,
     "noPaidResources": true,
     "noSQLOrCredentialsInGit": true
+  },
+  "isolatedPg17Evidence": {
+    "workflowRunId": 44264469228,
+    "conclusion": "success",
+    "originalFunctionFingerprintsVerified": 3,
+    "scenarioCountPassed": 33,
+    "postgresRoleAclDenialsPassed": 5,
+    "revocationThenRestorationTested": true,
+    "realSignedHostedUsersTested": false,
+    "productionOrQaSqlWritten": false
+  },
+  "standardCiObserved": {
+    "workflowRunId": 44264469276,
+    "conclusion": "success",
+    "frontendTests": true,
+    "build": true,
+    "dependencyAudit": true,
+    "edgeTypeChecks": true
   }
 }
