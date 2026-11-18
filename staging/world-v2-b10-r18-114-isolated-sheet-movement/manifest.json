@@ -72,5 +72,21 @@
   },
   "noHostedDatabaseWrites": true,
   "noProductionDeployment": true,
-  "releaseAuthorized": false
+  "releaseAuthorized": false,
+  "inventoryUuidRegression": {
+    "sourceVerifiedOriginalFunction": "public.get_campaign_sheet_inventory(uuid,text,uuid,text)",
+    "sourceSha256": "4b168977eaa254f665fa1f26ed81d7296053bb988b991e60574c1610de0a879e",
+    "originalRegexGroups": "8-4-4-12",
+    "canonicalUuidGroups": "8-4-4-4-12",
+    "validUuidRejectedInOriginalReadOnlySql": true,
+    "repeatedIdRegenerationReproducedInDisposablePg17": true,
+    "isolatedRepairCandidatePath": "staging/world-v2-b10-r18-114-inventory-uuid-guard/unapplied-inventory-uuid-five-segment-guard.sql",
+    "candidateDiffLimitedToOneRegex": true,
+    "candidateKeepsExistingIdsAndRepairsLegacyOnceInDisposablePg17": true,
+    "sourceExactGetterBehaviorSecurityApproved": false,
+    "scratchOnlyCandidateUsedForFullSheetTests": true,
+    "candidateAppliedToOriginal": false,
+    "candidateAppliedToQa": false,
+    "candidateReleaseAuthorized": false
+  }
 }
