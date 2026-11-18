@@ -122,6 +122,35 @@ test('R119 sanitized Docker failure classifications reveal no raw source or loca
  assert.match(source,/docker\(\['info','--format','\{\{\.ServerVersion\}\}'\]\)/);
  assert.match(source,/\['run','--pull=never','-d','--rm','--network','none'/);
 });
+test('R119 invitation failure report isolates step and SQLSTATE with no raw message leakage',()=>{
+ const details={behaviorStep:'first_join_rpc',sqlstate:'P0001',
+  path:'/private/secret.sql',rawSql:'do not reveal'};
+ const r=r119SanitizedFailureReceipt('invitation_behavior_checks',
+  'first_join_rpc_failed',details);
+ assert.equal(r.safeFailureStage,'invitation_behavior_checks');
+ assert.equal(r.safeBehaviorStep,'first_join_rpc');
+ assert.equal(r.safeFailureCode,'first_join_rpc_failed');
+ assert.equal(r.safePostgresSqlstate,'P0001');
+ assert.equal(r.decision,'NO_GO');
+ assert.equal(r.privateSqlExported,false);
+ assert.equal(r.originalOrQaSqlExecuted,false);
+ assert.equal(r.productionReleaseAuthorized,false);
+ assert.doesNotMatch(JSON.stringify(r),/private|secret|do not reveal|rawSql|path/);
+ const tampered=r119SanitizedFailureReceipt('invitation_behavior_checks',
+  'reason:/private/secret',{behaviorStep:'sneaky/path',sqlstate:'P0001 ERROR private'});
+ assert.equal(tampered.safeFailureCode,'not_classified');
+ assert.equal(tampered.safeBehaviorStep,'not_started');
+ assert.equal(tampered.safePostgresSqlstate,'unavailable');
+ const prior=r119SanitizedFailureReceipt('docker_launch',
+  'docker_container_launch_rejected',{behaviorStep:'first_join_rpc',sqlstate:'42501'});
+ assert.equal(Object.hasOwn(prior,'safePostgresSqlstate'),false);
+ assert.equal(Object.hasOwn(prior,'safeBehaviorStep'),false);
+ assert.match(source,/VERBOSITY=sqlstate/);
+ assert.match(source,/safeBehaviorStep='first_join_rpc'/);
+ assert.match(source,/first_join_membership_missing/);
+ assert.match(source,/first_join_role_not_player/);
+ assert.match(source,/r119CurrentSanitizedFailure/);
+});
 test('R119 local scratch runner prohibits hosted DB target, network, ports, host mounts, release',()=>{
  for(const phrase of [
   "inspectR118PrivateInvitations({workspace})",
