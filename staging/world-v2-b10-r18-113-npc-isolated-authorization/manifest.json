@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-113",
+  "decision": "NO_GO",
+  "observedLocalDate": "2026-11-18",
+  "scope": "DISPOSABLE_PG17_SOURCE_EXACT_DM_NPC_RPC_SYNTHETIC_AUTHORIZATION_TEST",
+  "parentPr": 215,
+  "parentSha": "47dace25fba4b8d0c8a79d48971d0e71d038799a",
+  "source": {
+    "originalProjectRef": "lwhwgqaunxbmvyndswze",
+    "originalHistoricalMigrations": 83,
+    "qaProjectRef": "bgydsamxypjslergfpla",
+    "qaHistoricalMigrations": 0,
+    "qaPublicTables": 0,
+    "functionName": "public.get_dm_map_npc_values(uuid)",
+    "repositoryMigrationPath": "supabase/migrations/20261109000500_dm_map_npc_protected_columns.sql",
+    "sourceSha256": "5e5c0657353a54f4812ee5b547e4575bf666f2e8c72a3fe1b6918cfff8293de5",
+    "sourceBodyBytes": 263,
+    "priorLiveExactBodyParityFromR103": true,
+    "sourceHelperFixture": "SYNTHETIC_SCOPED_IS_CAMPAIGN_DM_NOT_LIVE_SOURCE_EXACT",
+    "private83MigrationFilesRead": false,
+    "originalSqlBodiesExported": false
+  },
+  "syntheticAcceptance": {
+    "engine": "PostgreSQL 17",
+    "environment": "GITHUB_ACTIONS_ONLY_DISPOSABLE_CONTAINER",
+    "testCases": [
+      "DM_A_ALLOWED_OWN_NPCS",
+      "PLAYER_A_DENIED_OWN_NPCS",
+      "DM_B_DENIED_CROSS_CAMPAIGN",
+      "DM_B_ALLOWED_OWN_CAMPAIGN",
+      "DM_A_DENIED_CROSS_CAMPAIGN",
+      "OUTSIDER_DENIED",
+      "DM_A_UNKNOWN_MAP",
+      "NULL_IDENTITY_DENIED",
+      "DM_BEFORE_REVOCATION",
+      "DM_AFTER_REVOCATION_DENIED"
+    ],
+    "roleAclChecks": [
+      "ANON_RPC_EXECUTE_DENIED",
+      "AUTH_DIRECT_NPC_TABLE_READ_DENIED"
+    ],
+    "syntheticJwtGucOnly": true,
+    "supabaseSignedUserSessionsExecuted": false,
+    "crossCampaignInconsistentTokenFixturePresent": true,
+    "characterTokenExcluded": true,
+    "expectedAuthorizedNpcA": 2,
+    "expectedAuthorizedNpcB": 1,
+    "candidateOrHistoricalSqlAppliedToOriginal": false,
+    "candidateOrHistoricalSqlAppliedToQa": false
+  },
+  "releaseGates": {
+    "isolatedSourceExactNpcAuthorizationFixturePrepared": true,
+    "isolatedSourceExactNpcAuthorizationFixtureExecuted": false,
+    "original83PrivateSqlSemanticReviewApproved": false,
+    "all67AuthenticatedDefinerRpcsReviewed": false,
+    "knownFogStatusOracleClosedInHostedProject": false,
+    "independentOriginalSourceAuthenticatedAttestation": false,
+    "qaOnlyHistoricalDryRunAuthorized": false,
+    "qaHistoricalSchemaInstalled": false,
+    "signedDmPlayerOutsiderAcceptancePassed": false,
+    "freeTierMovementPerformanceAccepted": false,
+    "productionReleaseAuthorized": false
+  }
+}
