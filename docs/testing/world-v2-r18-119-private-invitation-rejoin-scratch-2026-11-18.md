@@ -9,6 +9,14 @@
 - Two historical `join_campaign` definitions exist; the **latest** matches current original live SHA-256 `5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655` (742 bytes).
 - Function name, body hash and source metadata do **not** establish the behavior of the `NOT EXISTS` guard, the actual signed Auth permission semantics, campaign invite revocation, or the human approval of all 83 historical migrations.
 
+## Operator receipt and fixture correction — 18 November 2026
+
+The operator uploaded a sanitized **NO_GO** receipt showing `reportStatus: ERROR`, `safeFailureStage: invitation_behavior_checks` and `safeFailureCode: not_classified`. The test passed private source provenance, local Docker start, scratch schema setup and exact function installation, but **did not complete actual invitation behavior checks**. Consequently the original source's rejoin outcome remains **unverified**.
+
+A read-only live `pg_proc` query checked only booleans (not SQL body or campaign/invite data) and established that `join_campaign` compares the **stored raw** `invite_code` with `lower(trim(p_invite_code))`. Real invite codes are generated using `encode(gen_random_bytes(8),'hex')` (lowercase). The R119 synthetic fixture had incorrectly used uppercase synthetic stored codes. Normalizing the input while preserving an uppercase stored code prevents a match on the initial join; this is a plausible direct explanation for the failure and a definite fixture compatibility bug, **not evidence of a hosted auth vulnerability**.
+
+The source-only repair normalizes all four invented fixture invite codes to 16-character lowercase hex, refuses uppercase/malformed/duplicate code fixtures, and updates the synthetic CI mock to use `invite_code = lower(trim(p_invite_code))` instead of the more permissive `lower(invite_code) = lower(trim(p_invite_code))`. This preserves exact original SQL fingerprint gating, local no-network Docker isolation, the private 83-SQL history, and hosted release NO_GO. Synthetic CI passing still does not mean the exact operator-only source test has run successfully; a new sanitized operator receipt is required.
+
 ## R18-119 local, source-exact test
 
 `scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs` is **operator-only**. It first rechecks the same original 83-file recovery and private R111 docket using the approved R18-118 private verifier, then reads the tracked frozen migration manifest. It extracts exactly the most recent `public.join_campaign(p_invite_code text)` function definition and demands both current original MD5 and SHA-256, exact body length, plpgsql, UUID return type, SECURITY DEFINER and empty search_path.
