@@ -1,5 +1,18 @@
 -- R115 original source exact lease behavior, synthetic PG17 only.
 \set ON_ERROR_STOP on
+-- Verify original EXECUTE ACLs before evaluating permission outcomes.
+DO $acl$ BEGIN
+ IF NOT has_function_privilege('authenticated',
+   'public.claim_campaign_sheet_item(uuid,text,uuid,text,uuid,boolean)','EXECUTE')
+   OR NOT has_function_privilege('authenticated',
+   'public.mutate_campaign_sheet_item(uuid,text,uuid,text,uuid,jsonb,boolean)','EXECUTE')
+   OR NOT has_function_privilege('authenticated',
+   'public.release_campaign_sheet_item(uuid,text,uuid,text,uuid)','EXECUTE')
+   OR has_function_privilege('anon',
+   'public.claim_campaign_sheet_item(uuid,text,uuid,text,uuid,boolean)','EXECUTE')
+   OR has_table_privilege('authenticated','public.campaign_sheet_item_leases','UPDATE')
+ THEN RAISE EXCEPTION 'R115 original lease privileges incorrect'; END IF;
+END $acl$;
 
 -- R115 P1_CLAIM_ITEM_701
 BEGIN;
