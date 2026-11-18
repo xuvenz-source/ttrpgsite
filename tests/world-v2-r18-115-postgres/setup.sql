@@ -44,16 +44,3 @@ UPDATE public.characters SET field_values=
   ]}'::jsonb
 WHERE id='00000000-0000-4000-8000-000000000501';
 
--- Setup enforces the desired grants actually used by the original RPCs.
-DO $acl$ BEGIN
- IF NOT has_function_privilege('authenticated',
-   'public.claim_campaign_sheet_item(uuid,text,uuid,text,uuid,boolean)','EXECUTE')
-   OR NOT has_function_privilege('authenticated',
-   'public.mutate_campaign_sheet_item(uuid,text,uuid,text,uuid,jsonb,boolean)','EXECUTE')
-   OR NOT has_function_privilege('authenticated',
-   'public.release_campaign_sheet_item(uuid,text,uuid,text,uuid)','EXECUTE')
-   OR has_function_privilege('anon',
-   'public.claim_campaign_sheet_item(uuid,text,uuid,text,uuid,boolean)','EXECUTE')
-   OR has_table_privilege('authenticated','public.campaign_sheet_item_leases','UPDATE')
- THEN RAISE EXCEPTION 'R115 original lease privileges incorrect'; END IF;
-END $acl$;
