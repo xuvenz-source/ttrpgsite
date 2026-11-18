@@ -1,0 +1,57 @@
+name: World V2 R18-116 disposable PostgreSQL17 tool NPC revocation
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-116-*'
+    paths:
+      - 'tests/world-v2-r18-116-postgres/**'
+      - '.github/workflows/world-v2-r18-116-isolated-revocation.yml'
+      - 'supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql'
+      - 'supabase/migrations/20261109000500_dm_map_npc_protected_columns.sql'
+      - 'staging/world-v2-b10-r18-103-live-source-parity/metadata-index.json'
+      - 'tests/world-v2-r18-115-postgres/**'
+      - 'tests/world-v2-r18-114-postgres/**'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-115-*'
+    paths:
+      - 'tests/world-v2-r18-116-postgres/**'
+      - '.github/workflows/world-v2-r18-116-isolated-revocation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgresql17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r114_disposable_only
+          POSTGRES_DB: world_v2_r18_114
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_114"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R114_ISOLATED: 'yes'
+      R115_ISOLATED: 'yes'
+      R116_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_114
+      PGUSER: postgres
+      PGPASSWORD: r114_disposable_only
+    steps:
+      - name: Checkout without hosted Supabase credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run original-source NPC and tool revocation tests in scratch PG17
+        shell: bash
+        run: bash tests/world-v2-r18-116-postgres/run.sh
