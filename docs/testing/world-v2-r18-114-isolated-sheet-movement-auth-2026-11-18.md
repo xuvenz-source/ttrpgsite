@@ -17,6 +17,16 @@ All generated SQL is temporary and executed only against a scratch PostgreSQL17 
 - Test tables hold invented campaign A/B, DMs, P1/P2, outsider, mismatched rows and private JSON fields. Application roles cannot SELECT base tables; SECURITY DEFINER functions run with privileged synthetic postgres ownership and require explicit authorization.
 - Network/tool isolation: CI runner requires exact localhost client PostgreSQL 17, `world_v2_r18_114` DB, explicit disposable marker, ephemeral fixed synthetic password and rejects external database URL and libpq connection overrides.
 
+## Source-confirmed inventory item identity defect
+
+During R18-114, the disposable PG17 test of the exact original `get_campaign_sheet_inventory` source failed on a previously valid inventory item ID. The original SQL used a **four-group** pattern `8-4-4-12` instead of canonical UUID `8-4-4-4-12`. The fallback branch runs `gen_random_uuid()::text` and writes the replaced row back. Because generated UUIDs also fail the original pattern, repeated authorized reads can repeatedly regenerate persistent item IDs.
+
+A **read-only** original Supabase SQL check confirmed `existing_regex_accepts_valid_uuid=false` and `corrected_regex_accepts_valid_uuid=true` on a synthetic canonical UUID, with live function body MD5 `5f47826bc6673b92a0cbc277b1b77c51` and 1,950 body bytes. The R18-103 stored SHA-256 `4b168977eaa254f665fa1f26ed81d7296053bb988b991e60574c1610de0a879e` is also matched against the committed Git body during fixture extraction.
+
+In disposable PG17 the **exact original function** was executed twice: the same already valid inventory row received two different UUIDs and persisted the replacement. The fixture then restored its synthetic original row, applied **only** `staging/world-v2-b10-r18-114-inventory-uuid-guard/unapplied-inventory-uuid-five-segment-guard.sql` inside scratch PG17, and verified both repeated preservation of valid IDs and one-time generation of legacy IDs. A Node regression test compares the candidate function DDL to the original and requires **exactly one textual UUID regex change**, preserving everything else. The original migration remains unchanged.
+
+**Sequence clarity:** The 38 sheet permission/GET/PATCH scenarios run against the source-exact campaign authorization helpers and PATCH body, but the GET function is the **scratch-only patched candidate** after the reproduced original defect. Accordingly those 38 pass results are NOT a pass for the unrepaired live inventory getter. The 25 movement cases run the original source-exact dispatcher. No candidate is applied to original or QA. Any eventual release requires a separate reviewed migration and approval. The potential impact on collaborative inventory locks and unnecessary writes is a code-level consequence; no live latency or production impact measurement was made.
+
 ## Test assertions
 
 **38 sheet cases:** 17 source-exact permission-chain results, 12 inventory getter allow/deny outcomes, 9 sheet PATCH allow/deny outcomes. Verify owners/DM/other player/other campaign/outsider/null identity, NPC template/token DM-only access, real inventory-field declarations, and that noninventory PATCH cannot overwrite inventory without a lease. Direct authenticated SELECT of private character table and direct private helper EXECUTE are denied.
