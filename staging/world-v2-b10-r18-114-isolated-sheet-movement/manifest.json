@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-114",
+  "decision": "NO_GO",
+  "parentPr": 216,
+  "parentSha": "3bf5ebb78465ee1c31b00c5edc808972acac6f46",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "databaseModel": "DISPOSABLE_POSTGRESQL17_GITHUB_ACTIONS_ONLY",
+  "sourceEvidence": "GIT_FUNCTION_BODIES_VS_FROZEN_R103_READ_ONLY_PG_PROC_SHA256",
+  "gitSourceBodiesRequired": 6,
+  "sourceHashAnchors": [
+    {
+      "name": "can_edit_campaign_sheet",
+      "sha256": "07dd89b2aa9c2e2c4851604de83362da37b3e5bf1716d146fd769b7bb816cb53",
+      "bytes": 790
+    },
+    {
+      "name": "can_edit_campaign_sheet_inventory",
+      "sha256": "169d6e5ec9fb79a760bc25ab28a3937f4c76cc1a5233c997b673b366cd8176e4",
+      "bytes": 427
+    },
+    {
+      "name": "get_campaign_sheet_inventory",
+      "sha256": "4b168977eaa254f665fa1f26ed81d7296053bb988b991e60574c1610de0a879e",
+      "bytes": 1950
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "sha256": "2059d837aea133d1cbe726e9eebb0736d04739ed37b06ed8cfa08dca017efc2b",
+      "bytes": 2364
+    },
+    {
+      "name": "can_view_campaign_map",
+      "sha256": "835829ca8012fe26ae5d224df749a1a8cde958136c322d10f3d3fa91a5f3f83c",
+      "bytes": 448,
+      "priorDirectLiveComparison": true
+    },
+    {
+      "name": "dispatch_movement_preview",
+      "sha256": "b897f48495a9a8add788741b64bf4a52c9cd5b9c1969d6e6dd50dadd8965063c",
+      "bytes": 6397,
+      "priorDirectLiveComparison": true
+    }
+  ],
+  "plannedChecks": {
+    "sheetAuthorizationCases": 17,
+    "sheetReaderCases": 12,
+    "sheetPatchCases": 9,
+    "movementCases": 25,
+    "actualRoleAclDenials": 5
+  },
+  "fixture": {
+    "syntheticAuthUid": true,
+    "syntheticIsCampaignDm": true,
+    "sourceExactCanViewCampaignMap": true,
+    "syntheticPublicMovementDelegatingWrapper": true,
+    "syntheticRealtimeObserverNoBroadcast": true,
+    "original83MigrationBodiesRead": false,
+    "originalDataRowsCopied": false
+  },
+  "unapprovedGates": {
+    "humanReviewed83HistoricalSql": false,
+    "independentOperatorSessionAttestation": false,
+    "hostedSignedAccountsExercised": false,
+    "all67PrivilegedRpcsReviewed": false,
+    "knownFogStatusOracleFixed": false,
+    "qaSchemaReplayApproved": false,
+    "qaSchemaInstalled": false,
+    "productionDeployed": false,
+    "paidInfrastructureApproved": false
+  },
+  "noHostedDatabaseWrites": true,
+  "noProductionDeployment": true,
+  "releaseAuthorized": false
+}
