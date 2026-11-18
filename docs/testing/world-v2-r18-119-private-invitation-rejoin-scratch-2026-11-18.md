@@ -40,6 +40,31 @@ The latest sanitized-only operator report has `decision:NO_GO`, `safeFailureStag
 
 This is a **test-fixture dependency**, not evidence of a bug or exploitation in the original hosted function. A new operator-only sanitized receipt remains necessary to establish actual original-source invitation/rejoining behavior. No private SQL files, live account data, migrations, or hosted original/QA SQL were modified.
 
+## Final operator acceptance receipt — source-exact synthetic replay successful (19 November 2026, Melbourne)
+
+**The operator provided the sanitized `r119-sanitized.json`** after the minimal `public.characters` fixture repair. The report was parsed and validated for all expected booleans and fail-closed flags. It explicitly states that the **current original `join_campaign` body SHA-256 was reverified locally**, the function ran in a no-network, no-bind-mount disposable PostgreSQL 17 container using only invented actors/invitations, and **no original/QA SQL was executed**.
+
+**Exact synthetic observations:**
+
+| Test | Observed |
+| --- | --- |
+| Valid first invitation creates player membership | `true` |
+| Duplicate join preserves player role | `true` |
+| DM duplicate join preserves DM role | `true` |
+| **After removing player membership, unchanged invitation rejoined player** | **`true`** |
+| Invalid invitation creates membership | `false` |
+| Rotated-away old invitation creates membership | `false` |
+| New invitation after rotation creates membership | `true` |
+| Null synthetic identity changes membership count | `false` |
+| Anonymous role can invoke invitation join | `false` |
+| Cross-campaign membership leak observed | `false` |
+
+**Engineering interpretation:** The source-exact current original elevated RPC **does permit rejoining after membership deletion when the same generic invitation remains valid**, under the tested synthetic identity and schema. This is not a demonstration of a real hosted user exploit, and the fixture did not execute the 83 migrations or real signed Supabase Auth. The original source does not by itself express the desired product policy: whether DM removal is a lasting revocation versus a temporary removal. Under the **proposed** security invariant—*DM removal persists until explicit DM reinstatement*—this is a **confirmed source-level policy gap** and a release blocker. If the product policy intentionally permits invitation-based rejoining, that decision must be explicitly documented and evaluated against repeated DM removals, stale sessions, fog, and revoked sheet access.
+
+**Recommendation for next scoped work package (R18-120):** Establish a product-approved distinction among voluntary leave, DM removal, and DM reinstatement; review the original exact `join_campaign` SQL body and all removal/rejoin entrypoints privately; then design a durable server-side revocation marker plus a reviewed, forward-only candidate migration and synthetic positive/negative tests. Do **not** modify current original/QA SQL, public invitation codes, users, or migration history in this phase. Critical regression checks: removed P1 cannot use old generic invitation, a previously unseen P2 can use a valid invitation, the active DM's role is stable, DM-only reinstatement restores P1 as a player, revoked/rotated code cannot join, failed join leaks no campaign metadata, and R18-115 sheet ownership gap cannot be used after removal.
+
+**Hard NO_GO remains:** Independent trusted human review of all 83 historical migration bodies; validated operator session; comprehensive authenticated-definer RPC audit; reviewed QA-only schema bootstrapping; signed multi-account QA, R18-104 fog status oracle, R18-114 inventory ID churn, and R18-115 revoked sheet-owner permission fixes. No paid service, merge, hosted SQL write, or production deployment. **A source-exact scratch PASS is not a hosted authorization PASS.**
+
 ## R18-119 local, source-exact test
 
 `scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs` is **operator-only**. It first rechecks the same original 83-file recovery and private R111 docket using the approved R18-118 private verifier, then reads the tracked frozen migration manifest. It extracts exactly the most recent `public.join_campaign(p_invite_code text)` function definition and demands both current original MD5 and SHA-256, exact body length, plpgsql, UUID return type, SECURITY DEFINER and empty search_path.
