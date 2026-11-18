@@ -122,6 +122,26 @@ test('R119 sanitized Docker failure classifications reveal no raw source or loca
  assert.match(source,/docker\(\['info','--format','\{\{\.ServerVersion\}\}'\]\)/);
  assert.match(source,/\['run','--pull=never','-d','--rm','--network','none'/);
 });
+test('R119 scratch schema includes all original invite RPC relation dependencies',()=>{
+ // Read-only live pg_proc source metadata identifies campaigns, members and
+ // characters. The latter is read and inserted by join_campaign.
+ for(const x of ['CREATE TABLE public.campaigns',
+   'CREATE TABLE public.campaign_members','CREATE TABLE public.characters',
+   'CREATE TABLE auth.users','ALTER TABLE public.characters ENABLE ROW LEVEL SECURITY',
+   'REVOKE ALL ON public.campaigns,public.campaign_members,public.characters',
+   'INSERT INTO auth.users(id) VALUES']){
+  assert.ok(source.includes(x),x);
+ }
+ assert.match(source,/REFERENCES auth.users\(id\) ON DELETE CASCADE/);
+ assert.match(source,/REFERENCES public.campaigns\(id\) ON DELETE CASCADE/);
+ assert.match(source,/field_values jsonb NOT NULL DEFAULT/);
+ const mock=readFileSync(new URL('../tests/world-v2-r18-119/synthetic-docker-run.mjs',import.meta.url),'utf8');
+ assert.match(mock,/SELECT 1 FROM public.characters ch/);
+ assert.match(mock,/INSERT INTO public.characters\(campaign_id,user_id,name\)/);
+ assert.match(mock,/safePostgresSqlstate,'42P01'/);
+ assert.match(mock,/fixture_relation_deliberately_absent/);
+ assert.doesNotMatch(source,/\bsupabase\s+(?:db push|migration apply|db reset)\b/i);
+});
 test('R119 invitation failure report isolates step and SQLSTATE with no raw message leakage',()=>{
  const details={behaviorStep:'first_join_rpc',sqlstate:'P0001',
   path:'/private/secret.sql',rawSql:'do not reveal'};
