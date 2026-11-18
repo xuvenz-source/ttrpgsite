@@ -1,0 +1,52 @@
+name: World V2 R18-113 disposable PostgreSQL17 NPC authorization
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-113-*'
+    paths:
+      - 'tests/world-v2-r18-113-postgres/**'
+      - '.github/workflows/world-v2-r18-113-isolated-npc.yml'
+      - 'supabase/migrations/20261109000500_dm_map_npc_protected_columns.sql'
+      - 'staging/world-v2-b10-r18-103-live-source-parity/metadata-index.json'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-112-*'
+    paths:
+      - 'tests/world-v2-r18-113-postgres/**'
+      - '.github/workflows/world-v2-r18-113-isolated-npc.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-postgresql17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r113_disposable_only
+          POSTGRES_DB: world_v2_r18_113
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_113"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R113_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_113
+      PGUSER: postgres
+      PGPASSWORD: r113_disposable_only
+    steps:
+      - name: Checkout source only, no hosted Supabase authentication
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run real NPC function under synthetic DM/player/nonmember roles in isolated PostgreSQL17
+        shell: bash
+        run: bash tests/world-v2-r18-113-postgres/run.sh
