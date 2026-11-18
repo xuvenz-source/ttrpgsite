@@ -35,6 +35,7 @@ const V=Object.freeze({
 });
 const fail=()=>{throw Error('R119 PRIVATE INVITATION FIXTURE NO-GO')};
 let safeStage='initial_checks';
+let safeFailureCode='not_classified';
 const digest=(alg,value)=>createHash(alg).update(value,'utf8').digest('hex');
 export function extractR119PrivateJoinDefinitions(sql){
  if(typeof sql!=='string'||Buffer.byteLength(sql,'utf8')>12*1024*1024)fail();
@@ -107,6 +108,38 @@ function docker(args,opts={}){
  });
  return {ok:r.status===0&&!r.error,
   stdout:r.status===0&&opts.capture?r.stdout:''};
+}
+export function r119SanitizedFailureReceipt(stage,code){
+ const stages=new Set(['initial_checks','safe_environment','docker_preflight',
+  'source_history_integrity','source_function_definition','scratch_preflight',
+  'docker_launch','postgres_ready','synthetic_schema_setup',
+  'source_function_install','invitation_behavior_checks']);
+ const codes=new Set(['not_classified','docker_cli_unavailable',
+  'docker_local_daemon_unavailable_or_denied','docker_postgres17_image_missing',
+  'docker_container_launch_rejected']);
+ const safeStage=stages.has(stage)?stage:'initial_checks';
+ const safeCode=codes.has(code)?code:'not_classified';
+ return Object.freeze({
+  schema:1,workPackage:'B10-R18-119',decision:'NO_GO',
+  reportStatus:'ERROR',safeFailureStage:safeStage,safeFailureCode:safeCode,
+  sourceDetailsIncluded:false,privateSqlExported:false,
+  originalOrQaSqlExecuted:false,productionReleaseAuthorized:false
+ });
+}
+function preflightLocalDocker(){
+ safeStage='docker_preflight';
+ if(!docker(['--version']).ok){
+  safeFailureCode='docker_cli_unavailable';fail();
+ }
+ if(!docker(['info','--format','{{.ServerVersion}}']).ok){
+  safeFailureCode='docker_local_daemon_unavailable_or_denied';fail();
+ }
+ // The official Docker CLI otherwise pulls missing images automatically.
+ // No implicit registry access, container network, or paid infrastructure.
+ if(!docker(['image','inspect','postgres:17']).ok){
+  safeFailureCode='docker_postgres17_image_missing';fail();
+ }
+ safeFailureCode='not_classified';
 }
 function sqlExec(name,query,capture=false){
  return docker(['exec','-i',name,'psql','-X','-A','-t','-q',
@@ -197,7 +230,8 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
  let active=false;
  try{
   safeStage='docker_launch';
-  const started=docker(['run','-d','--rm','--network','none','--read-only',
+  safeFailureCode='docker_container_launch_rejected';
+  const started=docker(['run','--pull=never','-d','--rm','--network','none','--read-only',
    '--user','999:999','--tmpfs','/var/lib/postgresql/data:rw,uid=999,gid=999,mode=0700',
    '--tmpfs','/var/run/postgresql:rw,uid=999,gid=999,mode=0777',
    '--tmpfs','/tmp:rw,uid=999,gid=999,mode=1777',
@@ -207,6 +241,7 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
    {timeout:120000});
   if(!started.ok)fail();
   active=true;
+  safeFailureCode='not_classified';
   safeStage='postgres_ready';
   let ready=false;
   for(let i=0;i<70;i++){
@@ -271,6 +306,7 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
 function runPrivateFixture(workspace){
  safeStage='safe_environment';
  checkEnv(process.env);
+ preflightLocalDocker();
  const source=originalJoinDdl(workspace);
  return runR119IsolatedFixtureWithDdl(source,{sourceVerified:true});
 }
@@ -286,12 +322,8 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  }catch{
   // Fail closed with a non-empty sanitized receipt. No raw error text, SQL,
   // Docker logs, private file paths, invitation values or user records.
-  process.stdout.write(JSON.stringify({
-   schema:1,workPackage:'B10-R18-119',decision:'NO_GO',
-   reportStatus:'ERROR',safeFailureStage:safeStage,
-   sourceDetailsIncluded:false,privateSqlExported:false,
-   originalOrQaSqlExecuted:false,productionReleaseAuthorized:false
-  },null,2)+'\n');
+  process.stdout.write(JSON.stringify(r119SanitizedFailureReceipt(
+   safeStage,safeFailureCode),null,2)+'\n');
   process.stderr.write('R119 PRIVATE INVITATION FIXTURE NO-GO: sanitized failure report generated. Do not share SQL or raw logs.\n');
   process.exitCode=1;
  }
