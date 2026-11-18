@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.join_campaign(p_invite_code text)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
 AS $synthetic_ci$
 DECLARE actor uuid := auth.uid();
-DECLARE target uuid;
+target uuid;
 BEGIN
  IF actor IS NULL THEN RAISE EXCEPTION 'Sign in required';END IF;
  SELECT id INTO target FROM public.campaigns
