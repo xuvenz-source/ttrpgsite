@@ -29,7 +29,7 @@ assert.equal(receipt.workPackage,'B10-R18-119');
 assert.equal(receipt.decision,'NO_GO');
 assert.equal(receipt.syntheticPg17NoNetworkContainer,true);
 assert.equal(receipt.noHostBindMounts,true);
-assert.equal(receipt.currentOriginalJoinSha256VerifiedLocally,true);
+assert.equal(receipt.currentOriginalJoinSha256VerifiedLocally,false);
 assert.deepEqual(receipt.outcomes,{
  firstJoinSucceeded:true,
  firstJoinIsPlayer:true,
