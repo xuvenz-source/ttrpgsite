@@ -196,6 +196,11 @@ test('R122 SQL candidate enforces DM-only private roster and denies UPDATE bypas
  assert.match(sql,/REVOKE ALL ON FUNCTION public\.dm_list_removed_campaign_players\(uuid\)/);
  assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.dm_list_removed_campaign_players\(uuid\)\s+TO authenticated/);
  assert.match(sql,/BEFORE UPDATE OF campaign_id,user_id ON public\.campaign_members/);
+ assert.match(sql,/CREATE FUNCTION forge_security\.reject_campaign_member_identity_update\(\)/);
+ assert.match(sql,/OLD\.user_id IS DISTINCT FROM NEW\.user_id/);
+ assert.match(sql,/OLD\.campaign_id IS DISTINCT FROM NEW\.campaign_id/);
+ assert.match(sql,/RAISE EXCEPTION 'Membership identity immutable' USING ERRCODE='42501'/);
+
  assert.doesNotMatch(sql,/GRANT (?:SELECT|UPDATE|DELETE|INSERT) ON forge_security\.campaign_member_revocations TO authenticated/i);
  assert.match(sql,/NOT a versioned migration/);
 });
