@@ -128,6 +128,28 @@ BEGIN
  END IF;
 END $verify$;
 
+-- Changing a current member to a never-removed identity must ALSO fail.
+-- Otherwise the OLD member disappears without a tombstone and can rejoin.
+DO $verify$
+DECLARE blocked boolean:=false;
+BEGIN
+ BEGIN
+  UPDATE public.campaign_members
+   SET user_id='00000000-0000-4000-8000-000000000305'
+   WHERE campaign_id='00000000-0000-4000-8000-000000000101'
+     AND user_id='00000000-0000-4000-8000-000000000303';
+ EXCEPTION WHEN SQLSTATE '42501' THEN blocked:=true;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'R122 nonrevoked identity reassignment bypassed removal';END IF;
+ IF NOT EXISTS(
+  SELECT 1 FROM public.campaign_members
+  WHERE campaign_id='00000000-0000-4000-8000-000000000101'
+    AND user_id='00000000-0000-4000-8000-000000000303'
+ ) THEN
+  RAISE EXCEPTION 'R122 illegal reassignment erased a current member';
+ END IF;
+END $verify$;
+
 BEGIN;
 SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000301',true);
