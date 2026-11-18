@@ -46,16 +46,16 @@
     "actualOperatorFixtureReceiptReceived": true
   },
   "invitationRejoinRisk": {
-    "status": "UNVERIFIED_POSSIBLE_REVOCATION_REJOIN_BYPASS",
+    "status": "SOURCE_EXACT_SYNTHETIC_REJOIN_CONFIRMED_POLICY_GAP",
     "dmRemovalShouldPreventOldGlobalInviteReuse": "PROPOSED_POLICY_NOT_APPROVED",
     "rejoinViaOldInviteObservedInOriginal": false,
-    "rejoinViaOldInviteObservedInOfflineFixture": false,
+    "rejoinViaOldInviteObservedInOfflineFixture": true,
     "signedQaSessionTestRun": false
   },
   "releaseGates": {
     "fullPrivate83SqlSemanticReviewPassed": false,
     "independentOriginalOperatorSessionAttested": false,
-    "sourceExactOfflineInviteBehaviorReviewed": false,
+    "sourceExactOfflineInviteBehaviorReviewed": true,
     "realSignedQaDmPlayerInviteCasesPassed": false,
     "qaOnlyHistoricalInstallAuthorized": false,
     "qaHistoricalInstallComplete": false,
@@ -74,16 +74,24 @@
     "schema": 1,
     "workPackage": "B10-R18-119",
     "decision": "NO_GO",
-    "reportStatus": "ERROR",
-    "safeFailureStage": "invitation_behavior_checks",
-    "safeFailureCode": "first_join_rpc_failed",
-    "safeBehaviorStep": "first_join_rpc",
-    "safePostgresSqlstate": "42P01",
-    "sourceDetailsIncluded": false,
+    "reportStatus": "COMPLETE_SOURCE_EXACT_SYNTHETIC_TEST",
+    "originalCurrentJoinSha256MatchedLocally": true,
     "privateSqlExported": false,
     "originalOrQaSqlExecuted": false,
-    "productionReleaseAuthorized": false,
-    "originalJoinBehaviorVerified": false
+    "syntheticPg17NoNetworkContainer": true,
+    "realSignedSupabaseAuthExercised": false,
+    "firstJoinSucceeded": true,
+    "firstJoinIsPlayer": true,
+    "duplicateJoinPreservedPlayerRole": true,
+    "dmDuplicatePreservedDmRole": true,
+    "removedPlayerRejoinedWithUnchangedInvite": true,
+    "invalidInviteAddedMember": false,
+    "rotatedOldInviteAddedMember": false,
+    "rotatedNewInviteAddedMember": true,
+    "nullActorChangedMemberCount": false,
+    "anonymousJoinCallable": false,
+    "crossCampaignMembershipLeaked": false,
+    "productionReleaseAuthorized": false
   },
   "identifiedFixtureDefect": {
     "priorStoredSyntheticInviteFormat": "uppercase hex characters",
@@ -92,7 +100,7 @@
     "updatedSyntheticFormat": "lowercase 16-character hex",
     "syntheticDockerMockNowMatchesRawStoredCodeComparison": true,
     "verifiedCurrentOriginalSqlBodyExported": false,
-    "privateExactSourceRejoinScenarioRetestedByOperator": false,
+    "privateExactSourceRejoinScenarioRetestedByOperator": true,
     "productionCodeChangeRequiredByThisFinding": false
   },
   "safeFailureDiagnostic": {
@@ -102,7 +110,7 @@
     "firstJoinRpcFailureSeparatedFromMissingMembershipAndWrongRole": true,
     "syntheticSourceSqlStateErrorExercisePassed": true,
     "syntheticSqlstateExpected": "P0001",
-    "actualSourceJoinBehaviorEstablished": false,
+    "actualSourceJoinBehaviorEstablished": true,
     "privateSqlHistoryExported": false
   },
   "missingRelationFixtureRepair": {
@@ -116,7 +124,16 @@
     "scratchCharactersDirectAppGrantsDenied": true,
     "syntheticCiMockExercisesCharacterDependency": true,
     "syntheticCiNegativeMissingRelationSqlstateExpected": "42P01",
-    "privateOriginalSourceFunctionRetestedByOperator": false,
+    "privateOriginalSourceFunctionRetestedByOperator": true,
     "hostedSqlModified": false
+  },
+  "evidenceQualification": {
+    "receiptValidatedLocally": true,
+    "sourceBodyVerifiedAgainstOriginalCurrentSha256": true,
+    "revokedActorRejoinObservedOnlyInSourceExactSyntheticPg17": true,
+    "hostedCurrentUserRemovalAndJoinNotTested": true,
+    "dmRemovalBlocksUnchangedInviteUnderProposedPolicy": false,
+    "requiresProductPolicyDecisionAndPrivilegedSqlSecurityReview": true,
+    "noHostedChanges": true
   }
 }
