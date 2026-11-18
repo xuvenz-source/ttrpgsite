@@ -35,6 +35,11 @@ export function runR100Cli({binary,cwd,args,env=process.env,runner=spawnSync}={}
   fail('pinned CLI unavailable or returned failure; examine privately');
  if(exact(args,ALLOW[2]))
   return Object.freeze({completed:true,outputDiscarded:true});
+ // Supabase CLI v2.81.3 prints its exact version on stdout and an optional
+ // upgrade advisory on stderr. Preserve strict exit status and stdout check;
+ // do not confuse stderr update notices with a different binary version.
+ if(exact(args,ALLOW[0]))
+  return Object.freeze({completed:true,helpText:p.stdout});
  return Object.freeze({completed:true,helpText:p.stdout+'\n'+p.stderr});
 }
 export function previewR100QaOnly({
