@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8');
 const historical=read('supabase/migrations/20261107095350_campaign_sheet_inventory_collaboration.sql');
+const claimFix=read('supabase/migrations/20261108013000_inventory_lease_expiry_qualification.sql');
 const candidate=read('staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql');
 function exact(sql,name){
  const matches=[...sql.matchAll(new RegExp('\\bcreate\\s+or\\s+replace\\s+function\\s+public\\.'+
@@ -16,19 +17,27 @@ function exact(sql,name){
  return {ddl:tail.slice(0,quoted.index+quoted[0].length),body:quoted[2]};
 }
 const EXPECT=[
- ['can_edit_campaign_sheet','5a8fed2bdc8427c884f89440c0eebe03',790],
- ['claim_campaign_sheet_item','d7932b1e0c2141833537301d75d262e4',1379],
- ['release_campaign_sheet_item','f7bc314718884312ce3e1ca48331429f',271],
- ['mutate_campaign_sheet_item','d2e4affcf04808423830f443ce93e530',2752]
+ ['can_edit_campaign_sheet','5a8fed2bdc8427c884f89440c0eebe03',790,historical],
+ ['claim_campaign_sheet_item','d7932b1e0c2141833537301d75d262e4',1379,claimFix],
+ ['release_campaign_sheet_item','f7bc314718884312ce3e1ca48331429f',271,historical],
+ ['mutate_campaign_sheet_item','d2e4affcf04808423830f443ce93e530',2752,historical]
 ];
 test('R115 source-backed baseline functions equal read-only live pg_proc MD5/bytes',()=>{
- for(const [name,hash,bytes] of EXPECT){
-  const v=exact(historical,name);
+ for(const [name,hash,bytes,source] of EXPECT){
+  const v=exact(source,name);
   assert.equal(Buffer.byteLength(v.body,'utf8'),bytes,name);
   assert.equal(createHash('md5').update(v.body,'utf8').digest('hex'),hash,name);
   assert.match(v.ddl,/SECURITY DEFINER/i);
   assert.match(v.ddl,/search_path=''/i);
  }
+});
+test('R115 claim RPC is taken from later applied lease-expiry patch, not stale migration',()=>{
+ const older=exact(historical,'claim_campaign_sheet_item').body;
+ const corrected=exact(claimFix,'claim_campaign_sheet_item').body;
+ assert.notEqual(older,corrected);
+ assert.equal(Buffer.byteLength(older,'utf8'),1340);
+ assert.equal(Buffer.byteLength(corrected,'utf8'),1379);
+ assert.match(corrected,/campaign_sheet_item_leases as lease/);
 });
 test('R115 membership candidate adds only one precondition while preserving helper source',()=>{
  const before=exact(historical,'can_edit_campaign_sheet').ddl;
