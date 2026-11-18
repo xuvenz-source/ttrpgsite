@@ -187,9 +187,8 @@ export function sanitizedR119Receipt(obs){
   productionReleaseAuthorized:false
  });
 }
-function runPrivateFixture(workspace){
- checkEnv(process.env);
- const originalDdl=originalJoinDdl(workspace);
+export function runR119IsolatedFixtureWithDdl(originalDdl){
+ if(typeof originalDdl!=='string'||originalDdl.length<1||originalDdl.length>128000)fail();
  const name='world-v2-r18-119-'+randomBytes(5).toString('hex');
  let active=false;
  try{
@@ -254,6 +253,11 @@ function runPrivateFixture(workspace){
  }finally{
   if(active)docker(['rm','-f',name],{timeout:20000});
  }
+}
+function runPrivateFixture(workspace){
+ checkEnv(process.env);
+ const source=originalJoinDdl(workspace);
+ return runR119IsolatedFixtureWithDdl(source);
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{
