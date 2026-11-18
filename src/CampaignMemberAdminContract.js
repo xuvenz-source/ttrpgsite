@@ -37,8 +37,9 @@ export function createCampaignMemberAdminContract({db,context,onReconcile}){
  const current=()=>{const x=context();return x&&typeof x==='object'?x:null;};
  const same=(a,b)=>!!a&&!!b&&a.userId===b.userId&&a.campaignId===b.campaignId;
  const reconcile=async anchor=>{
-  if(!same(anchor,current()))return;
-  try{await onReconcile()}catch{/* UI must separately report refresh failure; never fake updated roster. */}
+  if(!same(anchor,current()))return false;
+  try{return (await onReconcile())===true}
+  catch{return false}
  };
  async function act(kind,playerId){
   if(!own(RPC,kind))throw fail('invalid_action');
@@ -93,12 +94,13 @@ export function createCampaignMemberAdminContract({db,context,onReconcile}){
     await reconcile(anchor);
     throw fail('unconfirmed');
    }
-   await reconcile(anchor);
+   const refreshed=await reconcile(anchor);
    return Object.freeze({
-    status:res.data===true?'server_confirmed':'stale',
-    // The integration must not update cached map/fog/chat/sheet authority
-    // until it has independently reconciled a current server membership.
-    requiresReconciliation:true
+    status:res.data===true?'server_acknowledged':'stale',
+    // An ACK is not authorization to display success or keep map/fog/sheet
+    // state. Only a fresh, independently confirmed member roster may do so.
+    rosterReconciled:refreshed,
+    requiresReconciliation:!refreshed
    });
   }finally{busy=false;}
  }
