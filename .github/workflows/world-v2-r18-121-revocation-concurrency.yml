@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/world-v2-r18-121-revocation-concurrency.yml'
       - 'tests/world-v2-r18-121-postgres/**'
+      - 'tests/world-v2-r18-121-membership-source-boundary.test.mjs'
       - 'staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql'
   pull_request:
     branches:
@@ -84,3 +85,6 @@ jobs:
       - name: Verify inherited R120 security contract tests
         shell: bash
         run: node --test tests/world-v2-r18-120-revocation-contract.test.mjs
+      - name: Verify application membership-source boundary and cascade/race safety assertions
+        shell: bash
+        run: node --test tests/world-v2-r18-121-membership-source-boundary.test.mjs
