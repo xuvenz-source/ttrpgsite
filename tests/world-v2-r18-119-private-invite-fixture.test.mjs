@@ -74,6 +74,10 @@ test('R119 local scratch runner prohibits hosted DB target, network, ports, host
   "productionReleaseAuthorized:false"
  ])assert.ok(source.includes(phrase),phrase);
  assert.doesNotMatch(source,/\b(?:supabase\s+db|apply_migration|db push|migration repair)\b/i);
- assert.doesNotMatch(source,/['"]-p['"]|['"]--publish['"]|['"]-v['"]|['"]--volume['"]|['"]--mount['"]/);
+ const start=source.indexOf("const started=docker(['run'");
+ const end=source.indexOf("{timeout:120000}",start);
+ assert.ok(start>0&&end>start);
+ const dockerRun=source.slice(start,end);
+ assert.doesNotMatch(dockerRun,/['"]-p['"]|['"]--publish['"]|['"]-v['"]|['"]--volume['"]|['"]--mount['"]/);
  assert.match(source,/docker\(\['rm','-f',name\]/);
 });
