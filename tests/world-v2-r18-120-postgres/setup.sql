@@ -12,7 +12,7 @@ GRANT USAGE ON SCHEMA auth TO authenticated;
 CREATE FUNCTION auth.uid() RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=''
 AS $id$
- SELECT pg_catalog.nullif(
+ SELECT NULLIF(
   pg_catalog.current_setting('request.jwt.claim.sub',true),'')::uuid
 $id$;
 REVOKE ALL ON FUNCTION auth.uid() FROM PUBLIC,anon,authenticated;
