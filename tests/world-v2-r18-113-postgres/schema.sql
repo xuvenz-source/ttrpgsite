@@ -2,7 +2,13 @@
 \set ON_ERROR_STOP on
 DO $gate$ BEGIN
  IF current_database() <> 'world_v2_r18_113' OR current_user <> 'postgres'
- OR inet_server_addr() IS NULL OR inet_server_addr()::text <> '127.0.0.1'
+ OR inet_server_addr() IS NULL
+ -- GitHub's host connects on 127.0.0.1, but PostgreSQL sees the Docker
+ -- private bridge address (not loopback) inside its own container.
+ OR NOT (inet_server_addr() << inet '172.16.0.0/12'
+      OR inet_server_addr() << inet '10.0.0.0/8'
+      OR inet_server_addr() << inet '192.168.0.0/16'
+      OR inet_server_addr() = inet '127.0.0.1')
  THEN RAISE EXCEPTION 'R113 rejects database/host outside disposable CI fixture'; END IF;
 END $gate$;
 
