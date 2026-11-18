@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-117",
+  "decision": "NO_GO",
+  "date": "2026-11-18",
+  "parentPr": 221,
+  "parentSha": "c9db800042e31eb4bb03790aaea7fed3d193946b",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "originalRegisteredMigrations": 83,
+  "qaRegisteredMigrations": 0,
+  "source": [
+    {
+      "name": "mutate_campaign_tool_item",
+      "path": "supabase/migrations/20261107095343_campaign_tool_item_collaboration.sql",
+      "bodyMd5": "0692ac50eb864f3dd0f91064f478309e",
+      "bytes": 2178,
+      "liveMetadataFingerprintMatched": true,
+      "directLiveSqlBodyParityAttested": false
+    },
+    {
+      "name": "release_campaign_tool_item",
+      "path": "supabase/migrations/20261107095343_campaign_tool_item_collaboration.sql",
+      "bodyMd5": "775ad6515c74f23367ce6e55513f8744",
+      "bytes": 220,
+      "liveMetadataFingerprintMatched": true,
+      "directLiveSqlBodyParityAttested": false
+    },
+    {
+      "name": "patch_campaign_tool_details",
+      "path": "supabase/migrations/20261107095343_campaign_tool_item_collaboration.sql",
+      "bodyMd5": "12841d624886adab4f33e98f2c7716ac",
+      "bytes": 1086,
+      "liveMetadataFingerprintMatched": true,
+      "directLiveSqlBodyParityAttested": false
+    }
+  ],
+  "inviteLiveMetadata": [
+    {
+      "name": "create_campaign",
+      "bytes": 475,
+      "bodyMd5": "9a12043761641127b6f60304eea876c5",
+      "authUidText": true,
+      "insertsMembershipText": true,
+      "usesInviteCodeText": false,
+      "onConflictText": false,
+      "sourceBodyInspected": false,
+      "realSignedTested": false
+    },
+    {
+      "name": "join_campaign",
+      "bytes": 742,
+      "bodyMd5": "9fd65eca8e3160acd7a674931aad51c5",
+      "authUidText": true,
+      "insertsMembershipText": true,
+      "usesInviteCodeText": true,
+      "onConflictText": true,
+      "sourceBodyInspected": false,
+      "realSignedTested": false
+    }
+  ],
+  "invitationRiskQuestions": [
+    "Whether a removed player can reuse an unchanged invitation code to rejoin without DM approval",
+    "Invite-code rotation and revocation lifecycle when access is removed",
+    "Source-exact helper and row/role security of join_campaign ON CONFLICT",
+    "New vs returning membership role correctness and campaign owner preservation",
+    "Rate limiting and automated invite-code guessing",
+    "Single or multi-session behavior after removal and rejoin"
+  ],
+  "syntheticTests": {
+    "disposablePostgres17": true,
+    "usesPriorR116SyntheticFixture": true,
+    "toolEditReleaseScenarios": 33,
+    "actualPostgresAclDenials": 5,
+    "syntheticAuthAndCampaignMemberDmHelpers": true,
+    "realInvitationsUsed": false,
+    "originalSqlBodiesOrAuthRowsExported": false,
+    "private83HistoricalFilesRead": false,
+    "executed": false
+  },
+  "knownIssues": {
+    "fogStatusMetadataOracleUnfixed": true,
+    "inventoryUuidSourceDefectUnfixed": true,
+    "revokedSheetOwnerAccessUnfixed": true
+  },
+  "releaseGates": {
+    "originalSourceOperatorAttested": false,
+    "all83PrivateHistoricalSqlApproved": false,
+    "all67PrivilegedRpcAudited": false,
+    "realSignedInvitationAndRevocationTested": false,
+    "qaHistoryDryRunApproved": false,
+    "qaHistoryInstalled": false,
+    "productionReleaseAuthorized": false
+  },
+  "unchanged": {
+    "originalSql": true,
+    "qaSql": true,
+    "production": true,
+    "noMerges": true,
+    "noPaidResources": true,
+    "noSQLOrCredentialsInGit": true
+  }
+}
