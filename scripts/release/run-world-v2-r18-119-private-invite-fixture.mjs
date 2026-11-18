@@ -46,6 +46,8 @@ export function r119ValidateSyntheticInviteFormats(codes){
 const fail=()=>{throw Error('R119 PRIVATE INVITATION FIXTURE NO-GO')};
 let safeStage='initial_checks';
 let safeFailureCode='not_classified';
+let safeBehaviorStep='not_started';
+let safePostgresSqlstate='unavailable';
 const digest=(alg,value)=>createHash(alg).update(value,'utf8').digest('hex');
 export function extractR119PrivateJoinDefinitions(sql){
  if(typeof sql!=='string'||Buffer.byteLength(sql,'utf8')>12*1024*1024)fail();
@@ -112,26 +114,44 @@ function docker(args,opts={}){
  const r=spawnSync('docker',['--host',SOCKET,...args],{
   encoding:'utf8',timeout:opts.timeout??60000,maxBuffer:32768,
   input:opts.input??'',
-  stdio:['pipe',opts.capture?'pipe':'ignore','ignore'],
+  stdio:['pipe',opts.capture?'pipe':'ignore',opts.captureErrorCode?'pipe':'ignore'],
   env:{PATH:process.env.PATH,HOME:process.env.HOME,LANG:'C',
    DOCKER_CONFIG:join(process.env.HOME??'/tmp','.docker')}
  });
+ // The only retained diagnostic is PostgreSQL's five-character SQLSTATE.
+ // sqlstate verbosity suppresses SQL messages; never print Docker stderr.
+ const sqlstate=opts.captureErrorCode&&typeof r.stderr==='string'?
+  /(?:^|\n)ERROR:\s*([A-Z0-9]{5})(?=\s|$)/.exec(r.stderr)?.[1]:null;
  return {ok:r.status===0&&!r.error,
-  stdout:r.status===0&&opts.capture?r.stdout:''};
+  stdout:r.status===0&&opts.capture?r.stdout:'',
+  sqlstate:sqlstate??null};
 }
-export function r119SanitizedFailureReceipt(stage,code){
+export function r119SanitizedFailureReceipt(stage,code,details={}){
  const stages=new Set(['initial_checks','safe_environment','docker_preflight',
   'source_history_integrity','source_function_definition','scratch_preflight',
   'docker_launch','postgres_ready','synthetic_schema_setup',
   'source_function_install','invitation_behavior_checks']);
  const codes=new Set(['not_classified','docker_cli_unavailable',
   'docker_local_daemon_unavailable_or_denied','docker_postgres17_image_missing',
-  'docker_container_launch_rejected']);
+  'docker_container_launch_rejected','first_join_rpc_failed',
+  'first_join_membership_missing','first_join_role_not_player',
+  'synthetic_query_failed','synthetic_scalar_unexpected',
+  'membership_remove_failed']);
  const safeStage=stages.has(stage)?stage:'initial_checks';
  const safeCode=codes.has(code)?code:'not_classified';
+ const steps=new Set(['not_started','first_join_rpc','first_join_membership',
+  'first_join_role','duplicate_join','dm_duplicate','membership_remove',
+  'revoked_rejoin','invalid_invite','invite_rotation',
+  'old_invite_after_rotation','new_invite_after_rotation',
+  'null_actor','anonymous_join','cross_campaign','result_assembly']);
+ const step=steps.has(details.behaviorStep)?details.behaviorStep:'not_started';
+ const sqlstate=typeof details.sqlstate==='string'&&
+  /^[A-Z0-9]{5}$/.test(details.sqlstate)?details.sqlstate:'unavailable';
  return Object.freeze({
   schema:1,workPackage:'B10-R18-119',decision:'NO_GO',
   reportStatus:'ERROR',safeFailureStage:safeStage,safeFailureCode:safeCode,
+  ...(safeStage==='invitation_behavior_checks'?
+    {safeBehaviorStep:step,safePostgresSqlstate:sqlstate}:{}),
   sourceDetailsIncluded:false,privateSqlExported:false,
   originalOrQaSqlExecuted:false,productionReleaseAuthorized:false
  });
@@ -153,8 +173,9 @@ function preflightLocalDocker(){
 }
 function sqlExec(name,query,capture=false){
  return docker(['exec','-i',name,'psql','-X','-A','-t','-q',
-  '-v','ON_ERROR_STOP=1','-U','postgres','-d',DB],
-  {input:query+'\n',capture});
+  '-v','ON_ERROR_STOP=1','-v','VERBOSITY=sqlstate',
+  '-U','postgres','-d',DB],
+  {input:query+'\n',capture,captureErrorCode:true});
 }
 const quote=s=>"'"+s.replaceAll("'","''")+"'";
 function schema(){
@@ -193,9 +214,16 @@ function actorQuery(actor,invite,role='authenticated'){
 }
 function scalar(name,expr){
  const result=sqlExec(name,'SELECT ('+expr+')::text;',true);
- if(!result.ok)fail();
+ if(!result.ok){
+  safeFailureCode='synthetic_query_failed';
+  safePostgresSqlstate=result.sqlstate??'unavailable';
+  fail();
+ }
  const out=result.stdout.trim();
- if(!/^(true|false|t|f|[0-9]{1,4}|dm|player)$/.test(out))fail();
+ if(!/^(true|false|t|f|[0-9]{1,4}|dm|player)$/.test(out)){
+  safeFailureCode='synthetic_scalar_unexpected';
+  fail();
+ }
  return out==='t'?'true':out==='f'?'false':out;
 }
 function hasMember(name,campaign,actor){
@@ -273,34 +301,59 @@ export function runR119IsolatedFixtureWithDdl(originalDdl,{sourceVerified=false}
    '\nREVOKE ALL ON FUNCTION public.join_campaign(text) FROM PUBLIC,anon,authenticated;'+
    '\nGRANT EXECUTE ON FUNCTION public.join_campaign(text) TO authenticated;').ok)fail();
   safeStage='invitation_behavior_checks';
-  const first=sqlExec(name,actorQuery(V.player1,V.inviteA)).ok;
-  if(!first||!hasMember(name,V.campaignA,V.player1)||
-   memberRole(name,V.campaignA,V.player1)!=='player')fail();
+  safeBehaviorStep='first_join_rpc';
+  const firstAttempt=sqlExec(name,actorQuery(V.player1,V.inviteA));
+  if(!firstAttempt.ok){
+   safeFailureCode='first_join_rpc_failed';
+   safePostgresSqlstate=firstAttempt.sqlstate??'unavailable';
+   fail();
+  }
+  safeBehaviorStep='first_join_membership';
+  if(!hasMember(name,V.campaignA,V.player1)){
+   safeFailureCode='first_join_membership_missing';fail();
+  }
+  safeBehaviorStep='first_join_role';
+  if(memberRole(name,V.campaignA,V.player1)!=='player'){
+   safeFailureCode='first_join_role_not_player';fail();
+  }
+  const first=true;
+  safeBehaviorStep='duplicate_join';
   const duplicate=sqlExec(name,actorQuery(V.player1,V.inviteA)).ok;
   const dupGood=duplicate&&memberRole(name,V.campaignA,V.player1)==='player';
+  safeBehaviorStep='dm_duplicate';
   const dmRepeat=sqlExec(name,actorQuery(V.dmA,V.inviteA)).ok;
   const dmGood=dmRepeat&&memberRole(name,V.campaignA,V.dmA)==='dm';
+  safeBehaviorStep='membership_remove';
   if(!sqlExec(name,'DELETE FROM public.campaign_members WHERE campaign_id='+
     quote(V.campaignA)+' AND user_id='+quote(V.player1)+';').ok||
     hasMember(name,V.campaignA,V.player1))fail();
+  safeBehaviorStep='revoked_rejoin';
   sqlExec(name,actorQuery(V.player1,V.inviteA));
   const rejoined=hasMember(name,V.campaignA,V.player1);
+  safeBehaviorStep='invalid_invite';
   sqlExec(name,actorQuery(V.outsider,V.invalid));
   const invalid=hasMember(name,V.campaignA,V.outsider)||
     hasMember(name,V.campaignB,V.outsider);
+  safeBehaviorStep='invite_rotation';
   if(!sqlExec(name,'UPDATE public.campaigns SET invite_code='+quote(V.newInviteA)+
    ' WHERE id='+quote(V.campaignA)+';').ok)fail();
+  safeBehaviorStep='old_invite_after_rotation';
   sqlExec(name,actorQuery(V.player2,V.inviteA));
   const oldAccepted=hasMember(name,V.campaignA,V.player2);
+  safeBehaviorStep='new_invite_after_rotation';
   sqlExec(name,actorQuery(V.player2,V.newInviteA));
   const newAccepted=hasMember(name,V.campaignA,V.player2);
+  safeBehaviorStep='null_actor';
   const before=scalar(name,'(SELECT COUNT(*) FROM public.campaign_members)');
   sqlExec(name,actorQuery('',V.newInviteA));
   const after=scalar(name,'(SELECT COUNT(*) FROM public.campaign_members)');
+  safeBehaviorStep='anonymous_join';
   const anon=sqlExec(name,actorQuery(V.outsider,V.newInviteA,'anon')).ok;
+  safeBehaviorStep='cross_campaign';
   const cross=hasMember(name,V.campaignB,V.player1)||
     hasMember(name,V.campaignB,V.player2)||
     hasMember(name,V.campaignB,V.outsider);
+  safeBehaviorStep='result_assembly';
   return sanitizedR119Receipt({
    firstJoinSucceeded:first,firstJoinIsPlayer:true,
    duplicateJoinPreservedPlayerRole:dupGood,dmDuplicatePreservedDmRole:dmGood,
@@ -334,7 +387,8 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   // Fail closed with a non-empty sanitized receipt. No raw error text, SQL,
   // Docker logs, private file paths, invitation values or user records.
   process.stdout.write(JSON.stringify(r119SanitizedFailureReceipt(
-   safeStage,safeFailureCode),null,2)+'\n');
+   safeStage,safeFailureCode,
+   {behaviorStep:safeBehaviorStep,sqlstate:safePostgresSqlstate}),null,2)+'\n');
   process.stderr.write('R119 PRIVATE INVITATION FIXTURE NO-GO: sanitized failure report generated. Do not share SQL or raw logs.\n');
   process.exitCode=1;
  }
