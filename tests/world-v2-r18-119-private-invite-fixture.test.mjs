@@ -30,6 +30,29 @@ test('R119 source must match the latest of 2 recovered function definitions',()=
   latest.trim());
  assert.notEqual(definitions[0].body,definitions[1].body);
 });
+test('R119 accepts either safe PostgreSQL empty search_path form but rejects nonempty search_path',()=>{
+ const latest=DDL('latest',body);
+ const canonical=latest.replace("SET search_path=''","SET search_path TO ''");
+ const list=extractR119PrivateJoinDefinitions(DDL('previous','BEGIN RETURN NULL; END;')+canonical);
+ assert.equal(list.length,2);
+ assert.equal(boundR119PrivateJoinDdl({definitions:list,live:expected}),canonical.trim());
+ const insecure=latest.replace("SET search_path=''","SET search_path TO public");
+ const bad=extractR119PrivateJoinDefinitions(DDL('previous','BEGIN RETURN NULL; END;')+insecure);
+ assert.throws(()=>boundR119PrivateJoinDdl({definitions:bad,live:expected}),
+   /R119 PRIVATE INVITATION FIXTURE NO-GO/);
+});
+test('R119 failed private runs produce only non-empty safe stage indicators, not raw errors',()=>{
+ assert.match(source,/reportStatus:'ERROR',safeFailureStage:safeStage/);
+ assert.match(source,/sourceDetailsIncluded:false,privateSqlExported:false/);
+ assert.match(source,/safeStage='source_history_integrity'/);
+ assert.match(source,/safeStage='source_function_definition'/);
+ assert.match(source,/safeStage='docker_launch'/);
+ assert.match(source,/safeStage='postgres_ready'/);
+ assert.match(source,/safeStage='synthetic_schema_setup'/);
+ assert.match(source,/safeStage='source_function_install'/);
+ assert.match(source,/safeStage='invitation_behavior_checks'/);
+ assert.doesNotMatch(source,/process\.stderr\.write\(.*(?:\.stack|\.message|JSON\.stringify\(.*?error)/);
+});
 test('R119 refuses missing/changed SHA, wrong source signature, old-only history and invalid DDL',()=>{
  const definitions=extractR119PrivateJoinDefinitions(DDL('latest',body));
  assert.equal(definitions.length,1);
