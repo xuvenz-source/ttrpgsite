@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-119",
+  "decision": "NO_GO",
+  "date": "2026-11-18",
+  "parentPr": 224,
+  "parentSha": "d83c9dcc195594c9de04576f5ffec79ede564580",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "r118ReceiptAccepted": {
+    "originalHistoricFilesVerified": 83,
+    "privateDocketReverified": true,
+    "aggregateSha256": "fe31759c142602047c1813d8ba1868f734138b8f94c773f7f1b6106b5b6bb783",
+    "createCampaign": {
+      "definitionCount": 1,
+      "currentSha256Matched": true,
+      "sha256": "0ea1e01ba784dfa78e92c8e82a3ca2b2d28a19920f5286cc7423d1e891be645f"
+    },
+    "joinCampaign": {
+      "definitionCount": 2,
+      "currentSha256Matched": true,
+      "sha256": "5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655"
+    },
+    "userAndInviteValuesAbsent": true,
+    "operatorSessionIndependentAttestation": false,
+    "private83HistorySecurityReviewComplete": false,
+    "securityApproved": false
+  },
+  "isolatedOperatorFixture": {
+    "script": "scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs",
+    "executionEnvironment": "OPERATOR_LOCAL_DOCKER_POSTGRES17_NO_NETWORK",
+    "originalCurrentFunctionSha256Required": "5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655",
+    "testsUseExactRecoveredCurrentJoinBody": true,
+    "syntheticRoleAndClaimSource": "LOCAL_SESSION_GUC_NOT_SIGNED_JWT",
+    "runsFullPrivate83Migrations": false,
+    "hostedSupabaseConnections": false,
+    "usesPrivateUserOrCampaignData": false,
+    "realInviteCodesUsed": false,
+    "noHostBindMounts": true,
+    "networkNone": true,
+    "readOnlyRoot": true,
+    "noContainerSqlLogsExported": true,
+    "rejoinsAfterDmRemovalTestPlanned": true,
+    "testsFirstJoinAndRoleIdempotence": true,
+    "testsCodeRotationInvalidAndCrossCampaign": true,
+    "actualOperatorFixtureReceiptReceived": false
+  },
+  "invitationRejoinRisk": {
+    "status": "UNVERIFIED_POSSIBLE_REVOCATION_REJOIN_BYPASS",
+    "dmRemovalShouldPreventOldGlobalInviteReuse": "PROPOSED_POLICY_NOT_APPROVED",
+    "rejoinViaOldInviteObservedInOriginal": false,
+    "rejoinViaOldInviteObservedInOfflineFixture": false,
+    "signedQaSessionTestRun": false
+  },
+  "releaseGates": {
+    "fullPrivate83SqlSemanticReviewPassed": false,
+    "independentOriginalOperatorSessionAttested": false,
+    "sourceExactOfflineInviteBehaviorReviewed": false,
+    "realSignedQaDmPlayerInviteCasesPassed": false,
+    "qaOnlyHistoricalInstallAuthorized": false,
+    "qaHistoricalInstallComplete": false,
+    "knownHostedFogOracleFixed": false,
+    "knownHostedInventoryUuidFixed": false,
+    "knownHostedRevokedSheetOwnerFixed": false,
+    "all67PrivilegedRpcReviewsPassed": false,
+    "productionReleaseAuthorized": false
+  },
+  "qaSqlChanged": false,
+  "originalSqlChanged": false,
+  "noMerge": true,
+  "noPaidInfrastructure": true,
+  "noHostedDeployment": true
+}
