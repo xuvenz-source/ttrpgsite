@@ -16,7 +16,7 @@ target uuid;
 BEGIN
  IF actor IS NULL THEN RAISE EXCEPTION 'Sign in required';END IF;
  SELECT id INTO target FROM public.campaigns
-  WHERE lower(invite_code)=lower(trim(p_invite_code)) FOR UPDATE;
+  WHERE invite_code=lower(trim(p_invite_code)) FOR UPDATE;
  IF target IS NULL THEN RAISE EXCEPTION 'Invalid code';END IF;
  INSERT INTO public.campaign_members(campaign_id,user_id,role)
  VALUES(target,actor,'player') ON CONFLICT DO NOTHING;
