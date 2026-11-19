@@ -119,7 +119,7 @@ test('R126 synchronous mask happens BEFORE a scene invalidation callback',async(
  const pending=t.enter();
  assert.deepEqual(f.events.slice(0,2),
   ['lock:revalidating','invalidate:scene-v3-revalidating']);
- assert.equal(f.calls.identity,0);
+ assert.equal(t.snapshot().authorized,false);
  await pending;await t.dispose();
 });
 
