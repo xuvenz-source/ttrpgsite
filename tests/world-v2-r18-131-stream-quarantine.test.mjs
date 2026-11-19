@@ -252,6 +252,11 @@ test('R131 failed channel removal keeps next signed re-entry locked',async()=>{
  assert.equal(f.gate.snapshot().armed,false);
  assert.equal(f.gate.snapshot().removalFailures,1);
  assert.ok(f.faults.includes('channel_unsubscribe_failed'));
+ assert.equal(f.gate.snapshot().teardownUncertain,true);
+ assert.deepEqual(f.calls,['signed-begin']);
+ assert.equal(await f.gate.begin(f.scope),false,
+  'old socket uncertainty cannot be cleared by a fresh membership proof');
+ assert.equal(f.gate.snapshot().armed,false);
  assert.deepEqual(f.calls,['signed-begin']);
  await f.gate.dispose();
 });
@@ -275,6 +280,9 @@ test('R131 rejects non-synchronous masks, invalid channels and stale scope',asyn
   {code:'synchronous_mask_failed'});
  assert.equal(noMask.gate.snapshot().armed,false);
  assert.ok(noMask.faults.includes('mask_not_synchronous'));
+ assert.equal(noMask.gate.snapshot().maskUnconfirmed,true);
+ await assert.rejects(noMask.gate.begin(noMask.scope),
+  {code:'synchronous_mask_failed'});
 
  const f=fixture();await f.gate.begin(f.scope);
  assert.throws(()=>f.gate.registerChannel({}, {table:'unknown_table'},()=>{}),
