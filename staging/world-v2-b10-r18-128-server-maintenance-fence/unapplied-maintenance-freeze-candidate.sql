@@ -37,7 +37,7 @@ BEGIN
   campaign_id=excluded.campaign_id,
   changed_at=clock_timestamp()
  RETURNING generation INTO new_gen;
- -- No realtime.send and no legacy/map-wide or recipient sends.
+ -- No event emission on this maintenance boundary.
  RETURN new_gen;
 END $freeze$;
 REVOKE ALL ON FUNCTION forge_world_v2.bump_scene_publication_v2(uuid)
