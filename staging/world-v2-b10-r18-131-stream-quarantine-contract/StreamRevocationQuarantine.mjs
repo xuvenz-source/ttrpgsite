@@ -94,7 +94,11 @@ export function createStagedStreamQuarantine({
   const task=Promise.all(remaining.map(async channel=>{
    try{
     const res=await db.removeChannel(channel);
-    if(res==='error'||res===false){removalFailures++;return false}
+    if(res!=='ok'){
+     // Supabase JS returns 'ok', 'timed out' or 'error'. A timeout
+     // must NOT re-open the view as though an old socket was removed.
+     removalFailures++;return false;
+    }
     return true;
    }catch{removalFailures++;return false}
   })).then(results=>results.every(Boolean));
