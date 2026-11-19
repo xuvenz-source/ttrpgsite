@@ -18,6 +18,11 @@ CREATE POLICY "R126 V3 recipient scene receive"
    )
  );
 
+-- Retire the original observed V2 scene receive policy at the same atomic
+-- boundary as the sender replacement. No old shared subscription is
+-- authorized for future reconnects. This does NOT itself eject sockets.
+DROP POLICY "World V2 scene publication receive" ON realtime.messages;
+
 -- Preserve the exact legacy counter upsert semantics and output type.
 -- Replace ONLY shared publication fanout (no map-wide V2 send remains).
 -- This runs from the existing environment/rules AFTER triggers.
