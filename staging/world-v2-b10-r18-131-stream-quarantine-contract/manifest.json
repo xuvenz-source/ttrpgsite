@@ -56,7 +56,10 @@
     "r123SentinelConnectedToProduction": false,
     "r123TeardownConnectedToProduction": false,
     "hostedV3SceneReceiverInstalled": false,
-    "realR123SentinelIntegrationTestedInSyntheticNode": true
+    "realR123SentinelIntegrationTestedInSyntheticNode": true,
+    "terminalOnAmbiguousChannelRemoval": true,
+    "terminalOnUnconfirmedSynchronousMask": true,
+    "manualRebeginNeverResetsUncertainOldSocket": true
   },
   "remainingReleaseBlockers": [
     "R123 synchronous host mask and unmount need actual integration",
@@ -77,15 +80,16 @@
     231
   ],
   "tests": {
-    "dedicated": "PASSED_EXACT_IMPLEMENTATION_SOURCE_HEAD",
-    "standardRepository": "PASSED_EXACT_IMPLEMENTATION_SOURCE_HEAD",
-    "combinedStagingSql": "IN_PROGRESS_AT_RECORD",
+    "dedicated": "PENDING_RECHECK_AFTER_RECOVERY_FIX",
+    "standardRepository": "PENDING_RECHECK_AFTER_RECOVERY_FIX",
+    "combinedStagingSql": "PENDING_RECHECK_AFTER_RECOVERY_FIX",
     "realSignedQa": "NOT_RUN",
     "verifiedImplementationSha": "a1e3f270e2938dc0f2b100723d15fcab14766a7a",
     "dedicatedPrRunId": 44534976387,
     "standardPrRunId": 44534976196,
     "combinedPushRunId": 44534962277,
-    "postManifestCommitExactHeadRecheckRequired": true
+    "postManifestCommitExactHeadRecheckRequired": true,
+    "lastVerifiedPreRecoveryFixSha": "a1e3f270e2938dc0f2b100723d15fcab14766a7a"
   },
   "noHostedSqlWrites": true,
   "noVersionedMigrations": true,
