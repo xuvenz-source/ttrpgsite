@@ -5,8 +5,8 @@
 import {readFileSync,readdirSync} from 'node:fs';
 import {join,relative,sep} from 'node:path';
 export const R130_LIVE_ENABLED=false;
-const SUBSCRIPTION=/\.on\s*\(\s*(['"])postgres_changes\1\s*,\s*\{([\s\S]*?)\}\s*,/g;
-const ENTRY=/\.on\s*\(\s*['"]postgres_changes['"]/g;
+const SUBSCRIPTION=/\.on\s*\(\s*(['"\x60])postgres_changes\1\s*,\s*\{([\s\S]*?)\}\s*,/g;
+const ENTRY=/\.on\s*\(\s*['"\x60]postgres_changes['"\x60]/g;
 const property=(object,key)=>{
  const m=object.match(new RegExp('(?:^|[,\\s])'+key+'\\s*:\\s*([\\x27\\x22])([^\\x27\\x22]+)\\1'));
  return m?.[2]??null;
@@ -70,7 +70,8 @@ export function compareSubscriptionBaselines(actual,expected,publishedTables){
   const k=key(x);needed.set(k,(needed.get(k)||0)+1);
  }
  for(const x of actual){
-  if(!x||x.schema!=='public')problems.push('non_public_schema');
+  if(!x||typeof x!=='object'){problems.push('invalid_subscription_record');continue;}
+  if(x.schema!=='public')problems.push('non_public_schema');
   if(!known.has(x.table)&&!(x.file==='src/useCampaignSheetInventory.js'&&
     x.table==='target.table'&&x.tableExpression==='dynamic'))
    problems.push('unpublished_or_unknown_table');
