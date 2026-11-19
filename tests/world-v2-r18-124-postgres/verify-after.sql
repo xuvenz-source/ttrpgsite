@@ -9,11 +9,11 @@ DO $verify$
 BEGIN
  IF public.synthetic_sheet_edit_guard(
   '00000000-0000-4000-8000-000000000101','character',
-  '00000000-0000-4000-8000-000000000401')
+  '00000000-0000-4000-8000-000000000401') IS DISTINCT FROM false
  THEN RAISE EXCEPTION 'R124 revoked sheet owner was authorized';END IF;
  IF public.synthetic_sheet_edit_guard(
   '00000000-0000-4000-8000-000000000101','npc_template',
-  '00000000-0000-4000-8000-000000000501')
+  '00000000-0000-4000-8000-000000000501') IS DISTINCT FROM false
  THEN RAISE EXCEPTION 'R124 removed user edited NPC';END IF;
 END $verify$;
 COMMIT;
@@ -47,10 +47,10 @@ DO $verify$
 BEGIN
  IF public.synthetic_sheet_edit_guard(
   '00000000-0000-4000-8000-000000000101','character',
-  '00000000-0000-4000-8000-000000000401')
+  '00000000-0000-4000-8000-000000000401') IS DISTINCT FROM false
  OR public.synthetic_sheet_edit_guard(
   '00000000-0000-4000-8000-000000000101','npc_token',
-  '00000000-0000-4000-8000-000000000601')
+  '00000000-0000-4000-8000-000000000601') IS DISTINCT FROM false
  THEN RAISE EXCEPTION 'R124 outsider DM crossed campaign';END IF;
 END $verify$;
 COMMIT;
@@ -62,7 +62,7 @@ DO $verify$
 BEGIN
  IF public.synthetic_sheet_edit_guard(
   '00000000-0000-4000-8000-000000000101','character',
-  '00000000-0000-4000-8000-000000000401')
+  '00000000-0000-4000-8000-000000000401') IS DISTINCT FROM false
  THEN RAISE EXCEPTION 'R124 null identity authorized';END IF;
 END $verify$;
 COMMIT;
@@ -84,7 +84,7 @@ BEGIN
  THEN RAISE EXCEPTION 'R124 reinstated character owner blocked';END IF;
  IF public.synthetic_sheet_edit_guard(
   '00000000-0000-4000-8000-000000000101','npc_template',
-  '00000000-0000-4000-8000-000000000501')
+  '00000000-0000-4000-8000-000000000501') IS DISTINCT FROM false
  THEN RAISE EXCEPTION 'R124 non-DM player got NPC rights';END IF;
 END $verify$;
 COMMIT;
