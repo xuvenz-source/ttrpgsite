@@ -1,0 +1,990 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-130",
+  "observedDate": "2026-11-19",
+  "source": "original Supabase read-only pg_proc catalog",
+  "appSchema": "public",
+  "totalFunctions": 67,
+  "absenceOfDirectGuardTextCount": 15,
+  "limitations": [
+    "static regex matches qualified calls, not exact PostgreSQL dependency graph",
+    "strings, comments and dynamic SQL can cause missing or spurious references",
+    "manual transitive review and real signed-user tests NOT COMPLETE",
+    "contains no player data or function bodies"
+  ],
+  "functions": [
+    {
+      "name": "public.add_map_combat_tokens",
+      "signature": "p_map uuid, p_tokens uuid[]",
+      "sourceMd5": "fc6884af3d17233272b5e74d19f82829",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.add_map_combat_tokens",
+        "public.combat_publish",
+        "public.is_campaign_dm",
+        "public.map_combat_entries"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.advance_authorized_navigation_gesture",
+      "signature": "p_session uuid, p_dx integer, p_dy integer, p_seq bigint",
+      "sourceMd5": "72fe58d535a731eaea4364a551c5ca78",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.validate_piece_trajectory",
+        "public.advance_authorized_navigation_gesture",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.advance_authorized_navigation_gesture_batch",
+      "signature": "p_session uuid, p_targets jsonb, p_seq bigint",
+      "sourceMd5": "5d7252fef8732a85b8dd63efdb4323fd",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.publish_approved_navigation_batch",
+        "forge_visibility.validate_piece_trajectory",
+        "public.advance_authorized_navigation_gesture_batch",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.advance_map_motion_session",
+      "signature": "p_session uuid, p_x integer, p_y integer, p_seq bigint",
+      "sourceMd5": "fe6946643fb701ac6d30684cfdd9bca6",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.movement_preview_rates",
+        "forge_visibility.observer_path_status_cached",
+        "forge_visibility.swept_hits_segment",
+        "forge_visibility.wall_passes",
+        "public.advance_map_motion_session",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.advance_map_motion_session_path",
+      "signature": "p_session uuid, p_path jsonb, p_seq bigint",
+      "sourceMd5": "539292b1950d76909c032a056bebee79",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.bump_viewer_ticks",
+        "forge_visibility.movement_preview_rates",
+        "forge_visibility.observer_verified_path_status",
+        "forge_visibility.validate_piece_trajectory",
+        "public.advance_map_motion_session_path",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.advance_world_motion_v2",
+      "signature": "p_session uuid, p_seq bigint, p_from jsonb, p_targets jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "sourceMd5": "4b38b5e7116a3ff9abc8a99f58755126",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "forge_world_v2.advance_core_v2",
+        "forge_world_v2.publish_approved_observers",
+        "forge_world_v2.signal_movement_vision_v2",
+        "public.advance_world_motion_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-motion-session"
+    },
+    {
+      "name": "public.apply_token_quick_changes",
+      "signature": "p_token uuid, p_changes jsonb",
+      "sourceMd5": "8a01bdb39779e6154289eaeaaad16350",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.apply_token_quick_changes",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm",
+        "public.is_campaign_member"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.begin_authorized_navigation_gesture",
+      "signature": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "sourceMd5": "fe302c52ad18d282764793f4167683aa",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.navigation_gestures",
+        "public.begin_authorized_navigation_gesture",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.begin_map_combat",
+      "signature": "p_map uuid, p_tokens uuid[], p_field text, p_mode text",
+      "sourceMd5": "415470af4c3125760b3b62342185c18c",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.begin_map_combat",
+        "public.combat_publish",
+        "public.is_campaign_dm",
+        "public.map_combat_entries",
+        "public.map_combats"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.begin_map_motion_session",
+      "signature": "p_map uuid, p_kind text, p_piece uuid, p_ignore_collision boolean",
+      "sourceMd5": "776953dfcdf6fbed14a360db96faa6bf",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.movement_sessions",
+        "public.begin_map_motion_session",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.begin_world_motion_v2",
+      "signature": "p_map uuid, p_selection jsonb, p_origin jsonb, p_mode text, p_environment_revision bigint, p_permission_generation bigint, p_collision_override boolean",
+      "sourceMd5": "17b6d0f02051fadf17e222c7ec3c9551",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_world_v2.gesture_budgets",
+        "forge_world_v2.motion_sessions",
+        "forge_world_v2.valid_point",
+        "public.begin_world_motion_v2",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.can_observe_map_position",
+      "signature": "p_map uuid, px double precision, py double precision",
+      "sourceMd5": "a17e07961aef3800e64b6c8f6020f12d",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.point_visible",
+        "public.can_observe_map_position",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.can_observe_map_token",
+      "signature": "p_token uuid",
+      "sourceMd5": "fb1ebd4acfc8c07f39e8b9d650ff2f6f",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.point_visible",
+        "public.can_observe_map_token",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.can_player_place_map_piece",
+      "signature": "p_map uuid, px double precision, py double precision",
+      "sourceMd5": "b01aa3aba2ec7f3b7647063f3637b59d",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.point_visible",
+        "public.can_player_place_map_piece",
+        "public.can_view_campaign_map",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.can_view_campaign_map",
+      "signature": "p_campaign uuid, p_map uuid",
+      "sourceMd5": "8a5483194016397ed3e90826eb17cd52",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.cancel_world_motion_v2",
+      "signature": "p_session uuid",
+      "sourceMd5": "08649a3601df7c49a44e417ecb5771e0",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.cancel_world_motion_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "public.cast_collection_spell",
+      "signature": "p_campaign_id uuid, p_source_id uuid, p_collection_id text, p_entry_id text, p_source_type text, p_mode text",
+      "sourceMd5": "404b04ef9d9e370c3c2c8d90548ca744",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.cast_collection_spell",
+        "public.chat_messages",
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.roll_spell_expression"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.claim_campaign_sheet_item",
+      "signature": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_takeover boolean",
+      "sourceMd5": "c26508eac9684221933d67d9d8a9e7ed",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_edit_campaign_sheet_inventory",
+        "public.claim_campaign_sheet_item",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.claim_campaign_tool_item",
+      "signature": "p_issue uuid, p_item uuid, p_takeover boolean",
+      "sourceMd5": "a9044d3dbf5988c0d72c8594a7f6bf5e",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.claim_campaign_tool_item",
+        "public.is_campaign_dm",
+        "public.is_campaign_member"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.collect_campaign_map_pin",
+      "signature": "p_pin uuid",
+      "sourceMd5": "d4227cd72a8df8df6d78c0f33a37d18e",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map",
+        "public.collect_campaign_map_pin",
+        "public.is_campaign_member"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.command_map_combat",
+      "signature": "p_map uuid, p_action text, p_entry uuid, p_score integer",
+      "sourceMd5": "eec43c9d64eb202549607a6acc3a9533",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.combat_publish",
+        "public.command_map_combat",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.commit_world_motion_v2",
+      "signature": "p_session uuid, p_seq bigint, p_endpoint jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "sourceMd5": "f87014e7a967d1db1262dabe9e125552",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_world_v2.commit_checkpoints",
+        "forge_world_v2.session_valid",
+        "forge_world_v2.step_allowed",
+        "forge_world_v2.valid_point",
+        "public.can_view_campaign_map",
+        "public.commit_world_motion_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.create_campaign",
+      "signature": "p_name text",
+      "sourceMd5": "f7cb199e56d42db3a803f3bd39a7ce14",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.campaign_members",
+        "public.campaigns",
+        "public.characters",
+        "public.create_campaign"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.dm_give_inventory_item",
+      "signature": "p_character uuid, p_inventory_field text, p_item jsonb",
+      "sourceMd5": "6b99863f7d6b8e838caab1ddcd189264",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.dm_give_inventory_item",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.end_authorized_navigation_gesture",
+      "signature": "p_session uuid",
+      "sourceMd5": "1fdec5d9bdf976ca8f91a279bbfd658e",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.end_authorized_navigation_gesture"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "public.end_map_motion_previews",
+      "signature": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "sourceMd5": "6e72231f144469c3fc4f296b16726966",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.end_map_motion_previews"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "public.end_map_motion_sessions",
+      "signature": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "sourceMd5": "cd5af233b95d16f59b2bf4f14e481444",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.end_map_motion_previews",
+        "public.end_map_motion_sessions"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "public.get_authorized_map_combat",
+      "signature": "p_map uuid",
+      "sourceMd5": "1f7485ca13e9a8b73718c465cd821d6b",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_observe_map_token",
+        "public.can_view_campaign_map",
+        "public.get_authorized_map_combat",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_authorized_map_fog",
+      "signature": "p_map uuid",
+      "sourceMd5": "1b18bbb636abd5694b33db4be6e71634",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.exploration",
+        "forge_visibility.is_lit",
+        "forge_visibility.ray_blocked",
+        "public.can_view_campaign_map",
+        "public.get_authorized_map_fog",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_authorized_map_fog_delta",
+      "signature": "p_map uuid, p_base_epoch uuid, p_base_revision bigint, p_base_sequence bigint",
+      "sourceMd5": "0a3c800e678225ef2f4025eabc10d632",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "forge_visibility.fog_cells_diff",
+        "forge_visibility.viewer_fog_snapshots",
+        "public.get_authorized_map_fog_delta",
+        "public.get_authorized_map_fog_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-fog-auth"
+    },
+    {
+      "name": "public.get_authorized_map_fog_v2",
+      "signature": "p_map uuid",
+      "sourceMd5": "71f3076ebe2f4ba25a709fff21d6c2ec",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.get_authorized_map_fog",
+        "public.get_authorized_map_fog_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-fog-auth"
+    },
+    {
+      "name": "public.get_authorized_map_light_masks",
+      "signature": "p_map uuid",
+      "sourceMd5": "9cc187424661397d55765bf8d945d072",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.point_visible",
+        "forge_visibility.ray_blocked",
+        "public.can_view_campaign_map",
+        "public.get_authorized_map_fog",
+        "public.get_authorized_map_light_masks",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_authorized_map_light_masks_v2",
+      "signature": "p_map uuid",
+      "sourceMd5": "206bb2902af7b31a4d23c1cbb873cb0a",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map",
+        "public.get_authorized_map_light_masks",
+        "public.get_authorized_map_light_masks_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_authorized_map_navigation",
+      "signature": "p_map uuid, p_kind text, p_piece uuid",
+      "sourceMd5": "12fd6cd16a8f83fff7b3adeeb82b6ba5",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.navigation_position_observed",
+        "forge_visibility.swept_hits_segment",
+        "forge_visibility.wall_passes",
+        "public.can_view_campaign_map",
+        "public.get_authorized_map_fog_v2",
+        "public.get_authorized_map_navigation",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_campaign_account_names",
+      "signature": "p_campaign uuid",
+      "sourceMd5": "02b5719733369326e38deea5324bce3d",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.get_campaign_account_names",
+        "public.is_campaign_member"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_campaign_sheet_inventory",
+      "signature": "p_campaign uuid, p_source text, p_source_id uuid, p_field text",
+      "sourceMd5": "c73822a59e8d91665d18bd34184054e2",
+      "referencesAuthUid": false,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.can_edit_campaign_sheet_inventory",
+        "public.get_campaign_sheet_inventory"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-sheet-authority-revoked-owner-gap"
+    },
+    {
+      "name": "public.get_dm_map_npc_values",
+      "signature": "p_map uuid",
+      "sourceMd5": "681351605a7ca07859ef1906a344a44b",
+      "referencesAuthUid": false,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.get_dm_map_npc_values",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_npc_token_values",
+      "signature": "p_token uuid",
+      "sourceMd5": "1c80fff1a25cd9800e9d62d1f85c83b0",
+      "referencesAuthUid": false,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.get_npc_token_values",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_token_encumbrance_badges",
+      "signature": "p_map uuid",
+      "sourceMd5": "39c793cd962fd2d46e2d5e032691b268",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_observe_map_token",
+        "public.can_view_campaign_map",
+        "public.get_token_encumbrance_badges",
+        "public.inventory_encumbrance_badge",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_token_monitor_values",
+      "signature": "p_map uuid",
+      "sourceMd5": "40fc587d72a4ce4a3f70e08b9d675530",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_observe_map_token",
+        "public.can_view_campaign_map",
+        "public.get_token_monitor_values",
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.token_reference_value"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_token_quick_values",
+      "signature": "p_token uuid",
+      "sourceMd5": "15d99e615d72cd4377fd2139b7673afc",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map",
+        "public.get_token_quick_values",
+        "public.is_campaign_dm",
+        "public.is_campaign_member"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_world_observer_cursor_v2",
+      "signature": "p_map uuid",
+      "sourceMd5": "a4a998b12ed0ecdec2cb769ce1c3fd08",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map",
+        "public.get_world_observer_cursor_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_world_scene_v2",
+      "signature": "p_map uuid",
+      "sourceMd5": "acf9dd79f6ec4be18161bacc3c10eec3",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map",
+        "public.get_world_scene_v2",
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.get_world_visibility_v2",
+      "signature": "p_map uuid",
+      "sourceMd5": "88f8da7421b36f5375aa26e798a4a08b",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "forge_world_v2.visibility_frame_v2",
+        "public.get_world_visibility_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-vision-auth"
+    },
+    {
+      "name": "public.is_campaign_dm",
+      "signature": "c uuid",
+      "sourceMd5": "761e36fe534a830e6008148027bdee49",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.is_campaign_dm"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.is_campaign_member",
+      "signature": "c uuid",
+      "sourceMd5": "6070d2183cba554b5654bd15263c91ac",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.is_campaign_member"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.is_map_fog_published",
+      "signature": "p_map uuid",
+      "sourceMd5": "8841970de390b1eaef9dbd0f0886ed81",
+      "referencesAuthUid": false,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.is_map_fog_published"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "direct-fog-metadata-no-auth-check"
+    },
+    {
+      "name": "public.join_campaign",
+      "signature": "p_invite_code text",
+      "sourceMd5": "12759680e1e37d0617d3722e6f2ae8c6",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.campaign_members",
+        "public.characters",
+        "public.join_campaign"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.move_entire_party_to_map",
+      "signature": "p_campaign uuid, p_map uuid",
+      "sourceMd5": "2e7de20ead8eb0dd156fe4e6f2f08bb7",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.is_campaign_dm",
+        "public.move_entire_party_to_map"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.mutate_campaign_sheet_item",
+      "signature": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_row jsonb, p_remove boolean",
+      "sourceMd5": "0489adcc6b085b19876a0016d5ff718e",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.can_edit_campaign_sheet_inventory",
+        "public.mutate_campaign_sheet_item"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-sheet-authority-revoked-owner-gap"
+    },
+    {
+      "name": "public.mutate_campaign_tool_item",
+      "signature": "p_issue uuid, p_item uuid, p_row jsonb, p_remove boolean",
+      "sourceMd5": "d3a791e8320e4fb20fdc54d33f679b01",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.mutate_campaign_tool_item"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.patch_campaign_sheet_noninventory",
+      "signature": "p_campaign uuid, p_source text, p_source_id uuid, p_values jsonb, p_meta jsonb",
+      "sourceMd5": "88ef44be3ec6ec75dfec0fffa1a0e962",
+      "referencesAuthUid": false,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.can_edit_campaign_sheet",
+        "public.patch_campaign_sheet_noninventory"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-sheet-authority-revoked-owner-gap"
+    },
+    {
+      "name": "public.patch_campaign_tool_details",
+      "signature": "p_issue uuid, p_lit boolean, p_attrs jsonb",
+      "sourceMd5": "5a785ef08232fb1557083d75696a4d39",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.patch_campaign_tool_details"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.post_token_reference",
+      "signature": "p_token uuid, p_code text",
+      "sourceMd5": "4cc8597b2f48ada0755cd2cc3911c43e",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map",
+        "public.chat_messages",
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.post_token_reference",
+        "public.token_reference_value"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.preview_map_motion",
+      "signature": "p_map uuid, p_kind text, p_piece uuid, p_x integer, p_y integer, p_seq bigint, p_ignore_collision boolean",
+      "sourceMd5": "51a0a583cedeeab8588e2a2cad1d602a",
+      "referencesAuthUid": false,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "forge_visibility.dispatch_movement_preview",
+        "public.preview_map_motion"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "delegated-motion-guard"
+    },
+    {
+      "name": "public.preview_world_visibility_at_v2",
+      "signature": "p_map uuid, p_viewer uuid, p_token uuid, p_x integer, p_y integer",
+      "sourceMd5": "ace22c9d015a93594230bd76bd6bcfdd",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_world_v2.visibility_frame_v2",
+        "public.is_campaign_dm",
+        "public.preview_world_visibility_at_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.preview_world_visibility_v2",
+      "signature": "p_map uuid, p_viewer uuid",
+      "sourceMd5": "ee2f4c14542f0aebb721442bfc3966f9",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_world_v2.visibility_frame_v2",
+        "public.is_campaign_dm",
+        "public.preview_world_visibility_v2"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.publish_map_environment",
+      "signature": "p_map uuid, p_action text",
+      "sourceMd5": "4207656cec64f726dde56d810ed52728",
+      "referencesAuthUid": false,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "forge_visibility.bump_tick",
+        "forge_visibility.map_rules",
+        "public.is_campaign_dm",
+        "public.publish_map_environment"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.release_campaign_sheet_item",
+      "signature": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid",
+      "sourceMd5": "63adf4a53e129bae4c12f4262ed45cc2",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.release_campaign_sheet_item"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "public.release_campaign_tool_item",
+      "signature": "p_issue uuid, p_item uuid",
+      "sourceMd5": "ea08e722950efb66e186b4e761c27cdc",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": false,
+      "staticQualifiedCalls": [
+        "public.release_campaign_tool_item"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "public.roll_dice",
+      "signature": "p_campaign_id uuid, p_expression text, p_label text, p_character_id uuid",
+      "sourceMd5": "507721296edfb3714fee22ae05bb8f26",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.chat_messages",
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.roll_dice"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.roll_equipment_weapon",
+      "signature": "p_campaign_id uuid, p_source_type text, p_source_id uuid, p_field_id text, p_weapon_id text",
+      "sourceMd5": "89fed35fcc4ee595830ac805bed9bf49",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.chat_messages",
+        "public.equipment_numeric",
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.roll_equipment_weapon",
+        "public.roll_spell_expression"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.roll_map_combat_initiative",
+      "signature": "p_map uuid, p_entry uuid",
+      "sourceMd5": "dbed737ecae1f5804098d8176bfea002",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_view_campaign_map",
+        "public.chat_messages",
+        "public.combat_publish",
+        "public.is_campaign_dm",
+        "public.roll_map_combat_initiative"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.roll_map_npc_initiative",
+      "signature": "p_map uuid",
+      "sourceMd5": "2041e8b406f6bdfa0e3f1a3b5d03b0e4",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.is_campaign_dm",
+        "public.roll_map_combat_initiative",
+        "public.roll_map_npc_initiative"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.run_tabletop_macro",
+      "signature": "p_macro_id uuid",
+      "sourceMd5": "f5e3eef93f741cd95617b51d53a397c6",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.chat_messages",
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.resolve_tabletop_macro_quickcodes",
+        "public.resolve_tabletop_modifier_values",
+        "public.roll_spell_expression",
+        "public.run_tabletop_macro",
+        "public.tabletop_macro_natural_d20",
+        "public.valid_tabletop_macro_rows"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.set_token_quick_value",
+      "signature": "p_token uuid, p_field text, p_part text, p_value numeric",
+      "sourceMd5": "641dc18345df966b499a654bb48ae288",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.set_token_quick_value"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    },
+    {
+      "name": "public.transfer_campaign_inventory_item",
+      "signature": "p_campaign uuid, p_sheet uuid, p_field text, p_issue uuid, p_item uuid, p_direction text, p_x integer, p_y integer",
+      "sourceMd5": "27bb829f1a4b84a4070102139ad55359",
+      "referencesAuthUid": true,
+      "hasDirectGuardText": true,
+      "staticQualifiedCalls": [
+        "public.can_edit_campaign_sheet_inventory",
+        "public.find_campaign_inventory_transfer_slot",
+        "public.is_campaign_dm",
+        "public.is_campaign_member",
+        "public.transfer_campaign_inventory_item"
+      ],
+      "reviewState": "REQUIRES_MANUAL_TRANSITIVE_REVIEW",
+      "priorR129Classification": null
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+name: World V2 R18-130 source-only RPC and Realtime subscriber audit
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-130-*'
+    paths:
+      - '.github/workflows/world-v2-r18-130-rpc-stream-audit.yml'
+      - 'staging/world-v2-b10-r18-130-rpc-realtime-subscription-audit/**'
+      - 'tests/world-v2-r18-130-rpc-realtime-audit.test.mjs'
+      - 'docs/testing/world-v2-r18-130-rpc-stream-cutover-audit-2026-11-19.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-129-*'
+    paths:
+      - '.github/workflows/world-v2-r18-130-rpc-stream-audit.yml'
+      - 'staging/world-v2-b10-r18-130-rpc-realtime-subscription-audit/**'
+      - 'tests/world-v2-r18-130-rpc-realtime-audit.test.mjs'
+permissions:
+  contents: read
+jobs:
+  audit-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout complete source history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prove client and versioned migrations are unchanged
+        run: git diff --exit-code 31779ef3b1829f227c976c78144d748acd938c64 HEAD -- src/ supabase/migrations/
+      - name: Audit all 67 privileged definition hashes and all Postgres Changes listeners
+        run: node --test tests/world-v2-r18-130-rpc-realtime-audit.test.mjs
+      - name: Hold deployment
+        run: echo 'R18-130 NO_GO - source parity is not a signed Realtime revocation test or a safe legacy-client fence.'
