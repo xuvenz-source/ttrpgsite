@@ -77,10 +77,15 @@
     231
   ],
   "tests": {
-    "dedicated": "PENDING_CI",
-    "standardRepository": "PENDING_CI",
-    "combinedStagingSql": "PENDING_CI",
-    "realSignedQa": "NOT_RUN"
+    "dedicated": "PASSED_EXACT_IMPLEMENTATION_SOURCE_HEAD",
+    "standardRepository": "PASSED_EXACT_IMPLEMENTATION_SOURCE_HEAD",
+    "combinedStagingSql": "IN_PROGRESS_AT_RECORD",
+    "realSignedQa": "NOT_RUN",
+    "verifiedImplementationSha": "a1e3f270e2938dc0f2b100723d15fcab14766a7a",
+    "dedicatedPrRunId": 44534976387,
+    "standardPrRunId": 44534976196,
+    "combinedPushRunId": 44534962277,
+    "postManifestCommitExactHeadRecheckRequired": true
   },
   "noHostedSqlWrites": true,
   "noVersionedMigrations": true,
@@ -91,5 +96,6 @@
   "productionReleaseAuthorized": false,
   "actualServerSideRevocationComplete": false,
   "signedRealtimeQaPassed": false,
-  "preIssuedStorageUrlsRevoked": false
+  "preIssuedStorageUrlsRevoked": false,
+  "releaseGate": "NO_GO_ALL_HOSTED_AND_PRODUCTION"
 }
