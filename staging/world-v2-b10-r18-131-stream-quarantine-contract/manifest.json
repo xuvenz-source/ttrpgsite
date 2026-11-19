@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-131",
+  "date": "2026-11-20",
+  "decision": "NO_GO",
+  "parentPr": 238,
+  "parentSha": "bac02f6bc9769fd5ddc9dc3e6a91b4fa44c0b20e",
+  "repository": "xuvenz-source/ttrpgsite",
+  "originalSupabase": "lwhwgqaunxbmvyndswze",
+  "qaSupabase": "bgydsamxypjslergfpla",
+  "parentR130ExactHeadChecks": {
+    "source": 44503238091,
+    "build": 44503238113,
+    "combinedSql": 44503238086,
+    "allPassed": true
+  },
+  "originalMigrationsReadOnlyObserved": 83,
+  "qaMigrationsReadOnlyObserved": 0,
+  "originalLiveState": {
+    "sharedV2SceneReceivePolicy": true,
+    "v3RecipientSceneReceivePolicy": false,
+    "v3ChannelIssuanceRpc": false,
+    "appRealtimePostgresChangesPublishedTables": 17,
+    "allPublishedTablesDefaultReplicaIdentity": true,
+    "mapTokensAuthenticatedBaseTableSelectPrivilege": false,
+    "broadcastReceivePolicies": 5,
+    "broadcastSendPolicies": 1
+  },
+  "sourceAudit": {
+    "pinnedListenerDeclarations": 19,
+    "wildcardPostgresChangesDeclarations": 16,
+    "observedSourceFiles": 7,
+    "explicitColumnProjections": 0,
+    "futureRefreshOnlyHandlers": 15,
+    "futureValidatedPayloadHandlers": 4,
+    "legacyBroadcastSurfacesReviewed": 4,
+    "publicRoutingBroadcastPrivate": false,
+    "observerV2BroadcastPrivate": true,
+    "sceneV2BroadcastPrivate": true,
+    "mapMeasureBroadcastPrivate": true
+  },
+  "sourceOnlyCandidate": {
+    "module": "staging/world-v2-b10-r18-131-stream-quarantine-contract/StreamRevocationQuarantine.mjs",
+    "matrix": "staging/world-v2-b10-r18-131-stream-quarantine-contract/stream-risk-matrix.json",
+    "tests": "tests/world-v2-r18-131-stream-quarantine.test.mjs",
+    "runbook": "docs/testing/world-v2-r18-131-revocation-stream-cutoff-2026-11-20.md",
+    "sourceImportedByProduction": false,
+    "clientMasksBeforeAsyncSubscriptionRemoval": true,
+    "clientRequiresFreshR123SignedMembershipProof": true,
+    "oldEpochCallbacksRejected": true,
+    "oldChannelsNeverReused": true,
+    "deleteRawRowNotForwardedByProposedGuard": true,
+    "oldSocketNetworkDeliveryStopped": false,
+    "noNewMovementOrRendererNetworkCalls": true,
+    "signedAssetsClearedByGuard": false,
+    "r123SentinelConnectedToProduction": false,
+    "r123TeardownConnectedToProduction": false,
+    "hostedV3SceneReceiverInstalled": false
+  },
+  "remainingReleaseBlockers": [
+    "R123 synchronous host mask and unmount need actual integration",
+    "R125/R126 private V3 scene topic deployment uninstalled",
+    "server-enforced old-client read/write and Broadcast/PG Changes fence absent",
+    "already-connected old sockets not forcibly invalidated",
+    "real signed DM P1 P2 outsider and revoked/reinstated tests missing",
+    "67 privileged RPC paths not semantically audited",
+    "83 original migration bodies not fully reviewed",
+    "preissued Storage signed URLs remain valid until expiry (#231)",
+    "in-flight unauthorized UPDATE/DELETE and service_role paths unverified",
+    "movement/fog performance and free-tier fanout unmeasured"
+  ],
+  "unresolvedIssueNumbers": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "tests": {
+    "dedicated": "PENDING_CI",
+    "standardRepository": "PENDING_CI",
+    "combinedStagingSql": "PENDING_CI",
+    "realSignedQa": "NOT_RUN"
+  },
+  "noHostedSqlWrites": true,
+  "noVersionedMigrations": true,
+  "noLiveSrcChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "productionReleaseAuthorized": false
+}
