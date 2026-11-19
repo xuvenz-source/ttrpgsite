@@ -72,7 +72,7 @@ SELECT pg_catalog.set_config('request.jwt.claim.scene_topic',
 DO $assert$
 BEGIN
  IF (SELECT count(*) FROM realtime.messages)<>1 THEN
-  RAISE EXCEPTION 'R126 P1 could not read own message or read other users';END IF;
+  RAISE EXCEPTION 'R126 P1 RLS rows=%, actor=%, topic=%, predicate=%', (SELECT count(*) FROM realtime.messages), auth.uid(), realtime.topic(), forge_scene_revoke.can_receive_scene_topic_v3(realtime.topic());END IF;
 END $assert$;
 COMMIT;
 
