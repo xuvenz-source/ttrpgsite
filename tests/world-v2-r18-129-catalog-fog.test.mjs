@@ -139,7 +139,7 @@ test('R129 future catalog recheck reads only metadata, never private user rows o
  assert.doesNotMatch(recheck,/^\s*(CREATE|ALTER|DROP|INSERT|UPDATE|DELETE|TRUNCATE|GRANT|REVOKE|COPY|DO)\b/gmi);
 });
 test('R129 handoff distinguishes confirmed oracle from speculative 15, and leaves streams unresolved',()=>{
- for(const str of ['15','67','17','seven','private','Postgres Changes','not a universal',
+ for(const str of ['15','67','17','seven','private','Postgres Changes','not a complete',
  'NO-GO','#231','no live leak','read-only'])
   assert.ok(doc.toLowerCase().includes(str.toLowerCase()),str);
  assert.equal(manifest.explicitRisks.liveFunctionGuardPatched,false);
