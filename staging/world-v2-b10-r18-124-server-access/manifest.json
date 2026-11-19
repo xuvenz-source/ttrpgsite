@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-124",
+  "date": "2026-11-19",
+  "decision": "NO_GO",
+  "parentPr": 230,
+  "parentSha": "a016b57380d68978ce1774ee17e2caccf1f02694",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "qaProjectRef": "bgydsamxypjslergfpla",
+  "originalMigrationCountObserved": 83,
+  "qaMigrationCountObserved": 0,
+  "qaPublicApplicationTableCountObserved": 0,
+  "verifiedLiveReadOnly": {
+    "membershipHelperReadsCurrentMembership": true,
+    "mapAuthorizationReadsCurrentMembership": true,
+    "movementSessionValidRechecksMapAccess": true,
+    "fogAndSceneRpcsInvokeMapAuthorization": true,
+    "approvedMotionObserverPublisherSelectsCurrentMembers": true,
+    "originalSheetOwnerHelperMissingMembershipCheck": true,
+    "privateBroadcastPoliciesPresent": true,
+    "storageArtworkMapSelectPoliciesPresent": true,
+    "campaignMembersPublishedByRealtime": false,
+    "currentSignedAssetUrlTtlSeconds": 3600
+  },
+  "isolatedPackage": {
+    "existingUnappliedSheetFix": "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql",
+    "pg17Fixtures": "tests/world-v2-r18-124-postgres/",
+    "reproducesSourceLevelOldRevokedOwnerGap": true,
+    "provesUpdatedSyntheticHelperDeniesRevokedOwner": true,
+    "validatesCurrentDmAndRestoredOwner": true,
+    "validatesCrossCampaignAndNullActorDenied": true,
+    "validatesFourDirectAclDenials": true,
+    "syntheticSqlTestStatus": "PENDING_CI",
+    "originalHostedSqlTested": false,
+    "actualHostedPrivilegedRpcTested": false
+  },
+  "surfaces": {
+    "movement": {
+      "finding": "Current World V2 movement validates campaign map access through live membership in session_valid; full RPC/transaction race audit still needed.",
+      "hostedRemovedUserProof": false
+    },
+    "fog": {
+      "finding": "Current authorized fog and scene RPCs derive access from current campaign_members via can_view_campaign_map; separate fog metadata oracle remains.",
+      "hostedRemovedUserProof": false
+    },
+    "sheets": {
+      "finding": "Current can_edit_campaign_sheet has a revoked character owner path; R18-115 repair is not applied to either hosted DB.",
+      "hostedPatchApplied": false,
+      "hostedRemovedUserProof": false
+    },
+    "storage": {
+      "finding": "Current signed-url creation is checked through Storage object policies, but an existing bearer URL can outlive membership; local clear may reissue while subscribed.",
+      "previouslyIssuedBearerUrlsRevoked": false,
+      "preexistingSubscriberReissueFixedInApp": false
+    },
+    "realtime": {
+      "finding": "Original Realtime private channel RLS authorization occurs on join/authorization and does not guarantee that an already-connected removed player loses their channel immediately.",
+      "existingConnectedChannelRevocationVerified": false,
+      "secureServerKickImplemented": false
+    }
+  },
+  "openSecurityIssueNumbers": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "originalPrivateMigrationBodiesFullyReviewed": false,
+  "allPrivilegedRpcsReviewed": false,
+  "signedDmP1P2OutsiderQaPassed": false,
+  "noLiveSourceChanges": true,
+  "noVersionedMigration": true,
+  "noHostedSqlWrites": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "productionReleaseAuthorized": false
+}
