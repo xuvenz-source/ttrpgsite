@@ -7,6 +7,7 @@ import {
 import {
  createCampaignRevocationTeardown,R123_SYNC_PURGE_STEPS,R123_ASYNC_PURGE_STEPS
 } from '../staging/world-v2-b10-r18-123-access-revocation-guard/CampaignRevocationTeardown.js';
+import {createSignedAssetStore} from '../src/SignedAssetUrls.js';
 
 const C='00000000-0000-4000-8000-000000000101';
 const C2='00000000-0000-4000-8000-000000000102';
@@ -346,4 +347,38 @@ test('R123 guard + teardown execute once after verified revocation, not untruste
  await c.begin({campaignId:C,userId:P});
  assert.equal((await teardown.controller.revoke().finished).status,'complete');
  assert.equal(teardown.calls.filter(x=>x==='maskCampaign').length,1);
+});
+
+test('R123 existing signed-URL store reissues URL if clear occurs before artwork unmount',async()=>{
+ let signed=0;
+ const store=createSignedAssetStore({
+  now:()=>0,setTimer:()=>1,clearTimer:()=>{},
+  sign:async()=>({data:{signedUrl:'synthetic-url-'+(++signed)},error:null})
+ });
+ const fakeDb={};
+ const unmount=store.subscribe(fakeDb,'synthetic','map.png',()=>{});
+ await store.get(fakeDb,'synthetic','map.png');
+ assert.equal(signed,1);
+ store.clear();
+ // The real implementation deliberately refreshes active subscribers.
+ await flush();await store.get(fakeDb,'synthetic','map.png');
+ assert.equal(signed,2);
+ unmount();
+});
+
+test('R123 unmount before signed-URL clear avoids reissuance to revoked subscriber',async()=>{
+ let signed=0;
+ const store=createSignedAssetStore({
+  now:()=>0,setTimer:()=>1,clearTimer:()=>{},
+  sign:async()=>({data:{signedUrl:'synthetic-url-'+(++signed)},error:null})
+ });
+ const db={};
+ const unsubscribe=store.subscribe(db,'synthetic','token.png',()=>{});
+ await store.get(db,'synthetic','token.png');
+ assert.equal(signed,1);
+ unsubscribe();
+ store.clear();
+ await flush();
+ assert.equal(signed,1);
+ assert.equal(store.stats().subscribers,0);
 });
