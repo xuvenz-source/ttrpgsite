@@ -114,6 +114,15 @@ test('R126 PG17 source runner cannot connect to hosted Supabase',()=>{
  assert.match(runner,/permission denied for function/);
  assert.match(runner,/permission denied for table/);
 });
+test('R126 synchronous mask happens BEFORE a scene invalidation callback',async()=>{
+ const f=fixture(),t=f.create();
+ const pending=t.enter();
+ assert.deepEqual(f.events.slice(0,2),
+  ['lock:revalidating','invalidate:scene-v3-revalidating']);
+ assert.equal(f.calls.identity,0);
+ await pending;await t.dispose();
+});
+
 test('R126 future scene client masks synchronously and authorizes ONLY after fresh read',async()=>{
  const f=fixture();const t=f.create();
  const started=t.enter();assert.equal(f.calls.lock,1);
