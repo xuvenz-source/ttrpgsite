@@ -80,23 +80,23 @@ CREATE FUNCTION forge_scene_revoke.can_receive_scene_topic_v3(p_topic text)
 RETURNS boolean
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=''
 AS $receive$
-DECLARE map_id uuid;viewer_id uuid;topic_epoch uuid;
+DECLARE v_map_id uuid;v_viewer_id uuid;v_topic_epoch uuid;
 BEGIN
  IF auth.uid() IS NULL OR p_topic IS NULL OR
   p_topic !~ '^forge-world-scene-v3:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
  THEN RETURN false;END IF;
- map_id:=split_part(p_topic,':',2)::uuid;
- viewer_id:=split_part(p_topic,':',3)::uuid;
- topic_epoch:=split_part(p_topic,':',4)::uuid;
- IF viewer_id IS DISTINCT FROM auth.uid() THEN RETURN false;END IF;
+ v_map_id:=split_part(p_topic,':',2)::uuid;
+ v_viewer_id:=split_part(p_topic,':',3)::uuid;
+ v_topic_epoch:=split_part(p_topic,':',4)::uuid;
+ IF v_viewer_id IS DISTINCT FROM auth.uid() THEN RETURN false;END IF;
  RETURN EXISTS(
   SELECT 1 FROM forge_scene_revoke.member_scene_epochs l
   JOIN public.campaign_members cm
    ON cm.campaign_id=l.campaign_id AND cm.user_id=l.user_id
   JOIN public.battle_maps bm
    ON bm.campaign_id=l.campaign_id AND bm.id=l.map_id
-  WHERE l.map_id=map_id AND l.user_id=viewer_id
-   AND l.epoch=topic_epoch AND cm.role IN ('dm','player')
+  WHERE l.map_id=v_map_id AND l.user_id=v_viewer_id
+   AND l.epoch=v_topic_epoch AND cm.role IN ('dm','player')
    AND public.can_view_campaign_map(l.campaign_id,l.map_id)
  );
 END $receive$;
