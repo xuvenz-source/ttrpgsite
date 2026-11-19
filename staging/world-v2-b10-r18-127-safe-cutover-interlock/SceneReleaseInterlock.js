@@ -14,10 +14,6 @@ export const R127_LIVE_ENABLED=false;
 export const R127_REVISION='B10-R18-127';
 const SHA=/^[0-9a-f]{40}$/;
 const RECEIPT=/^[a-zA-Z0-9][a-zA-Z0-9._:/#-]{11,299}$/;
-const phases=Object.freeze([
- 'planning','fenced','server-v3','client-v3','signed-qa-v3',
- 'ready-for-human-release-review','abort-required','aborted-fenced'
-]);
 const required=Object.freeze({
  fence:Object.freeze([
   'maintenanceWindowConfirmed',
@@ -54,23 +50,23 @@ const required=Object.freeze({
   'signedDmP1P2OutsiderScenariosPassed',
   'removedAndReinstatedAccountScenariosPassed',
   'oldConnectedSocketReceivesNoNewData',
-  'storageIssuedUrlRiskResolvedOrExplicitlyAccepted',
+  'signedStorageAccessExposureRemediated',
   'all67PrivilegedRpcReviewCompleted',
   'all83OriginalMigrationBodyReviewCompleted',
-  'originalSecurityIssuesResolvedOrReleaseWaived',
+  'criticalRevocationAndPrivilegeIssuesResolved',
   'noFogFlashNoMovementLagRegression',
   'recipientFanoutAndFreeTierBudgetsMet',
   'abortAndRecoveryDrillPassed'
  ]),
  release:Object.freeze([
-  'releaseOwnerExplicitApprovalRecorded',
+  'releaseReviewOwnerAssigned',
   'samePinnedShaForClientServerAndQa',
   'productionPreflightRechecked',
   'maintenanceFenceExitPlanReviewed',
   'oldClientDenialContinuesAfterUnseal',
   'v3SignedActorFreshSceneConfirmed',
   'noUnsafeV2RollbackPath',
-  'outstandingSecurityExceptionsAccepted'
+  'noOutstandingCriticalSecurityExceptions'
  ]),
  abortFence:Object.freeze([
   'serverSideMaintenanceFenceConfirmed',
@@ -106,9 +102,11 @@ export function createSceneReleaseInterlock({
  if(!SHA.test(candidateSha||'')||!SHA.test(expectedParentSha||'')||
   !RECEIPT.test(attemptId||''))throw fail('invalid_release_identity');
  let phase='planning',proofs=[],seen=new Set(),aborted=false;
+ let abortReason=null,abortedFrom=null;
  const snapshot=()=>Object.freeze({
   phase,attemptId,candidateSha,expectedParentSha,
-  attested:proofs.map(x=>x.step),
+  attested:Object.freeze(proofs.map(x=>x.step)),
+  abortReason,abortedFrom,
   productionAuthorized:false,
   hostedActionPerformed:false,
   canRequestHumanReleaseReview:phase==='ready-for-human-release-review',
@@ -143,6 +141,8 @@ export function createSceneReleaseInterlock({
   if(typeof reason!=='string'||reason.trim().length<8)
    throw fail('abort_reason_required');
   if(phase==='aborted-fenced')return snapshot();
+  if(!aborted)abortedFrom=phase;
+  abortReason=reason.trim();
   phase='abort-required';aborted=true;
   // This DOES NOT imply traffic has actually stopped. Host MUST engage
   // independent server-side fence and then attest that fact.
@@ -158,7 +158,6 @@ export function createSceneReleaseInterlock({
   abort,
   attestAbortFence:proof=>transition(
    'abort-required','aborted-fenced','abortFence',proof),
-  snapshot,
-  get attestationSteps(){return [...phases]}
+  snapshot
  });
 }
