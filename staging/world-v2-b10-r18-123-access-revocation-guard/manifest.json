@@ -59,15 +59,20 @@
   "test": {
     "source": "tests/world-v2-r18-123-access-revocation-guard.test.mjs",
     "sourceOnlyNodeTestsPassed": true,
-    "releasePinnedR80R81ChecksPassed": false,
-    "standardRepoBuildAndSecurityChecksPassed": false,
+    "releasePinnedR80R81ChecksPassed": true,
+    "standardRepoBuildAndSecurityChecksPassed": true,
     "signedUrlReissueRegressionPassed": true,
     "simulatedRestoredMemberAfterExplicitReentryPassed": true,
     "exactPrivateOriginalSqlExecuted": false,
     "originalOrQaSqlExecuted": false,
     "sourceOnlyNodeTestCount": 31,
     "sourceOnlyNodeWorkflowRun": 44447589585,
-    "exactHeadCiRecheckRequired": true
+    "exactHeadCiRecheckRequired": true,
+    "lastFullyVerifiedSourceHead": "81ab41ff74f00e54eafb75e9dec1d813b5b36922",
+    "lastFullyVerifiedSourceHeadRuns": {
+      "sourceOnly": 44447776216,
+      "standard": 44447776215
+    }
   },
   "openSecurityGates": [
     "Proposed client sentinel is not mounted or connected to production",
