@@ -29,7 +29,10 @@
     "allPublishedTablesHaveDefaultReplicaIdentity": true,
     "replicaIdentityDefaultCount": 17,
     "replicaIdentityFullCount": 0,
-    "filteredWildcardDeleteNotReliableRevocationSignal": true
+    "filteredWildcardDeleteNotReliableRevocationSignal": true,
+    "publicDefinerCatalogEntryCount": 67,
+    "metadataOnlySourceHashCount": 67,
+    "sourceCodeSubscriptionBaselineMatched": true
   },
   "streamSecurity": {
     "livePostgresChangesRevocationVerified": false,
@@ -39,7 +42,7 @@
     "privateRlsSignedQaPerformed": false,
     "subscriberDisconnectProofPerformed": false,
     "clientUnsubscriptionIntegrated": false,
-    "sourceSubscriptionAuditPassed": false,
+    "sourceSubscriptionAuditPassed": true,
     "listenerBaselinePinned": true
   },
   "verifiedLiveSignedRpcAuthorization": false,
@@ -51,9 +54,15 @@
     "sourceTests": "tests/world-v2-r18-130-rpc-realtime-audit.test.mjs"
   },
   "tests": {
-    "source": "PENDING",
-    "standard": "PENDING",
-    "combined": "PENDING"
+    "source": "SUCCESS",
+    "standard": "SUCCESS",
+    "combined": "SUCCESS",
+    "lastFullyVerifiedImplementationHead": "ffd354a8765e69f4c2ca171282ec55f93f1ce25e",
+    "sourcePrRunId": 44502844640,
+    "standardPrRunId": 44502844812,
+    "combinedStagingOnlyPushRunId": 44502632066,
+    "postEvidenceCommitExactHeadRecheckRequired": true,
+    "signedHostedTest": "NOT_RUN"
   },
   "noHostedWrites": true,
   "noLiveRuntimeChanges": true,
@@ -61,5 +70,8 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "originalMigrationCountObserved": 83,
+  "qaMigrationCountObserved": 0,
+  "qaApplicationTableCountObserved": 0
 }
