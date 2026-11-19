@@ -1,0 +1,322 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-131",
+  "date": "2026-11-20",
+  "sourceCommit": "bac02f6bc9769fd5ddc9dc3e6a91b4fa44c0b20e",
+  "sourceAuditPr": 238,
+  "sourceAuditCiRun": 44503238091,
+  "observedHandlers": 19,
+  "wildcardDeclarations": 16,
+  "observedFiles": 7,
+  "validatedPayloadCandidates": 4,
+  "refreshOnlyCandidates": 15,
+  "defaultReplicaIdentityPublishedTables": 17,
+  "invariant": "This is a future refactor contract only; existing src listeners are unchanged.",
+  "handlers": [
+    {
+      "file": "src/TabletopApp.jsx",
+      "line": 1072,
+      "table": "campaign_player_maps",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "currently reads event.new.user_id; replace with membership-checked routing requery"
+    },
+    {
+      "file": "src/TabletopApp.jsx",
+      "line": 1453,
+      "table": "map_tokens",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "validated-payload",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "existing immediate canonical-coordinate patch: require current signed map/roster validation, not per-frame RPC"
+    },
+    {
+      "file": "src/TabletopApp.jsx",
+      "line": 1502,
+      "table": "campaigns",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/TabletopApp.jsx",
+      "line": 1509,
+      "table": "npc_templates",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/TabletopApp.jsx",
+      "line": 1511,
+      "table": "battle_maps",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/TabletopApp.jsx",
+      "line": 1537,
+      "table": "chat_messages",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/TabletopApp.jsx",
+      "line": 1564,
+      "table": "characters",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useAuthorizedMapFog.js",
+      "line": 178,
+      "table": "map_viewer_visibility_ticks",
+      "observedEvent": "INSERT",
+      "currentlyDeleteCapable": false,
+      "currentlyHasFilter": true,
+      "proposedMode": "validated-payload",
+      "proposedDeleteTreatment": "not-subscribed",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "retain existing map+signed viewer tick verification; never subscribe to DELETE"
+    },
+    {
+      "file": "src/useAuthorizedMapFog.js",
+      "line": 180,
+      "table": "map_viewer_visibility_ticks",
+      "observedEvent": "UPDATE",
+      "currentlyDeleteCapable": false,
+      "currentlyHasFilter": true,
+      "proposedMode": "validated-payload",
+      "proposedDeleteTreatment": "not-subscribed",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "retain existing map+signed viewer tick verification; never subscribe to DELETE"
+    },
+    {
+      "file": "src/useAuthorizedMapFog.js",
+      "line": 183,
+      "table": "map_visibility_ticks",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "validated-payload",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "revision handling consumes event.new, never treat DELETE as signed fog frame"
+    },
+    {
+      "file": "src/useCampaignHandouts.js",
+      "line": 52,
+      "table": "campaign_handout_events",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useCampaignSheetInventory.js",
+      "line": 63,
+      "table": "target.table",
+      "observedEvent": "UPDATE",
+      "currentlyDeleteCapable": false,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "not-subscribed",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "dynamic characters/npc_templates/map_tokens source: re-query authorized sheet, not event JSON"
+    },
+    {
+      "file": "src/useCampaignSheetInventory.js",
+      "line": 66,
+      "table": "campaign_sheet_item_leases",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useCampaignToolCollaboration.js",
+      "line": 31,
+      "table": "campaign_tool_item_leases",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useCampaignTools.js",
+      "line": 115,
+      "table": "campaign_tool_issues",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useCampaignTools.js",
+      "line": 118,
+      "table": "campaign_tool_map_tokens",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useCampaignTools.js",
+      "line": 121,
+      "table": "campaign_tool_templates",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useMapCombat.js",
+      "line": 59,
+      "table": "map_combats",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    },
+    {
+      "file": "src/useMapCombat.js",
+      "line": 62,
+      "table": "map_visibility_ticks",
+      "observedEvent": "*",
+      "currentlyDeleteCapable": true,
+      "currentlyHasFilter": true,
+      "proposedMode": "refresh-only",
+      "proposedDeleteTreatment": "sanitized-requery-hint",
+      "needsFreshAccessOnReconnection": true,
+      "serverSignedRealtimeProof": false,
+      "note": "uses change as a re-fetch/invalidation hint; never forward untrusted record"
+    }
+  ],
+  "broadcastSurfaces": [
+    {
+      "file": "src/TabletopApp.jsx",
+      "topic": "vtt-routing-<campaign>",
+      "events": [
+        "routing-changed",
+        "monitors-changed"
+      ],
+      "privateConfigObserved": false,
+      "payloadUse": "refresh trigger; routing-changed includes kind/targetId and re-queries",
+      "risk": "public untrusted Broadcast could cause unwanted refresh; not server-authoritative",
+      "proposedBoundary": "client treats hints as untrusted, server rechecks campaign membership; consider private recipient topic"
+    },
+    {
+      "file": "src/TabletopApp.jsx",
+      "topic": "forge-map:<map>",
+      "events": [
+        "map-measure"
+      ],
+      "privateConfigObserved": true,
+      "payloadUse": "remote measurement coordinates and actor from an untrusted client packet",
+      "risk": "Realtime RLS join/send permission alone does not prove claimed actor or packet integrity",
+      "proposedBoundary": "signed actor/server-authorized sharing, strict schema and context, no new visibility grants"
+    },
+    {
+      "file": "src/engine/v2/SceneTransport.js",
+      "topic": "forge-world-scene-v2:<map>",
+      "events": [
+        "scene-revision-v2"
+      ],
+      "privateConfigObserved": true,
+      "payloadUse": "generation invalidation hint, not map geometry",
+      "risk": "existing shared V2 channel may remain joined after membership removal",
+      "proposedBoundary": "retire with R125/R126 per-recipient V3 and server-side old publisher cutoff"
+    },
+    {
+      "file": "src/engine/v2/RealtimeTransport.js",
+      "topic": "forge-world-v2:<map>:<viewer>",
+      "events": [
+        "motion",
+        "world-vision-v2"
+      ],
+      "privateConfigObserved": true,
+      "payloadUse": "observer path hints / signed sight revalidation",
+      "risk": "old joined observer channel still requires server-side emitter and epoch revocation proof",
+      "proposedBoundary": "R123 teardown plus R125/R126 signed epoch; observer sender current-recipient proof"
+    }
+  ],
+  "unreviewedSurfaces": [
+    "public and private Presence semantics",
+    "all 7 server Realtime senders",
+    "external/Edge/REST Broadcast publishers",
+    "Storage signed URL expiry",
+    "in-flight RPC reads and writes",
+    "real signed Postgres Changes DELETE behavior"
+  ],
+  "productionReady": false,
+  "originalOrQaDatabaseChanged": false
+}
