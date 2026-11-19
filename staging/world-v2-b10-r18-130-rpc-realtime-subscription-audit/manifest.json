@@ -25,7 +25,11 @@
       "npc_templates",
       "map_tokens"
     ],
-    "sourceReceiptCiRun": 44501859219
+    "sourceReceiptCiRun": 44501859219,
+    "allPublishedTablesHaveDefaultReplicaIdentity": true,
+    "replicaIdentityDefaultCount": 17,
+    "replicaIdentityFullCount": 0,
+    "filteredWildcardDeleteNotReliableRevocationSignal": true
   },
   "streamSecurity": {
     "livePostgresChangesRevocationVerified": false,
