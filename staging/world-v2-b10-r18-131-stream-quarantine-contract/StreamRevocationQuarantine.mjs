@@ -63,7 +63,7 @@ export function createStagedStreamQuarantine({
   !isFn(getContext)||!isFn(onMask)||!isFn(onFault))
   throw error('invalid_configuration');
  let phase='closed',revision=0,scope=null,disposed=false;
- let removalFailures=0;
+ let removalFailures=0,teardownUncertain=false,maskUnconfirmed=false;
  const channels=new Map(),everRegistered=new WeakSet(),retirements=new Set();
  const liveScope=()=>{try{return equivalent(scope,getContext())}catch{return false}};
  const current=(epoch)=>!disposed&&phase==='armed'&&revision===epoch&&
@@ -72,7 +72,8 @@ export function createStagedStreamQuarantine({
  const snapshot=()=>frozen({
   phase,armed:phase==='armed'&&liveScope()&&sentinel.snapshot()?.allowed===true,
   registeredChannels:channels.size,pendingRetirements:retirements.size,
-  removalFailures,disposed,serverAuthorizationProven:false,
+  removalFailures,teardownUncertain,maskUnconfirmed,disposed,
+  serverAuthorizationProven:false,
   oldSocketDeliveryStopped:false,productionReady:false
  });
 
@@ -97,14 +98,15 @@ export function createStagedStreamQuarantine({
     if(res!=='ok'){
      // Supabase JS returns 'ok', 'timed out' or 'error'. A timeout
      // must NOT re-open the view as though an old socket was removed.
-     removalFailures++;return false;
+     removalFailures++;teardownUncertain=true;return false;
     }
     return true;
-   }catch{removalFailures++;return false}
+   }catch{removalFailures++;teardownUncertain=true;return false}
   })).then(results=>results.every(Boolean));
   retirements.add(task);
   void task.finally(()=>retirements.delete(task));
-  if(maskFault){report('mask_not_synchronous');throw error('synchronous_mask_failed')}
+  if(maskFault){maskUnconfirmed=true;report('mask_not_synchronous');
+   throw error('synchronous_mask_failed')}
   return {epoch:revision,retirement:task};
  }
  async function reauthorize(kind,input){
@@ -116,6 +118,9 @@ export function createStagedStreamQuarantine({
     campaignId:input.campaignId,userId:input.userId,mapId:input.mapId||null
    }):null;
   }
+  // A failed mask/disconnect is terminal for this gate instance. A fresh
+  // membership proof cannot certify that an earlier socket was retired.
+  if(maskUnconfirmed||teardownUncertain)return false;
   if(!scope||!liveScope())return false;
   if(!(await prior.retirement)){
    report('channel_unsubscribe_failed');return false;
