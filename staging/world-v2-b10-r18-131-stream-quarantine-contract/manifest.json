@@ -55,7 +55,8 @@
     "signedAssetsClearedByGuard": false,
     "r123SentinelConnectedToProduction": false,
     "r123TeardownConnectedToProduction": false,
-    "hostedV3SceneReceiverInstalled": false
+    "hostedV3SceneReceiverInstalled": false,
+    "realR123SentinelIntegrationTestedInSyntheticNode": true
   },
   "remainingReleaseBlockers": [
     "R123 synchronous host mask and unmount need actual integration",
@@ -87,5 +88,8 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "actualServerSideRevocationComplete": false,
+  "signedRealtimeQaPassed": false,
+  "preIssuedStorageUrlsRevoked": false
 }
