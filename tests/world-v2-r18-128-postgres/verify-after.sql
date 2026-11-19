@@ -12,9 +12,8 @@ BEGIN
  IF (SELECT count(*) FROM realtime.messages
   WHERE event='scene-revision-v2')<>1
  THEN RAISE EXCEPTION 'R128 shared scene sender emitted during freeze';END IF;
- IF EXISTS(SELECT 1 FROM pg_get_functiondef(
-  'forge_world_v2.bump_scene_publication_v2(uuid)'::regprocedure)::text fn
-  WHERE fn ILIKE '%PERFORM realtime.send%')
+ IF position('realtime.send' in lower(pg_get_functiondef(
+  'forge_world_v2.bump_scene_publication_v2(uuid)'::regprocedure)))>0
  THEN RAISE EXCEPTION 'R128 shared sender not actually replaced';END IF;
 END $test$;
 
