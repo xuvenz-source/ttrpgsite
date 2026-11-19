@@ -1,0 +1,66 @@
+name: World V2 R18-128 disposable maintenance-denial security proof
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-128-*'
+    paths:
+      - '.github/workflows/world-v2-r18-128-maintenance-fence.yml'
+      - 'tests/world-v2-r18-128-postgres/**'
+      - 'tests/world-v2-r18-128-maintenance-fence.test.mjs'
+      - 'staging/world-v2-b10-r18-128-server-maintenance-fence/**'
+      - 'docs/testing/world-v2-r18-128-server-maintenance-fence-2026-11-19.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-127-*'
+    paths:
+      - '.github/workflows/world-v2-r18-128-maintenance-fence.yml'
+      - 'tests/world-v2-r18-128-postgres/**'
+      - 'tests/world-v2-r18-128-maintenance-fence.test.mjs'
+      - 'staging/world-v2-b10-r18-128-server-maintenance-fence/**'
+permissions:
+  contents: read
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact R128 source history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Ensure protected app and migrations remain unchanged
+        run: git diff --exit-code fbc470e3ec54972ba17600ab0fc5a0ea06d2e3b2 HEAD -- src/ supabase/migrations/
+      - name: Verify hard-denial and remaining-bypass security contracts
+        run: node --test tests/world-v2-r18-128-maintenance-fence.test.mjs
+      - name: Explicit release hold
+        run: echo 'R128 NO_GO - private RPCs, other Realtime publishers, Storage links and real hosted QA remain unverified.'
+  synthetic-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r128_disposable_only
+          POSTGRES_DB: world_v2_r18_128
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_128"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R128_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_128
+      PGPASSWORD: r128_disposable_only
+    steps:
+      - name: Checkout fabricated source-only fixture
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove hard public API cutoff and private/Realtime residual risks
+        shell: bash
+        run: bash tests/world-v2-r18-128-postgres/run.sh
