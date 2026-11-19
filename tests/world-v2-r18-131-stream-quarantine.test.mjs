@@ -56,7 +56,7 @@ test('R131 is source-only with safe restrictive release boundaries',()=>{
  assert.equal(manifest.parentPr,238);
  assert.equal(manifest.parentSha,'bac02f6bc9769fd5ddc9dc3e6a91b4fa44c0b20e');
  assert.equal(manifest.decision,'NO_GO');
- for(const k of ['noHostedSqlWrites','noLiveSrcEdits','noVersionedMigrations',
+ for(const k of ['noHostedSqlWrites','noLiveSrcChanges','noVersionedMigrations',
   'noMerge','noDeploy','noPaidResources'])assert.equal(manifest[k],true,k);
  assert.equal(manifest.productionReleaseAuthorized,false);
  assert.equal(manifest.actualServerSideRevocationComplete,false);
@@ -209,6 +209,20 @@ test('R131 failed channel removal keeps next signed re-entry locked',async()=>{
  assert.deepEqual(f.calls,['signed-begin']);
  await f.gate.dispose();
 });
+test('R131 Supabase removeChannel timed out is never treated as a successful disconnect',async()=>{
+ const f=fixture({remove:async()=> 'timed out'});
+ await f.gate.begin(f.scope);
+ const ch={},lease=f.gate.registerChannel(ch,{table:'characters'},()=>{throw Error('leaked')});
+ const pending=f.gate.signal('reconnect');
+ assert.equal(lease.callback(event('characters')),false);
+ assert.equal(await pending,false);
+ assert.equal(f.gate.snapshot().armed,false);
+ assert.equal(f.gate.snapshot().removalFailures,1);
+ assert.ok(f.faults.includes('channel_unsubscribe_failed'));
+ assert.deepEqual(f.calls,['signed-begin']);
+ await f.gate.dispose();
+});
+
 test('R131 rejects non-synchronous masks, invalid channels and stale scope',async()=>{
  const noMask=fixture({mask:()=>Promise.resolve(true)});
  await assert.rejects(noMask.gate.begin(noMask.scope),
