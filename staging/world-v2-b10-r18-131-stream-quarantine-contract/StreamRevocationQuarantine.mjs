@@ -83,7 +83,9 @@ export function createStagedStreamQuarantine({
   let maskFault=false;
   try{
    const result=onMask(frozen({reason}));
-   if(result&&typeof result.then==='function'){
+   if(result!==true){
+    // A host must positively attest that the mask was installed NOW;
+    // returning undefined, false or a Promise is not sufficient.
     void Promise.resolve(result).catch(()=>{});
     maskFault=true;
    }
@@ -136,7 +138,10 @@ export function createStagedStreamQuarantine({
    (mode==='validated-payload'&&!hazardousPayloadTables.has(table)))
    throw error('invalid_subscription_contract');
   if(!current(revision))throw error('unverified_scope');
-  if(everRegistered.has(channel))throw error('old_channel_reuse');
+  if(everRegistered.has(channel)&&!channels.has(channel))
+   throw error('old_channel_reuse');
+  if(channels.has(channel)&&channels.get(channel)!==revision)
+   throw error('old_channel_reuse');
   everRegistered.add(channel);
   const epoch=revision;
   channels.set(channel,epoch);
