@@ -219,7 +219,7 @@ test('R131 rejects non-synchronous masks, invalid channels and stale scope',asyn
  const f=fixture();await f.gate.begin(f.scope);
  assert.throws(()=>f.gate.registerChannel({}, {table:'unknown_table'},()=>{}),
   {code:'invalid_subscription_contract'});
- assert.throws(()=>f.gate.signal('invalid_reason'),{code:'invalid_signal'});
+ await assert.rejects(f.gate.signal('invalid_reason'),{code:'invalid_signal'});
  const ch={},lease=f.gate.registerChannel(ch,{table:'campaigns'},()=>{throw Error('unexpected')});
  f.setActor({...f.scope,mapId:'00000000-0000-4000-8000-000000000202'});
  assert.equal(lease.callback(event('campaigns')),false);
