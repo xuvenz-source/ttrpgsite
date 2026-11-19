@@ -46,12 +46,14 @@ export function createSceneV3Transition({
  });
  function mask(reason){
   phase='locked';online=false;
-  sceneManager.invalidate('scene-v3-'+reason);
+  // Host must synchronously hide the view BEFORE stale-scene invalidation
+  // callbacks can schedule any renderer or fog work.
   const result=onLock(Object.freeze({reason}));
   if(result&&typeof result.then==='function'){
    void Promise.resolve(result).catch(()=>{});
    throw error('asynchronous_mask');
   }
+  sceneManager.invalidate('scene-v3-'+reason);
   safeCall(onState,snapshot());
  }
  function deny(reason){
