@@ -33,7 +33,7 @@ jobs:
       - name: Verify catalog metadata drift, fog authorization and NO_GO
         run: node --test tests/world-v2-r18-129-catalog-fog.test.mjs
       - name: Hold production and hosted databases
-        run: echo "R129 NO_GO: no hosted SQL, live signed users, Realtime stream freeze, merge or deployment."
+        run: echo 'R129 NO_GO - no hosted SQL, live signed users, Realtime stream freeze, merge or deployment.'
   synthetic-postgres17:
     runs-on: ubuntu-latest
     timeout-minutes: 12
