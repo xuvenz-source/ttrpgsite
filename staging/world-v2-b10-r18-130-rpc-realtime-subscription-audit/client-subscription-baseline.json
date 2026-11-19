@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-130",
+  "mode": "DISCOVERY_ONLY_NOT_VERIFIED",
+  "sourceCommit": "31779ef3b1829f227c976c78144d748acd938c64",
+  "notes": "Intentionally empty until full src/ scanner receipts are collected. Does not grant release authorization.",
+  "subscriptions": [],
+  "sourceReviewApproved": false,
+  "liveSignedPostgresChangesTestsPassed": false
+}
