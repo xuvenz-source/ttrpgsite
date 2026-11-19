@@ -90,6 +90,8 @@ test('R127 rollback is a demand to fence, not evidence that sessions are fenced'
  gate.attestServerV3(proof('server'));
  const intent=gate.abort('Unexpected recipient fanout during validation');
  assert.equal(intent.phase,'abort-required');
+ assert.equal(intent.abortReason,'Unexpected recipient fanout during validation');
+ assert.equal(intent.abortedFrom,'server-v3');
  assert.equal(intent.requiresServerSideFence,true);
  assert.equal(intent.productionAuthorized,false);
  assert.equal(intent.legacyV2FallbackAllowed,false);
@@ -112,6 +114,20 @@ test('R127 abort after full mock signoff still revokes the modeled release revie
  gate.attestAbortFence(proof('abortFence'));
  assert.equal(gate.snapshot().phase,'aborted-fenced');
 });
+test('R127 never accepts a blanket waiver of critical revocation, URL or privileged RPC security',()=>{
+ const flags=R127_REQUIRED_ATTESTATIONS.qa;
+ assert.ok(flags.includes('signedStorageAccessExposureRemediated'));
+ assert.ok(flags.includes('criticalRevocationAndPrivilegeIssuesResolved'));
+ assert.ok(!flags.some(k=>/Waived|Accepted/.test(k)));
+ assert.ok(R127_REQUIRED_ATTESTATIONS.release.includes('noOutstandingCriticalSecurityExceptions'));
+ const gate=make();
+ for(const [fn,step] of stages.slice(0,3))gate[fn](proof(step));
+ const missing=proof('qa',{criticalRevocationAndPrivilegeIssuesResolved:false});
+ assert.throws(()=>gate.attestSignedQa(missing),
+  {code:'missing_required_criticalRevocationAndPrivilegeIssuesResolved'});
+ assert.equal(gate.snapshot().phase,'client-v3');
+});
+
 test('R127 compatibility blocks legacy browsers, mismatched backend, stale or unsigned state',()=>{
  const safe={bundledProtocol:'v3',serverProtocol:'v3',serverMode:'serving-v3',
   signedActorMatch:true,membershipChecked:true,sceneAuthorized:true,
