@@ -1,0 +1,67 @@
+name: World V2 R18-124 isolated server-membership regression
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-124-*'
+    paths:
+      - '.github/workflows/world-v2-r18-124-server-access.yml'
+      - 'tests/world-v2-r18-124-postgres/**'
+      - 'tests/world-v2-r18-124-server-access.test.mjs'
+      - 'staging/world-v2-b10-r18-124-server-access/**'
+      - 'staging/world-v2-b10-r18-115-revocation-guard/**'
+      - 'docs/testing/world-v2-r18-124-server-enforcement-2026-11-19.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-123-*'
+    paths:
+      - '.github/workflows/world-v2-r18-124-server-access.yml'
+      - 'tests/world-v2-r18-124-postgres/**'
+      - 'tests/world-v2-r18-124-server-access.test.mjs'
+      - 'staging/world-v2-b10-r18-124-server-access/**'
+permissions:
+  contents: read
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact staged head with pinned parent history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Source-only NO_GO assertions
+        run: node --test tests/world-v2-r18-124-server-access.test.mjs
+      - name: Ensure no release-pinned frontend or versioned migrations changed since R123
+        run: git diff --exit-code a016b57380d68978ce1774ee17e2caccf1f02694 HEAD -- src/ supabase/migrations/
+      - name: State unreleased status
+        run: echo "R124 NO_GO - no hosted SQL, real signed users, stream revocation, signed URL invalidation, merge or deployment."
+  disposable-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r124_disposable_only
+          POSTGRES_DB: world_v2_r18_124
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_124"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R124_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_124
+      PGPASSWORD: r124_disposable_only
+    steps:
+      - name: Checkout synthetic fixtures and inherited unapplied SQL
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Test original revoked-owner defect and existing R115 correction
+        shell: bash
+        run: bash tests/world-v2-r18-124-postgres/run.sh
