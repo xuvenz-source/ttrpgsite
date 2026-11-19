@@ -30,9 +30,16 @@
     "validatesCurrentDmAndRestoredOwner": true,
     "validatesCrossCampaignAndNullActorDenied": true,
     "validatesFourDirectAclDenials": true,
-    "syntheticSqlTestStatus": "PENDING_CI",
+    "syntheticSqlTestStatus": "PASSED_AT_PRIOR_VERIFIED_SOURCE_HEAD",
     "originalHostedSqlTested": false,
-    "actualHostedPrivilegedRpcTested": false
+    "actualHostedPrivilegedRpcTested": false,
+    "lastFullyVerifiedSourceHead": "29bf6cbcafeb317350ba0b82600e7949ba23ec03",
+    "lastFullyVerifiedSourceHeadRunIds": {
+      "sourceOnlyPg17": 44451568727,
+      "standardBuildAndSecurity": 44451569190,
+      "combinedStagingOnlySql": 44451561694
+    },
+    "exactManifestOnlyHeadCiRecheckRequired": true
   },
   "surfaces": {
     "movement": {
