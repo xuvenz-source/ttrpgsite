@@ -6,10 +6,10 @@
  */
 export const R129_LIVE_ENABLED=false;
 const MD5=/^[0-9a-f]{32}$/;
-const sort=values=>[...values].sort((a,b)=>a.localeCompare(b));
+const sort=values=>[...values].map(x=>typeof x==='string'?x:'<invalid>').sort((a,b)=>a.localeCompare(b));
 const same=(left,right)=>JSON.stringify(left)===JSON.stringify(right);
 const isRecord=x=>!!x&&typeof x==='object'&&!Array.isArray(x);
-const asNames=a=>Array.isArray(a)?sort(a.map(x=>x.name)):[];
+const asNames=a=>Array.isArray(a)?sort(a.map(x=>isRecord(x)?x.name:null)):[];
 export function verifyCatalogDrift(pinned,observed){
  const problems=[];
  const add=s=>{if(!problems.includes(s))problems.push(s)};
@@ -48,7 +48,7 @@ export function verifyCatalogDrift(pinned,observed){
    z.length!==observed[expectedField]){add('function_set_drift_'+field);continue;}
   const baseline=new Map(a.map(f=>[f.name,f]));
   for(const f of z){
-   const prev=baseline.get(f.name);
+   const prev=isRecord(f)?baseline.get(f.name):null;
    if(!isRecord(f)||!prev||!MD5.test(f.sourceMd5||'')||
     f.sourceMd5!==prev.sourceMd5||
     (field==='directGuardTextAbsent'&&f.classification!==prev.classification)||
