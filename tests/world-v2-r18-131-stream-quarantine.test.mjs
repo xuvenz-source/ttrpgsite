@@ -8,6 +8,8 @@ import {createStagedStreamQuarantine,R131_LIVE_ENABLED,
  from '../staging/world-v2-b10-r18-131-stream-quarantine-contract/StreamRevocationQuarantine.mjs';
 import {scanRealtimeSubscriptions} from
  '../staging/world-v2-b10-r18-130-rpc-realtime-subscription-audit/SourceRealtimeSubscriptionAudit.mjs';
+import {createCampaignAccessSentinel} from
+ '../staging/world-v2-b10-r18-123-access-revocation-guard/CampaignAccessSentinel.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>readFileSync(join(root,p),'utf8');
@@ -76,6 +78,50 @@ test('R131 registers only after signed R123 proof, and synchronous view mask pre
  assert.equal(f.gate.snapshot().oldSocketDeliveryStopped,false);
  await f.gate.dispose();
 });
+test('R131 integrates with genuine R123 signed-user and current membership checks',async()=>{
+ let isMember=true,identity=P1,revocations=0;
+ const check={
+  select(){return this},
+  eq(){return this},
+  maybeSingle:async()=>({data:isMember?{user_id:P1,role:'player'}:null})
+ };
+ const db={
+  auth:{getUser:async()=>({data:{user:{id:identity}}})},
+  from:table=>{assert.equal(table,'campaign_members');return check},
+  removeChannel:async()=> 'ok'
+ };
+ const sentinel=createCampaignAccessSentinel({
+  db,getContext:()=>({campaignId:A,userId:P1}),
+  onLock:()=>{},onAllow:()=>{},
+  onRevoked:()=>{revocations++}
+ });
+ const masks=[];
+ const gate=createStagedStreamQuarantine({
+  sentinel,db,getContext:()=>({campaignId:A,userId:P1,mapId:M}),
+  onMask:x=>{masks.push(x.reason);return true}
+ });
+ const scope={campaignId:A,userId:P1,mapId:M};
+ assert.equal(await gate.begin(scope),true);
+ let delivered=0;
+ const old=gate.registerChannel({},{table:'chat_messages'},()=>delivered++);
+ assert.equal(old.callback(event('chat_messages')),true);
+ isMember=false;
+ const pending=gate.signal('membership-hint');
+ assert.equal(old.callback(event('chat_messages')),false);
+ assert.equal(await pending,false);
+ assert.equal(revocations,1);
+ assert.equal(gate.snapshot().armed,false);
+ assert.equal(delivered,1);
+ assert.ok(masks.includes('membership-hint'));
+ isMember=true;
+ identity='00000000-0000-4000-8000-000000000304';
+ assert.equal(await gate.begin(scope),false,'wrong signed actor cannot reactivate');
+ identity=P1;
+ assert.equal(await gate.begin(scope),true,'new explicit entry rechecks membership');
+ assert.equal(old.callback(event('chat_messages')),false);
+ await gate.dispose();sentinel.dispose();
+});
+
 test('R131 refresh-only listeners never see old/new row content, even DELETE',async()=>{
  const f=fixture(),seen=[];
  await f.gate.begin(f.scope);
