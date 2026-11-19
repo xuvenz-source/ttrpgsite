@@ -127,7 +127,6 @@ export function createCampaignAccessSentinel({
       }
      }
     }else{
-     if(phase==='authorized')lock('membership_unverified');
      if(phase!=='suspended')suspend(result.code||'membership_query_failed');
     }
    }
