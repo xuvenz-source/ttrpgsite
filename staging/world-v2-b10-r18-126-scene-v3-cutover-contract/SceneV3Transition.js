@@ -115,7 +115,8 @@ export function createSceneV3Transition({
   if(sceneManager.sceneGeneration!==null&&!sceneManager.stale&&
    payload.sceneGeneration<=sceneManager.sceneGeneration)return;
   lastGeneration=Math.max(lastGeneration,payload.sceneGeneration);
-  sceneManager.notifyPublication?.(payload);
+  sceneManager.notifyPublication?.({version:2,mapId,
+   sceneGeneration:payload.sceneGeneration});
   void pump(n,c);
  }
  async function enter(){
