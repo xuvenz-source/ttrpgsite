@@ -19,7 +19,7 @@ function deferred(){
 }
 function setup(overrides={}){
  let current=overrides.context??{campaignId:C,userId:P};
- let now=0,member=overrides.member??{user_id:P,role:'player'};
+ let now=0,member=Object.hasOwn(overrides,'member')?overrides.member:{user_id:P,role:'player'};
  let membership=overrides.membership??(async()=>({data:member,error:null}));
  let identity=overrides.identity??(async()=>({data:{user:{id:current.userId}},error:null}));
  const events=[],requests=[];
