@@ -24,7 +24,8 @@
     "issuedSignedUrlsCannotBeRecalledByClientCacheClear": true,
     "worldV2BoardDisposesRuntimeOnUnmount": true,
     "campaignRefreshCoordinatorHasInvalidateAll": true,
-    "existingProtectedAppSourceWasChanged": false
+    "existingProtectedAppSourceWasChanged": false,
+    "signedUrlRiskIssue": 231
   },
   "gate": {
     "source": "staging/world-v2-b10-r18-123-access-revocation-guard/CampaignAccessSentinel.js",
@@ -52,17 +53,21 @@
     "stalePendingReadsInvalidationIsFutureIntegrationRequirement": true,
     "v2RuntimeDisposedByExistingBoardUnmount": true,
     "iframeOrPopupCrossTabEvictionImplemented": false,
-    "alreadyIssuedSignedUrlsRevoked": false
+    "alreadyIssuedSignedUrlsRevoked": false,
+    "unmountOrderingVerifiedWithActualSignedAssetStore": true
   },
   "test": {
     "source": "tests/world-v2-r18-123-access-revocation-guard.test.mjs",
-    "sourceOnlyNodeTestsPassed": false,
+    "sourceOnlyNodeTestsPassed": true,
     "releasePinnedR80R81ChecksPassed": false,
     "standardRepoBuildAndSecurityChecksPassed": false,
-    "signedUrlReissueRegressionPassed": false,
-    "simulatedRestoredMemberAfterExplicitReentryPassed": false,
+    "signedUrlReissueRegressionPassed": true,
+    "simulatedRestoredMemberAfterExplicitReentryPassed": true,
     "exactPrivateOriginalSqlExecuted": false,
-    "originalOrQaSqlExecuted": false
+    "originalOrQaSqlExecuted": false,
+    "sourceOnlyNodeTestCount": 31,
+    "sourceOnlyNodeWorkflowRun": 44447589585,
+    "exactHeadCiRecheckRequired": true
   },
   "openSecurityGates": [
     "Proposed client sentinel is not mounted or connected to production",
@@ -76,7 +81,8 @@
     "No full human review of private 83 original migration bodies or independent operator attestation",
     "No complete audit of 67 callable privileged RPCs",
     "R18-104 fog metadata oracle, R18-114 inventory UUID churn and R18-115 revoked sheet access issues remain",
-    "No signed DM/P1/P2/outsider QA tests or QA history bootstrap approval"
+    "No signed DM/P1/P2/outsider QA tests or QA history bootstrap approval",
+    "Security issue #231 tracks already-issued signed Storage URLs and reissue while active subscribers remain"
   ],
   "noLiveAppCodeChanges": true,
   "noVersionedMigration": true,
