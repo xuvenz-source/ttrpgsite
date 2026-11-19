@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-129",
+  "date": "2026-11-19",
+  "decision": "NO_GO",
+  "parentPr": 236,
+  "parentSha": "ff63103b4767057fe2165503e35d8f75f9a9ed41",
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "originalMigrationsObserved": 83,
+  "qaMigrationsObserved": 0,
+  "qaApplicationTablesObserved": 0,
+  "sourceOnlyFiles": {
+    "catalog": "staging/world-v2-b10-r18-129-rpc-stream-fog-audit/catalog-evidence.json",
+    "driftGate": "staging/world-v2-b10-r18-129-rpc-stream-fog-audit/CatalogDriftGate.mjs",
+    "readOnlyCatalogRecheck": "staging/world-v2-b10-r18-129-rpc-stream-fog-audit/read-only-catalog-recheck.sql",
+    "fogOracleCandidate": "staging/world-v2-b10-r18-129-rpc-stream-fog-audit/unapplied-fog-published-auth-guard.sql",
+    "pg17Fixture": "tests/world-v2-r18-129-postgres/",
+    "sourceTests": "tests/world-v2-r18-129-catalog-fog.test.mjs"
+  },
+  "liveReadOnlyFacts": {
+    "authenticatedCallablePublicDefiners": 67,
+    "directGuardTextAbsent": 15,
+    "oneConfirmedDirectFogMetadataAuthorizationOmission": "public.is_map_fog_published(uuid)",
+    "originalFogFunctionAuthenticatedCallable": true,
+    "originalFogFunctionAnonymousCallable": false,
+    "originalFogFunctionNoStoredFunctionCallersDetected": true,
+    "originalFogSourceMd5": "8841970de390b1eaef9dbd0f0886ed81",
+    "privateEngineSchemasNoAuthenticatedUsage": true,
+    "appSchemaCounts": {
+      "public": 85,
+      "forge_world_v2": 24,
+      "forge_visibility": 30
+    },
+    "directRealtimePublisherFunctions": 7,
+    "publishedRealtimeTables": 17,
+    "publishedTablesRlsEnabled": 17,
+    "realtimeMessagesPrivateSelectPolicies": 5,
+    "realtimeMessagesPrivateInsertPolicies": 1,
+    "publishedTableWithoutAuthenticatedSelect": "map_tokens",
+    "campaignMembersNotPublished": true
+  },
+  "explicitRisks": {
+    "pg17SyntheticFogOracleReproduction": true,
+    "liveFogOracleExploitTested": false,
+    "liveFunctionGuardPatched": false,
+    "all67PrivilegedRpcChainsReviewed": false,
+    "all83PrivateMigrationBodiesReviewed": false,
+    "fullRealtimePostgresChangesSubscriberAndLeakReview": false,
+    "existingRealtimeSocketsRevoked": false,
+    "storagePreviouslySignedUrlRevoked": false,
+    "privateSchemaUsageCurrentRoleAuditPerformed": true,
+    "functionDefinitionHashDriftProofAvailableOnlyOnDemand": true,
+    "metadataOnlySourceTestsAreNotSignedQa": true,
+    "externalEdgeFunctionRealtimePublishersAudited": false,
+    "R18_128MaintenanceFenceInstalled": false,
+    "R18_125_R18_126SceneV3Installed": false
+  },
+  "unresolvedIssueNumbers": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "tests": {
+    "sourceContract": "PENDING_CI",
+    "syntheticPg17": "PENDING_CI",
+    "standardRepo": "PENDING_CI",
+    "combinedStagingSql": "PENDING_CI"
+  },
+  "noHostedSqlWrites": true,
+  "noLiveSourceChanges": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "productionReleaseAuthorized": false
+}
