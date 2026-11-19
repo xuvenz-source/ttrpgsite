@@ -36,6 +36,17 @@ Only then may asynchronous cleanup complete: explicitly confirm the campaign and
 
 **Not implemented by this package:** React hook wiring, DM kick events, active-campaign forced navigation, popup cross-tab signaling, pending RPC cancellation, server-side suppression of stale Broadcast/Realtime listeners, or actual browser storage revocation. This is an acceptance contract and a test harness, not an operational feature.
 
+## Executed R18-123 source-only regression evidence
+
+[Isolated source-only GitHub workflow #44447589585](https://github.com/xuvenz-source/ttrpgsite/actions/runs/44447589585) executed **31 of 31 Node regressions successfully** on commit `b0273b2acc1ce871232181650b749e61211187b7`, including:
+- Real signed URL store test: clearing while artwork is subscribed issues another synthetic signed URL; unsubscribing **before** clear does not.
+- Current signed actor and RLS membership validation, missing-row revocation, reconnect/focus/access-denied hint handling, once-per-minute passive verification without renderer remounts and no token/movement-loop hooks.
+- Concurrent urgent hint invalidates an in-flight older membership success; context switching and account changes cannot revive the old campaign; network uncertainty suspends rather than labelling a player removed.
+- Terminal revoked state requires explicit fresh campaign entry, not an untrusted event; genuinely synchronous view masking is required.
+- Teardown cleanup order with confirmed React unmount barrier; failed/unconfirmed unmount or channel unsubscribe never invokes signed URL cache clearing, and failures remain safely reported.
+
+**These are mock signed-user/RLS protocol tests, not real hosted Supabase Auth or verified React unmount in a browser.** The `src/` release-pinned application remains untouched; real DM removal, runtime enforcement, browser storage security and production release are **NO_GO**. Follow-up security blocker: [#231](https://github.com/xuvenz-source/ttrpgsite/issues/231) for signed bearer URL expiry/reissuance. R18-122 blocker [#229](https://github.com/xuvenz-source/ttrpgsite/issues/229) for service-role TRUNCATE remains separate.
+
 ## Threats, sequencing and NO_GO gates
 
 - **Server-side immediate revocation remains mandatory.** All privileged RPCs, RLS policies, Realtime/Broadcast topic authorization, Storage operations, sheet owner edits, fog/observer streams and movement commits must consult **current** campaign membership. Client polling cannot guarantee instantaneous revocation and cannot retroactively recall data already sent to a player.
