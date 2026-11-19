@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-129",
+  "observedOn": "2026-11-19",
+  "source": "READ_ONLY live original PostgreSQL catalog; never user records",
+  "originalProjectRef": "lwhwgqaunxbmvyndswze",
+  "scopeLimits": [
+    "not proof of complete SQL call graph",
+    "not real signed Supabase Auth",
+    "not proof of Realtime socket revocation",
+    "text matching is nonsemantic",
+    "publisher scan only references realtime.send/broadcast_changes/pg_notify in public/forge_world_v2/forge_visibility",
+    "not all storage/edge/external publishers"
+  ],
+  "publicSecurityDefinerAuthenticatedCallableCount": 67,
+  "appSchemaFunctionCounts": {
+    "public": 85,
+    "forge_world_v2": 24,
+    "forge_visibility": 30
+  },
+  "authHasSchemaUsage": {
+    "public": true,
+    "forge_world_v2": false,
+    "forge_visibility": false
+  },
+  "directGuardTextAbsentCount": 15,
+  "directGuardTextAbsent": [
+    {
+      "name": "advance_world_motion_v2",
+      "sourceMd5": "4b38b5e7116a3ff9abc8a99f58755126",
+      "classification": "delegated-motion-session"
+    },
+    {
+      "name": "cancel_world_motion_v2",
+      "sourceMd5": "08649a3601df7c49a44e417ecb5771e0",
+      "classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "end_authorized_navigation_gesture",
+      "sourceMd5": "1fdec5d9bdf976ca8f91a279bbfd658e",
+      "classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "end_map_motion_previews",
+      "sourceMd5": "6e72231f144469c3fc4f296b16726966",
+      "classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "end_map_motion_sessions",
+      "sourceMd5": "cd5af233b95d16f59b2bf4f14e481444",
+      "classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "get_authorized_map_fog_delta",
+      "sourceMd5": "0a3c800e678225ef2f4025eabc10d632",
+      "classification": "delegated-fog-auth"
+    },
+    {
+      "name": "get_authorized_map_fog_v2",
+      "sourceMd5": "71f3076ebe2f4ba25a709fff21d6c2ec",
+      "classification": "delegated-fog-auth"
+    },
+    {
+      "name": "get_campaign_sheet_inventory",
+      "sourceMd5": "c73822a59e8d91665d18bd34184054e2",
+      "classification": "delegated-sheet-authority-revoked-owner-gap"
+    },
+    {
+      "name": "get_world_visibility_v2",
+      "sourceMd5": "88f8da7421b36f5375aa26e798a4a08b",
+      "classification": "delegated-vision-auth"
+    },
+    {
+      "name": "is_map_fog_published",
+      "sourceMd5": "8841970de390b1eaef9dbd0f0886ed81",
+      "classification": "direct-fog-metadata-no-auth-check"
+    },
+    {
+      "name": "mutate_campaign_sheet_item",
+      "sourceMd5": "0489adcc6b085b19876a0016d5ff718e",
+      "classification": "delegated-sheet-authority-revoked-owner-gap"
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "sourceMd5": "88ef44be3ec6ec75dfec0fffa1a0e962",
+      "classification": "delegated-sheet-authority-revoked-owner-gap"
+    },
+    {
+      "name": "preview_map_motion",
+      "sourceMd5": "51a0a583cedeeab8588e2a2cad1d602a",
+      "classification": "delegated-motion-guard"
+    },
+    {
+      "name": "release_campaign_sheet_item",
+      "sourceMd5": "63adf4a53e129bae4c12f4262ed45cc2",
+      "classification": "actor-scoped-cleanup"
+    },
+    {
+      "name": "release_campaign_tool_item",
+      "sourceMd5": "ea08e722950efb66e186b4e761c27cdc",
+      "classification": "actor-scoped-cleanup"
+    }
+  ],
+  "realtimePublisherFunctionCount": 7,
+  "realtimePublishers": [
+    {
+      "name": "forge_visibility.dispatch_movement_preview",
+      "sourceMd5": "472683101bfcdfac83d90b4062bd77e1",
+      "schema": "forge_visibility"
+    },
+    {
+      "name": "forge_visibility.publish_approved_navigation_batch",
+      "sourceMd5": "543c982eb1d2bc1c5214b278382b96a1",
+      "schema": "forge_visibility"
+    },
+    {
+      "name": "forge_world_v2.bump_scene_publication_v2",
+      "sourceMd5": "2859469d975986d0acf5a5cefb26cae0",
+      "schema": "forge_world_v2"
+    },
+    {
+      "name": "forge_world_v2.bump_vision_epoch_v2",
+      "sourceMd5": "809322f2f358d87ce0524d4ba7444000",
+      "schema": "forge_world_v2"
+    },
+    {
+      "name": "forge_world_v2.publish_approved_observers",
+      "sourceMd5": "129d3d872050dd44da989fc5c36a816e",
+      "schema": "forge_world_v2"
+    },
+    {
+      "name": "public.advance_map_motion_session",
+      "sourceMd5": "fe6946643fb701ac6d30684cfdd9bca6",
+      "schema": "public"
+    },
+    {
+      "name": "public.advance_map_motion_session_path",
+      "sourceMd5": "539292b1950d76909c032a056bebee79",
+      "schema": "public"
+    }
+  ],
+  "supabaseRealtimePublicationTables": [
+    "battle_maps",
+    "campaign_handout_events",
+    "campaign_player_maps",
+    "campaign_sheet_item_leases",
+    "campaign_tool_issues",
+    "campaign_tool_item_leases",
+    "campaign_tool_map_tokens",
+    "campaign_tool_templates",
+    "campaigns",
+    "characters",
+    "chat_messages",
+    "map_combats",
+    "map_environments",
+    "map_tokens",
+    "map_viewer_visibility_ticks",
+    "map_visibility_ticks",
+    "npc_templates"
+  ],
+  "realtimePublicationTableCount": 17,
+  "publicationRlsEnabledForAll17": true,
+  "authSelectPrivilegeMissingOn": [
+    "map_tokens"
+  ],
+  "campaignMembersPublished": false,
+  "realtimeMessagesPolicyCounts": {
+    "select": 5,
+    "insert": 1
+  },
+  "originalV2SharedScenePolicyExists": true,
+  "fogMetadataOracle": {
+    "function": "public.is_map_fog_published(uuid)",
+    "originalSourceMd5": "8841970de390b1eaef9dbd0f0886ed81",
+    "authenticatedCanExecute": true,
+    "anonymousCanExecute": false,
+    "directMembershipOrMapAuthorizationCheck": false,
+    "directOriginalDatabaseCallersDetected": 0,
+    "sourceCandidateOnly": true
+  },
+  "securityConclusion": "NO_GO: catalog is an inventory, not runtime privilege proof; all feeds and stored procedures require signed-user and concurrency verification."
+}
