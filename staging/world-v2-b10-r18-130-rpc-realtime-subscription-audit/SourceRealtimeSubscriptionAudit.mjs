@@ -84,9 +84,9 @@ export function compareSubscriptionBaselines(actual,expected,publishedTables){
   status:problems.length?'SUBSCRIPTION_DRIFT_NO_GO':'SOURCE_PARITY_NO_GO',
   problems:Object.freeze(problems),
   counts:Object.freeze({handlers:actual.length,
-   files:new Set(actual.map(x=>x.file)).size,
-   deleteCapable:actual.filter(x=>x.includesDelete).length,
-   dynamicTableBindings:actual.filter(x=>x.tableExpression==='dynamic').length}),
+   files:new Set(actual.filter(x=>x&&typeof x==='object').map(x=>x.file)).size,
+   deleteCapable:actual.filter(x=>x&&x.includesDelete).length,
+   dynamicTableBindings:actual.filter(x=>x&&x.tableExpression==='dynamic').length}),
   releaseAuthorized:false,postgresChangesRevocationProven:false,socketEjectionProven:false
  });
 }
