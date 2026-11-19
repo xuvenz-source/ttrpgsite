@@ -91,7 +91,7 @@ test('R128 does not claim complete public/private/Realtime/Storage fence',()=>{
  assert.equal(manifest.readOnlyOriginalAuthAudit.authenticatedCallablePublicSecurityDefiners,67);
  assert.equal(manifest.readOnlyOriginalAuthAudit.publicDefinersWithoutAnyOfThoseFourDirectTextMatches,15);
  assert.deepEqual(manifest.unresolvedIssues,[220,223,229,231]);
- for(const term of ['NO-GO','67','83','#231','already-joined','private-schema',
+ for(const term of ['NO-GO','67','83','#231','Realtime','private-schema',
  'source-only','not a universal RPC fence'])
  assert.ok(doc.toLowerCase().includes(term.toLowerCase()),term);
 });
