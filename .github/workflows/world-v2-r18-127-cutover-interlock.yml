@@ -1,0 +1,34 @@
+name: World V2 R18-127 source-only fail-closed release interlock
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-127-*'
+    paths:
+      - '.github/workflows/world-v2-r18-127-cutover-interlock.yml'
+      - 'tests/world-v2-r18-127-release-interlock.test.mjs'
+      - 'staging/world-v2-b10-r18-127-safe-cutover-interlock/**'
+      - 'docs/testing/world-v2-r18-127-rollout-recovery-2026-11-19.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-126-*'
+    paths:
+      - '.github/workflows/world-v2-r18-127-cutover-interlock.yml'
+      - 'tests/world-v2-r18-127-release-interlock.test.mjs'
+      - 'staging/world-v2-b10-r18-127-safe-cutover-interlock/**'
+permissions:
+  contents: read
+jobs:
+  source-interlock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout R127 with ancestry
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Fail if production frontend or versioned migrations changed
+        run: git diff --exit-code b37bc136ee39d2045d32703a2d08079f375256f6 HEAD -- src/ supabase/migrations/
+      - name: Verify release evidence gates and all negative security cases
+        run: node --test tests/world-v2-r18-127-release-interlock.test.mjs
+      - name: Report source-only NO_GO
+        run: echo "R18-127 NO_GO - no hosted SQL, server hard fence, real browser enforcement, QA or production approval."
