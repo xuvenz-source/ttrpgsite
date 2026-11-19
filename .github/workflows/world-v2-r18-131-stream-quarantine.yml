@@ -1,0 +1,34 @@
+name: World V2 R18-131 source-only revocation stream quarantine
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-131-*'
+    paths:
+      - '.github/workflows/world-v2-r18-131-stream-quarantine.yml'
+      - 'tests/world-v2-r18-131-stream-quarantine.test.mjs'
+      - 'staging/world-v2-b10-r18-131-stream-quarantine-contract/**'
+      - 'docs/testing/world-v2-r18-131-revocation-stream-cutoff-2026-11-20.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-130-*'
+    paths:
+      - '.github/workflows/world-v2-r18-131-stream-quarantine.yml'
+      - 'tests/world-v2-r18-131-stream-quarantine.test.mjs'
+      - 'staging/world-v2-b10-r18-131-stream-quarantine-contract/**'
+permissions:
+  contents: read
+jobs:
+  source-quarantine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout complete R131 staging ancestry
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prevent live source and hosted migration edits
+        run: git diff --exit-code bac02f6bc9769fd5ddc9dc3e6a91b4fa44c0b20e HEAD -- src/ supabase/migrations/
+      - name: Check synchronous mask, reconnect, removal, DELETE sanitizer and 19 listener matrix
+        run: node --test tests/world-v2-r18-131-stream-quarantine.test.mjs
+      - name: Explicit deployment block
+        run: echo 'R131 NO_GO - unmounted candidate, real server stream isolation and signed QA unverified.'
