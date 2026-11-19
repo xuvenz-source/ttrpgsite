@@ -1,0 +1,66 @@
+name: World V2 R18-125 isolated scene revocation proof
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-125-*'
+    paths:
+      - '.github/workflows/world-v2-r18-125-scene-revocation.yml'
+      - 'tests/world-v2-r18-125-postgres/**'
+      - 'tests/world-v2-r18-125-scene-revocation.test.mjs'
+      - 'staging/world-v2-b10-r18-125-private-scene-revocation/**'
+      - 'docs/testing/world-v2-r18-125-private-scene-revocation-2026-11-19.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-124-*'
+    paths:
+      - '.github/workflows/world-v2-r18-125-scene-revocation.yml'
+      - 'tests/world-v2-r18-125-postgres/**'
+      - 'tests/world-v2-r18-125-scene-revocation.test.mjs'
+      - 'staging/world-v2-b10-r18-125-private-scene-revocation/**'
+permissions:
+  contents: read
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout full source-only branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Assert no live R18-125 source or migration changes
+        run: git diff --exit-code 7de314357be6aa1c5ac11df6a0956443600bf453 HEAD -- src/ supabase/migrations/
+      - name: Verify private scene-channel contracts
+        run: node --test tests/world-v2-r18-125-scene-revocation.test.mjs
+      - name: Explicitly hold hosted rollout
+        run: echo 'R18-125 NO_GO - old V2 topic active, no hosted SQL, realtime.messages policy, signed users, merge or production deploy.'
+  synthetic-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r125_disposable_only
+          POSTGRES_DB: world_v2_r18_125
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_125"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R125_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_125
+      PGPASSWORD: r125_disposable_only
+    steps:
+      - name: Checkout isolated synthetic test inputs
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove member epoch cascade and stale topic denial
+        shell: bash
+        run: bash tests/world-v2-r18-125-postgres/run.sh
