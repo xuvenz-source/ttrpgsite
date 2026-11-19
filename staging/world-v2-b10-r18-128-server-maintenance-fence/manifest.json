@@ -68,10 +68,15 @@
     231
   ],
   "tests": {
-    "sourceContract": "PENDING",
-    "scratchPg17": "PENDING",
-    "standardRepository": "PENDING",
-    "combinedStagingSql": "PENDING"
+    "sourceContract": "PASSED_SOURCE_HEAD",
+    "scratchPg17": "PASSED_SOURCE_HEAD",
+    "standardRepository": "PASSED_SOURCE_HEAD",
+    "combinedStagingSql": "IN_PROGRESS",
+    "lastFullyVerifiedSourceHead": "e4c7c2030b502c062990fb5a8282306b0df4e286",
+    "dedicatedPrRunId": 44494482295,
+    "standardPrRunId": 44494482276,
+    "combinedSqlPushRunId": 44494469691,
+    "postEvidenceCommitExactHeadRecheckRequired": true
   },
   "noHostedSqlWrites": true,
   "noLiveSourceChanges": true,
