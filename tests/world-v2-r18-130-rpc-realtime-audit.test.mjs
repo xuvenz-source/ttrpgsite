@@ -69,6 +69,11 @@ test('R130 parser extracts explicit and dynamic postgres_changes options fail-cl
  assert.equal(out[0].includesDelete,false);
  assert.equal(out[1].table,'chat_messages');
  assert.equal(out[1].includesDelete,true);
+ const templateQuoted="x.on(\x60postgres_changes\x60,{event:'UPDATE',schema:'public',table:'characters',filter:'id=eq.1'},()=>{})";
+ assert.equal(extractSubscriptionsFromSource(templateQuoted,'src/example.js').length,1);
+ assert.equal(manifest.observations.replicaIdentityDefaultCount,17);
+ assert.equal(manifest.observations.replicaIdentityFullCount,0);
+ assert.equal(manifest.observations.filteredWildcardDeleteNotReliableRevocationSignal,true);
  assert.throws(()=>extractSubscriptionsFromSource(
   "db.channel('x').on('postgres_changes',{event:'*',schema:'public',table:newKind},()=>{})",
   'src/unreviewed.js'),/unreviewed dynamic/);
@@ -129,6 +134,8 @@ test('R130 baseline drift rejects changed subscriptions and unexpected/unpublish
  const ok=compareSubscriptionBaselines(expected,expected,published.supabaseRealtimePublicationTables);
  assert.equal(ok.status,'SOURCE_PARITY_NO_GO');
  assert.equal(ok.releaseAuthorized,false);
+ assert.equal(compareSubscriptionBaselines([null],expected,
+  published.supabaseRealtimePublicationTables).status,'SUBSCRIPTION_DRIFT_NO_GO');
 });
 test('R130 always leaves actual Realtime, privilege and asset revocation unresolved',()=>{
  const s=manifest.streamSecurity;
