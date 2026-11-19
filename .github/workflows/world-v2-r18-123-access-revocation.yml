@@ -1,0 +1,38 @@
+name: World V2 R18-123 dormant campaign revocation safety contract
+
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-123-*'
+    paths:
+      - '.github/workflows/world-v2-r18-123-access-revocation.yml'
+      - 'staging/world-v2-b10-r18-123-access-revocation-guard/**'
+      - 'tests/world-v2-r18-123-access-revocation-guard.test.mjs'
+      - 'docs/testing/world-v2-r18-123-revocation-access-sentinel-2026-11-19.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-122-*'
+    paths:
+      - '.github/workflows/world-v2-r18-123-access-revocation.yml'
+      - 'staging/world-v2-b10-r18-123-access-revocation-guard/**'
+      - 'tests/world-v2-r18-123-access-revocation-guard.test.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  source-only-revocation-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact tracked draft head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify staging-only signed member access guard and teardown order
+        shell: bash
+        run: node --test tests/world-v2-r18-123-access-revocation-guard.test.mjs
+      - name: Verify R123 contract is not imported by release-pinned app code
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');for(const f of ['src/TabletopApp.jsx','src/engine/v2/WorldV2Board.jsx']){const s=fs.readFileSync(f,'utf8');if(/CampaignAccessSentinel|CampaignRevocationTeardown/.test(s))process.exit(3)}const a=fs.readFileSync('staging/world-v2-b10-r18-123-access-revocation-guard/CampaignAccessSentinel.js','utf8');if(!a.includes('R123_LIVE_ENABLED=false'))process.exit(4);"
+      - name: State explicit hosted release hold
+        run: echo "R123 NO_GO - isolated source-only tests, no Supabase SQL, signed users, new cache/Realtime rollout, merge or deployment."
