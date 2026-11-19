@@ -382,3 +382,25 @@ test('R123 unmount before signed-URL clear avoids reissuance to revoked subscrib
  assert.equal(signed,1);
  assert.equal(store.stats().subscribers,0);
 });
+
+test('R123 an asynchronous view-mask callback is rejected instead of falsely claiming immediate safety',()=>{
+ const db={auth:{getUser:async()=>({data:{user:{id:P}},error:null})},
+  from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:async()=>({data:{user_id:P,role:'player'},error:null})};return q;}};
+ const sentinel=createCampaignAccessSentinel({
+  db,getContext:()=>({campaignId:C,userId:P}),
+  onLock:async()=>true,onAllow:()=>{},onRevoked:()=>{}
+ });
+ assert.throws(()=>sentinel.begin({campaignId:C,userId:P}),
+  {code:'asynchronous_mask'});
+ assert.equal(sentinel.snapshot().allowed,false);
+});
+
+test('R123 a failing context callback cannot resurrect old campaign authorization',async()=>{
+ const f=setup();
+ await f.guard.begin({campaignId:C,userId:P});
+ f.setContext(null);
+ const r=await f.guard.notify('manual');
+ assert.equal(r.allowed,false);
+ assert.equal(r.phase,'suspended');
+ assert.equal(f.events.at(-1)[1],'context_changed');
+});
