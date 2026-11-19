@@ -63,10 +63,16 @@
     231
   ],
   "tests": {
-    "sourceContract": "PENDING_CI",
-    "syntheticPg17": "PENDING_CI",
-    "standardRepo": "PENDING_CI",
-    "combinedStagingSql": "PENDING_CI"
+    "sourceContract": "PASSED_AT_SOURCE_HEAD",
+    "syntheticPg17": "PASSED_AT_SOURCE_HEAD",
+    "standardRepo": "PASSED_AT_SOURCE_HEAD",
+    "combinedStagingSql": "IN_PROGRESS_AT_CHECKPOINT",
+    "lastSourceHead": "03ca1933f8a42dedd1235e207c6e79b3e08ffb98",
+    "dedicatedPrRun": 44498618398,
+    "standardPrRun": 44498618420,
+    "combinedPushRun": 44498610867,
+    "postReceiptCommitRecheckRequired": true,
+    "initialWorkflowYamlSyntaxFailureCorrected": true
   },
   "noHostedSqlWrites": true,
   "noLiveSourceChanges": true,
