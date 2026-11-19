@@ -188,6 +188,28 @@ test('R126 closed channel masks and old callbacks never reauthorize after reentr
  assert.ok(f.removals.includes(old));
  await t.dispose();
 });
+test('R126 automatic reconnect refetches fresh signed epoch; old channel never reauthorizes',async()=>{
+ const f=fixture();const t=f.create();
+ await t.enter();
+ const old=f.channels[0];
+ old.status('SUBSCRIBED');await tick();await tick();
+ assert.equal(t.snapshot().authorized,true);
+ assert.equal(f.calls.proof,1);
+ old.status('CHANNEL_ERROR');
+ assert.equal(t.snapshot().authorized,false);
+ old.status('SUBSCRIBED');await tick();await tick();
+ assert.equal(t.snapshot().authorized,false);
+ assert.equal(f.calls.proof,2);
+ assert.equal(f.channels.length,2);
+ assert.ok(f.removals.includes(old));
+ const fresh=f.channels[1];
+ assert.equal(fresh.config.config.private,true);
+ fresh.status('SUBSCRIBED');await tick();await tick();
+ assert.equal(t.snapshot().authorized,true);
+ assert.equal(f.calls.allow,2);
+ await t.dispose();
+});
+
 test('R126 disposing during delayed auth prevents late join/reveal',async()=>{
  let release;const pending=new Promise(resolve=>{release=resolve});
  const f=fixture({getUser:()=>pending});const t=f.create();
