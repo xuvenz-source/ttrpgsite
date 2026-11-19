@@ -52,11 +52,16 @@ export function createCampaignAccessSentinel({
  const snapshot=()=>Object.freeze({
   phase,allowed:phase==='authorized',checks,active:!!context,disposed
  });
- const matchesLive=()=>same(context,getContext());
+ const matchesLive=()=>{try{return same(context,getContext())}catch{return false}};
 
  function lock(reason){
-  // Callers must provide a synchronous mask/stop-input implementation.
-  onLock(Object.freeze({reason}));
+  // Fail closed if a future host supplies an async mask: a promise cannot
+  // provide the synchronous view/input cutoff this contract requires.
+  const r=onLock(Object.freeze({reason}));
+  if(r&&typeof r.then==='function'){
+   void Promise.resolve(r).catch(()=>{});
+   throw invalid('asynchronous_mask');
+  }
  }
  function suspend(code){
   const needLock=phase!=='suspended'&&phase!=='locked'&&phase!=='revoked';
@@ -109,8 +114,12 @@ export function createCampaignAccessSentinel({
     }
     if(result.kind==='revoked'){
      if(phase!=='revoked'){
-      if(phase==='authorized')lock('revoked');
+      const wasAuthorized=phase==='authorized';
       phase='revoked';
+      if(wasAuthorized){
+       try{lock('revoked')}
+       catch{onSuspended(Object.freeze({code:'view_mask_failed'}))}
+      }
       try{onRevoked(Object.freeze({reason:'membership_absent'}))}
       catch{onSuspended(Object.freeze({code:'revocation_teardown_failed'}))}
      }
@@ -169,8 +178,9 @@ export function createCampaignAccessSentinel({
    // An access-related signal is untrusted: it masks first and always
    // rechecks the real signed actor. It never authorises or revokes by itself.
    ++revision;
-   if(phase==='authorized')lock('revalidating');
+   const wasAuthorized=phase==='authorized';
    phase='locked';
+   if(wasAuthorized)lock('revalidating');
   }
   pending=true;
   return pump();
