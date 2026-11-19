@@ -147,10 +147,20 @@ export function createSceneV3Transition({
     return false;
    }
    channel=c;
+   let hadJoin=false;
    c.on('broadcast',{event:SCENE_V3_EVENT},event=>notice(event,n,c));
    c.subscribe(status=>{
     if(!active(n,c))return;
     if(status==='SUBSCRIBED'){
+     if(hadJoin){
+      // Realtime reconnect does not prove that the old epoch remains valid.
+      // Re-issue an authenticated lease and JOIN a new channel; never
+      // re-authorize old cached topic even after account reinstatement.
+      mask('reconnect-requires-fresh-epoch');
+      void enter().catch(e=>safeCall(onError,e));
+      return;
+     }
+     hadJoin=true;
      online=true;
      sceneManager.invalidate('scene-v3-joined');
      void pump(n,c);
