@@ -96,7 +96,7 @@ test('R126 source-only SQL retains generation and eliminates legacy sender AND r
 test('R126 SQL fixture simulates private policy and membership revoke lifecycle',()=>{
  assert.match(setup,/CREATE TABLE realtime\.messages/);
  assert.match(setup,/ALTER TABLE realtime\.messages ENABLE ROW LEVEL SECURITY/);
- assert.match(verify,/removed P1 received post-delete publication/);
+ assert.match(verify,/revoked P1 received post-delete publication/);
  assert.match(verify,/restored P1 reused old subscribed topic/);
  assert.match(verify,/P1 could read P2 private broadcast/);
  assert.match(verify,/old shared receiver policy remains/);
