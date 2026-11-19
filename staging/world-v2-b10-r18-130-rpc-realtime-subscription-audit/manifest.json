@@ -12,10 +12,20 @@
     "rpcDirectGuardTextMissing": 15,
     "appSchemaPrivateUsageForAuthenticated": false,
     "publishedRealtimeTables": 17,
-    "currentPostgresChangesSubscriberInventoryStatus": "DISCOVERY",
+    "currentPostgresChangesSubscriberInventoryStatus": "19_SITE_SOURCE_BASELINE_PINNED",
     "postgresChangesDeleteRlsSpecialCase": true,
     "clientOldV2SharedSceneTopicStillUsed": true,
-    "originalActivePublishedTableCount": 17
+    "originalActivePublishedTableCount": 17,
+    "sourceSubscriptionHandlers": 19,
+    "sourceSubscriptionFiles": 7,
+    "deleteCapableSubscriberDeclarations": 16,
+    "handlersWithoutExplicitSelectProjection": 19,
+    "dynamicSheetTableBindingOptions": [
+      "characters",
+      "npc_templates",
+      "map_tokens"
+    ],
+    "sourceReceiptCiRun": 44501859219
   },
   "streamSecurity": {
     "livePostgresChangesRevocationVerified": false,
@@ -24,7 +34,9 @@
     "serverSideLegacyFenceInstalled": false,
     "privateRlsSignedQaPerformed": false,
     "subscriberDisconnectProofPerformed": false,
-    "clientUnsubscriptionIntegrated": false
+    "clientUnsubscriptionIntegrated": false,
+    "sourceSubscriptionAuditPassed": false,
+    "listenerBaselinePinned": true
   },
   "verifiedLiveSignedRpcAuthorization": false,
   "all67PrivilegedRpcBodyAndDelegationReviewComplete": false,
