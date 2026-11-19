@@ -17,6 +17,10 @@ REVOKE ALL ON SCHEMA forge_scene_revoke FROM PUBLIC,anon,authenticated;
 -- Epoch belongs to a specific user + map under an existing member identity.
 -- Referential DELETE cascade makes an old epoch disappear atomically with
 -- the membership row. Explicit reinstatement generates a distinct epoch.
+-- Authenticated callers may invoke only the safe boolean predicate; never
+-- grant direct table read/write access to this schema.
+GRANT USAGE ON SCHEMA forge_scene_revoke TO authenticated;
+
 CREATE TABLE forge_scene_revoke.member_scene_epochs (
  campaign_id uuid NOT NULL,
  map_id uuid NOT NULL,
@@ -29,6 +33,7 @@ CREATE TABLE forge_scene_revoke.member_scene_epochs (
  FOREIGN KEY(campaign_id,map_id)
    REFERENCES public.battle_maps(campaign_id,id) ON DELETE CASCADE
 );
+ALTER TABLE forge_scene_revoke.member_scene_epochs ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON forge_scene_revoke.member_scene_epochs
  FROM PUBLIC,anon,authenticated;
 
@@ -97,6 +102,10 @@ BEGIN
 END $receive$;
 REVOKE ALL ON FUNCTION forge_scene_revoke.can_receive_scene_topic_v3(text)
  FROM PUBLIC,anon,authenticated;
+-- This exact boolean predicate is the only caller grant needed by a FUTURE
+-- private realtime.messages SELECT policy. No membership/epoch rows are exposed.
+GRANT EXECUTE ON FUNCTION forge_scene_revoke.can_receive_scene_topic_v3(text)
+ TO authenticated;
 
 -- Only trusted server-side fanout can resolve another user's current topic.
 -- FOR SHARE serializes a prospective send with membership removal.
