@@ -60,7 +60,7 @@ test('only signed current members can request their own map-bound new topic',()=
 test('recipient receive policy predicate is strict, no public raw epoch or server resolver',()=>{
  assert.match(sql,/CREATE FUNCTION forge_scene_revoke\.can_receive_scene_topic_v3\(p_topic text\)/);
  assert.match(sql,/viewer_id IS DISTINCT FROM auth\.uid\(\)/);
- assert.match(sql,/l\.epoch=topic_epoch/);
+ assert.match(sql,/l\.epoch=v_topic_epoch/);
  assert.match(sql,/public\.can_view_campaign_map\(l\.campaign_id,l\.map_id\)/);
  assert.match(sql,/GRANT EXECUTE ON FUNCTION forge_scene_revoke\.can_receive_scene_topic_v3\(text\)/);
  assert.match(sql,/REVOKE ALL ON FUNCTION forge_scene_revoke\.current_recipient_scene_topic_v3/);
