@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-130",
+  "date": "2026-11-19",
+  "decision": "NO_GO",
+  "parentPr": 237,
+  "parentSha": "31779ef3b1829f227c976c78144d748acd938c64",
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "observations": {
+    "privilegedPublicRpcCount": 67,
+    "rpcDirectGuardTextMissing": 15,
+    "appSchemaPrivateUsageForAuthenticated": false,
+    "publishedRealtimeTables": 17,
+    "currentPostgresChangesSubscriberInventoryStatus": "DISCOVERY",
+    "postgresChangesDeleteRlsSpecialCase": true,
+    "clientOldV2SharedSceneTopicStillUsed": true,
+    "originalActivePublishedTableCount": 17
+  },
+  "streamSecurity": {
+    "livePostgresChangesRevocationVerified": false,
+    "realtimeLegacyBroadcastSocketEjectionVerified": false,
+    "storageSignedUrlAccessRevoked": false,
+    "serverSideLegacyFenceInstalled": false,
+    "privateRlsSignedQaPerformed": false,
+    "subscriberDisconnectProofPerformed": false,
+    "clientUnsubscriptionIntegrated": false
+  },
+  "verifiedLiveSignedRpcAuthorization": false,
+  "all67PrivilegedRpcBodyAndDelegationReviewComplete": false,
+  "sourceOnlyArtifacts": {
+    "rpcCatalog": "staging/world-v2-b10-r18-130-rpc-realtime-subscription-audit/public-definer-call-candidates.json",
+    "scanner": "staging/world-v2-b10-r18-130-rpc-realtime-subscription-audit/SourceRealtimeSubscriptionAudit.mjs",
+    "subscriptionBaseline": "staging/world-v2-b10-r18-130-rpc-realtime-subscription-audit/client-subscription-baseline.json",
+    "sourceTests": "tests/world-v2-r18-130-rpc-realtime-audit.test.mjs"
+  },
+  "tests": {
+    "source": "PENDING",
+    "standard": "PENDING",
+    "combined": "PENDING"
+  },
+  "noHostedWrites": true,
+  "noLiveRuntimeChanges": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "productionReleaseAuthorized": false
+}
