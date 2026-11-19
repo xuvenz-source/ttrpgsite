@@ -79,7 +79,15 @@ test('R130 scans complete src tree and emits non-sensitive subscription metadata
   file:f.file,line:f.line,table:f.table,event:f.event,
   filter:f.hasFilter,select:f.hasSelect,dynamic:f.tableExpression==='dynamic'
  }))));
- assert.ok(found.length>=15,'unexpectedly small source subscription set');
+ assert.equal(found.length,19);
+ assert.equal(new Set(found.map(x=>x.file)).size,7);
+ assert.equal(found.filter(x=>x.includesDelete).length,16);
+ assert.equal(found.filter(x=>x.hasSelect).length,0);
+ assert.equal(clients.observations.handlerCount,19);
+ assert.equal(clients.observations.deleteCapableHandlerCount,16);
+ assert.equal(clients.observations.explicitProjectionCount,0);
+ assert.equal(clients.sourceReviewApproved,false);
+ assert.equal(clients.liveSignedPostgresChangesTestsPassed,false);
  assert.ok(found.some(x=>x.table==='map_viewer_visibility_ticks'&&x.event==='INSERT'));
  assert.ok(found.some(x=>x.table==='map_viewer_visibility_ticks'&&x.event==='UPDATE'));
  assert.ok(found.some(x=>x.table==='campaigns'));
@@ -88,6 +96,11 @@ test('R130 scans complete src tree and emits non-sensitive subscription metadata
  assert.ok(found.some(x=>x.table==='target.table'&&x.file==='src/useCampaignSheetInventory.js'));
  assert.ok(found.every(x=>x.schema==='public'));
  assert.ok(found.every(x=>x.hasFilter));
+ const sheetSource=read('src/useCampaignSheetInventory.js');
+ for(const [type,table] of [['character','characters'],
+   ['npc_template','npc_templates'],['npc_token','map_tokens']]){
+  assert.ok(sheetSource.includes(type+':{table:\''+table+'\''),type+' binding');
+ }
  const check=compareSubscriptionBaselines(found,clients.subscriptions,
   published.supabaseRealtimePublicationTables);
  assert.equal(check.releaseAuthorized,false);
