@@ -69,11 +69,19 @@
     "perRecipientFanoutCapacityApproved": false
   },
   "tests": {
-    "node": "PENDING_CI",
-    "pg17": "PENDING_CI",
-    "standard": "PENDING_CI",
-    "combined": "PENDING_CI",
-    "signedHosted": "NOT_RUN"
+    "node": "PASSED_ON_SOURCE_HEAD",
+    "pg17": "PASSED_ON_SOURCE_HEAD",
+    "standard": "PASSED_ON_SOURCE_HEAD",
+    "combined": "PASSED_ON_PRIOR_SQL_EQUIVALENT_SOURCE_HEAD",
+    "signedHosted": "NOT_RUN",
+    "lastFullyVerifiedNodeAndStandardSourceHead": "be60dfd04c2e5daabfea3de94e066a59cd4b9547",
+    "nodeAndPg17PrRunId": 44470372666,
+    "standardPrRunId": 44470372690,
+    "combinedPreviouslyPassedRunId": 44469937241,
+    "combinedPreviouslyPassedHead": "21dd36d95ce128fad0dfc6fbc4713247db789872",
+    "combinedFinalHeadRunId": 44470367347,
+    "combinedFinalHeadStatusAtRecord": "IN_PROGRESS",
+    "postManifestCommitExactHeadRecheckRequired": true
   },
   "noHostedWrites": true,
   "noProductionDeploy": true,
@@ -81,5 +89,6 @@
   "noVersionedMigrations": true,
   "noMerge": true,
   "noPaidInfrastructure": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "qaPublicApplicationTablesBefore": 0
 }
