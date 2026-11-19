@@ -157,11 +157,15 @@ export function createStagedStreamQuarantine({
    try{
     if(mode==='refresh-only'||event.eventType==='DELETE'){
      // Do NOT pass full row or old DELETE record to refresh-only callbacks.
-     listener(hint,isCurrent);
+     const work=listener(hint,isCurrent);
+     if(work&&typeof work.then==='function')
+      void Promise.resolve(work).catch(()=>report('async_listener_failed'));
      return true;
     }
     if(validator(event,scope)!==true)return false;
-    listener(event,isCurrent);
+    const work=listener(event,isCurrent);
+    if(work&&typeof work.then==='function')
+     void Promise.resolve(work).catch(()=>report('async_listener_failed'));
     return true;
    }catch{report('listener_or_validator_failed');return false}
   };
