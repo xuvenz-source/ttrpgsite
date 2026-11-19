@@ -30,7 +30,7 @@ Before the database/client cutover, the server must demonstrably block continued
 
 The dormant SceneReleaseInterlock.js has no SQL, deployment, network, DOM, timers or event listeners. It only records a pinned commit and unique checklist receipts. Allowed transitions are: planning -> fenced -> server-v3 -> client-v3 -> signed-qa-v3 -> ready-for-human-release-review. Missing and stale evidence or skipped stages are rejected. It NEVER grants production authorization. An abort becomes abort-required rather than pretending that server traffic stopped. Independently proved server-side fencing is required before aborted-fenced. Reopening V2 is not supported.
 
-Receipts in this model can be fabricated by a caller; they are not cryptographic proof or a substitute for real QA. The pure sceneClientCompatibility function predicts that V2, mismatched versions, missing signed membership, absent mask or maintenance state must stay masked. It grants no server access. The tests exercise model ordering and negative cases, not real old-browser revocation.
+Critical revocation and privilege issues, including server-side membership enforcement, are not waivable through this checklist. Signed Storage exposure must be remediated rather than ignored; any residual risk needs a separate reviewed decision outside this interlock. Receipts in this model can be fabricated by a caller; they are not cryptographic proof or a substitute for real QA. The pure sceneClientCompatibility function predicts that V2, mismatched versions, missing signed membership, absent mask or maintenance state must stay masked. It grants no server access. The tests exercise model ordering and negative cases, not real old-browser revocation.
 
 ## Free-tier performance and security gates
 
