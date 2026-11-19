@@ -61,8 +61,10 @@ BEGIN
  THEN RAISE EXCEPTION 'R126 new scoped receiver policy missing';END IF;
 END $assert$;
 
--- Synthetic authenticated SELECT obeys our exact current member/epoch
--- and current private channel topic. Other viewers remain invisible.
+-- Synthetic authenticated SELECT combines RLS (channel join permission)
+-- with the WHERE topic=realtime.topic() routing performed by the real
+-- Realtime server. The SQL RLS predicate alone does NOT row-route a durable
+-- test message log; actual Realtime messages are ephemeral, not query rows.
 BEGIN;
 SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub',
@@ -71,8 +73,10 @@ SELECT pg_catalog.set_config('request.jwt.claim.scene_topic',
  pg_catalog.current_setting('r126.p1'),true);
 DO $assert$
 BEGIN
- IF (SELECT count(*) FROM realtime.messages)<>1 THEN
-  RAISE EXCEPTION 'R126 P1 RLS rows=%, actor=%, topic=%, predicate=%', (SELECT count(*) FROM realtime.messages), auth.uid(), realtime.topic(), forge_scene_revoke.can_receive_scene_topic_v3(realtime.topic());END IF;
+ IF (SELECT count(*) FROM realtime.messages
+    WHERE topic=realtime.topic())<>1 THEN
+  RAISE EXCEPTION 'R126 P1 routed RLS rows=%, actor=%, topic=%, predicate=%', (SELECT count(*) FROM realtime.messages
+   WHERE topic=realtime.topic()), auth.uid(), realtime.topic(), forge_scene_revoke.can_receive_scene_topic_v3(realtime.topic());END IF;
 END $assert$;
 COMMIT;
 
@@ -84,7 +88,8 @@ SELECT pg_catalog.set_config('request.jwt.claim.scene_topic',
  pg_catalog.current_setting('r126.p2'),true);
 DO $assert$
 BEGIN
- IF (SELECT count(*) FROM realtime.messages)<>0 THEN
+ IF (SELECT count(*) FROM realtime.messages
+  WHERE topic=realtime.topic())<>0 THEN
   RAISE EXCEPTION 'R126 P1 could read P2 private broadcast';END IF;
 END $assert$;
 COMMIT;
@@ -122,7 +127,8 @@ SELECT pg_catalog.set_config('request.jwt.claim.scene_topic',
  pg_catalog.current_setting('r126.p1'),true);
 DO $assert$
 BEGIN
- IF (SELECT count(*) FROM realtime.messages)<>0 THEN
+ IF (SELECT count(*) FROM realtime.messages
+  WHERE topic=realtime.topic())<>0 THEN
   RAISE EXCEPTION 'R126 removed P1 still passes private channel RLS';END IF;
 END $assert$;
 COMMIT;
