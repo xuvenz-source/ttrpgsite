@@ -1,0 +1,30 @@
+name: World V2 R18-141 projection and cutover evidence
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-141-*'
+    paths:
+      - '.github/workflows/world-v2-r18-141-projection-cutover-audit.yml'
+      - 'staging/world-v2-b10-r18-141-projection-cutover-audit/**'
+      - 'tests/world-v2-r18-141-*'
+      - 'docs/testing/world-v2-r18-141-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-140-*'
+permissions:
+  contents: read
+jobs:
+  original-source-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Read exact stacked source without deploying
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Require no src or SQL migration modifications
+        run: git diff --exit-code 8203f37052c4d7896635999befe3f8247095613b HEAD -- src/ supabase/migrations/
+      - name: Reconcile 10 protected table projections, 19 subscriptions, 17 publications and three private Storage buckets
+        run: node --test tests/world-v2-r18-141-projection-cutover-audit.test.mjs
+      - name: Fail closed for hosted release
+        run: echo 'R18-141 NO_GO. Source-only audit; original 67 definers, signed old sockets, Storage URLs and free-tier latency remain blocked.'
