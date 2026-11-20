@@ -67,11 +67,16 @@
     231
   ],
   "tests": {
-    "dedicated": "PENDING",
-    "syntheticPg17": "PENDING",
-    "standardRepo": "PENDING",
-    "combinedStagingSql": "PENDING",
-    "signedQa": "NOT_RUN"
+    "dedicated": "SUCCESS_ON_IMPLEMENTATION_HEAD",
+    "syntheticPg17": "SUCCESS_ON_IMPLEMENTATION_HEAD",
+    "standardRepo": "SUCCESS_ON_IMPLEMENTATION_HEAD",
+    "combinedStagingSql": "SUCCESS_ON_IMPLEMENTATION_HEAD",
+    "signedQa": "NOT_RUN",
+    "verifiedImplementationSha": "390487e0eb54dab1c6a03be7b009ccf02d4b6522",
+    "dedicatedPrRunId": 44680628195,
+    "standardPrRunId": 44680628189,
+    "combinedPushRunId": 44680622741,
+    "postManifestEvidenceOnlyRecheckRequired": true
   },
   "noHostedWrites": true,
   "noLiveSourceEdits": true,
@@ -79,5 +84,16 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "hostedReadOnlyFinalVerification": {
+    "originalMigrationCount": 83,
+    "qaMigrationCount": 0,
+    "qaPublicApplicationTables": 0,
+    "oldV2ScenePolicyActive": true,
+    "v3ObserverPrivateReceiverPolicyInstalled": false,
+    "r132SceneGateInstalled": false,
+    "r133ObserverRelayInstalled": false,
+    "v3TopicRpcInstalled": false,
+    "noHostedWrites": true
+  }
 }
