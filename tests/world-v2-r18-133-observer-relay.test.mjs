@@ -52,6 +52,15 @@ test('R133 six original SQL senders have exact R129 hashes and remain unreplaced
  assert.ok(data.sourceFunctionCoverage.every(x=>x.oldTopic.startsWith('forge-')));
  assert.equal(data.currentRelayRequiresSignedActor,true);
  assert.equal(data.originalSystemVisionCallerCount,4);
+ assert.equal(data.liveOriginalEnabledSystemVisionTriggerCount,4);
+ assert.equal(data.verifiedTriggerCallsFromOriginalCatalog,true);
+ assert.equal(data.verifiedOriginalTriggerPaths.length,4);
+ const triggers=new Set(data.verifiedOriginalTriggerPaths.map(x=>x.trigger));
+ for(const t of ['world_v2_player_map_changed','world_v2_tool_light_change',
+  'world_v2_campaign_map_changed','world_v2_token_roster_changed'])
+  assert.ok(triggers.has(t));
+ assert.ok(data.verifiedOriginalTriggerPaths.every(x=>/^[0-9a-f]{32}$/.test(x.sourceMd5)));
+
  assert.equal(data.systemInitiatedVisionNotYetSupported,true);
  const vision=data.sourceFunctionCoverage.find(f=>f.name==='forge_world_v2.bump_vision_epoch_v2');
  assert.equal(vision.potentialSystemOriginWithoutJwt,true);
