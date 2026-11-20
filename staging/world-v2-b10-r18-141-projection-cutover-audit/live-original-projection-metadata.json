@@ -1,0 +1,351 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-141",
+  "observedAt": "2026-11-21",
+  "method": "read-only live pg_catalog, information_schema, pg_policies, storage.buckets; no application row reads",
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "originalMigrationCount": 83,
+  "qaMigrationCount": 0,
+  "qaApplicationTables": 0,
+  "originalAuthenticatedPublicFunctions": 77,
+  "originalAuthenticatedPublicSecurityDefiners": 67,
+  "originalPublicTablesAndViews": 31,
+  "realtimePublishedTableCount": 17,
+  "postgreChangesSourceHandlers": 19,
+  "signedAssetUrlSecondsInSource": 3600,
+  "originalPublicSchemaAuthenticatedUsage": true,
+  "hostedV3ApiSchemaInstalled": false,
+  "publishedTables": [
+    "battle_maps",
+    "campaign_handout_events",
+    "campaign_player_maps",
+    "campaign_sheet_item_leases",
+    "campaign_tool_issues",
+    "campaign_tool_item_leases",
+    "campaign_tool_map_tokens",
+    "campaign_tool_templates",
+    "campaigns",
+    "characters",
+    "chat_messages",
+    "map_combats",
+    "map_environments",
+    "map_tokens",
+    "map_viewer_visibility_ticks",
+    "map_visibility_ticks",
+    "npc_templates"
+  ],
+  "storageBuckets": [
+    {
+      "id": "battlemap-assets",
+      "public": false
+    },
+    {
+      "id": "personal-token-art",
+      "public": false
+    },
+    {
+      "id": "tabletop-artwork",
+      "public": false
+    }
+  ],
+  "tables": [
+    {
+      "name": "battle_maps",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 4,
+      "columns": [
+        "id",
+        "campaign_id",
+        "folder_id",
+        "name",
+        "storage_path",
+        "width",
+        "height",
+        "grid_size",
+        "created_at",
+        "source_width",
+        "source_height"
+      ],
+      "sensitive": [
+        "storage_path"
+      ],
+      "policy": "player:can_view_campaign_map; DM:map management",
+      "projection": "Separate authorized dimensions from Storage paths and map metadata; do not return raw storage paths by default"
+    },
+    {
+      "name": "campaign_handouts",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 4,
+      "columns": [
+        "id",
+        "campaign_id",
+        "folder_id",
+        "title",
+        "body",
+        "revealed",
+        "collected",
+        "created_at",
+        "updated_at"
+      ],
+      "sensitive": [
+        "body"
+      ],
+      "policy": "DM or campaign member for revealed handout or exposed visible map pin",
+      "projection": "Reveal text only when server-proved revealed/exposed-pin scope; no SELECT * to players"
+    },
+    {
+      "name": "campaign_map_pins",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 4,
+      "columns": [
+        "id",
+        "campaign_id",
+        "map_id",
+        "handout_id",
+        "kind",
+        "x",
+        "y",
+        "visible",
+        "collectable",
+        "created_at",
+        "updated_at"
+      ],
+      "sensitive": [
+        "x",
+        "y",
+        "visible"
+      ],
+      "policy": "DM or visible pin for member authorized for map",
+      "projection": "Do not send hidden pin coordinates or handout metadata in Realtime"
+    },
+    {
+      "name": "campaign_members",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 1,
+      "columns": [
+        "campaign_id",
+        "user_id",
+        "role",
+        "joined_at"
+      ],
+      "sensitive": [
+        "user_id",
+        "role"
+      ],
+      "policy": "campaign members can read membership",
+      "projection": "Return minimum roster fields only to signed current campaign members"
+    },
+    {
+      "name": "campaign_tool_issues",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 4,
+      "columns": [
+        "id",
+        "campaign_id",
+        "template_id",
+        "owner_id",
+        "party_shared",
+        "name",
+        "kind",
+        "icon",
+        "config",
+        "state",
+        "map_id",
+        "x",
+        "y",
+        "revision",
+        "created_at",
+        "updated_at",
+        "held_by_token_id"
+      ],
+      "sensitive": [
+        "config",
+        "state"
+      ],
+      "policy": "DM, owning recipient, or party-shared membership",
+      "projection": "Owner/DM-specific config and state, never assume party_shared grants every private field"
+    },
+    {
+      "name": "characters",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 3,
+      "columns": [
+        "id",
+        "campaign_id",
+        "user_id",
+        "name",
+        "field_values",
+        "updated_at",
+        "portrait_path",
+        "token_path"
+      ],
+      "sensitive": [
+        "field_values",
+        "portrait_path",
+        "token_path"
+      ],
+      "policy": "owner or campaign DM can select row",
+      "projection": "Owner/DM-only private field_values; player-facing token roster uses a separate bounded projection"
+    },
+    {
+      "name": "map_combat_entries",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 1,
+      "columns": [
+        "entry_id",
+        "map_id",
+        "token_id",
+        "sort_index",
+        "score",
+        "die_roll",
+        "modifier"
+      ],
+      "sensitive": [
+        "token_id",
+        "die_roll",
+        "modifier"
+      ],
+      "policy": "campaign DM only",
+      "projection": "Return player-visible initiative through get_authorized_map_combat, not private token_id map"
+    },
+    {
+      "name": "map_environments",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 4,
+      "columns": [
+        "map_id",
+        "campaign_id",
+        "prepared",
+        "live",
+        "revision",
+        "updated_at"
+      ],
+      "sensitive": [
+        "prepared",
+        "live"
+      ],
+      "policy": "campaign DM only",
+      "projection": "No direct prepared/live scene JSON to players; use authorized scene generation and fog mask"
+    },
+    {
+      "name": "map_tokens",
+      "authenticatedSelect": false,
+      "rls": true,
+      "policyCount": 5,
+      "columns": [
+        "id",
+        "campaign_id",
+        "map_id",
+        "owner_id",
+        "name",
+        "color",
+        "x",
+        "y",
+        "visible",
+        "updated_at",
+        "npc_template_id",
+        "character_id",
+        "image_path",
+        "npc_values",
+        "span_x",
+        "span_y",
+        "npc_bars_public",
+        "status_effects"
+      ],
+      "sensitive": [
+        "npc_values",
+        "npc_template_id",
+        "character_id"
+      ],
+      "policy": "DM or visible/observed row; authenticated base-table SELECT absent",
+      "projection": "Never grant direct authenticated SELECT; signed authorized visible-roster projection only"
+    },
+    {
+      "name": "npc_templates",
+      "authenticatedSelect": true,
+      "rls": true,
+      "policyCount": 4,
+      "columns": [
+        "id",
+        "campaign_id",
+        "folder_id",
+        "name",
+        "field_values",
+        "portrait_path",
+        "token_path",
+        "created_at",
+        "updated_at",
+        "npc_bars_public"
+      ],
+      "sensitive": [
+        "field_values",
+        "portrait_path",
+        "token_path"
+      ],
+      "policy": "campaign DM only",
+      "projection": "DM-only private NPC sheet; no raw player template SELECT"
+    }
+  ],
+  "cautions": [
+    "pg_catalog grants and RLS policy text are metadata, not proof of original function transitive correctness",
+    "RLS governs rows, not automatic column projection",
+    "The 19 source Postgres Changes declarations have no select projections; DELETE/old connected sockets need real testing",
+    "The signed URL cache clears local references but cannot invalidate an already issued bearer URL",
+    "get_campaign_sheet_inventory is a SECURITY DEFINER read-looking RPC that can normalize and WRITE _inventoryId via UPDATE; do not classify as read-only",
+    "get_authorized_map_combat is actor/map authorized and projects observed participants, but retains private DM-only combat entry mapping",
+    "Original public schema authenticated USAGE remains enabled; no hosted R128/V3 cutover",
+    "No real DM/P1/P2/outsider/multi-tab authorization, LOS, collision or free-tier latency test has been run"
+  ],
+  "sourceRiskReadouts": {
+    "broadSelectExamples": [
+      "src/TabletopApp.jsx campaign/character/mapping SELECT *",
+      "src/useCampaignHandouts.js SELECT * notes/pins"
+    ],
+    "legacySceneTopic": "forge-world-scene-v2:<map>",
+    "legacyObserverTopic": "forge-world-v2:<map>:<viewer>",
+    "signedUrlCacheSeconds": 3600,
+    "clientCacheClearingAloneRevokesIssuedUrl": false
+  },
+  "reviewedFunctionExamples": [
+    {
+      "name": "get_campaign_sheet_inventory",
+      "returns": "jsonb",
+      "behaviour": "reads AND conditionally writes normalized inventory UUIDs",
+      "permission": "can_edit_campaign_sheet_inventory"
+    },
+    {
+      "name": "get_dm_map_npc_values",
+      "returns": "token_id,npc_values",
+      "permission": "is_campaign_dm"
+    },
+    {
+      "name": "get_authorized_map_combat",
+      "returns": "jsonb",
+      "permission": "can_view_campaign_map and observed player roster; private DM mapping separate"
+    },
+    {
+      "name": "get_campaign_account_names",
+      "returns": "user_id,account_name",
+      "permission": "is_campaign_member; user metadata only for labels, not authorization"
+    },
+    {
+      "name": "collect_campaign_map_pin",
+      "returns": "uuid",
+      "permission": "signed current member, visible collectable pin and authorized map; mutates handout reveal"
+    }
+  ],
+  "originalFunctionBodiesAllReviewed": false,
+  "oldSocketEjectionVerified": false,
+  "signedStorageUrlRevocationVerified": false,
+  "actualSignedAuthorizationVerified": false,
+  "productionReleaseAuthorized": false
+}
