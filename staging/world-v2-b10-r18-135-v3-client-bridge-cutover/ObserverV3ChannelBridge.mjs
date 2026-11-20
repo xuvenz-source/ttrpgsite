@@ -84,6 +84,7 @@ export function createObserverV3ChannelBridge({
   try{await prior.transport.dispose();}
   catch{terminal=true;lastFailure='transport_dispose_failed';
    emit(lastFailure);return false}
+  if(prior.removalAttempted&&!prior.removed)return false;
   if(prior.channel&&!prior.removed){
    try{
     const result=await db.removeChannel(prior.channel);
@@ -109,6 +110,7 @@ export function createObserverV3ChannelBridge({
  function bind(n,observerTopic){
   if(!ok(n))throw bad('stale_scope');
   const holder={channel:null,boundChannel:null,removed:false,
+   removalAttempted:false,
    topic:observerTopic,transport:null};
   const expected=expectedV2(mapId,viewerId);
   const shim=Object.freeze({
@@ -169,7 +171,8 @@ export function createObserverV3ChannelBridge({
    removeChannel:async channel=>{
     if(channel!==holder.boundChannel)return 'error';
     try{
-     const result=await db.removeChannel(channel);
+     holder.removalAttempted=true;
+     const result=await db.removeChannel(holder.channel);
      if(result!=='ok'){
       terminal=true;unsubscribeFailures++;
       lastFailure='channel_remove_not_confirmed';emit(lastFailure);
