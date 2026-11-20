@@ -1,0 +1,760 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-137",
+  "observedAt": "2026-11-20",
+  "source": "original Supabase lwhwgqaunxbmvyndswze, read-only pg_catalog",
+  "disposableOnly": true,
+  "originalMigrationCount": 83,
+  "authenticatedPublicSchemaUsage": true,
+  "liveHostedGatewayInstalled": false,
+  "callabilityNote": "Role grants alone do NOT establish semantic authorization, safe field projection, caller identity or legacy-client denial.",
+  "functionCount": 77,
+  "securityDefinerCount": 67,
+  "relationCount": 31,
+  "publicSqlFunctions": [
+    {
+      "name": "add_map_combat_tokens",
+      "arguments": "p_map uuid, p_tokens uuid[]",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "advance_authorized_navigation_gesture",
+      "arguments": "p_session uuid, p_dx integer, p_dy integer, p_seq bigint",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "advance_authorized_navigation_gesture_batch",
+      "arguments": "p_session uuid, p_targets jsonb, p_seq bigint",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "advance_map_motion_session",
+      "arguments": "p_session uuid, p_x integer, p_y integer, p_seq bigint",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "advance_map_motion_session_path",
+      "arguments": "p_session uuid, p_path jsonb, p_seq bigint",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "advance_world_motion_v2",
+      "arguments": "p_session uuid, p_seq bigint, p_from jsonb, p_targets jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "apply_token_quick_changes",
+      "arguments": "p_token uuid, p_changes jsonb",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "begin_authorized_navigation_gesture",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "begin_map_combat",
+      "arguments": "p_map uuid, p_tokens uuid[], p_field text, p_mode text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "begin_map_motion_session",
+      "arguments": "p_map uuid, p_kind text, p_piece uuid, p_ignore_collision boolean",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "begin_world_motion_v2",
+      "arguments": "p_map uuid, p_selection jsonb, p_origin jsonb, p_mode text, p_environment_revision bigint, p_permission_generation bigint, p_collision_override boolean",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "can_observe_map_position",
+      "arguments": "p_map uuid, px double precision, py double precision",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "can_observe_map_token",
+      "arguments": "p_token uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "can_player_place_map_piece",
+      "arguments": "p_map uuid, px double precision, py double precision",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "can_view_campaign_map",
+      "arguments": "p_campaign uuid, p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "cancel_world_motion_v2",
+      "arguments": "p_session uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "cast_collection_spell",
+      "arguments": "p_campaign_id uuid, p_source_id uuid, p_collection_id text, p_entry_id text, p_source_type text, p_mode text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "claim_campaign_sheet_item",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_takeover boolean",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "claim_campaign_tool_item",
+      "arguments": "p_issue uuid, p_item uuid, p_takeover boolean",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "collect_campaign_map_pin",
+      "arguments": "p_pin uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "command_map_combat",
+      "arguments": "p_map uuid, p_action text, p_entry uuid, p_score integer",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "commit_map_trajectory",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[], p_steps jsonb, p_ignore_collision boolean",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "commit_world_motion_v2",
+      "arguments": "p_session uuid, p_seq bigint, p_endpoint jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "create_campaign",
+      "arguments": "p_name text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "dm_give_inventory_item",
+      "arguments": "p_character uuid, p_inventory_field text, p_item jsonb",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "end_authorized_navigation_gesture",
+      "arguments": "p_session uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "end_map_motion_previews",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "end_map_motion_sessions",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_authorized_map_combat",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_authorized_map_fog",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_authorized_map_fog_delta",
+      "arguments": "p_map uuid, p_base_epoch uuid, p_base_revision bigint, p_base_sequence bigint",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_authorized_map_fog_v2",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_authorized_map_light_masks",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_authorized_map_light_masks_v2",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_authorized_map_navigation",
+      "arguments": "p_map uuid, p_kind text, p_piece uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_campaign_account_names",
+      "arguments": "p_campaign uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_campaign_sheet_inventory",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_dm_map_npc_values",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_npc_token_values",
+      "arguments": "p_token uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_token_encumbrance_badges",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_token_monitor_values",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_token_quick_values",
+      "arguments": "p_token uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_world_observer_cursor_v2",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_world_scene_v2",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "get_world_visibility_v2",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "is_campaign_dm",
+      "arguments": "c uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "is_campaign_member",
+      "arguments": "c uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "is_map_fog_published",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "join_campaign",
+      "arguments": "p_invite_code text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "move_entire_party_to_map",
+      "arguments": "p_campaign uuid, p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "move_map_group",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[], p_dx integer, p_dy integer, p_ignore_collision boolean",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "mutate_campaign_sheet_item",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_row jsonb, p_remove boolean",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "mutate_campaign_tool_item",
+      "arguments": "p_issue uuid, p_item uuid, p_row jsonb, p_remove boolean",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_values jsonb, p_meta jsonb",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "patch_campaign_tool_details",
+      "arguments": "p_issue uuid, p_lit boolean, p_attrs jsonb",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "post_token_reference",
+      "arguments": "p_token uuid, p_code text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "preview_map_motion",
+      "arguments": "p_map uuid, p_kind text, p_piece uuid, p_x integer, p_y integer, p_seq bigint, p_ignore_collision boolean",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "preview_world_visibility_at_v2",
+      "arguments": "p_map uuid, p_viewer uuid, p_token uuid, p_x integer, p_y integer",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "preview_world_visibility_v2",
+      "arguments": "p_map uuid, p_viewer uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "publish_map_environment",
+      "arguments": "p_map uuid, p_action text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "release_campaign_sheet_item",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "release_campaign_tool_item",
+      "arguments": "p_issue uuid, p_item uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "resize_map_token",
+      "arguments": "p_token uuid, p_span_x numeric, p_span_y numeric, p_ignore_collision boolean",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "resolve_tabletop_modifier_values",
+      "arguments": "p_template jsonb, p_values jsonb",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "roll_dice",
+      "arguments": "p_campaign_id uuid, p_expression text, p_label text, p_character_id uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "roll_equipment_weapon",
+      "arguments": "p_campaign_id uuid, p_source_type text, p_source_id uuid, p_field_id text, p_weapon_id text",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "roll_map_combat_initiative",
+      "arguments": "p_map uuid, p_entry uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "roll_map_npc_initiative",
+      "arguments": "p_map uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "run_tabletop_macro",
+      "arguments": "p_macro_id uuid",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "set_token_quick_value",
+      "arguments": "p_token uuid, p_field text, p_part text, p_value numeric",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "set_token_statuses",
+      "arguments": "p_token uuid, p_statuses jsonb",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "transfer_campaign_inventory_item",
+      "arguments": "p_campaign uuid, p_sheet uuid, p_field text, p_issue uuid, p_item uuid, p_direction text, p_x integer, p_y integer",
+      "securityDefiner": true,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "valid_campaign_tool_config",
+      "arguments": "p_kind text, p_config jsonb",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "valid_campaign_tool_state",
+      "arguments": "p_state jsonb",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "valid_tabletop_macro_rows",
+      "arguments": "p_rows jsonb",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "valid_token_status_catalog",
+      "arguments": "p_catalog jsonb",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    },
+    {
+      "name": "valid_token_statuses",
+      "arguments": "p_effects jsonb, p_catalog jsonb",
+      "securityDefiner": false,
+      "authenticatedExecute": true
+    }
+  ],
+  "publicRelations": [
+    {
+      "name": "battle_maps",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_handout_events",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_handout_folders",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_handouts",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_map_pins",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_map_views",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_members",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_player_maps",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_sheet_item_leases",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_tool_issues",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_tool_item_leases",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_tool_map_tokens",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaign_tool_templates",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "campaigns",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": true,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "characters",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "chat_messages",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "map_combat_entries",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "map_combats",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "map_environments",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "map_folders",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "map_tokens",
+      "relationKind": "r",
+      "selectGranted": false,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "map_viewer_visibility_ticks",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "map_visibility_ticks",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "npc_folders",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "npc_templates",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "personal_tokens",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "tabletop_hotbars",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "tabletop_macros",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "tabletop_menu_preferences",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    },
+    {
+      "name": "tabletop_registration_limits",
+      "relationKind": "r",
+      "selectGranted": false,
+      "insertGranted": false,
+      "updateGranted": false,
+      "deleteGranted": false,
+      "rlsEnabled": true
+    },
+    {
+      "name": "tabletop_user_preferences",
+      "relationKind": "r",
+      "selectGranted": true,
+      "insertGranted": true,
+      "updateGranted": true,
+      "deleteGranted": true,
+      "rlsEnabled": true
+    }
+  ],
+  "doNotPromoteAutomatically": true
+}
