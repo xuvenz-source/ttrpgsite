@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-138",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 245,
+  "parentSha": "1243cb822efadc85c65b20bc6513be237e757fc4",
+  "parentFinalCi": {
+    "dedicated": 44741133294,
+    "standard": 44741133059,
+    "combinedSql": 44741124717,
+    "allPassed": true
+  },
+  "repo": "xuvenz-source/ttrpgsite",
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "originalMigrations": 83,
+  "qaMigrations": 0,
+  "qaPublicApplicationTables": 0,
+  "sourceOnlyFiles": {
+    "dynamicReview": "staging/world-v2-b10-r18-138-primary-v3-facade/DynamicRouteReview.mjs",
+    "prototypeSql": "staging/world-v2-b10-r18-138-primary-v3-facade/unapplied-closed-world-v3-facade.sql",
+    "tests": "tests/world-v2-r18-138-primary-facade.test.mjs",
+    "pgFixture": "tests/world-v2-r18-138-postgres/setup-original-world-stubs.sql",
+    "pgVerify": "tests/world-v2-r18-138-postgres/verify-closed-primary-facade.sql",
+    "pgRunner": "tests/world-v2-r18-138-postgres/run.sh",
+    "handoff": "docs/testing/world-v2-r18-138-primary-facade-2026-11-21.md"
+  },
+  "dynamicSourceAudit": {
+    "r137Observed": 26,
+    "r138SourceClassified": 26,
+    "sourceClassificationsPermissionProven": 0,
+    "unrecognizedRemaining": 0,
+    "unresolvedSemanticAuthorization": 26,
+    "generatedEvidence": "R138 GitHub Actions log + source audit module",
+    "sourceScannerLexicalNotComplete": true,
+    "semanticAuthorizationNotComplete": true
+  },
+  "facadePrototype": {
+    "newFunctions": 7,
+    "browserCallableNewFunctions": 0,
+    "originalR136TopicRpcCount": 1,
+    "exposedSchemaFunctionCountAfterPGFixture": 8,
+    "functions": [
+      "get_authorized_world_scene_v3(uuid)",
+      "get_authorized_world_sight_v3(uuid)",
+      "get_authorized_world_cursor_v3(uuid)",
+      "begin_world_motion_v3(uuid,jsonb,jsonb,text,bigint,bigint,boolean)",
+      "advance_world_motion_v3(uuid,bigint,jsonb,jsonb,bigint,bigint)",
+      "commit_world_motion_v3(uuid,bigint,jsonb,bigint,bigint)",
+      "cancel_world_motion_v3(uuid)"
+    ],
+    "grantsToAuthenticatedAdded": false,
+    "grantsToAnonAdded": false,
+    "serverChecksActorAndCurrentEpochForReadAndBegin": true,
+    "movementAdvancesKeepOriginalSessionCollisionAuthority": true,
+    "cancellationAllowedWhenFenced": true,
+    "perMovementNetworkRPCAdded": 0,
+    "additionalPerMovementDatabaseLockCostUnmeasured": true,
+    "usesExistingV2PayloadShapeAndNoNetworkFallback": true,
+    "projectCanExposeInDataAPI": false,
+    "originalRealDbFunctionBodiesReconstructed": false,
+    "worldEnginePerformanceBenchmarked": false,
+    "signedSightAndFogSecurityProven": false,
+    "signedDmP1P2OutsiderQaProven": false
+  },
+  "stillBlocked": [
+    "Prototype wrappers are not granted to clients, source-only and unapplied",
+    "Original 83 migrations and 67 privileged public RPCs not exhaustively semantically audited",
+    "Every one of 26 indirect/dynamic accesses has source classification, not complete per-caller permission proof",
+    "R128 public schema frozen would still break other campaign, sheet, fog, initiative, storage and NPC UI routes",
+    "R137 17 Postgres Changes tables and 19 source listeners not cut over to signed private V3",
+    "Live old connected V2 WebSockets, alternate senders and service_role bypass remain unproven",
+    "Preissued signed Storage bearer URLs survive membership revocation, #231",
+    "R138 gate per world movement RPC could increase database lock latency; zero production measurements",
+    "Actual original V2 scene/sight/collision source not exercised by disposable structural tests",
+    "No real signed user rollout, no approved Data API exposure, no hosted QA bootstrap",
+    "No human reviewed R127 production release attestation or safe rollback"
+  ],
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-139: audit 26 dynamic call sources with exhaustive actual transitive/actor tests, select narrow V3 sight and movement runtime contracts; do not enable grants",
+  "tests": {
+    "dedicatedNode": "PENDING",
+    "isolatedPg17": "PENDING",
+    "repoBuild": "PENDING",
+    "combinedSql": "PENDING",
+    "signedQa": "NOT_RUN"
+  },
+  "noHostedWrites": true,
+  "noApplicationSourceEdits": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "productionReleaseAuthorized": false
+}
