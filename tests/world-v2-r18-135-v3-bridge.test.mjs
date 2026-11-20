@@ -310,6 +310,6 @@ test('R135 source and cutover ledger explicitly do not prove live old-socket cut
  const src=read('src/engine/v2/RealtimeTransport.js');
  assert.ok(src.includes("'forge-world-v2:'"));
  const replacement=read('staging/world-v2-b10-r18-134-six-sender-v3-cutover/unapplied-six-legacy-observer-replacements.sql');
- assert.equal((replacement.match(/forge_observer_v3\.dispatch_authorized_observer_v3\(/g)||[]).length,7);
- assert.equal((replacement.match(/forge_observer_v3\.dispatch_trusted_vision_v3\(/g)||[]).length,1);
+ assert.equal((replacement.match(/(?:PERFORM|IF)\s+forge_observer_v3\.dispatch_authorized_observer_v3\(/gi)||[]).length,7);
+ assert.equal((replacement.match(/PERFORM\s+forge_observer_v3\.dispatch_trusted_vision_v3\(/gi)||[]).length,1);
 });
