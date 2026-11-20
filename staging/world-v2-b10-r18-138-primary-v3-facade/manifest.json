@@ -62,7 +62,13 @@
     "originalRealDbFunctionBodiesReconstructed": false,
     "worldEnginePerformanceBenchmarked": false,
     "signedSightAndFogSecurityProven": false,
-    "signedDmP1P2OutsiderQaProven": false
+    "signedDmP1P2OutsiderQaProven": false,
+    "newExposedSecurityDefinerCount": 0,
+    "newPrivateSecurityDefinerCount": 7,
+    "newExposedSecurityInvokerCount": 7,
+    "newTotalFunctionCount": 14,
+    "newSchema": "forge_v3_internal (private)",
+    "existingInheritedR136ExposedDefinerNeedsRelocation": true
   },
   "stillBlocked": [
     "Prototype wrappers are not granted to clients, source-only and unapplied",
@@ -75,7 +81,8 @@
     "R138 gate per world movement RPC could increase database lock latency; zero production measurements",
     "Actual original V2 scene/sight/collision source not exercised by disposable structural tests",
     "No real signed user rollout, no approved Data API exposure, no hosted QA bootstrap",
-    "No human reviewed R127 production release attestation or safe rollback"
+    "No human reviewed R127 production release attestation or safe rollback",
+    "Current Supabase RLS docs explicitly discourage SECURITY DEFINER functions in an exposed API schema; inherited R136 signed topic definer must be relocated to a private schema before Data API exposure"
   ],
   "unresolvedIssues": [
     220,
@@ -85,8 +92,8 @@
   ],
   "nextStep": "R18-139: audit 26 dynamic call sources with exhaustive actual transitive/actor tests, select narrow V3 sight and movement runtime contracts; do not enable grants",
   "tests": {
-    "dedicatedNode": "SUCCESS_ON_IMPLEMENTATION_HEAD",
-    "isolatedPg17": "SUCCESS_ON_IMPLEMENTATION_HEAD",
+    "dedicatedNode": "RECHECK_REQUIRED_AFTER_PRIVATE_HELPER_RELOCATION",
+    "isolatedPg17": "RECHECK_REQUIRED_AFTER_PRIVATE_HELPER_RELOCATION",
     "repoBuild": "SUCCESS_ON_IMPLEMENTATION_HEAD",
     "combinedSql": "SUCCESS_ON_IMPLEMENTATION_HEAD",
     "signedQa": "NOT_RUN",
