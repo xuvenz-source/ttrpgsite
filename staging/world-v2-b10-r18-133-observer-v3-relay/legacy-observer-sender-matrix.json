@@ -54,7 +54,15 @@
       "rewrittenToR133Relay": false,
       "actualV3ClientExists": false,
       "verifiedRealSignedRevocation": false,
-      "requiredMigration": "Preserve original ownership, collision, LOS, packet concealment and rate limits; replace only trusted sender call with V3 relay; verify V3 receiver and zero old topic emission"
+      "requiredMigration": "Preserve original ownership, collision, LOS, packet concealment and rate limits; replace only trusted sender call with V3 relay; verify V3 receiver and zero old topic emission; system/trigger-originated vision changes cannot require auth.uid and need a separate private, trusted server-only origin with current viewer epoch and explicit recipient authorization",
+      "potentialSystemOriginWithoutJwt": true,
+      "requiresSeparateTrustedSystemSender": true,
+      "staticOriginalCallers": [
+        "forge_world_v2.notify_party_source_change_v2",
+        "forge_world_v2.notify_roster_change_v2",
+        "forge_world_v2.signal_light_edit_v2",
+        "forge_world_v2.signal_movement_vision_v2"
+      ]
     },
     {
       "name": "forge_world_v2.publish_approved_observers",
@@ -107,5 +115,8 @@
     "Edge/REST Broadcast",
     "preissued Storage signed URLs"
   ],
-  "designRisk": "The relay checks current actor/map/membership and recipient epoch, but cannot independently prove token LOS or original movement authorization. No existing caller is rewired; release remains NO_GO."
+  "designRisk": "The relay checks current actor/map/membership and recipient epoch, but cannot independently prove token LOS or original movement authorization. No existing caller is rewired; release remains NO_GO. Read-only original catalog confirms four upstream vision-epoch callers; some may run without auth.uid, so a user-only relay cannot replace them blindly.",
+  "currentRelayRequiresSignedActor": true,
+  "originalSystemVisionCallerCount": 4,
+  "systemInitiatedVisionNotYetSupported": true
 }
