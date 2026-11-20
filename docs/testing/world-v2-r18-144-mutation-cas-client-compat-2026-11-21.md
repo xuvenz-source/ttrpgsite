@@ -2,7 +2,8 @@
 
 **21 November 2026, Melbourne.** Source-only child of verified R18-143 draft
 PR #251 (parent SHA `123a4e7ad1ce179d3b2de0690c6f8a1ee296bfbd`).
-**Production and hosted QA remain NO_GO.** No SQL migration, new browser
+**Production and hosted QA remain NO_GO.** The R128 public-API freeze
+must stay intact; the old socket revocation gate remains unresolved. No SQL migration, new browser
 role grant, runtime app edit, build deployment or paid resource.
 
 ## Original PostgreSQL / trigger findings (read-only source)
