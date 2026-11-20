@@ -127,7 +127,7 @@ test('R142 explicit NO_GO release ledger and proposed next incremental step',()=
  for(const key of ['noHostedWrites','noRuntimeSrcEdits','noVersionedMigrations',
   'noNewGrants','noMerge','noDeploy','noPaidResources','noDataApiExposure'])
   assert.equal(manifest[key],true,key);
- for(const term of ['R18-142','R128','R140','R141','NO_GO',
+ for(const term of ['R18-142','R128','R140','R18-141','NO_GO',
   'owner','DM','P1','P2','outsider','revoke','handout','Storage',
   'Realtime','signed','free-tier'])
   assert.ok(handoff.toLowerCase().includes(term.toLowerCase()),term);
