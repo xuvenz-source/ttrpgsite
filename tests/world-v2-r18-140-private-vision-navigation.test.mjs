@@ -98,7 +98,7 @@ test('R140 ledger remains NO_GO and no hosted, app, production changes',()=>{
   'noMerge','noDeploy','noPaidResources','noNewGrants','noDataApiExposure'])
   assert.equal(manifest[k],true,k);
  assert.deepEqual(manifest.unresolvedIssues,[220,223,229,231]);
- for(const term of ['NO_GO','R18-140','R128','R132','R138','R139','DM',
+ for(const term of ['NO_GO','R18-140','R128','R132','R138','R18-139','DM',
   'P1','P2','outsider','fog','lighting','navigation','Storage',
   '17 Realtime','old socket','free-tier'])
   assert.ok(handoff.toLowerCase().includes(term.toLowerCase()),term);
