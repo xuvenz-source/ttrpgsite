@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-135",
+  "date": "2026-11-20",
+  "release": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 242,
+  "parentSha": "bdfa855c67cd5e96b7d1a9e3e6487c1fae9c1103",
+  "parentFinalCiCombinedPassed": true,
+  "parentFinalCi": {
+    "dedicated": 44677921034,
+    "standard": 44677920933,
+    "combined": 44677914041
+  },
+  "originalSupabase": "lwhwgqaunxbmvyndswze",
+  "qaSupabase": "bgydsamxypjslergfpla",
+  "originalMigrationsObserved": 83,
+  "qaMigrationsObserved": 0,
+  "qaApplicationTablesObserved": 0,
+  "sourceOnlyFiles": {
+    "bridge": "staging/world-v2-b10-r18-135-v3-client-bridge-cutover/ObserverV3ChannelBridge.mjs",
+    "matrix": "staging/world-v2-b10-r18-135-v3-client-bridge-cutover/cutover-risk-matrix.json",
+    "test": "tests/world-v2-r18-135-v3-bridge.test.mjs",
+    "postgres": "tests/world-v2-r18-135-postgres/verify-old-socket-candidate.sql",
+    "runner": "tests/world-v2-r18-135-postgres/run.sh",
+    "handoff": "docs/testing/world-v2-r18-135-bridged-observer-cutover-2026-11-20.md"
+  },
+  "stagedCapabilities": {
+    "v3RecipientTopicOnly": true,
+    "existingSignedObserverMovementEnginePreserved": true,
+    "noV2ObserverTopicPassedToSupabase": true,
+    "perFrameOrPerMovementNetworkAuthAdded": false,
+    "requiresR125CurrentEpochRpc": true,
+    "requiresHostSignedSceneAndMask": true,
+    "freshSignedSightRequired": true,
+    "secondSubcribedRequiresFreshSignedEpoch": true,
+    "failedRemovalTerminallyQuarantines": true,
+    "candidateOldV2TopicNonDeliverySyntheticOnly": true,
+    "intentionalUnguardedBypassProvedSyntheticOnly": true,
+    "fullR127AttestationsSatisfied": false,
+    "r123CompleteHostUnmountIntegrated": false,
+    "r131OtherPostgresChangesHandlersIntegrated": false,
+    "oldSocketWebsocketEjectionProven": false,
+    "serverSideClientProtocolVersionFenceEnforced": false,
+    "originalSenderSqlInstalled": false,
+    "productionObserverBridgeMounted": false
+  },
+  "blockers": [
+    "R128 public schema USAGE maintenance freeze conflicts with V3 RPC access: requires explicit safe controlled server release plan",
+    "R127 existingOldSocketDeliveryStopped and signed QA receipts absent; source-only parser cannot substitute",
+    "R123 synchronous full campaign host mask, asset unmount and teardown not mounted",
+    "R126 scene and R135 observer client bridge not mounted",
+    "R131 19 Postgres Changes listener shutdown/refresh mapping not live",
+    "R132/133/134 server SQL recipient V3 candidates not installed",
+    "original seven SQL emitters and external/Edge/client Broadcast not fully fenced in live server",
+    "already-connected real V2 Realtime sockets and prequeued packets not tested",
+    "67 authenticated privileged SECURITY DEFINER RPCs not fully semantically reviewed",
+    "all 83 original private SQL migrations not fully audited",
+    "preissued 3600-second Storage signed URLs remain bearer-readable until expiry (#231)",
+    "DM/P1/P2/outsider/revoked/reinstated signed QA and collision/LOS/fog/free-tier latency not performed",
+    "manual release owner and signed security deployment approval missing"
+  ],
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "tests": {
+    "dedicated": "PENDING",
+    "syntheticPg17": "PENDING",
+    "standardRepo": "PENDING",
+    "combinedStagingSql": "PENDING",
+    "signedQa": "NOT_RUN"
+  },
+  "noHostedWrites": true,
+  "noLiveSourceEdits": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "productionReleaseAuthorized": false
+}
