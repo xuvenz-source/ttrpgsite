@@ -79,11 +79,16 @@
     231
   ],
   "tests": {
-    "source": "PENDING",
-    "isolatedPg17": "PENDING",
-    "standardRepo": "PENDING",
-    "combinedStagingSql": "PENDING",
-    "signedHostedQa": "NOT_RUN"
+    "source": "SUCCESS_IMPLEMENTATION_HEAD",
+    "isolatedPg17": "SUCCESS_IMPLEMENTATION_HEAD",
+    "standardRepo": "SUCCESS_IMPLEMENTATION_HEAD",
+    "combinedStagingSql": "SUCCESS_IMPLEMENTATION_HEAD",
+    "signedHostedQa": "NOT_RUN",
+    "verifiedImplementationHead": "9fa38790ceb8554a0f4b15aab14f067c031bd84d",
+    "dedicatedPrRunId": 44736764993,
+    "standardPrRunId": 44736765125,
+    "combinedSqlPushRunId": 44736753958,
+    "finalEvidenceOnlyHeadRecheckRequired": true
   },
   "noHostedWrites": true,
   "noLiveSrcChanges": true,
@@ -91,5 +96,15 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "originalFinalReadOnlyCheck": {
+    "originalMigrations": 83,
+    "qaMigrations": 0,
+    "qaPublicApplicationTables": 0,
+    "v3ApiSchemaInstalled": false,
+    "oldPublicAuthenticatedUsageStillLive": true,
+    "oldV2SharedSceneReceiverStillLive": true,
+    "noHostedWrites": true,
+    "observedDate": "2026-11-20"
+  }
 }
