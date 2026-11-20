@@ -1,0 +1,65 @@
+name: World V2 R18-146 original revocation and lock graph
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-146-*'
+    paths:
+      - '.github/workflows/world-v2-r18-146-revocation-lock-graph.yml'
+      - 'staging/world-v2-b10-r18-146-original-revocation-lock-graph/**'
+      - 'tests/world-v2-r18-146-*'
+      - 'docs/testing/world-v2-r18-146-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-145-*'
+permissions:
+  contents: read
+jobs:
+  original-revocation-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Keep browser runtime and versioned migrations untouched
+        run: git diff --exit-code a922556ccd49f19251dfb2bad399d0aea8ee67d9 HEAD -- src/ supabase/migrations/
+      - name: Audit exact original trigger/privileged role evidence and no-go
+        run: node --test tests/world-v2-r18-146-revocation-lock-graph.test.mjs
+      - name: Deny premature rollout
+        run: echo 'R146 source-only: no grants, hosted writes, app changes or deployment'
+  disposable-postgresql17-lock-races:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      R140_ISOLATED: 'yes'
+      R142_ISOLATED: 'yes'
+      R143_ISOLATED: 'yes'
+      R145_ISOLATED: 'yes'
+      R146_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify new lock order and reproduce old inversion only in fictional PG17
+        shell: bash
+        run: bash tests/world-v2-r18-146-postgres/run.sh
+      - name: Never treat expected old-path deadlock as release authorization
+        run: echo 'R146 fixture only. Original signed actor, 83 migrations, Storage, Realtime and DDL preflight UNVERIFIED.'

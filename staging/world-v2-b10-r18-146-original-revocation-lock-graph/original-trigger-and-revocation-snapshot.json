@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-146",
+  "observedAt": "2026-11-21",
+  "source": "read-only pg_catalog trigger/function definition & has_table_privilege on original Supabase",
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "originalMigrations": 83,
+  "qaProject": "bgydsamxypjslergfpla",
+  "qaMigrations": 0,
+  "qaPublicApplicationTables": 0,
+  "originalTriggerCounts": {
+    "characters": 6,
+    "campaign_handouts": 3,
+    "campaign_map_pins": 2,
+    "campaign_members": 0,
+    "map_tokens": 10,
+    "campaigns": 2,
+    "campaign_player_maps": 1,
+    "campaign_tool_issues": 5,
+    "map_environments": 1,
+    "campaign_handout_events": 0
+  },
+  "originalAuthorityFindings": {
+    "revokedCharacterOwnerStillMatchesCanEditSheetOwnerBranch": true,
+    "canEditCampaignSheetOwnerBranchCallsIsCampaignMember": false,
+    "joinCampaignAcceptsUnchangedInviteCode": true,
+    "joinCampaignReinsertsMemberOnConflictDoNothing": true,
+    "campaignMembersCustomRevocationTriggers": 0,
+    "authenticatedCanUpdateCampaignMembers": false,
+    "authenticatedCanTruncateCampaignMembers": false,
+    "serviceRoleCanTruncateCampaignMembers": true,
+    "staleJoinedRealtimeSocketRevocationProved": false
+  },
+  "mutationLockGraph": [
+    {
+      "from": "public.collect_campaign_map_pin",
+      "edges": [
+        "campaign_map_pins FOR UPDATE",
+        "campaign_handouts UPDATE",
+        "campaign_handout_events revision"
+      ],
+      "hazard": "PIN_TO_HANDOUT"
+    },
+    {
+      "from": "public.hide_campaign_handout_pins",
+      "edges": [
+        "campaign_handouts UPDATE",
+        "campaign_map_pins UPDATE",
+        "campaign_handout_events revision"
+      ],
+      "hazard": "HANDOUT_TO_PIN"
+    },
+    {
+      "from": "R145.collect_authorized_pin_once_v3",
+      "edges": [
+        "read pin identifier",
+        "campaign_handouts FOR UPDATE",
+        "campaign_map_pins FOR UPDATE",
+        "R143 original collect"
+      ],
+      "hazard": "HANDOUT_THEN_PIN"
+    },
+    {
+      "from": "public.patch_campaign_sheet_noninventory(character)",
+      "edges": [
+        "characters UPDATE",
+        "characters_monitor_refresh -> map_tokens.updated_at",
+        "forge_character_elevation_tick -> permission generation"
+      ],
+      "hazard": "visibility and map-token write fanout"
+    },
+    {
+      "from": "public.validate_campaign_handout",
+      "edges": [
+        "campaign_handouts BEFORE UPDATE",
+        "updated_at=now()"
+      ],
+      "hazard": "non-monotonic updatedAt"
+    },
+    {
+      "from": "public.bump_campaign_handout_revision",
+      "edges": [
+        "campaign_handout_events UPSERT"
+      ],
+      "hazard": "duplicate collect revision on every update"
+    }
+  ],
+  "criticalOriginalTriggerNames": {
+    "characters": [
+      "character_sheet_items_rpc_only",
+      "characters_monitor_refresh",
+      "characters_protect",
+      "characters_sync_token_art",
+      "characters_touch",
+      "forge_character_elevation_tick"
+    ],
+    "campaign_handouts": [
+      "campaign_handout_hide_pins",
+      "campaign_handout_tick",
+      "campaign_handout_validate"
+    ],
+    "campaign_map_pins": [
+      "campaign_map_pin_tick",
+      "campaign_map_pin_validate"
+    ],
+    "campaign_player_maps": [
+      "world_v2_player_map_changed"
+    ],
+    "campaigns": [
+      "campaigns_valid_map",
+      "world_v2_campaign_map_changed"
+    ]
+  },
+  "securityIssueIds": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "releaseDecision": "NO_GO",
+  "snapshotConfirmsOnlyMetadataAndSqlSource": true,
+  "realOriginalTransactionDeadlockMeasured": false,
+  "realSignedRevocationVerified": false,
+  "realRealtimeOldSocketClosed": false,
+  "realStorageBearerRevoked": false
+}
