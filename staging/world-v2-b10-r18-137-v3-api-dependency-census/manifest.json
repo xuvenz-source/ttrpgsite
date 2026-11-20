@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-137",
+  "date": "2026-11-20",
+  "release": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 244,
+  "parentSha": "696e720470094eb1a9114aaa3a25ad66bf8d3a2f",
+  "parentFinalCi": {
+    "dedicated": 44737170994,
+    "standard": 44737170850,
+    "standardAttempt": 2,
+    "combinedSql": 44737162717,
+    "allPassed": true
+  },
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "originalMigrations": 83,
+  "qaMigrations": 0,
+  "qaPublicTables": 0,
+  "sourceOnlyFiles": {
+    "scanner": "staging/world-v2-b10-r18-137-v3-api-dependency-census/BrowserApiRouteCensus.mjs",
+    "privileges": "staging/world-v2-b10-r18-137-v3-api-dependency-census/live-public-api-acl-snapshot.json",
+    "otherSurfaces": "staging/world-v2-b10-r18-137-v3-api-dependency-census/live-other-data-surfaces.json",
+    "coverage": "staging/world-v2-b10-r18-137-v3-api-dependency-census/v3-gameplay-api-coverage-plan.json",
+    "tests": "tests/world-v2-r18-137-v3-api-census.test.mjs",
+    "handoff": "docs/testing/world-v2-r18-137-complete-v3-api-dependency-census-2026-11-20.md"
+  },
+  "originalCatalogCounts": {
+    "publicAuthenticatedFunctions": 77,
+    "securityDefinerPublicFunctions": 67,
+    "publicRelations": 31,
+    "storagePrivateBuckets": 3,
+    "realtimePublishedPublicTables": 17
+  },
+  "scanner": {
+    "allSrcJsJsxIncluded": true,
+    "indirectAndDynamicRpcsRemainUnreviewed": true,
+    "staticLexicalCensusCannotAuthorize": true,
+    "artifactPublishedFromCiWhenSuccessful": true,
+    "noSecretsCaptured": true
+  },
+  "design": {
+    "featureDomains": 12,
+    "existingV3ApiCandidateOnly": "forge_v3_api.get_authorized_scene_channel_v3 (R136, source-only)",
+    "approvedV3GameplayEndpoints": 0,
+    "sourceReferencesNotYetInstalled": [
+      "finalize_world_motion_v2",
+      "get_authorized_scene_channel_v3"
+    ],
+    "directMapTokenSelectWithoutAuthenticatedTableSelectPrivilegeNeedsReview": true,
+    "cannotRestoreLegacyPublicSchema": true,
+    "all77PublicRpcSemanticReviewsIncomplete": true,
+    "all31RelationProjectionReviewsIncomplete": true,
+    "all17PostgresChangesRoutesUnfenced": true,
+    "existingSignedStorageUrlsStillUsableUntilExpiry": true,
+    "browserVersionStringIsNotIdentity": true
+  },
+  "customV3PostgrestSchemaExposed": false,
+  "originalPublicSchemaUsageRevokedOnHosted": false,
+  "approvedV3GameplayEndpoints": 0,
+  "signedHostedQaPassed": false,
+  "oldV2ConnectedSocketCutoffProven": false,
+  "storageRevocationRemediated": false,
+  "v3CompleteGameApiLive": false,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-138: review source census artifact, classify every dynamic/indirect route, design first least-privilege scene/sight/movement API facade with no public USAGE restore",
+  "tests": {
+    "sourceScanner": "PENDING",
+    "repositoryBuildSecurity": "PENDING",
+    "combinedStagingSql": "PENDING",
+    "signedHostedQa": "NOT_RUN"
+  },
+  "noHostedWrites": true,
+  "noAppSourceChanges": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "productionReleaseAuthorized": false
+}
