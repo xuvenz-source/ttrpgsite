@@ -159,9 +159,12 @@ test('R136 stale response after account/map switch is invalidated, no cache/repl
  await assert.rejects(first,{code:'changed_context'});
  assert.equal(f.defaultRpc,0);
  f.api.dispose();
- const w=fixture({hold:deferred()});
+ const second=deferred(),w=fixture({hold:second});
  const pending=w.api.getTopic();await later();
  w.api.cancel();
+ // Cancellation invalidates results, but cannot magically resolve a network
+ // request. Simulate the old socket response arriving after cancellation.
+ second.resolve();
  await assert.rejects(pending,{code:'changed_context'});
  w.api.dispose();
 });
