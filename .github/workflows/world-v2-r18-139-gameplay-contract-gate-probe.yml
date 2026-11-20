@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
       - name: Refuse production source and versioned migration edits
         run: git diff --exit-code 300fb92786bf66f8c61dcb36488f51be0709aa7c HEAD -- src/ supabase/migrations/
       - name: Re-scan exact indirect actors and fail any drift
