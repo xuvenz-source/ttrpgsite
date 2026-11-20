@@ -41,7 +41,9 @@
     "productionFrontendChanged": false,
     "originalV2SocketCutoffProven": false,
     "storageSignedUrlsRevoked": false,
-    "everApprovesProduction": false
+    "everApprovesProduction": false,
+    "systemOriginatedVisionNotificationsSupported": false,
+    "originalVisionEpochCallerCountExcludingSelf": 4
   },
   "gaps": [
     "six original SQL realtime.send call sites have not been converted",
@@ -54,7 +56,8 @@
     "server-side service_role bypass and TRUNCATE/identity UPDATE revocation unresolved",
     "preissued signed Storage links still valid (#231)",
     "real DM P1 P2 outsider and revoked/epoch reconnect QA missing",
-    "LOS concealment and performance budget on free tier unverified"
+    "LOS concealment and performance budget on free tier unverified",
+    "four current vision-epoch SQL callers may run without auth.uid; separate trusted server-origin fanout required"
   ],
   "unresolvedIssues": [
     220,
@@ -63,7 +66,7 @@
     231
   ],
   "tests": {
-    "dedicated": "PENDING",
+    "dedicated": "RECHECK_REQUIRED_AFTER_VISION_CALLER_AUDIT",
     "standard": "PENDING",
     "combinedStagingSql": "PENDING",
     "signedUsers": "NOT_RUN"
