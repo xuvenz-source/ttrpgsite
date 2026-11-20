@@ -68,10 +68,15 @@
     231
   ],
   "tests": {
-    "dedicated": "RECHECK_REQUIRED_AFTER_VISION_CALLER_AUDIT",
-    "standard": "PENDING",
-    "combinedStagingSql": "PENDING",
-    "signedUsers": "NOT_RUN"
+    "dedicated": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "standard": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "combinedStagingSql": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "signedUsers": "NOT_RUN",
+    "verifiedImplementationHead": "e67bfdf58dd25a12f886cabd90146d7d4df41085",
+    "dedicatedPrRunId": 44675469470,
+    "standardPrRunId": 44675469384,
+    "combinedStagingSqlRunId": 44675462823,
+    "finalManifestOnlyHeadNeedsRecheck": true
   },
   "noHostedWrites": true,
   "noLiveSrcChanges": true,
@@ -79,5 +84,16 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidServices": true,
-  "releaseAuthorized": false
+  "releaseAuthorized": false,
+  "originalReadOnlyFinalVerification": {
+    "date": "2026-11-20",
+    "originalMigrations": 83,
+    "qaMigrations": 0,
+    "qaPublicTables": 0,
+    "sixOriginalLegacySenderHashesMatch": true,
+    "fourEnabledSystemVisionTriggersVerified": true,
+    "v3ObserverRelayNotInstalled": true,
+    "originalV2ScenePolicyStillLive": true,
+    "noHostedWrites": true
+  }
 }
