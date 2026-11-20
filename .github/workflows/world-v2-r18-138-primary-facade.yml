@@ -27,8 +27,38 @@ jobs:
       - name: Print unresolved direct dynamic route evidence
         run: |
           node --input-type=module -e "import {buildDynamicRouteReview} from './staging/world-v2-b10-r18-138-primary-v3-facade/DynamicRouteReview.mjs'; const v=buildDynamicRouteReview(); console.log(JSON.stringify({count:v.count,missing:v.missingManualReviews,rows:v.rows.map(({id,key,expression,candidatesInSameFile})=>({id,key,expression,candidatesInSameFile}))},null,2)); if(v.count!==26) process.exit(42)"
-      - name: Verify design security contracts
-        run: |
-          if [ -f tests/world-v2-r18-138-primary-facade.test.mjs ]; then node --test tests/world-v2-r18-138-primary-facade.test.mjs; fi
+      - name: Verify 26 precise source classifications and seven ungranted APIs
+        run: node --test tests/world-v2-r18-138-primary-facade.test.mjs
       - name: Keep hosted deployment blocked
         run: echo 'R138 NO_GO - source-only review and prototype, no hosted database writes or public API unseal.'
+
+  isolated-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - name: Checkout fictional membership and world source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Compile seven ungranted facade functions and test signed actor/collision contract
+        shell: bash
+        run: bash tests/world-v2-r18-138-postgres/run.sh
