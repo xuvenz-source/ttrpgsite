@@ -67,7 +67,7 @@ current 17 published table names; new/missing listeners fail CI.
 The R131 client quarantine and R135 V3 observer bridge remain
 **dormant**. The existing original V2 scene and observer topic producers
 remain in `src/engine/v2/SceneTransport.js` and
-`src/engine/v2/RealtimeTransport.js`. Local channel removal and client
+`src/engine/v2/RealtimeTransport.js`. Old socket network denial remains unproven. Local channel removal and client
 buffer invalidation do **not** prove an already joined V2 socket has
 stopped receiving bytes. The server must fence all senders/receivers,
 legacy Postgres Changes and queued messages, and signed real

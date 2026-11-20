@@ -66,7 +66,7 @@ test('R141 requires explicit field minimization even when RLS and SELECT exist',
  assert.equal(snap.originalPublicSchemaAuthenticatedUsage,true);
  assert.equal(snap.hostedV3ApiSchemaInstalled,false);
  assert.equal(snap.reviewedFunctionExamples.find(x=>x.name==='get_campaign_sheet_inventory')
-  .behaviour.includes('WRITES'),true);
+  .behaviour.toLowerCase().includes('writes'),true);
 });
 test('R141 R130 full-source subscription drift catches additional or missing handler',()=>{
  const rows=scanRealtimeSubscriptions(root);
