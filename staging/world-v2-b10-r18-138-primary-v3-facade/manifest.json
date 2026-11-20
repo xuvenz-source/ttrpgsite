@@ -97,16 +97,16 @@
   ],
   "nextStep": "R18-139: audit 26 dynamic call sources with exhaustive actual transitive/actor tests, select narrow V3 sight and movement runtime contracts; do not enable grants",
   "tests": {
-    "dedicatedNode": "RECHECK_REQUIRED_AFTER_TOPIC_REHOME",
-    "isolatedPg17": "RECHECK_REQUIRED_AFTER_TOPIC_REHOME",
-    "repoBuild": "SUCCESS_ON_IMPLEMENTATION_HEAD",
-    "combinedSql": "SUCCESS_ON_IMPLEMENTATION_HEAD",
+    "dedicatedNode": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "isolatedPg17": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "repoBuild": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "combinedSql": "SUCCESS_AT_IMPLEMENTATION_HEAD",
     "signedQa": "NOT_RUN",
-    "verifiedImplementationHead": "255febb4b9828458cc19a79de5d82c29ec79772e",
-    "dedicatedPrRunId": 44754089670,
-    "standardPrRunId": 44754089639,
-    "combinedSqlPushRunId": 44753919405,
-    "finalEvidenceOnlyHeadNeedsRecheck": true
+    "verifiedImplementationHead": "5b61d07dc659e91c039c78513f7394a3767f4af5",
+    "dedicatedPrRunId": 44756630498,
+    "standardPrRunId": 44756630605,
+    "combinedSqlPushRunId": 44756630627,
+    "finalManifestOnlyHeadRecheckRequired": true
   },
   "noHostedWrites": true,
   "noApplicationSourceEdits": true,
@@ -116,14 +116,13 @@
   "noPaidResources": true,
   "productionReleaseAuthorized": false,
   "liveReadOnlyVerification": {
-    "observedAt": "2026-11-21",
     "originalMigrations": 83,
     "qaMigrations": 0,
-    "qaPublicAppTables": 0,
-    "originalV3ApiSchemaAbsent": true,
-    "originalPublicAuthenticatedUsageStillLive": true,
-    "originalOldV2SceneReceiverPolicyLive": true,
-    "originalV3SceneGateAbsent": true,
-    "noHostedWrites": true
+    "qaPublicApplicationTables": 0,
+    "originalForgeV3ApiInstalled": false,
+    "originalR132SceneGateInstalled": false,
+    "originalOldV2SceneReceivePolicyStillLive": true,
+    "originalAuthenticatedPublicSchemaUsageStillLive": true,
+    "hostedWritesPerformed": false
   }
 }
