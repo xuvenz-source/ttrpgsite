@@ -8,12 +8,11 @@ BEGIN
  IF n<>8 THEN RAISE EXCEPTION 'R138 expected topic RPC + seven closed facade functions';END IF;
  IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace ns
    ON ns.oid=p.pronamespace
-   WHERE ns.nspname='forge_v3_api' AND
-   p.proname<>'get_authorized_scene_channel_v3' AND p.prosecdef)
+   WHERE ns.nspname='forge_v3_api' AND p.prosecdef)
  THEN RAISE EXCEPTION 'R138 exposed new security definer';END IF;
  SELECT count(*) INTO n FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace ns
    ON ns.oid=p.pronamespace WHERE ns.nspname='forge_v3_internal' AND p.prosecdef;
- IF n<>7 THEN RAISE EXCEPTION 'R138 expected seven private security definers';END IF;
+ IF n<>8 THEN RAISE EXCEPTION 'R138 expected eight private security definers';END IF;
  IF pg_catalog.has_schema_privilege('authenticated','public','USAGE')
  OR pg_catalog.has_schema_privilege('anon','public','USAGE')
  THEN RAISE EXCEPTION 'R138 public legacy API reopened';END IF;
@@ -24,6 +23,22 @@ BEGIN
   OR pg_catalog.has_function_privilege('anon',p.oid,'EXECUTE'));
  IF n<>0 THEN RAISE EXCEPTION 'R138 unreviewed prototype exposed to browser';END IF;
 END $r138_acl$;
+
+-- The inherited R136 signed topic endpoint must still function through
+-- its exposed SECURITY INVOKER and PRIVATE SECURITY DEFINER backend.
+BEGIN;
+SET LOCAL ROLE authenticated;
+SELECT pg_catalog.set_config('request.jwt.claim.sub',
+ '00000000-0000-4000-8000-000000000303',true);
+DO $topic$
+DECLARE t text;
+BEGIN
+ t:=forge_v3_api.get_authorized_scene_channel_v3(
+  '00000000-0000-4000-8000-000000000201');
+ IF t NOT LIKE 'forge-world-scene-v3:00000000-0000-4000-8000-000000000201:00000000-0000-4000-8000-000000000303:%'
+ THEN RAISE EXCEPTION 'R138 inherited R136 signed topic routing failed after private relocation';END IF;
+END $topic$;
+COMMIT;
 
 -- A superuser driving a fictional signed JWT can exercise the draft
 -- function *body* while grants still deny real authenticated clients.
