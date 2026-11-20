@@ -22,7 +22,7 @@ test('R145 exact parent 252, inherited risk inventory and default-denied API',()
  assert.equal(v.newTriggers,2);
  assert.equal(v.newPrivateHelpers,6);
  assert.equal(v.newApiInvokers,5);
- assert.equal(v.newBrowserGrants,undefined);
+ assert.equal(v.newBrowserGrants,0);
  assert.equal(v.hostedSqlApplied,false);
  assert.equal(R145_DECLARED_API.length,5);
  assert.equal(manifest.parentPr,252);
