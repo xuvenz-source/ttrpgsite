@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-144",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 251,
+  "parentSha": "123a4e7ad1ce179d3b2de0690c6f8a1ee296bfbd",
+  "originalMigrationCount": 83,
+  "qaMigrationCount": 0,
+  "qaPublicApplicationTables": 0,
+  "sourceOnly": true,
+  "runtimeSourceModified": false,
+  "newDatabaseFunctions": 0,
+  "newBrowserCallableFunctions": 0,
+  "newGrants": 0,
+  "productionReleaseAuthorized": false,
+  "existingClientFlowsReviewed": 5,
+  "existingCharacterSheetOldRpcCallSites": 2,
+  "existingHandoutHookMutations": [
+    "createFolder",
+    "renameFolder",
+    "deleteFolder",
+    "createHandout",
+    "updateHandout",
+    "deleteHandout",
+    "createPin",
+    "updatePin",
+    "deletePin",
+    "collectPin"
+  ],
+  "provenCompatibility": {
+    "characterNameMetadata": false,
+    "npcTemplateAndTokenMutations": false,
+    "completeHandoutCrud": false,
+    "inventoryIdentityAndLeases": false,
+    "collectReturnShape": false
+  },
+  "timestampCAS": {
+    "originalTriggerUsesTransactionNow": true,
+    "strictlyMonotonic": false,
+    "simulatedSameTransactionThreeCallsAccepted": true,
+    "realOriginalMultiTabTested": false
+  },
+  "collection": {
+    "originalFunctionUpdatesHandoutUnconditionally": true,
+    "originalTriggerRevisionTick": true,
+    "syntheticDuplicateUpdateRiskVerified": true,
+    "idempotent": false
+  },
+  "remainingSecurity": {
+    "originalAll67DefinersAudited": false,
+    "originalAll31RelationsProjectionsAudited": false,
+    "oldSocketsServerEjected": false,
+    "preissuedStorageBearerRevoked": false,
+    "realSignedActorsVerified": false,
+    "freeTierPerformanceMeasured": false
+  },
+  "noHostedWrites": true,
+  "noRuntimeEdits": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "noNewGrants": true,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-145: design monotonic revision/ETag and idempotent collect semantics plus complete client adapter contracts; stage only under default-deny, never expose or deploy",
+  "tests": {
+    "sourceInventory": "PENDING",
+    "syntheticPG17Risk": "PENDING",
+    "standardRepository": "PENDING"
+  }
+}

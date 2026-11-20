@@ -1,0 +1,64 @@
+name: World V2 R18-144 mutation-CAS and V3 client compatibility
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-144-*'
+    paths:
+      - '.github/workflows/world-v2-r18-144-mutation-risk.yml'
+      - 'staging/world-v2-b10-r18-144-mutation-cas-client-compat/**'
+      - 'tests/world-v2-r18-144-*'
+      - 'docs/testing/world-v2-r18-144-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-143-*'
+permissions:
+  contents: read
+jobs:
+  exact-compatibility-census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse app changes and migrations
+        run: git diff --exit-code 123a4e7ad1ce179d3b2de0690c6f8a1ee296bfbd HEAD -- src/ supabase/migrations/
+      - name: Fail closed on old mutation source drift
+        run: node --test tests/world-v2-r18-144-mutation-risk.test.mjs
+      - name: Preserve NO_GO
+        run: echo 'R144 no runtime use, no browser privileges, no hosted database changes'
+  disposable-pg17-risk-demonstration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      R140_ISOLATED: 'yes'
+      R142_ISOLATED: 'yes'
+      R143_ISOLATED: 'yes'
+      R144_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Deliberately expose timestamp CAS and duplicate collect in fictional PG17
+        shell: bash
+        run: bash tests/world-v2-r18-144-postgres/run.sh
+      - name: Never promote a risk proof into release approval
+        run: echo 'R144 verified weaknesses, not production safety. NO_GO.'
