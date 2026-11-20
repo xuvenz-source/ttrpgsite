@@ -221,7 +221,15 @@ BEGIN
 END $r143_reassignment$;
 
 -- TEST-ONLY transactional role grants; rollback MUST remove both.
+-- Capture opaque CAS tokens BEFORE SET ROLE; the authenticated role must
+-- never query the protected public.characters source directly (R128).
 BEGIN;
+SELECT pg_catalog.set_config('r143.fixture.p1_updated_at',
+ (SELECT updated_at::text FROM public.characters WHERE
+ id='00000000-0000-4000-8000-000000000501'),true);
+SELECT pg_catalog.set_config('r143.fixture.p2_updated_at',
+ (SELECT updated_at::text FROM public.characters WHERE
+ id='00000000-0000-4000-8000-000000000502'),true);
 GRANT EXECUTE ON FUNCTION
  forge_v3_api.patch_authorized_character_v3(uuid,jsonb,timestamptz)
  TO authenticated;
@@ -236,14 +244,12 @@ DECLARE receipt jsonb;
 BEGIN
  receipt:=forge_v3_api.patch_authorized_character_v3(
   '00000000-0000-4000-8000-000000000501','{"notes":"role-proved"}',
-  (SELECT updated_at FROM public.characters WHERE
-  id='00000000-0000-4000-8000-000000000501'));
+  pg_catalog.current_setting('r143.fixture.p1_updated_at')::timestamptz);
  IF receipt->>'result' IS DISTINCT FROM 'patched'
  THEN RAISE EXCEPTION 'R143 temporary authenticated role could not patch own sheet';END IF;
  IF forge_v3_api.patch_authorized_character_v3(
   '00000000-0000-4000-8000-000000000502','{"hp":100}',
-  (SELECT updated_at FROM public.characters WHERE
-  id='00000000-0000-4000-8000-000000000502')) IS NOT NULL
+  pg_catalog.current_setting('r143.fixture.p2_updated_at')::timestamptz) IS NOT NULL
  THEN RAISE EXCEPTION 'R143 temporary authenticated role bypassed P2 ownership';END IF;
 END $r143_temporary_grant$;
 ROLLBACK;
