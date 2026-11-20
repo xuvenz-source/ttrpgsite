@@ -50,6 +50,13 @@ test('R133 six original SQL senders have exact R129 hashes and remain unreplaced
  assert.equal(new Set(data.sourceFunctionCoverage.map(x=>x.name)).size,6);
  assert.equal(new Set(data.sourceFunctionCoverage.map(x=>x.oldTopic)).size,2);
  assert.ok(data.sourceFunctionCoverage.every(x=>x.oldTopic.startsWith('forge-')));
+ assert.equal(data.currentRelayRequiresSignedActor,true);
+ assert.equal(data.originalSystemVisionCallerCount,4);
+ assert.equal(data.systemInitiatedVisionNotYetSupported,true);
+ const vision=data.sourceFunctionCoverage.find(f=>f.name==='forge_world_v2.bump_vision_epoch_v2');
+ assert.equal(vision.potentialSystemOriginWithoutJwt,true);
+ assert.equal(vision.requiresSeparateTrustedSystemSender,true);
+ assert.equal(vision.staticOriginalCallers.length,4);
  assert.equal(data.oldV2SendersStoppedInProduction,false);
 });
 test('R133 private observer receive policy validates topic with epoch-scoped R125 predicate',()=>{
