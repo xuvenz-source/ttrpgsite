@@ -223,5 +223,17 @@ END $assert$;
 
 -- Deliberately demonstrate the unguarded old sender is STILL callable in
 -- the mock. This is an unresolved release blocker, NOT a safe fallback.
-PERFORM_PLACEHOLDER_NOT_EXECUTED
+DO $assert$
+BEGIN
+ PERFORM realtime.send(
+  '{"fixture":true}'::jsonb,'old-legacy-bypass',
+  'forge-observer:00000000-0000-4000-8000-000000000201:00000000-0000-4000-8000-000000000303',true);
+ IF (SELECT count(*) FROM realtime.messages
+  WHERE event='old-legacy-bypass' AND
+    topic LIKE 'forge-observer:%')<>1
+ THEN RAISE EXCEPTION 'R133 legacy unguarded bypass proof absent';END IF;
+ IF (SELECT mode FROM forge_scene_drain.scene_publication_gate WHERE singleton)
+  IS DISTINCT FROM 'fenced'
+ THEN RAISE EXCEPTION 'R133 direct sender inadvertently changed gate';END IF;
+END $assert$;
 \echo 'R133 synthetic PG17 PASS: recipient-scoped observer relay; old SQL call sites still unmodified.'
