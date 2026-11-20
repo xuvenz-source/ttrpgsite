@@ -69,8 +69,8 @@ test('R138 dynamic access types cannot be silently promoted to safe public RPCs'
 test('R138 SQL creates exactly seven ungranted functions and no alternate public grants',()=>{
  assert.equal((sql.match(/^\s*CREATE FUNCTION forge_v3_api\./gm)||[]).length,7);
  assert.equal((sql.match(/^\s*REVOKE ALL ON FUNCTION forge_v3_api\./gm)||[]).length,7);
- assert.equal((sql.match(/^\s*CREATE FUNCTION forge_v3_internal\./gm)||[]).length,7);
- assert.equal((sql.match(/^\s*REVOKE ALL ON FUNCTION forge_v3_internal\./gm)||[]).length,7);
+ assert.equal((sql.match(/^\s*CREATE FUNCTION forge_v3_internal\./gm)||[]).length,8);
+ assert.equal((sql.match(/^\s*REVOKE ALL ON FUNCTION forge_v3_internal\./gm)||[]).length,8);
  assert.match(sql,/CREATE SCHEMA forge_v3_internal/);
  assert.match(sql,/REVOKE ALL ON SCHEMA forge_v3_internal FROM PUBLIC,anon,authenticated/);
  assert.match(sql,/R138 newly exposed API function must be SECURITY INVOKER/);
@@ -90,8 +90,15 @@ test('R138 SQL creates exactly seven ungranted functions and no alternate public
  assert.match(sql,/CREATE FUNCTION forge_v3_internal\.get_authorized_scene_channel_v3/);
  assert.match(sql,/GRANT EXECUTE ON FUNCTION forge_v3_internal\.get_authorized_scene_channel_v3\(uuid\)/);
  assert.match(sql,/R138 inherited signed topic gateway lost narrow invoker access/);
- assert.doesNotMatch(sql,/\bGRANT EXECUTE\b/);
- assert.doesNotMatch(sql,/\bGRANT USAGE\b/);
+ // Exactly one inherited signed-topic private helper is callable through
+ // the R136 invoker; all seven new world helpers stay completely denied.
+ const execGrants=[...sql.matchAll(/^GRANT EXECUTE ON FUNCTION\s+([^\n]+)/gm)];
+ const schemaGrants=[...sql.matchAll(/^GRANT USAGE ON SCHEMA\s+([^\n]+)/gm)];
+ assert.equal(execGrants.length,1);
+ assert.match(execGrants[0][1],/forge_v3_internal\.get_authorized_scene_channel_v3\(uuid\)/);
+ assert.equal(schemaGrants.length,1);
+ assert.match(schemaGrants[0][1],/forge_v3_internal TO authenticated/);
+ assert.doesNotMatch(sql,/GRANT EXECUTE ON FUNCTION forge_v3_internal\.(?:get_authorized_world|begin_world|advance_world|commit_world|cancel_world)/);
  assert.doesNotMatch(sql,/\bGRANT ALL\b/);
  assert.doesNotMatch(sql,/\bCREATE (?:TABLE|POLICY)\b/);
  assert.match(sql,/R138 blocked: R128 legacy public schema is not frozen/);
