@@ -106,10 +106,12 @@ test('R138 original authoritative V2 collision, LOS and session semantics are de
  assert.match(sql,/CREATE FUNCTION forge_v3_api\.begin_world_motion_v3/);
  assert.match(sql,/CREATE FUNCTION forge_v3_api\.advance_world_motion_v3/);
  assert.match(sql,/CREATE FUNCTION forge_v3_api\.commit_world_motion_v3/);
- const advance=sql.slice(sql.indexOf('CREATE FUNCTION forge_v3_api.advance_world_motion_v3'),
-  sql.indexOf('REVOKE ALL ON FUNCTION forge_v3_api.advance_world_motion_v3'));
- const commit=sql.slice(sql.indexOf('CREATE FUNCTION forge_v3_api.commit_world_motion_v3'),
-  sql.indexOf('REVOKE ALL ON FUNCTION forge_v3_api.commit_world_motion_v3'));
+ // The private SECURITY DEFINER implements the signed transactional
+ // gate. The exposed SECURITY INVOKER must only forward into that helper.
+ const advance=sql.slice(sql.indexOf('CREATE FUNCTION forge_v3_internal.advance_world_motion_v3'),
+  sql.indexOf('REVOKE ALL ON FUNCTION forge_v3_internal.advance_world_motion_v3'));
+ const commit=sql.slice(sql.indexOf('CREATE FUNCTION forge_v3_internal.commit_world_motion_v3'),
+  sql.indexOf('REVOKE ALL ON FUNCTION forge_v3_internal.commit_world_motion_v3'));
  for(const piece of [advance,commit]){
   assert.doesNotMatch(piece,/get_authorized_scene_channel_v3/);
   assert.match(piece,/scene_v3_publish_allowed\(\)/);
