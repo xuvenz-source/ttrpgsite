@@ -118,5 +118,37 @@
   "designRisk": "The relay checks current actor/map/membership and recipient epoch, but cannot independently prove token LOS or original movement authorization. No existing caller is rewired; release remains NO_GO. Read-only original catalog confirms four upstream vision-epoch callers; some may run without auth.uid, so a user-only relay cannot replace them blindly.",
   "currentRelayRequiresSignedActor": true,
   "originalSystemVisionCallerCount": 4,
-  "systemInitiatedVisionNotYetSupported": true
+  "systemInitiatedVisionNotYetSupported": true,
+  "verifiedOriginalTriggerPaths": [
+    {
+      "table": "public.campaign_player_maps",
+      "trigger": "world_v2_player_map_changed",
+      "triggerFunction": "forge_world_v2.player_map_change_trigger_v2",
+      "sourceMd5": "b146ecb8c1a2e334bb81055dd16a2e17",
+      "via": "forge_world_v2.notify_party_source_change_v2"
+    },
+    {
+      "table": "public.campaign_tool_map_tokens",
+      "trigger": "world_v2_tool_light_change",
+      "triggerFunction": "forge_world_v2.tool_light_edit_trigger_v2",
+      "sourceMd5": "ac53847f88716bc0cb1ffe8fc881700b",
+      "via": "forge_world_v2.signal_light_edit_v2"
+    },
+    {
+      "table": "public.campaigns",
+      "trigger": "world_v2_campaign_map_changed",
+      "triggerFunction": "forge_world_v2.campaign_map_change_trigger_v2",
+      "sourceMd5": "19abe797ef718f5abd1696c5626dcc2e",
+      "via": "forge_world_v2.notify_party_source_change_v2"
+    },
+    {
+      "table": "public.map_tokens",
+      "trigger": "world_v2_token_roster_changed",
+      "triggerFunction": "forge_world_v2.token_roster_change_trigger_v2",
+      "sourceMd5": "8d614fab8e60fd9bfab8b84b9acc6aeb",
+      "via": "forge_world_v2.notify_roster_change_v2"
+    }
+  ],
+  "liveOriginalEnabledSystemVisionTriggerCount": 4,
+  "verifiedTriggerCallsFromOriginalCatalog": true
 }
