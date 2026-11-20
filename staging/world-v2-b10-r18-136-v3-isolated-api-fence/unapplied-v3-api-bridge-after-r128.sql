@@ -35,6 +35,11 @@ BEGIN
    'public.get_authorized_scene_channel_v3(uuid)') IS NULL THEN
   RAISE EXCEPTION 'R136 preflight: R125 signed V3 topic authority missing';
  END IF;
+ IF EXISTS(SELECT 1 FROM pg_catalog.pg_policies
+   WHERE schemaname='realtime' AND tablename='messages'
+     AND policyname='World V2 scene publication receive') THEN
+  RAISE EXCEPTION 'R136 preflight: R126 old shared scene receive policy still active';
+ END IF;
 END $r136_preflight$;
 
 CREATE SCHEMA forge_v3_api;
