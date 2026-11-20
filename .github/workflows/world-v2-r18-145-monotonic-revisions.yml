@@ -1,0 +1,64 @@
+name: World V2 R18-145 revision counters and no-repeat collection
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-145-*'
+    paths:
+      - '.github/workflows/world-v2-r18-145-monotonic-revisions.yml'
+      - 'staging/world-v2-b10-r18-145-monotonic-mutation-revisions/**'
+      - 'tests/world-v2-r18-145-*'
+      - 'docs/testing/world-v2-r18-145-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-144-*'
+permissions:
+  contents: read
+jobs:
+  default-denied-source-census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse app runtime or versioned migrations
+        run: git diff --exit-code c4c26fb8d736e021862a754008c0361ba67fd2eb HEAD -- src/ supabase/migrations/
+      - name: Assert all-writer triggers, no grants, current actor checks, strict lock order
+        run: node --test tests/world-v2-r18-145-monotonic-revisions.test.mjs
+      - name: Record strict closed release
+        run: echo 'R145 SOURCE ONLY NO_GO — nothing installed on hosted QA/production'
+  disposable-postgresql17-revision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      R140_ISOLATED: 'yes'
+      R142_ISOLATED: 'yes'
+      R143_ISOLATED: 'yes'
+      R145_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Compile only on synthetic PG17 and test signed-equivalent actors/locking
+        shell: bash
+        run: bash tests/world-v2-r18-145-postgres/run.sh
+      - name: Deny release
+        run: echo 'R145 fictional PG17, real signed original schema and free-tier DDL/old-socket/storage NOT PROVEN'
