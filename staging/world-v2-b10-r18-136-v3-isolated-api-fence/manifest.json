@@ -55,7 +55,9 @@
     "deployedDatabaseMigration": false,
     "requiresSeparatePostgrestDataApiExposedSchemaConfiguration": true,
     "postgrestActuallyConfigured": false,
-    "realSignedHostedQaPassed": false
+    "realSignedHostedQaPassed": false,
+    "requiresR126OldSharedSceneReceiverRetired": true,
+    "negativePreflightOnOldV2ReceiverPolicy": true
   },
   "releaseBlockers": [
     "Independent Supabase Data API exposed-schema config forge_v3_api required; PostgreSQL GRANT alone is not enough",
