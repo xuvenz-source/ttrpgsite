@@ -73,8 +73,10 @@ const critical=Object.freeze({
 });
 export function censusBrowserRoutes({root=process.cwd(),liveCatalog}={}){
  const files=sourceFiles(root),rows=[];
+ const sourceTextByPath=new Map();
  for(const path of files){
   const src=readFileSync(join(root,path),'utf8');
+  sourceTextByPath.set(path,src);
   for(const {kind,pattern} of patterns){
    const rx=new RegExp(pattern.source,pattern.flags);
    for(let m;(m=rx.exec(src));){
@@ -96,7 +98,14 @@ export function censusBrowserRoutes({root=process.cwd(),liveCatalog}={}){
  rows.sort((a,b)=>a.path.localeCompare(b.path)||a.line-b.line||a.offset-b.offset);
  const targets=kind=>[...new Set(rows.filter(x=>x.kind===kind&&x.target).map(x=>x.target))].sort();
  const staticTargets=Object.fromEntries(patterns.map(x=>[x.kind,targets(x.kind)]));
+ // A wrapper may pass a constant to traceRpc(), while the direct db.rpc
+ // invocation receives variable "name". Count those as indirect evidence,
+ // never as proof that the actual RPC was authorized or reached.
  const criticalMissing=Object.entries(critical).flatMap(([kind,names])=>
+  names.filter(name=>![...sourceTextByPath.values()].some(src=>
+   src.includes("'"+name+"'")||src.includes('"'+name+'"')))
+   .map(name=>kind+':'+name));
+ const criticalNotDirect=Object.entries(critical).flatMap(([kind,names])=>
   names.filter(name=>!targets(kind).includes(name)).map(name=>kind+':'+name));
  const rpcSet=new Set(liveCatalog?.publicSqlFunctions?.map(x=>x.name)??[]);
  const relationSet=new Set(liveCatalog?.publicRelations?.map(x=>x.name)??[]);
@@ -108,7 +117,7 @@ export function censusBrowserRoutes({root=process.cwd(),liveCatalog}={}){
   occurrenceCount:rows.length,dynamicCount:rows.filter(x=>x.dynamic).length,
   kindCounts:Object.fromEntries(patterns.map(x=>[x.kind,rows.filter(y=>y.kind===x.kind).length])),
   groupCounts:Object.fromEntries(categories.map(g=>[g,rows.filter(x=>x.group===g).length])),
-  staticTargets,criticalMissing,
+  staticTargets,criticalMissing,criticalNotDirect,
   rpcMissingOriginalCatalog:liveCatalog?targets('rpc').filter(x=>!rpcSet.has(x)):null,
   relationMissingOriginalCatalog:liveCatalog?targets('relation').filter(x=>!relationSet.has(x)):null,
   blockers:[
@@ -130,6 +139,7 @@ export function censusSummary(v){
   staticTargetCounts:Object.fromEntries(Object.entries(v.staticTargets)
    .map(([k,values])=>[k,values.length])),
   missingCritical:v.criticalMissing,
+  onlyIndirectCritical:v.criticalNotDirect,
   missingLiveRpc:v.rpcMissingOriginalCatalog,
   missingLiveRelation:v.relationMissingOriginalCatalog,
   decision:'NO_GO'
