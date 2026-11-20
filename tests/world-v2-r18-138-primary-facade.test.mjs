@@ -81,7 +81,15 @@ test('R138 SQL creates exactly seven ungranted functions and no alternate public
    assert.doesNotMatch(block,/SECURITY DEFINER/,hit[1]);
  }
  assert.equal(manifest.facadePrototype.newExposedSecurityDefinerCount,0);
- assert.equal(manifest.facadePrototype.existingInheritedR136ExposedDefinerNeedsRelocation,true);
+ assert.equal(manifest.facadePrototype.inheritedR136TopicGatewayRehomedInR138,true);
+ assert.equal(manifest.facadePrototype.existingInheritedR136ExposedDefinerNeedsRelocation,false);
+ assert.equal(manifest.facadePrototype.totalPrivateSecurityDefiners,8);
+ assert.equal(manifest.facadePrototype.totalExposedSecurityInvokers,8);
+ assert.match(sql,/CREATE OR REPLACE FUNCTION forge_v3_api\.get_authorized_scene_channel_v3/);
+ assert.match(sql,/SECURITY INVOKER SET search_path=''/);
+ assert.match(sql,/CREATE FUNCTION forge_v3_internal\.get_authorized_scene_channel_v3/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION forge_v3_internal\.get_authorized_scene_channel_v3\(uuid\)/);
+ assert.match(sql,/R138 inherited signed topic gateway lost narrow invoker access/);
  assert.doesNotMatch(sql,/\bGRANT EXECUTE\b/);
  assert.doesNotMatch(sql,/\bGRANT USAGE\b/);
  assert.doesNotMatch(sql,/\bGRANT ALL\b/);
@@ -134,7 +142,8 @@ test('R138 PG17 synthetic tests cover fenced start/advance/commit, DM/private pr
   'R138 fenced motion still wrote',
   'R138 safe cancellation blocked while fenced',
   'R138 temporary grant escaped rollback',
-  'R138 expected seven private security definers'])
+  'R138 expected eight private security definers',
+  'R138 inherited R136 signed topic routing failed after private relocation'])
   assert.ok(verify.includes(expected),expected);
  for(const required of ['R138_ISOLATED','127.0.0.1','world_v2_r18_138',
   'r138_disposable_only','SUPABASE_SERVICE_ROLE_KEY',
