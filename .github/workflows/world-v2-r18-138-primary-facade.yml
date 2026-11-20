@@ -1,0 +1,64 @@
+name: World V2 R18-138 dynamic route triage and primary V3 facade
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-138-*'
+    paths:
+      - '.github/workflows/world-v2-r18-138-primary-facade.yml'
+      - 'staging/world-v2-b10-r18-138-primary-v3-facade/**'
+      - 'tests/world-v2-r18-138-*.test.mjs'
+      - 'docs/testing/world-v2-r18-138-primary-facade-2026-11-21.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-137-*'
+permissions:
+  contents: read
+jobs:
+  source-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Read exact R138 stacked repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Block runtime and original migration changes
+        run: git diff --exit-code 1243cb822efadc85c65b20bc6513be237e757fc4 HEAD -- src/ supabase/migrations/
+      - name: Print unresolved direct dynamic route evidence
+        run: |
+          node --input-type=module -e "import {buildDynamicRouteReview} from './staging/world-v2-b10-r18-138-primary-v3-facade/DynamicRouteReview.mjs'; const v=buildDynamicRouteReview(); console.log(JSON.stringify({count:v.count,missing:v.missingManualReviews,rows:v.rows.map(({id,key,expression,candidatesInSameFile})=>({id,key,expression,candidatesInSameFile}))},null,2)); if(v.count!==26) process.exit(42)"
+      - name: Verify 26 precise source classifications and seven ungranted APIs
+        run: node --test tests/world-v2-r18-138-primary-facade.test.mjs
+      - name: Keep hosted deployment blocked
+        run: echo 'R138 NO_GO - source-only review and prototype, no hosted database writes or public API unseal.'
+
+  isolated-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - name: Checkout fictional membership and world source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Compile seven ungranted facade functions and test signed actor/collision contract
+        shell: bash
+        run: bash tests/world-v2-r18-138-postgres/run.sh
