@@ -69,6 +69,19 @@ test('R138 dynamic access types cannot be silently promoted to safe public RPCs'
 test('R138 SQL creates exactly seven ungranted functions and no alternate public grants',()=>{
  assert.equal((sql.match(/^\s*CREATE FUNCTION forge_v3_api\./gm)||[]).length,7);
  assert.equal((sql.match(/^\s*REVOKE ALL ON FUNCTION forge_v3_api\./gm)||[]).length,7);
+ assert.equal((sql.match(/^\s*CREATE FUNCTION forge_v3_internal\./gm)||[]).length,7);
+ assert.equal((sql.match(/^\s*REVOKE ALL ON FUNCTION forge_v3_internal\./gm)||[]).length,7);
+ assert.match(sql,/CREATE SCHEMA forge_v3_internal/);
+ assert.match(sql,/REVOKE ALL ON SCHEMA forge_v3_internal FROM PUBLIC,anon,authenticated/);
+ assert.match(sql,/R138 newly exposed API function must be SECURITY INVOKER/);
+ for(const hit of sql.matchAll(/CREATE FUNCTION forge_v3_api\.(\w+)\(/g)){
+   const until=sql.indexOf('REVOKE ALL ON FUNCTION forge_v3_api.'+hit[1],hit.index);
+   const block=sql.slice(hit.index,until);
+   assert.match(block,/SECURITY INVOKER/,hit[1]);
+   assert.doesNotMatch(block,/SECURITY DEFINER/,hit[1]);
+ }
+ assert.equal(manifest.facadePrototype.newExposedSecurityDefinerCount,0);
+ assert.equal(manifest.facadePrototype.existingInheritedR136ExposedDefinerNeedsRelocation,true);
  assert.doesNotMatch(sql,/\bGRANT EXECUTE\b/);
  assert.doesNotMatch(sql,/\bGRANT USAGE\b/);
  assert.doesNotMatch(sql,/\bGRANT ALL\b/);
@@ -118,7 +131,8 @@ test('R138 PG17 synthetic tests cover fenced start/advance/commit, DM/private pr
   'R138 original motion commit response changed',
   'R138 fenced motion still wrote',
   'R138 safe cancellation blocked while fenced',
-  'R138 temporary grant escaped rollback'])
+  'R138 temporary grant escaped rollback',
+  'R138 expected seven private security definers'])
   assert.ok(verify.includes(expected),expected);
  for(const required of ['R138_ISOLATED','127.0.0.1','world_v2_r18_138',
   'r138_disposable_only','SUPABASE_SERVICE_ROLE_KEY',
