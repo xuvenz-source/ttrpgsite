@@ -1,0 +1,289 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-137",
+  "date": "2026-11-20",
+  "decision": "NO_GO",
+  "source": "selected exact source evidence lines + live read-only pg_catalog; source scanner supplies broader direct-call census",
+  "auditingLimit": "Feature plan is a migration design, not permission to expose the listed sources or a complete AST/transitive review.",
+  "countedLiveSurface": {
+    "authenticatedPublicFunctionGrants": 77,
+    "authenticatedSecurityDefinerFunctions": 67,
+    "publicRelations": 31,
+    "realtimePublishedPublicTables": 17,
+    "privateStorageBuckets": 3
+  },
+  "onlyStagedV3Route": "forge_v3_api.get_authorized_scene_channel_v3(uuid) (unapplied R136)",
+  "stagedV3RouteCount": 1,
+  "liveV3RouteCount": 0,
+  "reviewedUsableCompleteV3GameplayRoutes": 0,
+  "allGameplayRoutesCovered": false,
+  "allOriginalPrivilegesAudited": false,
+  "legacyPublicSchemaCanBeReopened": false,
+  "routeCount": 12,
+  "featureRoutes": [
+    {
+      "feature": "scene-and-recipient-topic",
+      "source": [
+        "src/engine/v2/SceneManager.js:187",
+        "staging/world-v2-b10-r18-136-v3-isolated-api-fence/IsolatedV3TopicClient.mjs"
+      ],
+      "legacy": [
+        "get_world_scene_v2",
+        "get_authorized_scene_channel_v3 (R125 only, not hosted)"
+      ],
+      "proposed": "forge_v3_api.get_authorized_scene_channel_v3 (R136 source-only), plus separately reviewed signed scene snapshot",
+      "priority": "P0",
+      "owner": "world-engine",
+      "state": "PARTIAL_TOPIC_GATEWAY_ONLY",
+      "required": "Signed actor/campaign/map, static scene/fog authorization, no stale cached manifest reveal, no V2 fallback"
+    },
+    {
+      "feature": "observer-sight-and-fog",
+      "source": [
+        "src/engine/v2/RealtimeTransport.js:80",
+        "src/engine/v2/VisibilityController.js:136",
+        "src/AuthorizedNavigation.js:191"
+      ],
+      "legacy": [
+        "get_world_observer_cursor_v2",
+        "get_world_visibility_v2",
+        "get_authorized_map_fog_v2",
+        "get_authorized_map_light_masks_v2",
+        "get_authorized_map_navigation"
+      ],
+      "proposed": "signed V3 private observer sight, private fog delta and authorized navigation RPC wrappers",
+      "priority": "P0",
+      "owner": "visibility",
+      "state": "NOT_IMPLEMENTED",
+      "required": "Server-derived LOS/concealment; per-recipient private epoch; no fallback to raw map data or old recipient topic"
+    },
+    {
+      "feature": "movement-and-collision",
+      "source": [
+        "src/engine/v2/AuthorityClient.js:25",
+        "src/engine/v2/MovementController.js",
+        "src/AuthorizedNavigation.js"
+      ],
+      "legacy": [
+        "begin_world_motion_v2",
+        "advance_world_motion_v2",
+        "commit_world_motion_v2",
+        "cancel_world_motion_v2",
+        "finalize_world_motion_v2 (source referenced, absent live)",
+        "commit_map_trajectory"
+      ],
+      "proposed": "actor-owned V3 gesture and commit API with verified per-step collision and no new per-frame RPCs",
+      "priority": "P0",
+      "owner": "movement",
+      "state": "NOT_IMPLEMENTED",
+      "required": "Preserve signed actor/session/sequence, collision, path proof, atomic finalize/no unsafe fallback, low latency under rapid drags/keyboard"
+    },
+    {
+      "feature": "campaign-map-and-membership",
+      "source": [
+        "src/TabletopApp.jsx:387",
+        "src/TabletopApp.jsx:398",
+        "src/TabletopApp.jsx:446"
+      ],
+      "legacy": [
+        "campaigns",
+        "campaign_members",
+        "battle_maps",
+        "campaign_player_maps",
+        "campaign_map_views",
+        "map_folders",
+        "npc_folders",
+        "get_campaign_account_names",
+        "join_campaign",
+        "create_campaign"
+      ],
+      "proposed": "separately reviewed minimum-projection current-campaign metadata and privileged DM mutation RPCs",
+      "priority": "P0",
+      "owner": "campaign-access",
+      "state": "NOT_IMPLEMENTED",
+      "required": "Direct select('*') cannot be mirrored into broad V3 table SELECT; prove member/DM authorization and revocation"
+    },
+    {
+      "feature": "dm-map-content-and-environment",
+      "source": [
+        "src/TabletopApp.jsx:221",
+        "src/TabletopApp.jsx:644",
+        "src/TabletopApp.jsx:662",
+        "src/TabletopApp.jsx:957"
+      ],
+      "legacy": [
+        "map_environments",
+        "map_tokens",
+        "map_folders",
+        "campaign_map_pins",
+        "npc_templates",
+        "publish_map_environment",
+        "get_dm_map_npc_values"
+      ],
+      "proposed": "authorized static scene and bounded DM editor writes with server-side collision/visibility and map-version checks",
+      "priority": "P0",
+      "owner": "map-editor",
+      "state": "NOT_IMPLEMENTED",
+      "required": "No raw NPC stats or unpublished fog via player API; R134 trusted trigger notifications retained"
+    },
+    {
+      "feature": "character-sheet-inventory",
+      "source": [
+        "src/TabletopApp.jsx:400",
+        "src/TabletopApp.jsx:619",
+        "src/CharacterEditor.jsx:44",
+        "src/InventoryTransfers.js:83"
+      ],
+      "legacy": [
+        "characters",
+        "patch_campaign_sheet_noninventory",
+        "transfer_campaign_inventory_item",
+        "get_campaign_sheet_inventory",
+        "mutate_campaign_sheet_item",
+        "claim_campaign_sheet_item",
+        "release_campaign_sheet_item"
+      ],
+      "proposed": "owner/DM projected character views, revision-safe sheet edits and inventory lease RPCs",
+      "priority": "P0",
+      "owner": "character-sheet",
+      "state": "NOT_IMPLEMENTED",
+      "required": "No cross-character private sheet fields; issue #220, inventory UUID integrity, permission and lease rechecks"
+    },
+    {
+      "feature": "dm-tools-handouts-and-pins",
+      "source": [
+        "src/TabletopApp.jsx:1452",
+        "src/InventoryTransfers.js:50"
+      ],
+      "legacy": [
+        "campaign_tool_issues",
+        "campaign_tool_templates",
+        "campaign_tool_map_tokens",
+        "campaign_handouts",
+        "campaign_handout_events",
+        "campaign_map_pins",
+        "collect_campaign_map_pin"
+      ],
+      "proposed": "role-scoped handout/token visibility and bounded DM mutation RPCs",
+      "priority": "P1",
+      "owner": "dm-tools",
+      "state": "NOT_IMPLEMENTED",
+      "required": "Handout secrecy, pin role scope, no recipient leaks via old publication/event names"
+    },
+    {
+      "feature": "chat-rolls-macros-and-combat",
+      "source": [
+        "src/TabletopApp.jsx:403",
+        "src/TabletopApp.jsx:1052"
+      ],
+      "legacy": [
+        "chat_messages",
+        "tabletop_macros",
+        "map_combats",
+        "map_combat_entries",
+        "roll_dice",
+        "run_tabletop_macro",
+        "begin_map_combat",
+        "command_map_combat"
+      ],
+      "proposed": "separate signed campaign/DM actions with bounded projections, rolls and event triggers",
+      "priority": "P1",
+      "owner": "collaboration",
+      "state": "NOT_IMPLEMENTED",
+      "required": "No actor spoofing, cross-campaign dice or private combat metadata leaks, rate limits"
+    },
+    {
+      "feature": "personal-preferences-hotbar",
+      "source": [
+        "src/TabletopApp.jsx:1027",
+        "src/TabletopApp.jsx:1040"
+      ],
+      "legacy": [
+        "tabletop_user_preferences",
+        "tabletop_hotbars",
+        "tabletop_menu_preferences",
+        "personal_tokens"
+      ],
+      "proposed": "signed own-user CRUD endpoints independent from campaign scope",
+      "priority": "P1",
+      "owner": "account-preferences",
+      "state": "NOT_IMPLEMENTED",
+      "required": "No arbitrary user_id write/read; bind auth.uid and narrow per-user fields"
+    },
+    {
+      "feature": "artwork-storage-and-edge",
+      "source": [
+        "src/SignedAssetUrls.js:8",
+        "src/TokenStudio.jsx:249",
+        "src/AccountSettings.jsx:24"
+      ],
+      "legacy": [
+        "battlemap-assets",
+        "personal-token-art",
+        "tabletop-artwork",
+        "username-update Edge Function"
+      ],
+      "proposed": "server-authorized short-lived asset reads and ownership-verified uploads/Edge calls with revocation gate",
+      "priority": "P0",
+      "owner": "assets-and-edge",
+      "state": "NOT_IMPLEMENTED",
+      "required": "Existing signed Storage URLs survive membership revocation; #231 blocking, three buckets private but bearer URLs still usable"
+    },
+    {
+      "feature": "realtime-postgres-changes-and-broadcast",
+      "source": [
+        "src/TabletopApp.jsx:1065",
+        "src/TabletopApp.jsx:1215",
+        "src/TabletopApp.jsx:1452",
+        "src/engine/v2/SceneTransport.js:85"
+      ],
+      "legacy": [
+        "17 supabase_realtime public tables",
+        "legacy V2 per-viewer Broadcast",
+        "legacy shared scene Broadcast",
+        "presence and client-originated Broadcast"
+      ],
+      "proposed": "V3 only recipient-epoch private Broadcast plus explicit 17-table listener quarantine, legacy receiver/sender fence",
+      "priority": "P0",
+      "owner": "realtime-security",
+      "state": "NOT_IMPLEMENTED",
+      "required": "Old already-connected V2 socket cannot receive new data; real signed multi-tab QA and Postgres Changes/Storage boundaries"
+    },
+    {
+      "feature": "data-api-surface-and-release",
+      "source": [
+        "staging/world-v2-b10-r18-128-server-maintenance-fence/unapplied-maintenance-freeze-candidate.sql",
+        "staging/world-v2-b10-r18-136-v3-isolated-api-fence/unapplied-v3-api-bridge-after-r128.sql"
+      ],
+      "legacy": [
+        "77 authenticated public callable functions",
+        "31 public relations",
+        "67 callable SECURITY DEFINER functions"
+      ],
+      "proposed": "single exposed forge_v3_api schema with exact individual grants, no public USAGE recovery; full endpoint review and signed release gate",
+      "priority": "P0",
+      "owner": "release-security",
+      "state": "INCOMPLETE",
+      "required": "Audit all privilege/definer paths; PostgREST exposed schema separately configured only on approved QA, zero blanket grants"
+    }
+  ],
+  "requiredAuditGates": [
+    "Static complete repo scan including unresolved dynamic and wrapped clients",
+    "No route becomes V3-executable until actor scope, row projection and operation tests pass",
+    "Every authenticated direct table read/write replaced by a reviewed narrow API; no blanket GRANT ALL",
+    "All 77 functions and 31 relations individually triaged, especially 67 public SECURITY DEFINER bodies",
+    "No legacy source/client bundle version flag used for authorization",
+    "Existing R128 public USAGE freeze continues to deny old endpoints after any V3 schema exposure",
+    "Supabase Data API Exposed schemas setting verified separately on explicit approved QA; not in this work",
+    "Postgres Changes/Realtime/Edge/Storage separate server-side authorization and revocation checks",
+    "Real signed DM/P1/P2/outsider/revoked/reinstated and multiple-tabs old-socket QA",
+    "No movement or fog performance regression on free tier and no cross-recipient visibility leak",
+    "Approved R127 human release record and rollback-to-fenced-only drill"
+  ],
+  "issuesStillOpen": [
+    220,
+    223,
+    229,
+    231
+  ]
+}
