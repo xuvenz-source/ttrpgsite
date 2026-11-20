@@ -146,9 +146,14 @@ export function createObserverV3ChannelBridge({
          // A SECOND SUBSCRIBED can follow socket reconnection. Do not
          // reuse stale R125 epochs or let existing V2 cursor reauthorize.
          mask('observer-reconnected');
-         void retire().then(done=>{
-          if(done&&!terminal&&!disposed)void enter();
-         });
+         void retire().then(async done=>{
+          if(!done||terminal||disposed)return;
+          // If a fast reconnect arrives while the first start() promise
+          // is still settling, wait for that old attempt to drain before
+          // requesting a fresh signed topic. Never resurrect the epoch.
+          if(beginWork)await beginWork;
+          if(!terminal&&!disposed)void enter();
+         }).catch(()=>emit('observer_reconnect_failed'));
          return;
         }
         joined=true;
