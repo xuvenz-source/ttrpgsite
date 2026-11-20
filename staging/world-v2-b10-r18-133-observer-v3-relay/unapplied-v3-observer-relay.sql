@@ -61,7 +61,7 @@ DECLARE
  private_topic text;
 BEGIN
  IF actor IS NULL OR p_map IS NULL OR p_viewer IS NULL OR
-  p_event NOT IN ('motion','world-motion-v2','world-vision-v2') OR
+  p_event IS NULL OR p_event NOT IN ('motion','world-motion-v2','world-vision-v2') OR
   p_payload IS NULL OR jsonb_typeof(p_payload)<>'object' OR
   pg_catalog.pg_column_size(p_payload)>8192 OR
   p_payload->>'mapId' IS DISTINCT FROM p_map::text OR
