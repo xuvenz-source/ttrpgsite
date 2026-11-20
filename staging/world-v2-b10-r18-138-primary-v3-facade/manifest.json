@@ -68,7 +68,12 @@
     "newExposedSecurityInvokerCount": 7,
     "newTotalFunctionCount": 14,
     "newSchema": "forge_v3_internal (private)",
-    "existingInheritedR136ExposedDefinerNeedsRelocation": true
+    "existingInheritedR136ExposedDefinerNeedsRelocation": false,
+    "totalPrivateSecurityDefiners": 8,
+    "totalExposedSecurityInvokers": 8,
+    "inheritedR136TopicGatewayRehomedInR138": true,
+    "topicPrivateHelperAuthenticatedExecuteOnly": true,
+    "schemaUsageGrantedOnlyForSignedTopicHelper": true
   },
   "stillBlocked": [
     "Prototype wrappers are not granted to clients, source-only and unapplied",
@@ -82,7 +87,7 @@
     "Actual original V2 scene/sight/collision source not exercised by disposable structural tests",
     "No real signed user rollout, no approved Data API exposure, no hosted QA bootstrap",
     "No human reviewed R127 production release attestation or safe rollback",
-    "Current Supabase RLS docs explicitly discourage SECURITY DEFINER functions in an exposed API schema; inherited R136 signed topic definer must be relocated to a private schema before Data API exposure"
+    "Standalone R136 retains the old exposed SECURITY DEFINER until this unmerged R138 child is included; never deploy R136 alone"
   ],
   "unresolvedIssues": [
     220,
@@ -92,8 +97,8 @@
   ],
   "nextStep": "R18-139: audit 26 dynamic call sources with exhaustive actual transitive/actor tests, select narrow V3 sight and movement runtime contracts; do not enable grants",
   "tests": {
-    "dedicatedNode": "RECHECK_REQUIRED_AFTER_PRIVATE_HELPER_RELOCATION",
-    "isolatedPg17": "RECHECK_REQUIRED_AFTER_PRIVATE_HELPER_RELOCATION",
+    "dedicatedNode": "RECHECK_REQUIRED_AFTER_TOPIC_REHOME",
+    "isolatedPg17": "RECHECK_REQUIRED_AFTER_TOPIC_REHOME",
     "repoBuild": "SUCCESS_ON_IMPLEMENTATION_HEAD",
     "combinedSql": "SUCCESS_ON_IMPLEMENTATION_HEAD",
     "signedQa": "NOT_RUN",
