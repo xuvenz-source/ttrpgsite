@@ -78,6 +78,8 @@ test('R136 SQL refuses installation before full R128 public schema fence',()=>{
  assert.match(sql,/has_schema_privilege\('authenticated','public','USAGE'\)/);
  assert.match(sql,/has_schema_privilege\('anon','public','USAGE'\)/);
  assert.match(sql,/R136 preflight: R128 public schema fence not installed/);
+ assert.match(sql,/R136 preflight: R126 old shared scene receive policy still active/);
+ assert.match(sql,/policyname='World V2 scene publication receive'/);
  assert.match(sql,/public\.get_authorized_scene_channel_v3\(uuid\)/);
  assert.match(sql,/R136 postflight: legacy public schema unexpectedly reopened/);
  assert.match(sql,/CREATE SCHEMA forge_v3_api/);
@@ -199,7 +201,8 @@ test('R136 PG17 fixture proves old public routes denied, new route and revoke',(
  'unapplied-v3-api-bridge-after-r128.sql',
  'signed-old-sheet','signed-old-motion',
  'signed-v3-old-public-rpc','signed-owner-sheet-direct',
- 'anonymous-new-v3-rpc','R136 preflight: R128 public schema fence not installed'
+ 'anonymous-new-v3-rpc','R136 preflight: R128 public schema fence not installed',
+  'R136 preflight: R126 old shared scene receive policy still active'
  ])assert.ok(runner.includes(str),str);
  assert.doesNotMatch(runner,/supabase\s+(db|link|migration|deploy)/);
 });
