@@ -1,0 +1,66 @@
+name: World V2 R18-134 isolated six legacy sender V3 cutover
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-134-*'
+    paths:
+      - '.github/workflows/world-v2-r18-134-six-sender-v3-cutover.yml'
+      - 'staging/world-v2-b10-r18-134-six-sender-v3-cutover/**'
+      - 'tests/world-v2-r18-134-postgres/**'
+      - 'tests/world-v2-r18-134-six-senders.test.mjs'
+      - 'docs/testing/world-v2-r18-134-six-sender-cutover-2026-11-20.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-133-*'
+    paths:
+      - '.github/workflows/world-v2-r18-134-six-sender-v3-cutover.yml'
+      - 'staging/world-v2-b10-r18-134-six-sender-v3-cutover/**'
+      - 'tests/world-v2-r18-134-postgres/**'
+      - 'tests/world-v2-r18-134-six-senders.test.mjs'
+permissions:
+  contents: read
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout all pinned source history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject any runtime or versioned migration edit
+        run: git diff --exit-code 4cb9c800d90129994b678b5369ab4f213ab1b6b0 HEAD -- src/ supabase/migrations/
+      - name: Prove exact original SQL preservation and eight reviewed V3 rewrites
+        run: node --test tests/world-v2-r18-134-six-senders.test.mjs
+      - name: Preserve release hold
+        run: echo 'R134 NO_GO - no hosted SQL, old socket cutoff, signed QA or real movement load test.'
+  synthetic-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r134_disposable_only
+          POSTGRES_DB: world_v2_r18_134
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_134"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R134_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_134
+      PGPASSWORD: r134_disposable_only
+    steps:
+      - name: Checkout fictional database and source candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Compile all six original function bodies and test trusted system vision
+        shell: bash
+        run: bash tests/world-v2-r18-134-postgres/run.sh
