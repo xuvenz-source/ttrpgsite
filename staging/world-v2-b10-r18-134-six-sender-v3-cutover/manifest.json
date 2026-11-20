@@ -43,7 +43,7 @@
   "signedMultiUserQaComplete": false,
   "fullPrivilegedRpcSemanticAuditComplete": false,
   "all83OriginalSqlBodiesAudited": false,
-  "sourceOnlySixSqlFunctionsCompiledInSyntheticPg17": false,
+  "sourceOnlySixSqlFunctionsCompiledInSyntheticPg17": true,
   "movementPathPerformanceMeasured": false,
   "allExternalRealtimeSendersCovered": false,
   "unresolvedIssues": [
@@ -54,10 +54,16 @@
   ],
   "nextReleaseGate": "R18-135 coordinated old-client hard fence, signed WebSocket revocation, client migration, performance and release audit",
   "tests": {
-    "sourceContract": "PENDING",
-    "syntheticPostgres17": "PENDING",
-    "standardRepo": "PENDING",
-    "combinedStagingSql": "PENDING"
+    "sourceContract": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "syntheticPostgres17": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "standardRepo": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "combinedStagingSql": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "realSignedMultiplayerQa": "NOT_RUN",
+    "verifiedImplementationHead": "717fd105dd0883d7be82ffc705c93cc96e7a0eec",
+    "dedicatedPrRunId": 44677540023,
+    "standardPrRunId": 44677540040,
+    "combinedSqlPushRunId": 44677504983,
+    "finalEvidenceOnlyCommitRecheckRequired": true
   },
   "noHostedSqlWrites": true,
   "noProductionSourceEdits": true,
@@ -65,5 +71,17 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "hostedReadOnlyFinalVerification": {
+    "originalMigrations": 83,
+    "qaMigrations": 0,
+    "qaPublicAppTables": 0,
+    "sixOriginalSourceHashesStillMatch": true,
+    "internalSenderCountNotAuthenticatedCallable": 4,
+    "publicMovementRpcAuthenticatedCallable": 2,
+    "privateObserverV3Installed": false,
+    "privateSceneDrainInstalled": false,
+    "oldV2SceneReceivePolicyPresent": true,
+    "noHostedWrites": true
+  }
 }
