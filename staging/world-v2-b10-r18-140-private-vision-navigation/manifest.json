@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-140",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 247,
+  "parentSha": "a5de4681558be7aceaec4060915137eb4f814df7",
+  "originalSupabaseProject": "lwhwgqaunxbmvyndswze",
+  "qaSupabaseProject": "bgydsamxypjslergfpla",
+  "originalMigrationCount": 83,
+  "qaMigrationCount": 0,
+  "qaPublicApplicationTables": 0,
+  "inheritedProposedApiFunctions": 8,
+  "newGameplayFunctions": 5,
+  "newBrowserCallableFunctions": 0,
+  "totalProposedApiFunctions": 13,
+  "newPrivilegedHelpersInPrivateSchema": 5,
+  "newPublicSurfaceInvokers": 5,
+  "newPrivileges": "NONE",
+  "r128FreezeRequired": true,
+  "r132FenceRequired": true,
+  "inheritedR138SevenGameplayFunctionsStillDenied": true,
+  "sourceContractsExactFromR139": 6,
+  "remainingDynamicR138": 26,
+  "actualOriginalFunctionBodiesReadOnlyReviewed": [
+    "preview_world_visibility_v2",
+    "preview_world_visibility_at_v2",
+    "forge_world_v2.visibility_frame_v2",
+    "get_authorized_map_fog_delta",
+    "get_authorized_map_fog_v2",
+    "get_authorized_map_light_masks_v2",
+    "get_authorized_map_navigation"
+  ],
+  "preview": {
+    "currentSignedDmOnly": true,
+    "targetViewerMustBeCurrentPlayerOnMap": true,
+    "originalVirtualTokenOwnershipAndBoundsDelegated": true,
+    "noExplorationPersistenceExpectedFromOriginal": true,
+    "realSignedProofComplete": false
+  },
+  "fog": {
+    "noLegacyGlobalFallback": true,
+    "originalViewerEpochDeltaOnly": true,
+    "exactBaseTupleOrFullSnapshot": true,
+    "realtimeRevocationUnproven": true,
+    "originalSideEffectWritesReplayed": false
+  },
+  "lighting": {
+    "originalV2ProtocolVersion": 2,
+    "actorBound": true
+  },
+  "navigation": {
+    "originalPayloadVersion": 1,
+    "tokenAndToolOnly": true,
+    "originalGraphAndCollisionDelegated": true,
+    "originalCostBenchmark": "NOT_RUN"
+  },
+  "qaSignedActors": "SYNTHETIC_PG17_ONLY",
+  "signedDmP1P2OutsiderRealQa": false,
+  "realOriginalLosOrNavigationRun": false,
+  "multiTabSocketRevocationProven": false,
+  "originalPrivilegedFunctionAuditComplete": false,
+  "freeTierWorldLatency": "NOT_MEASURED",
+  "noHostedWrites": true,
+  "noApplicationSourceEdits": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "noNewGrants": true,
+  "noDataApiExposure": true,
+  "productionReleaseAuthorized": false,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-141 — review original privilege/field-projection and integrate full client transport/Realtime/Storage teardown only after explicit security tests; no rollout",
+  "tests": {
+    "dedicatedNode": "PENDING",
+    "isolatedPg17": "PENDING",
+    "standardBuild": "PENDING"
+  }
+}
