@@ -1,0 +1,66 @@
+name: World V2 R18-136 isolated V3 API gateway after public schema freeze
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-136-*'
+    paths:
+      - '.github/workflows/world-v2-r18-136-isolated-v3-api-fence.yml'
+      - 'staging/world-v2-b10-r18-136-v3-isolated-api-fence/**'
+      - 'tests/world-v2-r18-136-postgres/**'
+      - 'tests/world-v2-r18-136-v3-api.test.mjs'
+      - 'docs/testing/world-v2-r18-136-isolated-v3-api-after-r128-2026-11-20.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-135-*'
+    paths:
+      - '.github/workflows/world-v2-r18-136-isolated-v3-api-fence.yml'
+      - 'staging/world-v2-b10-r18-136-v3-isolated-api-fence/**'
+      - 'tests/world-v2-r18-136-postgres/**'
+      - 'tests/world-v2-r18-136-v3-api.test.mjs'
+permissions:
+  contents: read
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout pinned source and ancestry
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Confirm live application and historical migrations remain unchanged
+        run: git diff --exit-code 252d5fcc582eb280159728aea97bb5a36ff6e960 HEAD -- src/ supabase/migrations/
+      - name: Test isolated schema-scoped client, exact SQL ACL and NO_GO
+        run: node --test tests/world-v2-r18-136-v3-api.test.mjs
+      - name: Hold hosted and production access
+        run: echo 'R136 NO_GO - one V3 topic RPC does not supply complete V3 gameplay and Data API exposure is not configured.'
+  synthetic-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r136_disposable_only
+          POSTGRES_DB: world_v2_r18_136
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_136"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R136_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_136
+      PGPASSWORD: r136_disposable_only
+    steps:
+      - name: Checkout fictional R125 R126 R128 and R136 PostgreSQL setup
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove R128 denial and isolated V3 RPC without restoring public schema
+        shell: bash
+        run: bash tests/world-v2-r18-136-postgres/run.sh
