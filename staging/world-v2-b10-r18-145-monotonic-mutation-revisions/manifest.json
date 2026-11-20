@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-145",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 252,
+  "parentSha": "c4c26fb8d736e021862a754008c0361ba67fd2eb",
+  "originalMigrationCount": 83,
+  "qaMigrationCount": 0,
+  "qaPublicApplicationTables": 0,
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "inheritedApiFunctions": 20,
+  "inheritedPrivateFunctions": 20,
+  "newApiInvokers": 5,
+  "newPrivateHelperFunctions": 6,
+  "totalProposedApiFunctions": 25,
+  "totalProposedPrivateFunctions": 26,
+  "newColumns": 2,
+  "newRevisionTriggers": 2,
+  "tablesWithAllWriterRevisionTriggers": [
+    "public.characters",
+    "public.campaign_handouts"
+  ],
+  "defaultDenied": true,
+  "newBrowserGrants": 0,
+  "allMethodsSecurityDefinerInPrivateSchema": true,
+  "publicFacadeSecurityInvoker": true,
+  "noGenericActionRouter": true,
+  "revisionDesign": {
+    "initialRevision": 0,
+    "beforeUpdateTrigger": "forge_v3_internal.bump_mutation_revision_v3",
+    "arbitraryUserProvidedRevisionOverwritten": true,
+    "revisionMonotonicOnAllTableUpdates": true,
+    "sameTransactionNextEditUsesIncrementedRevision": true,
+    "expectedRevisionType": "bigint",
+    "originalUpdatedAtStillPresentButNotPrimaryCAS": true,
+    "existingLegacyPrivilegedFunctionsNotGrantedToBrowser": true,
+    "introducedDBTriggerPerUpdate": true,
+    "original83MigrationCompatibilityVerified": false,
+    "crossTransactionRealConcurrencyTested": false
+  },
+  "collectionDesign": {
+    "lockOrder": "HANDOUT_THEN_PIN",
+    "r143LegacyCollectorDelegatedOnFirstCollection": true,
+    "doubleCollectSkipsMutation": true,
+    "alreadyCollectedReceipt": true,
+    "allOldPrivilegedPublishersAndCollectorsAudited": false,
+    "realDeadlockStressTested": false
+  },
+  "clientCompatibility": {
+    "existingClientFiveFlowGapsStillBlocked": true,
+    "adaptersToReadRevisionPayloadAndRehydrate": false,
+    "namesNpcCrudHandoutFolderPinInventoryRoutesComplete": false,
+    "noAddedMovementHotPathRpc": true
+  },
+  "syntheticPg17": {
+    "signedEquivalentActors": [
+      "DM",
+      "P1",
+      "P2",
+      "outsider",
+      "revoked"
+    ],
+    "testRevisionsFromDirectLegacyWriters": true,
+    "testSameTransactionCAS": true,
+    "testDoubleCollectNoAdditionalUpdate": true,
+    "testTransactionalAuthenticatedGrantsRollback": true,
+    "realSignedSupabaseActors": false,
+    "real83MigrationGraphReplayed": false,
+    "actualFreeTierDDLPerformanceMeasured": false
+  },
+  "productionReleaseAuthorized": false,
+  "hostedSqlApplied": false,
+  "noHostedWrites": true,
+  "noRuntimeSrcEdits": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "noNewGrants": true,
+  "noDataApiExposure": true,
+  "storageSignedBearerRevoked": false,
+  "oldJoinedSocketDeliveryBlocked": false,
+  "all67PrivilegedFunctionsAudited": false,
+  "R127HumanReleaseApproval": false,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-146: perform exact original trigger and caller dependency preflight, transaction lock-order stress tests, and reconcile client compatibility; require explicit signed QA approval before schema installation",
+  "tests": {
+    "sourceNode": "PENDING",
+    "syntheticPG17": "PENDING",
+    "standardRepository": "PENDING"
+  }
+}
