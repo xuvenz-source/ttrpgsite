@@ -43,10 +43,16 @@
     229,
     231
   ],
-  "nextStep": "R18-147: stage direct least-privilege revocation remediations for old sheet owner and unchanged invite; require original schema QA/human decision before applying anything",
+  "nextStep": "R18-147: reconcile existing draft PRs #219/#222/#228/#230 and R120/R121 tombstone candidates; close TRUNCATE/rejoin security gaps without duplicate patches",
   "tests": {
     "sourceGraph": "PENDING",
     "syntheticLockRace": "PENDING",
     "standardRepo": "PENDING"
-  }
+  },
+  "existingSecurityDraftCandidates": [
+    219,
+    222,
+    228,
+    230
+  ]
 }

@@ -76,10 +76,13 @@ are not tested by this fixture.
 
 ## Required next changes
 
-R18-147 should stage a **separate default-denied original-authorizer
-revocation design** for legacy character owner permissions, invite
-rotation/reuse, privileged membership UPDATE/TRUNCATE and current
-session/recipient generations. It must preserve DM edit access,
+R18-147 should **reconcile existing unapplied security candidates**:
+revoked-character-owner guard in draft PR #219, tool/role tests in #222,
+source-only membership UPDATE guard in #228, private tombstone/rejoin
+prototypes in R18-120/R18-121, and Storage teardown tests in #230.
+Do not duplicate or silently replace these branches. Resolve missing
+privileged TRUNCATE and old invite rejoin controls, then integrate signed
+actor/recipient generation checks with the latest mutation work. It must preserve DM edit access,
 party membership, current map and token ownership and must not grant
 broad table or public-schema privileges.
 
