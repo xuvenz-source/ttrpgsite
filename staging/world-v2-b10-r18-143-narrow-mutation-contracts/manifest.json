@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-143",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 250,
+  "parentSha": "282927baca1f11014cfc03d10524546ea203f299",
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "originalMigrationCount": 83,
+  "qaMigrationCount": 0,
+  "qaPublicApplicationTables": 0,
+  "inheritedV3ApiFunctions": 17,
+  "newApiInvokers": 3,
+  "newPrivateDefiners": 3,
+  "totalProposedV3ApiFunctions": 20,
+  "totalPrivateDefiners": 20,
+  "newBrowserCallableFunctions": 0,
+  "newExplicitPublicGrants": 0,
+  "originalFunctionsReadOnlyReviewed": [
+    "can_edit_campaign_sheet",
+    "can_edit_campaign_sheet_inventory",
+    "patch_campaign_sheet_noninventory",
+    "collect_campaign_map_pin",
+    "get_campaign_sheet_inventory",
+    "is_campaign_dm",
+    "can_view_campaign_map",
+    "protect_character_identity",
+    "reject_direct_sheet_inventory_overwrite",
+    "touch_updated_at",
+    "hide_campaign_handout_pins",
+    "validate_campaign_handout",
+    "bump_campaign_handout_revision"
+  ],
+  "mutations": [
+    {
+      "name": "patch_authorized_character_v3",
+      "args": "(uuid,jsonb,timestamptz)",
+      "requires": "current membership AND owner/DM AND original can_edit_campaign_sheet; expected updated_at; only configured non-inventory field IDs",
+      "underlyingOriginal": "public.patch_campaign_sheet_noninventory(uuid,text,uuid,jsonb,jsonb)",
+      "expectedCase": "owner-or-DM plus CAS",
+      "returns": "id,campaignId,updatedAt,changedKeys",
+      "security": "no meta fields; no source sheet row or image paths; <=16KB/32 fields"
+    },
+    {
+      "name": "edit_authorized_handout_v3",
+      "args": "(uuid,text,text,boolean,timestamptz)",
+      "requires": "current campaign DM AND exact updated_at; original validate/hide-pin/tick triggers",
+      "expectedCase": "DM writes scoped handout only",
+      "returns": "id,campaignId,revealed,updatedAt",
+      "security": "no folder, pin, collectable or author ownership edits; title<=160 chars; body<=16KB"
+    },
+    {
+      "name": "collect_authorized_pin_v3",
+      "args": "(uuid)",
+      "requires": "current signed campaign member, visible collectable pinned note on CURRENT assigned map; original collect_campaign_map_pin",
+      "expectedCase": "row-lock pin then delegate atomic reveal/collect",
+      "returns": "handoutId only",
+      "security": "no hidden-pin or foreign-map access, no full handout body"
+    }
+  ],
+  "syntheticPg17": {
+    "localPostgres17Only": true,
+    "usesInheritedR142Fixture": true,
+    "actors": [
+      "DM",
+      "P1",
+      "P2",
+      "outsider-DM",
+      "nonmember",
+      "revoked"
+    ],
+    "tests": [
+      "default deny",
+      "fenced mutations",
+      "CAS stale edits",
+      "inventory & invalid metadata rejection",
+      "DM reveal/hide pin trigger",
+      "owned character patch",
+      "current map collection",
+      "map reassignment",
+      "cross-campaign denial",
+      "transient role grant rollback",
+      "membership revocation"
+    ],
+    "actualOriginal83MigrationsReplayed": false,
+    "actualSignedAuthVerified": false,
+    "websocketRevocationVerified": false
+  },
+  "originalTriggerCaveats": [
+    "character_sheet_items_rpc_only uses current_user authenticated bypass in original SECURITY DEFINER; must audit transitive mutation constraints before grant",
+    "touch_updated_at uses transaction_timestamp()/now() rather than globally monotonic revision; intra-transaction repeated edits can share updated_at",
+    "handout revision/tick/revealed hide-pin cascade must be verified under original schema before unseal",
+    "legacy collect_campaign_map_pin permits repeated collect, which may re-publish revision; idempotency under load unverified"
+  ],
+  "browserRuntimeChanged": false,
+  "noHotPathMovementCalls": true,
+  "noVersionedMigrations": true,
+  "noHostedWrites": true,
+  "noRuntimeSrcEdits": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "noNewGrants": true,
+  "noDataApiExposure": true,
+  "originalPublicDefinersFullyAudited": false,
+  "storageSignedUrlsRevoked": false,
+  "oldSocketsServerEjected": false,
+  "freeTierMovementP95": "NOT_MEASURED",
+  "signedDmP1P2OutsiderQa": "NOT_RUN",
+  "humanR127ReleaseApproved": false,
+  "productionReleaseAuthorized": false,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-144: audit original V2 mutation side-effect chain/locking and build strict client request mapping + revoked actor QA plan; keep V3 browser access denied",
+  "tests": {
+    "sourceNode": "PENDING",
+    "isolatedPostgreSQL17": "PENDING",
+    "standardRepo": "PENDING"
+  }
+}

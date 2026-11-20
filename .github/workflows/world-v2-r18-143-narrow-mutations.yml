@@ -1,0 +1,63 @@
+name: World V2 R18-143 narrowly-scoped mutations and security tests
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-143-*'
+    paths:
+      - '.github/workflows/world-v2-r18-143-narrow-mutations.yml'
+      - 'staging/world-v2-b10-r18-143-narrow-mutation-contracts/**'
+      - 'tests/world-v2-r18-143-*'
+      - 'docs/testing/world-v2-r18-143-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-142-*'
+permissions:
+  contents: read
+jobs:
+  exact-source-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse browser runtime / versioned migration modifications
+        run: git diff --exit-code 282927baca1f11014cfc03d10524546ea203f299 HEAD -- src/ supabase/migrations/
+      - name: Verify precise mutation signatures, original V2 contracts and no browser grants
+        run: node --test tests/world-v2-r18-143-narrow-mutations.test.mjs
+      - name: Record the unreleased security boundary
+        run: echo 'R143 NO_GO — no hosted SQL, migrations, browser EXECUTE, or runtime deployment'
+  disposable-pg17-mutation-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      R140_ISOLATED: 'yes'
+      R142_ISOLATED: 'yes'
+      R143_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Replay fictional R142 and new R143 PG17 fixtures/test mutation gates
+        shell: bash
+        run: bash tests/world-v2-r18-143-postgres/run.sh
+      - name: Require human release/no automatic rollout
+        run: echo 'Synthetic PG17 tests only. Original 83 migrations, signed QA, R127 and old-socket/storage access remain blocked.'
