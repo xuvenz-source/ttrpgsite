@@ -108,7 +108,8 @@ export function createObserverV3ChannelBridge({
  }
  function bind(n,observerTopic){
   if(!ok(n))throw bad('stale_scope');
-  const holder={channel:null,removed:false,topic:observerTopic,transport:null};
+  const holder={channel:null,boundChannel:null,removed:false,
+   topic:observerTopic,transport:null};
   const expected=expectedV2(mapId,viewerId);
   const shim=Object.freeze({
    realtime:Object.freeze({
@@ -162,10 +163,11 @@ export function createObserverV3ChannelBridge({
       return wrapped;
      }
     };
-    return Object.freeze(wrapped);
+    holder.boundChannel=Object.freeze(wrapped);
+    return holder.boundChannel;
    },
    removeChannel:async channel=>{
-    if(channel!==holder.channel)return 'error';
+    if(channel!==holder.boundChannel)return 'error';
     try{
      const result=await db.removeChannel(channel);
      if(result!=='ok'){
@@ -197,8 +199,10 @@ export function createObserverV3ChannelBridge({
     onPath(item,meta)},
    onHide:(item,meta)=>{if(ok(n)&&session===holder&&signedSight)
     onHide(item,meta)},
-   onVisionDirty:payload=>{if(ok(n)&&session===holder)
-    onVisionDirty(payload)},
+   onVisionDirty:payload=>{
+    if(ok(n)&&session===holder&&signedSight)
+     onVisionDirty(payload);
+   },
    onRevoke:reason=>{signedSight=false;
     safe(onRevoke,Object.freeze({reason}))},
    onState:update=>{
