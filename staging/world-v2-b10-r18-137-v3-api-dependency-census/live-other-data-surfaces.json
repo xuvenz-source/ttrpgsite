@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-137",
+  "observedAt": "2026-11-20",
+  "source": "original hosted Supabase read-only pg_publication_tables and storage.buckets",
+  "readOnly": true,
+  "publication": "supabase_realtime",
+  "publishedPublicTableCount": 17,
+  "publishedPublicTables": [
+    "battle_maps",
+    "campaign_handout_events",
+    "campaign_player_maps",
+    "campaign_sheet_item_leases",
+    "campaign_tool_issues",
+    "campaign_tool_item_leases",
+    "campaign_tool_map_tokens",
+    "campaign_tool_templates",
+    "campaigns",
+    "characters",
+    "chat_messages",
+    "map_combats",
+    "map_environments",
+    "map_tokens",
+    "map_viewer_visibility_ticks",
+    "map_visibility_ticks",
+    "npc_templates"
+  ],
+  "storageBucketCount": 3,
+  "privateStorageBuckets": [
+    "battlemap-assets",
+    "personal-token-art",
+    "tabletop-artwork"
+  ],
+  "allStorageBucketsPrivate": true,
+  "postgrestAndRealtimeAreDifferentSurfaces": true,
+  "revokedJwtDoesNotInvalidatePreissuedSignedStorageBearerUrl": true,
+  "noRealtimeSocketRevocationProven": true,
+  "noHostedWrites": true,
+  "securityNotes": [
+    "Postgres Changes subscriptions on 17 public tables are independent from Broadcast channel ACL and a new V3 RPC schema",
+    "A private Storage bucket does not revoke an already created signed URL before its expiry",
+    "Original old already-joined V2 sockets have not been independently tested after server sender retirement",
+    "No policy/trigger/function or realtime client implementation is changed by this snapshot"
+  ]
+}
