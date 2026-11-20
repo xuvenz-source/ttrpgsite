@@ -10,12 +10,12 @@ import {pathToFileURL} from 'node:url';
 export const R137_LIVE_ENABLED=false;
 const extensions=new Set(['.js','.jsx','.mjs','.ts','.tsx']);
 const patterns=Object.freeze([
- {kind:'rpc',pattern:/\b(?:db|supabase)\s*(?:\?\.)?\s*\.\s*rpc\s*\(\s*([^,\)\r\n]+)/g},
- {kind:'relation',pattern:/\b(?:db|supabase)\s*(?:\?\.)?\s*\.\s*from\s*\(\s*([^,\)\r\n]+)/g},
- {kind:'channel',pattern:/\b(?:db|supabase)\s*(?:\?\.)?\s*\.\s*channel\s*\(\s*([^,\)\r\n]+)/g},
- {kind:'apiSchema',pattern:/\b(?:db|supabase)\s*(?:\?\.)?\s*\.\s*schema\s*\(\s*([^,\)\r\n]+)/g},
- {kind:'storageBucket',pattern:/\b(?:db|supabase)\s*(?:\?\.)?\s*\.\s*storage\s*\.\s*from\s*\(\s*([^,\)\r\n]+)/g},
- {kind:'edgeFunction',pattern:/\b(?:db|supabase)\s*(?:\?\.)?\s*\.\s*functions\s*\.\s*invoke\s*\(\s*([^,\)\r\n]+)/g},
+ {kind:'rpc',pattern:/\b(?:db|supabase)\s*(?:\?\.|\.)\s*rpc\s*\(\s*([^,\)\r\n]+)/g},
+ {kind:'relation',pattern:/\b(?:db|supabase)\s*(?:\?\.|\.)\s*from\s*\(\s*([^,\)\r\n]+)/g},
+ {kind:'channel',pattern:/\b(?:db|supabase)\s*(?:\?\.|\.)\s*channel\s*\(\s*([^,\)\r\n]+)/g},
+ {kind:'apiSchema',pattern:/\b(?:db|supabase)\s*(?:\?\.|\.)\s*schema\s*\(\s*([^,\)\r\n]+)/g},
+ {kind:'storageBucket',pattern:/\b(?:db|supabase)\s*(?:\?\.|\.)\s*storage\s*\.\s*from\s*\(\s*([^,\)\r\n]+)/g},
+ {kind:'edgeFunction',pattern:/\b(?:db|supabase)\s*(?:\?\.|\.)\s*functions\s*\.\s*invoke\s*\(\s*([^,\)\r\n]+)/g},
  {kind:'realtimePostgresChanges',pattern:/\.\s*on\s*\(\s*['"]postgres_changes['"]/g},
  {kind:'realtimeBroadcastListener',pattern:/\.\s*on\s*\(\s*['"]broadcast['"]/g}
 ]);
