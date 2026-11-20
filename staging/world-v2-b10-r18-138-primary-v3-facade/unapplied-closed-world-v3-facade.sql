@@ -1,5 +1,5 @@
 -- B10-R18-138 -- SOURCE ONLY, UNAPPLIED. NEVER RUN ON HOSTED SUPABASE.
--- Seven SECURITY DEFINER wrappers, all deliberately EXECUTE-REVOKED.
+-- Seven private SECURITY DEFINER helpers and seven API SECURITY INVOKER stubs, all EXECUTE-REVOKED.
 -- This is NOT an operational V3 API or compatible PostgREST release.
 --
 -- Fictional test order: R125 -> R126 -> R128 -> R136 -> R132 -> R138.
@@ -37,9 +37,15 @@ BEGIN
  THEN RAISE EXCEPTION 'R138 blocked: anon can execute existing V3 function';END IF;
 END $r138_preflight$;
 
+-- Privileged helpers must not live in a Data API-exposed schema.
+-- Supabase RLS guidance recommends keeping SECURITY DEFINER outside
+-- every exposed schema. No direct authenticated/anonymous USAGE here.
+CREATE SCHEMA forge_v3_internal;
+REVOKE ALL ON SCHEMA forge_v3_internal FROM PUBLIC,anon,authenticated;
+
 -- Signed V3 topic check is a separate per-join/scene/sight check, never
 -- added to the render frame loop or each movement cell.
-CREATE FUNCTION forge_v3_api.get_authorized_world_scene_v3(p_map uuid)
+CREATE FUNCTION forge_v3_internal.get_authorized_world_scene_v3(p_map uuid)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=''
 AS $world_reader$
 DECLARE actor uuid:=auth.uid();reply jsonb;topic text;
@@ -63,12 +69,12 @@ BEGIN
  THEN RETURN NULL;END IF;
  RETURN reply;
 END $world_reader$;
-REVOKE ALL ON FUNCTION forge_v3_api.get_authorized_world_scene_v3(uuid)
+REVOKE ALL ON FUNCTION forge_v3_internal.get_authorized_world_scene_v3(uuid)
  FROM PUBLIC,anon,authenticated;
 
 -- Signed V3 topic check is a separate per-join/scene/sight check, never
 -- added to the render frame loop or each movement cell.
-CREATE FUNCTION forge_v3_api.get_authorized_world_sight_v3(p_map uuid)
+CREATE FUNCTION forge_v3_internal.get_authorized_world_sight_v3(p_map uuid)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=''
 AS $world_reader$
 DECLARE actor uuid:=auth.uid();reply jsonb;topic text;
@@ -92,12 +98,12 @@ BEGIN
  THEN RETURN NULL;END IF;
  RETURN reply;
 END $world_reader$;
-REVOKE ALL ON FUNCTION forge_v3_api.get_authorized_world_sight_v3(uuid)
+REVOKE ALL ON FUNCTION forge_v3_internal.get_authorized_world_sight_v3(uuid)
  FROM PUBLIC,anon,authenticated;
 
 -- Signed V3 topic check is a separate per-join/scene/sight check, never
 -- added to the render frame loop or each movement cell.
-CREATE FUNCTION forge_v3_api.get_authorized_world_cursor_v3(p_map uuid)
+CREATE FUNCTION forge_v3_internal.get_authorized_world_cursor_v3(p_map uuid)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=''
 AS $world_reader$
 DECLARE actor uuid:=auth.uid();reply jsonb;topic text;
@@ -119,13 +125,13 @@ BEGIN
  THEN RETURN NULL;END IF;
  RETURN reply;
 END $world_reader$;
-REVOKE ALL ON FUNCTION forge_v3_api.get_authorized_world_cursor_v3(uuid)
+REVOKE ALL ON FUNCTION forge_v3_internal.get_authorized_world_cursor_v3(uuid)
  FROM PUBLIC,anon,authenticated;
 
 -- Begin is the one motion phase that needs to establish the recipient's
 -- currently authorized map/epoch. No extra network RPC is added: same
 -- single client begin request, with a server-side signed gate.
-CREATE FUNCTION forge_v3_api.begin_world_motion_v3(
+CREATE FUNCTION forge_v3_internal.begin_world_motion_v3(
  p_map uuid,p_selection jsonb,p_origin jsonb,p_mode text,
  p_environment_revision bigint,p_permission_generation bigint,
  p_collision_override boolean DEFAULT false)
@@ -148,7 +154,7 @@ BEGIN
   OR reply->>'sessionId' IS NULL THEN RETURN NULL;END IF;
  RETURN reply;
 END $world_begin$;
-REVOKE ALL ON FUNCTION forge_v3_api.begin_world_motion_v3(
+REVOKE ALL ON FUNCTION forge_v3_internal.begin_world_motion_v3(
  uuid,jsonb,jsonb,text,bigint,bigint,boolean)
  FROM PUBLIC,anon,authenticated;
 
@@ -157,7 +163,7 @@ REVOKE ALL ON FUNCTION forge_v3_api.begin_world_motion_v3(
 -- One transaction-level R132 gate check per *existing* motion RPC is needed
 -- to prevent stale in-flight committed writes after a maintenance fence.
 -- This adds a server-side row lock; performance is NOT yet measured.
-CREATE FUNCTION forge_v3_api.advance_world_motion_v3(
+CREATE FUNCTION forge_v3_internal.advance_world_motion_v3(
  p_session uuid,p_seq bigint,p_from jsonb,p_targets jsonb,
  p_environment_revision bigint,p_permission_generation bigint)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=''
@@ -169,11 +175,11 @@ BEGIN
   p_session,p_seq,p_from,p_targets,
   p_environment_revision,p_permission_generation);
 END $world_advance$;
-REVOKE ALL ON FUNCTION forge_v3_api.advance_world_motion_v3(
+REVOKE ALL ON FUNCTION forge_v3_internal.advance_world_motion_v3(
  uuid,bigint,jsonb,jsonb,bigint,bigint)
  FROM PUBLIC,anon,authenticated;
 
-CREATE FUNCTION forge_v3_api.commit_world_motion_v3(
+CREATE FUNCTION forge_v3_internal.commit_world_motion_v3(
  p_session uuid,p_seq bigint,p_endpoint jsonb,
  p_environment_revision bigint,p_permission_generation bigint)
 RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=''
@@ -185,19 +191,87 @@ BEGIN
   p_session,p_seq,p_endpoint,
   p_environment_revision,p_permission_generation);
 END $world_commit$;
-REVOKE ALL ON FUNCTION forge_v3_api.commit_world_motion_v3(
+REVOKE ALL ON FUNCTION forge_v3_internal.commit_world_motion_v3(
  uuid,bigint,jsonb,bigint,bigint)
  FROM PUBLIC,anon,authenticated;
 
 -- Safe cleanup of one's own session is permitted while fenced; a cancel
 -- never creates a token write or recipient broadcast.
-CREATE FUNCTION forge_v3_api.cancel_world_motion_v3(p_session uuid)
+CREATE FUNCTION forge_v3_internal.cancel_world_motion_v3(p_session uuid)
 RETURNS boolean LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=''
 AS $world_cancel$
 BEGIN
  IF auth.uid() IS NULL OR p_session IS NULL THEN RETURN false;END IF;
  RETURN public.cancel_world_motion_v2(p_session);
 END $world_cancel$;
+REVOKE ALL ON FUNCTION forge_v3_internal.cancel_world_motion_v3(uuid)
+ FROM PUBLIC,anon,authenticated;
+
+-- The API schema gets only SECURITY INVOKER forwarding stubs.
+-- Every stub remains EXECUTE-REVOKED, so this is NOT an unseal.
+-- Granting API access in a future reviewed release would additionally
+-- need narrowly-scoped internal USAGE/EXECUTE, not blanket grants.
+
+CREATE FUNCTION forge_v3_api.get_authorized_world_scene_v3(p_map uuid)
+RETURNS jsonb
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path=''
+AS $r138_invoker$
+ SELECT forge_v3_internal.get_authorized_world_scene_v3(p_map)
+$r138_invoker$;
+REVOKE ALL ON FUNCTION forge_v3_api.get_authorized_world_scene_v3(uuid)
+ FROM PUBLIC,anon,authenticated;
+
+CREATE FUNCTION forge_v3_api.get_authorized_world_sight_v3(p_map uuid)
+RETURNS jsonb
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path=''
+AS $r138_invoker$
+ SELECT forge_v3_internal.get_authorized_world_sight_v3(p_map)
+$r138_invoker$;
+REVOKE ALL ON FUNCTION forge_v3_api.get_authorized_world_sight_v3(uuid)
+ FROM PUBLIC,anon,authenticated;
+
+CREATE FUNCTION forge_v3_api.get_authorized_world_cursor_v3(p_map uuid)
+RETURNS jsonb
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path=''
+AS $r138_invoker$
+ SELECT forge_v3_internal.get_authorized_world_cursor_v3(p_map)
+$r138_invoker$;
+REVOKE ALL ON FUNCTION forge_v3_api.get_authorized_world_cursor_v3(uuid)
+ FROM PUBLIC,anon,authenticated;
+
+CREATE FUNCTION forge_v3_api.begin_world_motion_v3(p_map uuid,p_selection jsonb,p_origin jsonb,p_mode text,p_environment_revision bigint,p_permission_generation bigint,p_collision_override boolean DEFAULT false)
+RETURNS jsonb
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path=''
+AS $r138_invoker$
+ SELECT forge_v3_internal.begin_world_motion_v3(p_map,p_selection,p_origin,p_mode,p_environment_revision,p_permission_generation,p_collision_override)
+$r138_invoker$;
+REVOKE ALL ON FUNCTION forge_v3_api.begin_world_motion_v3(uuid,jsonb,jsonb,text,bigint,bigint,boolean)
+ FROM PUBLIC,anon,authenticated;
+
+CREATE FUNCTION forge_v3_api.advance_world_motion_v3(p_session uuid,p_seq bigint,p_from jsonb,p_targets jsonb,p_environment_revision bigint,p_permission_generation bigint)
+RETURNS jsonb
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path=''
+AS $r138_invoker$
+ SELECT forge_v3_internal.advance_world_motion_v3(p_session,p_seq,p_from,p_targets,p_environment_revision,p_permission_generation)
+$r138_invoker$;
+REVOKE ALL ON FUNCTION forge_v3_api.advance_world_motion_v3(uuid,bigint,jsonb,jsonb,bigint,bigint)
+ FROM PUBLIC,anon,authenticated;
+
+CREATE FUNCTION forge_v3_api.commit_world_motion_v3(p_session uuid,p_seq bigint,p_endpoint jsonb,p_environment_revision bigint,p_permission_generation bigint)
+RETURNS jsonb
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path=''
+AS $r138_invoker$
+ SELECT forge_v3_internal.commit_world_motion_v3(p_session,p_seq,p_endpoint,p_environment_revision,p_permission_generation)
+$r138_invoker$;
+REVOKE ALL ON FUNCTION forge_v3_api.commit_world_motion_v3(uuid,bigint,jsonb,bigint,bigint)
+ FROM PUBLIC,anon,authenticated;
+
+CREATE FUNCTION forge_v3_api.cancel_world_motion_v3(p_session uuid)
+RETURNS boolean
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path=''
+AS $r138_invoker$
+ SELECT forge_v3_internal.cancel_world_motion_v3(p_session)
+$r138_invoker$;
 REVOKE ALL ON FUNCTION forge_v3_api.cancel_world_motion_v3(uuid)
  FROM PUBLIC,anon,authenticated;
 
@@ -210,6 +284,22 @@ BEGIN
  JOIN pg_catalog.pg_namespace ns ON ns.oid=p.pronamespace
  WHERE ns.nspname='forge_v3_api';
  IF cnt<>8 THEN RAISE EXCEPTION 'R138 expected R136 topic plus seven closed wrappers';END IF;
+ SELECT count(*) INTO cnt FROM pg_catalog.pg_proc p
+ JOIN pg_catalog.pg_namespace ns ON ns.oid=p.pronamespace
+ WHERE ns.nspname='forge_v3_internal';
+ IF cnt<>7 THEN RAISE EXCEPTION 'R138 expected seven private privileged helpers';END IF;
+ IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
+ JOIN pg_catalog.pg_namespace ns ON ns.oid=p.pronamespace
+ WHERE ns.nspname='forge_v3_api' AND
+  p.proname<>'get_authorized_scene_channel_v3' AND p.prosecdef)
+ THEN RAISE EXCEPTION 'R138 newly exposed API function must be SECURITY INVOKER';END IF;
+ IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
+ JOIN pg_catalog.pg_namespace ns ON ns.oid=p.pronamespace
+ WHERE ns.nspname='forge_v3_internal' AND
+   (NOT p.prosecdef OR
+    pg_catalog.has_function_privilege('authenticated',p.oid,'EXECUTE') OR
+    pg_catalog.has_function_privilege('anon',p.oid,'EXECUTE')))
+ THEN RAISE EXCEPTION 'R138 private helpers not correctly fenced';END IF;
  IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc p
  JOIN pg_catalog.pg_namespace ns ON ns.oid=p.pronamespace
  WHERE ns.nspname='forge_v3_api'
@@ -222,6 +312,6 @@ BEGIN
 END $r138_postflight$;
 COMMIT;
 
--- All seven experimental functions remain unavailable to browser roles
+-- All fourteen new functions remain unavailable to browser roles
 -- even if forge_v3_api is later exposed to PostgREST. NO_GO until signed
 -- DM/P1/P2/outsider and performance, LOS, fog and revocation release tests.
