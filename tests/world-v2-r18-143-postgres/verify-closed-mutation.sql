@@ -161,7 +161,7 @@ END $r143_p2$;
 SELECT pg_catalog.set_config('request.jwt.claim.sub',
  '00000000-0000-4000-8000-000000000304',false);
 DO $r143_outsider$
-DECLARE foreign uuid:='00000000-0000-4000-8000-000000000606';
+DECLARE foreign_note uuid:='00000000-0000-4000-8000-000000000606';
  changed jsonb;
 BEGIN
  IF forge_v3_api.patch_authorized_character_v3(
@@ -176,8 +176,8 @@ BEGIN
   '00000000-0000-4000-8000-000000000611') IS NOT NULL
  THEN RAISE EXCEPTION 'R143 foreign-campaign DM escaped authorization';END IF;
  changed:=forge_v3_api.edit_authorized_handout_v3(
-  foreign,'Foreign DM authored','Own lore',true,
-  (SELECT updated_at FROM public.campaign_handouts WHERE id=foreign));
+  foreign_note,'Foreign DM authored','Own lore',true,
+  (SELECT updated_at FROM public.campaign_handouts WHERE id=foreign_note));
  IF changed->>'result' IS DISTINCT FROM 'edited'
  THEN RAISE EXCEPTION 'R143 outsider DM denied legitimate campaign edit';END IF;
 END $r143_outsider$;
