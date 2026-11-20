@@ -43,7 +43,8 @@
     "storageSignedUrlsRevoked": false,
     "everApprovesProduction": false,
     "systemOriginatedVisionNotificationsSupported": false,
-    "originalVisionEpochCallerCountExcludingSelf": 4
+    "originalVisionEpochCallerCountExcludingSelf": 4,
+    "verifiedEnabledOriginalVisionTriggers": 4
   },
   "gaps": [
     "six original SQL realtime.send call sites have not been converted",
@@ -57,7 +58,8 @@
     "preissued signed Storage links still valid (#231)",
     "real DM P1 P2 outsider and revoked/epoch reconnect QA missing",
     "LOS concealment and performance budget on free tier unverified",
-    "four current vision-epoch SQL callers may run without auth.uid; separate trusted server-origin fanout required"
+    "four current vision-epoch SQL callers may run without auth.uid; separate trusted server-origin fanout required",
+    "four original enabled trigger paths feed vision notice helper; authenticated-only relay would drop trusted no-JWT system events"
   ],
   "unresolvedIssues": [
     220,
