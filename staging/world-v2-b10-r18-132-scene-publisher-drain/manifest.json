@@ -61,10 +61,16 @@
     231
   ],
   "tests": {
-    "source": "PENDING",
-    "isolatedPg17": "PENDING",
-    "standardRepository": "PENDING",
-    "combinedStagingSql": "PENDING"
+    "source": "PASSED_ON_IMPLEMENTATION_HEAD",
+    "isolatedPg17": "PASSED_ON_IMPLEMENTATION_HEAD",
+    "standardRepository": "PASSED_ON_IMPLEMENTATION_HEAD",
+    "combinedStagingSql": "PASSED_ON_IMPLEMENTATION_HEAD",
+    "signedHostedQa": "NOT_RUN",
+    "implementationHeadSha": "02ab8404e4cca03271a0047604e075601dbcba72",
+    "dedicatedRunId": 44669035425,
+    "standardPrRunId": 44669035427,
+    "combinedSqlRunId": 44668979481,
+    "evidenceOnlyManifestRecheckRequired": true
   },
   "noHostedSqlWrites": true,
   "noLiveSrcChanges": true,
@@ -72,5 +78,17 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "originalReadOnlyFinalVerification": {
+    "observedDate": "2026-11-20",
+    "migrationCount": 83,
+    "qaMigrationCount": 0,
+    "qaApplicationTables": 0,
+    "oldV2ReceivePolicyLive": true,
+    "v3RecipientReceivePolicyLive": false,
+    "v3TopicRpcLive": false,
+    "newSceneGateLive": false,
+    "oldSevenSenderHashesMatchedPinnedBaseline": true,
+    "noHostedWrites": true
+  }
 }
