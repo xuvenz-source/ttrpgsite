@@ -1,0 +1,66 @@
+name: World V2 R18-135 isolated V3 observer client and old-socket cutoff audit
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-135-*'
+    paths:
+      - '.github/workflows/world-v2-r18-135-v3-client-cutover.yml'
+      - 'staging/world-v2-b10-r18-135-v3-client-bridge-cutover/**'
+      - 'tests/world-v2-r18-135-postgres/**'
+      - 'tests/world-v2-r18-135-v3-bridge.test.mjs'
+      - 'docs/testing/world-v2-r18-135-bridged-observer-cutover-2026-11-20.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-134-*'
+    paths:
+      - '.github/workflows/world-v2-r18-135-v3-client-cutover.yml'
+      - 'staging/world-v2-b10-r18-135-v3-client-bridge-cutover/**'
+      - 'tests/world-v2-r18-135-postgres/**'
+      - 'tests/world-v2-r18-135-v3-bridge.test.mjs'
+permissions:
+  contents: read
+jobs:
+  source-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout full pinned R135 ancestry
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prevent live frontend and versioned migration edits
+        run: git diff --exit-code bdfa855c67cd5e96b7d1a9e3e6487c1fae9c1103 HEAD -- src/ supabase/migrations/
+      - name: Test real V2 observer engine bridged only to V3 signed recipient
+        run: node --test tests/world-v2-r18-135-v3-bridge.test.mjs
+      - name: Hold production and hosted QA
+        run: echo 'R135 NO_GO - old joined WebSocket delivery and signed realtime QA not proved.'
+  synthetic-postgres17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r135_disposable_only
+          POSTGRES_DB: world_v2_r18_135
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_135"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R135_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_135
+      PGPASSWORD: r135_disposable_only
+    steps:
+      - name: Checkout synthetic Postgres candidate publishers and standing old topics
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify only V3 candidate sends and privileged bypass negative control
+        shell: bash
+        run: bash tests/world-v2-r18-135-postgres/run.sh

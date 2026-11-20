@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-135",
+  "observedDate": "2026-11-20",
+  "parentPr": 242,
+  "parentSha": "bdfa855c67cd5e96b7d1a9e3e6487c1fae9c1103",
+  "sourceOnly": true,
+  "release": "NO_GO",
+  "observedLegacySqlSenderCount": 7,
+  "proposedR134Replacements": 6,
+  "sceneR132GuardedSenders": 1,
+  "originalHostedSenderMutations": 0,
+  "sourceBoundaries": [
+    {
+      "kind": "scene-notice",
+      "legacyTopic": "forge-world-scene-v2:<map>",
+      "candidate": "R132 guarded per-recipient forge-world-scene-v3:<map>:<viewer>:<epoch>",
+      "status": "STAGED_ONLY",
+      "hotPathReads": 0
+    },
+    {
+      "kind": "observer-motion",
+      "legacyTopic": "forge-world-v2:<map>:<viewer>",
+      "candidate": "R133/R134 private forge-world-observer-v3:<map>:<viewer>:<epoch>",
+      "status": "STAGED_ONLY",
+      "hotPathReads": 0
+    },
+    {
+      "kind": "legacy-motion-and-path",
+      "legacyTopic": "forge-observer:<map>:<viewer>",
+      "candidate": "R134 signed actor V3 recipient relay",
+      "status": "STAGED_ONLY",
+      "hotPathReads": 0
+    },
+    {
+      "kind": "trigger-vision",
+      "legacyTopic": "forge-world-v2:<map>:<viewer>",
+      "candidate": "R134 trusted no-JWT trigger V3 observer relay",
+      "status": "STAGED_ONLY",
+      "hotPathReads": 0
+    }
+  ],
+  "clientInterface": {
+    "newModule": "staging/world-v2-b10-r18-135-v3-client-bridge-cutover/ObserverV3ChannelBridge.mjs",
+    "preservesExistingTransportEngine": "src/engine/v2/RealtimeTransport.js",
+    "requiresSignedGetUser": true,
+    "requiresR125V3SceneTopicRpc": true,
+    "actuallySubscribesOnlyToV3Observer": true,
+    "noOldSocketTopicEverSentToSupabase": true,
+    "secondSubscribedReauthorizesFreshEpoch": true,
+    "requiresFreshSignedSightBeforeObserverReady": true,
+    "cannotUnmaskCampaignViewByItself": true,
+    "perMovementOrFrameAuthRpc": false,
+    "completeR123R126R131HostIntegration": false
+  },
+  "serverConditions": {
+    "oldSocketDeliveryStoppedInProduction": false,
+    "hostedSignedQaPerformed": false,
+    "v3BrowserIntegrated": false,
+    "realMovementPerformanceVerified": false,
+    "postgresChangesCovered": false,
+    "preissuedStorageUrlsRevoked": false,
+    "readWriteMaintenanceFenceInstalled": false,
+    "sevenOldSenderReplacementHosted": false,
+    "externalEdgeAndClientBroadcastReviewed": false,
+    "zeroPostRevocationInFlightPacketsVerified": false
+  },
+  "oldSocketDeliveryStoppedInProduction": false,
+  "hostedSignedQaPerformed": false,
+  "v3BrowserIntegrated": false,
+  "realMovementPerformanceVerified": false,
+  "postgresChangesCovered": false,
+  "preissuedStorageUrlsRevoked": false,
+  "scenarios": [
+    {
+      "test": "Simulated already-connected V2 map-wide scene observer",
+      "expected": "zero new candidate-origin legacy topic after guarded emissions",
+      "proofClass": "SYNTHETIC_DB_ONLY"
+    },
+    {
+      "test": "Simulated already-connected V2 per-user observer",
+      "expected": "zero candidate-origin forge-world-v2 or forge-observer emission",
+      "proofClass": "SYNTHETIC_DB_ONLY"
+    },
+    {
+      "test": "Privileged bypass negative control",
+      "expected": "direct realtime.send to old topic remains possible while gate closed",
+      "proofClass": "KNOWN_UNCLOSED_RISK"
+    },
+    {
+      "test": "Fresh V3 signed browser receives current epoch",
+      "expected": "client opens private V3 only after membership RPC + signed sight",
+      "proofClass": "CLIENT_MOCK_ONLY"
+    },
+    {
+      "test": "Realtime second SUBSCRIBED",
+      "expected": "old callbacks masked synchronously, old channel retired, fresh epoch required",
+      "proofClass": "CLIENT_MOCK_ONLY"
+    },
+    {
+      "test": "Timeout on removing old client V3 channel",
+      "expected": "terminal view mask and no re-entry",
+      "proofClass": "CLIENT_MOCK_ONLY"
+    }
+  ],
+  "blockingReleaseAttestations": [
+    "R127 existingOldSocketDeliveryStopped remains unproven",
+    "R128 legacy read/write hard cutoff incompatible with V3 public RPC until reconciled",
+    "R123 sentinel and R131 quarantine are not mounted in production",
+    "R126 V3 scene and R133 observer topic not mounted in production",
+    "R134 six source sender replacements are unapplied",
+    "17 Postgres Changes feed handlers and public/client/Edge Broadcast unfenced",
+    "67 public SECURITY DEFINER RPC chains and 83 migration bodies not fully audited",
+    "Storage signed URL bearer access remains until expiry (#231)",
+    "real signed DM/P1/P2/outsider WebSocket remove/rejoin/old-socket checks missing",
+    "real player/DM movement, collision, fog, LOS, rendering latency and free-tier load unmeasured"
+  ],
+  "nextRecommendedTranche": "B10-R18-136: reconcile server V3 RPC access with R128 public-schema freeze; complete signed QA and provider socket/session proofs",
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ]
+}
