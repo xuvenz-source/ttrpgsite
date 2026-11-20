@@ -71,10 +71,15 @@
   ],
   "nextStep": "R18-138: review source census artifact, classify every dynamic/indirect route, design first least-privilege scene/sight/movement API facade with no public USAGE restore",
   "tests": {
-    "sourceScanner": "PENDING",
-    "repositoryBuildSecurity": "PENDING",
-    "combinedStagingSql": "PENDING",
-    "signedHostedQa": "NOT_RUN"
+    "sourceScanner": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "repositoryBuildSecurity": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "combinedStagingSql": "SUCCESS_AT_IMPLEMENTATION_HEAD",
+    "signedHostedQa": "NOT_RUN",
+    "verifiedImplementationSha": "7c7e1ee63a52903182181ee946aa0150162649dc",
+    "dedicatedPrRunId": 44740789051,
+    "standardPrRunId": 44740789112,
+    "combinedSqlRunId": 44740686554,
+    "evidenceOnlyFinalHeadRecheckRequired": true
   },
   "noHostedWrites": true,
   "noAppSourceChanges": true,
@@ -82,5 +87,56 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "productionReleaseAuthorized": false
+  "productionReleaseAuthorized": false,
+  "sourceCensusObservation": {
+    "observedAt": "2026-11-20",
+    "scannedJsJsxModules": 169,
+    "filesWithDirectAccess": 28,
+    "directLexicalCallSites": 227,
+    "unresolvedDynamicCallSites": 26,
+    "kindCounts": {
+      "rpc": 64,
+      "relation": 111,
+      "channel": 15,
+      "apiSchema": 0,
+      "storageBucket": 9,
+      "edgeFunction": 2,
+      "realtimePostgresChanges": 19,
+      "realtimeBroadcastListener": 7
+    },
+    "literalTargets": {
+      "rpc": 47,
+      "relation": 26,
+      "channel": 0,
+      "storageBucket": 2,
+      "edgeFunction": 2
+    },
+    "criticalSourceNamesMissing": [],
+    "indirectCritical": [
+      "get_world_visibility_v2",
+      "begin_world_motion_v2",
+      "advance_world_motion_v2",
+      "commit_world_motion_v2"
+    ],
+    "liveCatalogMissingStaticRpcTargets": [],
+    "liveCatalogMissingStaticRelationTargets": [],
+    "fullMachineReadableArtifact": {
+      "runId": 44740789051,
+      "artifactId": 14631010860,
+      "url": "https://github.com/xuvenz-source/ttrpgsite/actions/runs/44740789051/artifacts/14631010860",
+      "uploadedSha256Zip": "e052321708d0c3a73e8db5416985487e3d37acf2cd253d961ac4bf68d54a81a0",
+      "retentionDays": 7
+    },
+    "scannerIsLexicalNotExhaustive": true,
+    "allRoutesApproved": false
+  },
+  "hostedReadOnlyLastVerified": {
+    "originalMigrations": 83,
+    "qaMigrations": 0,
+    "qaPublicApplicationTables": 0,
+    "originalV3GatewayInstalled": false,
+    "originalPublicAuthenticatedUsageLive": true,
+    "oldSharedV2SceneReceiverLive": true,
+    "noHostedWrites": true
+  }
 }
