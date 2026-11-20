@@ -27,6 +27,14 @@ if psql -X -v ON_ERROR_STOP=1 -q -f staging/world-v2-b10-r18-136-v3-isolated-api
 fi
 grep -Fq 'R136 preflight: R128 public schema fence not installed' "$tmp/pre-fence-denial.log" || fail "unfenced install rejected for wrong reason"
 psql -X -v ON_ERROR_STOP=1 -q -f staging/world-v2-b10-r18-128-server-maintenance-fence/unapplied-maintenance-freeze-candidate.sql > "$tmp/r128-fence.log"
+# Even when R128 public USAGE is frozen, an old shared scene RECEIVE
+# policy is incompatible with the R136 release preflight.
+psql -X -v ON_ERROR_STOP=1 -q -c 'CREATE POLICY "World V2 scene publication receive" ON realtime.messages FOR SELECT TO authenticated USING(true);' > "$tmp/old-receiver-negative-control.log"
+if psql -X -v ON_ERROR_STOP=1 -q -f staging/world-v2-b10-r18-136-v3-isolated-api-fence/unapplied-v3-api-bridge-after-r128.sql > "$tmp/old-receiver-denial.log" 2>&1;then
+ fail "R136 became callable while old V2 receive policy still exists"
+fi
+grep -Fq 'R136 preflight: R126 old shared scene receive policy still active' "$tmp/old-receiver-denial.log" || fail "old V2 receiver refused for wrong reason"
+psql -X -v ON_ERROR_STOP=1 -q -c 'DROP POLICY "World V2 scene publication receive" ON realtime.messages;' > "$tmp/retire-old-receiver.log"
 psql -X -v ON_ERROR_STOP=1 -q -f staging/world-v2-b10-r18-136-v3-isolated-api-fence/unapplied-v3-api-bridge-after-r128.sql > "$tmp/r136-gateway.log"
 psql -X -v ON_ERROR_STOP=1 -q -f tests/world-v2-r18-136-postgres/verify-isolated-v3-api.sql > "$tmp/verified-current-membership.log"
 
