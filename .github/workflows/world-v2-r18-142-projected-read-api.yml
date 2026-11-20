@@ -1,0 +1,64 @@
+name: World V2 R18-142 private read projection contracts
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-142-*'
+    paths:
+      - '.github/workflows/world-v2-r18-142-projected-read-api.yml'
+      - 'staging/world-v2-b10-r18-142-projected-read-api/**'
+      - 'tests/world-v2-r18-142-postgres/**'
+      - 'tests/world-v2-r18-142-*.test.mjs'
+      - 'docs/testing/world-v2-r18-142-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-141-*'
+permissions:
+  contents: read
+jobs:
+  exact-deny-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Read staging, not install into hosted DB
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse app runtime and versioned migration edits
+        run: git diff --exit-code 0b09cf5c66994b4082d17058699f9d54141adee3 HEAD -- src/ supabase/migrations/
+      - name: Check four exact minimum projections and inherited R141 security inventory
+        run: node --test tests/world-v2-r18-142-projected-read-api.test.mjs
+      - name: Preserve NO_GO
+        run: echo 'R142 remains NO_GO and adds no browser role grants or hosted migrations'
+  disposable-pg17-actors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      R140_ISOLATED: 'yes'
+      R142_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Compile closed R142 V3 projections on fictional R140 PG17
+        shell: bash
+        run: bash tests/world-v2-r18-142-postgres/run.sh
+      - name: Explicitly prohibit production rollout
+        run: echo 'Fictional PG17 permission matrix only; signed Supabase, old sockets, Storage and free-tier performance require independent verification'

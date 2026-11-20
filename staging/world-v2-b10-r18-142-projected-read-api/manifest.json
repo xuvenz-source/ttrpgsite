@@ -1,0 +1,167 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-142",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 249,
+  "parentSha": "0b09cf5c66994b4082d17058699f9d54141adee3",
+  "originalProject": "lwhwgqaunxbmvyndswze",
+  "qaProject": "bgydsamxypjslergfpla",
+  "originalMigrationCount": 83,
+  "qaMigrationCount": 0,
+  "qaPublicApplicationTables": 0,
+  "originalPublicDefiners": 67,
+  "originalAuthenticatedPublicFunctions": 77,
+  "originalRelations": 31,
+  "publishedRealtimeTables": 17,
+  "sourceRealtimeSubscribers": 19,
+  "privateStorageBuckets": 3,
+  "inheritedProposedV3ApiFunctions": 13,
+  "newApiInvokers": 4,
+  "newPrivateDefiners": 4,
+  "totalProposedV3ApiFunctions": 17,
+  "newBrowserCallableFunctions": 0,
+  "candidateFunctions": [
+    {
+      "name": "get_authorized_character_sheet_v3(uuid)",
+      "fields": [
+        "version",
+        "scope",
+        "id",
+        "campaignId",
+        "userId",
+        "name",
+        "fieldValues",
+        "updatedAt"
+      ],
+      "boundary": "current owner or campaign DM, current signed membership",
+      "excludes": [
+        "portrait_path",
+        "token_path",
+        "other character fields"
+      ]
+    },
+    {
+      "name": "get_authorized_handout_v3(uuid)",
+      "fields": [
+        "version",
+        "scope",
+        "id",
+        "campaignId",
+        "title",
+        "body",
+        "revealed",
+        "collected",
+        "updatedAt"
+      ],
+      "boundary": "current signed campaign DM or member with revealed note or visible pin on authorized map",
+      "excludes": [
+        "unrevealed hidden pin text",
+        "cross-map/cross-campaign notes"
+      ]
+    },
+    {
+      "name": "get_authorized_tool_issue_v3(uuid)",
+      "fields": [
+        "version",
+        "scope",
+        "id",
+        "campaignId",
+        "name",
+        "kind",
+        "icon",
+        "partyShared",
+        "revision",
+        "owner-or-DM-only config/state"
+      ],
+      "boundary": "current DM, current owner, or party_shared member on assigned map",
+      "excludes": [
+        "shared tool config/state",
+        "hidden map coordinates",
+        "held-by-token",
+        "template_id"
+      ]
+    },
+    {
+      "name": "get_authorized_map_metadata_v3(uuid)",
+      "fields": [
+        "version",
+        "scope",
+        "id",
+        "campaignId",
+        "name",
+        "width",
+        "height",
+        "gridSize"
+      ],
+      "boundary": "current signed viewer for map and current V3 scene topic",
+      "excludes": [
+        "storage_path",
+        "source dimensions",
+        "unpublished geometry",
+        "NPC stats"
+      ]
+    }
+  ],
+  "contractSemantics": {
+    "defaultDeniedForPublicAnonAuthenticated": true,
+    "privilegedImplementationsInPrivateSchema": true,
+    "publicSurfaceWrappersSecurityInvoker": true,
+    "noUnrestrictedSelectTables": true,
+    "noOriginalPublicSchemaRegrant": true,
+    "noNewRealtimeOrStorageExposure": true,
+    "inheritedR128PublicSchemaFreezeRequired": true,
+    "inheritedR132PublishGateRequired": true,
+    "originalSignedMemberAndDMHelpersUsed": true,
+    "originalMapAssignmentHelperUsed": true,
+    "noClientSideActorRoleTrusted": true,
+    "nullOwnerPartyToolCheckFailClosed": true,
+    "perFrameMovementRpcAdded": false
+  },
+  "isolatedPg17": {
+    "fictionalOriginalSqlFixture": true,
+    "usesInheritedR140Fixture": true,
+    "roleActors": [
+      "dm",
+      "p1",
+      "p2",
+      "outsider",
+      "nonmember",
+      "revoked"
+    ],
+    "fogOrRealLosTested": false,
+    "realJwtAuth": false,
+    "trueNetworkRealtimeTested": false,
+    "signedStorageBearerRevocationTested": false
+  },
+  "actualSignedActorsTested": false,
+  "realWorldAuthorizationVerified": false,
+  "originalCollisionLosVerified": false,
+  "fullSourceSchemaAndPermissionSemanticAuditComplete": false,
+  "freeTierMovementAndFogP95": "NOT_MEASURED",
+  "signedStorageUrlsPreissuedAccessRevoked": false,
+  "oldSocketsNetworkEjectionVerified": false,
+  "stagedSourceImportedByLiveApp": false,
+  "noHostedWrites": true,
+  "noRuntimeSrcEdits": true,
+  "noVersionedMigrations": true,
+  "noNewGrants": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "noDataApiExposure": true,
+  "productionReleaseAuthorized": false,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-143: choose and explicitly verify minimal additional write contracts and role transitions; test original authorization semantics using real signed QA only after security/maintenance release preflight; no rollout",
+  "tests": {
+    "dedicatedSource": "PENDING",
+    "isolatedPg17": "PENDING",
+    "standardRepo": "PENDING"
+  }
+}
