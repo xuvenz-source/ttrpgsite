@@ -6,6 +6,8 @@ import {fileURLToPath} from 'node:url';
 import {createWorldRealtimeTransport} from '../src/engine/v2/RealtimeTransport.js';
 import {createObserverV3ChannelBridge,R135_LIVE_ENABLED}
  from '../staging/world-v2-b10-r18-135-v3-client-bridge-cutover/ObserverV3ChannelBridge.mjs';
+import {createSceneReleaseInterlock,R127_REQUIRED_ATTESTATIONS} from
+ '../staging/world-v2-b10-r18-127-safe-cutover-interlock/SceneReleaseInterlock.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>readFileSync(join(root,p),'utf8');
@@ -268,6 +270,28 @@ test('R135 delayed RPC, changed map, signed actor or stale transaction cannot su
  assert.equal(await x.bridge.enter(),false);
  assert.equal(x.channels.length,0);await x.bridge.dispose();
 });
+test('R135 cannot advance R127 release while real old socket delivery proof is missing',()=>{
+ const gate=createSceneReleaseInterlock({
+  candidateSha:'bdfa855c67cd5e96b7d1a9e3e6487c1fae9c1103',
+  expectedParentSha:'4cb9c800d90129994b678b5369ab4f213ab1b6b0',
+  attemptId:'R135-source-only-blocked-2026-11-20'
+ });
+ assert.equal(gate.snapshot().productionAuthorized,false);
+ assert.equal(gate.snapshot().canRequestHumanReleaseReview,false);
+ assert.equal(gate.snapshot().legacyV2FallbackAllowed,false);
+ const fields=Object.fromEntries(R127_REQUIRED_ATTESTATIONS.fence.map(k=>[k,true]));
+ fields.existingOldSocketDeliveryStopped=false;
+ assert.throws(()=>gate.attestFence({
+  attemptId:'R135-source-only-blocked-2026-11-20',
+  candidateSha:'bdfa855c67cd5e96b7d1a9e3e6487c1fae9c1103',
+  expectedParentSha:'4cb9c800d90129994b678b5369ab4f213ab1b6b0',
+  receipt:'r135-source-fence-not-proved',
+  ...fields
+ }),{code:'missing_required_existingOldSocketDeliveryStopped'});
+ assert.equal(gate.snapshot().phase,'planning');
+ assert.equal(gate.snapshot().productionAuthorized,false);
+});
+
 test('R135 source and cutover ledger explicitly do not prove live old-socket cutoff',()=>{
  assert.equal(cutover.observedLegacySqlSenderCount,7);
  assert.equal(cutover.proposedR134Replacements,6);
