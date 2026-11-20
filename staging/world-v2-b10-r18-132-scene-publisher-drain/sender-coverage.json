@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-132",
+  "date": "2026-11-20",
+  "observedOriginal": "2026-11-19 read-only live pg_proc snapshot; no hosted writes",
+  "originalMigrations": 83,
+  "qaMigrations": 0,
+  "directRealtimeSqlSenderCount": 7,
+  "syntheticSceneGuardedCount": 1,
+  "uncoveredDirectSenderCount": 6,
+  "otherKnownSurfaces": [
+    "client-origin private and public Broadcast",
+    "Presence",
+    "17 Postgres Changes tables",
+    "unreviewed external/Edge publishers",
+    "previously issued signed Storage URLs",
+    "preexisting joined old V2 sockets",
+    "messages committed before gate transition"
+  ],
+  "evidenceOnlyNoGo": true,
+  "noV3ClientAvailable": true,
+  "originalSceneV2ReceivePolicyLive": true,
+  "originalV3PolicyLive": false,
+  "sourceOnlyCandidate": "staging/world-v2-b10-r18-132-scene-publisher-drain/unapplied-scene-publication-drain.sql",
+  "historicSourceHashDisclaimer": "MD5 values refer to unmodified ORIGINAL database; staged SQL has NOT replaced those functions",
+  "senders": [
+    {
+      "name": "forge_visibility.dispatch_movement_preview",
+      "sourceMd5": "472683101bfcdfac83d90b4062bd77e1",
+      "schema": "forge_visibility",
+      "guardedByR132SyntheticCandidate": false,
+      "realLiveFunctionModified": false,
+      "mode": "not-guarded-by-r132",
+      "requiredProof": "real signed owner/map/recipient revocation and live-socket publication stop"
+    },
+    {
+      "name": "forge_visibility.publish_approved_navigation_batch",
+      "sourceMd5": "543c982eb1d2bc1c5214b278382b96a1",
+      "schema": "forge_visibility",
+      "guardedByR132SyntheticCandidate": false,
+      "realLiveFunctionModified": false,
+      "mode": "not-guarded-by-r132",
+      "requiredProof": "real signed owner/map/recipient revocation and live-socket publication stop"
+    },
+    {
+      "name": "forge_world_v2.bump_scene_publication_v2",
+      "sourceMd5": "2859469d975986d0acf5a5cefb26cae0",
+      "schema": "forge_world_v2",
+      "guardedByR132SyntheticCandidate": true,
+      "realLiveFunctionModified": false,
+      "mode": "candidate-guard-only",
+      "requiredProof": "real signed owner/map/recipient revocation and live-socket publication stop"
+    },
+    {
+      "name": "forge_world_v2.bump_vision_epoch_v2",
+      "sourceMd5": "809322f2f358d87ce0524d4ba7444000",
+      "schema": "forge_world_v2",
+      "guardedByR132SyntheticCandidate": false,
+      "realLiveFunctionModified": false,
+      "mode": "not-guarded-by-r132",
+      "requiredProof": "real signed owner/map/recipient revocation and live-socket publication stop"
+    },
+    {
+      "name": "forge_world_v2.publish_approved_observers",
+      "sourceMd5": "129d3d872050dd44da989fc5c36a816e",
+      "schema": "forge_world_v2",
+      "guardedByR132SyntheticCandidate": false,
+      "realLiveFunctionModified": false,
+      "mode": "not-guarded-by-r132",
+      "requiredProof": "real signed owner/map/recipient revocation and live-socket publication stop"
+    },
+    {
+      "name": "public.advance_map_motion_session",
+      "sourceMd5": "fe6946643fb701ac6d30684cfdd9bca6",
+      "schema": "public",
+      "guardedByR132SyntheticCandidate": false,
+      "realLiveFunctionModified": false,
+      "mode": "not-guarded-by-r132",
+      "requiredProof": "real signed owner/map/recipient revocation and live-socket publication stop"
+    },
+    {
+      "name": "public.advance_map_motion_session_path",
+      "sourceMd5": "539292b1950d76909c032a056bebee79",
+      "schema": "public",
+      "guardedByR132SyntheticCandidate": false,
+      "realLiveFunctionModified": false,
+      "mode": "not-guarded-by-r132",
+      "requiredProof": "real signed owner/map/recipient revocation and live-socket publication stop"
+    }
+  ],
+  "operationalCutoverProven": false,
+  "joinedOldSocketRevoked": false,
+  "realAuthenticatedRecipientsTested": false,
+  "full7SqlEmitterReviewComplete": false
+}
