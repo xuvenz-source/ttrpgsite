@@ -6,6 +6,14 @@ BEGIN
  SELECT count(*) INTO n FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace ns
  ON ns.oid=p.pronamespace WHERE ns.nspname='forge_v3_api';
  IF n<>8 THEN RAISE EXCEPTION 'R138 expected topic RPC + seven closed facade functions';END IF;
+ IF EXISTS(SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace ns
+   ON ns.oid=p.pronamespace
+   WHERE ns.nspname='forge_v3_api' AND
+   p.proname<>'get_authorized_scene_channel_v3' AND p.prosecdef)
+ THEN RAISE EXCEPTION 'R138 exposed new security definer';END IF;
+ SELECT count(*) INTO n FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace ns
+   ON ns.oid=p.pronamespace WHERE ns.nspname='forge_v3_internal' AND p.prosecdef;
+ IF n<>7 THEN RAISE EXCEPTION 'R138 expected seven private security definers';END IF;
  IF pg_catalog.has_schema_privilege('authenticated','public','USAGE')
  OR pg_catalog.has_schema_privilege('anon','public','USAGE')
  THEN RAISE EXCEPTION 'R138 public legacy API reopened';END IF;
@@ -76,6 +84,11 @@ END $r138_dm$;
 -- authenticated role, but never leaves the experimental function exposed.
 BEGIN;
 GRANT EXECUTE ON FUNCTION forge_v3_api.get_authorized_world_scene_v3(uuid)
+ TO authenticated;
+-- During this one rolled-back test transaction only, expose the private
+-- invoker dependency. No permanent private schema grant is proposed.
+GRANT USAGE ON SCHEMA forge_v3_internal TO authenticated;
+GRANT EXECUTE ON FUNCTION forge_v3_internal.get_authorized_world_scene_v3(uuid)
  TO authenticated;
 SET LOCAL ROLE authenticated;
 SELECT pg_catalog.set_config('request.jwt.claim.sub',
