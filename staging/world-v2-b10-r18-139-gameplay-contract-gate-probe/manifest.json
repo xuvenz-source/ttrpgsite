@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-139",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "repo": "xuvenz-source/ttrpgsite",
+  "parentPr": 246,
+  "parentSha": "300fb92786bf66f8c61dcb36488f51be0709aa7c",
+  "originalMigrationCount": 83,
+  "qaMigrationCount": 0,
+  "contractGroups": 6,
+  "dynamicR138Classified": 26,
+  "sourceContractPermissionProved": 0,
+  "newGameplayApiFunctions": 0,
+  "newBrowserGrants": 0,
+  "maintenanceGate": {
+    "lock": "FOR SHARE",
+    "readerReaderCompatibility": "SYNTHETIC_PROBE_ONLY",
+    "fenceTransition": "WAIT_FOR_IN_FLIGHT_READERS",
+    "perCallOverhead": "DISPOSABLE_PG17_MEASUREMENT_ONLY",
+    "realFreeTierCost": "UNMEASURED"
+  },
+  "qaSignedActorTests": "NOT_RUN",
+  "freeTierWorldLatency": "NOT_MEASURED",
+  "originalLOSAndCollisionVerified": false,
+  "productionReleaseAuthorized": false,
+  "noHostedWrites": true,
+  "noApplicationSourceEdits": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "noNewBrowserGrants": true,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-140: narrow DM preview/fog/light/nav actor-bound API prototypes and signed-QA/legacy socket kill-switch plan; no blanket grants",
+  "sourceOnly": true
+}

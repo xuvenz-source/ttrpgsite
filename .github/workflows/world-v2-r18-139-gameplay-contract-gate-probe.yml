@@ -1,0 +1,61 @@
+name: World V2 R18-139 exact gameplay contracts and gate contention
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-139-*'
+    paths:
+      - '.github/workflows/world-v2-r18-139-gameplay-contract-gate-probe.yml'
+      - 'staging/world-v2-b10-r18-139-gameplay-contract-gate-probe/**'
+      - 'tests/world-v2-r18-139-*'
+      - 'docs/testing/world-v2-r18-139-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-138-*'
+permissions:
+  contents: read
+jobs:
+  source-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse production source and versioned migration edits
+        run: git diff --exit-code 300fb92786bf66f8c61dcb36488f51be0709aa7c HEAD -- src/ supabase/migrations/
+      - name: Re-scan exact indirect actors and fail any drift
+        run: node --test tests/world-v2-r18-139-gameplay-contract.test.mjs
+      - name: Explicit fail-closed release decision
+        run: echo 'R139 NO_GO - no unseal, production merge, hosted QA or deployment'
+  disposable-gate-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r138_disposable_only
+          POSTGRES_DB: world_v2_r18_138
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_138"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R138_ISOLATED: 'yes'
+      R139_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_138
+      PGPASSWORD: r138_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Establish fenced, fictionally signed R138 SQL fixture
+        shell: bash
+        run: bash tests/world-v2-r18-138-postgres/run.sh
+      - name: Check compatible concurrent gate readers and fenced writer
+        run: node tests/world-v2-r18-139-gate-concurrency.mjs
