@@ -26,7 +26,8 @@ jobs:
       - name: Audit exact original trigger/privileged role evidence and no-go
         run: node --test tests/world-v2-r18-146-revocation-lock-graph.test.mjs
       - name: Deny premature rollout
-        run: echo 'R146 source-only: no grants, hosted writes, app changes or deployment'
+        run: |
+          echo 'R146 source-only: no grants, hosted writes, app changes or deployment'
   disposable-postgresql17-lock-races:
     runs-on: ubuntu-latest
     timeout-minutes: 18
