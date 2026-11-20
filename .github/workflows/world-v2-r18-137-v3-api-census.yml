@@ -1,0 +1,43 @@
+name: World V2 R18-137 complete browser data/API dependency census
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-137-*'
+    paths:
+      - '.github/workflows/world-v2-r18-137-v3-api-census.yml'
+      - 'staging/world-v2-b10-r18-137-v3-api-dependency-census/**'
+      - 'tests/world-v2-r18-137-v3-api-census.test.mjs'
+      - 'docs/testing/world-v2-r18-137-complete-v3-api-dependency-census-2026-11-20.md'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-136-*'
+    paths:
+      - '.github/workflows/world-v2-r18-137-v3-api-census.yml'
+      - 'staging/world-v2-b10-r18-137-v3-api-dependency-census/**'
+      - 'tests/world-v2-r18-137-v3-api-census.test.mjs'
+permissions:
+  contents: read
+jobs:
+  route-census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout original source under pinned R137 ancestry
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Verify protected source and migrations are byte-identical to parent
+        run: git diff --exit-code 696e720470094eb1a9114aaa3a25ad66bf8d3a2f HEAD -- src/ supabase/migrations/
+      - name: Test all source API routes and original live read-only ACL snapshots
+        run: node --test tests/world-v2-r18-137-v3-api-census.test.mjs
+      - name: Write exact source/line API occurrence artifact
+        run: node staging/world-v2-b10-r18-137-v3-api-dependency-census/BrowserApiRouteCensus.mjs --json=staging/world-v2-b10-r18-137-v3-api-dependency-census/r137-browser-api-observed-ci.json
+      - name: Preserve machine-readable census for security review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: r137-complete-browser-api-source-census
+          path: staging/world-v2-b10-r18-137-v3-api-dependency-census/r137-browser-api-observed-ci.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve production release hold
+        run: echo 'R137 NO_GO - lexical route census is not a reviewed live V3 API; no original or QA Supabase changes.'
