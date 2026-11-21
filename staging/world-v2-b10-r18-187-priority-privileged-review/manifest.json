@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-187",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 295,
+  "parentSha": "591b91c18792d120b8ec0aacf50aaf0383fdd9fe",
+  "sourceOnly": true,
+  "receiptR186Received": true,
+  "receiptR186ByteLength": 6428,
+  "receiptR186Sha256": "9cc644f625ab30b4c5b4cdd35a3780b273a7b8ea1917ad321aaa4141eb1abcdd",
+  "verifiedR186Snapshot": {
+    "privateHistoricalSources": 83,
+    "historicalCreateFunctionStatements": 231,
+    "historicalSecurityDefinerStatements": 182,
+    "flaggedDefinitions": 158,
+    "missingIdentityMarkers": 70,
+    "missingMembershipMarkers": 143,
+    "userEditableAuthMetadataMarkers": 1,
+    "missingLocalSearchPathMarkers": 0,
+    "publicLocalSearchPathMarkers": 0,
+    "topLevelPublicExecuteGrantMarkers": 0,
+    "firstQueue24Remaining134": true
+  },
+  "riskOrdering": [
+    "USER_METADATA_LEXICAL_MARKER",
+    "NO_DIRECT_IDENTITY_AND_NO_MEMBERSHIP_MARKER",
+    "NO_DIRECT_IDENTITY_MARKER_ONLY",
+    "OTHER_LEXICAL_REVIEW_MARKERS"
+  ],
+  "privateOfflineScript": "scripts/release/r187_private_privileged_priority_queue.py",
+  "dependencies": [
+    "scripts/release/r154_private_history_audit.py",
+    "scripts/release/r186_private_privileged_statement_inventory.py"
+  ],
+  "pinSourceWithCommitHashBeforeManualRun": true,
+  "recordContainsNoPrivateSql": true,
+  "outputMayContainOnlyFixedCodesAndNumericDocketStatementIndices": true,
+  "expectedPrivateDocketOrdering": "R111 priority-sorted docket, not chronological migration order",
+  "expectedSourceMarkerSnapshotMustMatch": true,
+  "approvals": {
+    "all83HistoricalSemantics": false,
+    "all67LivePrivilegedChains": false,
+    "signedQa": false,
+    "qaInstall": false,
+    "productionRelease": false
+  },
+  "noHostedSqlWrites": true,
+  "noRuntimeChanges": true,
+  "noVersionedMigrationChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "nextManualGate": "Owner runs commit-pinned offline R187 script on same private SHA-verified archive and shares only sanitized JSON."
+}
