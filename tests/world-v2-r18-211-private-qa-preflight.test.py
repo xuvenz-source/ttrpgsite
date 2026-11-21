@@ -71,6 +71,16 @@ class PrivateQaSemanticPreflight(unittest.TestCase):
   self.assertEqual(gate.kind_of("GRANT TRUNCATE ON TABLE public.fake TO authenticated"),"grant")
   self.assertEqual(gate.kind_of("COPY public.fake FROM PROGRAM 'echo nothing'"),"copy")
   self.assertEqual(gate.kind_of("VACUUM public.fake"),"other")
+  forged=( "CREATE FUNCTION public.invented() RETURNS void LANGUAGE plpgsql "
+           "SECURITY DEFINER AS $body$ BEGIN RAISE NOTICE 'SET search_path = public'; END; $body$" )
+  function_kind,source_markers,suspicious=gate.classify(forged)
+  self.assertEqual(function_kind,"create_function")
+  self.assertTrue(source_markers["definer_without_local_search_path"])
+  self.assertTrue(suspicious)
+  guarded=("CREATE FUNCTION public.invented() RETURNS void LANGUAGE plpgsql "
+           "SECURITY DEFINER SET search_path='' AS $body$ BEGIN RETURN; END; $body$")
+  _,source_markers,_=gate.classify(guarded)
+  self.assertFalse(source_markers["definer_without_local_search_path"])
 
  def test_lexical_sensitive_effects_count_and_r111_indices_are_not_chronology(self):
   with tempfile.TemporaryDirectory() as folder:
