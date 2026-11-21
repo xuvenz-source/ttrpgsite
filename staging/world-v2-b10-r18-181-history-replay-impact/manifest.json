@@ -1,0 +1,204 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-181",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 289,
+  "parentSha": "9412e8e35a7a1251f341f13e98156823eda5b912",
+  "sourceOnly": true,
+  "analysis": "READ_ONLY_ORIGINAL_REGISTERED_SQL_TOP_LEVEL_LEXICAL_SPLIT_IGNORING_QUOTED_AND_DOLLAR_BODIES",
+  "exactOriginalMigrationRecordCount": 83,
+  "topLevelStatements": 943,
+  "parserCompleteTopLevelLexicalModes": 83,
+  "unknownLeadingStatementParses": 8,
+  "topLevel": {
+    "deleteCount": 0,
+    "truncateCount": 0,
+    "updateCount": 4,
+    "insertCount": 3,
+    "dropCount": 40,
+    "dropPolicyCount": 23,
+    "dropTriggerCount": 17,
+    "dropTableCount": 0,
+    "doBlockCount": 12,
+    "grantCount": 111,
+    "revokeCount": 190
+  },
+  "topLevelUpdates": [
+    {
+      "version": "20261105143416",
+      "name": "map_calibration_source_dimensions_and_realtime",
+      "table": "battle_maps",
+      "columns": [
+        "source_width",
+        "source_height"
+      ],
+      "wherePresent": true,
+      "dataEffectSemanticApproval": false
+    },
+    {
+      "version": "20261106074754",
+      "name": "20261106_private_player_maps",
+      "table": "chat_messages",
+      "columns": [
+        "map_id"
+      ],
+      "wherePresent": true,
+      "dataEffectSemanticApproval": false
+    },
+    {
+      "version": "20261107095343",
+      "name": "campaign_tool_item_collaboration",
+      "table": "campaign_tool_issues",
+      "columns": [
+        "state"
+      ],
+      "wherePresent": true,
+      "dataEffectSemanticApproval": false
+    },
+    {
+      "version": "20261108031754",
+      "name": "world_runtime_movement_fog_collision_20261108",
+      "table": "map_visibility_ticks",
+      "columns": [
+        "fog_enforced"
+      ],
+      "wherePresent": true,
+      "dataEffectSemanticApproval": false
+    }
+  ],
+  "topLevelInserts": [
+    {
+      "version": "20261105111916",
+      "name": "tabletop_functions_and_map_storage",
+      "table": "storage.buckets",
+      "explicitPrivateFlag": true,
+      "hasOnConflict": true,
+      "semanticApproval": false
+    },
+    {
+      "version": "20261105114239",
+      "name": "add_npc_bestiary_and_character_artwork",
+      "table": "storage.buckets",
+      "explicitPrivateFlag": true,
+      "hasOnConflict": true,
+      "semanticApproval": false
+    },
+    {
+      "version": "20261105133019",
+      "name": "create_personal_token_libraries",
+      "table": "storage.buckets",
+      "explicitPrivateFlag": true,
+      "hasOnConflict": true,
+      "semanticApproval": false
+    }
+  ],
+  "doBlocks": [
+    {
+      "version": "20261105112515",
+      "name": "enable_tabletop_realtime",
+      "statements": 1,
+      "purpose": "DYNAMIC_PUBLICATION_IDENTIFIER",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261105143416",
+      "name": "map_calibration_source_dimensions_and_realtime",
+      "statements": 1,
+      "purpose": "PUBLICATION",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261105163541",
+      "name": "reconnect_legacy_token_monitor_fields_to_unique_sheet_ids",
+      "statements": 1,
+      "purpose": "CAMPAIGN_CONFIG_UPDATE",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261106074754",
+      "name": "20261106_private_player_maps",
+      "statements": 1,
+      "purpose": "DYNAMIC_DDL",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261107051546",
+      "name": "remove_unused_anon_preference_and_map_grants",
+      "statements": 2,
+      "purpose": "SECURITY_GRANTS_AND_METADATA",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261107081736",
+      "name": "campaign_tools_issuance",
+      "statements": 1,
+      "purpose": "PUBLICATION",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261107081754",
+      "name": "campaign_pins_and_handouts",
+      "statements": 1,
+      "purpose": "PUBLICATION",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261107095343",
+      "name": "campaign_tool_item_collaboration",
+      "statements": 1,
+      "purpose": "PUBLICATION",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261107095350",
+      "name": "campaign_sheet_inventory_collaboration",
+      "statements": 1,
+      "purpose": "PUBLICATION",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261107150305",
+      "name": "holdable_campaign_tools",
+      "statements": 1,
+      "purpose": "BACKFILL_OR_AUDIT",
+      "fullySemanticReviewed": false
+    },
+    {
+      "version": "20261108091818",
+      "name": "observer_and_per_viewer_visibility_release_20261108",
+      "statements": 1,
+      "purpose": "PUBLICATION",
+      "fullySemanticReviewed": false
+    }
+  ],
+  "doBlockWithNestedDataUpdate": "20261105163541",
+  "doBlocksWithDynamicExecute": [
+    "20261105112515",
+    "20261106074754"
+  ],
+  "interpretiveLimitations": [
+    "Statements in DO blocks execute during replay and may perform additional DDL/DML. They are not innocuous solely because the top-level statement is DO.",
+    "Stored function definitions can run privileged SQL later and triggers can run when data is backfilled; a top-level parser does not authorize their behavior.",
+    "An UPDATE with WHERE is not automatically safe; predicates, joins, trigger side effects, row counts and replay idempotence require semantic review.",
+    "DROP POLICY and DROP TRIGGER can temporarily expand access or interrupt protection; partially replayed schema must remain unavailable to signed users.",
+    "The eight unknown statement prefixes need explicit review; do not interpret zero DROP TABLE detected as comprehensive absence of every destructive operation.",
+    "Three original top-level Storage bucket INSERT statements use private flags and ON CONFLICT, but current effective bucket settings and Storage policies still need signed QA.",
+    "No actual historical migration SQL bodies, secrets or application-user rows are exported from the original database."
+  ],
+  "all83MigrationSemanticApproval": false,
+  "all67PrivilegedFunctionChainsApproved": false,
+  "qaHistoryReplayApproved": false,
+  "qaSchemaInstalled": false,
+  "ownerQaInstallApproved": false,
+  "signedQaPassed": false,
+  "originalSecurityPatchesApplied": false,
+  "productionReleaseApproved": false,
+  "noHostedWrites": true,
+  "noRawPrivateSqlExport": true,
+  "noRuntimeChange": true,
+  "noVersionedMigrationEdit": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true
+}

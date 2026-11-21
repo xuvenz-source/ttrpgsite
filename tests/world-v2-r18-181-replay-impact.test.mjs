@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const m=JSON.parse(readFileSync('staging/world-v2-b10-r18-181-history-replay-impact/manifest.json','utf8'));
+test('R181 exact R180 parent, no hosted writes or semantic signoff',()=>{
+ assert.equal(m.workPackage,'B10-R18-181');
+ assert.equal(m.parentPr,289);
+ assert.equal(m.parentSha,'9412e8e35a7a1251f341f13e98156823eda5b912');
+ assert.equal(m.decision,'NO_GO');
+ for(const k of ['sourceOnly','noHostedWrites','noRawPrivateSqlExport','noRuntimeChange','noVersionedMigrationEdit','noMerge','noDeploy','noPaidResources'])
+  assert.equal(m[k],true,k);
+ for(const k of ['all83MigrationSemanticApproval','all67PrivilegedFunctionChainsApproved','qaHistoryReplayApproved','qaSchemaInstalled','ownerQaInstallApproved','signedQaPassed','originalSecurityPatchesApplied','productionReleaseApproved'])
+  assert.equal(m[k],false,k);
+});
+test('83 original registered SQL sources, top-level categories and unresolved DO blocks',()=>{
+ assert.equal(m.exactOriginalMigrationRecordCount,83);
+ assert.equal(m.topLevelStatements,943);
+ assert.equal(m.topLevel.deleteCount,0);assert.equal(m.topLevel.truncateCount,0);
+ assert.equal(m.topLevel.updateCount,4);assert.equal(m.topLevel.insertCount,3);
+ assert.equal(m.topLevel.dropCount,40);assert.equal(m.topLevel.dropPolicyCount,23);
+ assert.equal(m.topLevel.dropTriggerCount,17);assert.equal(m.topLevel.dropTableCount,0);
+ assert.equal(m.topLevel.doBlockCount,12);
+ assert.equal(m.topLevel.grantCount,111);assert.equal(m.topLevel.revokeCount,190);
+ assert.equal(m.unknownLeadingStatementParses,8);
+ assert.equal(m.doBlocks.reduce((n,x)=>n+x.statements,0),12);
+ assert.ok(m.doBlocks.every(x=>x.fullySemanticReviewed===false));
+});
+test('four direct UPDATEs and three Storage bucket INSERTs cannot be marked safe by syntax alone',()=>{
+ assert.deepEqual(m.topLevelUpdates.map(x=>x.table),['battle_maps','chat_messages','campaign_tool_issues','map_visibility_ticks']);
+ assert.ok(m.topLevelUpdates.every(x=>x.wherePresent&&x.dataEffectSemanticApproval===false));
+ assert.equal(m.topLevelInserts.length,3);
+ assert.ok(m.topLevelInserts.every(x=>x.table==='storage.buckets'&&x.explicitPrivateFlag&&x.hasOnConflict&&!x.semanticApproval));
+ assert.equal(m.doBlockWithNestedDataUpdate,'20261105163541');
+ assert.deepEqual(m.doBlocksWithDynamicExecute,['20261105112515','20261106074754']);
+});
