@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-197",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 305,
+    "head": "d22674818b05ae1f40f0439e1f2be7a954c611fb",
+    "dedicatedSuccessRun": 44902645538,
+    "generalSuccessRun": 44902645528
+  },
+  "issue": 306,
+  "fivePublicTables": [
+    "public.campaign_map_views",
+    "public.campaign_player_maps",
+    "public.map_environments",
+    "public.tabletop_macros",
+    "public.tabletop_menu_preferences"
+  ],
+  "readOnlyOriginalCatalog": {
+    "public_tables": 31,
+    "authenticated_effective_truncate_tables": 5,
+    "chosen_tables": 5,
+    "chosen_rls_enabled": 5,
+    "chosen_postgres_owned": 5,
+    "chosen_authenticated_schema_usage": 5,
+    "chosen_effective_auth_truncate": 5,
+    "chosen_effective_auth_select": 5,
+    "chosen_effective_auth_insert": 5,
+    "chosen_effective_auth_update": 5,
+    "chosen_effective_auth_delete": 5,
+    "direct_auth_truncate_entries": 5,
+    "public_truncate_entries": 0,
+    "inherited_auth_truncate_entries": 0,
+    "inherits_owner_on_chosen": 0,
+    "any_truncate_grant_option_entries": 0,
+    "auth_superuser": false,
+    "auth_bypassrls": false,
+    "auth_inherits_roles": true,
+    "anon_truncate_public_tables": 0,
+    "service_role_truncate_public_tables": 31
+  },
+  "frozenSourceBlobs": {
+    "staging/world-v2-b10-r18-197-authenticated-truncate/unapplied-five-table-revoke.sql": "c62edbe2958adc48ab6e3dd60f1bdfde5982f69a",
+    "tests/world-v2-r18-197-postgres/run.sh": "ea628638d8808bb4dde628bdd48c9cb6aab26124",
+    "scripts/release/r197_readonly_public_authenticated_truncate.sql": "4d10c5508efb31a83d25e0b3186743d4b0a3b9e3"
+  },
+  "expectedPostcondition": "Revoke only authenticated TRUNCATE on five pinned public tables; rollback entire statement on residual inherited/PUBLIC grant; leave service_role and ordinary CRUD grants alone.",
+  "interpretation": {
+    "directDatabasePrivilegePresent": true,
+    "authenticatedCanExecuteArbitrarySqlViaNormalRestApiProven": false,
+    "signedWebsiteExploitObserved": false,
+    "externalSqlOrInjectionPathsAudited": false,
+    "all83OriginalHistorySemanticsApproved": false,
+    "all67PrivilegedCallChainsApproved": false,
+    "realSignedQaPassed": false,
+    "qaMigrationInstallApproved": false,
+    "productionDeploymentApproved": false
+  },
+  "restrictions": {
+    "unappliedScratchSqlOnly": true,
+    "noOriginalOrQaWrites": true,
+    "noRealUserDataOrOriginalPrivateSqlExported": true,
+    "noLiveRuntimeOrActiveMigrationChanges": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  }
+}
