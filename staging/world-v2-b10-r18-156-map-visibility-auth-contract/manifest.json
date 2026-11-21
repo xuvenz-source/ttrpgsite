@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-156",
+  "date": "2026-11-21",
+  "parentPr": 263,
+  "parentSha": "b7eff8a085db90c2eaaff718dcc1c71e94feba3c",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "fixtureOnly": true,
+  "r155SanitizedOperatorInput": {
+    "workPackage": "B10-R18-155",
+    "decision": "NO_GO",
+    "verifiedMigrations": 83,
+    "r111ReviewIndex": 29,
+    "targetPolicyCount": 1,
+    "knownTables": [
+      "battle_maps"
+    ],
+    "knownHelpers": [
+      "can_view_campaign_map"
+    ],
+    "bucketIdMarker": true,
+    "objectNameMarker": true,
+    "campaignIdMarker": true,
+    "hasExists": true,
+    "hasDirectAuthIdentity": false,
+    "usesAuthenticatedRole": true,
+    "approval": false
+  },
+  "liveOriginalReadOnly": {
+    "storagePolicyUsesBattleMaps": true,
+    "storageObjectPathMatchesMapStoragePath": true,
+    "storagePolicyCallsCanViewCampaignMapWithSameAlias": true,
+    "battleMapsRlsEnabled": true,
+    "battleMapsStoragePathUniqueIndexPresent": true,
+    "duplicateStoragePathGroups": 0,
+    "crossCampaignStoragePathCollisionGroups": 0,
+    "canViewFunctionChecksAuthUid": true,
+    "canViewFunctionReferencesCampaignMembership": true,
+    "canViewFunctionUsesCurrentActiveOrOverrideMap": true,
+    "canViewFunctionRunsSecurityDefiner": true,
+    "canViewFunctionSearchPathBound": true
+  },
+  "historicalExactSqlSemanticallyApproved": false,
+  "historicalMatchesLiveExactSqlProven": false,
+  "otherPermissiveStorageSelectPoliciesReviewed": false,
+  "original83IndependentlyApproved": false,
+  "original67DefinersReviewed": false,
+  "signedDMPlayerCrossCampaignQaExecuted": false,
+  "issuedSignedUrlsRevoked": false,
+  "joinedRealtimeSocketsRevoked": false,
+  "qaHistoryAuthorized": false,
+  "qaHistoryInstalled": false,
+  "productionReleaseAuthorized": false,
+  "noOriginalOrQaSqlWrites": true,
+  "noVersionedMigrations": true,
+  "noRuntimeChanges": true,
+  "noBrowserGrants": true,
+  "noMerge": true,
+  "noDeployment": true,
+  "noPaidResources": true,
+  "manualNextStep": "Run pinned R156 private map binding check in existing restricted Ubuntu workspace, share only sanitized JSON",
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ]
+}
