@@ -1,0 +1,22 @@
+name: World V2 R18-171 membership lifecycle and cascade source gate
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-171-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-170-*'
+permissions:
+  contents: read
+jobs:
+  membership-source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prevent original migrations and gameplay runtime changes
+        run: git diff --exit-code 9d3f86fb53bec655880b2c048cc3cefb1c411994 HEAD -- src/ supabase/migrations/
+      - name: Verify parent source SQL hashes, cascade review and QA NO_GO
+        run: node --test tests/world-v2-r18-171-membership-lifecycle.test.mjs
