@@ -93,7 +93,7 @@ class OriginalPrivilegedGraph(unittest.TestCase):
   returned=q[q.rfind("SELECT a.slot"):]
   # Source may appear only as an *argument* to in-DB regexp/boolean
   # functions, never as a standalone SELECT output column or raw source.
-  self.assertNotRegex(returned,r"(?m)^\\s*[ap]\\.prosrc\\s*(?:,|AS\\b)")
+  self.assertFalse(any(line.strip().startswith(("a.prosrc,", "p.prosrc,", "a.prosrc AS", "p.prosrc AS")) for line in returned.splitlines()))
   for forbidden in ("a.prosrc AS","pg_get_functiondef",
                     "FROM public.characters","FROM auth.users",
                     "DROP FUNCTION","DELETE FROM","UPDATE public.","ALTER POLICY"):
