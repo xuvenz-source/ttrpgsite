@@ -4,6 +4,8 @@
 
 **Owner direction:** The sole project operator has asked the lead developer to continue technical security assessment autonomously and has no independent reviewer available. We can conduct a first-party risk assessment and build rigorous evidence and automated regression suites, but **cannot represent that as independent human security certification or falsely mark the 83 migrations as approved**.
 
+**No private SQL is uploaded or exported by this work package.**
+
 ## Private historical SQL boundary
 
 The original 83 SQL migration files reside only in the operator's Ubuntu `$HOME/ttrpg-history-private/r106-original-83-recovery/supabase/migrations`. The R111 SHA-256-bound docket is in the same private workspace, and prior operator evidence confirmed 83/83 matching hashes, zero independent approvals, and private directory mode 0700. These files are **not present in this repository**; GitHub can neither execute nor inspect them. No original SQL may be copied into a GitHub commit, CI artifact or this conversation.
