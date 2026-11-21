@@ -11,3 +11,9 @@ The four direct updates target battle_maps source dimensions, chat_messages map 
 A partial history replay MUST remain isolated; dropped policies/triggers and new functions can temporarily change authorization. Backfills may fire triggers. Full 83-file semantics, all 67 privileged chains, signed tests, issue #220/#212 repairs, member/Storage revocation and independent QA authorization remain unfinished.
 
 NO original/QA hosted writes, raw private SQL, runtime modifications, migration files, merges, deployments or paid resources were introduced.
+
+## Mandatory dynamic function-rewrite gate
+
+A deeper in-place review of historical `20261106074754 20261106_private_player_maps` found a DO block that retrieves the then-existing PostgreSQL definition of `public.can_view_campaign_map` using `pg_get_functiondef`, rewrites its source text and executes the amended function definition. This is not a generic static CREATE FUNCTION. Its resulting authorization behavior depends on the exact earlier chronological function version.
+
+Before authorizing any separate QA replay, attest the source-exact helper version immediately before this migration, verify the transformation's exact intended output and subsequent migrations, and test DM/player/foreign-campaign access after the rewrite. Preserve strict QA API isolation during the entire sequence. This historical rewrite is **not semantically approved** in R18-181. No original SQL body was exported.
