@@ -1,0 +1,22 @@
+name: World V2 R18-181 original history replay impact NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-181-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-180-*'
+permissions:
+  contents: read
+jobs:
+  source-history-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Never edit versioned migrations or active app source
+        run: git diff --exit-code 9412e8e35a7a1251f341f13e98156823eda5b912 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Validate private source structural summary and semantic NO_GO
+        run: node --test tests/world-v2-r18-181-replay-impact.test.mjs
