@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-203",
+  "date": "2026-11-22",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 312,
+    "head": "4135d0bc277a5f1d8a23c4bbc5f2c04bd34b4da1",
+    "focusedCiSuccess": 44907082875,
+    "generalCiSuccess": 44907082791,
+    "draft": true
+  },
+  "ownerR200Receipt": {
+    "sha256": "4d9f09d70ff13208700e4428b33910039029a4ac2d823c429bcce0ff500c2b53",
+    "originalMigrationHashesVerified": 83,
+    "historicalDirectStorageCreate": 10,
+    "historicalDirectStorageDrop": 2,
+    "latestMapHelperBodyCurrentShaMatches": true
+  },
+  "originalLiveStoragePerPolicyAnon": [
+    {
+      "anonymous_slot": 1,
+      "root_and": true,
+      "root_and_children": 3,
+      "first_child_bucket_equality_constant": true,
+      "first_child_contains_or": false,
+      "nested_or_only_beyond_first": false,
+      "has_bucket_literal": true,
+      "distinct_private_bucket_values": 3
+    },
+    {
+      "anonymous_slot": 2,
+      "root_and": true,
+      "root_and_children": 2,
+      "first_child_bucket_equality_constant": true,
+      "first_child_contains_or": false,
+      "nested_or_only_beyond_first": true,
+      "has_bucket_literal": true,
+      "distinct_private_bucket_values": 3
+    },
+    {
+      "anonymous_slot": 3,
+      "root_and": true,
+      "root_and_children": 2,
+      "first_child_bucket_equality_constant": true,
+      "first_child_contains_or": false,
+      "nested_or_only_beyond_first": false,
+      "has_bucket_literal": true,
+      "distinct_private_bucket_values": 3
+    }
+  ],
+  "frozenGitBlobs": {
+    "scripts/release/r203_readonly_storage_bucket_root_guards.sql": "fbb03a1a4fcc2b8e6962ae2bb639ec2ae3bcbb38",
+    "tests/world-v2-r18-203-postgres/run.sh": "eea9a3ddce8a0f4554be87bd352425e710426bc4",
+    "tests/world-v2-r18-202-postgres/run.sh": "f06ecd6a728ea645bc46cfc0fe5306229a890fe3"
+  },
+  "interpretation": {
+    "allThreeCurrentPolicyRootsHaveSeparateBucketComparison": true,
+    "allThreeBucketLiteralsDiffer": true,
+    "nestedOrNotInFirstBucketComparator": true,
+    "currentInstalledBucketIsolationPassesThisConservativeAstMarker": true,
+    "allEffectiveStoragePolicySemanticsApproved": false,
+    "allNestedSqlHelperAccessGraphsAudited": false,
+    "revokedCampaignMemberFreshUrlIssuanceDeniedInSignedQa": false,
+    "oneHourExistingBearerLinksRevoked": false,
+    "all83HistoricalMigrationSemanticsApproved": false,
+    "all67PrivilegedCallChainsApproved": false,
+    "signedDmP1P2RemovedOutsiderStorageQaPassed": false,
+    "qaOrProductionSqlAuthorized": false
+  },
+  "guardrails": {
+    "readOnlyOriginalPgCatalogOnly": true,
+    "onlyLoopbackDisposablePg17SyntheticFixture": true,
+    "noOriginalPolicySqlOrBucketNamesOrObjectPathsExported": true,
+    "noOriginalOrQaSqlWrites": true,
+    "noAppRuntimeOrActiveMigrationsEdited": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  },
+  "nextGate": "Review current helper SQL authorization and Storage operation-specific SELECT behavior, then real signed removed-user URL issuance and already-issued 3600-second bearer expiry controls after separate QA authorization."
+}
