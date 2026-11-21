@@ -37,7 +37,7 @@ test('R155 safe review is not original historical approval or QA',()=>{
  assert.equal(m.frontendRuntimeModified,false);
  assert.equal(m.browserGrantsAdded,0);
  assert.equal(m.deployed,false);
- assert.equal(m.merged,false);
+ assert.equal(m.mergePerformed,false);
  assert.equal(m.paidResourcesUsed,false);
  assert.equal(m.original83HistoryIndependentlyApproved,false);
  assert.equal(m.original67PrivilegedFunctionReviewApproved,false);
