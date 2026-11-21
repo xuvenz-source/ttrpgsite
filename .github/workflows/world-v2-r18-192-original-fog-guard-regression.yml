@@ -1,0 +1,50 @@
+name: World V2 R18-192 frozen original-to-repair fog guard PG17 NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-192-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-191-*'
+permissions:
+  contents: read
+jobs:
+  original-source-to-existing-repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r105_disposable_only
+          POSTGRES_DB: world_v2_r18_105
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_105"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R105_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_105
+      PGUSER: postgres
+      PGPASSWORD: r105_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject runtime, original migrations, Edge Functions and deployment scope
+        run: git diff --exit-code 8cb0da0758659df7584f102daf5eb365b765012f HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Check R191 original lineage and untouched R104/R105 Git blobs
+        run: python3 scripts/release/r192_reconcile_fog_guard_lineage.py
+      - name: Reject fixture tampering, release escalation and unsafe rollback
+        run: python3 tests/world-v2-r18-192-fog-guard-lineage.test.py
+      - name: Verify source Python syntax
+        run: python3 -m py_compile scripts/release/r192_reconcile_fog_guard_lineage.py
+      - name: Execute EXACT existing R105 source-based synthetic authorization regression, disposable PG17 only
+        shell: bash
+        run: bash tests/world-v2-r18-105-postgres/run.sh
