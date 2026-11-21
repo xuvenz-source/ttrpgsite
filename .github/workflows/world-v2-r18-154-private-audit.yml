@@ -1,0 +1,37 @@
+name: World V2 R18-154 private migration offline triage source-only
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-154-*'
+    paths:
+      - '.github/workflows/world-v2-r18-154-private-audit.yml'
+      - 'scripts/release/r154_private_history_audit.py'
+      - 'tests/world-v2-r18-154-*'
+      - 'staging/world-v2-b10-r18-154-private-history-offline-assessment/**'
+      - 'docs/testing/world-v2-r18-154-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-153-*'
+permissions:
+  contents: read
+jobs:
+  source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Confirm source-only ancestry and no SQL migrations changed
+        run: git diff --exit-code ad4fe88e0c073541e084349d3deafee8cb4b06a8 HEAD -- src/ supabase/migrations/
+      - name: Fail-closed R154 no-go manifest
+        run: node --test tests/world-v2-r18-154-release-gate.test.mjs
+  python3-local-auditor-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Offline Python unit tests with fake 83-file SQL workspace
+        run: python3 tests/world-v2-r18-154-private-history.test.py -v
+      - name: Ensure no original files or hosted SQL processed
+        run: echo 'R154 CI uses only fake SQL and no Supabase keys. Real Ubuntu docket awaits operator. NO_GO.'
