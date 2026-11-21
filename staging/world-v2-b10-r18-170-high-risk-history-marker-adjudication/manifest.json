@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-170",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 278,
+  "parentSha": "e867a8d48293ac3903036d946f7b160b368e8ec8",
+  "reviewer": "SOLE_AI_TECHNICAL_REVIEWER",
+  "originalSqlInPlaceReadOnly": true,
+  "rawOriginalSqlExported": false,
+  "sourceOnly": true,
+  "totalMigrationSources": 83,
+  "sourceMarkers": {
+    "dynamicExecuteFormatFiles": 1,
+    "dynamicExecuteVariableFiles": 0,
+    "dynamicExecuteLiteralFiles": 0,
+    "userMetadataFiles": 1,
+    "authJwtClaimFiles": 0,
+    "appMetadataFiles": 0,
+    "serviceRoleIdentifierFiles": 10,
+    "storageObjectsTextFiles": 5,
+    "directStorageObjectsDmlFiles": 0,
+    "heuristicPublicOrAnonFunctionGrantFiles": 5,
+    "actualPublicOrAnonExecuteGrantsInFiveSuspectFiles": 0,
+    "actualAuthenticatedExecuteGrantsInFiveSuspectFiles": 22,
+    "filesWithCreateViewMarker": 0,
+    "filesWithAlterDefaultPrivilegesMarker": 0,
+    "filesWithExtensionOrAlterRoleMarker": 1,
+    "filesWithFunctionDeclarationMarker": 66
+  },
+  "priorityAdjudications": [
+    {
+      "version": "20261105112515",
+      "name": "enable_tabletop_realtime",
+      "markers": [
+        "EXECUTE_FORMAT"
+      ],
+      "finding": "DYNAMIC_SQL_USES_QUOTED_IDENTIFIER_PLACEHOLDER_AND_STATIC_TABLE_ARRAY",
+      "formatIdentifierEscaped": true,
+      "hardcodedIdentifierList": true,
+      "clientOrAuthDerivedIdentifiersObserved": false,
+      "safeToReplayInQaApproved": false
+    },
+    {
+      "version": "20261106090848",
+      "name": "20261106_campaign_account_names",
+      "markers": [
+        "USER_METADATA"
+      ],
+      "finding": "AUTH_USERS_METADATA_USED_FOR_DISPLAY_NAME_WITH_MEMBER_HELPER",
+      "projectionKeys": [
+        "username",
+        "display_name"
+      ],
+      "usesAuthJwtForPermission": false,
+      "selectsEmail": false,
+      "securityFullyApproved": false
+    },
+    {
+      "version": "20261105110307",
+      "name": "tabletop_foundation",
+      "markers": [
+        "EXTENSION_OR_ROLE"
+      ],
+      "finding": "PGCRYPTO_EXTENSION_CREATE_NO_ALTER_ROLE",
+      "extensionName": "pgcrypto",
+      "altersRoles": false,
+      "extensionAvailabilityCheckedInQa": false
+    },
+    {
+      "version": "20261106090851",
+      "name": "20261106_dm_ability_modifiers",
+      "markers": [
+        "HEURISTIC_PUBLIC_GRANT"
+      ],
+      "finding": "TWO_AUTHENTICATED_EXECUTE_GRANTS_NO_PUBLIC_ANON_EXECUTE_GRANT",
+      "actualAuthenticatedExecuteGrantStatements": 2
+    },
+    {
+      "version": "20261107052003",
+      "name": "map_combat_initiative",
+      "markers": [
+        "HEURISTIC_PUBLIC_GRANT"
+      ],
+      "finding": "FIVE_AUTHENTICATED_EXECUTE_GRANTS_NO_PUBLIC_ANON_EXECUTE_GRANT",
+      "actualAuthenticatedExecuteGrantStatements": 5
+    },
+    {
+      "version": "20261107081736",
+      "name": "campaign_tools_issuance",
+      "markers": [
+        "HEURISTIC_PUBLIC_GRANT"
+      ],
+      "finding": "TWO_AUTHENTICATED_EXECUTE_GRANTS_NO_PUBLIC_ANON_EXECUTE_GRANT",
+      "actualAuthenticatedExecuteGrantStatements": 2
+    },
+    {
+      "version": "20261107110539",
+      "name": "authoritative_fog_collision_release",
+      "markers": [
+        "HEURISTIC_PUBLIC_GRANT",
+        "STORAGE_OBJECTS_REFERENCE"
+      ],
+      "finding": "SEVEN_AUTHENTICATED_EXECUTE_GRANTS_NO_PUBLIC_ANON_EXECUTE_GRANT",
+      "actualAuthenticatedExecuteGrantStatements": 7
+    },
+    {
+      "version": "20261108031754",
+      "name": "world_runtime_movement_fog_collision_20261108",
+      "markers": [
+        "HEURISTIC_PUBLIC_GRANT",
+        "SERVICE_ROLE_IDENTIFIER"
+      ],
+      "finding": "SIX_AUTHENTICATED_EXECUTE_GRANTS_NO_PUBLIC_ANON_EXECUTE_GRANT",
+      "actualAuthenticatedExecuteGrantStatements": 6
+    }
+  ],
+  "interpretationConstraints": [
+    "An EXECUTE format with %I and hardcoded table names reduces identifier injection concern but still needs replay dependency and role-authority review.",
+    "User-editable Auth metadata may be used for display only; never trust it for permission decisions.",
+    "No direct Storage objects DML under targeted statement patterns is not proof that triggers or helper functions cannot write Storage.",
+    "An initial regex spanning statements incorrectly suggested five public/anon EXECUTE grant files; statement-aware parsing found 22 authenticated grants, zero public/anon among those five.",
+    "Zero regex-matched historical views, JWT references or app metadata do not prove their complete absence under unrecognized syntax.",
+    "Stored migration history and the live catalog can differ from original Git tracked source; do not auto-replay or edit original migration history.",
+    "Historical SQL may embed non-obvious secrets despite zero credential-like regex patterns; never export original SQL to public Git or signed CI."
+  ],
+  "requiredNextReview": [
+    "Inspect full semantics and replay order of all 83 stored SQL files including definer, Storage, trigger, Realtime and data-dependent statements.",
+    "Check actual 67 callable privileged RPC authorization chains and private schema grants against signed actors in QA.",
+    "Complete individual QA dependency bootstrap and forward-only fixes for #220 and #212 alongside #223/#229/#231.",
+    "Do not authorize hosted QA SQL until explicit owner approval of a reviewed private history and QA-only target.",
+    "Preserve R127 production release and free-tier resource gates separately."
+  ],
+  "history83SemanticApproval": false,
+  "all67RpcApproval": false,
+  "qaInstalled": false,
+  "realSignedQaPassed": false,
+  "productionReleaseApproved": false,
+  "openIssues": [
+    212,
+    218,
+    220,
+    223,
+    229,
+    231
+  ],
+  "latentGrantHardeningIssue": 275,
+  "noHostedSqlWrites": true,
+  "noMigrationHistoryChanges": true,
+  "noRuntimeChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true
+}
