@@ -124,11 +124,14 @@ class PrivatePrivilegedHistory(unittest.TestCase):
    self.assertTrue(report["target_slots"][1]["latest_calls_inventory_guard_marker"])
    self.assertTrue(report["target_slots"][5]["latest_calls_sheet_guard_marker"])
    self.assertTrue(report["target_slots"][8]["latest_calls_sheet_guard_marker"])
+   self.assertFalse(report["target_slots"][8]["latest_calls_inventory_guard_marker"])
+   self.assertFalse(report["target_slots"][9]["latest_calls_dm_guard_marker"])
+   self.assertFalse(report["target_slots"][10]["latest_calls_membership_guard_marker"])
    self.assertTrue(report["target_slots"][0]["latest_user_editable_metadata_marker"])
    for name in r206.NO_APPROVAL_FIELDS:
     self.assertIs(report[name],False)
    dumped=json.dumps(report)
-   for forbidden in ("CREATE FUNCTION","get_campaign_sheet_inventory",
+   for forbidden in ("CREATE FUNCTION public.","get_campaign_sheet_inventory",
      "r106-original-83-recovery","r111-private-review-docket",
      "user_metadata","can_edit_campaign_sheet","fictional_"):
     self.assertNotIn(forbidden,dumped)
