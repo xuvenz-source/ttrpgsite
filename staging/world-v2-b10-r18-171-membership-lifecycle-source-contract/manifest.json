@@ -1,0 +1,302 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-171",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 279,
+  "parentSha": "9d3f86fb53bec655880b2c048cc3cefb1c411994",
+  "sourceOnly": true,
+  "reviewer": "SINGLE_AI_TECHNICAL_REVIEWER_NOT_INDEPENDENT_SECOND_PARTY",
+  "originalCatalogReadOnly": {
+    "registeredMigrationRecords": 83,
+    "qaRegisteredMigrationRecords": 0,
+    "publicMemberTable": "public.campaign_members",
+    "memberTableOwner": "postgres",
+    "memberTableRlsEnabled": true,
+    "memberTableForcedRls": false,
+    "memberTableCurrentEnabledCustomTriggers": 0,
+    "authenticated": {
+      "select": true,
+      "insert": false,
+      "update": false,
+      "delete": false,
+      "truncate": false
+    },
+    "serviceRole": {
+      "insert": true,
+      "update": true,
+      "delete": true,
+      "truncate": true
+    },
+    "memberTableUniquePrimaryKey": "(campaign_id,user_id)",
+    "memberRoleCheckValues": [
+      "dm",
+      "player"
+    ],
+    "foreignKeysToMemberTable": [
+      {
+        "from": "public.campaigns(id)",
+        "onDelete": "CASCADE"
+      },
+      {
+        "from": "auth.users(id)",
+        "onDelete": "CASCADE"
+      }
+    ],
+    "downstreamMembershipCascade": {
+      "table": "public.campaign_player_maps",
+      "onMemberDeletion": "CASCADE"
+    },
+    "campaignOwner": {
+      "table": "public.campaigns",
+      "field": "owner_id",
+      "serviceRoleUpdateAllowed": true,
+      "foreignKeyToAuthUsersOnDelete": "CASCADE"
+    },
+    "joinCampaign": {
+      "functionName": "public.join_campaign",
+      "sourceMd5": "9fd65eca8e3160acd7a674931aad51c5",
+      "bodyBytes": 742,
+      "authenticatedExecute": true,
+      "anonymousExecute": false,
+      "looksUpReusableInviteCode": true,
+      "requiresAuthUid": true,
+      "memberInsertOnConflictDoNothing": true,
+      "checksRemovalTombstone": false,
+      "returningRevokedMembershipPossibleUnderOriginal": true,
+      "sourceOnlyInference": true,
+      "liveSignedExploitNotTested": true
+    },
+    "createCampaign": {
+      "functionName": "public.create_campaign",
+      "sourceMd5": "9a12043761641127b6f60304eea876c5",
+      "bodyBytes": 475,
+      "insertsOwnerAndMember": true,
+      "requiresAuthUid": true
+    }
+  },
+  "reconciledExistingCandidates": [
+    {
+      "step": "R120",
+      "issue": 223,
+      "pr": 226,
+      "path": "staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql",
+      "gitBlobSha": "f7bda6b79f7b9ac4a3323142c27d54a44436d5a8",
+      "role": "REMOVAL_TOMBSTONE_AND_REINSTATE_PROTOTYPE",
+      "live": false
+    },
+    {
+      "step": "R122",
+      "issue": 229,
+      "pr": 228,
+      "path": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
+      "gitBlobSha": "cc6c778783fc387203dee88cdb25517ba0050bcb",
+      "role": "IDENTITY_UPDATE_GUARD_INCOMPLETE",
+      "live": false
+    },
+    {
+      "step": "R148",
+      "issue": 229,
+      "pr": 256,
+      "path": "staging/world-v2-b10-r18-148-privileged-membership-guards/unapplied-privileged-membership-guards.sql",
+      "gitBlobSha": "c9a948e003989a68edb052a67608e371c5f39927",
+      "role": "TRUNCATE_AND_ROLE_CHANGE_DENY_PROTOTYPE",
+      "live": false
+    },
+    {
+      "step": "R150",
+      "issue": 229,
+      "pr": 258,
+      "path": "staging/world-v2-b10-r18-150-service-insert-privilege/unapplied-revoke-service-role-insert.sql",
+      "gitBlobSha": "167e66332eba4319fa18a6a21096a64013eb4dfe",
+      "role": "SERVICE_ROLE_DIRECT_INSERT_DENY_PROTOTYPE",
+      "live": false
+    }
+  ],
+  "reviewFindings": [
+    {
+      "severity": "RELEASE_BLOCKER",
+      "key": "OLD_INVITE_REJOIN",
+      "issue": 223,
+      "control": "DELETE_LEDGER_AND_REJOIN_GATE",
+      "status": "SOURCE_CONFIRMED_UNFIXED"
+    },
+    {
+      "severity": "RELEASE_BLOCKER",
+      "key": "PRIVILEGED_MEMBERSHIP_TRUNCATE",
+      "issue": 229,
+      "control": "NO_PRIVILEGED_TRUNCATE_AND_FAIL_CLOSED_STATEMENT_TRIGGER",
+      "status": "SOURCE_CONFIRMED_UNFIXED"
+    },
+    {
+      "severity": "RELEASE_BLOCKER",
+      "key": "PRIVILEGED_NEW_DM_INSERT",
+      "issue": 229,
+      "control": "REVOKE_UNREVIEWED_SERVICE_INSERT_WITH_ALLOWLISTED_TRUSTED_CREATION",
+      "status": "SCRATCH_NEGATIVE_CONTROL_PROVES_BYPASS"
+    },
+    {
+      "severity": "RELEASE_BLOCKER",
+      "key": "OWNER_AND_ROLE_TRANSFER",
+      "issue": 229,
+      "control": "REVIEW_SERVICE_OWNER_UPDATE_ROLE_TRANSFER_AND_AUTH_CASCADE",
+      "status": "REQUIRES_ADMIN_WORKFLOW_CONTRACT"
+    },
+    {
+      "severity": "RELEASE_BLOCKER",
+      "key": "REVOKED_SHEET_OWNER",
+      "issue": 220,
+      "control": "EXISTING_R115_CURRENT_MEMBER_GUARD",
+      "status": "SOURCE_CONFIRMED_UNFIXED"
+    },
+    {
+      "severity": "RELEASE_BLOCKER",
+      "key": "SIGNED_URL_AND_REALTIME_REVOCATION",
+      "issue": 231,
+      "control": "SERVER_BEARER_MITIGATION_AND_STALE_CHANNEL_EVICTION",
+      "status": "UNVERIFIED"
+    }
+  ],
+  "deletionSemantics": {
+    "dmRemovesPlayer": {
+      "tombstoneRequired": true,
+      "oldInviteMustNotRejoin": true,
+      "explicitDmReinstatementRequired": true
+    },
+    "voluntaryLeave": {
+      "mustBeDistinguishableFromDmRevocation": true,
+      "productDecisionBeforeQA": true
+    },
+    "accountDeletionCascade": {
+      "mustNotCreateOrphanedAccessOrSpoofDmRemoval": true,
+      "requiresExplicitTest": true
+    },
+    "campaignDeletionCascade": {
+      "mustNotCreateTombstoneThatRestoresDeletedCampaign": true,
+      "requiresExplicitTest": true
+    },
+    "authenticatedWriterCanDirectlyTruncate": false,
+    "serviceRoleCanCurrentlyTruncate": true,
+    "privilegedTableOwnerCanDisableTriggers": true,
+    "noSingleTriggerSolvesAllPrivilegedWriterBypasses": true
+  },
+  "qaActorCases": [
+    {
+      "id": "M01",
+      "actor": "DM",
+      "operation": "remove_P1",
+      "expected": "tombstone_and_revoke_current_access",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M02",
+      "actor": "REMOVED_P1",
+      "operation": "join_campaign_using_unchanged_invitation",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M03",
+      "actor": "REMOVED_P1",
+      "operation": "read_or_write_owned_character",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M04",
+      "actor": "OUTSIDER",
+      "operation": "call_DM_reinstatement",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M05",
+      "actor": "DM",
+      "operation": "reinstate_P1",
+      "expected": "allow_only_explicit_authorized_reinstatement",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M06",
+      "actor": "REINSTATED_P1",
+      "operation": "access_campaign_after_reinstatement",
+      "expected": "allow",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M07",
+      "actor": "SERVICE_ROLE",
+      "operation": "direct_insert_new_dm",
+      "expected": "deny_without_audited_owner_creation_path",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M08",
+      "actor": "SERVICE_ROLE",
+      "operation": "truncate_campaign_members",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M09",
+      "actor": "SERVICE_ROLE",
+      "operation": "update_member_role_or_identity",
+      "expected": "deny_unauthorized",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M10",
+      "actor": "SERVICE_ROLE",
+      "operation": "update_campaign_owner_id",
+      "expected": "deny_without_approved_owner_transfer_path",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M11",
+      "actor": "OWNER_POSTGRES",
+      "operation": "disable_membership_triggers_or_force_bypass",
+      "expected": "privileged_owner_residual_risk_documented",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M12",
+      "actor": "AUTH_SERVICE",
+      "operation": "delete_auth_user_with_memberships",
+      "expected": "cascade_safely_no_rejoin_grant",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M13",
+      "actor": "DM",
+      "operation": "delete_campaign",
+      "expected": "cascade_cleanup_without_restoring_members",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "M14",
+      "actor": "VOLUNTARY_LEAVER",
+      "operation": "join_again_without_dm_removal",
+      "expected": "match_approved_leave_policy",
+      "result": "NOT_RUN"
+    }
+  ],
+  "pending": {
+    "original83SemanticReviewComplete": false,
+    "all67PrivilegedRpcAuditComplete": false,
+    "externalServiceRoleWriterInventoryComplete": false,
+    "ownerApprovedInviteAndReinstatementSemantics": false,
+    "privateQaBootstrapApproved": false,
+    "combinedCandidatesSourceIntegrationTested": false,
+    "qaHistoricalSchemaInstalled": false,
+    "realSignedQaExecuted": false,
+    "originalHostedSchemaPatched": false,
+    "productionR127ReleaseApproved": false
+  },
+  "noOriginalOrQaWrites": true,
+  "noRawOriginalSqlExport": true,
+  "noRootMigrationEdits": true,
+  "noRuntimeSourceEdits": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true
+}
