@@ -106,10 +106,7 @@ def report(root: Path) -> dict:
     for index, item in enumerate(items, 1):
         filename = item["filename"]
         version = strict_migration_version(filename)
-        if version is None or version in chronology:
-            chronology_valid = False
-        else:
-            chronology_valid = True
+        if version is not None and version not in chronology:
             chronology[version] = index
         raw = checked_file(folder / filename, MAX_SQL_BYTES)
         if hashlib.sha256(raw).hexdigest() != item["sourceBodySha256"]:
