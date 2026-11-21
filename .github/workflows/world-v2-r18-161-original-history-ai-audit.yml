@@ -1,0 +1,22 @@
+name: World V2 R18-161 original-history AI triage (source only)
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-161-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-160-*'
+permissions:
+  contents: read
+jobs:
+  sanitize-and-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Check no original or runtime modifications
+        run: git diff --exit-code e5dec83f2158344c6deed0663d66273df09ad4c1 HEAD -- src/ supabase/migrations/
+      - name: Enforce source-only triage and NO_GO
+        run: node --test tests/world-v2-r18-161-original-history-ai-audit.test.mjs
