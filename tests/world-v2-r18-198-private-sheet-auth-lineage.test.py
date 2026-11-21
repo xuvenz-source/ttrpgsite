@@ -100,8 +100,12 @@ class SheetPrivateHistory(unittest.TestCase):
    root=Path(directory)
    augment(root)
    with patch.object(r193,"TARGETS",fictional.patched_targets()):
-    with self.assertRaises(r154.AuditBlocked):
-     r198.report(root) # R198 current hash guards require original live SHA.
+    result=r198.report(root) # Different current SHA remains NO_GO.
+    self.assertFalse(result["latest_body_sha256_matches_live"])
+    self.assertEqual(result["decision"],"NO_GO")
+   # The original unpatched invitation targets must fail prior R193 parity.
+   with self.assertRaises(r154.AuditBlocked):
+    r198.report(root)
 
  def test_no_ambiguous_sql_source_statement(self):
   self.assertIsNone(r193.evaluate(
