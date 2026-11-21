@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-199",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 308,
+    "sha": "a2d6285fdf1e4422c3a88c1b437f15d33d41d95a",
+    "sourceOnly": true
+  },
+  "ownerPrivateR198Receipt": {
+    "sizeBytes": 1734,
+    "sha256": "9688c8aedb036f2d393cacb31a9f1852371a732bbe6f8569e8a820fbb6ce78cc",
+    "historySha256Verified": 83,
+    "chronologyUnique": true,
+    "priorR193Verified": true,
+    "directHistoricalSheetHelperDefinitions": 1,
+    "matchingCurrentBodyCount": 1,
+    "prioritySortedR111DocketIndexNotChronology": 49,
+    "executableSqlStatementOrdinal": 7,
+    "latestCurrentBodySha256AndByteSizeMatch": true,
+    "latestDirectIdentityMarker": true,
+    "latestDirectMembershipMarker": false,
+    "sqlOrSecretsExported": false,
+    "networkOrDatabaseAccessed": false
+  },
+  "originalReadOnlyStorageSnapshot": {
+    "storage_buckets_total": 3,
+    "storage_buckets_public": 0,
+    "storage_buckets_private": 3,
+    "storage_objects_tables": 1,
+    "objects_rls_enabled": true,
+    "objects_force_rls": false,
+    "authenticated_select_grant": true,
+    "anon_select_grant": true,
+    "total_policies": 8,
+    "select_applicable_policies": 3,
+    "permissive_select_applicable": 3,
+    "restrictive_select_applicable": 0,
+    "authenticated_or_public_select_policies": 3,
+    "direct_membership_marker_select_policies": 0,
+    "direct_auth_uid_marker_select_policies": 2,
+    "map_view_helper_marker_select_policies": 1,
+    "bucket_marker_select_policies": 3
+  },
+  "existingClientSource": {
+    "signedUrlSeconds": 3600,
+    "localCacheTtlMs": 3240000,
+    "clearResignsActiveSubscribers": true,
+    "unmountedR123Sentinel": true,
+    "unmountedR123Teardown": true,
+    "alreadyIssuedBearerRevokedByClientCacheClear": false,
+    "alreadyIssuedBearerRevokedByAuthJwtKeyRotation": false,
+    "supabaseSignedUrlRevocationRequiresSupport": true
+  },
+  "frozenGitBlobs": {
+    "src/SignedAssetUrls.js": "cda974731221ba49262346aaf9baa7b6c2fc7b4b",
+    "staging/world-v2-b10-r18-123-access-revocation-guard/CampaignAccessSentinel.js": "984f6d1b1b2653186d8da6d8856a38dadfeac548",
+    "staging/world-v2-b10-r18-123-access-revocation-guard/CampaignRevocationTeardown.js": "e98702ec68ea88a65c3a0e362d0dc6e43ac8bc78",
+    "tests/world-v2-r18-123-access-revocation-guard.test.mjs": "72b6b2e4613cb58c4784245c2e10921940d2ee59",
+    "tests/world-v2-r18-199-signed-url-teardown.test.mjs": "465ba01b11be73f49b32597136b2af3763db29dc",
+    "scripts/release/r199_readonly_storage_policy_aggregates.sql": "146d584c56767ee4274f14ea9746f02a2b354b16"
+  },
+  "knownIssue": 231,
+  "relatedIssues": [
+    212,
+    220,
+    223,
+    229,
+    306
+  ],
+  "releaseApprovals": {
+    "effectiveStoragePolicyCompositionAndNestedHelperAuthorizationProven": false,
+    "revokedUserCannotMintFreshSignedUrlInRealSupabaseProven": false,
+    "alreadyIssuedBearerRemoteRevocationDemonstrated": false,
+    "realSignedDmP1P2RemovedOutsiderQaPassed": false,
+    "all83HistoricalMigrationSemanticsApproved": false,
+    "all67LivePrivilegedCallChainsApproved": false,
+    "qaSqlOrRuntimeInstallApproved": false,
+    "productionReleaseAuthorized": false
+  },
+  "restrictions": {
+    "noHistoricalPrivateSqlPolicySqlObjectPathsOrTokensExported": true,
+    "noOriginalOrQaDbWritesOrSignedUrlMinting": true,
+    "noChangesToLiveSrcOrActiveMigrations": true,
+    "noMerge": true,
+    "noDeployment": true,
+    "noPaidResources": true
+  },
+  "nextGate": "Audit server-side per-bucket Storage policy AND-helper semantics without publishing original policy SQL; choose short URL expiry with measured free-tier cache/movement costs, review support-based issued token revocation, then signed QA only after separately approved isolated QA install."
+}
