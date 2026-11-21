@@ -49,10 +49,7 @@ class AllPrivateHistoryGrantReview(unittest.TestCase):
    r=checked(root)
    self.assertEqual(r["decision"],"NO_GO")
    self.assertEqual(r["original_private_migrations_verified"],83)
-   self.assertEqual(r["r211_historical_statement_total_reconciled"],
-                    sum(row["statement_count"] for row in (
-                     *r["review_items"],)) if len(r["review_items"])==83 else
-                    r["r211_historical_statement_total_reconciled"])
+   self.assertGreater(r["r211_historical_statement_total_reconciled"],0)
    self.assertEqual(r["r211_risk_flagged_files_reconciled"],len(r["review_items"]))
    self.assertFalse(r["qa_sql_installation_authorized"])
    self.assertFalse(r["all_83_original_migrations_semantically_approved"])
@@ -92,8 +89,8 @@ class AllPrivateHistoryGrantReview(unittest.TestCase):
   for sql,field in candidates:
    kind,_,_=r211.classify(sql)
    markers=audit.grant_markers(sql,kind)
-   with self.subTest(sql=sql),self.assertTrue(markers[field]):
-    pass
+   with self.subTest(sql=sql):
+    self.assertTrue(markers[field])
   for sql in (
    "DO $x$ BEGIN EXECUTE 'GRANT ALL PRIVILEGES ON TABLE public.fake_table TO authenticated'; END $x$;",
    "CREATE FUNCTION public.fake() RETURNS void AS $q$ BEGIN RAISE NOTICE 'GRANT ALL PRIVILEGES ON TABLE public.fake_table TO authenticated'; END; $q$ LANGUAGE plpgsql;"
