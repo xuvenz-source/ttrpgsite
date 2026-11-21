@@ -1,0 +1,58 @@
+name: World V2 R18-150 service role INSERT least privilege PG17
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-150-*'
+    paths:
+      - '.github/workflows/world-v2-r18-150-service-role-insert.yml'
+      - 'staging/world-v2-b10-r18-150-service-insert-privilege/**'
+      - 'tests/world-v2-r18-150-*'
+      - 'docs/testing/world-v2-r18-150-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-149-*'
+permissions:
+  contents: read
+jobs:
+  source-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Protect runtime source and migration history
+        run: git diff --exit-code 1fb7ad406ca421b51eaaa24656a0a5b6ea6550b5 HEAD -- src/ supabase/migrations/
+      - name: Source NO_GO candidate verification
+        run: node --test tests/world-v2-r18-150-source.test.mjs
+  pg17-grant-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r150_disposable_only
+          POSTGRES_DB: world_v2_r18_150
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_150"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R150_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_150
+      PGPASSWORD: r150_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Test REVOKE plus fictional SECURITY DEFINER write compatibility
+        shell: bash
+        run: bash tests/world-v2-r18-150-postgres/run.sh
+      - name: Mandatory hosted release hold
+        run: echo 'R150 synthetic only. Original administration and 83 historical migrations unreviewed. NO_GO.'
