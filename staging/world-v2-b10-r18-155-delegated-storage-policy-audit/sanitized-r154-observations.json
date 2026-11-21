@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-154",
+  "decision": "NO_GO",
+  "source": "USER_SANITIZED_OFFLINE_REPORT",
+  "sha256": "4ce6bc93283c7fda46ab4a5bb563ce9e90ff3c5e13339b7a582c3226cff8284f",
+  "filesSha256Verified": 83,
+  "filesSecurityApproved": 0,
+  "flagged": [
+    {
+      "docketReviewIndex": 29,
+      "marker": "storage_policy_no_known_identity_helper",
+      "count": 1
+    }
+  ],
+  "statementCounts": {
+    "authSchemaWrites": 0,
+    "authenticatedExecuteGrants": 81,
+    "campaignOwnerUpdateMarkers": 0,
+    "defaultPrivilegeChanges": 0,
+    "definerDynamicExecuteMarkers": 0,
+    "definerMembershipReferences": 39,
+    "definerWithPublicSearchPath": 0,
+    "definerWithoutDirectIdentity": 70,
+    "definerWithoutLocalSearchPath": 0,
+    "extensionOrRoleChanges": 1,
+    "functionDefinitions": 231,
+    "membershipDeleteStatements": 0,
+    "membershipInsertStatements": 3,
+    "membershipTruncateStatements": 0,
+    "membershipUpdateStatements": 0,
+    "policyDefinitions": 117,
+    "publicExecuteGrants": 0,
+    "realtimePublicationChanges": 11,
+    "securityDefinerFunctions": 182,
+    "storageDataOrBucketWrites": 3,
+    "storageObjectPolicies": 10,
+    "storagePolicyLiteralTrue": 0,
+    "storagePolicyNoBucketMarker": 0,
+    "storagePolicyNoKnownIdentityHelper": 1,
+    "storagePolicyOrMarker": 3,
+    "storageSelectPolicies": 5
+  },
+  "originalSqlExported": false,
+  "sourceMigrationFilenameExported": false,
+  "independentSecurityReviewComplete": false,
+  "signedQaComplete": false,
+  "productionReleaseAuthorized": false
+}

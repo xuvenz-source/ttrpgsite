@@ -1,0 +1,61 @@
+name: World V2 R18-155 delegated Storage RLS and private policy focus
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-155-*'
+    paths:
+      - '.github/workflows/world-v2-r18-155-delegated-storage.yml'
+      - 'staging/world-v2-b10-r18-155-delegated-storage-policy-audit/**'
+      - 'scripts/release/r155_private_policy_focus.py'
+      - 'tests/world-v2-r18-155-*'
+      - 'docs/testing/world-v2-r18-155-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-154-*'
+permissions:
+  contents: read
+jobs:
+  source-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Zero versioned migrations or runtime changes
+        run: git diff --exit-code 5c5aa83a79cd688af3406145f5c798cd7ea97909 HEAD -- src/ supabase/migrations/
+      - name: Reject optimistic historical/security approval
+        run: node --test tests/world-v2-r18-155-source.test.mjs
+      - name: Synthetic local auditor tests
+        run: python3 tests/world-v2-r18-155-private-policy.test.py -v
+  pg17-indirect-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r155_disposable_only
+          POSTGRES_DB: world_v2_r18_155
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_155"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R155_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_155
+      PGPASSWORD: r155_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Fictional map RLS and 3 deliberate negative controls
+        shell: bash
+        run: bash tests/world-v2-r18-155-postgres/run.sh
+      - name: Keep original and QA blocked
+        run: echo 'R155 synthetic only. Historical index 29 and signed Auth not reviewed. NO_GO.'
