@@ -1,0 +1,57 @@
+name: World V2 R18-157 three-bucket Storage SELECT and token visibility
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-157-*'
+    paths:
+      - '.github/workflows/world-v2-r18-157-storage-buckets.yml'
+      - 'staging/world-v2-b10-r18-157-storage-bucket-composition/**'
+      - 'tests/world-v2-r18-157-*'
+      - 'docs/testing/world-v2-r18-157-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-156-*'
+permissions:
+  contents: read
+jobs:
+  source-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Preserve zero changes to real runtime and migrations
+        run: git diff --exit-code bbfc6a4caf20653ed96bb3217ddd1f5d1a8f6d03 HEAD -- src/ supabase/migrations/
+      - name: Verify source-only R157 security evidence remains NO_GO
+        run: node --test tests/world-v2-r18-157-source.test.mjs
+  pg17-three-bucket-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r157_disposable_only
+          POSTGRES_DB: world_v2_r18_157
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_157"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R157_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_157
+      PGPASSWORD: r157_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run fictional three-bucket, token visibility and revoked owner negative controls
+        run: bash tests/world-v2-r18-157-postgres/run.sh
+      - name: Refuse claims of live signed QA or old bearer revocation
+        run: echo 'R157 synthetic only. Original SQL, signed Auth, issued URLs, Realtime and R127 remain NO_GO.'
