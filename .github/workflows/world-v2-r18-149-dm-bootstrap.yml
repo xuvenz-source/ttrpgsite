@@ -1,0 +1,58 @@
+name: World V2 R18-149 DM bootstrap privileged insert negative control
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-149-*'
+    paths:
+      - '.github/workflows/world-v2-r18-149-dm-bootstrap.yml'
+      - 'staging/world-v2-b10-r18-149-dm-bootstrap-audit/**'
+      - 'tests/world-v2-r18-149-*'
+      - 'docs/testing/world-v2-r18-149-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-148-*'
+permissions:
+  contents: read
+jobs:
+  source-only-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Preserve pinned runtime and historical schema
+        run: git diff --exit-code 0355eb7d2523261f3a509254a7acd401c7f181d5 HEAD -- src/ supabase/migrations/
+      - name: Audit source markers and explicit NO_GO
+        run: node --test tests/world-v2-r18-149-source.test.mjs
+  pg17-counterexample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r149_disposable_only
+          POSTGRES_DB: world_v2_r18_149
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_149"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R149_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_149
+      PGPASSWORD: r149_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Reproduce privileged owner reassignment defeating simplistic DM guard
+        shell: bash
+        run: bash tests/world-v2-r18-149-postgres/run.sh
+      - name: Require no-go despite successful bypass negative control
+        run: echo 'R149 synthetic only. No original, QA or production writes or privileged SQL authorization.'
