@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "work_package": "B10-R18-195",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 303,
+    "head": "01001c8fd2ca0599055fa5aaca02115f7d0132a9",
+    "prior_security_workflow": "44900555044"
+  },
+  "live_read_only_grants": {
+    "relation": "public.campaign_members",
+    "owner_role": "postgres",
+    "rls_enabled": true,
+    "service_role_effective_truncate": true,
+    "ordinary_authenticated_effective_truncate": false,
+    "anonymous_effective_truncate": false,
+    "service_role_effective_delete": true,
+    "service_role_effective_update": true
+  },
+  "known_source_issue": 229,
+  "candidate_unapplied_only": {
+    "path": "staging/world-v2-b10-r18-195-membership-truncate-denial/unapplied-truncate-denial.sql",
+    "git_blob_sha1": "300421215fce40f1cfcfacbe3d3762413f218343",
+    "design": "Revoke service_role TRUNCATE only, add BEFORE TRUNCATE statement-level error as defense in depth while retaining per-row DELETE/revocation logic.",
+    "originalOrQaInstalled": false
+  },
+  "synthetic_runner": {
+    "path": "tests/world-v2-r18-195-postgres/run.sh",
+    "git_blob_sha1": "ae07bc8ffde2ae873e3d47072956da0666b2d349",
+    "postgres_version": 17,
+    "isolation": "GitHub Actions only, loopback 127.0.0.1, synthetic postgres scratch db, no original SQL or hosted Supabase credentials"
+  },
+  "limitations": {
+    "real_service_role_usage_inventory_complete": false,
+    "owner_superuser_trigger_bypass_prevented": false,
+    "real_qa_signed_accounts_tested": false,
+    "all83PrivateHistoricalSemanticsApproved": false,
+    "all67CallablePrivilegedFunctionsApproved": false,
+    "qaSqlInstallationApproved": false,
+    "productionReleaseApproved": false
+  },
+  "no_real_sql_or_user_data_exported": true,
+  "no_original_or_qa_database_changes": true,
+  "no_live_runtime_changed": true,
+  "no_active_versioned_migration": true,
+  "no_merge": true,
+  "no_deploy": true,
+  "no_paid_resources": true,
+  "next_gate": "Verify source-only disposable PG17 denial including simulated baseline bypass; inventory privileged admin/service role TRUNCATE workflow before recommending any forward-only migration or signed QA."
+}
