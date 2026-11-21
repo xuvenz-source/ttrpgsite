@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-188",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 296,
+  "parentSha": "227c79835c673ae3d29c7d87949f165ed21dbf1e",
+  "sourceOnly": true,
+  "r187ReportReceived": true,
+  "r187ReportBytes": 8561,
+  "r187ReportSha256": "40a0a6afd4fae7059de597e0a62872417a4ccc2b257be0850216d1a9b69588b6",
+  "r187Report": {
+    "historicalFilesSHA256Verified": 83,
+    "historicalDefiners": 182,
+    "flagged": 158,
+    "queueSize": 24,
+    "queueRemaining": 134,
+    "buckets": {
+      "userMetadata": 1,
+      "noDirectIdentityAndMembership": 56,
+      "noDirectIdentityOnly": 14,
+      "otherLexical": 87
+    }
+  },
+  "target": {
+    "r111DocketPriorityIndexNotChronology": 31,
+    "executableStatementOrdinal": 1,
+    "requiredMarkers": [
+      "USER_EDITABLE_AUTH_METADATA_MARKER"
+    ]
+  },
+  "privateOfflineScript": "scripts/release/r188_private_metadata_context.py",
+  "dependencies": [
+    "scripts/release/r154_private_history_audit.py",
+    "scripts/release/r186_private_privileged_statement_inventory.py",
+    "scripts/release/r187_private_privileged_priority_queue.py"
+  ],
+  "permittedOutput": "Only bounded contextual counts, known booleans, fixed enum/index keys; never SQL, function names, SQL literals, file names, paths or credentials",
+  "noSqlSemanticClaim": true,
+  "currentFunctionLineageResolved": false,
+  "approvals": {
+    "history83": false,
+    "live67": false,
+    "signedQa": false,
+    "qaSchema": false,
+    "production": false
+  },
+  "noHostedSqlWrites": true,
+  "noRuntimeChanges": true,
+  "noVersionedMigrationChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "nextRequiredAction": "Owner locally executes commit pinned R188 script against existing 83-file WSL private archive and shares only r188-sanitized-report.json"
+}
