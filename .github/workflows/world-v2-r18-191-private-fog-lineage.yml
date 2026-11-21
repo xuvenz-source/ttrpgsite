@@ -1,0 +1,24 @@
+name: World V2 R18-191 private fog-status source lineage NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-191-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-190-*'
+permissions:
+  contents: read
+jobs:
+  fictional-private-fog-lineage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject application, migrations and Edge Function modifications
+        run: git diff --exit-code 657269ca610dcd9a951c2644cbe5f2fecf69160d HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Test 83-file fictional chronological source lineage, sha and redaction
+        run: python3 tests/world-v2-r18-191-private-fog-status-lineage.test.py
+      - name: Verify offline syntax
+        run: python3 -m py_compile scripts/release/r191_private_fog_status_lineage.py
