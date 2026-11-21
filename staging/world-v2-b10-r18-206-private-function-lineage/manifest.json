@@ -88,8 +88,8 @@
     }
   ],
   "frozenSourceBlobs": {
-    "scripts/release/r206_private_privileged_function_lineage.py": "ba5092d0051da44540d843933947e320321471e3",
-    "tests/world-v2-r18-206-private-privileged-function-lineage.test.py": "5a411013e367248bc07391e0ef8dfa92dd8e7529",
+    "scripts/release/r206_private_privileged_function_lineage.py": "e940d36d946b7a407fcde9603a8175dc7901daae",
+    "tests/world-v2-r18-206-private-privileged-function-lineage.test.py": "1d32b23ad18e4779e8655908a5add5f28d4845e1",
     "scripts/release/r200_private_storage_policy_lineage.py": "bdfbd1e88756141848250796ac2f8aca6d81b827",
     "scripts/release/r198_private_sheet_auth_lineage.py": "8c005a517decd2cc1d39ee28c69d4b349afa171a",
     "scripts/release/r193_private_invite_source_lineage.py": "4630d13557aa59298325269fe3bc4b6062f2655d"
