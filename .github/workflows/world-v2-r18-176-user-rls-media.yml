@@ -1,0 +1,22 @@
+name: World V2 R18-176 user-scoped RLS Storage media resolver NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-176-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-175-*'
+permissions:
+  contents: read
+jobs:
+  per-user-rls-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Keep all current app, functions, migration and Storage source untouched
+        run: git diff --exit-code 3c02f7bc95066d78d7f15acf9a2142eba6e0750e HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Verify signed-user resource/RLS simulation and HTTP media response
+        run: node --test tests/world-v2-r18-176-user-rls-media.test.mjs

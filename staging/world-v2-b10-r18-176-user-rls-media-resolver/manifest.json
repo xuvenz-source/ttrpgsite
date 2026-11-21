@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-176",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 284,
+  "parentSha": "3c02f7bc95066d78d7f15acf9a2142eba6e0750e",
+  "implementation": "DORMANT_USER_JWT_SCOPED_REAL_SCHEMA_RESOLVER_AND_PRIVATE_STORAGE_RLS_ADAPTER",
+  "sourcePath": "staging/world-v2-b10-r18-176-user-rls-media-resolver/UserScopedMediaAdapters.mjs",
+  "liveEnabled": false,
+  "deployedEdgeFunction": false,
+  "originalCatalogReadOnly": {
+    "tables": [
+      "battle_maps",
+      "map_tokens",
+      "characters",
+      "npc_templates",
+      "personal_tokens"
+    ],
+    "resourceColumns": {
+      "map": "battle_maps.id, campaign_id, storage_path",
+      "token": "map_tokens.id, campaign_id, map_id, owner_id, image_path, character_id, npc_template_id",
+      "character": "characters.id, campaign_id, user_id, portrait_path",
+      "npc": "npc_templates.id, campaign_id, portrait_path",
+      "personal": "personal_tokens.id, owner_id, token_path, portrait_path"
+    },
+    "sourceFunctions": {
+      "canViewMap": {
+        "signature": "public.can_view_campaign_map(uuid,uuid)",
+        "md5": "cf708e7eaa9f2a4493e94bcc1fb63d98"
+      },
+      "canObserveToken": {
+        "signature": "public.can_observe_map_token(uuid)",
+        "md5": "f43faa26f1b9e15ecfbe440c7c2d918f"
+      },
+      "isCampaignDm": {
+        "signature": "public.is_campaign_dm(uuid)",
+        "md5": "a9dc5287aa552c0d39c3793daadafb19"
+      }
+    },
+    "selectedRls": {
+      "map": "published map or dm / can_view_campaign_map",
+      "token": "members view only observed tokens / can_view_campaign_map and can_observe_map_token",
+      "character": "owner or dm read characters",
+      "npc": "dm view npc templates",
+      "personal": "owner read personal tokens"
+    }
+  },
+  "securityContracts": {
+    "verifiedUserIdMustBindToPerRequestUserJWTClient": true,
+    "secretServiceRoleClientAllowed": false,
+    "userJwtStorageDownloadCallsRls": true,
+    "noAdminStorageBypass": true,
+    "noCreateSignedUrl": true,
+    "resourceIdResolvedFromRecords": true,
+    "currentMapAccessRequired": true,
+    "tokenObservationRequired": true,
+    "hiddenNpcPortraitDmOnly": true,
+    "characterPortraitOwnerOrDmOnly": true,
+    "personalOwnerIndependence": true,
+    "additionalRlsRecheckAtDownload": true,
+    "inFlightAlreadyDownloadedBytesRevocable": false
+  },
+  "supabaseDocumentation": [
+    "https://supabase.com/docs/guides/storage/buckets/fundamentals",
+    "https://supabase.com/docs/guides/functions/auth-headers",
+    "https://supabase.com/docs/guides/storage/security/access-control"
+  ],
+  "tests": {
+    "localNodePassCount": 9,
+    "githubNotYetVerified": true
+  },
+  "openGates": [
+    "Wire only a per-request Auth getUser verified JWT-scoped publishable DB/Storage client; never use a globally shared user or elevated service client.",
+    "Reconcile exact resource-to-path mapping for legacy images and aliases; avoid extra RLS calls per frame and collision.",
+    "Benchmark user Storage RLS download and Blob allocations on free plan; compare real map sizes and image concurrency.",
+    "Test real signed DM, current P1/P2, revoked P1 and outsider against Storage and map/LOS permissions after approved QA schema install.",
+    "Implement actual frontend migration away from existing signed URLs without breaking personal token library.",
+    "Account for old bearer links, stale Realtime, source-confirmed #220 and #212 and #223/#229/#231 as separate release gates."
+  ],
+  "noOriginalOrQaWrites": true,
+  "noStorageChanges": true,
+  "noMigrationEdit": true,
+  "noRuntimeSourceEdit": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidInfrastructure": true,
+  "productionReleaseApproved": false
+}
