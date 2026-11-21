@@ -1,0 +1,58 @@
+name: World V2 R18-152 synthetic Storage RLS revocation acceptance matrix
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-152-*'
+    paths:
+      - '.github/workflows/world-v2-r18-152-storage-matrix.yml'
+      - 'staging/world-v2-b10-r18-152-storage-authorization-matrix/**'
+      - 'tests/world-v2-r18-152-*'
+      - 'docs/testing/world-v2-r18-152-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-151-*'
+permissions:
+  contents: read
+jobs:
+  source-only-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Verify zero runtime or historical migrations changed
+        run: git diff --exit-code cf7d0d2a2af7dbc28fcf2bd48c36ccd95de99f86 HEAD -- src/ supabase/migrations/
+      - name: Verify source-only scope and no release claim
+        run: node --test tests/world-v2-r18-152-source.test.mjs
+  pg17-fictional-rls-revocation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r152_disposable_only
+          POSTGRES_DB: world_v2_r18_152
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_152"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R152_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_152
+      PGPASSWORD: r152_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run fictional authorization and bearer negative controls only
+        shell: bash
+        run: bash tests/world-v2-r18-152-postgres/run.sh
+      - name: Refuse signed URL and hosted release approval
+        run: echo 'R152 fictional PG17 only. Signed URLs, old sockets and original SQL remain NO_GO.'
