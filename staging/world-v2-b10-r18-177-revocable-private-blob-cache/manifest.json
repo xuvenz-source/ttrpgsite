@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-177",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 285,
+  "parentSha": "76b4730e016c2c719d3092ff2a980d95387638db",
+  "sourceOnly": true,
+  "liveEnabled": false,
+  "component": "staging/world-v2-b10-r18-177-revocable-private-blob-cache/RevocablePrivateImageCache.mjs",
+  "dependency": [
+    "R18-123 passive access sentinel (dormant)",
+    "R18-175 HTTP gateway (dormant)",
+    "R18-176 user-JWT RLS media resolver (dormant)"
+  ],
+  "clientSecurity": {
+    "noBearerUrlOrAuthTokenStorage": true,
+    "imageSourceIsMemoryOnlyBlobUrl": true,
+    "freshExternalMembershipProofBeforeActivation": true,
+    "proofIsClientUiConditionNotServerAuthorization": true,
+    "contextScopedToUserAndCampaign": true,
+    "deduplicatedInFlightMediaLoads": true,
+    "boundedEntries": true,
+    "immediateSynchronousRevokedImageMask": true,
+    "pendingAbortOnRevocation": true,
+    "lateResponseCannotResurrectUrl": true,
+    "noAutomaticRefetchOnClear": true,
+    "revokesObjectUrlsOnUnmountAndCampaignChange": true,
+    "mustBlockNewMediaUntilExplicitFreshProof": true,
+    "cannotEraseAlreadyDownloadedOrInFlightDeliveredBytes": true,
+    "sameContextFreshMembershipProofPreservesCache": true
+  },
+  "performance": {
+    "defaultMaxEntries": 250,
+    "perFrameMembershipReads": false,
+    "automaticPeriodicMediaResign": false,
+    "perObjectUrlBrowserMemoryLimitMeasured": false,
+    "realMapImageBandwidthBenchmarkPassed": false
+  },
+  "tests": {
+    "localPassCount": 9,
+    "realSignedQa": false
+  },
+  "remainingReleaseBlockers": [
+    212,
+    218,
+    220,
+    223,
+    229,
+    231
+  ],
+  "authorizationCaveats": [
+    "Browser freshProof boolean is not cryptographic authority. Only server RLS and signed API controls can grant bytes.",
+    "R123 sentinel is not yet mounted; real client role revocation can be delayed until focus/reconnect/passive probe.",
+    "Previously issued Storage signed URLs and already downloaded images remain outside local Blob URL cleanup.",
+    "Actual image mounting/unmount and browser memory/CPU must be tested with DM/P1/P2 before any preview release."
+  ],
+  "noHostedSqlWrites": true,
+  "noStorageChanges": true,
+  "noVersionedMigrations": true,
+  "noRuntimeChanges": true,
+  "noHostedQaOrProductionDeploy": true,
+  "noMerge": true,
+  "noPaidResources": true,
+  "realSignedQaDone": false,
+  "productionReleaseApproved": false
+}

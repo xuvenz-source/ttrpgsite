@@ -1,0 +1,22 @@
+name: World V2 R18-177 revocable private image client cache NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-177-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-176-*'
+permissions:
+  contents: read
+jobs:
+  revoked-url-client-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No active app, database or hosted function edits
+        run: git diff --exit-code 76b4730e016c2c719d3092ff2a980d95387638db HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Verify revocation synchronous mask, abort and no automatic refetch
+        run: node --test tests/world-v2-r18-177-revocable-private-blob-cache.test.mjs
