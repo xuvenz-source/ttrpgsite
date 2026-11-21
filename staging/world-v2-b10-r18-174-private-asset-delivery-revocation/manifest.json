@@ -1,0 +1,202 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-174",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 282,
+  "parentSha": "486a9224eeb90778421b65dfc8538fdf92977acf",
+  "reviewer": "AI_SINGLE_TECHNICAL_REVIEWER",
+  "originalReadOnly": {
+    "buckets": [
+      {
+        "id": "battlemap-assets",
+        "private": true,
+        "classification": "CAMPAIGN_PRIVATE_MAP_SCENE"
+      },
+      {
+        "id": "personal-token-art",
+        "private": true,
+        "classification": "PERSONAL_OWNER_SCOPED_RESOURCE"
+      },
+      {
+        "id": "tabletop-artwork",
+        "private": true,
+        "classification": "CAMPAIGN_OR_TOKEN_OBSERVATION_SCOPED_ART"
+      }
+    ],
+    "storageObjectPolicyCount": 8,
+    "authenticatedSelectPolicies": [
+      {
+        "name": "dm read maps",
+        "bucketId": "battlemap-assets",
+        "mapViewPredicate": true
+      },
+      {
+        "name": "owner view private token images",
+        "bucketId": "personal-token-art",
+        "ownerPredicate": true
+      },
+      {
+        "name": "artwork only for dm owned characters and observed map tokens",
+        "bucketId": "tabletop-artwork",
+        "memberOrObservationPredicate": true
+      }
+    ]
+  },
+  "currentAssetStore": {
+    "path": "src/SignedAssetUrls.js",
+    "gitBlobSha": "cda974731221ba49262346aaf9baa7b6c2fc7b4b",
+    "downloadLinkSeconds": 3600,
+    "localCacheTtlMs": 3240000,
+    "maxEntries": 250,
+    "clearImmediatelyReloadsActiveSubscribers": true,
+    "frontendRevokeImplemented": false,
+    "issuedUrlsRevokedByClientClear": false
+  },
+  "officialSupabaseContract": {
+    "individualSignedUrlRevocationSupported": false,
+    "objectDeleteMoveRenameInvalidatesSpecificLink": true,
+    "globalKeyRotateAndRevokeAvailable": true,
+    "authJwtKeyRotationDoesNotInvalidateStorageUrl": true,
+    "cdnMayServePreviouslyCachedContentAfterExpiry": true,
+    "authenticatedEndpointStillSubjectToJwtAndCdnCaching": true,
+    "references": [
+      "https://supabase.com/docs/guides/storage/serving/downloads",
+      "https://supabase.com/docs/guides/storage/security/signing-keys",
+      "https://supabase.com/docs/guides/storage/cdn/smart-cdn"
+    ]
+  },
+  "proposedDeliveryModel": {
+    "campaignPrivateAssets": {
+      "preferred": "SERVER_AUTHENTICATED_PER_REQUEST_GATEWAY_WITH_NO_BEARER_REDIRECT",
+      "permission": "VERIFY_SIGNED_USER_CURRENT_CAMPAIGN_MEMBERSHIP_AND_MAP_TOKEN_OBSERVATION_BEFORE_BYTES",
+      "browserResponseCache": "NO_STORE_FOR_REVOCABLE_CONTENT",
+      "originRequest": "SERVER_AUTH_TO_PRIVATE_STORAGE_DO_NOT_EXPOSE_SECRET_KEY_IN_BROWSER",
+      "mustNotRedirectToSignedBearerUrl": true,
+      "requiresFreeTierInvocationAndBandwidthBenchmark": true
+    },
+    "personalAssets": {
+      "permission": "CURRENT_OWNER_ACCESS_OR_EXPLICIT_CURRENT_CAMPAIGN_SHARE_CONTEXT",
+      "mustNotAccidentallyRevokePersonalAccountOwnershipWhenCampaignMembershipRemoved": true
+    },
+    "interimRiskReduction": {
+      "reduceNewSignedUrlTtl": true,
+      "isNotImmediateRevocation": true,
+      "oldOneHourUrlsRemainRiskUntilExpiryOrGlobalRevocation": true,
+      "cdnPurgeAndCacheBehaviorMustBeTested": true
+    },
+    "emergencyGlobalCutover": {
+      "rotateAndRevokeStorageSigningKey": true,
+      "requiresAdminApproval": true,
+      "breaksAllExistingSignedUrls": true,
+      "mustPlanAuthorizedClientReload": true,
+      "requiresCdnCacheInvalidation": true,
+      "doesNotEraseAlreadyDownloadedContent": true
+    }
+  },
+  "acceptanceMatrix": [
+    {
+      "id": "S01",
+      "actor": "DM",
+      "operation": "get_own_campaign_private_map",
+      "expected": "ALLOW",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S02",
+      "actor": "P1_CURRENT",
+      "operation": "get_assigned_map_private_art",
+      "expected": "ALLOW_IF_MAP_AND_OBSERVATION_AUTHORIZE",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S03",
+      "actor": "P2_CURRENT",
+      "operation": "get_unassigned_map",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S04",
+      "actor": "REVOKED_P1",
+      "operation": "new_campaign_private_asset_request",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S05",
+      "actor": "OUTSIDER",
+      "operation": "cross_campaign_object_key_guess",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S06",
+      "actor": "REVOKED_P1",
+      "operation": "old_3600_sec_signed_url",
+      "expected": "NOT_SERVE_AFTER_APPROVED_CACHE_AND_KEY_MITIGATION",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S07",
+      "actor": "REVOKED_P1",
+      "operation": "cached_cdn_signed_url",
+      "expected": "MEASURE_CACHE_INVALIDATION_AND_DISCLOSE_DELAY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S08",
+      "actor": "REVOKED_P1",
+      "operation": "stale_browser_cache",
+      "expected": "NO_NEW_SERVER_BYTES_CLIENT_SIDE_COPIES_CANNOT_BE_ERASED",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S09",
+      "actor": "ACTIVE_P1",
+      "operation": "authorized_after_global_key_rotation",
+      "expected": "RELOAD_AND_CONTINUE",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S10",
+      "actor": "PERSONAL_OWNER",
+      "operation": "view_personal_token_art_after_campaign_leave",
+      "expected": "PRESERVE_ACCOUNT_OWNERSHIP",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S11",
+      "actor": "P2_CURRENT",
+      "operation": "request_hidden_NPC_art",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S12",
+      "actor": "REVOKED_P1",
+      "operation": "old_realtime_subscription_and_asset_refresh",
+      "expected": "DENY_AND_TERMINATE",
+      "result": "NOT_RUN"
+    }
+  ],
+  "unresolved": {
+    "serverSideGatewayImplemented": false,
+    "currentAssetStoreChanged": false,
+    "newSignedUrlTtlReduced": false,
+    "oldIssuedUrlsRevoked": false,
+    "cdnCacheInvalidationVerified": false,
+    "staleRealtimeSubscriptionsEvicted": false,
+    "realSignedQaPassed": false,
+    "freeTierMediaGatewayPerformancePassed": false,
+    "ownerApprovedGlobalSigningKeyOperation": false,
+    "fullSecurityAuditPassed": false,
+    "productionR127ReleaseApproved": false
+  },
+  "noHostedSqlOrStorageChanges": true,
+  "noRuntimeEdits": true,
+  "noOriginalOrQaDeploy": true,
+  "noRootMigrationEdits": true,
+  "noMerge": true,
+  "noPaidResources": true
+}
