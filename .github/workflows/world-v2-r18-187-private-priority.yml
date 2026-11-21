@@ -1,0 +1,24 @@
+name: World V2 R18-187 offline privileged priority NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-187-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-186-*'
+permissions:
+  contents: read
+jobs:
+  bounded-priority-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject runtime, migrations and Edge Function updates
+        run: git diff --exit-code 591b91c18792d120b8ec0aacf50aaf0383fdd9fe HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Test fictional 83-file snapshot, source-drift and redaction gates
+        run: python3 tests/world-v2-r18-187-private-priority-queue.test.py
+      - name: Verify offline Python syntax
+        run: python3 -m py_compile scripts/release/r187_private_privileged_priority_queue.py
