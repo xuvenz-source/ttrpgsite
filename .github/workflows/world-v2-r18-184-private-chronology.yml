@@ -1,0 +1,24 @@
+name: World V2 R18-184 offline private chronology audit NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-184-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-183-*'
+permissions:
+  contents: read
+jobs:
+  sanitized-offline-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Forbid runtime and migration changes
+        run: git diff --exit-code e30aeed072fba007ff8df1587964e9d5401c1088 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Synthetic-only offline chronology and no data leakage
+        run: python3 tests/world-v2-r18-184-private-chronology.test.py
+      - name: Verify Python source syntax without local private archive
+        run: python3 -m py_compile scripts/release/r184_private_rpc_history_parity.py
