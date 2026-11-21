@@ -1,0 +1,262 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-207",
+  "date": "2026-11-22",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 316,
+    "head": "fe36e37480744e661ae003ea9597cb80cda6cfda",
+    "focusedCiRun": 44918104589,
+    "standardCiRun": 44918104592,
+    "draft": true
+  },
+  "ownerR206SanitizedReceipt": {
+    "bytes": 11290,
+    "sha256": "f9d57b16c6b9babdad47ffea69f0e414fc5299277dabc146fbe4178eb2097471",
+    "verifiedOriginalMigrations": 83,
+    "latest11BodiesMatchedCurrent": true,
+    "exact11EachOneHistoricalDefinition": true,
+    "priorR200R198R193LineageReverified": true,
+    "noNetworkOrDatabaseAccess": true,
+    "securityApproved": false
+  },
+  "currentOriginalLiveTwelveFunctionLexicalCallGraph": [
+    {
+      "slot": 1,
+      "known_function_name": "get_campaign_account_names",
+      "source_bytes": 378,
+      "source_sha256": "bd98b2ec061445b828724d0830f1da245b845a3e9c83fcf7c1a17bd34343c9a6",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        11
+      ],
+      "direct_member_marker": true,
+      "direct_uid_marker": true,
+      "editable_metadata_marker": true,
+      "metadata_marker_before_first_where": true,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 2,
+      "known_function_name": "get_campaign_sheet_inventory",
+      "source_bytes": 1950,
+      "source_sha256": "4b168977eaa254f665fa1f26ed81d7296053bb988b991e60574c1610de0a879e",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        9
+      ],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": true
+    },
+    {
+      "slot": 3,
+      "known_function_name": "get_dm_map_npc_values",
+      "source_bytes": 263,
+      "source_sha256": "5e5c0657353a54f4812ee5b547e4575bf666f2e8c72a3fe1b6918cfff8293de5",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        10
+      ],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 4,
+      "known_function_name": "get_npc_token_values",
+      "source_bytes": 141,
+      "source_sha256": "2b82239cc0b630d500240b19bc267aeac013f6b78936472fc590d8207e46a9f8",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        10
+      ],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 5,
+      "known_function_name": "is_map_fog_published",
+      "source_bytes": 102,
+      "source_sha256": "767cbcd8bd4813c0a535fa71bf1ecc3a9cf8a6dd02c239499c0be1737a28c96f",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 6,
+      "known_function_name": "patch_campaign_sheet_noninventory",
+      "source_bytes": 2364,
+      "source_sha256": "2059d837aea133d1cbe726e9eebb0736d04739ed37b06ed8cfa08dca017efc2b",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        12
+      ],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": true
+    },
+    {
+      "slot": 7,
+      "known_function_name": "preview_map_motion",
+      "source_bytes": 110,
+      "source_sha256": "31720e150e501f186bb0424b2d814d6a480c3e781c202a3209d872b8e0e491dd",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 8,
+      "known_function_name": "publish_map_environment",
+      "source_bytes": 3836,
+      "source_sha256": "425a2336150ea0a1a28cd4d39f6d2b7560b2fb43a0bd25d69d6897ad74b1b32c",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        10
+      ],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": true
+    },
+    {
+      "slot": 9,
+      "known_function_name": "can_edit_campaign_sheet_inventory",
+      "source_bytes": 427,
+      "source_sha256": "169d6e5ec9fb79a760bc25ab28a3937f4c76cc1a5233c997b673b366cd8176e4",
+      "is_definer": true,
+      "auth_exec": false,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        12
+      ],
+      "direct_member_marker": false,
+      "direct_uid_marker": false,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 10,
+      "known_function_name": "is_campaign_dm",
+      "source_bytes": 148,
+      "source_sha256": "7c9cbc8f5146ee794ad6fe97bdb83017fccefe76761bf5c0f31d6020303d398a",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [],
+      "direct_member_marker": true,
+      "direct_uid_marker": true,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 11,
+      "known_function_name": "is_campaign_member",
+      "source_bytes": 132,
+      "source_sha256": "18a326e27b3839b1b6011d593b1d1c1dd566e8ac8d17eda1feda7cb886713024",
+      "is_definer": true,
+      "auth_exec": true,
+      "anon_exec": false,
+      "lexical_callee_slots": [],
+      "direct_member_marker": true,
+      "direct_uid_marker": true,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    },
+    {
+      "slot": 12,
+      "known_function_name": "can_edit_campaign_sheet",
+      "source_bytes": 790,
+      "source_sha256": "07dd89b2aa9c2e2c4851604de83362da37b3e5bf1716d146fd769b7bb816cb53",
+      "is_definer": true,
+      "auth_exec": false,
+      "anon_exec": false,
+      "lexical_callee_slots": [
+        10
+      ],
+      "direct_member_marker": false,
+      "direct_uid_marker": true,
+      "editable_metadata_marker": false,
+      "metadata_marker_before_first_where": false,
+      "write_verb_marker": false
+    }
+  ],
+  "frozenSourceBlobs": {
+    "scripts/release/r207_readonly_privileged_helper_graph.sql": "129a00c61fac2a3c55ea724f22aadf17a4436766",
+    "tests/world-v2-r18-207-postgres/run.sh": "f21706ede1c6175f0b9884c7c71d639aa44d4016"
+  },
+  "provenanceLimitations": {
+    "graphEdgesAreLexicalTextNotExecutedCalls": true,
+    "metadataBeforeWhereIsNotFormalAuthorizationProof": true,
+    "previewMotionNoKnownHelperDoesNotProveVulnerability": true,
+    "doNotConfuseR111PriorityWithChronology": true,
+    "doNotClaimSignedQaFromLocalPgFixture": true
+  },
+  "unresolvedSecurity": {
+    "fogStatusIssue": 212,
+    "revokedSheetOwnerIssue": 220,
+    "storageBearerIssue": 231,
+    "inviteRejoinIssue": 223,
+    "membershipTruncateIssue": 229,
+    "authenticatedTruncateIssue": 306
+  },
+  "unapprovedClaims": {
+    "metadataOnlyDisplaySemanticsEstablished": false,
+    "all12HelperBooleanConditionsProven": false,
+    "removedOwnerInventoryReadDeniedOnOriginal": false,
+    "fogStatusOracleRepairedOnOriginal": false,
+    "all67PrivilegedFunctionCallGraphsApproved": false,
+    "all83HistoricalPrivateSqlSemanticsApproved": false,
+    "realSignedDmP1P2RevokedOutsiderQaPassed": false,
+    "hostedQaSqlInstallAuthorized": false,
+    "productionDeploymentAuthorized": false
+  },
+  "restrictions": {
+    "originalOnlyPgCatalogSelect": true,
+    "onlySyntheticPg17RolesMetadata": true,
+    "noPrivateOriginalSqlFunctionBodiesOrDocketExported": true,
+    "noOriginalOrQaSqlWrites": true,
+    "noApplicationEdgeOrActiveMigrationEdits": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  },
+  "nextGate": "Prioritize exact source semantics of original current fog status and removed sheet owner controls, and expand remaining 55+ callable privileged RPC graph reviews. No signed QA, SQL installation or production release until separately authorized."
+}
