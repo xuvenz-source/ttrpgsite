@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-147",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 254,
+  "parentSha": "1a71cb8fd6542c5a362d3a6c6a123c4d790026b8",
+  "priorCandidates": [
+    {
+      "pr": 219,
+      "issue": 220,
+      "kind": "original-character-sheet-owner-membership-guard",
+      "path": "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql",
+      "gitBlob": "380f7fd4fcd75fc17c76af8b851d86c068616420"
+    },
+    {
+      "pr": 226,
+      "issue": 223,
+      "kind": "tombstone-guard-plus-dm-removal-and-reinstatement",
+      "path": "staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql",
+      "gitBlob": "f7bda6b79f7b9ac4a3323142c27d54a44436d5a8"
+    },
+    {
+      "pr": 228,
+      "issue": 229,
+      "kind": "membership-identity-update-guard-and-dm-revoked-roster",
+      "path": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
+      "gitBlob": "cc6c778783fc387203dee88cdb25517ba0050bcb"
+    },
+    {
+      "pr": 230,
+      "issue": 231,
+      "kind": "dormant-member-sentinel",
+      "path": "staging/world-v2-b10-r18-123-access-revocation-guard/CampaignAccessSentinel.js",
+      "gitBlob": "984f6d1b1b2653186d8da6d8856a38dadfeac548"
+    },
+    {
+      "pr": 230,
+      "issue": 231,
+      "kind": "dormant-revocation-teardown",
+      "path": "staging/world-v2-b10-r18-123-access-revocation-guard/CampaignRevocationTeardown.js",
+      "gitBlob": "e98702ec68ea88a65c3a0e362d0dc6e43ac8bc78"
+    }
+  ],
+  "supportingDraftPrs": [
+    222,
+    225,
+    227,
+    254
+  ],
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "gaps": {
+    "originalRevokedOwnerRPCStillActive": true,
+    "originalUnchangedInviteRejoinStillActive": true,
+    "serviceRoleTruncateStillPermitted": true,
+    "privilegedRoleOnlyUpdateNotFullyReviewed": true,
+    "oldRealtimeSocketCutoffUnproved": true,
+    "existingStorageBearerURLRevocationUnproved": true,
+    "original67PrivilegedRPCReviewIncomplete": true
+  },
+  "originalMigrations": 83,
+  "qaMigrations": 0,
+  "qaPublicApplicationTables": 0,
+  "sourceOnly": true,
+  "noHostedWrites": true,
+  "noVersionedMigrations": true,
+  "noRuntimeSourceChanges": true,
+  "noNewGrants": true,
+  "noMerge": true,
+  "noDeployment": true,
+  "noPaidResources": true,
+  "currentOriginalFixesInstalled": false,
+  "allCandidateBehaviorsSignedQaVerified": false,
+  "r127HumanReleaseApproved": false,
+  "nextStep": "R18-148: separately prototype/test fail-closed TRUNCATE and privileged membership-role mutation guard with disposable PG17 before any hosted grant change"
+}
