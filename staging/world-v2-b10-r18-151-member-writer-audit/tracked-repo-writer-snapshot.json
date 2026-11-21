@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-151",
+  "scope": "read-only github tree and blobs at frozen R149 commit",
+  "repo": "xuvenz-source/ttrpgsite",
+  "sha": "1fb7ad406ca421b51eaaa24656a0a5b6ea6550b5",
+  "gitTreeEntries": 1368,
+  "gitTreeTruncated": false,
+  "scannedScriptsAndEdgeTextFiles": 56,
+  "categoryBreakdown": {
+    "scripts": 51,
+    "supabaseEdge": 5
+  },
+  "browserRuntimeAlreadyInspectedUnderR121": true,
+  "currentRuntimeSourceRefunchangedByR148ToR151": true,
+  "reverifiedRuntimeReadOnlyFiles": [
+    {
+      "path": "src/TabletopApp.jsx",
+      "campaignMembersReferences": 3,
+      "directMembershipMutations": 0
+    },
+    {
+      "path": "src/PersonalTokenLibrary.jsx",
+      "campaignMembersReferences": 1,
+      "directMembershipMutations": 0
+    }
+  ],
+  "scriptEdgeMembershipTextFiles": [
+    "scripts/release/inspect-world-v2-r18-118-private-invitations.mjs",
+    "scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs"
+  ],
+  "scriptEdgeDirectSupabaseMemberMutationMatches": 0,
+  "scriptEdgeServiceRoleOrSecretMarkers": [
+    "scripts/release/review-world-v2-r18-108-private-history.mjs",
+    "scripts/release/run-world-v2-r18-119-private-invite-fixture.mjs",
+    "scripts/release/triage-world-v2-r18-109-private-risk.mjs",
+    "supabase/functions/username-register/index.ts",
+    "supabase/functions/username-update/index.ts"
+  ],
+  "scanPattern": "literal campaign_members, campaignMembers, dm_remove/reinstate and direct Supabase .from('campaign_members').insert/upsert/delete/update within 250 chars",
+  "externalIntegrationsCovered": false,
+  "privateHistorical83BodiesSemanticReviewed": false,
+  "trustedServiceRoleDashboardManualWritesCovered": false,
+  "dynamicSqlOrIndirectWritesExcluded": true,
+  "sourceSnapshotIsNotAttestationOfDeployedEdgeFunctions": true,
+  "productionSecurityRiskCleared": false
+}

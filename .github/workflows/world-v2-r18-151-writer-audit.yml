@@ -1,0 +1,29 @@
+name: World V2 R18-151 tracked writer path audit
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-151-*'
+    paths:
+      - '.github/workflows/world-v2-r18-151-writer-audit.yml'
+      - 'staging/world-v2-b10-r18-151-member-writer-audit/**'
+      - 'tests/world-v2-r18-151-*'
+      - 'docs/testing/world-v2-r18-151-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-150-*'
+permissions:
+  contents: read
+jobs:
+  audited-writer-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Protect pinned browser runtime and versioned migration history
+        run: git diff --exit-code f64183ad583e1712fb96c249b3e790995df77754 HEAD -- src/ supabase/migrations/
+      - name: Reject false claim that external privilege path is proven safe
+        run: node --test tests/world-v2-r18-151-writer-audit.test.mjs
+      - name: Hosted permission and deployment still blocked
+        run: echo 'R151 only source evidence. Operator private admin and 83-history audit still required. NO_GO.'
