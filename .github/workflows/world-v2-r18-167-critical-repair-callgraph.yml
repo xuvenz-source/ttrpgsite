@@ -1,0 +1,22 @@
+name: World V2 R18-167 critical repair callgraph source-only guard
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-167-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-166-*'
+permissions:
+  contents: read
+jobs:
+  source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No original or application source changes
+        run: git diff --exit-code cdccf275c7347b5eee6a3ccb2db812ef99c118d9 HEAD -- src/ supabase/migrations/
+      - name: Validate source-only repair pins and signed QA NO_GO
+        run: node --test tests/world-v2-r18-167-critical-repair-callgraph.test.mjs
