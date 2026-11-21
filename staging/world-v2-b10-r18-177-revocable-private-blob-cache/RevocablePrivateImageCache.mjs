@@ -41,7 +41,11 @@ export function createRevocablePrivateImageCache({loadBlob,createUrl,revokeUrl,m
   function authorize({userId,campaignId,freshProof}={}){
     if(phase==='disposed'||!valid(userId)||!valid(campaignId)||freshProof!==true)
       return false;
-    // No reuse across campaign switches, accounts or membership epochs.
+    // A routine fresh membership check for the SAME authorized context must
+    // not blank and re-fetch every token image (the previous lag regression).
+    if(phase==='authorized'&&context?.userId===userId&&context?.campaignId===campaignId)
+      return true;
+    // Account/campaign switches and post-revocation entry start a fresh epoch.
     purge();context=Object.freeze({userId,campaignId});phase='authorized';
     return true;
   }
