@@ -1,6 +1,14 @@
 -- R18-157 fictional PG17 only. No original/storage.objects SQL.
 -- Uses fake buckets to model independent PERMISSIVE SELECT policies.
 BEGIN;
+-- The R120 scratch campaigns table starts with RLS enabled but no
+-- authenticated SELECT grant. Model an explicit, member-scoped read policy;
+-- this changes ONLY the disposable PG17 fixture, never original Supabase.
+GRANT SELECT ON public.campaigns TO authenticated;
+CREATE POLICY r157_campaign_member_select ON public.campaigns
+ FOR SELECT TO authenticated
+ USING (public.synthetic_is_campaign_member(id));
+
 ALTER TABLE forge_test.file_objects
  ADD COLUMN bucket_id text NOT NULL DEFAULT 'MAPS',
  ADD COLUMN owner_id uuid,
