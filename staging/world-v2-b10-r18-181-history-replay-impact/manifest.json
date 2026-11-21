@@ -204,15 +204,33 @@
   "dynamicFunctionRewrite": {
     "version": "20261106074754",
     "migrationName": "20261106_private_player_maps",
-    "targetFunction": "public.can_view_campaign_map",
-    "dependsOnPgGetFunctiondef": true,
-    "transformsExistingFunctionSource": true,
-    "executesRewrittenDefinition": true,
-    "usesCatalogTargetLookup": true,
-    "originalInputDefinitionVersionAttested": false,
-    "exactPostRewriteFunctionSemanticsApproved": false,
+    "mapAuthorizationFunctionDefinedStatically": "public.can_view_campaign_map(uuid,uuid)",
+    "rewriteMechanism": "DO_BLOCK_PG_GET_FUNCTIONDEF_STRING_REPLACE_EXECUTE",
+    "targetFunctions": [
+      {
+        "name": "public.get_token_monitor_values",
+        "signature": "(p_map uuid)",
+        "oldCheck": "campaign_active_map_match",
+        "newCheck": "can_view_campaign_map(campaign_id,map_id)",
+        "matchRequired": true,
+        "exactPriorBodyVerified": false,
+        "signedRegressionPassed": false
+      },
+      {
+        "name": "public.post_token_reference",
+        "signature": "(p_token uuid,p_code text)",
+        "oldCheck": "owned_token",
+        "newCheck": "owned_token_AND_can_view_campaign_map(token_campaign,token_map)",
+        "matchRequired": true,
+        "exactPriorBodyVerified": false,
+        "signedRegressionPassed": false
+      }
+    ],
+    "sourcePatternChecked": true,
+    "exactChronologicalInputDefinitionsProven": false,
+    "allRewrittenRpcsApproved": false,
     "isolatedReplayCompatibilityVerified": false,
-    "risk": "DYNAMIC_REDEFINITION_DEPENDS_ON_CHRONOLOGICAL_PRIOR_FUNCTION_BODY",
+    "risk": "EXACT_PREVIOUS_MONITOR_AND_REFERENCE_FUNCTION_DEFINITIONS_REQUIRED",
     "releaseGate": "DO_NOT_EXPOSE_QA_API_DURING_HISTORY_REPLAY"
   }
 }
