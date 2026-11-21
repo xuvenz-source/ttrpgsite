@@ -1,0 +1,24 @@
+name: World V2 R18-185 sanitized receipt NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-185-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-184-*'
+permissions:
+  contents: read
+jobs:
+  offline-receipt-reconciliation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Forbid runtime and hosted migration changes
+        run: git diff --exit-code 2aa70db77b7f4eaa42758377bdb5d2be88cbb9d5 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Fictional receipt adversarial gate tests
+        run: python3 tests/world-v2-r18-185-chronology-receipt.test.py
+      - name: Python syntax check, no private archive needed
+        run: python3 -m py_compile scripts/release/r185_reconcile_private_chronology_receipt.py
