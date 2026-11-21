@@ -37,7 +37,8 @@ OPERATIONS={
 BLOBS={
  "scripts/release/r204_readonly_map_helper_or_depth.sql":"5d4b3dae721d92f18d1556b310abf60bda2e9d01",
  "tests/world-v2-r18-204-postgres/run.sh":"8b812fdd3bceb6f29cd822d5e5c0b5eea870db1a",
- "tests/world-v2-r18-203-postgres/run.sh":"eea9a3ddce8a0f4554be87bd352425e710426bc4"
+ "tests/world-v2-r18-203-postgres/run.sh":"eea9a3ddce8a0f4554be87bd352425e710426bc4",
+ "scripts/release/r204_readonly_storage_operation_markers.sql":"7aa8b9d7c092c87ab04310ab1a8c245a188560cf"
 }
 TRUE_CLAIMS=("liveMapHelperOrLexicallyNestedDeeperThanMembershipReference",)
 FALSE_CLAIMS=(
