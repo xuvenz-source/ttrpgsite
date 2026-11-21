@@ -1,0 +1,24 @@
+name: World V2 R18-186 private function statement audit NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-186-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-185-*'
+permissions:
+  contents: read
+jobs:
+  private-function-synthetic-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject source-runtime and versioned migration changes
+        run: git diff --exit-code dd61712f5784c4f837c801cda3dfafb0938fef0a HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Fictional 83-file SHA and per-function risk marker tests only
+        run: python3 tests/world-v2-r18-186-private-function-inventory.test.py
+      - name: Syntax verify without owner-private archive
+        run: python3 -m py_compile scripts/release/r186_private_privileged_statement_inventory.py
