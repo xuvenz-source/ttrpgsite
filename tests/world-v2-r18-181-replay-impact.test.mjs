@@ -14,14 +14,17 @@ test('R181 exact R180 parent, no hosted writes or semantic signoff',()=>{
 });
 test('83 original registered SQL sources, top-level categories and unresolved DO blocks',()=>{
  assert.equal(m.exactOriginalMigrationRecordCount,83);
- assert.equal(m.topLevelStatements,943);
+ assert.equal(m.lexicalSegments,943);
+ assert.equal(m.topLevelStatements,937);
+ assert.equal(m.nonSqlTrailingCommentSegments,6);
  assert.equal(m.topLevel.deleteCount,0);assert.equal(m.topLevel.truncateCount,0);
  assert.equal(m.topLevel.updateCount,4);assert.equal(m.topLevel.insertCount,3);
  assert.equal(m.topLevel.dropCount,40);assert.equal(m.topLevel.dropPolicyCount,23);
  assert.equal(m.topLevel.dropTriggerCount,17);assert.equal(m.topLevel.dropTableCount,0);
  assert.equal(m.topLevel.doBlockCount,12);
  assert.equal(m.topLevel.grantCount,111);assert.equal(m.topLevel.revokeCount,190);
- assert.equal(m.unknownLeadingStatementParses,8);
+ assert.equal(m.unknownLeadingStatementParses,0);
+ assert.equal(Object.values(m.recognizedHeadDistribution).reduce((a,b)=>a+b,0),937);
  assert.equal(m.doBlocks.reduce((n,x)=>n+x.statements,0),12);
  assert.ok(m.doBlocks.every(x=>x.fullySemanticReviewed===false));
 });
