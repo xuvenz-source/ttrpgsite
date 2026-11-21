@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-157",
+  "date": "2026-11-21",
+  "parentPr": 264,
+  "parentSha": "bbfc6a4caf20653ed96bb3217ddd1f5d1a8f6d03",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "simulationOnly": true,
+  "receivedR156Report": {
+    "sha256": "78e27c1172338ae77f6b75d2c32be33f023b7c488de8b50f88e2575e263332b9",
+    "verifiedFiles": 83,
+    "reviewIndex": 29,
+    "allExpectedBindingMarkersPresent": true,
+    "policyCount": 1,
+    "policySemanticallyApproved": false,
+    "actualSignedQa": false,
+    "releaseAuthorized": false
+  },
+  "liveReadOnlyOriginal": {
+    "storageSelectPolicies": 3,
+    "privateBuckets": 3,
+    "selectBucketGroups": 3,
+    "allSelectBranchesHaveBucketPredicate": true,
+    "selectBranchGroupsDisjoint": true,
+    "selectBranches": [
+      {
+        "index": 1,
+        "category": "campaign-assets-and-tokens",
+        "membershipCheck": true,
+        "dmBranch": true,
+        "ownerBranch": true,
+        "tokenSightHelper": true
+      },
+      {
+        "index": 2,
+        "category": "map-images",
+        "mapRecordExists": true,
+        "mapPathBinding": true,
+        "canViewCampaignMap": true
+      },
+      {
+        "index": 3,
+        "category": "personal-account-files",
+        "directUid": true,
+        "folderRestriction": true
+      }
+    ],
+    "canObserveMapToken": {
+      "securityDefiner": true,
+      "ownerPostgres": true,
+      "searchPathBound": true,
+      "authCallable": true,
+      "anonCallable": false,
+      "checksAuthUid": true,
+      "checksMapVisibility": true,
+      "checksTokenVisible": true,
+      "hasDmOverride": true,
+      "hasOwnerOverrideForVisibleTokens": true,
+      "hasFogSightQuery": true
+    }
+  },
+  "privateOriginalPolicyTextExported": false,
+  "privateFunctionTextExported": false,
+  "originalUserRowsRead": false,
+  "originalHistoricalPolicyChronologicalParityProved": false,
+  "allOriginalStoragePoliciesSemanticallyApproved": false,
+  "original83SecurityReviewed": false,
+  "original67SecurityDefinerPathsReviewed": false,
+  "realSignedMultiActorQaDone": false,
+  "issuedSignedUrlsRevoked": false,
+  "joinedRealtimeSocketsRevoked": false,
+  "r127OwnerReleaseApproved": false,
+  "productionReleaseAuthorized": false,
+  "noHostedSqlWrites": true,
+  "noMigrationChanges": true,
+  "noRuntimeChanges": true,
+  "noBrowserGrants": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "openSecurityIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "manualActionNeededNow": false,
+  "nextStep": "R18-158 source-only check other role/privileged policy paths, then plan controlled signed QA after history gating"
+}
