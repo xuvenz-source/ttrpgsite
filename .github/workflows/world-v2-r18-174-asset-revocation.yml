@@ -1,0 +1,22 @@
+name: World V2 R18-174 signed asset revocation release gate
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-174-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-173-*'
+permissions:
+  contents: read
+jobs:
+  asset-security-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Never alter current runtime, migration history or Storage
+        run: git diff --exit-code 486a9224eeb90778421b65dfc8538fdf92977acf HEAD -- src/ supabase/migrations/
+      - name: Validate exact current client and future server revocation NO_GO
+        run: node --test tests/world-v2-r18-174-private-asset-revocation.test.mjs
