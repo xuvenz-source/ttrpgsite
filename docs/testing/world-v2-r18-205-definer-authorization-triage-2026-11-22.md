@@ -30,7 +30,7 @@ Seven missing-direct-identity functions plus **one separate metadata reader**:
 
 | Current public RPC name | Direct-identity or delegation indicator | Review priority |
 |---|---|---|
-| `get_campaign_sheet_inventory` | No direct `auth.uid`/membership/helper word; write-verb word | Verify exact wrapper/source and authorization chain; cannot infer a write |
+| `get_campaign_sheet_inventory` | No direct `auth.uid`/membership word; **delegates to `can_edit_campaign_sheet_inventory`, which delegates to `can_edit_campaign_sheet`**; write-verb word | **Existing #220 revoked-owner chain**, not an unguarded standalone getter. Existing R115 source-exact GET test covers this path. |
 | `patch_campaign_sheet_noninventory` | Calls **`can_edit_campaign_sheet`**, whose original revoked owner gap #220 is source-exact reproduced | **Existing confirmed blocker**; re-run R115 in disposable PG17 |
 | `is_map_fog_published` | No direct `auth.uid`/membership; EXISTS marker | **Existing confirmed fog-status metadata oracle #212**, re-run R105 in disposable PG17 |
 | `publish_map_environment` | Calls `is_campaign_dm` but no direct `auth.uid` | Inspect delegated DM branch, public function args and relevant RLS |
@@ -38,6 +38,8 @@ Seven missing-direct-identity functions plus **one separate metadata reader**:
 | `get_npc_token_values` | Delegates to `is_campaign_dm` | Same delegated DM and campaign scoping requirements |
 | `preview_map_motion` | Neither direct `auth.uid` nor known helper marker; 110-byte body | Inspect alternate helper/wrapper and actual caller privileges |
 | `get_campaign_account_names` | Direct `auth.uid` and membership markers; **user-editable Auth metadata** marker; read-only lexical body | Metadata may be **display name**, not authorization. Verify no authorization decisions depend on editable user claims; do not flag a confirmed privilege escalation |
+
+**Additional source reconciliation:** The checked-in, source-exact `supabase/migrations/20261107095350_campaign_sheet_inventory_collaboration.sql` defines `get_campaign_sheet_inventory` as a definer wrapper that calls the internal `can_edit_campaign_sheet_inventory`, which in turn calls `can_edit_campaign_sheet`. An independent original project read-only `pg_proc` check confirmed the internal inventory guard is one SQL SECURITY DEFINER function, **427 bytes**, SHA-256 `169d6e5ec9fb79a760bc25ab28a3937f4c76cc1a5233c997b673b366cd8176e4`, not directly callable by `authenticated` or `anon`, with a direct call to `can_edit_campaign_sheet`, no direct identity/membership marker. Consequently the getter's missing direct identity is a **delegated authorization chain** and the known R115 revoked-owner fixture already covers its GET outcome. This still does not mean the guard is installed or hosted safe. The original helper source body and signatures were not exported from hosted Supabase.
 
 All eight original current `pg_proc.prosrc` SHA-256/UTF-8 lengths and booleans are pinned in the **source-only manifest**. These are **existing public routine names**, not historical private migration filenames or SQL bodies. Exactly one of the eight has a user-metadata marker; this alone does **not** mean it authorizes access with editable metadata.
 
