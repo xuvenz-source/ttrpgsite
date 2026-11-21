@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-148",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 255,
+  "parentSha": "471a7b2349e98477909ab67143e272f98f9ef548",
+  "originalReadOnlyGrantAttestation": {
+    "projectName": "TTRPG Site",
+    "tableOwner": "postgres",
+    "serviceRoleHasTruncate": true,
+    "serviceRoleHasInsert": true,
+    "serviceRoleHasUpdate": true,
+    "serviceRoleHasDelete": true,
+    "serviceRoleBypassesRls": true,
+    "serviceRoleParentRoleMemberships": [],
+    "campaignMembersCustomTriggers": 0
+  },
+  "model": "disposable-fictional-postgresql17",
+  "sourceOnly": true,
+  "unappliedCandidateOnly": true,
+  "candidateGuards": [
+    "REVOKE_TRUNCATE_SERVICE_ROLE",
+    "BEFORE_TRUNCATE_DENY",
+    "BEFORE_UPDATE_ROLE_CHANGE_DENY"
+  ],
+  "inheritedCandidates": [
+    "R120_R121_TOMBSTONE",
+    "R122_IDENTITY_UPDATE_GUARD"
+  ],
+  "negativeControl": "PRIVILEGED_NEW_DM_INSERT_STILL_POSSIBLE_FOR_UNREVOKED_IDENTITY",
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "remainingGaps": [
+    "privileged INSERT granting DM to previously unseen account",
+    "owner can disable triggers",
+    "original 67 privileged functions unaudited",
+    "old joined Realtime sockets",
+    "preissued 3600-second Storage URLs",
+    "83 migration semantic review",
+    "signed QA and free-tier rollout timing",
+    "R127 human approval"
+  ],
+  "originalMigrations": 83,
+  "qaMigrations": 0,
+  "qaPublicApplicationTables": 0,
+  "newRuntimeSourceEdits": 0,
+  "newVersionedMigrations": 0,
+  "newExposedApiGrants": 0,
+  "hostedSqlMutations": 0,
+  "hostedDeployments": 0,
+  "merges": 0,
+  "paidResources": 0,
+  "exactSourceOriginalSchemaReplayed": false,
+  "realSignedActorsTested": false,
+  "realServiceRoleWorkflowsAudited": false,
+  "productionReleaseAuthorized": false,
+  "nextStep": "R18-149: inventory privileged DM grant/admin paths and design signed-role contract"
+}
