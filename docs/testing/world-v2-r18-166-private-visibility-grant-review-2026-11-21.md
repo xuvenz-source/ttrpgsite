@@ -17,7 +17,7 @@ Original PostgreSQL ACL inspection:
 - `forge_world_v2`: **24** SECURITY DEFINER functions; zero direct authenticated/anonymous EXECUTE grants and **no** schema USAGE for either ordinary role.
 - `forge_visibility`: **23** SECURITY DEFINER functions; **11** functions retain the default public EXECUTE ACL (including **7** SECURITY DEFINER); both ordinary roles lack schema USAGE. The current schema boundary prevents direct invocation by these roles, so **no current exploitable API exposure is claimed**. However, a future `GRANT USAGE`, exposed schema change, or newly privileged role could open access unexpectedly. Review a forward hardening migration to REVOKE explicit EXECUTE from PUBLIC/anon/authenticated on internal-only helpers after checking function dependencies. Do not grant schema USAGE to fix app permission issues.
 
-This risk is not interchangeable with existing issue #212's current exposed fog metadata oracle or issue #220's revoked character-owner vulnerability, both of which remain current release blockers.
+This latent risk is tracked separately in [hardening issue #275](https://github.com/xuvenz-source/ttrpgsite/issues/275).\n\nThis risk is not interchangeable with existing issue #212's current exposed fog metadata oracle or issue #220's revoked character-owner vulnerability, both of which remain current release blockers.
 
 ## Fresh Supabase security advisor output
 
