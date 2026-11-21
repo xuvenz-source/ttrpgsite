@@ -1,0 +1,264 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-160",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 267,
+  "parentSha": "ddf48efc2a53a26aeab033799e4f52898fbb3343",
+  "sourceOnly": true,
+  "reviewObjective": "Reconcile existing fixes; do not create competing SQL, migrations or deployed code.",
+  "candidateSources": [
+    {
+      "key": "revoked_sheet_owner",
+      "issue": 220,
+      "pr": 219,
+      "path": "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql",
+      "gitBlobSha": "380f7fd4fcd75fc17c76af8b851d86c068616420",
+      "status": "SYNTHETIC_PG17_PASS_UNAPPLIED",
+      "mustPrecedeSignedQa": true
+    },
+    {
+      "key": "fog_metadata_oracle",
+      "issue": 212,
+      "pr": 206,
+      "path": "staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql",
+      "gitBlobSha": "c84d7cf8b0958621f11ec273cb36361e2501a77f",
+      "status": "SYNTHETIC_PG17_PASS_UNAPPLIED",
+      "mustPrecedeSignedQa": true
+    },
+    {
+      "key": "removed_player_invitation",
+      "issue": 223,
+      "pr": 226,
+      "path": "staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql",
+      "gitBlobSha": "f7bda6b79f7b9ac4a3323142c27d54a44436d5a8",
+      "status": "SCRATCH_PROTOTYPE_INCOMPLETE",
+      "mustPrecedeSignedQa": true
+    },
+    {
+      "key": "membership_privileged_writer",
+      "issue": 229,
+      "pr": 228,
+      "path": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
+      "gitBlobSha": "cc6c778783fc387203dee88cdb25517ba0050bcb",
+      "status": "SCRATCH_PROTOTYPE_TRUNCATE_GAP",
+      "mustPrecedeSignedQa": true
+    }
+  ],
+  "sharedPrerequisites": [
+    {
+      "id": "H01",
+      "requirement": "Independent private semantic review and provenance attestation of all 83 original migration bodies",
+      "passed": false,
+      "requiresTrustedOperator": true
+    },
+    {
+      "id": "H02",
+      "requirement": "Independent security review of all 67 authenticated-callable definer chains and live grants/ACL",
+      "passed": false,
+      "requiresTrustedOperator": true
+    },
+    {
+      "id": "H03",
+      "requirement": "Product decision: DM removal blocks reuse of old generic invites; distinguish voluntary leave",
+      "passed": false,
+      "requiresProductApproval": true
+    },
+    {
+      "id": "H04",
+      "requirement": "Review service_role/admin TRUNCATE, membership key and role UPDATE, Auth cascade and all privileged writers",
+      "passed": false,
+      "requiresTrustedOperator": true
+    },
+    {
+      "id": "H05",
+      "requirement": "Review and approve server-side issued URL revocation strategy within free-tier limits",
+      "passed": false,
+      "requiresSecurityApproval": true
+    },
+    {
+      "id": "H06",
+      "requirement": "Independent QA-only target attestation and reviewed historical dependency replay",
+      "passed": false,
+      "requiresTrustedOperator": true
+    },
+    {
+      "id": "H07",
+      "requirement": "Separate explicit authorization for any QA-only schema install and forward-only migration",
+      "passed": false,
+      "requiresOperatorApproval": true
+    },
+    {
+      "id": "H08",
+      "requirement": "Deploy QA-only exact audited migration and ensure safe forward recovery (not vulnerable rollback)",
+      "passed": false,
+      "requiresOperatorApproval": true
+    },
+    {
+      "id": "H09",
+      "requirement": "All real signed DM/P1/P2/outsider negative and positive acceptance scenarios passed",
+      "passed": false,
+      "requiresSignedQa": true
+    },
+    {
+      "id": "H10",
+      "requirement": "Separate explicit production release approval under R127",
+      "passed": false,
+      "requiresOwnerApproval": true
+    }
+  ],
+  "signedAcceptanceMatrix": [
+    {
+      "id": "S01",
+      "actor": "DM",
+      "operation": "read_own_campaign_fog",
+      "expected": "allow_or_off",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S02",
+      "actor": "P1",
+      "operation": "read_assigned_map_fog",
+      "expected": "allow_or_off",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S03",
+      "actor": "P2",
+      "operation": "read_unassigned_map_fog",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S04",
+      "actor": "OUTSIDER",
+      "operation": "read_foreign_map_fog",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S05",
+      "actor": "REVOKED_P1",
+      "operation": "sheet_inventory_get_owned_character",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S06",
+      "actor": "REVOKED_P1",
+      "operation": "sheet_patch_owned_character",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S07",
+      "actor": "REVOKED_P1",
+      "operation": "sheet_claim_and_mutate",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S08",
+      "actor": "ACTIVE_P1",
+      "operation": "sheet_owner_get_patch_claim",
+      "expected": "allow",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S09",
+      "actor": "DM",
+      "operation": "sheet_npc_and_character_edit",
+      "expected": "allow",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S10",
+      "actor": "REVOKED_P1",
+      "operation": "join_using_old_invite",
+      "expected": "deny_until_dm_reinstatement",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S11",
+      "actor": "DM",
+      "operation": "explicit_reinstatement_then_member_access",
+      "expected": "allow_after_authorized_reinstatement",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S12",
+      "actor": "OUTSIDER",
+      "operation": "call_dm_remove_or_reinstate",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S13",
+      "actor": "P2",
+      "operation": "read_foreign_storage_map_and_art",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S14",
+      "actor": "REVOKED_P1",
+      "operation": "issue_new_signed_asset_url",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S15",
+      "actor": "REVOKED_P1",
+      "operation": "already_issued_signed_bearer_url",
+      "expected": "mitigation_verified_not_just_client_cache",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S16",
+      "actor": "REVOKED_P1",
+      "operation": "stale_realtime_and_popup_subscription",
+      "expected": "deny_and_evict",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S17",
+      "actor": "PRIVILEGED_WRITER",
+      "operation": "membership_truncate_and_key_update",
+      "expected": "audited_no_revocation_bypass",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "S18",
+      "actor": "DM_P1_P2_OUTSIDER",
+      "operation": "world_motion_and_visibility",
+      "expected": "role_and_map_isolated",
+      "result": "NOT_RUN"
+    }
+  ],
+  "negativeReleaseClaims": {
+    "history83IndependentlyApproved": false,
+    "remainingDefinerChainsFullyReviewed": false,
+    "qaHistoricalSchemaInstalled": false,
+    "candidateSqlAppliedToOriginal": false,
+    "candidateSqlAppliedToQa": false,
+    "realtimeRevocationProven": false,
+    "issuedSignedUrlsRevoked": false,
+    "realSignedAccountTestsPassed": false,
+    "productionReleaseAuthorized": false
+  },
+  "invariants": [
+    "A revoked character owner must fail all privileged sheet read/write/lease operations regardless of character.user_id.",
+    "A map fog status response must not disclose map visibility to a signed nonmember.",
+    "DM removal must not silently rejoin using an unchanged generic invite; voluntary leaving is a distinct product action.",
+    "No direct or privileged membership mutation may silently bypass the revocation ledger, including TRUNCATE.",
+    "Client cache clearing and unmount ordering never prove revocation of an already issued signed bearer URL.",
+    "All approval gates remain NO_GO until independently proved by authorized signed QA and reviewer evidence."
+  ],
+  "noOriginalOrQaWrites": true,
+  "noVersionedMigrations": true,
+  "noRuntimeSourceChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "manualActionNeededForNextReleaseGate": true
+}
