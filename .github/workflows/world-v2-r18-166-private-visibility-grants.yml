@@ -1,0 +1,22 @@
+name: World V2 R18-166 private visibility chain and grant review
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-166-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-165-*'
+permissions:
+  contents: read
+jobs:
+  private-gate-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Ensure no original migrations or gameplay runtime changes
+        run: git diff --exit-code 1427f5bc5b0451491f9a5b972b0b7b62ef4bd68e HEAD -- src/ supabase/migrations/
+      - name: Pin source-only authorization and private grant NO_GO
+        run: node --test tests/world-v2-r18-166-private-visibility-grants.test.mjs
