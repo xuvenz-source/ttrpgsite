@@ -1,0 +1,57 @@
+name: World V2 R18-209 live motion mid-session revocation NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-209-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-208-*'
+permissions:
+  contents: read
+jobs:
+  original-world-motion-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject application code, active migrations, Edge and production config changes
+        run: git diff --exit-code 98947a532e199b9ecf40f09f2a2f310a22f3b037 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Pin current original five World Motion V2 phase/helper SQL source hashes and gate offsets
+        run: python3 scripts/release/r209_validate_world_motion_revocation.py
+      - name: Test all source markers, no fake signed QA, no private SQL leak and no unauthorized GO
+        run: python3 tests/world-v2-r18-209-world-motion-revocation.test.py
+      - name: Compile release validation code
+        run: python3 -m py_compile scripts/release/r209_validate_world_motion_revocation.py
+
+  synthetic-revocation-between-advance-and-commit:
+    needs: original-world-motion-source-only
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r209_disposable_only
+          POSTGRES_DB: world_v2_r18_209
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_209"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R209_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_209
+      PGUSER: postgres
+      PGPASSWORD: r209_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove fictional revoked actor cannot commit but may cancel own pending session
+        shell: bash
+        run: bash tests/world-v2-r18-209-postgres/run.sh
