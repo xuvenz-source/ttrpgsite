@@ -1,0 +1,22 @@
+name: World V2 R18-170 high-risk history marker source guard
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-170-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-169-*'
+permissions:
+  contents: read
+jobs:
+  history-marker-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Check no app or original migration changes
+        run: git diff --exit-code e867a8d48293ac3903036d946f7b160b368e8ec8 HEAD -- src/ supabase/migrations/
+      - name: Keep historical semantic review and release NO_GO
+        run: node --test tests/world-v2-r18-170-history-marker-audit.test.mjs
