@@ -1,0 +1,22 @@
+name: World V2 R18-178 storage path policy parity NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-178-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-177-*'
+permissions:
+  contents: read
+jobs:
+  storage-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject active code or migration edits
+        run: git diff --exit-code c51ca2d792d92557354256117cbe8b1969777e69 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Test real resolver against source-pattern limited private Storage RLS
+        run: node --test tests/world-v2-r18-178-storage-policy-parity.test.mjs

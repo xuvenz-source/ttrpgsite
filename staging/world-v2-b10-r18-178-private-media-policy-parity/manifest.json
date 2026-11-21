@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-178",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 286,
+  "parentSha": "c51ca2d792d92557354256117cbe8b1969777e69",
+  "sourceOnly": true,
+  "originalReadOnlyStoragePolicySource": {
+    "bucketCount": 3,
+    "privateBuckets": 3,
+    "objectSelectPolicies": 3,
+    "catalog": [
+      {
+        "policyName": "artwork only for dm owned characters and observed map tokens",
+        "predicateMd5": "affe04714d6ba424c9ae80f9e28b865c",
+        "bytes": 610,
+        "containsMapTokenImagePath": true,
+        "containsCharacterPortraitPath": true,
+        "containsCharacterTokenPath": true,
+        "containsNpcTemplatesTableReference": false,
+        "containsNpcFolderNameReference": false,
+        "containsTokenSightHelper": true
+      },
+      {
+        "policyName": "dm read maps",
+        "predicateMd5": "341629659e1beb77d69e0d77a4162fb7",
+        "bytes": 217,
+        "containsMapStoragePath": true,
+        "containsCurrentMapPermissionHelper": true
+      },
+      {
+        "policyName": "owner view private token images",
+        "predicateMd5": "e533213c334b6f5095bc4b763e23b3f0",
+        "bytes": 116,
+        "containsOwnerFolderCheck": true
+      }
+    ]
+  },
+  "finding": {
+    "category": "SOURCE_LEVEL_PRIVATE_MEDIA_READABILITY_MISMATCH_RISK",
+    "npcTemplatePortraitExplicitlyReferencedInArtworkSelectPolicy": false,
+    "npcTokenImageReferencedViaMapTokens": true,
+    "realSignedDMNpcPortraitDownloadTested": false,
+    "actualNpcTemplatePortraitDefinitivelyUnreachable": false,
+    "mustDenyInsteadOfPrivilegedStorageFallback": true,
+    "requiresProductPolicyDecisionBeforeQa": true,
+    "potentialSolutions": [
+      "Only expose NPC token art already linked to an observed map_tokens.image_path.",
+      "If DM NPC portraits are required, propose a narrow current-DM-plus-campaign+template-path bound Storage SELECT policy after original private 83 review.",
+      "Never add broad bucket-wide DM read or service_role media bypass to mask this issue."
+    ]
+  },
+  "synthetic": {
+    "contracts": [
+      "current map stored path",
+      "observed token image path",
+      "owner/DM character portrait path",
+      "personal owner folder path"
+    ],
+    "overlyPermissiveEarlierMockCorrected": true,
+    "realSupabaseStorageRequestExecuted": false,
+    "caseCount": 6
+  },
+  "pending": {
+    "full83HistoricalSqlSemanticsReviewed": false,
+    "all67PrivilegedFunctionsApproved": false,
+    "qaSchemaInstalled": false,
+    "realSignedUserTested": false,
+    "npcPortraitPolicyFixedOrApproved": false,
+    "issuedBearerUrlsRevoked": false,
+    "productionApproved": false
+  },
+  "noHostedWrites": true,
+  "noRuntimeSourceChange": true,
+  "noVersionedMigrationChange": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true
+}
