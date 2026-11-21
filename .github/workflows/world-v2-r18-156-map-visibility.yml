@@ -1,0 +1,60 @@
+name: World V2 R18-156 active map visibility and private binding check
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-156-*'
+    paths:
+      - '.github/workflows/world-v2-r18-156-map-visibility.yml'
+      - 'staging/world-v2-b10-r18-156-map-visibility-auth-contract/**'
+      - 'scripts/release/r156_private_map_binding.py'
+      - 'tests/world-v2-r18-156-*'
+      - 'docs/testing/world-v2-r18-156-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-155-*'
+permissions:
+  contents: read
+jobs:
+  source-only-security-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Verify zero runtime or versioned migrations changes
+        run: git diff --exit-code b7eff8a085db90c2eaaff718dcc1c71e94feba3c HEAD -- src/ supabase/migrations/
+      - name: Verify release remains NO_GO and structural evidence is not approval
+        run: node --test tests/world-v2-r18-156-source.test.mjs
+      - name: Synthetic local private index29 binding tests only
+        run: python3 tests/world-v2-r18-156-private-binding.test.py -v
+  fictional-pg17-active-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r156_disposable_only
+          POSTGRES_DB: world_v2_r18_156
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_156"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R156_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_156
+      PGPASSWORD: r156_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run fictional DM/player map access, override and revocation matrix
+        run: bash tests/world-v2-r18-156-postgres/run.sh
+      - name: Preserve operator-only review and hosted QA hold
+        run: echo 'R156 fictional PG17 only; no original private SQL, signed Supabase Auth or release approval. NO_GO.'
