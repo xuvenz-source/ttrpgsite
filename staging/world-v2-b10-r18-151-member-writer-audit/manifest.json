@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-151",
+  "date": "2026-11-21",
+  "parentPr": 258,
+  "parentSha": "f64183ad583e1712fb96c249b3e790995df77754",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "originalMigrations": 83,
+  "qaMigrations": 0,
+  "qaPublicApplicationTables": 0,
+  "countsCarriedFromR146": true,
+  "noOriginalOrQaSqlChanges": true,
+  "noRuntimeChanges": true,
+  "noMigrationChanges": true,
+  "noBrowserGrants": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "proposedR150GrantChangeApproved": false,
+  "realAdminWriterInventoryComplete": false,
+  "full67DefinerAuditDone": false,
+  "full83PrivateHistoryReviewDone": false,
+  "realSignedQaDone": false,
+  "humanR127ReleaseApproved": false,
+  "productionReleaseAuthorized": false,
+  "manualOperatorInputNeeded": [
+    "Independent private 83-migration semantic security review result; never paste SQL bodies or credentials",
+    "Confirm external service_role membership INSERT/admin writer call paths outside this tracked Git repository",
+    "Later approved signed DM/P1/P2/outsider/revoked/rejoined QA after separately authorized QA bootstrap and migration review"
+  ],
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "nextStep": "R18-152 cannot approve hosted migration/production without independent historical review, external privileged writer attestation and separate QA release authorization"
+}
