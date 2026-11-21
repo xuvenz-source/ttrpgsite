@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-204",
+  "date": "2026-11-22",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 313,
+    "head": "f70e1528921353dd5c211d23db833d353d652e55",
+    "focusedCiSuccess": 44907900317,
+    "generalCiSuccess": 44907900208,
+    "draft": true
+  },
+  "knownOriginalMapHelper": {
+    "overloads": 1,
+    "body_bytes": 448,
+    "body_sha256": "835829ca8012fe26ae5d224df749a1a8cde958136c322d10f3d3fa91a5f3f83c",
+    "security_definer": true,
+    "postgres_owned": true,
+    "authenticated_execute": true,
+    "anon_execute_denied": true,
+    "or_word_count": 1,
+    "and_word_count": 5,
+    "exists_word_count": 1,
+    "member_table_word_count": 1,
+    "player_maps_word_count": 1,
+    "auth_uid_call_count": 2,
+    "or_token_offset": 393,
+    "or_depth": 2,
+    "exists_depth": 0,
+    "member_depth": 1,
+    "player_maps_depth": 1,
+    "first_uid_depth": 0,
+    "second_uid_depth": 1,
+    "membership_reference_precedes_or": true,
+    "player_maps_reference_precedes_or": true,
+    "user_editable_metadata_absent": true
+  },
+  "liveStorageSelectOperationMarkers": {
+    "select_applicable_policy_count": 3,
+    "only_operation_helper_count": 0,
+    "any_operation_helper_count": 0,
+    "object_list_operation_marker_count": 0,
+    "authenticated_download_operation_marker_count": 0,
+    "signed_url_operation_marker_count": 0,
+    "foldername_marker_count": 1,
+    "filename_marker_count": 0,
+    "owner_id_marker_count": 1,
+    "auth_uid_marker_count": 2,
+    "map_helper_marker_count": 1,
+    "editable_metadata_marker_count": 0
+  },
+  "sourceGitBlobs": {
+    "scripts/release/r204_readonly_map_helper_or_depth.sql": "5d4b3dae721d92f18d1556b310abf60bda2e9d01",
+    "tests/world-v2-r18-204-postgres/run.sh": "8b812fdd3bceb6f29cd822d5e5c0b5eea870db1a",
+    "tests/world-v2-r18-203-postgres/run.sh": "eea9a3ddce8a0f4554be87bd352425e710426bc4"
+  },
+  "interpretation": {
+    "liveMapHelperOrLexicallyNestedDeeperThanMembershipReference": true,
+    "safelyProvedFullHelperBooleanAuthSemantics": false,
+    "sourceExactCurrentMapHelperExecutedInScratch": false,
+    "realRemovedCampaignMemberFreshStorageUrlDenied": false,
+    "existingSignedBearerLinksRevoked": false,
+    "all83PrivateHistoricalSqlSemanticsApproved": false,
+    "all67PrivilegedCallGraphsApproved": false,
+    "signedDmP1P2RemovedOutsiderQaPassed": false,
+    "qaSchemaSqlOrProductionReleaseAuthorized": false
+  },
+  "restrictions": {
+    "originalPgCatalogSelectOnly": true,
+    "onlyFictionalSqlRolesMapAssignmentsAndFixtures": true,
+    "noOriginalSqlPolicyNamesObjectPathsOrSignedTokensExported": true,
+    "noOriginalOrQaWrites": true,
+    "noAppSourceOrActiveMigrationChanges": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  },
+  "nextGate": "Privately inspect exact 448-byte current can_view_campaign_map SQL boolean branches and run independently authorized real signed DM/P1/P2/removed/outsider Storage and Realtime QA; prove new URL issuance denial, handle existing one-hour URLs, review 83 semantics and 67 call graphs before deployment."
+}
