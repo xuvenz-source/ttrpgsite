@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "work_package": "B10-R18-192",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "direct_parent": {
+    "pr": 300,
+    "commit": "8cb0da0758659df7584f102daf5eb365b765012f"
+  },
+  "owner_private_r191_receipt": {
+    "bytes": 1820,
+    "sha256": "2087f092686f6243bd0210cb9de2fca408739abc638bd1d68bd1faf0a7bcf377",
+    "source_sha256_verified_count": 83,
+    "chronology_valid": true,
+    "direct_fog_status_definition_count": 1,
+    "r111_priority_docket_index_not_chronology": 50,
+    "executable_statement_ordinal": 57,
+    "latest_body_sha256_matches_current": true,
+    "latest_body_size_matches_current": true,
+    "latest_has_direct_identity_marker": false,
+    "latest_has_membership_or_map_helper_marker": false
+  },
+  "current_live_fog_body": {
+    "sha256": "767cbcd8bd4813c0a535fa71bf1ecc3a9cf8a6dd02c239499c0be1737a28c96f",
+    "bytes": 102
+  },
+  "frozen_prior_unapplied_repair": {
+    "pr": 206,
+    "candidate_path": "staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql",
+    "git_blob_sha1": "c84d7cf8b0958621f11ec273cb36361e2501a77f",
+    "fixture_pr": 207,
+    "pg17_source_extractor": {
+      "path": "tests/world-v2-r18-105-postgres/extract_sources.py",
+      "git_blob_sha1": "e4a1dc6b0bae612dfe6e4c74aa54851824ba1d36"
+    },
+    "pg17_runner": {
+      "path": "tests/world-v2-r18-105-postgres/run.sh",
+      "git_blob_sha1": "e6a92d934fef4905216f86e18e77e5dba4f17503"
+    },
+    "pg17_post_candidate": {
+      "path": "tests/world-v2-r18-105-postgres/post-candidate.sql",
+      "git_blob_sha1": "fe9c2a4045048661469166f517ca0cdc9296c4ed"
+    }
+  },
+  "known_fixture_result": "Synthetic signed-actor simulation in disposable PG17 reproduced baseline fog status oracle, candidate denied cross-campaign and revoked actor while preserving legitimate combat roster RLS; no real hosted signed QA.",
+  "no_revert_to_original_unsafe_function_as_rollback": true,
+  "permissions": {
+    "all_83_original_sql_semantics_approved": false,
+    "all_67_authenticated_privileged_call_chains_approved": false,
+    "real_signed_dm_p1_p2_revoked_outsider_qa_passed": false,
+    "owner_qa_install_authorized": false,
+    "production_release_authorized": false
+  },
+  "no_hosted_original_or_qa_sql_changes": true,
+  "no_runtime_changes": true,
+  "no_versioned_migrations": true,
+  "no_merge": true,
+  "no_deploy": true,
+  "no_paid_resources": true,
+  "next_requisite": "Independent historical semantic review and signed QA; only owner can separately authorize QA schema install and production release."
+}
