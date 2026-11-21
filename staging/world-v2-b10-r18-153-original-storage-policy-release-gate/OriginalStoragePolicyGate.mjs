@@ -14,6 +14,7 @@ export function auditR153({root=process.cwd(),manifestOverride,topologyOverride,
    m.versionedMigrationsChanged!==0||m.runtimeSourceChanged!==false||
    m.exposedBrowserGrantsAdded!==0||m.merged!==false||m.deployed!==false||
    m.paidResourcesUsed!==false||m.privateHistoryNeverExported!==true||
+   m.externalMembershipWritersOperatorStatement!=='NOT_KNOWINGLY_CONFIGURED_NOT_A_COMPLETE_ATTESTATION'||
    m.original83SemanticReviewApprovals!==0||m.original67DefinerReviewApproved!==false||
    m.originalPolicyBodiesIndependentlyReviewed!==false||
    m.qaHistoryDryRunApproved!==false||m.qaHistoryInstalled!==false||
@@ -34,7 +35,8 @@ export function auditR153({root=process.cwd(),manifestOverride,topologyOverride,
    fail('live catalog evidence changed');
  for(let i=0;i<8;i++){
   const p=t.policies[i];
-  if(p.ordinal!==i+1||p.role!=='authenticated'||p.permissive!==true||
+  const ops=['DELETE','DELETE','INSERT','INSERT','INSERT','SELECT','SELECT','SELECT'];
+  if(p.operation!==ops[i]||p.ordinal!==i+1||p.role!=='authenticated'||p.permissive!==true||
     p.bucketPredicate!==true||p.literalTrue!==false)
     fail('policy evidence changed');
  }
