@@ -1,0 +1,29 @@
+name: World V2 R18-159 privileged definer routing source-only guard
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-159-*'
+    paths:
+      - '.github/workflows/world-v2-r18-159-definer-routing.yml'
+      - 'staging/world-v2-b10-r18-159-privileged-definer-routing/**'
+      - 'tests/world-v2-r18-159-*'
+      - 'docs/testing/world-v2-r18-159-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-158-*'
+permissions:
+  contents: read
+jobs:
+  privilege-and-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No changed original SQL or runtime source
+        run: git diff --exit-code 1b093aedc9180e6fd7d1fd6d3a5f108dbe882226 HEAD -- src/ supabase/migrations/
+      - name: Fail if flawed original helper or seven privileged paths marked reviewed
+        run: node --test tests/world-v2-r18-159-source.test.mjs
+      - name: Keep issue 220 candidate source-only
+        run: echo 'R159 original can_edit_campaign_sheet is vulnerable; PR219 guard remains unapplied. NO_GO.'

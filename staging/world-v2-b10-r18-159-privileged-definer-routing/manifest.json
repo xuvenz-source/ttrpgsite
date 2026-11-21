@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-159",
+  "date": "2026-11-21",
+  "parentPr": 266,
+  "parentSha": "1b093aedc9180e6fd7d1fd6d3a5f108dbe882226",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "originalReadOnlySecurityDefinerCatalog": {
+    "publicSchemaDefinerFunctions": 85,
+    "authenticatedCallable": 67,
+    "anonymousCallable": 0,
+    "authenticatedCallableWithoutDirectAuthUidMarker": 7,
+    "authenticatedCallableWithoutBoundSearchPath": 0,
+    "authenticatedCallableWithPublicSearchPath": 0,
+    "authenticatedCallableWithDynamicExecuteMarker": 0
+  },
+  "classifiedSeven": [
+    {
+      "name": "get_campaign_sheet_inventory",
+      "classification": "DEPENDENT_ON_CONFIRMED_REVOKED_OWNER_GAP",
+      "issue": 220,
+      "needsSignedQa": true
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "classification": "DEPENDENT_ON_CONFIRMED_REVOKED_OWNER_GAP",
+      "issue": 220,
+      "needsSignedQa": true
+    },
+    {
+      "name": "get_dm_map_npc_values",
+      "classification": "DELEGATES_TO_CAMPAIGN_DM_HELPER",
+      "issue": null,
+      "needsSignedQa": true
+    },
+    {
+      "name": "get_npc_token_values",
+      "classification": "DELEGATES_TO_CAMPAIGN_DM_HELPER",
+      "issue": null,
+      "needsSignedQa": true
+    },
+    {
+      "name": "is_map_fog_published",
+      "classification": "UNGUARDED_MAP_FOG_METADATA_ORACLE",
+      "issue": 212,
+      "needsSignedQa": true
+    },
+    {
+      "name": "preview_map_motion",
+      "classification": "DELEGATES_TO_PRIVATE_MOVEMENT_FUNCTION_WITH_IDENTITY_CHECKS",
+      "issue": null,
+      "needsSignedQa": true
+    },
+    {
+      "name": "publish_map_environment",
+      "classification": "DELEGATES_TO_CAMPAIGN_DM_HELPER_AND_MUTATES_FOG",
+      "issue": null,
+      "needsSignedQa": true
+    }
+  ],
+  "helperAudit": {
+    "canEditCampaignSheetLiveMd5": "5a8fed2bdc8427c884f89440c0eebe03",
+    "canEditCampaignSheetBodyBytes": 790,
+    "memberCheckMissingFromOwnerBranch": true,
+    "helperDirectAuthenticatedExecute": false,
+    "helperAnonymousExecute": false,
+    "authenticatedDefinerWrappersReachHelper": true,
+    "charactersHaveDirectMembershipForeignKey": false,
+    "currentOwnedOrphanCharacterCount": 0,
+    "defectReproducedInPriorIsolatedPostgres": true,
+    "candidateRepairPr": 219,
+    "candidateRepairHeadSha": "920cd0801b098d3c5de4e8e36a1aa5dca82d1add",
+    "candidateRepairRequiresMembership": true,
+    "candidateRepairCiGreen": true,
+    "candidateRepairAppliedToOriginal": false,
+    "candidateRepairAppliedToQa": false
+  },
+  "fogOracle": {
+    "functionName": "is_map_fog_published",
+    "authenticatedCallable": true,
+    "anonymousCallable": false,
+    "hasDirectIdentityGuard": false,
+    "knownIssue": 212,
+    "securityApproved": false
+  },
+  "untestedOrUnresolved": {
+    "remainingSixtyAuthenticatedDefinersSemanticallyReviewed": false,
+    "sevenVerifiedWithRealSignedActors": false,
+    "history83IndependentReviewPassed": false,
+    "allOriginalPrivilegedFunctionsSignedQaPassed": false,
+    "realtimeRevocationVerified": false,
+    "issuedSignedUrlRevocationVerified": false,
+    "oldInviteRevocationResolved": false
+  },
+  "noOriginalOrQaWrites": true,
+  "noHistoricalMigrationChanges": true,
+  "noRuntimeSourceChanges": true,
+  "noBrowserGrants": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "openSecurityIssues": [
+    212,
+    220,
+    223,
+    229,
+    231
+  ],
+  "r127OwnerReleaseApproved": false,
+  "productionReleaseAuthorized": false,
+  "manualActionNeededNow": false,
+  "nextStep": "Reconcile already-staged PR #219 revoked-sheet membership fix before any QA migration; defer signed deployment until 83 original migration review and separate QA authorization"
+}
