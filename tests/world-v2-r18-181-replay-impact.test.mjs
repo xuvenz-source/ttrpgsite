@@ -35,15 +35,17 @@ test('four direct UPDATEs and three Storage bucket INSERTs cannot be marked safe
 });
 
 
-test('dynamic historical function rewrite remains blocked pending exact chronological input source',()=>{
+test('historical DO rewrites only existing monitor/reference RPCs, not static map helper',()=>{
  const d=m.dynamicFunctionRewrite;
  assert.equal(d.version,'20261106074754');
- assert.equal(d.targetFunction,'public.can_view_campaign_map');
- assert.equal(d.dependsOnPgGetFunctiondef,true);
- assert.equal(d.transformsExistingFunctionSource,true);
- assert.equal(d.executesRewrittenDefinition,true);
- assert.equal(d.originalInputDefinitionVersionAttested,false);
- assert.equal(d.exactPostRewriteFunctionSemanticsApproved,false);
+ assert.equal(d.mapAuthorizationFunctionDefinedStatically,'public.can_view_campaign_map(uuid,uuid)');
+ assert.equal(d.rewriteMechanism,'DO_BLOCK_PG_GET_FUNCTIONDEF_STRING_REPLACE_EXECUTE');
+ assert.deepEqual(d.targetFunctions.map(x=>x.name),['public.get_token_monitor_values','public.post_token_reference']);
+ assert.deepEqual(d.targetFunctions.map(x=>x.signature),['(p_map uuid)','(p_token uuid,p_code text)']);
+ assert.ok(d.targetFunctions.every(x=>x.matchRequired&&x.exactPriorBodyVerified===false&&x.signedRegressionPassed===false));
+ assert.equal(d.sourcePatternChecked,true);
+ assert.equal(d.exactChronologicalInputDefinitionsProven,false);
+ assert.equal(d.allRewrittenRpcsApproved,false);
  assert.equal(d.isolatedReplayCompatibilityVerified,false);
  assert.equal(d.releaseGate,'DO_NOT_EXPOSE_QA_API_DURING_HISTORY_REPLAY');
 });
