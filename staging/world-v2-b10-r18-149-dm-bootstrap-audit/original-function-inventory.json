@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-149",
+  "originalReadOnlyMetadataAsOf": "2026-11-21",
+  "project": "TTRPG Site",
+  "projectRef": "lwhwgqaunxbmvyndswze",
+  "queryScope": [
+    "public",
+    "forge_world_v2"
+  ],
+  "scannedFunctions": 145,
+  "securityDefiners": 109,
+  "authenticatedExecutableSecurityDefiners": 67,
+  "directMemberInsertSecurityDefiners": [
+    {
+      "name": "public.create_campaign",
+      "args": "p_name text",
+      "sourceSha256": "0ea1e01ba784dfa78e92c8e82a3ca2b2d28a19920f5286cc7423d1e891be645f",
+      "sourceBytes": 475,
+      "authExecutable": true,
+      "serviceExecutable": true,
+      "referencesAuthUid": true,
+      "referencesOwnerId": true,
+      "dmLiteral": true,
+      "playerLiteral": false
+    },
+    {
+      "name": "public.join_campaign",
+      "args": "p_invite_code text",
+      "sourceSha256": "5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655",
+      "sourceBytes": 742,
+      "authExecutable": true,
+      "serviceExecutable": true,
+      "referencesAuthUid": true,
+      "referencesOwnerId": false,
+      "dmLiteral": false,
+      "playerLiteral": true
+    }
+  ],
+  "directMemberUpdateSecurityDefinerCount": 0,
+  "directMemberDeleteSecurityDefinerCount": 0,
+  "directMemberTruncateSecurityDefinerCount": 0,
+  "campaignMembersRoleCheck": [
+    "dm",
+    "player"
+  ],
+  "campaignMembersForeignKeyDeleteActions": {
+    "campaigns": "CASCADE",
+    "authUsers": "CASCADE"
+  },
+  "campaignsOwnerColumn": {
+    "type": "uuid",
+    "nullable": false
+  },
+  "campaignsRowLevelSecurity": true,
+  "campaignsOwnerIdUpdatePriv": {
+    "serviceRole": true,
+    "authenticated": true
+  },
+  "authenticatedMembershipInsertGrant": false,
+  "authenticatedMembershipUpdateGrant": false,
+  "campaignsUpdatePolicy": "dm edit campaigns",
+  "campaignsUpdatePolicyWithCheckReferencesOwnerAndUid": true,
+  "campaignsCustomTriggerNames": [
+    "campaigns_valid_map",
+    "world_v2_campaign_map_changed"
+  ],
+  "exactPrivateFunctionBodiesExported": false,
+  "fullTransitivePrivilegeAuditCompleted": false,
+  "serviceRoleAdminOrOperatorPathsValidated": false,
+  "realSignedActorTests": false,
+  "releaseDecision": "NO_GO"
+}
