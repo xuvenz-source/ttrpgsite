@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-201",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 310,
+    "head": "83feb12629e2ce92e7114a49ab17b28a6c04e9b0",
+    "focusedCiSuccess": 44905133304,
+    "generalCiSuccess": 44905133290
+  },
+  "ownerR200Receipt": {
+    "bytes": 3183,
+    "sha256": "4d9f09d70ff13208700e4428b33910039029a4ac2d823c429bcce0ff500c2b53",
+    "migrationShaVerified": 83,
+    "historicalStoragePolicyCreates": 10,
+    "historicalStoragePolicyAlters": 0,
+    "historicalStoragePolicyDrops": 2,
+    "historicalMapHelperDefinitions": 1,
+    "latestMapHelperBodyMatchesCurrent": true
+  },
+  "currentOriginalStorageSelectPoliciesAnonymous": [
+    {
+      "anonymous_slot": 1,
+      "polpermissive": true,
+      "role_applies_authenticated": true,
+      "role_applies_anon": false,
+      "missing_using": false,
+      "has_bucket": true,
+      "direct_uid": false,
+      "direct_membership": false,
+      "map_helper": true,
+      "owner_marker": false,
+      "path_marker": true,
+      "exists_marker": true,
+      "and_word": true,
+      "or_word": false,
+      "true_word": false,
+      "user_metadata_marker": false,
+      "jwt_marker": false
+    },
+    {
+      "anonymous_slot": 2,
+      "polpermissive": true,
+      "role_applies_authenticated": true,
+      "role_applies_anon": false,
+      "missing_using": false,
+      "has_bucket": true,
+      "direct_uid": true,
+      "direct_membership": false,
+      "map_helper": false,
+      "owner_marker": true,
+      "path_marker": true,
+      "exists_marker": true,
+      "and_word": true,
+      "or_word": true,
+      "true_word": false,
+      "user_metadata_marker": false,
+      "jwt_marker": false
+    },
+    {
+      "anonymous_slot": 3,
+      "polpermissive": true,
+      "role_applies_authenticated": true,
+      "role_applies_anon": false,
+      "missing_using": false,
+      "has_bucket": true,
+      "direct_uid": true,
+      "direct_membership": false,
+      "map_helper": false,
+      "owner_marker": false,
+      "path_marker": true,
+      "exists_marker": false,
+      "and_word": true,
+      "or_word": false,
+      "true_word": false,
+      "user_metadata_marker": false,
+      "jwt_marker": false
+    }
+  ],
+  "currentOriginalMapHelper": {
+    "bodyUtf8Bytes": 448,
+    "sha256": "835829ca8012fe26ae5d224df749a1a8cde958136c322d10f3d3fa91a5f3f83c",
+    "directMembershipMarker": true,
+    "authenticatedExecutable": true
+  },
+  "sources": {
+    "scripts/release/r201_readonly_storage_policy_branch_matrix.sql": "62240473e7588a7204d48917238e2410d98dc0b3",
+    "tests/world-v2-r18-201-postgres/run.sh": "2fa7c3be2e52f409f6229523c6021af9f0e31b1d"
+  },
+  "interpretation": {
+    "originalEffectiveStoragePolicyBooleanSemanticsReviewed": false,
+    "actualPolicyOrPrecedenceExposureProven": false,
+    "signedRevokedActorCanMintStorageUrlDemonstrated": false,
+    "realSignedMultiaccountStorageQaPassed": false,
+    "existingOneHourBearerRevocationVerified": false,
+    "original83HistoricalSqlSemanticsApproved": false,
+    "all67LivePrivilegedCallGraphsApproved": false,
+    "qaOriginalSqlInstallApproved": false,
+    "productionReleaseApproved": false
+  },
+  "restrictions": {
+    "onlyReadOnlyOriginalCatalogAggregates": true,
+    "nodeAndPg17FixturesOnlySynthetic": true,
+    "noPolicySqlNamesBucketObjectPathsOrSignedTokensExported": true,
+    "noOriginalOrQaWrites": true,
+    "noAppSourceOrVersionedMigrations": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  },
+  "nextGate": "Review semantic bucket scope and AND/OR grouping separately for each current Storage SELECT branch without exporting policy SQL; confirm no cross-bucket route lets removed member sign protected campaign assets. Require signed QA and independent deployment approval."
+}
