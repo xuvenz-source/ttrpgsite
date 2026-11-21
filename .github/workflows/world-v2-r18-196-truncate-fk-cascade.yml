@@ -1,0 +1,57 @@
+name: World V2 R18-196 private membership FK CASCADE PG17 NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-196-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-195-*'
+permissions:
+  contents: read
+jobs:
+  fixed-catalogue-source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prevent live application, SQL migrations, Edge and deployment changes
+        run: git diff --exit-code 0b12a69936fce26941f1c06a28100e0b192ebab7 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Validate original read-only role privilege, FK and frozen source evidence
+        run: python3 scripts/release/r196_validate_truncate_role_fk_evidence.py
+      - name: Reject malformed grants, altered runner, hostile release flags and missing cascade coverage
+        run: python3 tests/world-v2-r18-196-truncate-role-fk.test.py
+      - name: Verify source-only Python syntax
+        run: python3 -m py_compile scripts/release/r196_validate_truncate_role_fk_evidence.py
+
+  synthetic-two-inbound-fk-cascade:
+    needs: fixed-catalogue-source-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r196_disposable_only
+          POSTGRES_DB: world_v2_r18_196
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_196"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R196_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_196
+      PGUSER: postgres
+      PGPASSWORD: r196_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Reproduce FK-protected plain TRUNCATE versus CASCADE bypass and verify R195 double guard
+        shell: bash
+        run: bash tests/world-v2-r18-196-postgres/run.sh

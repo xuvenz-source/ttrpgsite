@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-196",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 304,
+    "head": "0b12a69936fce26941f1c06a28100e0b192ebab7",
+    "dedicatedSuccessRun": 44900934673,
+    "generalSuccessRun": 44900934662
+  },
+  "originalProjectLiveReadOnlySnapshot": {
+    "membership_tables": 1,
+    "service_roles": 1,
+    "service_role_superuser": false,
+    "service_role_inherits": true,
+    "service_role_bypasses_rls": true,
+    "campaign_members_rls": true,
+    "service_inherits_table_owner": false,
+    "direct_service_truncate_grant_entries": 1,
+    "public_truncate_grant_entries": 0,
+    "inherited_other_role_truncate_grants": 0,
+    "truncate_grant_options_count": 0,
+    "enabled_user_truncate_triggers": 0,
+    "enabled_user_delete_triggers": 0,
+    "inbound_referencing_tables": 2,
+    "service_role_truncate_on_referencing_tables": 2,
+    "authenticated_truncate_on_referencing_tables": 2,
+    "function_source_total_in_scanned_schemas": 142,
+    "any_truncate_word": 0,
+    "both_truncate_and_campaign_members_words": 0,
+    "any_execute_and_membership_words": 0,
+    "any_membership_words": 22
+  },
+  "exactSources": {
+    "priorR195Candidate": {
+      "path": "staging/world-v2-b10-r18-195-membership-truncate-denial/unapplied-truncate-denial.sql",
+      "gitBlob": "300421215fce40f1cfcfacbe3d3762413f218343"
+    },
+    "newIsolatedRunner": {
+      "path": "tests/world-v2-r18-196-postgres/run.sh",
+      "gitBlob": "28eb6765529ca359f3e443c1d7a9989ceadfce4e"
+    }
+  },
+  "interpretation": {
+    "directRevokeAloneExpectedToRemoveServiceRoleEffectiveTruncate": true,
+    "verifiedOnHosted": false,
+    "actualExternalServiceRoleUsageAudited": false,
+    "noCurrentlyInstalledTruncateTrigger": true,
+    "noKnownFunctionLiteralTruncateWords": true,
+    "dynamicSqlAndOutsideDatabaseOperationsExcluded": false,
+    "original83HistorySemanticsApproved": false,
+    "all67PrivilegedCallChainsApproved": false,
+    "signedQaMultiaccountPassed": false,
+    "qaDbSqlAuthorized": false,
+    "productionDeployAuthorized": false
+  },
+  "restrictions": {
+    "currentAuditReadOnly": true,
+    "scriptOnlyReproducesSyntheticSql": true,
+    "noOriginalOrQaSqlWrites": true,
+    "noActiveMigration": true,
+    "noRuntimeChange": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true,
+    "noPrivateSqlOrCampaignRecordsExported": true
+  },
+  "nextGate": "Verify exact-head scratch PG17 with two inbound FKs and cascading revocation-bypass denial, then independently review admin workflow and role grants before any QA schema install."
+}
