@@ -195,10 +195,16 @@ $q$;
 SET LOCAL ROLE authenticated;
 SET LOCAL app.fake_world_uid='00000000-0000-4000-8000-000000000911';
 DO $t$
-DECLARE moved integer;
 BEGIN
  IF NOT public.fake_world_commit('00000000-0000-4000-8000-000000000931'::uuid)
  THEN RAISE EXCEPTION 'fictional unsafe commit was not reproduced'; END IF;
+END $t$;
+-- Return from the fabricated authenticated role to disposable postgres so
+-- the fixture can inspect token data without granting direct table SELECT.
+RESET ROLE;
+DO $t$
+DECLARE moved integer;
+BEGIN
  SELECT step INTO moved FROM public.fake_world_tokens
  WHERE token_id='00000000-0000-4000-8000-000000000921'::uuid;
  IF moved!=2 THEN RAISE EXCEPTION 'unsafe state not modified'; END IF;
