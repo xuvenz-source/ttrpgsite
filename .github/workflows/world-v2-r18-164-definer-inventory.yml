@@ -1,0 +1,22 @@
+name: World V2 R18-164 privileged definer inventory no-go
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-164-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-163-*'
+permissions:
+  contents: read
+jobs:
+  source-only-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No application or migration changes
+        run: git diff --exit-code e04df51e38d0a26d9c33c53317679d347a3005e3 HEAD -- src/ supabase/migrations/
+      - name: Validate 67-function catalog inventory is not signoff
+        run: node --test tests/world-v2-r18-164-definer-inventory.test.mjs
