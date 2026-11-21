@@ -107,134 +107,6 @@
       "requiresOwnerApproval": true
     }
   ],
-  "signedAcceptanceMatrix": [
-    {
-      "id": "S01",
-      "actor": "DM",
-      "operation": "read_own_campaign_fog",
-      "expected": "allow_or_off",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S02",
-      "actor": "P1",
-      "operation": "read_assigned_map_fog",
-      "expected": "allow_or_off",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S03",
-      "actor": "P2",
-      "operation": "read_unassigned_map_fog",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S04",
-      "actor": "OUTSIDER",
-      "operation": "read_foreign_map_fog",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S05",
-      "actor": "REVOKED_P1",
-      "operation": "sheet_inventory_get_owned_character",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S06",
-      "actor": "REVOKED_P1",
-      "operation": "sheet_patch_owned_character",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S07",
-      "actor": "REVOKED_P1",
-      "operation": "sheet_claim_and_mutate",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S08",
-      "actor": "ACTIVE_P1",
-      "operation": "sheet_owner_get_patch_claim",
-      "expected": "allow",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S09",
-      "actor": "DM",
-      "operation": "sheet_npc_and_character_edit",
-      "expected": "allow",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S10",
-      "actor": "REVOKED_P1",
-      "operation": "join_using_old_invite",
-      "expected": "deny_until_dm_reinstatement",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S11",
-      "actor": "DM",
-      "operation": "explicit_reinstatement_then_member_access",
-      "expected": "allow_after_authorized_reinstatement",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S12",
-      "actor": "OUTSIDER",
-      "operation": "call_dm_remove_or_reinstate",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S13",
-      "actor": "P2",
-      "operation": "read_foreign_storage_map_and_art",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S14",
-      "actor": "REVOKED_P1",
-      "operation": "issue_new_signed_asset_url",
-      "expected": "deny",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S15",
-      "actor": "REVOKED_P1",
-      "operation": "already_issued_signed_bearer_url",
-      "expected": "mitigation_verified_not_just_client_cache",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S16",
-      "actor": "REVOKED_P1",
-      "operation": "stale_realtime_and_popup_subscription",
-      "expected": "deny_and_evict",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S17",
-      "actor": "PRIVILEGED_WRITER",
-      "operation": "membership_truncate_and_key_update",
-      "expected": "audited_no_revocation_bypass",
-      "result": "NOT_RUN"
-    },
-    {
-      "id": "S18",
-      "actor": "DM_P1_P2_OUTSIDER",
-      "operation": "world_motion_and_visibility",
-      "expected": "role_and_map_isolated",
-      "result": "NOT_RUN"
-    }
-  ],
   "negativeReleaseClaims": {
     "history83IndependentlyApproved": false,
     "remainingDefinerChainsFullyReviewed": false,
@@ -260,5 +132,151 @@
   "noMerge": true,
   "noDeploy": true,
   "noPaidResources": true,
-  "manualActionNeededForNextReleaseGate": true
+  "manualActionNeededForNextReleaseGate": true,
+  "qaAcceptanceMatrix": [
+    {
+      "id": "S01",
+      "actor": "DM",
+      "operation": "read_own_campaign_fog",
+      "expected": "allow_or_off",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S02",
+      "actor": "P1",
+      "operation": "read_assigned_map_fog",
+      "expected": "allow_or_off",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S03",
+      "actor": "P2",
+      "operation": "read_unassigned_map_fog",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S04",
+      "actor": "OUTSIDER",
+      "operation": "read_foreign_map_fog",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S05",
+      "actor": "REVOKED_P1",
+      "operation": "sheet_inventory_get_owned_character",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S06",
+      "actor": "REVOKED_P1",
+      "operation": "sheet_patch_owned_character",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S07",
+      "actor": "REVOKED_P1",
+      "operation": "sheet_claim_and_mutate",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S08",
+      "actor": "ACTIVE_P1",
+      "operation": "sheet_owner_get_patch_claim",
+      "expected": "allow",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S09",
+      "actor": "DM",
+      "operation": "sheet_npc_and_character_edit",
+      "expected": "allow",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S10",
+      "actor": "REVOKED_P1",
+      "operation": "join_using_old_invite",
+      "expected": "deny_until_dm_reinstatement",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S11",
+      "actor": "DM",
+      "operation": "explicit_reinstatement_then_member_access",
+      "expected": "allow_after_authorized_reinstatement",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S12",
+      "actor": "OUTSIDER",
+      "operation": "call_dm_remove_or_reinstate",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S13",
+      "actor": "P2",
+      "operation": "read_foreign_storage_map_and_art",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S14",
+      "actor": "REVOKED_P1",
+      "operation": "issue_new_signed_asset_url",
+      "expected": "deny",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S15",
+      "actor": "REVOKED_P1",
+      "operation": "already_issued_signed_bearer_url",
+      "expected": "mitigation_verified_not_just_client_cache",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S16",
+      "actor": "REVOKED_P1",
+      "operation": "stale_realtime_and_popup_subscription",
+      "expected": "deny_and_evict",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    },
+    {
+      "id": "S17",
+      "actor": "PRIVILEGED_WRITER",
+      "operation": "membership_truncate_and_key_update",
+      "expected": "audited_no_revocation_bypass",
+      "result": "NOT_RUN",
+      "executionContext": "CONTROLLED_PRIVILEGED_WRITER_AUDIT"
+    },
+    {
+      "id": "S18",
+      "actor": "DM_P1_P2_OUTSIDER",
+      "operation": "world_motion_and_visibility",
+      "expected": "role_and_map_isolated",
+      "result": "NOT_RUN",
+      "executionContext": "SIGNED_QA_AUTH"
+    }
+  ]
 }
