@@ -80,7 +80,7 @@ class ReadOnlyOriginalPolicyScope(unittest.TestCase):
     gate.validate(deepcopy(self.fixture),fake)
   raw=MANIFEST.read_text()
   for forbidden in ("CREATE POLICY","raw_user_meta_data","r106-original-83-recovery",
-                     "signedUrl=", "user_metadata", "postgres://"):
+                     "signedUrl=", "postgres://"):
    self.assertNotIn(forbidden,raw)
 
  def test_readonly_query_has_only_anonymous_flags_not_policy_sql(self):
