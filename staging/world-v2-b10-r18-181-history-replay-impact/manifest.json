@@ -8,9 +8,9 @@
   "sourceOnly": true,
   "analysis": "READ_ONLY_ORIGINAL_REGISTERED_SQL_TOP_LEVEL_LEXICAL_SPLIT_IGNORING_QUOTED_AND_DOLLAR_BODIES",
   "exactOriginalMigrationRecordCount": 83,
-  "topLevelStatements": 943,
+  "topLevelStatements": 937,
   "parserCompleteTopLevelLexicalModes": 83,
-  "unknownLeadingStatementParses": 8,
+  "unknownLeadingStatementParses": 0,
   "topLevel": {
     "deleteCount": 0,
     "truncateCount": 0,
@@ -182,7 +182,7 @@
     "Stored function definitions can run privileged SQL later and triggers can run when data is backfilled; a top-level parser does not authorize their behavior.",
     "An UPDATE with WHERE is not automatically safe; predicates, joins, trigger side effects, row counts and replay idempotence require semantic review.",
     "DROP POLICY and DROP TRIGGER can temporarily expand access or interrupt protection; partially replayed schema must remain unavailable to signed users.",
-    "The eight unknown statement prefixes need explicit review; do not interpret zero DROP TABLE detected as comprehensive absence of every destructive operation.",
+    "All 937 SQL statements have a recognized leading SQL command after comment removal. This is syntactic classification only, not a semantic replay endorsement.",
     "Three original top-level Storage bucket INSERT statements use private flags and ON CONFLICT, but current effective bucket settings and Storage policies still need signed QA.",
     "No actual historical migration SQL bodies, secrets or application-user rows are exported from the original database."
   ],
@@ -232,5 +232,20 @@
     "isolatedReplayCompatibilityVerified": false,
     "risk": "EXACT_PREVIOUS_MONITOR_AND_REFERENCE_FUNCTION_DEFINITIONS_REQUIRED",
     "releaseGate": "DO_NOT_EXPOSE_QA_API_DURING_HISTORY_REPLAY"
+  },
+  "lexicalSegments": 943,
+  "nonSqlTrailingCommentSegments": 6,
+  "recognizedHeadDistribution": {
+    "CREATE": 462,
+    "ALTER": 105,
+    "REVOKE": 190,
+    "GRANT": 111,
+    "INSERT": 3,
+    "DO": 12,
+    "DROP": 40,
+    "COMMENT": 6,
+    "UPDATE": 4,
+    "BEGIN": 2,
+    "COMMIT": 2
   }
 }
