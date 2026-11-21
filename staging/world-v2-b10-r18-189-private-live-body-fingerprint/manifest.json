@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-189",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "parentPr": 297,
+  "parentSha": "60803e1036d7bab3154cc4966c098a7e8a0963ca",
+  "r188SanitizedReceiptReceived": true,
+  "r188SanitizedReceiptBytes": 1546,
+  "r188SanitizedReceiptSha256": "bf8bbf90452a50ed7c4d20ac5d53e8fc7b21a2532931649405cf161a55aa9313",
+  "target": {
+    "r111PriorityDocketIndexNotMigrationChronology": 31,
+    "executableStatementOrdinal": 1,
+    "unquotedUserMetadataOccurrences": 2,
+    "quotedUserMetadataOccurrences": 0,
+    "commentUserMetadataOccurrences": 0
+  },
+  "readOnlyOriginalLiveCatalog": {
+    "project": "lwhwgqaunxbmvyndswze",
+    "publicSecurityDefinerCount": 85,
+    "authenticatedCallableCount": 67,
+    "userMetadataCandidateCount": 1,
+    "metadataCandidateAuthenticatedCallable": true,
+    "metadataCandidateAnonCallable": false,
+    "metadataCandidateLanguage": "sql",
+    "metadataCandidateSourceBodyByteLength": 378,
+    "metadataCandidateSourceBodySha256": "bd98b2ec061445b828724d0830f1da245b845a3e9c83fcf7c1a17bd34343c9a6",
+    "metadataCandidateOwnedByPostgres": true,
+    "metadataCandidateSearchPathDoubleQuotedEmpty": true
+  },
+  "privateOfflineScript": "scripts/release/r189_private_live_body_fingerprint.py",
+  "dependencies": [
+    "scripts/release/r154_private_history_audit.py",
+    "scripts/release/r186_private_privileged_statement_inventory.py",
+    "scripts/release/r187_private_privileged_priority_queue.py",
+    "scripts/release/r188_private_metadata_context.py"
+  ],
+  "privacyContract": {
+    "privateHistoryNeverSentToGitCI": true,
+    "noSQLOrFunctionNamesExport": true,
+    "noAuthDataAccess": true,
+    "safeFixedBooleansOnly": true
+  },
+  "strongestClaim": "SHA256+length of historical SQL function body versus current unique metadata-bearing public SECURITY DEFINER pg_proc.prosrc; no semantic or signature approval",
+  "functionSignatureIdentityProven": false,
+  "metadataAuthorizationUseProvenSafe": false,
+  "metadataAuthorizationUseProvenUnsafe": false,
+  "all83HistoricalSemanticsApproved": false,
+  "all67LiveCallablePrivilegedChainsApproved": false,
+  "signedQA": false,
+  "qaSqlAuthorized": false,
+  "productionReleaseAuthorized": false,
+  "noOriginalOrQaWrites": true,
+  "noRuntimeChanges": true,
+  "noVersionedMigrationChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "nextManualGate": "Run commit-pinned R189 Python offline on unchanged 83-file WSL private archive; upload only r189-sanitized-report.json"
+}
