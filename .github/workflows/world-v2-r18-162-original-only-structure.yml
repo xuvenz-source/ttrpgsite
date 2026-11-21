@@ -1,0 +1,22 @@
+name: World V2 R18-162 original-only structural security scan
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-162-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-161-*'
+permissions:
+  contents: read
+jobs:
+  immutable-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Never modify active source or original migration history
+        run: git diff --exit-code 25bd4b0d1f41b1ee6113b70b67f1cf51b68b31cb HEAD -- src/ supabase/migrations/
+      - name: Test fail-closed R162 no-go evidence
+        run: node --test tests/world-v2-r18-162-original-only-structure.test.mjs

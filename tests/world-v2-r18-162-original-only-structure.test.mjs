@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const m=JSON.parse(readFileSync('staging/world-v2-b10-r18-162-original-only-structure-audit/manifest.json','utf8'));
+test('R162 pins exact reviewer and immutable parent',()=>{
+ assert.equal(m.workPackage,'B10-R18-162');
+ assert.equal(m.parentPr,269);
+ assert.equal(m.parentSha,'25bd4b0d1f41b1ee6113b70b67f1cf51b68b31cb');
+ assert.equal(m.decision,'NO_GO');
+ assert.equal(m.reviewerModel,'AI_LED_TECHNICAL_AUDIT_SINGLE_REVIEWER');
+ assert.ok(Object.values(m.immutability).every(v=>v===true));
+ assert.ok(Object.values(m.unresolved).every(v=>v===false));
+});
+test('R162 records non-equivalent historical semantic scan and current runtime catalog checks',()=>{
+ const h=m.historicalOriginalOnlyScan;
+ assert.equal(h.records,22);
+ assert.equal(h.topLevelStatementCount,190);
+ assert.equal(h.functionDefinitions,23);
+ assert.equal(h.securityDefinerDefinitions,20);
+ assert.equal(h.createPolicyDeclarations,43);
+ assert.equal(h.directTopLevelDataWriteMigrationVersions.length,4);
+ assert.equal(h.noDirectActorMarkerCandidates.length,5);
+ assert.ok(h.noDirectActorMarkerCandidates.every(f=>f.anonymousCallable===false&&f.authenticatedCallable===false&&f.authorizationReviewComplete===false));
+ assert.equal(h.lexicalTokenizerOnly,true);
+ const l=m.currentLiveSnapshot;
+ assert.equal(l.publicApplicationTables,31);
+ assert.equal(l.publicTablesWithRlsDisabled,0);
+ assert.equal(l.anonSelectablePublicTables,0);
+ assert.equal(l.publicRlsPolicies,77);
+ assert.equal(l.permissivePolicies,77);
+ assert.equal(l.authenticatedCallableSecurityDefiners,67);
+ assert.equal(l.anonymousCallablePublicSecurityDefiners,0);
+ assert.equal(l.knownRevokedSheetOwnerSecurityIssue,220);
+ assert.equal(l.knownFogStatusOracleIssue,212);
+});
