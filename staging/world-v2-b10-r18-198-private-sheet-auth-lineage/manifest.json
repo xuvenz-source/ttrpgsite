@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-198",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 307,
+    "sha": "0663a3f37e54078cb0b1e9b3ab97612255e872dc",
+    "sourceOnly": true
+  },
+  "existingGuardPr": 219,
+  "issue": 220,
+  "knownPublicFunctions": {
+    "can_edit_campaign_sheet": {
+      "liveBodies": 1,
+      "bytes": 790,
+      "sha256": "07dd89b2aa9c2e2c4851604de83362da37b3e5bf1716d146fd769b7bb816cb53",
+      "md5": "5a8fed2bdc8427c884f89440c0eebe03",
+      "authenticatedExecute": false,
+      "directAuthIdentityMarker": true,
+      "directCampaignMembersMarker": false
+    },
+    "claim_campaign_sheet_item": {
+      "liveBodies": 1,
+      "bytes": 1379,
+      "sha256": "7c7916294b992927098b797e83406eaf6113920231bd22cbb7c8f53e0c4cbf44",
+      "md5": "d7932b1e0c2141833537301d75d262e4",
+      "authenticatedExecute": true
+    },
+    "mutate_campaign_sheet_item": {
+      "liveBodies": 1,
+      "bytes": 2752,
+      "sha256": "8d749e88cd95ab6dd14f781d80bfa114f28396a5ebcd2c1f84b64b38b1f7d5fa",
+      "md5": "d2e4affcf04808423830f443ce93e530",
+      "authenticatedExecute": true
+    },
+    "release_campaign_sheet_item": {
+      "liveBodies": 1,
+      "bytes": 271,
+      "sha256": "e31447390c4a34dac06f1c6a6beaedb33ec9c730f02933e6129c43a54fe2fe22",
+      "md5": "f7bc314718884312ce3e1ca48331429f",
+      "authenticatedExecute": true
+    }
+  },
+  "frozenSourceBlobs": {
+    "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql": "380f7fd4fcd75fc17c76af8b851d86c068616420",
+    "tests/world-v2-r18-115-postgres/run.sh": "1e5b6d413116251c3077b89ae292fae6fc60cefd",
+    "tests/world-v2-r18-115-postgres/extract-lease-source.py": "62dc53c44d67bcf5cf1ed379ed6c177a9baae53f",
+    "tests/world-v2-r18-114-postgres/run.sh": "403cfca912c434780ebd68b2d54af55f59dfd402",
+    "tests/world-v2-r18-115-postgres/verify-revocation-candidate.sql": "dabdcc808f23358b3ce3fd135e0ed2ecce164ac9",
+    "tests/world-v2-r18-115-postgres/verify-lease-and-revocation-baseline.sql": "6d5820c4eb4d29a9df0a25ceee7f2c95f2c840a7"
+  },
+  "privateOfflineScript": "scripts/release/r198_private_sheet_auth_lineage.py",
+  "privateExistingDependencies": [
+    "r154_private_history_audit.py",
+    "r186_private_privileged_statement_inventory.py",
+    "r191_private_fog_status_lineage.py",
+    "r193_private_invite_source_lineage.py"
+  ],
+  "privateExpectedHistorySourceFiles": 83,
+  "releaseGuards": {
+    "all83HistoricalSemanticsApproved": false,
+    "all67PrivilegedCallChainsApproved": false,
+    "historicalFunctionSignatureIdentityProven": false,
+    "revokedOwnerAuthorizationProvenSafe": false,
+    "realSignedDmP1P2RevokedOutsiderQaPassed": false,
+    "qaSqlInstallAuthorized": false,
+    "productionReleaseAuthorized": false
+  },
+  "sourceOnly": true,
+  "noOriginalOrQaSqlWrites": true,
+  "noLiveRuntimeChanges": true,
+  "noActiveVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "nextManualGate": "After exact-head CI, owner runs SHA-pinned R198 offline Python in existing private WSL archive and uploads ONLY r198-sanitized-report.json; no original SQL, migration filenames, function source/signatures, paths, credentials or invite values."
+}
