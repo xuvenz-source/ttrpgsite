@@ -16,7 +16,7 @@ On the owner's private Ubuntu WSL, after obtaining the commit-SHA pinned R186 Py
 
 ```bash
 umask 077
-python3 "$HOME/ttrpg-history-private/r186_private_privileged_statement_inventory.py" \\
+python3 "$HOME/ttrpg-history-private/r186_private_privileged_statement_inventory.py" \
   > "$HOME/ttrpg-history-private/r186-sanitized-report.json" &&
 cat "$HOME/ttrpg-history-private/r186-sanitized-report.json"
 ```
