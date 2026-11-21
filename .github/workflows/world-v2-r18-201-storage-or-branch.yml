@@ -1,0 +1,57 @@
+name: World V2 R18-201 Storage SELECT permissive OR NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-201-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-200-*'
+permissions:
+  contents: read
+jobs:
+  current-original-branch-source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse application, active migrations, Edge and Vercel changes
+        run: git diff --exit-code 83feb12629e2ce92e7114a49ab17b28a6c04e9b0 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Reconcile R200 SHA-pinned private receipt and current live anonymous branch booleans
+        run: python3 scripts/release/r201_validate_storage_or_branch_scope.py
+      - name: Reject forged membership/role/AND-OR flags, unsafe approvals and source tampering
+        run: python3 tests/world-v2-r18-201-storage-or-branch.test.py
+      - name: Compile source-only validator
+        run: python3 -m py_compile scripts/release/r201_validate_storage_or_branch_scope.py
+
+  synthetic-storage-or-bucket-isolation:
+    needs: current-original-branch-source-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r201_disposable_only
+          POSTGRES_DB: world_v2_r18_201
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_201"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R201_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_201
+      PGUSER: postgres
+      PGPASSWORD: r201_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify representative per-bucket OR isolation and rolled-back negative bypass
+        shell: bash
+        run: bash tests/world-v2-r18-201-postgres/run.sh
