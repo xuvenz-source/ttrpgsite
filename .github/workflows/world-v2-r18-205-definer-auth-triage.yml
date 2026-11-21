@@ -1,0 +1,89 @@
+name: World V2 R18-205 privileged definer authorization triage NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-205-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-204-*'
+permissions:
+  contents: read
+jobs:
+  original-catalog-67-definer-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Do not alter application, active migrations, Edge or deploy config
+        run: git diff --exit-code a3e2b6ceed9be32fdcc767c39ffb2187e81394e2 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Reconcile 67 current live privileged definer markers and immutable original source regression files
+        run: python3 scripts/release/r205_validate_definer_auth_triage.py
+      - name: Reject forged 7-identity and metadata findings, unapproved hosted security GO and source tampering
+        run: python3 tests/world-v2-r18-205-definer-auth-triage.test.py
+      - name: Check Python syntax
+        run: python3 -m py_compile scripts/release/r205_validate_definer_auth_triage.py
+
+  fog-status-exact-original-source-pg17:
+    needs: original-catalog-67-definer-source-only
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r105_disposable_only
+          POSTGRES_DB: world_v2_r18_105
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_105"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R105_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_105
+      PGUSER: postgres
+      PGPASSWORD: r105_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Replay unchanged source-exact original R105 fog-status nonmember oracle and scratch R104 denial
+        shell: bash
+        run: bash tests/world-v2-r18-105-postgres/run.sh
+
+  revoked-sheet-owner-source-exact-pg17:
+    needs: original-catalog-67-definer-source-only
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r114_disposable_only
+          POSTGRES_DB: world_v2_r18_114
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_114"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R114_ISOLATED: 'yes'
+      R115_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_114
+      PGUSER: postgres
+      PGPASSWORD: r114_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Replay unchanged source-exact R115 removed sheet owner / inventory lease and unapplied guard
+        shell: bash
+        run: bash tests/world-v2-r18-115-postgres/run.sh
