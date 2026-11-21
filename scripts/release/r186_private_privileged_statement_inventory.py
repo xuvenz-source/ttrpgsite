@@ -23,14 +23,14 @@ MAX_ITEMS = 24
 CREATE_FUNCTION = re.compile(r"^\s*CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\b", re.I)
 DOLLAR = re.compile(r"\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$")
 DEF = re.compile(r"\bSECURITY\s+DEFINER\b", re.I)
-SEARCH_PATH = re.compile(r"\bSET\s+search_path\s*(?:=|TO)\b", re.I)
+SEARCH_PATH = re.compile(r"\bSET\s+search_path\s*(?:=|\bTO\b)", re.I)
 PUBLIC_PATH = re.compile(r"\bSET\s+search_path\s*(?:=|TO)\s*(?:public\b|\"public\")", re.I)
 IDENTITY = re.compile(r"\bauth\s*\.\s*(?:uid|jwt)\s*\(", re.I)
 CAMPAIGN = re.compile(r"\bcampaign_members\b", re.I)
 DYNAMIC = re.compile(r"\bEXECUTE\s+(?:format\s*\(|['\"]|\$|[a-z_][a-z_0-9]*)", re.I)
 USER_META = re.compile(r"\b(?:raw_user_meta_data|user_metadata)\b", re.I)
 GRANT_PUBLIC = re.compile(
-    r"^\s*GRANT\s+EXECUTE\s+ON\s+(?:ALL\s+)?FUNCTIONS?\b[\s\S]*\bTO\s+PUBLIC\b", re.I
+    r"^\s*GRANT\s+EXECUTE\s+ON\s+(?:ALL\s+)?FUNCTIONS?\b[\s\S]*\bTO\s+(?:PUBLIC\b|[^;]*,\s*PUBLIC\b)", re.I
 )
 RISK_CODES = (
     "MISSING_FUNCTION_LOCAL_SEARCH_PATH_MARKER",
