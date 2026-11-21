@@ -1,0 +1,35 @@
+name: World V2 R18-211 owner-private QA schema-effects preflight NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-211-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-210-*'
+permissions:
+  contents: read
+jobs:
+  immutable-owner-private-preflight-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject live app, active migrations, Supabase Edge, deployment changes
+        run: git diff --exit-code 4b39a4173e7643b9a35acdd8b398cc0d322b87b3 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Enforce prep-only owner scope, zero QA schema, private source hashes and no SQL install
+        run: python3 scripts/release/r211_validate_private_qa_preflight_package.py
+      - name: Reject forged QA SQL installation, production release and private export
+        run: python3 tests/world-v2-r18-211-private-qa-package.test.py
+      - name: Compile source-only private offline preflight modules
+        run: python3 -m py_compile scripts/release/r211_private_qa_migration_effects.py scripts/release/r211_validate_private_qa_preflight_package.py
+
+  fictional-83-migration-source-triage:
+    needs: immutable-owner-private-preflight-package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run invented 83-file SQL taxonomy and fail-closed private SHA, chronology, body spoofing tests
+        run: python3 tests/world-v2-r18-211-private-qa-preflight.test.py
