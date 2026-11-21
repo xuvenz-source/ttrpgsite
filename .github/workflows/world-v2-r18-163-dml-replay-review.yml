@@ -1,0 +1,22 @@
+name: World V2 R18-163 historical DML replay guard
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-163-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-162-*'
+permissions:
+  contents: read
+jobs:
+  safe-replay-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No active migrations or runtime updates
+        run: git diff --exit-code e3bfc9097c794bc2beea7f19ff4f6bfae6dd745a HEAD -- src/ supabase/migrations/
+      - name: Guard original historical DML review status
+        run: node --test tests/world-v2-r18-163-dml-replay-review.test.mjs
