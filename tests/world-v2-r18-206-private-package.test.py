@@ -4,10 +4,14 @@ import importlib.util
 import json
 from pathlib import Path
 import shutil
+import sys
 import tempfile
 import unittest
 
 ROOT=Path(".").resolve()
+# Direct importlib loading does not automatically include this module's
+# sibling release directory; match the normal standalone runner import path.
+sys.path.insert(0,str(ROOT/"scripts/release"))
 spec=importlib.util.spec_from_file_location(
  "r206gate",ROOT/"scripts/release/r206_validate_private_package.py")
 gate=importlib.util.module_from_spec(spec)
