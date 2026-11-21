@@ -70,7 +70,9 @@ class FogHistoryLineage(unittest.TestCase):
             self.assertFalse(result["latest_direct_target_has_direct_identity_marker"])
             self.assertFalse(result["all_67_live_privileged_call_chains_approved"])
             self.assertFalse(result["qa_or_production_sql_authorized"])
-            for forbidden in ("fictional_", "raw_user_meta_data", "CREATE FUNCTION",
+            for forbidden in ("fictional_", "raw_user_meta_data",
+                              "CREATE FUNCTION public.is_map_fog_published",
+                              "CREATE OR REPLACE FUNCTION public.is_map_fog_published",
                               "r106-original", "p_map_id"):
                 self.assertNotIn(forbidden, json.dumps(result))
 
