@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-191",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "parentPr": 299,
+  "parentSha": "657269ca610dcd9a951c2644cbe5f2fecf69160d",
+  "originalLiveCatalog": {
+    "verifiedReadOnly": true,
+    "publicAuthenticatedCallableDefinerRPC": true,
+    "targetKnownPriorIssue": 212,
+    "publicOverloads": 1,
+    "arguments": 1,
+    "language": "sql",
+    "returnsScalarBoolean": true,
+    "storedBodyBytes": 102,
+    "storedBodySha256": "767cbcd8bd4813c0a535fa71bf1ecc3a9cf8a6dd02c239499c0be1737a28c96f",
+    "ownedByPostgres": true,
+    "explicitEmptySearchPath": true,
+    "anonExecutable": false,
+    "authenticatedExecutable": true,
+    "lexicalMarkers": {
+      "directAuthUidOrJwt": false,
+      "campaignMembers": false,
+      "canViewCampaignMap": false
+    }
+  },
+  "verifiedPrivateHistorySnapshotExpected": 83,
+  "privateOfflineScript": "scripts/release/r191_private_fog_status_lineage.py",
+  "dependencies": [
+    "scripts/release/r154_private_history_audit.py",
+    "scripts/release/r186_private_privileged_statement_inventory.py"
+  ],
+  "privacyContract": {
+    "sourceSqlFunctionBodiesOrSignaturesExported": false,
+    "originalMigrationFileNamesPathsExported": false,
+    "sqlExecutedOrHostedDbAccessedByOfflineTool": false
+  },
+  "chronology": "Check all 83 original filenames have unique valid 14-digit Supabase migration timestamps before claiming latest.",
+  "possibleFindings": [
+    "zero direct original statements",
+    "one or more historical definitions",
+    "latest historical body matches or does not match live"
+  ],
+  "strongGuaranteesNotSupported": [
+    "function argument signature equivalence",
+    "dynamic DO migrations or live follow-up installs",
+    "effective SQL/RLS/ACL authorization",
+    "hosted signed QA actor outcomes"
+  ],
+  "approvals": {
+    "all83MigrationSemantics": false,
+    "all67LivePrivilegedChains": false,
+    "signedQA": false,
+    "originalOrQaSQL": false,
+    "productionRelease": false
+  },
+  "noOriginalOrQaWrites": true,
+  "noRuntimeChanges": true,
+  "noVersionedMigrationChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "nextManualGate": "Owner downloads SHA-pinned R191 offline script into existing WSL private archive, runs under umask 077 and uploads only r191-sanitized-report.json."
+}
