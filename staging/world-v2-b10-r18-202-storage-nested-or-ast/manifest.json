@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-202",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 311,
+    "head": "8aa37b14b99734073113137c2336149ef375d530",
+    "focusedCiSuccess": 44906600134,
+    "generalCiSuccess": 44906600199
+  },
+  "ownerR200ReceiptSha256": "4d9f09d70ff13208700e4428b33910039029a4ac2d823c429bcce0ff500c2b53",
+  "originalReadOnlyStorageAstAnonymousSlots": [
+    {
+      "anonymous_slot": 1,
+      "root_boolean_expression": true,
+      "root_and": true,
+      "root_or": false,
+      "any_or_node": false,
+      "any_and_node": true,
+      "ast_serialized_characters": 3463
+    },
+    {
+      "anonymous_slot": 2,
+      "root_boolean_expression": true,
+      "root_and": true,
+      "root_or": false,
+      "any_or_node": true,
+      "any_and_node": true,
+      "ast_serialized_characters": 10360
+    },
+    {
+      "anonymous_slot": 3,
+      "root_boolean_expression": true,
+      "root_and": true,
+      "root_or": false,
+      "any_or_node": false,
+      "any_and_node": true,
+      "ast_serialized_characters": 2423
+    }
+  ],
+  "frozenGitBlobs": {
+    "scripts/release/r202_readonly_storage_policy_ast_root.sql": "3770db1ef838b55252ddf0e828a01d6184c739fa",
+    "tests/world-v2-r18-202-postgres/run.sh": "f06ecd6a728ea645bc46cfc0fe5306229a890fe3",
+    "tests/world-v2-r18-201-postgres/run.sh": "2fa7c3be2e52f409f6229523c6021af9f0e31b1d"
+  },
+  "technicalInterpretation": {
+    "allThreeLiveSelectPolicyAstRootsAreAnd": true,
+    "secondLiveSelectPolicyContainsNestedOrNode": true,
+    "bucketScopeProvenForAllOrArms": false,
+    "currentOriginalPermissivePolicyBooleanSemanticsApproved": false,
+    "syntheticCrossBucketCounterexampleIsProofOfHostExploit": false,
+    "userSignedRevokedActorCanMintNewUrlProven": false,
+    "alreadyIssuedStorageSignedBearerRevoked": false,
+    "all83HistoricalSemanticsApproved": false,
+    "all67PrivilegedFunctionChainsApproved": false,
+    "realSignedMultiuserQaApproved": false,
+    "qaSqlInstallApproved": false,
+    "productionDeployApproved": false
+  },
+  "restrictions": {
+    "readOnlyOriginalPgCatalogOnly": true,
+    "onlySyntheticPg17RlsPolicies": true,
+    "noOriginalPoliciesNamesSqlBucketPathsObjectDataOrTokensExported": true,
+    "noOriginalOrQaSqlWrites": true,
+    "noLiveAppEdgeOrVersionedMigrationEdits": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  },
+  "nextGate": "Semantically inspect each current Storage SELECT policy's bucket-scoped AND/OR branches via private owner-only methodology or explicitly authorized signed QA, without disclosing original policy SQL or changing original/QA."
+}
