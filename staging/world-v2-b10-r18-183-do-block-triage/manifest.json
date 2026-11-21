@@ -1,0 +1,199 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-183",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 291,
+  "parentSha": "bfe5c68496dabbddbaffc5f2e2df06c88975a0ce",
+  "sourceOnly": true,
+  "originalMigrationCount": 83,
+  "executableTopLevelStatements": 937,
+  "commentOnlySegments": 6,
+  "inPlaceDoBlockCount": 12,
+  "doBlocks": [
+    {
+      "version": "20261105112515",
+      "index": 1,
+      "category": "REALTIME_PUBLICATION",
+      "risk": "DYNAMIC_TABLE_NAME_PUBLICATION",
+      "id": "20261105112515.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261105143416",
+      "index": 1,
+      "category": "REALTIME_PUBLICATION",
+      "risk": "BATTLE_MAP_PUBLICATION",
+      "id": "20261105143416.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261105163541",
+      "index": 1,
+      "category": "DATA_BACKFILL",
+      "risk": "CAMPAIGN_TOKEN_DISPLAY_CONFIG_REWRITE",
+      "id": "20261105163541.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261106074754",
+      "index": 1,
+      "category": "DYNAMIC_RPC_REWRITE",
+      "risk": "TWO_EXACT_FUNCTION_DEFINITIONS",
+      "id": "20261106074754.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261107051546",
+      "index": 1,
+      "category": "SECURITY_ASSERTION",
+      "risk": "POLICY_GRANT_POSTCONDITION",
+      "id": "20261107051546.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261107051546",
+      "index": 2,
+      "category": "SECURITY_ASSERTION",
+      "risk": "CATALOG_GRANT_POSTCONDITION",
+      "id": "20261107051546.2",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261107081736",
+      "index": 1,
+      "category": "REALTIME_PUBLICATION",
+      "risk": "CAMPAIGN_TOOL_PUBLICATIONS",
+      "id": "20261107081736.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261107081754",
+      "index": 1,
+      "category": "REALTIME_PUBLICATION",
+      "risk": "CAMPAIGN_HANDOUT_EVENTS_PUBLICATION",
+      "id": "20261107081754.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261107095343",
+      "index": 1,
+      "category": "REALTIME_PUBLICATION",
+      "risk": "CAMPAIGN_TOOL_ITEM_LEASES_PUBLICATION",
+      "id": "20261107095343.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261107095350",
+      "index": 1,
+      "category": "REALTIME_PUBLICATION",
+      "risk": "SHEET_LEASES_CHARACTERS_NPC_TEMPLATES_PUBLICATION",
+      "id": "20261107095350.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261107150305",
+      "index": 1,
+      "category": "CONDITIONAL_CONSTRAINT_DDL",
+      "risk": "CAMPAIGN_TOOL_HOLDABLE_CHECK_CONSTRAINTS",
+      "id": "20261107150305.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    },
+    {
+      "version": "20261108091818",
+      "index": 1,
+      "category": "REALTIME_PUBLICATION",
+      "risk": "VIEWER_VISIBILITY_TICKS_PUBLICATION",
+      "id": "20261108091818.1",
+      "sourceInspectedInPlace": true,
+      "sqlBodyExported": false,
+      "fullSemanticApproval": false,
+      "hostedSignedReplayPassed": false
+    }
+  ],
+  "classes": {
+    "REALTIME_PUBLICATION": 7,
+    "DATA_BACKFILL": 1,
+    "DYNAMIC_RPC_REWRITE": 1,
+    "SECURITY_ASSERTION": 2,
+    "CONDITIONAL_CONSTRAINT_DDL": 1
+  },
+  "sourceDerivedConclusions": {
+    "DODataMutationTarget": "public.campaigns.token_display_config",
+    "DODataMutationUsesExistingCampaignSheetTemplate": true,
+    "DORpcPatchTargets": [
+      "public.get_token_monitor_values(p_map uuid)",
+      "public.post_token_reference(p_token uuid,p_code text)"
+    ],
+    "DOAssertionBodiesAreNotDirectDataMutation": true,
+    "DOConditionalConstraintTables": [
+      "public.campaign_tool_templates",
+      "public.campaign_tool_issues"
+    ],
+    "DORealtimePublicationName": "supabase_realtime",
+    "DORealtimeIncludesSensitiveCandidateTables": [
+      "public.characters",
+      "public.npc_templates",
+      "public.campaign_sheet_item_leases",
+      "public.map_viewer_visibility_ticks"
+    ],
+    "privatePublicationRlsSignedQaVerified": false,
+    "historicalBackfillDataIdempotenceVerified": false,
+    "completeDynamicPatchSourceReplayVerified": false
+  },
+  "releaseGates": [
+    "Replay private historical SQL only under a controlled, reviewed, chronological installation; do not ignore DO-block side effects.",
+    "Protect API and Realtime exposure until publication changes and current RLS are installed and signed actor tested.",
+    "Independently inspect backfill migration against existing token_display_config and template ID behavior; no unsafe historical resave.",
+    "Verify get_token_monitor_values and post_token_reference source exact prior bodies, DO patch and eventual new definitions.",
+    "Check the two holdable constraints against preexisting issue/template rows, not only a fresh empty schema.",
+    "Refuse to label structural-only/PG17 synthetic tests as signed hosted authorization acceptance."
+  ],
+  "original83SemanticSignoff": false,
+  "all67PrivilegedFunctionSignoff": false,
+  "qaHistoryReplayApproved": false,
+  "qaMigrationsInstalled": false,
+  "signedQAPassed": false,
+  "ownerQaInstallApproval": false,
+  "productionApproved": false,
+  "noHostedWrites": true,
+  "noPrivateSqlExport": true,
+  "noRootMigrationChange": true,
+  "noRuntimeChange": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true
+}

@@ -1,0 +1,22 @@
+name: World V2 R18-183 historical DO semantic NO_GO gate
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-183-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-182-*'
+permissions:
+  contents: read
+jobs:
+  do-effect-classification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Protect active runtime, versioned migrations and hosted functions
+        run: git diff --exit-code bfe5c68496dabbddbaffc5f2e2df06c88975a0ce HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Verify 12 original DO effects and preserve semantic NO_GO
+        run: node --test tests/world-v2-r18-183-do-block-triage.test.mjs
