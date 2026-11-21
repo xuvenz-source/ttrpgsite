@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-168",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 276,
+  "parentSha": "e16320f5d15894a083f1724046fc314905012266",
+  "sourceOnly": true,
+  "reviewer": "AI_SOLE_TECHNICAL_REVIEWER",
+  "historicalReadOnlyInspection": [
+    {
+      "version": "20261105110307",
+      "name": "tabletop_foundation",
+      "createsCoreTables": [
+        "campaigns",
+        "campaign_members",
+        "characters",
+        "map_folders",
+        "battle_maps",
+        "map_tokens",
+        "chat_messages"
+      ],
+      "newPolicies": 0,
+      "initialTablesMayBeExposedBeforeSubsequentRls": true,
+      "requiresClosedApiDuringBootstrap": true,
+      "securitySemanticApproval": false
+    },
+    {
+      "version": "20261105111843",
+      "name": "tabletop_rls_permissions",
+      "createsHelperFunctions": [
+        "is_campaign_member",
+        "is_campaign_dm"
+      ],
+      "enablesRlsOnCoreTables": 7,
+      "createsPolicies": 19,
+      "allCreatedPoliciesToAuthenticated": true,
+      "allCreatedPoliciesContainUsingOrWithCheck": true,
+      "anonymousOrPublicPolicyCreated": false,
+      "securitySemanticApproval": false
+    },
+    {
+      "version": "20261105112628",
+      "name": "restrict_player_character_visibility",
+      "dropsPolicy": "members view characters",
+      "createsPolicy": "owner or dm read characters",
+      "table": "characters",
+      "createsPolicies": 1,
+      "allCreatedPoliciesToAuthenticated": true,
+      "narrowsHistoricalCharacterReader": true,
+      "securitySemanticApproval": false
+    }
+  ],
+  "currentCatalogCrosscheck": {
+    "publicApplicationTables": 31,
+    "publicTablesWithoutRls": 0,
+    "anonymousSelectablePublicTables": 0,
+    "totalPublicPolicies": 77,
+    "directCharacterSelect": {
+      "name": "owner or dm read characters",
+      "currentMembershipPredicate": true,
+      "ownerOrDmPredicate": true,
+      "actorScoped": true
+    },
+    "directCharacterUpdate": {
+      "name": "owners or dm edit characters",
+      "hasUsing": true,
+      "hasWithCheck": true,
+      "currentMembershipPredicate": true,
+      "ownerOrDmPredicate": true
+    },
+    "directBattleMapSelect": {
+      "name": "published map or dm",
+      "canViewCampaignMap": true
+    },
+    "directMapTokenSelect": {
+      "name": "members view only observed tokens",
+      "canViewCampaignMap": true,
+      "canObserveMapToken": true
+    },
+    "directCampaignMembersSelect": {
+      "name": "members view membership",
+      "currentMemberPredicate": true
+    },
+    "directChatSelect": {
+      "name": "members read chat",
+      "hasCurrentMembershipOrDm": true,
+      "canViewCampaignMap": true
+    },
+    "mapCombatSelect": {
+      "name": "dm or nonfog viewers read combat roster",
+      "usesFogMetadataOracle": true,
+      "hasCanViewCampaignMap": true,
+      "knownIssue": 212
+    }
+  },
+  "replaySecuritySequence": [
+    "Keep QA isolated and API unavailable to signed players while foundational DDL has not yet received RLS and safe grants.",
+    "Replay the exact original historical chronology in an independently attested, authorized QA-only environment; original historical SQL may not be rewritten or copied into public Git.",
+    "Before any signed QA user is admitted, verify all 31 expected public app tables have effective RLS and all direct role grants match the planned final policy state.",
+    "Verify the broad initial members-view-characters policy was removed, and the owner-or-DM replacement applies alongside current campaign membership.",
+    "Check permissive policy OR composition and all SECURITY DEFINER bypasses; direct RLS is not a substitute for the known #220 sheet helper guard.",
+    "Apply reviewed forward-only fixes for the confirmed #220 sheet and #212 fog status flaws after a separately approved QA bootstrap, not from scratch SQL.",
+    "Disable old invitation rejoin and address privileged membership writer and stale assets/Reatime before considering release.",
+    "Run real signed DM/P1/P2/revoked/outsider denial and positive tests and free-tier performance acceptance before any owner production decision."
+  ],
+  "original83FullySemanticReviewed": false,
+  "remaining67PrivilegedFunctionsApproved": false,
+  "qaSchemaInstalled": false,
+  "signedQaAuthCompleted": false,
+  "ownerReleaseApproved": false,
+  "openSecurityIssues": [
+    212,
+    218,
+    220,
+    223,
+    229,
+    231
+  ],
+  "hardeningIssue": 275,
+  "immutability": {
+    "noHostedSqlWrites": true,
+    "noRawOriginalSqlExport": true,
+    "noRootMigrationsModified": true,
+    "noAppRuntimeChanges": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidInfrastructure": true
+  }
+}
