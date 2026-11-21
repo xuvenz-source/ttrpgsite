@@ -37,6 +37,7 @@ test('R166 definer private schema grants are latent not current anonymous access
  assert.equal(p.forgeVisibility.authenticatedCanUseSchema,false);
  assert.equal(p.forgeVisibility.canInvokeDirectlyNowViaOrdinaryRoles,false);
  assert.equal(p.forgeVisibility.latentGrantRiskIfSchemaUsageEnabled,true);
- assert.equal(p.forgeVisibility.hardeningAppliedToOriginal,false);\n assert.equal(p.forgeVisibility.hardeningIssue,275);
+ assert.equal(p.forgeVisibility.hardeningAppliedToOriginal,false);
+ assert.equal(p.forgeVisibility.hardeningIssue,275);
  assert.deepEqual(m.openSecurityIssues,[212,218,220,223,229,231]);
 });
