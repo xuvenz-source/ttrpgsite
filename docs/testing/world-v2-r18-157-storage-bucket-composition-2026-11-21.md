@@ -1,6 +1,6 @@
 # B10-R18-157 — Original Storage SELECT composition and three-bucket synthetic access matrix
 
-**21 November 2026.** Parent draft R18-156 PR #264 at exact green SHA `bbfc6a4caf20653ed96bb3217ddd1f5d1a8f6d03`. **SOURCE ONLY / NO_GO.**
+**21 November 2026.** Parent draft R18-156 PR #264 at exact green SHA `bbfc6a4caf20653ed96bb3217ddd1f5d1a8f6d03`. **SOURCE-ONLY / NO_GO.**
 
 ## R156 operator evidence (no private SQL)
 
