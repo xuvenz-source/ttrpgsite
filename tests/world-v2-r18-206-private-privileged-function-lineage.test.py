@@ -49,6 +49,30 @@ def prepare(root:Path,exclude:int|None=None)->Path:
  folder=fictional.fixture(root)
  docket_file=root/"r111-private-review-docket.json"
  docket=json.loads(docket_file.read_text())
+ # The R200 invented fixture has 3 CREATE / 1 ALTER / 1 DROP events.
+ # R206 intentionally requires the owner R200 observed 10/0/2 = 12,
+ # so reshape ONLY the fabricated files to that shape.
+ item=docket["reviewItems"][60]
+ p=folder/item["filename"]
+ original=p.read_text()
+ if "ALTER POLICY owner_read ON storage.objects" not in original:
+  raise AssertionError("fictional policy fixture unexpectedly changed")
+ edited=original.replace(
+   "ALTER POLICY owner_read ON storage.objects",
+   "CREATE POLICY owner_read_extra ON storage.objects",1)
+ p.write_text(edited)
+ item["sourceBodySha256"]=sha(edited)
+ for i,index_in_docket in enumerate((30,31,32,33,34,35,36)):
+  item=docket["reviewItems"][index_in_docket]
+  p=folder/item["filename"]
+  text=p.read_text()
+  if i<6:
+   text+=(f"\nCREATE POLICY fictional_extra_{i} ON storage.objects "
+          f"FOR SELECT TO authenticated USING (bucket_id='fake_{i}');\n")
+  else:
+   text+="\nDROP POLICY IF EXISTS fictional_extra_0 ON storage.objects;\n"
+  p.write_text(text)
+  item["sourceBodySha256"]=sha(text)
  for index,(target,body) in enumerate(zip(r206.TARGETS,BODIES)):
   if index==exclude:continue
   old=docket["reviewItems"][INDICES[index]]
