@@ -1,0 +1,22 @@
+name: World V2 R18-175 private media gateway prototype NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-175-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-174-*'
+permissions:
+  contents: read
+jobs:
+  synthetic-http-media:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Do not alter active app, migrations or hosted Storage
+        run: git diff --exit-code 171a23c593081138a86df51aa6f3b6036714b837 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Check signed per-resource mock authorization and fail-closed delivery
+        run: node --test tests/world-v2-r18-175-private-media-gateway.test.mjs
