@@ -1,0 +1,57 @@
+name: World V2 R18-207 12-function privileged helper call graph NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-207-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-206-*'
+permissions:
+  contents: read
+jobs:
+  original-12-function-graph-source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse application, active migration, Edge and production config changes
+        run: git diff --exit-code fe36e37480744e661ae003ea9597cb80cda6cfda HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Pin owner R206 sanitized SHA and current original 12 function hashes/lexical graph
+        run: python3 scripts/release/r207_validate_privileged_helper_graph.py
+      - name: Reject forged helper edges, mutable metadata authorization assumptions and hosted GO
+        run: python3 tests/world-v2-r18-207-helper-graph.test.py
+      - name: Compile source-only validator
+        run: python3 -m py_compile scripts/release/r207_validate_privileged_helper_graph.py
+
+  synthetic-editable-metadata-never-grants-membership:
+    needs: original-12-function-graph-source-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r207_disposable_only
+          POSTGRES_DB: world_v2_r18_207
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_207"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R207_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_207
+      PGUSER: postgres
+      PGPASSWORD: r207_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Check fake display-name changes do not authorize, forged metadata bypass only in ROLLBACK
+        shell: bash
+        run: bash tests/world-v2-r18-207-postgres/run.sh
