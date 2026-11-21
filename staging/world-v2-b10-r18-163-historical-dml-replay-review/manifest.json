@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-163",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 270,
+  "parentSha": "e3bfc9097c794bc2beea7f19ff4f6bfae6dd745a",
+  "reviewer": "AI_LED_SOURCE_AND_LIVE_CATALOG_INSPECTION",
+  "readOnlyOriginalAndQa": true,
+  "historicalDataStatements": [
+    {
+      "version": "20261105111916",
+      "migration": "tabletop_functions_and_map_storage",
+      "operation": "INSERT",
+      "target": "storage.buckets",
+      "onConflictDoNothing": true,
+      "upsertOverwrite": false,
+      "hasHardcodedUuidLiteral": false,
+      "semanticReview": "CONDITIONAL_IDEMPOTENCY_GUARD_PENDING"
+    },
+    {
+      "version": "20261105114239",
+      "migration": "add_npc_bestiary_and_character_artwork",
+      "operation": "INSERT",
+      "target": "storage.buckets",
+      "onConflictDoNothing": true,
+      "upsertOverwrite": false,
+      "hasHardcodedUuidLiteral": false,
+      "semanticReview": "CONDITIONAL_IDEMPOTENCY_GUARD_PENDING"
+    },
+    {
+      "version": "20261105133019",
+      "migration": "create_personal_token_libraries",
+      "operation": "INSERT",
+      "target": "storage.buckets",
+      "onConflictDoNothing": true,
+      "upsertOverwrite": false,
+      "hasHardcodedUuidLiteral": false,
+      "semanticReview": "CONDITIONAL_IDEMPOTENCY_GUARD_PENDING"
+    },
+    {
+      "version": "20261105143416",
+      "migration": "map_calibration_source_dimensions_and_realtime",
+      "operation": "UPDATE",
+      "target": "public.battle_maps",
+      "hasWhere": true,
+      "hasNullCheck": true,
+      "hasCoalesce": true,
+      "hasSourceDimensions": true,
+      "hasHardcodedUuidLiteral": false,
+      "semanticReview": "DATA_BACKFILL_DEPENDENCIES_PENDING"
+    }
+  ],
+  "bucketPostconditions": {
+    "originalBucketCount": 3,
+    "originalPublicBuckets": 0,
+    "originalPrivateBuckets": 3,
+    "qaBucketCount": 0,
+    "qaSchemaInstalled": false,
+    "allThreeBucketNamesPrivatelyComparedToMigrationIntent": false,
+    "postReplayConfigurationProven": false
+  },
+  "triggerBoundary": {
+    "triggerFunctionsWithoutDirectActorMarker": 4,
+    "allNotDirectlyExecutableByAnonOrAuthenticated": true,
+    "triggerTableBindingsReviewed": true,
+    "triggerEffectsAndOwnerUpdatePathsSemanticallyReviewed": false,
+    "claimTabletopRegistrationSlotPrivilegedCallerValidated": false
+  },
+  "requiredSafeReplayChecks": [
+    "Confirm every expected bucket is private after fresh QA bootstrap and after any preexisting-name conflict; ON CONFLICT DO NOTHING does not validate existing settings.",
+    "Confirm conditional battle_maps dimension backfill is safe for zero rows, partially populated rows, and restored source dimensions.",
+    "Prove no application-owned data, Auth identity, or public Storage state is overwritten during historical replay.",
+    "Review source-exact privileged trigger side effects and trusted caller chain, not just direct EXECUTE grants.",
+    "Never apply original or candidate SQL to QA without separate security approval and target attestation."
+  ],
+  "all83HistorySemanticallyApproved": false,
+  "all67PrivilegedFunctionsApproved": false,
+  "signedQaPassed": false,
+  "ownerRiskAcceptanceGranted": false,
+  "productionReleaseAuthorized": false,
+  "immutability": {
+    "noOriginalOrQaWrites": true,
+    "noRawPrivateSqlExport": true,
+    "noRuntimeSourceChanges": true,
+    "noMigrationsModified": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  }
+}
