@@ -33,3 +33,17 @@ test('four direct UPDATEs and three Storage bucket INSERTs cannot be marked safe
  assert.equal(m.doBlockWithNestedDataUpdate,'20261105163541');
  assert.deepEqual(m.doBlocksWithDynamicExecute,['20261105112515','20261106074754']);
 });
+
+
+test('dynamic historical function rewrite remains blocked pending exact chronological input source',()=>{
+ const d=m.dynamicFunctionRewrite;
+ assert.equal(d.version,'20261106074754');
+ assert.equal(d.targetFunction,'public.can_view_campaign_map');
+ assert.equal(d.dependsOnPgGetFunctiondef,true);
+ assert.equal(d.transformsExistingFunctionSource,true);
+ assert.equal(d.executesRewrittenDefinition,true);
+ assert.equal(d.originalInputDefinitionVersionAttested,false);
+ assert.equal(d.exactPostRewriteFunctionSemanticsApproved,false);
+ assert.equal(d.isolatedReplayCompatibilityVerified,false);
+ assert.equal(d.releaseGate,'DO_NOT_EXPOSE_QA_API_DURING_HISTORY_REPLAY');
+});
