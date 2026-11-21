@@ -1,0 +1,22 @@
+name: World V2 R18-169 combat and token source-only authorization review
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-169-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-168-*'
+permissions:
+  contents: read
+jobs:
+  source-authorization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Ensure no app or historical migration edits
+        run: git diff --exit-code ee219e79d34743223c1e2b5834c5c736a0326dab HEAD -- src/ supabase/migrations/
+      - name: Enforce source-only RPC findings and signed QA NO_GO
+        run: node --test tests/world-v2-r18-169-combat-token-authorization.test.mjs

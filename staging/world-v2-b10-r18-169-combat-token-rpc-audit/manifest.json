@@ -1,0 +1,437 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-169",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 277,
+  "parentSha": "ee219e79d34743223c1e2b5834c5c736a0326dab",
+  "reviewer": "AI_SOLE_TECHNICAL_REVIEWER",
+  "sourceOnly": true,
+  "scope": "CURRENT_ORIGINAL_PG_PROC_CODE_INSPECTION_NO_HOSTED_WRITES",
+  "privilegedRpcInventory": [
+    {
+      "name": "add_map_combat_tokens",
+      "identityArguments": "p_map uuid, p_tokens uuid[]",
+      "sourceMd5": "3033bf8460c64b5ce9fd3d2e3aaa1536",
+      "sourceBytes": 1184,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "apply_token_quick_changes",
+      "identityArguments": "p_token uuid, p_changes jsonb",
+      "sourceMd5": "38dd2ad2867e96658ef1e8a7743fa8d7",
+      "sourceBytes": 3468,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm",
+        "is_campaign_member",
+        "can_view_campaign_map"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": true,
+      "hasMapIdArgument": false,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "begin_map_combat",
+      "identityArguments": "p_map uuid, p_tokens uuid[], p_field text, p_mode text",
+      "sourceMd5": "78e45a9c2b8ea6cd790223982f5b2382",
+      "sourceBytes": 2458,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "command_map_combat",
+      "identityArguments": "p_map uuid, p_action text, p_entry uuid, p_score integer",
+      "sourceMd5": "e593c347e351d1d4d2d9384991b1acec",
+      "sourceBytes": 3199,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "get_dm_map_npc_values",
+      "identityArguments": "p_map uuid",
+      "sourceMd5": "32bb20cc485a57d24a50b13a64cecab0",
+      "sourceBytes": 263,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": false,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": false,
+      "recognizedAuthCheckBeforeMutation": null,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "get_npc_token_values",
+      "identityArguments": "p_token uuid",
+      "sourceMd5": "d492c33eddc090ea9a1bcfed7602807e",
+      "sourceBytes": 141,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": false,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": false,
+      "recognizedAuthCheckBeforeMutation": null,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": false,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "get_token_monitor_values",
+      "identityArguments": "p_map uuid",
+      "sourceMd5": "5932d9018fe845c80226ce0e8fa9a409",
+      "sourceBytes": 2509,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm",
+        "is_campaign_member",
+        "can_view_campaign_map",
+        "can_observe_map_token"
+      ],
+      "firstMutationDetected": false,
+      "recognizedAuthCheckBeforeMutation": null,
+      "containsTableOwnershipChecks": true,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "get_token_quick_values",
+      "identityArguments": "p_token uuid",
+      "sourceMd5": "2ab9a32078fbaef39338ace85261104c",
+      "sourceBytes": 1899,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm",
+        "is_campaign_member",
+        "can_view_campaign_map"
+      ],
+      "firstMutationDetected": false,
+      "recognizedAuthCheckBeforeMutation": null,
+      "containsTableOwnershipChecks": true,
+      "hasMapIdArgument": false,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "move_entire_party_to_map",
+      "identityArguments": "p_campaign uuid, p_map uuid",
+      "sourceMd5": "bb8abf7fcc93b5db495dd0da8c6892f4",
+      "sourceBytes": 675,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "post_token_reference",
+      "identityArguments": "p_token uuid, p_code text",
+      "sourceMd5": "2704c3fd2bd5290a72a3ca0135891a61",
+      "sourceBytes": 1773,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_member",
+        "is_campaign_dm",
+        "can_view_campaign_map"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": true,
+      "hasMapIdArgument": false,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "publish_map_environment",
+      "identityArguments": "p_map uuid, p_action text",
+      "sourceMd5": "847d71e3382c05d2802c965c532ff225",
+      "sourceBytes": 3836,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": false,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "roll_map_combat_initiative",
+      "identityArguments": "p_map uuid, p_entry uuid",
+      "sourceMd5": "540c9719e3ae08602a17064fc84ce511",
+      "sourceBytes": 4743,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "can_view_campaign_map",
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": true,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "roll_map_npc_initiative",
+      "identityArguments": "p_map uuid",
+      "sourceMd5": "3a5132c5839b96136a59e7826461cf14",
+      "sourceBytes": 692,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm"
+      ],
+      "firstMutationDetected": false,
+      "recognizedAuthCheckBeforeMutation": null,
+      "containsTableOwnershipChecks": false,
+      "hasMapIdArgument": true,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "name": "set_token_quick_value",
+      "identityArguments": "p_token uuid, p_field text, p_part text, p_value numeric",
+      "sourceMd5": "b8258cbebc7d26e42ac62d7cdf98e9e7",
+      "sourceBytes": 2593,
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "directAuthUidMarker": true,
+      "delegatedAuthHelpers": [
+        "is_campaign_dm",
+        "is_campaign_member"
+      ],
+      "firstMutationDetected": true,
+      "recognizedAuthCheckBeforeMutation": true,
+      "containsTableOwnershipChecks": true,
+      "hasMapIdArgument": false,
+      "hasCampaignScopeMarker": true,
+      "semanticApproval": false,
+      "signedQa": "NOT_RUN"
+    }
+  ],
+  "sourceObservations": {
+    "signedCallableCount": 14,
+    "anonymousCallableCount": 0,
+    "functionsWithDirectAuthUid": 11,
+    "functionsDelegatingWithoutDirectAuthUid": [
+      "get_dm_map_npc_values",
+      "get_npc_token_values",
+      "publish_map_environment"
+    ],
+    "directMutationStatementFunctions": 9,
+    "detectedMutationFunctionsWithAuthHelperAhead": 9,
+    "detectedMutationFunctionsWithoutAuthHelperAhead": 0,
+    "sourceHeuristicNotProof": true
+  },
+  "signedQaCases": [
+    {
+      "id": "T01",
+      "actor": "DM",
+      "action": "combat_begin_and_command",
+      "expected": "ALLOW_OWN_CAMPAIGN",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T02",
+      "actor": "P1",
+      "action": "dm_only_combat_command",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T03",
+      "actor": "P1",
+      "action": "roll_owned_combat_initiative",
+      "expected": "ROLE_SCOPED",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T04",
+      "actor": "P1",
+      "action": "roll_other_npc_initiative",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T05",
+      "actor": "P2",
+      "action": "modify_p1_owned_token",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T06",
+      "actor": "DM",
+      "action": "edit_npc_quick_values",
+      "expected": "ALLOW_OWN_CAMPAIGN",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T07",
+      "actor": "REVOKED_P1",
+      "action": "modify_or_read_campaign_token_private_values",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T08",
+      "actor": "OUTSIDER",
+      "action": "read_dm_npc_values",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T09",
+      "actor": "P1",
+      "action": "cross_campaign_token_id_spoof",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T10",
+      "actor": "P1",
+      "action": "publish_map_environment",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T11",
+      "actor": "DM",
+      "action": "publish_map_environment",
+      "expected": "ALLOW_OWN_CAMPAIGN",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T12",
+      "actor": "P2",
+      "action": "read_unobserved_token_monitor_values",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T13",
+      "actor": "P1",
+      "action": "approved_owned_quick_adjustment",
+      "expected": "ROLE_SCOPED",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "T14",
+      "actor": "OUTSIDER",
+      "action": "post_token_reference_to_foreign_campaign",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    }
+  ],
+  "reviewQualifications": [
+    "An authorization helper before the first obvious DML token does not prove every branch is correctly authorized; inspect token ownership, target campaign, JSON field allowlists and trigger effects.",
+    "NPC getters that lack a direct auth.uid() marker delegate to is_campaign_dm; both must be tested with outsider and revoked members.",
+    "DM environment publisher delegates to is_campaign_dm and can affect fog/light; source code review does not prove current Realtime subscriber revocation.",
+    "Player quick changes and initiative rolling have more nuanced ownership checks than simple DM-only gates; verify granted roles under real signed actors.",
+    "Private map IDs and other cross-campaign references must not be usable to change a foreign token or disclose hidden NPC resources.",
+    "Historical 83-file semantic review and all 67 privileged RPC authorization chains are not complete; this group does not approve production."
+  ],
+  "pending": {
+    "all83HistoricalApproved": false,
+    "all67PrivilegedCallsReviewed": false,
+    "signedQaCompleted": false,
+    "qaSchemaInstalled": false,
+    "revokedOwnerIssue220Fixed": false,
+    "fogMetadataIssue212Fixed": false,
+    "ownerReleaseApproved": false
+  },
+  "securityBlockers": [
+    212,
+    218,
+    220,
+    223,
+    229,
+    231
+  ],
+  "defenseInDepthIssue": 275,
+  "noOriginalOrQaWrites": true,
+  "noRawOriginalSqlExport": true,
+  "noMigrationHistoryEdit": true,
+  "noAppRuntimeChange": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidInfrastructure": true
+}
