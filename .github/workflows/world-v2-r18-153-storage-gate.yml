@@ -1,0 +1,29 @@
+name: World V2 R18-153 original Storage policy and QA NO_GO gate
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-153-*'
+    paths:
+      - '.github/workflows/world-v2-r18-153-storage-gate.yml'
+      - 'staging/world-v2-b10-r18-153-original-storage-policy-release-gate/**'
+      - 'tests/world-v2-r18-153-*'
+      - 'docs/testing/world-v2-r18-153-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-152-*'
+permissions:
+  contents: read
+jobs:
+  source-only-signed-qa-hold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No runtime source or versioned migration change
+        run: git diff --exit-code 0fecf887e85f012b7000211407dfa4fd068da929 HEAD -- src/ supabase/migrations/
+      - name: Refuse fabricated historical approval and signed QA results
+        run: node --test tests/world-v2-r18-153-storage-gate.test.mjs
+      - name: Preserve manual-only release decision
+        run: echo 'R153 source-only. 83 human review, 67 definer review, R127 and 18 signed cases NOT RUN. NO_GO.'
