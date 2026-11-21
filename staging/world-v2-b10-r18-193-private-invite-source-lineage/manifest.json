@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-193",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 301,
+  "parentSha": "f51c6d49423096fd245ee53ab8abffdd28712799",
+  "originalProjectReadOnlyCatalog": {
+    "project": "lwhwgqaunxbmvyndswze",
+    "verifiedReadOnly": true,
+    "projectMutation": false,
+    "knownPublicRPCs": {
+      "JOIN": {
+        "name": "join_campaign",
+        "overloads": 1,
+        "arguments": 1,
+        "language": "plpgsql",
+        "sourceBodyBytes": 742,
+        "sourceBodySha256": "5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655",
+        "postgresOwned": true,
+        "securityDefiner": true,
+        "authenticatedCallable": true,
+        "anonCallable": false,
+        "emptySearchPath": true
+      },
+      "CREATE": {
+        "name": "create_campaign",
+        "overloads": 1,
+        "arguments": 1,
+        "language": "plpgsql",
+        "sourceBodyBytes": 475,
+        "sourceBodySha256": "0ea1e01ba784dfa78e92c8e82a3ca2b2d28a19920f5286cc7423d1e891be645f",
+        "postgresOwned": true,
+        "securityDefiner": true,
+        "authenticatedCallable": true,
+        "anonCallable": false,
+        "emptySearchPath": true
+      }
+    }
+  },
+  "privateOfflineScript": "scripts/release/r193_private_invite_source_lineage.py",
+  "dependencies": [
+    "scripts/release/r154_private_history_audit.py",
+    "scripts/release/r186_private_privileged_statement_inventory.py",
+    "scripts/release/r191_private_fog_status_lineage.py"
+  ],
+  "expectedOwnerPrivateSourceCount": 83,
+  "targetSourceOrder": "R111 priority docket index is NOT migration chronological position. Every original filename must verify unique 14-digit chronological stamp before latest designation.",
+  "outputContract": "Only fixed target codes JOIN/CREATE, numeric docket/statement positions, booleans and counts; never original SQL, filenames, identifiers, signatures, paths, credentials or user data.",
+  "limitations": {
+    "dynamicDoSqlOrLaterInstallNotProven": false,
+    "currentSignatureIdentityProven": false,
+    "safeInviteReuseProven": false,
+    "fullHistorySemanticsApproved": false,
+    "all67LiveCallChainsApproved": false,
+    "realSignedQAPassed": false,
+    "originalOrQaSqlAuthorized": false,
+    "productionReleaseAuthorized": false
+  },
+  "issue223Unfixed": true,
+  "existingOriginalInviteReuseSyntheticFinding": true,
+  "noHostedWrites": true,
+  "noRuntimeChanges": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "nextManualGate": "Owner uses commit-pinned R193 offline source scanner against private existing WSL archive, sharing only r193-sanitized-report.json."
+}

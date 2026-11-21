@@ -1,0 +1,24 @@
+name: World V2 R18-193 private invite RPC history NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-193-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-192-*'
+permissions:
+  contents: read
+jobs:
+  private-history-fingerprint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prevent application, active migrations, Edge or deployment changes
+        run: git diff --exit-code f51c6d49423096fd245ee53ab8abffdd28712799 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Test fictional 83-file source SHA/chronology and no private SQL export
+        run: python3 tests/world-v2-r18-193-private-invite-source-lineage.test.py
+      - name: Validate offline source script syntax only
+        run: python3 -m py_compile scripts/release/r193_private_invite_source_lineage.py
