@@ -1,0 +1,35 @@
+name: World V2 R18-199 Storage signed bearer NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-199-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-198-*'
+permissions:
+  contents: read
+jobs:
+  original-policy-and-signer-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject application, active migrations, Edge, and deployment edits
+        run: git diff --exit-code a2d6285fdf1e4422c3a88c1b437f15d33d41d95a HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Verify sanitized R198 receipt, read-only Storage policy aggregates and frozen live source
+        run: python3 scripts/release/r199_validate_signed_url_release_gates.py
+      - name: Reject policy drift, Auth token revocation claims, unauthorized QA/production GO
+        run: python3 tests/world-v2-r18-199-storage-release-gates.test.py
+      - name: Verify source-only validator syntax
+        run: python3 -m py_compile scripts/release/r199_validate_signed_url_release_gates.py
+
+  actual-signed-asset-store-and-dormant-teardown:
+    needs: original-policy-and-signer-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Re-run original R123 revocation contracts and R199 real client signer race regressions
+        run: node --test tests/world-v2-r18-123-access-revocation-guard.test.mjs tests/world-v2-r18-199-signed-url-teardown.test.mjs
