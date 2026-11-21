@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-153",
+  "target": "FUTURE_SEPARATELY_AUTHORIZED_QA_ONLY",
+  "cases": [
+    {
+      "id": "STOR-01",
+      "actor": "DM-A",
+      "action": "Own campaign shared asset",
+      "expected": "ALLOW",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-02",
+      "actor": "DM-A",
+      "action": "Own campaign DM-only asset",
+      "expected": "ALLOW",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-03",
+      "actor": "P1-A",
+      "action": "Own campaign player-share asset",
+      "expected": "ALLOW",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-04",
+      "actor": "P1-A",
+      "action": "Own campaign DM-only asset",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-05",
+      "actor": "P2-B",
+      "action": "Campaign A shared asset",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-06",
+      "actor": "DM-B",
+      "action": "Campaign A DM-only asset",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-07",
+      "actor": "OUTSIDER",
+      "action": "Campaign A shared asset",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-08",
+      "actor": "ANON",
+      "action": "Private campaign A asset",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-09",
+      "actor": "P2-B",
+      "action": "Attempt Storage object upload into campaign A",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "STOR-10",
+      "actor": "DM-B",
+      "action": "Attempt Storage object delete in campaign A",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "REV-01",
+      "actor": "P1-A",
+      "action": "After DM revocation: fresh authorized read",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "REV-02",
+      "actor": "P1-A",
+      "action": "After DM revocation: issue new signed URL",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "REV-03",
+      "actor": "P1-A",
+      "action": "After DM revocation: unchanged invite rejoin",
+      "expected": "DENY",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "REV-04",
+      "actor": "DM-A",
+      "action": "After explicit reinstate: P1 can access permitted shared file",
+      "expected": "ALLOW",
+      "evidence": "SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "REV-05",
+      "actor": "P1-A",
+      "action": "Previously issued signed URL after membership revocation",
+      "expected": "UNRESOLVED_CONTRACT",
+      "evidence": "SIGNED_QA_AND_DESIGN",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "REV-06",
+      "actor": "P1-A",
+      "action": "Already joined Realtime websocket after revocation",
+      "expected": "UNRESOLVED_CONTRACT",
+      "evidence": "SIGNED_QA_AND_DESIGN",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "ROLE-01",
+      "actor": "SERVICE_ADMIN",
+      "action": "Direct membership role transfer or insert",
+      "expected": "UNRESOLVED_CONTRACT",
+      "evidence": "ADMIN_WRITER_REVIEW",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    },
+    {
+      "id": "CASCADE-01",
+      "actor": "DM-A",
+      "action": "Campaign deletion and auth-user deletion cascades",
+      "expected": "UNRESOLVED_CONTRACT",
+      "evidence": "PRIVATE_SQL_AND_SIGNED_QA",
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidenceRef": null
+    }
+  ],
+  "authorizedToExecute": false,
+  "signedIdentitiesAvailable": false,
+  "qaHistoryInstalled": false,
+  "original83SqlSemanticReviewApproved": false,
+  "original67PrivilegedFunctionsApproved": false,
+  "independentReviewerApproved": false,
+  "preissuedSignedUrlBehaviorApproved": false,
+  "realtimeJoinedSocketCutoffApproved": false,
+  "storagePolicyCompositionApproved": false,
+  "r127HumanApproval": false,
+  "productionReleaseAuthorized": false
+}
