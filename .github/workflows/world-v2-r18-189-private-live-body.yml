@@ -1,0 +1,24 @@
+name: World V2 R18-189 original-to-live metadata body SHA NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-189-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-188-*'
+permissions:
+  contents: read
+jobs:
+  fictional-original-live-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Verify no runtime, migration or Edge Function change
+        run: git diff --exit-code 60803e1036d7bab3154cc4966c098a7e8a0963ca HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: SHA-verified fictional original-to-live historical metadata body tests
+        run: python3 tests/world-v2-r18-189-private-live-body-fingerprint.test.py
+      - name: Offline script syntax, no real private archive
+        run: python3 -m py_compile scripts/release/r189_private_live_body_fingerprint.py
