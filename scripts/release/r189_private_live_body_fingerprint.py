@@ -39,15 +39,11 @@ def extract_dollar_quoted_sql_body(statement: str) -> str:
     header = r186.exclude_dollar_bodies(statement)
     if not SQL_LANGUAGE.search(header):
         raise AuditBlocked("R189_NON_SQL_FUNCTION_LANGUAGE")
-    starts = list(AS_DOLLAR.finditer(header))
-    if len(starts) != 1:
-        raise AuditBlocked("R189_UNSUPPORTED_FUNCTION_BODY_FORM")
-    opening = starts[0]
-    # exclude_dollar_bodies shortens the outside source. Locate AS directly in
-    # the original unchanged statement rather than trusting its offsets.
+    # The dollar body was intentionally removed from 'header'; locate AS
+    # against the unmodified original and reject unsupported source forms.
     direct = AS_DOLLAR.search(statement)
-    if direct is None or direct.group(1) != opening.group(1):
-        raise AuditBlocked("R189_DOLLAR_BODY_MISMATCH")
+    if direct is None:
+        raise AuditBlocked("R189_UNSUPPORTED_FUNCTION_BODY_FORM")
     tag = direct.group(1)
     end = statement.find(tag, direct.end())
     if end < 0:
