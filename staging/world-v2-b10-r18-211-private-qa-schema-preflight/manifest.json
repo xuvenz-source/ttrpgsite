@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-211",
+  "date": "2026-11-22",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 320,
+    "head": "4b39a4173e7643b9a35acdd8b398cc0d322b87b3",
+    "focusedCiRun": 44924410782,
+    "standardCiRun": 44924410804,
+    "draft": true
+  },
+  "scope": {
+    "qaOnlySchemaPreparationUserAuthorized": true,
+    "qaSqlInstallationUserAuthorized": false,
+    "originalSqlWritesAuthorized": false,
+    "productionDeploymentAuthorized": false,
+    "freeResourcesOnly": true
+  },
+  "readOnlyBaseline": {
+    "originalPublicTables": 31,
+    "originalPublicFunctions": 112,
+    "qaPublicTables": 0,
+    "qaPublicFunctions": 0,
+    "qaAuthUsers": 0,
+    "qaStorageBuckets": 0,
+    "qaStorageObjects": 0,
+    "qaMigrationLedgerPresent": false
+  },
+  "privateOriginalSourceState": {
+    "migrationsShaVerified": 83,
+    "priorityFunctionBodiesMatched": 11,
+    "all83SemanticMigrationEffectsReviewed": false,
+    "all67PrivilegedFunctionCallChainsReviewed": false
+  },
+  "ownerLocalPreflight": {
+    "scriptDeliveredSourceOnly": true,
+    "ownerPrivateReportReceived": false,
+    "scriptNetworkOrDatabaseAccessRequired": false,
+    "expectedPrivateMigrationCount": 83,
+    "sanitizedOutputOnly": true,
+    "localPrivateMigrationNamesOrBodiesExportAllowed": false,
+    "preparedInstallableQaSchemaProven": false
+  },
+  "sourceBlobs": {
+    "scripts/release/r211_private_qa_migration_effects.py": "bb36d7e720f7d787fd758b726144a9addf389ab4",
+    "tests/world-v2-r18-211-private-qa-preflight.test.py": "b6b8c1abe03f319df7c20485fbc9f4e1edb9805d",
+    "scripts/release/r154_private_history_audit.py": "47a69ccbaa27c9c326a767c6d64b8268eef09a6f",
+    "scripts/release/r191_private_fog_status_lineage.py": "bc2b039ec2cb2172659ef5c7df07306eb8c5ae84",
+    "scripts/release/r186_private_privileged_statement_inventory.py": "12a685f94773c23054d0edd23bf3612a3e8ed8a5",
+    "tests/world-v2-r18-193-private-invite-source-lineage.test.py": "1fcee465b0a9e7c153cc7874c97940afc53e8751",
+    "tests/world-v2-r18-187-private-priority-queue.test.py": "6304cac7bcfe1fcfdaf0fe91c2c43c7160bd4d08"
+  },
+  "riskGuardrails": {
+    "lexicalAnalysisCannotProveSafeInstallation": true,
+    "unsupportedDynamicFunctionAndDoBodiesNeedPrivateSemanticReview": true,
+    "roleExtensionAuthStorageAndRealtimeChangesNeedExplicitReview": true,
+    "migrationChronologyMustUseTimestampsNotR111PriorityIndices": true,
+    "supabaseCliV3TargetFlagsMustBeCheckedBeforeAnyFutureRemoteCommand": true,
+    "noBlindDbPushOrSchemaClone": true,
+    "noPrivateSqlToGithubCiChatOrHostedTools": true
+  },
+  "releaseApprovals": {
+    "qaSqlInstallationApproved": false,
+    "existingOriginalMigratedToQa": false,
+    "productionSecurityReleaseApproved": false,
+    "originalFogOracleRepaired": false,
+    "revokedSheetOwnerRepaired": false,
+    "realSignedMultiUserQaPassed": false,
+    "all83PrivateMigrationSemanticsApproved": false,
+    "all67PrivilegedCallChainsApproved": false
+  },
+  "restrictions": {
+    "noOriginalOrQaWrites": true,
+    "noOriginalOrQaAuthOrStorageWrites": true,
+    "noAppOrEdgeOrMigrationRuntimeEdit": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true,
+    "ciOnlyInventedPrivate83FileFixtures": true
+  },
+  "nextManualAction": "After source-only exact-head tests pass, owner must run commit-pinned r211_private_qa_migration_effects.py in private Ubuntu WSL and upload ONLY r211-sanitized-report.json. Keep all 83 original SQL files, R111 docket, private filenames, migration versions, function signatures, auth records, credentials and signed links on owner's machine. Do not execute migration SQL or change QA."
+}
