@@ -1,0 +1,26 @@
+name: World V2 R18-210 original vs empty QA readiness NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-210-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-209-*'
+permissions:
+  contents: read
+jobs:
+  source-only-original-versus-qa-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject active app/Edge/migration/Vercel changes before owner QA approval
+        run: git diff --exit-code e6dcba03171764ba5ba76c7d298821c15e9cd4f2 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Validate original 31/112 vs existing isolated QA 0/0 source snapshots and SQL NO_GO
+        run: python3 scripts/release/r210_validate_qa_schema_readiness.py
+      - name: Reject forged QA installation, implicit owner approval and private source export
+        run: python3 tests/world-v2-r18-210-qa-schema-readiness.test.py
+      - name: Compile source-only validator
+        run: python3 -m py_compile scripts/release/r210_validate_qa_schema_readiness.py

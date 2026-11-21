@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-210",
+  "date": "2026-11-22",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 319,
+    "head": "e6dcba03171764ba5ba76c7d298821c15e9cd4f2",
+    "focusedCiRun": 44923818468,
+    "standardCiRun": 44923818494,
+    "draft": true
+  },
+  "snapshotScope": "READ_ONLY_ORIGINAL_AND_EXISTING_SEPARATE_QA_PG_CATALOG_AND_AGGREGATES",
+  "original": {
+    "public_tables": 31,
+    "public_views": 0,
+    "public_functions": 112,
+    "auth_schema_present": 1,
+    "storage_schema_present": 1,
+    "public_schema_present": 1,
+    "migration_ledger_present": 1
+  },
+  "isolatedQa": {
+    "public_tables": 0,
+    "public_views": 0,
+    "public_functions": 0,
+    "auth_schema_present": 1,
+    "storage_schema_present": 1,
+    "public_schema_present": 1,
+    "migration_ledger_present": 0
+  },
+  "isolatedQaExistingAccountCounts": {
+    "auth_users": 0,
+    "storage_buckets": 0,
+    "storage_objects": 0
+  },
+  "ownerPrivateHistoricalSourceContext": {
+    "originalMigrationFilesShaVerified": 83,
+    "sourceExactPrioritizedFunctionBodiesMatched": 11,
+    "privateMigrationSemanticReviewFullyApproved": false
+  },
+  "immutableQuerySourceGitBlob": "ebf9ea84c35926cfde729c1d45a744d5611dd481",
+  "qaInstallationState": {
+    "existingQaProjectOnly": true,
+    "qaPublicAppSchemaPresent": false,
+    "ownerExplicitQaSqlMutationApprovalReceived": false,
+    "ownerExplicitOriginalSqlMutationApprovalReceived": false,
+    "ownerExplicitProductionDeployApprovalReceived": false,
+    "fullPrivate83MigrationInstallReviewedAndSafe": false,
+    "hostedSignedDmP1P2RevokedOutsiderTestsPossibleNow": false,
+    "realtimeStorageFullQaFeatureParityVerified": false,
+    "qaRlsAndPrivilegedRpcEffectiveAuthApproved": false,
+    "all67PrivilegedFunctionCallGraphsApproved": false,
+    "all83PrivateHistoryMigrationSemanticsApproved": false
+  },
+  "safePlan": {
+    "phase1ReadOnlyQaAndOriginalCatalogBaseline": true,
+    "phase2PrivateWsl83SqlSemanticPreflightWithoutExport": false,
+    "phase3ExplicitQaOnlyMutationOwnerApproval": false,
+    "phase4ReviewedMinimumQaSchemaInstallUsingPrivateLocalWslOnly": false,
+    "phase5ReadOnlyPostInstallParityAndIndependentQaActorVerification": false,
+    "phase6SeparateProductionChangeApproval": false
+  },
+  "hardRestrictions": {
+    "noOriginalOrQaSqlWritesPerformed": true,
+    "noAuthOrStorageWritesPerformed": true,
+    "noPublicFunctionOrMigrationSqlExported": true,
+    "noPrivate83MigrationSourcesOrDocketUploaded": true,
+    "noOriginalOrQaCredentialsUploaded": true,
+    "noProductionPreviewDeployOrEdgeChanges": true,
+    "noGitMerge": true,
+    "noPaidResources": true,
+    "noHostSchemaInstallWithoutExplicitOwnerApproval": true
+  },
+  "manualGate": "Owner must explicitly approve a separately scoped QA-only schema-preparation and later QA SQL installation path; private 83 historical migrations remain owner-local WSL, never in GitHub/chat/CI. No production or original schema action is implied by generic 'Proceed'."
+}
