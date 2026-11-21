@@ -27,7 +27,8 @@
     "noAutomaticRefetchOnClear": true,
     "revokesObjectUrlsOnUnmountAndCampaignChange": true,
     "mustBlockNewMediaUntilExplicitFreshProof": true,
-    "cannotEraseAlreadyDownloadedOrInFlightDeliveredBytes": true
+    "cannotEraseAlreadyDownloadedOrInFlightDeliveredBytes": true,
+    "sameContextFreshMembershipProofPreservesCache": true
   },
   "performance": {
     "defaultMaxEntries": 250,
@@ -37,7 +38,7 @@
     "realMapImageBandwidthBenchmarkPassed": false
   },
   "tests": {
-    "localPassCount": 8,
+    "localPassCount": 9,
     "realSignedQa": false
   },
   "remainingReleaseBlockers": [
