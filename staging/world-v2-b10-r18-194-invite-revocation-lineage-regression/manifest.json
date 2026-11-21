@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-194",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 302,
+    "headSha": "10e9178895144b20fb9b584b005eb6664c8198f7"
+  },
+  "ownerR193Receipt": {
+    "sizeBytes": 2616,
+    "sha256": "4a4eeb14225eccb43153138375989c97930f17f4299c026ee5263b3faeef6f75",
+    "verifiedPrivateHistoryFiles": 83,
+    "uniqueMigrationChronology": true,
+    "create": {
+      "historicalDefinitions": 1,
+      "matchingCurrentLiveBodyCount": 1,
+      "latestR111PriorityDocketIndexNotChronological": 2,
+      "latestStatementOrdinal": 12,
+      "latestBodyMatchesLive": true
+    },
+    "join": {
+      "historicalDefinitions": 2,
+      "matchingCurrentLiveBodyCount": 1,
+      "latestR111PriorityDocketIndexNotChronological": 28,
+      "latestStatementOrdinal": 4,
+      "latestBodyMatchesLive": true
+    }
+  },
+  "liveFunctionSourceSnapshot": {
+    "joinCampaign": {
+      "bodyBytes": 742,
+      "sha256": "5f3a7dbcadc4361f59fa814a820b84cfb2cc0d89f685ae6194efe3912d015655"
+    },
+    "createCampaign": {
+      "bodyBytes": 475,
+      "sha256": "0ea1e01ba784dfa78e92c8e82a3ca2b2d28a19920f5286cc7423d1e891be645f"
+    }
+  },
+  "inheritedRepairEvidence": {
+    "sourceExactOriginalInviteReuseSyntheticObserved": true,
+    "originalSourceExactPrivatePg17Issue": 223,
+    "existingDraftPrototypePrs": [
+      226,
+      227,
+      228
+    ],
+    "productPolicy": "A DM-removed member cannot rejoin using an unchanged generic invite without explicit DM reinstatement. Voluntary leave remains a separate flow.",
+    "standaloneSyntheticPG17NotHostedSignedAuth": true,
+    "postDeleteCampaignCascadeRegressionPassedPreviously": true,
+    "privilegedTruncateGapRemainsUnresolved": true,
+    "clientAdminControllerIsStagedUnmounted": true
+  },
+  "frozenSourceBlobs": {
+    "staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql": "f7bda6b79f7b9ac4a3323142c27d54a44436d5a8",
+    "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql": "cc6c778783fc387203dee88cdb25517ba0050bcb",
+    "tests/world-v2-r18-120-postgres/run.sh": "3bc1b07c5c1d906117dd47ff0e8daa392c5674ac",
+    "tests/world-v2-r18-120-postgres/setup.sql": "7caa4fcc0dd90622683f6bac48edb0047ddf8206",
+    "tests/world-v2-r18-120-postgres/verify-contract.sql": "0ff3fd257ec4534974cc16e54352d330fb8a22e8",
+    "tests/world-v2-r18-121-postgres/run.sh": "d3584daa47c803b7d7025c04ad785434ef9e60ea",
+    "tests/world-v2-r18-121-postgres/campaign-cascade.sql": "91dff03c1e472a60a4ec1bf26366a5e4e871fd13",
+    "tests/world-v2-r18-122-postgres/run.sh": "76cbba376f21531426308791fe207054147863f5",
+    "tests/world-v2-r18-122-postgres/verify-dm-removed-roster.sql": "068f4dd191c44eeb75655fde37099f221f3bdca7",
+    "tests/world-v2-r18-120-revocation-contract.test.mjs": "57b7f575eecd711600f99383193f290db909460e",
+    "tests/world-v2-r18-121-membership-source-boundary.test.mjs": "b1d00c9d25850365c311e8a91b0a0333f9fafde6",
+    "tests/world-v2-r18-122-member-admin-contract.test.mjs": "f6d994ef5bf565e51a690f6a2a57be23b7cc5df4"
+  },
+  "releaseGates": {
+    "all83HistoricalMigrationSemanticsApproved": false,
+    "all67PrivilegedFunctionCallChainsApproved": false,
+    "finalRoleGrantRLSSemanticsApproved": false,
+    "existingServiceRoleTruncateBypassFixed": false,
+    "realSignedDmP1P2RevokedOutsiderQaPassed": false,
+    "qaHistoricalMigrationInstallAuthorized": false,
+    "originalOrProductionDeploymentAuthorized": false
+  },
+  "noOriginalPrivateSqlOrFunctionBodiesPublished": true,
+  "noHostedOriginalOrQaSqlAccessOrWrites": true,
+  "noApplicationRuntimeChanges": true,
+  "noVersionedMigrations": true,
+  "noMerge": true,
+  "noDeployment": true,
+  "noPaidResources": true,
+  "nextGate": "No private WSL re-run needed; existing synthetic prototype is not a hosted fix. Before QA SQL installation separately review all 83 historical migration semantics, live DM removal paths, service-role TRUNCATE and signed multiuser security tests."
+}
