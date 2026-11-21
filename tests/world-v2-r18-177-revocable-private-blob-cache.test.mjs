@@ -94,3 +94,15 @@ test('dispose permanently aborts all requests and forbids reactivation',async()=
  assert.equal(await task,'');assert.equal(f.cache.stats().phase,'disposed');
  assert.equal(auth(f.cache),false);assert.equal(f.stats().requests,1);
 });
+
+
+test('repeated fresh proof for the same campaign never flashes or re-fetches images',async()=>{
+ const f=fixture();auth(f.cache);const seen=[];
+ f.cache.subscribe('map-image',MAP,'map',x=>seen.push(x));
+ f.pending[0].resolve(blob);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(auth(f.cache),true);
+ assert.equal(f.stats().requests,1);
+ assert.deepEqual(seen,['','blob:test/1']);
+ assert.equal(f.cache.peek('map-image',MAP,'map'),'blob:test/1');
+ assert.deepEqual(f.removed,[]);
+});
