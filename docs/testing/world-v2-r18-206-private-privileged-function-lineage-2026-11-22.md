@@ -1,0 +1,35 @@
+# B10-R18-206 — One owner-only original 83-history lineage audit for 11 privileged authorization functions (NO_GO)
+
+22 November 2026. Nested child of [R205 draft PR #315](https://github.com/xuvenz-source/ttrpgsite/pull/315), pinned **exact parent head** `60cb549fe7f8278a2d7a5c0b6c185e333a6d91ee`. Dedicated R205 original-source-bound R105 fog and R115 revoked sheet PG17 checks `44917276034` **SUCCESS**; general staging frontend/lint/build/Edge `44917276050` **SUCCESS**. No hosted SQL or app runtime changes, merges, deployments or paid resources.
+
+## Verified live read-only metadata basis
+
+R205 original PostgreSQL `pg_catalog` SELECT-only census: **112** public functions, **67** current authenticated-callable postgres-owned SECURITY DEFINER functions, all **67** with an explicitly empty search_path and **none** callable by anonymous; **7** of 67 have no direct `auth.uid()` textual marker; **1** has a user-editable Auth metadata textual marker. These are review priorities, not seven bugs or a confirmed metadata authorization escalation. Eight known public target names/hashes/byte lengths were captured with no source SQL, argument signatures or user data.
+
+A follow-up **source-exact checked-in migration review and read-only catalog query** confirmed the inventory GET chain is: `get_campaign_sheet_inventory` → internal `can_edit_campaign_sheet_inventory` → internal `can_edit_campaign_sheet`. Current inner inventory helper: 427 UTF-8 bytes, SHA-256 `169d6e5ec9fb79a760bc25ab28a3937f4c76cc1a5233c997b673b366cd8176e4`, postgres-owned SQL SECURITY DEFINER with configured empty search_path; neither authenticated nor anon can call it directly. But the outer GET can call the helper as a privileged function. The existing **UNAPPLIED** R115 membership repair is still required for the character-owner branch of `can_edit_campaign_sheet`, and R115 source-exact scratch tests already demonstrated revoked-owner GET and PATCH access before the guard.
+
+Two further known public role helper fingerprints are now established original-current read-only: `is_campaign_dm` 148B SHA `7c9cbc8f5146ee794ad6fe97bdb83017fccefe76761bf5c0f31d6020303d398a` and `is_campaign_member` 132B SHA `18a326e27b3839b1b6011d593b1d1c1dd566e8ac8d17eda1feda7cb886713024`, both postgres-owned SECURITY DEFINER, authenticated callable, anon denied, direct `auth.uid` and campaign_members markers. This does **not** attest their actual SQL authorization semantics.
+
+## One private owner-local WSL check instead of 11 source uploads
+
+`scripts/release/r206_private_privileged_function_lineage.py` is **owner-private and offline only**. It imports the existing R154/R186/R191/R193/R198/R200 private-history readers from `$HOME/ttrpg-history-private`. It reruns **R200 → R198 → R193 → R154** original 83/83 migration SHA, unique timestamp, original join/create/sheet/map helper body parity and 10 CREATE/2 DROP Storage event checks, then scans those same private files **only inside the owner's machine** for direct top-level `CREATE FUNCTION`/ `CREATE OR REPLACE FUNCTION` declarations of eleven currently known privileged or helper functions.
+
+The targets include the eight R205 queue functions (inventory getter, sheet PATCH, fog status, preview map motion, DM/NPC getters, environment publisher and account-name reader) plus the **internal inventory guard** and two current **DM/member role helpers**. For each, it counts historical direct definitions, selects the latest by actual migration filename timestamp and executable statement ordinal (never by R111 priority order), compares supported SQL/PLpgSQL dollar-quoted body SHA-256 and byte length against the independently recorded original live `pg_proc.prosrc`, and emits fixed numeric/boolean authorization marker flags (identity, direct membership, delegated guards, editable metadata, unsupported dynamic SQL).
+
+**Sanitized output contains only slots numbered 1–11**, counts, numeric **R111 priority docket indices (NOT chronological migration indices)**, statement ordinals, source-match boolean flags and explicit NO_GO limitations. It prints **no** original historical SQL, function names or signatures, migration filenames or paths, Storage bucket names/object paths, JWTs, invite codes, user/campaign records, credentials or signed URL tokens. No original or QA database calls or network access.
+
+A missing or mismatched historical body remains `NO_GO`, **not** assumed to be an exploit, because code may be installed outside direct top-level private history or use unsupported source syntax. A matching body is only **source identity**: it does **not** mean its effective RLS/ACL/call-chain authorization or removed-player behavior is safe. Dynamic `DO`/SQL, non-dollar-quoted bodies and post-migration changes are not exhaustively covered.
+
+## Fictional GitHub tests and release holds
+
+Dedicated CI runs only **fictional 83-file** local temp directories, never any of the 83 original historical SQLs. Tests cover exact 11-function SHA/byte parity and local-only sanitized report, one missing definition, later historical redefinition overriding earlier priority docket entries, source fingerprint drift, tampered archive SHA, duplicate/invalid migration chronology, malformed dollar quote and rejection of all security/hosted GO claims. R206 distribution validator SHA-pins the code and tests, prior R200/R198/R193 readers, the exact live 11 public function metadata and the R200 owner-sanitized report (3,183B SHA-256 `4d9f09d70ff13208700e4428b33910039029a4ac2d823c429bcce0ff500c2b53`). General staged repo checks run separately.
+
+**All 83 original migration semantic reviews and all 67 currently authenticated-callable privileged function authorization call graphs remain NO_GO**, even if all 11 bodies match. Existing blockers #212 fog oracle, #220 revoked character owner, #223 invite rejoin, #229 privileged membership TRUNCATE, #231 signed bearer lifetime, #306 authenticated TRUNCATE are not remediated here. Real signed DM/P1/P2/removed/outsider/reinstated multi-window QA, Storage fresh URL issuance and old one-hour bearer expiry/support handling, separate QA installation approval and production release are outstanding.
+
+**Scope:** no original/QA database writes, migrations, live application/Edge/Vercel config edits, merges, deploys or paid resources.
+
+## Manual checkpoint after exact-head CI
+
+Download **only** the commit-pinned R206 Python script into the existing `$HOME/ttrpg-history-private` Ubuntu WSL workspace. The previously downloaded R154/R186/R191/R193/R198/R200 Python dependencies and original private 83 migration/archive docket must remain present. Run with `umask 077`, saving output to `r206-sanitized-report.json`, and upload **only that sanitized JSON** to chat. Never upload SQL, original docket, migration filenames, function SQL/source signatures, secret values or verbose logs. If the script errors, stop without printing original SQL.
+
+**This is an owner-local private read-only test; no QA SQL or production action authorized.**
