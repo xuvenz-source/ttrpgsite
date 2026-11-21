@@ -1,0 +1,22 @@
+name: World V2 R18-160 forward security gates (source-only)
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-160-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-159-*'
+permissions:
+  contents: read
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Never edit active app or migration history
+        run: git diff --exit-code ddf48efc2a53a26aeab033799e4f52898fbb3343 HEAD -- src/ supabase/migrations/
+      - name: Validate existing candidate pins, negatives and unsigned QA gate
+        run: node --test tests/world-v2-r18-160-forward-repair.test.mjs
