@@ -200,5 +200,19 @@
   "noVersionedMigrationEdit": true,
   "noMerge": true,
   "noDeploy": true,
-  "noPaidResources": true
+  "noPaidResources": true,
+  "dynamicFunctionRewrite": {
+    "version": "20261106074754",
+    "migrationName": "20261106_private_player_maps",
+    "targetFunction": "public.can_view_campaign_map",
+    "dependsOnPgGetFunctiondef": true,
+    "transformsExistingFunctionSource": true,
+    "executesRewrittenDefinition": true,
+    "usesCatalogTargetLookup": true,
+    "originalInputDefinitionVersionAttested": false,
+    "exactPostRewriteFunctionSemanticsApproved": false,
+    "isolatedReplayCompatibilityVerified": false,
+    "risk": "DYNAMIC_REDEFINITION_DEPENDS_ON_CHRONOLOGICAL_PRIOR_FUNCTION_BODY",
+    "releaseGate": "DO_NOT_EXPOSE_QA_API_DURING_HISTORY_REPLAY"
+  }
 }
