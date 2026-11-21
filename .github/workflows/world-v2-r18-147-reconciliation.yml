@@ -1,0 +1,29 @@
+name: World V2 R18-147 security candidate reconciliation
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-147-*'
+    paths:
+      - '.github/workflows/world-v2-r18-147-reconciliation.yml'
+      - 'staging/world-v2-b10-r18-147-revocation-candidate-reconciliation/**'
+      - 'tests/world-v2-r18-147-*'
+      - 'docs/testing/world-v2-r18-147-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-146-*'
+permissions:
+  contents: read
+jobs:
+  reconcile-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Immutable runtime, versions and migrations
+        run: git diff --exit-code 1a71cb8fd6542c5a362d3a6c6a123c4d790026b8 HEAD -- src/ supabase/migrations/
+      - name: Source candidate identity, negative release flags and privilege gap
+        run: node --test tests/world-v2-r18-147-reconciliation.test.mjs
+      - name: Release boundary
+        run: echo 'R147 evidence only — NO HOSTED SQL, grants, merges or deployment'
