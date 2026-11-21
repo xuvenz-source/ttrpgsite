@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-158",
+  "date": "2026-11-21",
+  "parentPr": 265,
+  "parentSha": "67c5b62597fa5f1a0786565c21ce12993da184f6",
+  "decision": "NO_GO",
+  "sourceOnly": true,
+  "fictionalPostgres17Only": true,
+  "originalReadOnlyCatalog": {
+    "rlsEnabled": true,
+    "authenticatedInsertGrant": true,
+    "authenticatedDeleteGrant": true,
+    "authenticatedUpdateGrant": true,
+    "selectPolicies": 3,
+    "insertPolicies": 3,
+    "deletePolicies": 2,
+    "updatePolicies": 0,
+    "allPolicies": 0,
+    "writeScopes": [
+      {
+        "operation": "DELETE",
+        "assetCategory": "map-images",
+        "actorRule": "current-campaign-dm",
+        "bucketScoped": true
+      },
+      {
+        "operation": "DELETE",
+        "assetCategory": "personal-account-files",
+        "actorRule": "signed-user-folder",
+        "bucketScoped": true
+      },
+      {
+        "operation": "INSERT",
+        "assetCategory": "map-images",
+        "actorRule": "current-campaign-dm",
+        "bucketScoped": true
+      },
+      {
+        "operation": "INSERT",
+        "assetCategory": "personal-account-files",
+        "actorRule": "signed-user-folder",
+        "bucketScoped": true
+      },
+      {
+        "operation": "INSERT",
+        "assetCategory": "campaign-assets-and-tokens",
+        "actorRule": "campaign-member-own-folder-or-dm-folder",
+        "bucketScoped": true
+      }
+    ]
+  },
+  "potentialFunctionalConstraint": "AUTHENTICATED_STORAGE_REPLACEMENT_UPSERT_MAY_BE_DENIED_WITHOUT_UPDATE_POLICY",
+  "upsertFunctionalityActuallyTested": false,
+  "originalPrivatePolicySourceCopied": false,
+  "originalUserDataQueried": false,
+  "original83SemanticReviewApprovals": 0,
+  "original67DefinerCallPathsApproved": false,
+  "actualSignedQaTestsPassed": 0,
+  "original83MigrationHistoryQaReplayed": false,
+  "issuedSignedUrlsRevocationVerified": false,
+  "oldRealtimeSubscriptionsRevocationVerified": false,
+  "r127ProductionOwnerApproval": false,
+  "productionReleaseAuthorized": false,
+  "noHostedSqlWrites": true,
+  "noVersionedMigrationChanges": true,
+  "noRuntimeChanges": true,
+  "noBrowserGrants": true,
+  "noMerge": true,
+  "noDeployment": true,
+  "noPaidServices": true,
+  "unresolvedIssues": [
+    220,
+    223,
+    229,
+    231
+  ],
+  "manualActionNeededNow": false,
+  "nextStep": "R18-159 source-only audit of privileged write/RPC chain and RLS upsert acceptance without host alterations; postpone authenticated QA until historical review and separate consent"
+}
