@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-206",
+  "date": "2026-11-22",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 315,
+    "head": "60cb549fe7f8278a2d7a5c0b6c185e333a6d91ee",
+    "focusedCiRun": 44917276034,
+    "standardCiRun": 44917276050,
+    "sourceOnly": true
+  },
+  "ownerPrivateR200Receipt": {
+    "bytes": 3183,
+    "sha256": "4d9f09d70ff13208700e4428b33910039029a4ac2d823c429bcce0ff500c2b53",
+    "verifiedOriginalMigrationFiles": 83,
+    "storagePolicyEvents": 12,
+    "policyCreates": 10,
+    "policyDrops": 2,
+    "mapHelperBodyMatched": true
+  },
+  "liveKnownFunctionTargets": [
+    {
+      "slot": 1,
+      "known_public_function_name": "get_campaign_account_names",
+      "body_sha256": "bd98b2ec061445b828724d0830f1da245b845a3e9c83fcf7c1a17bd34343c9a6",
+      "body_bytes": 378
+    },
+    {
+      "slot": 2,
+      "known_public_function_name": "get_campaign_sheet_inventory",
+      "body_sha256": "4b168977eaa254f665fa1f26ed81d7296053bb988b991e60574c1610de0a879e",
+      "body_bytes": 1950
+    },
+    {
+      "slot": 3,
+      "known_public_function_name": "get_dm_map_npc_values",
+      "body_sha256": "5e5c0657353a54f4812ee5b547e4575bf666f2e8c72a3fe1b6918cfff8293de5",
+      "body_bytes": 263
+    },
+    {
+      "slot": 4,
+      "known_public_function_name": "get_npc_token_values",
+      "body_sha256": "2b82239cc0b630d500240b19bc267aeac013f6b78936472fc590d8207e46a9f8",
+      "body_bytes": 141
+    },
+    {
+      "slot": 5,
+      "known_public_function_name": "is_map_fog_published",
+      "body_sha256": "767cbcd8bd4813c0a535fa71bf1ecc3a9cf8a6dd02c239499c0be1737a28c96f",
+      "body_bytes": 102
+    },
+    {
+      "slot": 6,
+      "known_public_function_name": "patch_campaign_sheet_noninventory",
+      "body_sha256": "2059d837aea133d1cbe726e9eebb0736d04739ed37b06ed8cfa08dca017efc2b",
+      "body_bytes": 2364
+    },
+    {
+      "slot": 7,
+      "known_public_function_name": "preview_map_motion",
+      "body_sha256": "31720e150e501f186bb0424b2d814d6a480c3e781c202a3209d872b8e0e491dd",
+      "body_bytes": 110
+    },
+    {
+      "slot": 8,
+      "known_public_function_name": "publish_map_environment",
+      "body_sha256": "425a2336150ea0a1a28cd4d39f6d2b7560b2fb43a0bd25d69d6897ad74b1b32c",
+      "body_bytes": 3836
+    },
+    {
+      "slot": 9,
+      "known_public_function_name": "can_edit_campaign_sheet_inventory",
+      "body_sha256": "169d6e5ec9fb79a760bc25ab28a3937f4c76cc1a5233c997b673b366cd8176e4",
+      "body_bytes": 427
+    },
+    {
+      "slot": 10,
+      "known_public_function_name": "is_campaign_dm",
+      "body_sha256": "7c9cbc8f5146ee794ad6fe97bdb83017fccefe76761bf5c0f31d6020303d398a",
+      "body_bytes": 148
+    },
+    {
+      "slot": 11,
+      "known_public_function_name": "is_campaign_member",
+      "body_sha256": "18a326e27b3839b1b6011d593b1d1c1dd566e8ac8d17eda1feda7cb886713024",
+      "body_bytes": 132
+    }
+  ],
+  "frozenSourceBlobs": {
+    "scripts/release/r206_private_privileged_function_lineage.py": "ba5092d0051da44540d843933947e320321471e3",
+    "tests/world-v2-r18-206-private-privileged-function-lineage.test.py": "5a411013e367248bc07391e0ef8dfa92dd8e7529",
+    "scripts/release/r200_private_storage_policy_lineage.py": "bdfbd1e88756141848250796ac2f8aca6d81b827",
+    "scripts/release/r198_private_sheet_auth_lineage.py": "8c005a517decd2cc1d39ee28c69d4b349afa171a",
+    "scripts/release/r193_private_invite_source_lineage.py": "4630d13557aa59298325269fe3bc4b6062f2655d"
+  },
+  "privateDependencies": [
+    "r154_private_history_audit.py",
+    "r186_private_privileged_statement_inventory.py",
+    "r191_private_fog_status_lineage.py",
+    "r193_private_invite_source_lineage.py",
+    "r198_private_sheet_auth_lineage.py",
+    "r200_private_storage_policy_lineage.py"
+  ],
+  "nextManualGate": "After exact-head GitHub CI, owner uses private WSL $HOME/ttrpg-history-private to run commit-pinned r206_private_privileged_function_lineage.py and uploads ONLY r206-sanitized-report.json. Never share raw SQL, original migration filenames, docket, function signatures, object paths, JWTs or credentials.",
+  "releaseApprovals": {
+    "elevenTargetFunctionSourceSemanticsApproved": false,
+    "all67PrivilegedCallableRpcCallGraphsApproved": false,
+    "all83PrivateOriginalMigrationsSemanticallyReviewed": false,
+    "fogStatusOriginalRemediated": false,
+    "revokedSheetOwnerOriginalRemediated": false,
+    "realSignedMultiaccountQaPassed": false,
+    "qaSqlInstallAuthorized": false,
+    "productionDeployAuthorized": false
+  },
+  "restrictions": {
+    "noHistoricalPrivateSqlUploaded": true,
+    "noOriginalOrQaDbWrites": true,
+    "noLiveRuntimeOrEdgeOrActiveMigrations": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true,
+    "onlyFictional83FileGitHubCi": true,
+    "reportNeverIncludesPrivateSqlFunctionNamesOrMigrationPaths": true
+  }
+}
