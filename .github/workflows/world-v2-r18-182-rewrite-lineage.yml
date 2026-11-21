@@ -1,0 +1,52 @@
+name: World V2 R18-182 dynamic RPC rewrite chronology PG17
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-182-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-181-*'
+permissions:
+  contents: read
+jobs:
+  lineage-source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject changes to active app, functions and versioned migration files
+        run: git diff --exit-code 6eced6676b262259aa9b30a007a5ea32df6c6706 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Validate exact historical chronology and planned negative cases
+        run: node --test tests/world-v2-r18-182-source-gate.test.mjs
+      - name: Runner syntax
+        run: bash -n tests/world-v2-r18-182-postgres/run.sh
+  guarded-rewrite-scratch-pg17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r182_disposable_only
+          POSTGRES_DB: world_v2_r18_182
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_182"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_182
+      PGPASSWORD: r182_disposable_only
+      R182_ISOLATED: 'yes'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Run fictional old checks, guarded rewrite, current actor checks and double apply denial
+        run: bash tests/world-v2-r18-182-postgres/run.sh

@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-182",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 290,
+  "parentSha": "6eced6676b262259aa9b30a007a5ea32df6c6706",
+  "sourceOnly": true,
+  "originalRegisteredMigrationLineageObservedInPlace": true,
+  "privateSqlBodiesExported": false,
+  "chronology": {
+    "getTokenMonitorValues": [
+      {
+        "version": "20261105144953",
+        "bodyBytes": 1469,
+        "legacyActiveMap": true,
+        "newMapGate": false
+      },
+      {
+        "version": "20261105151706",
+        "bodyBytes": 2139,
+        "legacyActiveMap": true,
+        "newMapGate": false
+      },
+      {
+        "version": "20261106074748",
+        "bodyBytes": 2449,
+        "legacyActiveMap": true,
+        "newMapGate": false
+      },
+      {
+        "version": "20261107110539",
+        "bodyBytes": 2509,
+        "legacyActiveMap": false,
+        "newMapGate": true
+      }
+    ],
+    "postTokenReference": [
+      {
+        "version": "20261106074748",
+        "bodyBytes": 1703,
+        "legacyOwnerGuard": true,
+        "mapGateBeforePatch": false
+      }
+    ],
+    "canViewCampaignMap": [
+      {
+        "version": "20261106074754",
+        "bodyBytes": 448,
+        "staticDefinition": true,
+        "assignmentTableReference": true
+      }
+    ]
+  },
+  "dynamicRewrite": {
+    "version": "20261106074754",
+    "staticCanViewMapDefinition": true,
+    "targets": [
+      {
+        "function": "public.get_token_monitor_values(p_map uuid)",
+        "oldFragment": "c.active_map_id=p_map",
+        "newPredicate": "CURRENT_CAN_VIEW_CAMPAIGN_MAP",
+        "priorMigration": "20261106074748",
+        "sourceAnchorOccurrence": 1,
+        "sourceExactFullMigrationReplayed": false
+      },
+      {
+        "function": "public.post_token_reference(p_token uuid,p_code text)",
+        "oldFragment": "v_token.owner_id=auth.uid()",
+        "newPredicate": "OWNER_AND_CURRENT_CAN_VIEW_CAMPAIGN_MAP",
+        "priorMigration": "20261106074748",
+        "sourceAnchorOccurrence": 1,
+        "sourceExactFullMigrationReplayed": false
+      }
+    ],
+    "usesPgGetFunctiondef": true,
+    "guardsMissingOldFragment": true,
+    "executesAmendedFunction": true,
+    "selectiveSecondRewriteIdempotent": false,
+    "completeReapplicationExpectedToFailOnMonitorGuard": true,
+    "realSignedAuthRegressionPassed": false
+  },
+  "originalCurrentFunctionFingerprints": [
+    {
+      "name": "can_view_campaign_map",
+      "bodyMd5": "cf708e7eaa9f2a4493e94bcc1fb63d98",
+      "bodyBytes": 448
+    },
+    {
+      "name": "get_token_monitor_values",
+      "bodyMd5": "5932d9018fe845c80226ce0e8fa9a409",
+      "bodyBytes": 2509
+    },
+    {
+      "name": "post_token_reference",
+      "bodyMd5": "2704c3fd2bd5290a72a3ca0135891a61",
+      "bodyBytes": 1773
+    }
+  ],
+  "pg17SyntheticRunPassed": false,
+  "all83HistorySemanticSignoff": false,
+  "all67DefinerSignoff": false,
+  "signedQaPassed": false,
+  "qaMigrationsInstalled": false,
+  "ownerQaApproval": false,
+  "r127ProductionApproval": false,
+  "noOriginalOrQaWrites": true,
+  "noVersionedMigrationChanges": true,
+  "noRuntimeChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidInfrastructure": true
+}
