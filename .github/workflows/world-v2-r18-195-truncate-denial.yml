@@ -1,0 +1,56 @@
+name: World V2 R18-195 membership TRUNCATE denial PG17 NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-195-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-194-*'
+permissions:
+  contents: read
+jobs:
+  frozen-guard-and-release-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse application, active migrations, Edge and Vercel modifications
+        run: git diff --exit-code 01001c8fd2ca0599055fa5aaca02115f7d0132a9 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Validate frozen read-only original grant evidence and no-release candidate
+        run: python3 scripts/release/r195_validate_membership_truncate_denial.py
+      - name: Reject altered original grant state, role escalations or source tampering
+        run: python3 tests/world-v2-r18-195-truncate-guard.test.py
+      - name: Syntax validate source-only report tool
+        run: python3 -m py_compile scripts/release/r195_validate_membership_truncate_denial.py
+
+  synthetic-truncate-denial:
+    needs: frozen-guard-and-release-no-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r195_disposable_only
+          POSTGRES_DB: world_v2_r18_195
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_195"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R195_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_195
+      PGUSER: postgres
+      PGPASSWORD: r195_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove original synthetic TRUNCATE tombstone bypass and verify double guard
+        run: bash tests/world-v2-r18-195-postgres/run.sh
