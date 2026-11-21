@@ -21,6 +21,7 @@ from r154_private_history_audit import (
     AuditBlocked, MAX_SQL_BYTES, audit, checked_dir, checked_file, statements
 )
 from r191_private_fog_status_lineage import strict_migration_version
+from r186_private_privileged_statement_inventory import exclude_dollar_bodies
 
 WORK="B10-R18-211"
 EXPECTED=83
@@ -118,15 +119,19 @@ def kind_of(statement:str)->str:
 def classify(statement:str)->tuple[str,dict[str,bool],bool]:
     kind=kind_of(statement)
     hit={name:bool(rx.search(statement)) for name,rx in REX.items()}
-    # Definition declarations are scoped to CREATE FUNCTION, not an unrelated
-    # SQL file containing SECURITY DEFINER text or an unrelated string.
+    # Function SECURITY DEFINER and SET search_path are HEADER attributes.
+    # A quoted SQL/body containing "SET search_path" is not a valid local
+    # function search_path and must never clear the warning.
     if kind!="create_function":
         hit["security_definer_definition"]=False
         hit["definer_without_local_search_path"]=False
     else:
+        header=exclude_dollar_bodies(statement)
+        hit["security_definer_definition"]=bool(
+            re.search(r"\bSECURITY\s+DEFINER\b",header,re.I))
         hit["definer_without_local_search_path"]=(
             hit["security_definer_definition"] and not bool(
-                re.search(r"\bSET\s+search_path\s*(?:=|\bTO\b)",statement,re.I)))
+                re.search(r"\bSET\s+search_path\s*(?:=|\bTO\b)",header,re.I)))
     risk=kind in REVIEW_KINDS
     if kind in ("create_function","alter_function") and (
         hit["definer_without_local_search_path"] or
