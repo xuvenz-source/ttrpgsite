@@ -29,7 +29,7 @@ export function auditR147({root=process.cwd(),manifestOverride,sourceOverride={}
  for(const c of m.priorCandidates){
    if(!c.path.startsWith('staging/')||c.path.includes('..'))fail('unsafe candidate path');
    const data=read(c.path);
-   const actual=createHash('sha1').update('blob '+Buffer.byteLength(data)+'\\0'+data).digest('hex');
+   const actual=createHash('sha1').update('blob '+Buffer.byteLength(data)+'\0'+data).digest('hex');
    if(actual!==c.gitBlob)fail('candidate Git blob drift: '+c.kind);
    files.set(c.kind,data);
  }
