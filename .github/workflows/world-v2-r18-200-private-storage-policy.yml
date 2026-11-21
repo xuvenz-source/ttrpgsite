@@ -1,0 +1,51 @@
+name: World V2 R18-200 private Storage policy history NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-200-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-199-*'
+permissions:
+  contents: read
+jobs:
+  fictional-owner-private-storage-policy-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse app source, migrations, Edge and Vercel changes
+        run: git diff --exit-code 04df56b8d3a3005449dc51664af0c0a35d9142f0 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Validate R200 exact parent, live source fingerprints and frozen evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          p=Path('staging/world-v2-b10-r18-200-private-storage-policy-lineage/manifest.json')
+          data=json.loads(p.read_text())
+          assert data["schema"]==1 and type(data["schema"]) is int
+          assert data["workPackage"]=="B10-R18-200" and data["decision"]=="NO_GO"
+          assert data["parent"]["sha"]=="04df56b8d3a3005449dc51664af0c0a35d9142f0"
+          assert data["ownerR198Receipt"]["sha256"]=="9688c8aedb036f2d393cacb31a9f1852371a732bbe6f8569e8a820fbb6ce78cc"
+          assert data["originalLiveMapHelper"]["bodyUtf8Bytes"]==448
+          assert data["originalLiveMapHelper"]["bodySha256"]=="835829ca8012fe26ae5d224df749a1a8cde958136c322d10f3d3fa91a5f3f83c"
+          assert data["privateAudit"]["sourceFilesExpected"]==83
+          assert data["originalStoragePolicySummary"]["permissiveSelectPolicies"]==3
+          assert data["originalStoragePolicySummary"]["restrictiveSelectPolicies"]==0
+          assert data["originalStoragePolicySummary"]["selectPoliciesWithDirectMembershipMarker"]==0
+          assert data["privateAudit"]["notProven"] and len(data["privateAudit"]["notProven"])>=5
+          assert all(v is True for v in data["scopeLocks"].values())
+          for path,expected in data["sourceGitBlobs"].items():
+              raw=Path(path).read_bytes()
+              actual=hashlib.sha1(("blob "+str(len(raw))+"\0").encode()+raw).hexdigest()
+              assert actual==expected,(path,"source drift")
+          print("R200 private history provenance SHA guards pass; NO_GO remains.")
+          PY
+      - name: Test 83-file fictional policy event ordering, helper body SHA, redaction and tamper denial
+        run: python3 tests/world-v2-r18-200-private-storage-policy.test.py
+      - name: Compile owner-private script; never run on real SQL in GitHub
+        run: python3 -m py_compile scripts/release/r200_private_storage_policy_lineage.py

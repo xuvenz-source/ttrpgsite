@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-200",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 309,
+    "sha": "04df56b8d3a3005449dc51664af0c0a35d9142f0",
+    "dedicatedCiSuccess": 44904614303,
+    "generalCiSuccess": 44904614304,
+    "draft": true
+  },
+  "ownerR198Receipt": {
+    "bytes": 1734,
+    "sha256": "9688c8aedb036f2d393cacb31a9f1852371a732bbe6f8569e8a820fbb6ce78cc",
+    "shaVerifiedHistory": 83,
+    "latestPrivateSheetHelperBodyMatchesLive": true,
+    "r111PriorityDocketIndexNotChronology": 49,
+    "sqlStatementOrdinal": 7
+  },
+  "originalLiveMapHelper": {
+    "name": "can_view_campaign_map",
+    "overloads": 1,
+    "language": "sql",
+    "bodyUtf8Bytes": 448,
+    "bodySha256": "835829ca8012fe26ae5d224df749a1a8cde958136c322d10f3d3fa91a5f3f83c",
+    "postgresOwned": true,
+    "securityDefiner": true,
+    "authenticatedExecutable": true,
+    "anonymousExecutable": false,
+    "explicitlyEmptySearchPath": true,
+    "directAuthUidMarker": true,
+    "directMembershipMarker": true,
+    "directPlayerMapMarker": true,
+    "userEditableMetadataMarker": false
+  },
+  "originalStoragePolicySummary": {
+    "totalBuckets": 3,
+    "privateBuckets": 3,
+    "publicBuckets": 0,
+    "storageObjectsRls": true,
+    "totalPolicies": 8,
+    "selectApplicablePolicies": 3,
+    "permissiveSelectPolicies": 3,
+    "restrictiveSelectPolicies": 0,
+    "selectPoliciesWithDirectMembershipMarker": 0,
+    "selectPoliciesWithAuthUidMarker": 2,
+    "selectPoliciesWithMapViewHelperMarker": 1,
+    "selectPoliciesWithBucketIdMarker": 3
+  },
+  "privateAudit": {
+    "script": "scripts/release/r200_private_storage_policy_lineage.py",
+    "dependencies": [
+      "r154_private_history_audit.py",
+      "r186_private_privileged_statement_inventory.py",
+      "r191_private_fog_status_lineage.py",
+      "r193_private_invite_source_lineage.py",
+      "r198_private_sheet_auth_lineage.py"
+    ],
+    "sourceFilesExpected": 83,
+    "sourceTimeOrder": "R111 docket indices are priority-sorted, NOT chronological migration positions.",
+    "outputAllowed": "Fixed numeric counts, booleans and R111 priority numeric index/SQL statement ordinal only; no source SQL, policy names, filenames, object paths or secrets.",
+    "scope": "All direct top-level original CREATE/ALTER/DROP POLICY on storage.objects, DO-block word-marker count, and direct map visibility helper body SHA/bytes versus current live.",
+    "notProven": [
+      "Current live policy names or expression identity",
+      "Effective PostgreSQL permissive OR and nested helper semantics",
+      "New signed URLs denied after DM revocation",
+      "Existing bearer URL revocation",
+      "All 83 original semantic approvals",
+      "All 67 callable privileged RPC call-graph approvals",
+      "Real signed multiaccount QA"
+    ]
+  },
+  "sourceGitBlobs": {
+    "scripts/release/r200_private_storage_policy_lineage.py": "bdfbd1e88756141848250796ac2f8aca6d81b827",
+    "tests/world-v2-r18-200-private-storage-policy.test.py": "e4e7b31d50bdb079ac372f09882f0b48e2d9bc74",
+    "scripts/release/r200_readonly_map_helper_catalog.sql": "a9423f5e37ffe1181f1afcb04005868903bfb43c"
+  },
+  "scopeLocks": {
+    "sourceOnly": true,
+    "noOriginalOrQaDbWrites": true,
+    "noRuntimeSrcEdits": true,
+    "noVersionedMigrations": true,
+    "noMerge": true,
+    "noDeployment": true,
+    "noPaidResources": true,
+    "noHistoricalPolicySqlNamesPathsTokensSecretsExported": true
+  },
+  "requiredOwnerAction": "After exact-head CI success, owner downloads SHA-pinned R200 offline script into existing private WSL archive and uploads ONLY r200-sanitized-report.json."
+}
