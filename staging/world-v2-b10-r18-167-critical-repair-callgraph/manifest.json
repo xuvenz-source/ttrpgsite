@@ -1,0 +1,259 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-167",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 274,
+  "parentSha": "cdccf275c7347b5eee6a3ccb2db812ef99c118d9",
+  "sourceOnly": true,
+  "reviewer": "AI_SINGLE_TECHNICAL_REVIEWER",
+  "originalReadOnlySource": {
+    "revokedSheetOwner": {
+      "function": "public.can_edit_campaign_sheet",
+      "signature": "(uuid,text,uuid)",
+      "sourceMd5": "5a8fed2bdc8427c884f89440c0eebe03",
+      "sourceBodyBytes": 790,
+      "authenticatedDirectExecute": false,
+      "anonymousDirectExecute": false,
+      "currentOwnerBranchRequiresMembership": false,
+      "signedHostedExploitObserved": false,
+      "syntheticSourceExploitReproduced": true,
+      "issue": 220
+    },
+    "fogMetadata": {
+      "function": "public.is_map_fog_published",
+      "signature": "(uuid)",
+      "sourceMd5": "084a62df8ed72d3e5fffbfce9507ff0f",
+      "sourceBodyBytes": 102,
+      "authenticatedDirectExecute": true,
+      "anonymousDirectExecute": false,
+      "checksCurrentMapAuthorization": false,
+      "signedHostedExploitObserved": false,
+      "syntheticSourceDisclosureReproduced": true,
+      "issue": 212
+    }
+  },
+  "privilegedSheetCallers": [
+    {
+      "name": "can_edit_campaign_sheet_inventory",
+      "sourceMd5": "0f45ba1e88b16997f82d67110252be9c",
+      "directAuthenticatedExecute": false,
+      "hasOwnMembershipCheck": false,
+      "delegatesToOriginalHelper": true,
+      "permissionRisk": "INHERITS_REVOKED_OWNER_GAP"
+    },
+    {
+      "name": "claim_campaign_sheet_item",
+      "sourceMd5": "d7932b1e0c2141833537301d75d262e4",
+      "directAuthenticatedExecute": true,
+      "hasOwnMembershipCheck": false,
+      "permissionRisk": "CONFIRMED_SYNTHETIC_CLAIM_GAP"
+    },
+    {
+      "name": "get_campaign_sheet_inventory",
+      "sourceMd5": "5f47826bc6673b92a0cbc277b1b77c51",
+      "directAuthenticatedExecute": true,
+      "hasOwnMembershipCheck": false,
+      "permissionRisk": "CONFIRMED_SYNTHETIC_GET_GAP"
+    },
+    {
+      "name": "mutate_campaign_sheet_item",
+      "sourceMd5": "d2e4affcf04808423830f443ce93e530",
+      "directAuthenticatedExecute": true,
+      "hasOwnMembershipCheck": false,
+      "permissionRisk": "CONFIRMED_SYNTHETIC_MUTATE_GAP"
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "sourceMd5": "f988c6d7a05c441e45746491278ccff4",
+      "directAuthenticatedExecute": true,
+      "hasOwnMembershipCheck": false,
+      "permissionRisk": "CONFIRMED_SYNTHETIC_PATCH_GAP"
+    },
+    {
+      "name": "transfer_campaign_inventory_item",
+      "sourceMd5": "62fed77e523275da70f95ae14f4f2172",
+      "directAuthenticatedExecute": true,
+      "hasOwnMembershipCheck": true,
+      "checkLocatedBeforeTopLevelMutation": true,
+      "permissionRisk": "ADDITIONAL_MEMBERSHIP_GATE_SOURCE_OBSERVED_STILL_NEEDS_SIGNED_QA"
+    }
+  ],
+  "fogConsumer": {
+    "table": "public.map_combats",
+    "policyName": "dm or nonfog viewers read combat roster",
+    "operation": "SELECT",
+    "permissive": true,
+    "policyUsesFogStatus": true,
+    "policyUsesCanViewCampaignMap": true,
+    "policyUsesIsCampaignDm": true,
+    "requiresSignatureAndAuthenticatedExecutePreservation": true
+  },
+  "existingCandidatePins": [
+    {
+      "issue": 220,
+      "pr": 219,
+      "path": "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql",
+      "gitBlobSha": "380f7fd4fcd75fc17c76af8b851d86c068616420",
+      "changedInvariant": "CURRENT_CAMPAIGN_MEMBER_REQUIRED_FOR_ALL_SOURCE_TYPES",
+      "sourceOnly": true,
+      "signedQa": "NOT_RUN"
+    },
+    {
+      "issue": 212,
+      "pr": 206,
+      "path": "staging/world-v2-b10-r18-104-fog-guard/unapplied-fog-status-guard.sql",
+      "gitBlobSha": "c84d7cf8b0958621f11ec273cb36361e2501a77f",
+      "changedInvariant": "AUTHORIZED_CAMPAIGN_MAP_BOUND_FOG_STATUS",
+      "sourceOnly": true,
+      "signedQa": "NOT_RUN"
+    }
+  ],
+  "signedQaMatrix": [
+    {
+      "id": "Q01",
+      "actor": "REVOKED_P1",
+      "action": "inventory_get_assigned_character",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q02",
+      "actor": "REVOKED_P1",
+      "action": "inventory_claim_and_mutate_assigned_character",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q03",
+      "actor": "REVOKED_P1",
+      "action": "noninventory_sheet_patch_assigned_character",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q04",
+      "actor": "REVOKED_P1",
+      "action": "inventory_transfer_assigned_character",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q05",
+      "actor": "P1_CURRENT",
+      "action": "assigned_character_sheet_get_claim_patch",
+      "expected": "ALLOW",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q06",
+      "actor": "DM_CURRENT",
+      "action": "same_campaign_sheet_and_npc_editor",
+      "expected": "ALLOW",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q07",
+      "actor": "P2_CURRENT",
+      "action": "other_players_character_sheet",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q08",
+      "actor": "OUTSIDER",
+      "action": "foreign_campaign_sheet_operations",
+      "expected": "DENY",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q09",
+      "actor": "OUTSIDER",
+      "action": "foreign_map_fog_status",
+      "expected": "NO_FOREIGN_FOG_DISCLOSURE",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q10",
+      "actor": "P1_CURRENT",
+      "action": "authorized_active_map_fog_status",
+      "expected": "ROLE_APPROPRIATE_RESULT",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q11",
+      "actor": "P2_CURRENT",
+      "action": "unassigned_campaign_map_fog_status",
+      "expected": "NO_UNASSIGNED_MAP_DISCLOSURE",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q12",
+      "actor": "ANON",
+      "action": "direct_fog_status_rpc",
+      "expected": "DENY_EXECUTE",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q13",
+      "actor": "DM_AND_P1",
+      "action": "map_combats_rls_fog_off_and_fog_on",
+      "expected": "PRESERVE_COMBAT_VISIBILITY_CONTRACT",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q14",
+      "actor": "REMOVED_P1",
+      "action": "old_invite_rejoin_after_dm_removal",
+      "expected": "REJECT_UNTIL_DM_REINSTATEMENT",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q15",
+      "actor": "REMOVED_P1",
+      "action": "new_signed_asset_url_and_realtime_subscriber",
+      "expected": "DENY_AND_EVICT",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "Q16",
+      "actor": "REMOVED_P1",
+      "action": "previously_issued_signed_url",
+      "expected": "MEASURE_APPROVED_SERVER_REVOCATION_MITIGATION",
+      "result": "NOT_RUN"
+    }
+  ],
+  "dependencies": {
+    "private83HistoricalMigrationsSemanticAuditPassed": false,
+    "all67PrivilegedRpcSemanticsSignedOff": false,
+    "qaOnlyOriginalTargetAttestedAndInstallApproved": false,
+    "originalJoinInviteRevocationResolved": false,
+    "privilegedMembershipTruncateAndUpdateResolved": false,
+    "signedUrlAndRealtimeRevocationVerified": false,
+    "inventoryUuidChurnResolved": false,
+    "ownerR127ProductionReleaseApproved": false
+  },
+  "designConstraints": [
+    "Do not transplant scratch-only BEGIN/COMMIT SQL files as active migrations; prepare reviewed forward-only QA migration after history approval.",
+    "Avoid reverting a privileged helper to the original source known to permit removed character owners.",
+    "Preserve authenticated fog-status EXECUTE for historical map_combats policy while denying foreign-map metadata.",
+    "Membership guard must not restore access for old invite rejoin; invitation tombstones and privileged membership writers are separate gates.",
+    "Do not claim transfer_campaign_inventory_item exploit solely from helper call: an additional membership guard exists in its current source.",
+    "Signed asset URL bearer links and subscribed Realtime clients require independent revocation tests and a free-tier-compatible mitigation."
+  ],
+  "otherSecurityIssues": [
+    218,
+    223,
+    229,
+    231
+  ],
+  "privateGrantHardeningIssue": 275,
+  "productionReleaseAuthorized": false,
+  "noOriginalOrQaWrites": true,
+  "noOriginalSqlExport": true,
+  "noRootMigrationChanges": true,
+  "noRuntimeChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true
+}
