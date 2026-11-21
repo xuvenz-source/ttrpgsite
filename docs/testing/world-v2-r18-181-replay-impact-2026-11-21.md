@@ -12,8 +12,11 @@ A partial history replay MUST remain isolated; dropped policies/triggers and new
 
 NO original/QA hosted writes, raw private SQL, runtime modifications, migration files, merges, deployments or paid resources were introduced.
 
-## Mandatory dynamic function-rewrite gate
+## Mandatory dynamic function-rewrite gate (corrected after source inspection)
 
-A deeper in-place review of historical `20261106074754 20261106_private_player_maps` found a DO block that retrieves the then-existing PostgreSQL definition of `public.can_view_campaign_map` using `pg_get_functiondef`, rewrites its source text and executes the amended function definition. This is not a generic static CREATE FUNCTION. Its resulting authorization behavior depends on the exact earlier chronological function version.
+The original `20261106074754 20261106_private_player_maps` migration **creates/replaces `public.can_view_campaign_map(uuid,uuid)` statically**. A subsequent DO block dynamically rewrites two *different* existing RPC definitions, using `pg_get_functiondef`, guarded string replacement and `EXECUTE`:
 
-Before authorizing any separate QA replay, attest the source-exact helper version immediately before this migration, verify the transformation's exact intended output and subsequent migrations, and test DM/player/foreign-campaign access after the rewrite. Preserve strict QA API isolation during the entire sequence. This historical rewrite is **not semantically approved** in R18-181. No original SQL body was exported.
+- `public.get_token_monitor_values(p_map uuid)`: replaces an active-campaign-map equality check with `can_view_campaign_map(campaign_id,map_id)` authorization.
+- `public.post_token_reference(p_token uuid,p_code text)`: augments the owner check with `can_view_campaign_map(token_campaign,token_map)`.
+
+Both replacements require exact prior function bodies and raise if the expected text is missing. They must be replayed chronologically and checked against the later definitions and signed P1/P2/DM/outsider authorization. **Do not misidentify `can_view_campaign_map` itself as a dynamically rewritten target.** R18-181 marks both individual input-body and authorization tests as unapproved, so hosted QA remains NO_GO. No original private SQL is exported.
