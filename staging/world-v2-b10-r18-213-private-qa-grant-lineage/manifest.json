@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-213",
+  "date": "2026-11-22",
+  "decision": "NO_GO",
+  "parent": {
+    "pr": 322,
+    "head": "3f9cf13cf5d09af5be53a1ccfe6a323712cd92eb",
+    "focusedCiRun": 44935882465,
+    "standardCiRun": 44935882476,
+    "draft": true
+  },
+  "ownerR211SanitizedReceipt": {
+    "bytes": 3342,
+    "sha256": "d718a19fab36778a3360a4ee9f514a9e728c8d2772d4f31e4704d02e1eea03f3",
+    "verifiedOriginalMigrations": 83,
+    "topLevelStatementCount": 937,
+    "flaggedOriginalFiles": 22,
+    "literalGrantTruncateMarkers": 0,
+    "fullySemanticReviewed": false
+  },
+  "currentOriginalReadOnlyEffectiveAcl": {
+    "publicTables": 31,
+    "rlsEnabledTables": 31,
+    "authenticatedTruncateTables": 5,
+    "permissivePublicPolicies": 77,
+    "permissiveStoragePolicies": 8
+  },
+  "sourceBlobs": {
+    "scripts/release/r213_private_qa_broad_grant_review.py": "05d92ba996c2763b8f444c13d9194a0c8d1b833f",
+    "tests/world-v2-r18-213-private-qa-grants.test.py": "e34f8347dd255d0e396f953e40bd9415524003c6",
+    "scripts/release/r211_private_qa_migration_effects.py": "bb36d7e720f7d787fd758b726144a9addf389ab4",
+    "scripts/release/r154_private_history_audit.py": "47a69ccbaa27c9c326a767c6d64b8268eef09a6f",
+    "scripts/release/r191_private_fog_status_lineage.py": "bc2b039ec2cb2172659ef5c7df07306eb8c5ae84",
+    "scripts/release/r186_private_privileged_statement_inventory.py": "12a685f94773c23054d0edd23bf3612a3e8ed8a5",
+    "tests/world-v2-r18-193-private-invite-source-lineage.test.py": "1fcee465b0a9e7c153cc7874c97940afc53e8751",
+    "tests/world-v2-r18-187-private-priority-queue.test.py": "6304cac7bcfe1fcfdaf0fe91c2c43c7160bd4d08"
+  },
+  "scope": {
+    "ownerApprovedQaSchemaPreparationOnly": true,
+    "ownerApprovedQaSqlInstallation": false,
+    "ownerApprovedOriginalSqlMutation": false,
+    "ownerApprovedProductionRelease": false,
+    "onlyExistingFreeQaProject": true
+  },
+  "securityHold": {
+    "currentOriginalFiveAuthenticatedTruncatePrivilegesRemain": true,
+    "broadGrantLexicalMarkerAloneProvesActualGrantCause": false,
+    "all83PrivateMigrationsSemanticallyReviewed": false,
+    "all67CallablePrivilegedFunctionChainsApproved": false,
+    "signedDmP1P2RevokedOutsiderQaPassed": false,
+    "storageBearerIssueResolved": false
+  },
+  "restrictions": {
+    "onlyInvented83MigrationsInGitHubCi": true,
+    "noPrivateOriginalSqlDocketNamesOrVersionsExport": true,
+    "noOriginalOrQaSqlWrite": true,
+    "noAuthStorageUserDataWrite": true,
+    "noRuntimeOrEdgeOrActiveMigrationChanges": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true,
+    "noNetworkOrDatabaseInOwnerLocalScript": true
+  },
+  "ownerNextStep": "After exact-head CI, owner uses private Ubuntu WSL $HOME/ttrpg-history-private to run commit-pinned r213_private_qa_broad_grant_review.py and uploads ONLY r213-sanitized-report.json. No original SQL, R111 docket, filenames, timestamps, policy/function names/signatures, credentials, URLs or raw logs leave WSL. This is read-only risk triage, not permission to execute migrations.",
+  "nextGate": "Reconcile all 83 historical direct table GRANT ALL candidates, explicit TRUNCATE grants/revokes and any extra risky numeric docket indices outside the original 22 with current original five-table effective TRUNCATE ACL; prepare a separately reviewed minimal QA app schema dependency plan but do not install SQL without explicit owner QA-write approval."
+}

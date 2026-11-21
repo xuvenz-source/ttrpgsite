@@ -1,0 +1,35 @@
+name: World V2 R18-213 owner-private all-83 GRANT lineage NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-213-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-212-*'
+permissions:
+  contents: read
+jobs:
+  owner-private-grant-source-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject app, active migrations, Edge, Vercel and production changes
+        run: git diff --exit-code 3f9cf13cf5d09af5be53a1ccfe6a323712cd92eb HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Pin R211 owner receipt, current original five effective TRUNCATE ACLs and all-83 private source-only script
+        run: python3 scripts/release/r213_validate_private_qa_grant_package.py
+      - name: Reject forged QA installation, original write scope, source or private data leakage
+        run: python3 tests/world-v2-r18-213-private-grant-package.test.py
+      - name: Compile offline private history source checker
+        run: python3 -m py_compile scripts/release/r213_private_qa_broad_grant_review.py scripts/release/r213_validate_private_qa_grant_package.py
+
+  fictional-83-history-broad-grants-outside-prior-risk-files:
+    needs: owner-private-grant-source-package
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Invented 83 file tests of broad table grant not originally flagged, rollback-free static parsing, no private SQL
+        run: python3 tests/world-v2-r18-213-private-qa-grants.test.py
