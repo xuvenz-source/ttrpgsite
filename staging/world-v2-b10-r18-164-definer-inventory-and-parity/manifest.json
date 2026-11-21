@@ -1,0 +1,1223 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-164",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 271,
+  "parentSha": "e04df51e38d0a26d9c33c53317679d347a3005e3",
+  "sourceOnly": true,
+  "originalSupabaseReadOnly": true,
+  "reviewer": "SINGLE_AI_LEAD_TECHNICAL_REVIEWER",
+  "functionInventory": [
+    {
+      "name": "add_map_combat_tokens",
+      "arguments": "p_map uuid, p_tokens uuid[]",
+      "bodyBytes": 1184,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "advance_authorized_navigation_gesture",
+      "arguments": "p_session uuid, p_dx integer, p_dy integer, p_seq bigint",
+      "bodyBytes": 5431,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "advance_authorized_navigation_gesture_batch",
+      "arguments": "p_session uuid, p_targets jsonb, p_seq bigint",
+      "bodyBytes": 10398,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "advance_map_motion_session",
+      "arguments": "p_session uuid, p_x integer, p_y integer, p_seq bigint",
+      "bodyBytes": 7071,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": true,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "advance_map_motion_session_path",
+      "arguments": "p_session uuid, p_path jsonb, p_seq bigint",
+      "bodyBytes": 7544,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": true,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "advance_world_motion_v2",
+      "arguments": "p_session uuid, p_seq bigint, p_from jsonb, p_targets jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "bodyBytes": 1150,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": false,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "apply_token_quick_changes",
+      "arguments": "p_token uuid, p_changes jsonb",
+      "bodyBytes": 3468,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "begin_authorized_navigation_gesture",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "bodyBytes": 3312,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "begin_map_combat",
+      "arguments": "p_map uuid, p_tokens uuid[], p_field text, p_mode text",
+      "bodyBytes": 2458,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "begin_map_motion_session",
+      "arguments": "p_map uuid, p_kind text, p_piece uuid, p_ignore_collision boolean",
+      "bodyBytes": 4379,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "begin_world_motion_v2",
+      "arguments": "p_map uuid, p_selection jsonb, p_origin jsonb, p_mode text, p_environment_revision bigint, p_permission_generation bigint, p_collision_override boolean",
+      "bodyBytes": 5561,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "can_observe_map_position",
+      "arguments": "p_map uuid, px double precision, py double precision",
+      "bodyBytes": 381,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "can_observe_map_token",
+      "arguments": "p_token uuid",
+      "bodyBytes": 561,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "can_player_place_map_piece",
+      "arguments": "p_map uuid, px double precision, py double precision",
+      "bodyBytes": 495,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "can_view_campaign_map",
+      "arguments": "p_campaign uuid, p_map uuid",
+      "bodyBytes": 448,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "cancel_world_motion_v2",
+      "arguments": "p_session uuid",
+      "bodyBytes": 205,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": false,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "cast_collection_spell",
+      "arguments": "p_campaign_id uuid, p_source_id uuid, p_collection_id text, p_entry_id text, p_source_type text, p_mode text",
+      "bodyBytes": 6726,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "claim_campaign_sheet_item",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_takeover boolean",
+      "bodyBytes": 1379,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "claim_campaign_tool_item",
+      "arguments": "p_issue uuid, p_item uuid, p_takeover boolean",
+      "bodyBytes": 1693,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "collect_campaign_map_pin",
+      "arguments": "p_pin uuid",
+      "bodyBytes": 821,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "command_map_combat",
+      "arguments": "p_map uuid, p_action text, p_entry uuid, p_score integer",
+      "bodyBytes": 3199,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "commit_world_motion_v2",
+      "arguments": "p_session uuid, p_seq bigint, p_endpoint jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "bodyBytes": 5796,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "create_campaign",
+      "arguments": "p_name text",
+      "bodyBytes": 475,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "dm_give_inventory_item",
+      "arguments": "p_character uuid, p_inventory_field text, p_item jsonb",
+      "bodyBytes": 2644,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "end_authorized_navigation_gesture",
+      "arguments": "p_session uuid",
+      "bodyBytes": 170,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": false,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "end_map_motion_previews",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "bodyBytes": 535,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "end_map_motion_sessions",
+      "arguments": "p_map uuid, p_token_ids uuid[], p_tool_issue_ids uuid[]",
+      "bodyBytes": 682,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_authorized_map_combat",
+      "arguments": "p_map uuid",
+      "bodyBytes": 1312,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_authorized_map_fog",
+      "arguments": "p_map uuid",
+      "bodyBytes": 5517,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": true,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_authorized_map_fog_delta",
+      "arguments": "p_map uuid, p_base_epoch uuid, p_base_revision bigint, p_base_sequence bigint",
+      "bodyBytes": 3088,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_authorized_map_fog_v2",
+      "arguments": "p_map uuid",
+      "bodyBytes": 1388,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_authorized_map_light_masks",
+      "arguments": "p_map uuid",
+      "bodyBytes": 5094,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": true,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_authorized_map_light_masks_v2",
+      "arguments": "p_map uuid",
+      "bodyBytes": 1616,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_authorized_map_navigation",
+      "arguments": "p_map uuid, p_kind text, p_piece uuid",
+      "bodyBytes": 12861,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_campaign_account_names",
+      "arguments": "p_campaign uuid",
+      "bodyBytes": 378,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": true,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_campaign_sheet_inventory",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text",
+      "bodyBytes": 1950,
+      "markers": {
+        "directActor": false,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_dm_map_npc_values",
+      "arguments": "p_map uuid",
+      "bodyBytes": 263,
+      "markers": {
+        "directActor": false,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_npc_token_values",
+      "arguments": "p_token uuid",
+      "bodyBytes": 141,
+      "markers": {
+        "directActor": false,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_token_encumbrance_badges",
+      "arguments": "p_map uuid",
+      "bodyBytes": 719,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_token_monitor_values",
+      "arguments": "p_map uuid",
+      "bodyBytes": 2509,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_token_quick_values",
+      "arguments": "p_token uuid",
+      "bodyBytes": 1899,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_world_observer_cursor_v2",
+      "arguments": "p_map uuid",
+      "bodyBytes": 930,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_world_scene_v2",
+      "arguments": "p_map uuid",
+      "bodyBytes": 2709,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "get_world_visibility_v2",
+      "arguments": "p_map uuid",
+      "bodyBytes": 143,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "is_campaign_dm",
+      "arguments": "c uuid",
+      "bodyBytes": 148,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "is_campaign_member",
+      "arguments": "c uuid",
+      "bodyBytes": 132,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "is_map_fog_published",
+      "arguments": "p_map uuid",
+      "bodyBytes": 102,
+      "markers": {
+        "directActor": false,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "join_campaign",
+      "arguments": "p_invite_code text",
+      "bodyBytes": 742,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "move_entire_party_to_map",
+      "arguments": "p_campaign uuid, p_map uuid",
+      "bodyBytes": 675,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "mutate_campaign_sheet_item",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid, p_row jsonb, p_remove boolean",
+      "bodyBytes": 2752,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "mutate_campaign_tool_item",
+      "arguments": "p_issue uuid, p_item uuid, p_row jsonb, p_remove boolean",
+      "bodyBytes": 2178,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "patch_campaign_sheet_noninventory",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_values jsonb, p_meta jsonb",
+      "bodyBytes": 2364,
+      "markers": {
+        "directActor": false,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "patch_campaign_tool_details",
+      "arguments": "p_issue uuid, p_lit boolean, p_attrs jsonb",
+      "bodyBytes": 1086,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "post_token_reference",
+      "arguments": "p_token uuid, p_code text",
+      "bodyBytes": 1773,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "preview_map_motion",
+      "arguments": "p_map uuid, p_kind text, p_piece uuid, p_x integer, p_y integer, p_seq bigint, p_ignore_collision boolean",
+      "bodyBytes": 110,
+      "markers": {
+        "directActor": false,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "preview_world_visibility_at_v2",
+      "arguments": "p_map uuid, p_viewer uuid, p_token uuid, p_x integer, p_y integer",
+      "bodyBytes": 383,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "preview_world_visibility_v2",
+      "arguments": "p_map uuid, p_viewer uuid",
+      "bodyBytes": 381,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "publish_map_environment",
+      "arguments": "p_map uuid, p_action text",
+      "bodyBytes": 3836,
+      "markers": {
+        "directActor": false,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "release_campaign_sheet_item",
+      "arguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid",
+      "bodyBytes": 271,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "release_campaign_tool_item",
+      "arguments": "p_issue uuid, p_item uuid",
+      "bodyBytes": 220,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": false,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": false,
+        "ownership": false,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "roll_dice",
+      "arguments": "p_campaign_id uuid, p_expression text, p_label text, p_character_id uuid",
+      "bodyBytes": 2362,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "roll_equipment_weapon",
+      "arguments": "p_campaign_id uuid, p_source_type text, p_source_id uuid, p_field_id text, p_weapon_id text",
+      "bodyBytes": 6856,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": true,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "roll_map_combat_initiative",
+      "arguments": "p_map uuid, p_entry uuid",
+      "bodyBytes": 4743,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": true,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "roll_map_npc_initiative",
+      "arguments": "p_map uuid",
+      "bodyBytes": 692,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": false,
+        "writesRows": false,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "run_tabletop_macro",
+      "arguments": "p_macro_id uuid",
+      "bodyBytes": 7896,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "set_token_quick_value",
+      "arguments": "p_token uuid, p_field text, p_part text, p_value numeric",
+      "bodyBytes": 2593,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    },
+    {
+      "name": "transfer_campaign_inventory_item",
+      "arguments": "p_campaign uuid, p_sheet uuid, p_field text, p_issue uuid, p_item uuid, p_direction text, p_x integer, p_y integer",
+      "bodyBytes": 6190,
+      "markers": {
+        "directActor": true,
+        "recognizedAuthorizationHelper": true,
+        "directMembership": false,
+        "privateDispatch": false,
+        "campaignOrMap": true,
+        "ownership": true,
+        "writesRows": true,
+        "privilegedIdentity": false,
+        "dynamicExecute": false
+      },
+      "semanticReview": "NOT_YET_COMPLETE"
+    }
+  ],
+  "summary": {
+    "total": 67,
+    "directActor": 60,
+    "delegatedOrNoDirectActor": 7,
+    "knownAuthorizationHelper": 50,
+    "directMembership": 12,
+    "privateDispatch": 25,
+    "writeMarkers": 42,
+    "privilegedIdentity": 1,
+    "dynamicExecuteHint": 0
+  },
+  "candidateThreeWritePaths": [
+    {
+      "name": "cancel_world_motion_v2",
+      "sourceClassification": "AUTH_UID_AND_RESOURCE_SCOPED_DELETE_IN_CURRENT_LIVE_CODE",
+      "signedActorVerified": false,
+      "semanticApproval": false
+    },
+    {
+      "name": "release_campaign_sheet_item",
+      "sourceClassification": "AUTH_UID_AND_RESOURCE_SCOPED_DELETE_IN_CURRENT_LIVE_CODE",
+      "signedActorVerified": false,
+      "semanticApproval": false
+    },
+    {
+      "name": "release_campaign_tool_item",
+      "sourceClassification": "AUTH_UID_AND_RESOURCE_SCOPED_DELETE_IN_CURRENT_LIVE_CODE",
+      "signedActorVerified": false,
+      "semanticApproval": false
+    }
+  ],
+  "knownOpenSecurityIssues": [
+    212,
+    218,
+    220,
+    223,
+    229,
+    231
+  ],
+  "privilegedAccountNamesFunction": {
+    "name": "get_campaign_account_names",
+    "returnShape": "user_id_uuid_and_account_name_text",
+    "directActor": true,
+    "membershipAndCampaignBoundSourceMarkers": true,
+    "readsAuthUserMetadata": true,
+    "containsEmailSourceMarker": false,
+    "semanticApproval": false
+  },
+  "historyGitParity": {
+    "trackedFiles": 62,
+    "originalRecords": 83,
+    "exactByteMatches": 47,
+    "quotePreservingNormalizedMatches": 14,
+    "originalOnly": 22,
+    "gitOnlyUnapplied": 1,
+    "normalizedMatchesAreSemanticApprovals": false
+  },
+  "all67Reviewed": false,
+  "original83SemanticallyApproved": false,
+  "realSignedQaPassed": false,
+  "productionReleaseAuthorized": false,
+  "immutability": {
+    "noOriginalOrQaWrites": true,
+    "noRawOriginalSqlExport": true,
+    "noSrcRuntimeChanges": true,
+    "noMigrationsEdited": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidInfrastructure": true
+  },
+  "nextStep": "Review current full source semantics for the 67 functions in bounded groups, prioritize three actor-scoped cleanup paths and elevated Auth reader, then real signed QA. Never infer security from marker counts."
+}
