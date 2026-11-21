@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-175",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 283,
+  "parentSha": "171a23c593081138a86df51aa6f3b6036714b837",
+  "implementation": "DORMANT_PURE_HTTP_MEDIA_HANDLER_WITH_MOCK_AUTHORIZATION_ADAPTERS",
+  "sourcePath": "staging/world-v2-b10-r18-175-private-media-gateway-prototype/CampaignPrivateMediaGateway.mjs",
+  "liveEnabled": false,
+  "importedByCurrentApp": false,
+  "deployedEdgeFunction": false,
+  "realSupabaseAdapterImplemented": false,
+  "realSignedQaPassed": false,
+  "assets": [
+    "map-image",
+    "campaign-token-art",
+    "personal-token-art"
+  ],
+  "securityContracts": {
+    "freshServerVerifiedAuthEveryRequest": true,
+    "resolverMustCheckCurrentResourceAuthorization": true,
+    "browserSuppliesOnlyKindResourceIdAndVariant": true,
+    "browserCannotSupplyStorageBucketOrPath": true,
+    "trustedResolverMustBindActualResourceToPath": true,
+    "strictBucketCategoryMapping": true,
+    "noDirectBearerLinkOr302": true,
+    "noStorageSecretInBrowser": true,
+    "allowedContentTypes": [
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+      "image/gif"
+    ],
+    "svgAndHtmlDenied": true,
+    "imageMagicBytesChecked": true,
+    "strictOriginAllowlist": true,
+    "requestBytesCapped": true,
+    "responseBytesCapped": true,
+    "cacheControlNoStore": true,
+    "distinguishPersonalTokenOwnership": true,
+    "previouslyIssuedOneHourSignedLinksRevoked": false,
+    "inFlightOrDownloadedBytesRevocable": false
+  },
+  "supabaseDocs": {
+    "edgeFunctionFreeMemoryMiB": 256,
+    "edgeFunctionFreeWallClockSeconds": 150,
+    "edgeFunctionFreeCpuSecondsPerRequest": 2,
+    "smartCdnProOrAbove": true,
+    "manualCdnPurgeProOrAbove": true,
+    "resources": [
+      "https://supabase.com/docs/guides/functions/auth-headers",
+      "https://supabase.com/docs/guides/functions/limits",
+      "https://supabase.com/docs/guides/storage/cdn/smart-cdn",
+      "https://supabase.com/docs/guides/storage/cdn/purge-cdn-cache"
+    ]
+  },
+  "tests": {
+    "localNodePassCount": 10,
+    "ciNewTestsNotYetRun": true
+  },
+  "nextGates": [
+    "Implement a real resolver using current signed actor and original map/token/character/personal-token authoritative resource tables, not a client-supplied storage path.",
+    "Confirm Auth getUser and publishable-key usage without exposing service keys; scope any secret Storage client to the server.",
+    "Measure actual Supabase Storage download Blob memory, map file sizes, bandwidth and Edge Function free-tier invocation limits before deploying.",
+    "Prove concurrent revocation and already-issued URL transition; do not claim in-flight byte cancellation.",
+    "Close #220/#212/#223/#229/#231 and independent original 83-file and 67-definer audits before signed multi-actor QA.",
+    "Do not rely on Pro-only CDN purge; preserve free-tier-only resource policy."
+  ],
+  "unknowns": {
+    "liveSourceResolved": false,
+    "hostedQaSigned": false,
+    "realStorageRead": false,
+    "existingUrlsRevoked": false,
+    "r127ProductionReleaseApproved": false
+  },
+  "noHostedSqlWrites": true,
+  "noStorageChanges": true,
+  "noAppRuntimeChanges": true,
+  "noVersionedMigrationChanges": true,
+  "noProductionOrQaDeploy": true,
+  "noMerge": true,
+  "noPaidResources": true
+}
