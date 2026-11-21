@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-180",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 288,
+  "parentSha": "ff469e23aaf7198157145e01da3ea4e1b809d3a8",
+  "sourceOnly": true,
+  "dormantComponent": "staging/world-v2-b10-r18-180-request-isolated-media-client/RequestIsolatedMediaHandler.mjs",
+  "sourceDependencySteps": [
+    "R175",
+    "R176"
+  ],
+  "plannedSyntheticCases": 7,
+  "contracts": {
+    "perRequestClient": true,
+    "authGetUserNetworkValidation": true,
+    "oneUserJwtForDbAndStorage": true,
+    "publishableKeyOnly": true,
+    "noGlobalUserState": true,
+    "concurrentUserIsolation": true,
+    "noSignedUrl": true,
+    "activeDeployment": false,
+    "realSignedQA": false
+  },
+  "requiredBeforeQa": [
+    "Pin actual Supabase client dependency at live integration",
+    "Verify Edge Function verify_jwt=true",
+    "Check publishable key existence and real user session bindings",
+    "Benchmark memory/latency within free-tier limits",
+    "Resolve issued signed URLs and remaining security blockers"
+  ],
+  "activeRuntimeChanged": false,
+  "qaSchemaInstalled": false,
+  "originalHostedPatched": false,
+  "productionApproved": false,
+  "noHostedWrites": true,
+  "noMigrationChange": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidInfrastructure": true
+}
