@@ -190,7 +190,8 @@
       "ofDefaultGrantsSecurityDefiners": 7,
       "canInvokeDirectlyNowViaOrdinaryRoles": false,
       "latentGrantRiskIfSchemaUsageEnabled": true,
-      "hardeningAppliedToOriginal": false
+      "hardeningAppliedToOriginal": false,
+      "hardeningIssue": 275
     }
   },
   "securityAdvisors": {
