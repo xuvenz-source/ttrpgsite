@@ -1,0 +1,24 @@
+name: World V2 R18-188 private metadata-context NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-188-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-187-*'
+permissions:
+  contents: read
+jobs:
+  bounded-private-metadata-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject runtime, versioned migration or Edge Function changes
+        run: git diff --exit-code 227c79835c673ae3d29c7d87949f165ed21dbf1e HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Fictional exact source and SHA-checked private metadata-context tests
+        run: python3 tests/world-v2-r18-188-private-metadata-context.test.py
+      - name: Source syntax and safety
+        run: python3 -m py_compile scripts/release/r188_private_metadata_context.py
