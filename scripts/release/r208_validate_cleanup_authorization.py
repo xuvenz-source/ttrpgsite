@@ -95,7 +95,6 @@ def expected_rows():
      "auth_exec":True,"anon_exec":False,"uid_calls":nuid,"has_where_word":True,
      "editable_metadata_word":False}
   r.update({k:bool(v) for k,v in zip(FOCUS_FIELDS,FOCUS[i])})
-  returnrows_dummy=None
   rows.append(r)
  return rows
 def validate(m,root,raw=None):
