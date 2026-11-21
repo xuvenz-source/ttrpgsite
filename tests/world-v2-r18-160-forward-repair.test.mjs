@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const manifest=JSON.parse(readFileSync(join(root,'staging/world-v2-b10-r18-160-forward-security-repair-gates/manifest.json'),'utf8'));
 const read=(p)=>readFileSync(join(root,p),'utf8');
-const gitBlob=(s)=>createHash('sha1').update('blob '+Buffer.byteLength(s)+'\\0').update(s).digest('hex');
+const gitBlob=(s)=>createHash('sha1').update('blob '+Buffer.byteLength(s)+'\0').update(s).digest('hex');
 
 test('R160 is exactly parented to R159 and cannot be mistaken for release approval',()=>{
  assert.equal(manifest.workPackage,'B10-R18-160');
