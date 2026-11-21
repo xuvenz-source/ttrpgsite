@@ -1,0 +1,56 @@
+name: World V2 R18-212 original-vs-QA effective ACL and broad grant NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-212-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-211-*'
+permissions:
+  contents: read
+jobs:
+  exact-original-qa-effective-privilege-counts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject active app, migrations, Supabase Edge and production config changes
+        run: git diff --exit-code eafc1a42a44a95642303ec5b018833f69f29fc1d HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Validate owner R211 83/937/22 preflight and original five effective TRUNCATE privileges
+        run: python3 scripts/release/r212_validate_effective_permission_surface.py
+      - name: Reject forged source hash, ACL counts, unsafe no-op RLS assumptions or release approvals
+        run: python3 tests/world-v2-r18-212-effective-permissions.test.py
+      - name: Python compile release validator
+        run: python3 -m py_compile scripts/release/r212_validate_effective_permission_surface.py
+
+  fictional-grant-all-truncate-bypasses-rls:
+    needs: exact-original-qa-effective-privilege-counts
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r212_disposable_only
+          POSTGRES_DB: world_v2_r18_212
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_212"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R212_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_212
+      PGUSER: postgres
+      PGPASSWORD: r212_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Check fictional broad GRANT ALL produces TRUNCATE, RLS does not block, rollback and synthetic revoke
+        run: bash tests/world-v2-r18-212-postgres/run.sh
