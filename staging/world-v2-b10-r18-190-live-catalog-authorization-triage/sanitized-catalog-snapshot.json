@@ -1,0 +1,46 @@
+{
+  "work_package": "B10-R18-190",
+  "mode": "READONLY_ORIGINAL_PUBLIC_DEFINER_CATALOG_LEXICAL_SNAPSHOT",
+  "decision": "NO_GO",
+  "original_project_status": "ACTIVE_HEALTHY",
+  "snapshot_date": "2026-11-21",
+  "r189_sanitized_receipt_sha256": "48468e18b5deb53350cbefb75b29e984505fa99d90804e346d98a818caa3cb57",
+  "evidence_provenance": "Supabase pg_catalog read-only aggregate; source not exported; reported current only at capture",
+  "aggregate": {
+    "public_definers": 85,
+    "authenticated_callable_definers": 67,
+    "direct_identity_markers": 60,
+    "missing_direct_identity_markers": 7,
+    "anonymous_callable_definers": 0,
+    "user_metadata_definer_candidates": 1,
+    "metadata_total_words": 2,
+    "metadata_words_before_first_from": 2,
+    "metadata_words_at_or_after_first_where": 0,
+    "metadata_function_uid_words_at_or_after_where": 1,
+    "metadata_candidate_returns_setof_record": true,
+    "fog_status_authenticated_callable_overloads": 1,
+    "fog_status_returns_boolean": true,
+    "fog_status_has_direct_identity_marker": false,
+    "fog_status_has_literal_campaign_member_marker": false,
+    "fog_status_has_map_view_helper_marker": false,
+    "fog_status_anonymous_callable": false
+  },
+  "interpretation": {
+    "metadata_authorization_semantics_proven_safe": false,
+    "metadata_authorization_semantics_proven_unsafe": false,
+    "metadata_projection_only_ast_proven": false,
+    "fog_status_caller_authorization_proven": false,
+    "live_privileged_call_graph_approved": false,
+    "full_original_83_migration_semantics_approved": false,
+    "real_signed_qa_passed": false,
+    "hosted_qa_installation_authorized": false,
+    "production_release_authorized": false
+  },
+  "source_sql_bodies_or_user_data_exported": false,
+  "sql_or_network_mutations_performed": false,
+  "limitations": [
+    "Token positions relative to the first FROM and WHERE words are not an AST, cannot prove projections or effective authorization.",
+    "Direct auth.uid/campaign membership string markers are heuristic and cannot validate helper call graphs or revoked-user enforcement.",
+    "A pg_catalog snapshot is time-specific; no real signed DM/P1/P2/removed/outsider QA was performed."
+  ]
+}

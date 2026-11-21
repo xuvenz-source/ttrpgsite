@@ -1,0 +1,26 @@
+name: World V2 R18-190 readonly catalog authorization NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-190-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-189-*'
+permissions:
+  contents: read
+jobs:
+  source-only-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Block runtime and live migration changes
+        run: git diff --exit-code 7b1ca1ced5ed76df4a2a9e586818de32d6a72a93 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Verify sanitized read-only catalog evidence and adversarial refusal
+        run: python3 tests/world-v2-r18-190-live-authorization-catalog.test.py
+      - name: Check no approval and exact snapshot schema
+        run: python3 scripts/release/r190_reconcile_live_authorization_catalog.py
+      - name: Offline syntax validation
+        run: python3 -m py_compile scripts/release/r190_reconcile_live_authorization_catalog.py
