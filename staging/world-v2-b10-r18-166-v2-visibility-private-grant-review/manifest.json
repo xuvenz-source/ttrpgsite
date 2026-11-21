@@ -1,0 +1,233 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-166",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 273,
+  "parentSha": "1427f5bc5b0451491f9a5b972b0b7b62ef4bd68e",
+  "sourceOnly": true,
+  "reviewer": "AI_SINGLE_TECHNICAL_REVIEWER",
+  "liveSourceFingerprints": [
+    {
+      "name": "forge_world_v2.advance_core_v2",
+      "arguments": "p_session uuid, p_seq bigint, p_from jsonb, p_targets jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "sourceMd5": "977f24a8103982ad9d6d8e2733f07d58",
+      "bodyBytes": 5212,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": false,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "forge_world_v2.publish_approved_observers",
+      "arguments": "p_session forge_world_v2.motion_sessions, p_from jsonb, p_accepted jsonb",
+      "sourceMd5": "cb3fb0906697e72eb2f131597c15d172",
+      "bodyBytes": 3443,
+      "returns": "integer",
+      "anonymousExecute": false,
+      "authenticatedExecute": false,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "forge_world_v2.session_valid",
+      "arguments": "s forge_world_v2.motion_sessions",
+      "sourceMd5": "9c02e2fd21f876a2f98c67c1d35b8759",
+      "bodyBytes": 2959,
+      "returns": "boolean",
+      "anonymousExecute": false,
+      "authenticatedExecute": false,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "forge_world_v2.signal_movement_vision_v2",
+      "arguments": "s forge_world_v2.motion_sessions, p_accepted jsonb",
+      "sourceMd5": "00664ace31e3e53f756d8a3be7efc1ea",
+      "bodyBytes": 7204,
+      "returns": "integer",
+      "anonymousExecute": false,
+      "authenticatedExecute": false,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "forge_world_v2.viewer_on_map",
+      "arguments": "p_campaign uuid, p_map uuid, p_viewer uuid",
+      "sourceMd5": "3f374641d6868b0175d2eb9c93494941",
+      "bodyBytes": 560,
+      "returns": "text",
+      "anonymousExecute": false,
+      "authenticatedExecute": false,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "forge_world_v2.visibility_frame_v2",
+      "arguments": "p_map uuid, p_viewer uuid, p_store_exploration boolean, p_preview_token uuid, p_preview_x integer, p_preview_y integer",
+      "sourceMd5": "ba1e88cf1e09efc729ef3a60c5b5fffa",
+      "bodyBytes": 11994,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": false,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "public.advance_world_motion_v2",
+      "arguments": "p_session uuid, p_seq bigint, p_from jsonb, p_targets jsonb, p_environment_revision bigint, p_permission_generation bigint",
+      "sourceMd5": "d15dd923c5c36927493a709fdb2c0909",
+      "bodyBytes": 1150,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "public.get_world_observer_cursor_v2",
+      "arguments": "p_map uuid",
+      "sourceMd5": "eba93af9f7f8aa4b0e1ca707a5a91c11",
+      "bodyBytes": 930,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "public.get_world_scene_v2",
+      "arguments": "p_map uuid",
+      "sourceMd5": "20e7ae44eaf487f51f0ea827c1f62f96",
+      "bodyBytes": 2709,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "public.get_world_visibility_v2",
+      "arguments": "p_map uuid",
+      "sourceMd5": "fe3b49d1350feddb287d18fc1402b2cf",
+      "bodyBytes": 143,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "public.preview_world_visibility_at_v2",
+      "arguments": "p_map uuid, p_viewer uuid, p_token uuid, p_x integer, p_y integer",
+      "sourceMd5": "2a76561483a36b78d471190acbb5b740",
+      "bodyBytes": 383,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    },
+    {
+      "name": "public.preview_world_visibility_v2",
+      "arguments": "p_map uuid, p_viewer uuid",
+      "sourceMd5": "492b4eb70492d8b4b5c305e5f835044b",
+      "bodyBytes": 381,
+      "returns": "jsonb",
+      "anonymousExecute": false,
+      "authenticatedExecute": true,
+      "sourceFinding": "INSPECTED_CONTROL_FLOW_NOT_SIGNED_QA"
+    }
+  ],
+  "authorizationChains": {
+    "selfVisibleFrame": {
+      "publicEntry": "public.get_world_visibility_v2",
+      "viewerArgument": "auth.uid()",
+      "privateTarget": "forge_world_v2.visibility_frame_v2",
+      "explorationWriteArgument": true,
+      "viewerRoleHelper": "forge_world_v2.viewer_on_map",
+      "requiresCurrentMembershipInHelper": true,
+      "requiresAssignedOrActiveMapForPlayer": true,
+      "actorOrAuthorizedDmBoundaryInPrivateFrame": true,
+      "signedQa": "NOT_RUN"
+    },
+    "dmPreview": {
+      "publicEntries": [
+        "public.preview_world_visibility_v2",
+        "public.preview_world_visibility_at_v2"
+      ],
+      "requiresCampaignDmAtEntry": true,
+      "viewerArgumentFromClient": true,
+      "explorationWriteArgument": false,
+      "privateViewerMustHaveCurrentCampaignMapEligibility": true,
+      "signedQa": "NOT_RUN"
+    },
+    "sceneCursor": {
+      "publicEntries": [
+        "public.get_world_scene_v2",
+        "public.get_world_observer_cursor_v2"
+      ],
+      "requiresCanViewCampaignMap": true,
+      "signedQa": "NOT_RUN"
+    },
+    "motion": {
+      "publicEntry": "public.advance_world_motion_v2",
+      "privateTarget": "forge_world_v2.advance_core_v2",
+      "checksSignedActorSession": true,
+      "requiresSessionValid": true,
+      "requiresPermissionGenerationMatch": true,
+      "privateSessionValidReferencesCanViewCampaignMap": true,
+      "observerPublicationChecksSessionValid": true,
+      "observerPublicationChecksViewerEligibility": true,
+      "signedQa": "NOT_RUN"
+    }
+  },
+  "privateSchemaAcl": {
+    "forgeWorldV2": {
+      "securityDefinerFunctions": 24,
+      "authenticatedCanUseSchema": false,
+      "anonymousCanUseSchema": false,
+      "authenticatedFunctionExecuteGrants": 0,
+      "anonymousFunctionExecuteGrants": 0
+    },
+    "forgeVisibility": {
+      "securityDefinerFunctions": 23,
+      "authenticatedCanUseSchema": false,
+      "anonymousCanUseSchema": false,
+      "authenticatedFunctionExecuteGrants": 11,
+      "anonymousFunctionExecuteGrants": 11,
+      "defaultAclPublicExecuteFunctions": 11,
+      "ofDefaultGrantsSecurityDefiners": 7,
+      "canInvokeDirectlyNowViaOrdinaryRoles": false,
+      "latentGrantRiskIfSchemaUsageEnabled": true,
+      "hardeningAppliedToOriginal": false
+    }
+  },
+  "securityAdvisors": {
+    "checkedOriginalReadOnly": true,
+    "publicAuthenticatedDefinerWarnings": 67,
+    "rlsNoPolicyInformationNotices": 15,
+    "leakedPasswordProtectionWarnings": 1,
+    "lintUrls": {
+      "authenticatedDefiners": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+      "noRlsPolicy": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+      "passwordProtection": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+    }
+  },
+  "negativeReleaseClaims": {
+    "all67PrivilegedFunctionsSemanticallyApproved": false,
+    "realSignedActorRevocationTestPassed": false,
+    "privateFunctionDefaultGrantsRemediated": false,
+    "original83HistoricalMigrationsApproved": false,
+    "qaSchemaInstalled": false,
+    "issuedAssetUrlsRevoked": false,
+    "realtimeSubscribersEvictedOnRevocation": false,
+    "productionReleaseApproved": false
+  },
+  "openSecurityIssues": [
+    212,
+    218,
+    220,
+    223,
+    229,
+    231
+  ],
+  "noRawOriginalSqlExport": true,
+  "noOriginalOrQaWrites": true,
+  "noVersionedMigrationChanges": true,
+  "noAppRuntimeChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidResources": true,
+  "nextStep": "Stage a reviewed authorization matrix for signed DM/P1/P2/removed P1/outsider across visibility, preview, motion and live subscriptions. Keep original/QA unchanged until explicit QA schema review and approval."
+}
