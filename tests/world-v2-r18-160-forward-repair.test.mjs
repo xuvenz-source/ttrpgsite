@@ -55,10 +55,12 @@ test('R160 pins essential authorization boundaries, not just optimistic source f
 });
 
 test('R160 signed QA matrix is complete but genuinely unexecuted',()=>{
- const cases=manifest.signedAcceptanceMatrix;
+ const cases=manifest.qaAcceptanceMatrix;
  assert.equal(cases.length,18);
  assert.equal(new Set(cases.map(x=>x.id)).size,18);
  assert.ok(cases.every(x=>x.result==='NOT_RUN'));
+ assert.equal(cases.filter(x=>x.executionContext==='SIGNED_QA_AUTH').length,17);
+ assert.equal(cases.filter(x=>x.executionContext==='CONTROLLED_PRIVILEGED_WRITER_AUDIT').length,1);
  for(const word of ['fog','sheet','invite','signed','realtime','truncate','motion','storage']){
   assert.ok(cases.some(x=>x.operation.includes(word)),word);
  }
