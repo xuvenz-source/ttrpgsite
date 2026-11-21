@@ -1,0 +1,59 @@
+name: World V2 R18-203 live Storage root bucket guard NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-203-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-202-*'
+permissions:
+  contents: read
+jobs:
+  original-live-bucket-root-source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject live application, active SQL migrations, Edge and Vercel changes
+        run: git diff --exit-code 4135d0bc277a5f1d8a23c4bbc5f2c04bd34b4da1 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Verify original 3 live policy root bucket guards and immutable source
+        run: python3 scripts/release/r203_validate_bucket_root_guard.py
+      - name: Reject forged bucket/operator OR structure, source drift and false QA GO
+        run: python3 tests/world-v2-r18-203-bucket-root-guard.test.py
+      - name: Compile source-only gate
+        run: python3 -m py_compile scripts/release/r203_validate_bucket_root_guard.py
+
+  synthetic-root-bucket-and-nested-or:
+    needs: original-live-bucket-root-source-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r201_disposable_only
+          POSTGRES_DB: world_v2_r18_201
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_201"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R201_ISOLATED: 'yes'
+      R202_ISOLATED: 'yes'
+      R203_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_201
+      PGUSER: postgres
+      PGPASSWORD: r201_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Re-run unchanged R201/R202 then R203 live-shaped root comparator query and intentional rollback
+        shell: bash
+        run: bash tests/world-v2-r18-203-postgres/run.sh
