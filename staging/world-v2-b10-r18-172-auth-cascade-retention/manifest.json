@@ -1,0 +1,137 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-172",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 280,
+  "parentSha": "5126e8ccadac4095e2b08c89b66cb77468ecb6ef",
+  "executionModel": "DISPOSABLE_GITHUB_ACTIONS_POSTGRESQL_17_ONLY_NO_NETWORK_TO_HOSTED",
+  "scope": "ORIGINAL_SHAPED_AUTH_USER_CASCADE_WITH_EXISTING_FOUR_STAGED_SCRATCH_CANDIDATES",
+  "syntheticSetup": {
+    "source": "tests/world-v2-r18-120-postgres/setup.sql",
+    "addedAuthUsersTable": true,
+    "twoSyntheticForeignKeys": [
+      {
+        "from": "public.campaign_members(user_id)",
+        "to": "auth.users(id)",
+        "onDelete": "CASCADE"
+      },
+      {
+        "from": "public.campaigns(owner_id)",
+        "to": "auth.users(id)",
+        "onDelete": "CASCADE"
+      }
+    ],
+    "allSyntheticFixedUuids": true,
+    "notExactOriginal83MigrationReplay": true,
+    "realSupabaseAuthTokensUsed": false
+  },
+  "existingCandidateFiles": [
+    {
+      "step": "R120",
+      "path": "staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql",
+      "gitBlobSha": "f7bda6b79f7b9ac4a3323142c27d54a44436d5a8"
+    },
+    {
+      "step": "R122",
+      "path": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
+      "gitBlobSha": "cc6c778783fc387203dee88cdb25517ba0050bcb"
+    },
+    {
+      "step": "R148",
+      "path": "staging/world-v2-b10-r18-148-privileged-membership-guards/unapplied-privileged-membership-guards.sql",
+      "gitBlobSha": "c9a948e003989a68edb052a67608e371c5f39927"
+    },
+    {
+      "step": "R150",
+      "path": "staging/world-v2-b10-r18-150-service-insert-privilege/unapplied-revoke-service-role-insert.sql",
+      "gitBlobSha": "167e66332eba4319fa18a6a21096a64013eb4dfe"
+    }
+  ],
+  "testCases": [
+    {
+      "id": "A01",
+      "name": "signed_P1_joins_and_gets_member",
+      "expected": "pass",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A02",
+      "name": "Auth_user_P1_delete_cascades_membership",
+      "expected": "pass",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A03",
+      "name": "Auth_user_P1_delete_keeps_revocation_tombstone_until_campaign_delete",
+      "expected": "pass_observed_prototype_behavior_not_approved_retention",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A04",
+      "name": "same_synthetic_identity_rejoins_after_user_recreation",
+      "expected": "reject_42501",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A05",
+      "name": "direct_service_role_DM_insert",
+      "expected": "reject_permission_denied",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A06",
+      "name": "direct_service_role_membership_truncate",
+      "expected": "reject_permission_denied",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A07",
+      "name": "signed_P2_joins_before_owner_deletion",
+      "expected": "pass",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A08",
+      "name": "delete_auth_owner_cascades_campaign_and_membership",
+      "expected": "pass_without_deadlock_or_fk_violation",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A09",
+      "name": "campaign_delete_clears_tombstones",
+      "expected": "pass",
+      "status": "NOT_YET_RUN"
+    },
+    {
+      "id": "A10",
+      "name": "other_campaign_and_DM_remain_intact",
+      "expected": "pass",
+      "status": "NOT_YET_RUN"
+    }
+  ],
+  "retentionDecision": {
+    "accountDeletedUserIdTombstonePersistsUnderPrototype": "UNVERIFIED_IN_NEW_INTEGRATION",
+    "separateRetentionPolicyRequired": true,
+    "mustNotTreatAccountDeletionAsDeliberateDmRemoval": true,
+    "protectAgainstOrphanedRejoin": true,
+    "doNotClaimPrivacyCompliantUntilReviewed": true
+  },
+  "securityGates": {
+    "original83MigrationSemanticsApproved": false,
+    "privileged67RpcAuditComplete": false,
+    "authDeletionRetentionPolicyApproved": false,
+    "externalServiceRoleWorkflowsApproved": false,
+    "separateQaBootstrapApproved": false,
+    "hostedQaSignedActorTestsPassed": false,
+    "originalSecurityPatchesApplied": false,
+    "r127ProductionReleaseApproved": false
+  },
+  "noOriginalOrQaSqlWrites": true,
+  "noVersionedMigrationEdit": true,
+  "noAppRuntimeEdit": true,
+  "noProductionOrQaDeploy": true,
+  "noMerge": true,
+  "noPaidResources": true,
+  "noRawOriginalSqlExport": true
+}
