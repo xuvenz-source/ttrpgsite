@@ -1,0 +1,22 @@
+name: World V2 R18-180 request-isolated user JWT media NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-180-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-179-*'
+permissions:
+  contents: read
+jobs:
+  user-auth-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No active source or migrations
+        run: git diff --exit-code ff469e23aaf7198157145e01da3ea4e1b809d3a8 HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: Verify per-request user JWT scoped Storage and identity isolation
+        run: node --test tests/world-v2-r18-180-request-isolated-media.test.mjs
