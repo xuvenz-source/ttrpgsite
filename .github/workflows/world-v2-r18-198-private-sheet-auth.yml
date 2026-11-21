@@ -1,0 +1,60 @@
+name: World V2 R18-198 private revoked sheet helper PG17 NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-198-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-197-*'
+permissions:
+  contents: read
+jobs:
+  original-private-history-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject runtime, active migration, Edge and deploy changes
+        run: git diff --exit-code 0663a3f37e54078cb0b1e9b3ab97612255e872dc HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Verify current original live helper source evidence and immutable R115 candidate
+        run: python3 scripts/release/r198_validate_sheet_fixture_lineage.py
+      - name: Test 83-file fictional private history chronology, SHA tamper and no SQL leaks
+        run: python3 tests/world-v2-r18-198-private-sheet-auth-lineage.test.py
+      - name: Reject altered source, premature QA GO, and private archive disclosure
+        run: python3 tests/world-v2-r18-198-sheet-fixture-integrity.test.py
+      - name: Syntax compile offline private auditor and source guard
+        run: python3 -m py_compile scripts/release/r198_private_sheet_auth_lineage.py scripts/release/r198_validate_sheet_fixture_lineage.py
+
+  source-real-synthetic-revoked-owner:
+    needs: original-private-history-source-only
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r114_disposable_only
+          POSTGRES_DB: world_v2_r18_114
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_114"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R114_ISOLATED: 'yes'
+      R115_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_114
+      PGUSER: postgres
+      PGPASSWORD: r114_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Re-run unchanged source-exact R115 revoked owner claim, GET, PATCH and 23 lease cases
+        shell: bash
+        run: bash tests/world-v2-r18-115-postgres/run.sh
