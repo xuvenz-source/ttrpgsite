@@ -1,0 +1,22 @@
+name: World V2 R18-165 actor-scoped privileged cleanup source guard
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-165-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-164-*'
+permissions:
+  contents: read
+jobs:
+  source-authorization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Ensure active app and original migrations untouched
+        run: git diff --exit-code 5d266fe117b6fdc8307fde0c786bc59bd4dedb3d HEAD -- src/ supabase/migrations/
+      - name: Preserve exact live fingerprints and explicit release NO_GO
+        run: node --test tests/world-v2-r18-165-source-boundaries.test.mjs

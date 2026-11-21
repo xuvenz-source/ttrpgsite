@@ -1,0 +1,156 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-165",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 272,
+  "parentSha": "5d266fe117b6fdc8307fde0c786bc59bd4dedb3d",
+  "reviewer": "AI_SINGLE_TECHNICAL_REVIEWER",
+  "sourceAccess": "READ_ONLY_ORIGINAL_PG_PROC_PROSRC_IN_MEMORY",
+  "candidateType": "SOURCE_SEMANTIC_BOUNDARY_ANALYSIS_NOT_IMPLEMENTATION",
+  "actorScopedCleanup": [
+    {
+      "name": "cancel_world_motion_v2",
+      "identityArguments": "p_session uuid",
+      "sourceMd5": "5196c60e4b300df07df2c564bb15e542",
+      "sourceBytes": 205,
+      "operation": "DELETE",
+      "target": "forge_world_v2.motion_sessions",
+      "whereBindings": [
+        "id=p_session",
+        "actor_id=auth.uid()"
+      ],
+      "authenticatedExecute": true,
+      "anonymousExecute": false,
+      "securityDefiner": true,
+      "boundSearchPath": true,
+      "postRevocationOwnCleanupPossible": true,
+      "signedQa": "NOT_RUN",
+      "sourceJudgment": "BOUNDED_TO_ACTOR_SESSION_NOT_HOSTED_TESTED"
+    },
+    {
+      "name": "release_campaign_sheet_item",
+      "identityArguments": "p_campaign uuid, p_source text, p_source_id uuid, p_field text, p_item uuid",
+      "sourceMd5": "f7bc314718884312ce3e1ca48331429f",
+      "sourceBytes": 271,
+      "operation": "DELETE",
+      "target": "public.campaign_sheet_item_leases",
+      "whereBindings": [
+        "campaign_id=p_campaign",
+        "source_type=p_source",
+        "source_id=p_source_id",
+        "field_id=p_field",
+        "item_id=p_item",
+        "holder_id=auth.uid()"
+      ],
+      "authenticatedExecute": true,
+      "anonymousExecute": false,
+      "securityDefiner": true,
+      "boundSearchPath": true,
+      "postRevocationOwnCleanupPossible": true,
+      "signedQa": "NOT_RUN",
+      "sourceJudgment": "BOUNDED_TO_ACTOR_HELD_SHEET_LEASE_NOT_HOSTED_TESTED"
+    },
+    {
+      "name": "release_campaign_tool_item",
+      "identityArguments": "p_issue uuid, p_item uuid",
+      "sourceMd5": "775ad6515c74f23367ce6e55513f8744",
+      "sourceBytes": 220,
+      "operation": "DELETE",
+      "target": "public.campaign_tool_item_leases",
+      "whereBindings": [
+        "issue_id=p_issue",
+        "item_id=p_item",
+        "holder_id=actor",
+        "actor=auth.uid()"
+      ],
+      "authenticatedExecute": true,
+      "anonymousExecute": false,
+      "securityDefiner": true,
+      "boundSearchPath": true,
+      "postRevocationOwnCleanupPossible": true,
+      "signedQa": "NOT_RUN",
+      "sourceJudgment": "BOUNDED_TO_ACTOR_HELD_TOOL_LEASE_NOT_HOSTED_TESTED"
+    }
+  ],
+  "accountNameReader": {
+    "name": "get_campaign_account_names",
+    "identityArguments": "p_campaign uuid",
+    "sourceMd5": "be7693abffbc633383fab2ab15212dc3",
+    "sourceBytes": 378,
+    "securityDefiner": true,
+    "boundSearchPath": true,
+    "authenticatedExecute": true,
+    "anonymousExecute": false,
+    "returnColumns": [
+      "user_id uuid",
+      "account_name text"
+    ],
+    "authUsersRead": true,
+    "memberCampaignBound": true,
+    "memberJoinUserId": true,
+    "usesCurrentMembershipHelper": true,
+    "membershipHelperName": "is_campaign_member",
+    "metadataProjectionKeys": [
+      "username",
+      "display_name"
+    ],
+    "emailReturned": false,
+    "userMetadataUsedForAuthorization": false,
+    "memberListVisibleToAnyCurrentMember": true,
+    "scope": "CURRENT_CAMPAIGN_MEMBERS_ONLY_BY_HELPER",
+    "signedQa": "NOT_RUN",
+    "sourceJudgment": "CONDITIONAL_BOUNDARY_NOT_FULL_PRIVACY_SIGNOFF"
+  },
+  "memberHelper": {
+    "name": "is_campaign_member",
+    "identityArguments": "c uuid",
+    "sourceMd5": "de577e5030dbbb0b926a73ec9162224e",
+    "sourceBytes": 132,
+    "securityDefiner": true,
+    "boundSearchPath": true,
+    "authenticatedExecute": true,
+    "anonymousExecute": false,
+    "checksCurrentCampaignMemberRow": true,
+    "checksSignedActorUsingAuthUid": true,
+    "checksCampaignArgument": true,
+    "usesEditableMetadataForPermission": false,
+    "hostedSignedBehavior": "NOT_RUN"
+  },
+  "remainingConcerns": [
+    "Actor-bound cleanup after membership revocation must not restore any campaign access, emit other-user data, or alter another holder's lease.",
+    "Current campaign members may see each other's user-provided username/display_name; confirm DM/player product privacy contract with real signed actors.",
+    "Raw user metadata is display-only, not a trustworthy authorization source; verify frontend escaping of displayed names.",
+    "Exact source MD5 is a provenance pin, not an independent logical proof or executable security test.",
+    "All three DELETE return paths and account-name SELECT must pass hosted DM/P1/P2/revoked/outsider signed QA after approved isolated QA bootstrap.",
+    "Issued signed asset URL and Realtime socket revocation remain independent of cleanup DELETE scoping.",
+    "Confirmed can_edit_campaign_sheet revoked-owner flaw and is_map_fog_published metadata oracle are unchanged in original."
+  ],
+  "revisedPrivilegedFunctionReviewCount": {
+    "sourcePredicateInspected": 4,
+    "semanticApprovedForRelease": 0,
+    "totalAuthenticatedCallableDefiners": 67
+  },
+  "blockedIssues": [
+    212,
+    218,
+    220,
+    223,
+    229,
+    231
+  ],
+  "all67SemanticallyApproved": false,
+  "original83HistoryApproved": false,
+  "qaInstalled": false,
+  "realSignedQaPassed": false,
+  "r127OwnerProdReleaseApproved": false,
+  "immutability": {
+    "noOriginalOrQaWrites": true,
+    "noRawOriginalSqlExport": true,
+    "noRootMigrationChanges": true,
+    "noAppRuntimeChanges": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  }
+}
