@@ -1,0 +1,122 @@
+name: World V2 R18-194 frozen invite-revocation PG17 NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-194-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-193-*'
+permissions:
+  contents: read
+jobs:
+  pinned-private-source-and-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse runtime, migrations, Edge and deployment changes
+        run: git diff --exit-code 10e9178895144b20fb9b584b005eb6664c8198f7 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Reconcile SHA-pinned private join/create evidence and existing frozen prototypes
+        run: python3 scripts/release/r194_reconcile_private_invite_revocation.py
+      - name: Reject malicious receipt, prototype drift, TRUNCATE approval and unauthorized GO
+        run: python3 tests/world-v2-r18-194-invite-revocation-lineage.test.py
+      - name: Compile offline validator
+        run: python3 -m py_compile scripts/release/r194_reconcile_private_invite_revocation.py
+
+  synthetic-r120-membership-contract:
+    needs: pinned-private-source-and-no-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r120_disposable_only
+          POSTGRES_DB: world_v2_r18_120
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_120"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R120_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_120
+      PGUSER: postgres
+      PGPASSWORD: r120_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Re-run unchanged R120 synthetic DM removal and invite-rejoin ACL contracts
+        run: bash tests/world-v2-r18-120-postgres/run.sh
+      - name: Re-run R120 source-only security contract tests
+        run: node --test tests/world-v2-r18-120-revocation-contract.test.mjs
+
+  synthetic-r121-cascade-concurrency:
+    needs: pinned-private-source-and-no-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r121_disposable_only
+          POSTGRES_DB: world_v2_r18_121
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_121"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R121_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_121
+      PGUSER: postgres
+      PGPASSWORD: r121_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Re-run unchanged R121 true two-session lock/cascade/rollback tests
+        run: bash tests/world-v2-r18-121-postgres/run.sh
+      - name: Re-run R121 frontend/source access-boundary tests
+        run: node --test tests/world-v2-r18-121-membership-source-boundary.test.mjs
+
+  synthetic-r122-dm-revoked-roster:
+    needs: pinned-private-source-and-no-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r122_disposable_only
+          POSTGRES_DB: world_v2_r18_122
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_122"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R122_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_122
+      PGUSER: postgres
+      PGPASSWORD: r122_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Re-run unchanged R122 synthetic DM list and membership identity mutation denial
+        run: bash tests/world-v2-r18-122-postgres/run.sh
+      - name: Re-run dormant DM membership controller security contract
+        run: node --test tests/world-v2-r18-122-member-admin-contract.test.mjs
