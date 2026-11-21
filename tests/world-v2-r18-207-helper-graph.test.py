@@ -91,7 +91,10 @@ class OriginalPrivilegedGraph(unittest.TestCase):
     self.assertIn("current live",q)
    else:self.assertIn(marker,q)
   returned=q[q.rfind("SELECT a.slot"):]
-  for forbidden in ("a.prosrc AS","a.prosrc,","p.prosrc,","pg_get_functiondef",
+  # Source may appear only as an *argument* to in-DB regexp/boolean
+  # functions, never as a standalone SELECT output column or raw source.
+  self.assertNotRegex(returned,r"(?m)^\\s*[ap]\\.prosrc\\s*(?:,|AS\\b)")
+  for forbidden in ("a.prosrc AS","pg_get_functiondef",
                     "FROM public.characters","FROM auth.users",
                     "DROP FUNCTION","DELETE FROM","UPDATE public.","ALTER POLICY"):
    self.assertNotIn(forbidden,returned)
