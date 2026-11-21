@@ -89,6 +89,9 @@ def markers(statement:str,target:tuple)->dict|None:
         body=statement[tag.end():end].encode("utf-8")
         if not body or len(body)>MAX_SQL_BYTES:
             raise AuditBlocked("R206_INVALID_TARGET_BODY_SIZE")
+    # Inspect only extracted function BODY, not its CREATE declaration.
+    # Function names in headers must not masquerade as recursive calls.
+    body_text=body.decode("utf-8") if body is not None else ""
     return {
       "explicit_security_definer":definer,
       "supported_sql_or_plpgsql_dollar_body":body is not None,
@@ -96,14 +99,14 @@ def markers(statement:str,target:tuple)->dict|None:
            hashlib.sha256(body).hexdigest()==sha_expected),
       "source_bytes_match_current":bool(body is not None and
            len(body)==bytes_expected),
-      "direct_auth_uid_marker":bool(UID.search(statement)),
-      "direct_campaign_members_marker":bool(MEMBER.search(statement)),
-      "calls_sheet_guard_marker":bool(EDIT_SHEET.search(statement)),
-      "calls_inventory_guard_marker":bool(EDIT_INVENTORY.search(statement)),
-      "calls_dm_guard_marker":bool(IS_DM.search(statement)),
-      "calls_membership_guard_marker":bool(IS_MEMBER.search(statement)),
-      "user_editable_metadata_marker":bool(EDITABLE.search(statement)),
-      "dynamic_execute_word_marker":bool(DYNAMIC_EXECUTE.search(statement)),
+      "direct_auth_uid_marker":bool(UID.search(body_text)),
+      "direct_campaign_members_marker":bool(MEMBER.search(body_text)),
+      "calls_sheet_guard_marker":bool(EDIT_SHEET.search(body_text)),
+      "calls_inventory_guard_marker":bool(EDIT_INVENTORY.search(body_text)),
+      "calls_dm_guard_marker":bool(IS_DM.search(body_text)),
+      "calls_membership_guard_marker":bool(IS_MEMBER.search(body_text)),
+      "user_editable_metadata_marker":bool(EDITABLE.search(body_text)),
+      "dynamic_execute_word_marker":bool(DYNAMIC_EXECUTE.search(body_text)),
     }
 
 def report(root:Path)->dict:
@@ -206,7 +209,7 @@ def report(root:Path)->dict:
       "limitations":[
         "Only direct top-level SQL/PLpgSQL dollar-body CREATE FUNCTION statements are covered; DO/dynamic SQL, quoted single-string bodies, and post-migration installs are not.",
         "R111 priority docket indices are NOT chronological migration positions. Latest is selected by unique timestamp version and SQL statement ordinal.",
-        "Matching original/live bytes and simple call words are source identity, NOT semantic proof of caller identity, authorization, effective RLS or nested helper chains.",
+        "Matching original/live bytes and body-only lexical call markers are source identity, NOT semantic proof of caller identity, authorization, effective RLS or nested helper chains.",
         "Actual signed DM/P1/P2/removed/outsider QA and separate owner approvals remain mandatory."
       ]
     }
