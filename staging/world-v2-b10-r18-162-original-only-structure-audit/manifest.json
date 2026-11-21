@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-162",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 269,
+  "parentSha": "25bd4b0d1f41b1ee6113b70b67f1cf51b68b31cb",
+  "reviewerModel": "AI_LED_TECHNICAL_AUDIT_SINGLE_REVIEWER",
+  "scope": "READ_ONLY_22_ORIGINAL_ONLY_MIGRATION_STATEMENTS_AND_LIVE_CURRENT_CATALOG",
+  "historicalOriginalOnlyScan": {
+    "records": 22,
+    "sourceSqlWasReturnedToGithubChatCi": false,
+    "lexicalTokenizerOnly": true,
+    "balancedLexicalStates": true,
+    "topLevelStatementCount": 190,
+    "functionDefinitions": 23,
+    "securityDefinerDefinitions": 20,
+    "createPolicyDeclarations": 43,
+    "directTopLevelDataWriteMigrationVersions": [
+      "20261105111916",
+      "20261105114239",
+      "20261105133019",
+      "20261105143416"
+    ],
+    "noDirectActorMarkerCandidates": [
+      {
+        "name": "public.validate_token_map",
+        "kind": "TRIGGER",
+        "triggerUses": 1,
+        "anonymousCallable": false,
+        "authenticatedCallable": false,
+        "authorizationReviewComplete": false
+      },
+      {
+        "name": "public.validate_npc_structure",
+        "kind": "TRIGGER",
+        "triggerUses": 2,
+        "anonymousCallable": false,
+        "authenticatedCallable": false,
+        "authorizationReviewComplete": false
+      },
+      {
+        "name": "public.sync_character_token_art",
+        "kind": "TRIGGER",
+        "triggerUses": 1,
+        "anonymousCallable": false,
+        "authenticatedCallable": false,
+        "authorizationReviewComplete": false
+      },
+      {
+        "name": "public.notify_character_token_resources",
+        "kind": "TRIGGER",
+        "triggerUses": 1,
+        "anonymousCallable": false,
+        "authenticatedCallable": false,
+        "authorizationReviewComplete": false
+      },
+      {
+        "name": "public.claim_tabletop_registration_slot",
+        "kind": "NON_TRIGGER_BOOLEAN_FUNCTION",
+        "triggerUses": 0,
+        "anonymousCallable": false,
+        "authenticatedCallable": false,
+        "authorizationReviewComplete": false
+      }
+    ],
+    "sourceMeaning": "LEXICAL_AND_GRANT_TRIAGE_NOT_FULL_STATEMENT_SEMANTICS"
+  },
+  "currentLiveSnapshot": {
+    "publicApplicationTables": 31,
+    "publicTablesWithRlsDisabled": 0,
+    "anonSelectablePublicTables": 0,
+    "rlsEnabledWithNoPolicies": [
+      "tabletop_registration_limits"
+    ],
+    "publicRlsPolicies": 77,
+    "permissivePolicies": 77,
+    "policiesWithLiteralTrueUsing": 0,
+    "policiesWithLiteralTrueWithCheck": 0,
+    "authenticatedCallableSecurityDefiners": 67,
+    "anonymousCallablePublicSecurityDefiners": 0,
+    "directIdentityMarkerAbsentDefiners": 7,
+    "knownRevokedSheetOwnerSecurityIssue": 220,
+    "knownFogStatusOracleIssue": 212
+  },
+  "unresolved": {
+    "historicalMigrationSemanticReviewComplete": false,
+    "fourTopLevelDmlReplayRisksReviewed": false,
+    "fiveDefinerCallerChainsReviewed": false,
+    "allPublicRlsPolicySemanticsApproved": false,
+    "all67AuthenticatedPrivilegedChainsApproved": false,
+    "original83HistorySignedOff": false,
+    "genuineSignedQaPassed": false,
+    "ownerAcceptsSingleReviewerProcessRisk": false
+  },
+  "immutability": {
+    "originalSqlUnchanged": true,
+    "qaSqlUnchanged": true,
+    "noRawOriginalSqlExport": true,
+    "stagedOnly": true,
+    "noVersionedMigrationEdits": true,
+    "noAppRuntimeEdits": true,
+    "noMerge": true,
+    "noDeploy": true,
+    "noPaidResources": true
+  },
+  "nextStep": "R163 targeted data writes and definer caller chains, followed by all 83-source semantic findings and approved QA isolation. Never mark lexical scan as final review."
+}
