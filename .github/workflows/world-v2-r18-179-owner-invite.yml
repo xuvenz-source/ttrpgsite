@@ -1,0 +1,54 @@
+name: World V2 R18-179 combined revoked owner plus invitation PG17
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-179-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-178-*'
+permissions:
+  contents: read
+jobs:
+  no-go-and-source-pins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: No active app, functions or versioned migration changes
+        run: git diff --exit-code 7f97035a752cf9e8ae89ca52079bb8be2fc7295e HEAD -- src/ supabase/migrations/ supabase/functions/
+      - name: SHA pin and planned negative controls
+        run: node --test tests/world-v2-r18-179-source-gate.test.mjs
+      - name: Runner syntax
+        run: bash -n tests/world-v2-r18-179-postgres/run.sh
+  combined-fixes-pg17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r179_disposable_only
+          POSTGRES_DB: world_v2_r18_179
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_179"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_179
+      PGPASSWORD: r179_disposable_only
+      R179_ISOLATED: 'yes'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove synthetic unsafe baseline then composed repairs
+        run: bash tests/world-v2-r18-179-postgres/run.sh
+      - name: Preserve hosted release denial
+        run: echo "R179 fictional PG17 only; signed QA and original database unchanged."

@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-179",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 287,
+  "parentSha": "7f97035a752cf9e8ae89ca52079bb8be2fc7295e",
+  "sourceOnly": true,
+  "model": "FICTIONAL_PG17_CROSS_REPAIR_NEGATIVE_CONTROL_AND_FORWARD_REPAIR",
+  "originalSourceKnown": {
+    "sheetOwnerMd5": "5a8fed2bdc8427c884f89440c0eebe03",
+    "inviteMd5": "9fd65eca8e3160acd7a674931aad51c5"
+  },
+  "knownIssues": [
+    220,
+    223,
+    229,
+    231,
+    212,
+    218
+  ],
+  "existingCandidates": [
+    {
+      "step": "R115",
+      "path": "staging/world-v2-b10-r18-115-revocation-guard/unapplied-campaign-membership-required.sql",
+      "gitBlobSha": "380f7fd4fcd75fc17c76af8b851d86c068616420",
+      "hostedApplied": false
+    },
+    {
+      "step": "R120",
+      "path": "staging/world-v2-b10-r18-120-revocation-contract/unapplied-prototype.sql",
+      "gitBlobSha": "f7bda6b79f7b9ac4a3323142c27d54a44436d5a8",
+      "hostedApplied": false
+    },
+    {
+      "step": "R122",
+      "path": "staging/world-v2-b10-r18-122-dm-membership-admin-contract/unapplied-dm-revoked-roster.sql",
+      "gitBlobSha": "cc6c778783fc387203dee88cdb25517ba0050bcb",
+      "hostedApplied": false
+    },
+    {
+      "step": "R148",
+      "path": "staging/world-v2-b10-r18-148-privileged-membership-guards/unapplied-privileged-membership-guards.sql",
+      "gitBlobSha": "c9a948e003989a68edb052a67608e371c5f39927",
+      "hostedApplied": false
+    },
+    {
+      "step": "R150",
+      "path": "staging/world-v2-b10-r18-150-service-insert-privilege/unapplied-revoke-service-role-insert.sql",
+      "gitBlobSha": "167e66332eba4319fa18a6a21096a64013eb4dfe",
+      "hostedApplied": false
+    },
+    {
+      "step": "R173",
+      "path": "staging/world-v2-b10-r18-173-auth-deletion-ledger-cascade/unapplied-auth-identity-cleanup.sql",
+      "gitBlobSha": "b4b8a6e987a9ba0bede907b6f696e42206622685",
+      "hostedApplied": false
+    }
+  ],
+  "sourceLimit": "The intentionally vulnerable owner branch and synthetic sheet mutation wrapper are not original SQL; original R115 candidate loaded unchanged.",
+  "expectedPhases": [
+    "signed P1 and P2 join",
+    "current P1 edits own sheet",
+    "DM removes P1 and old invite denied",
+    "unsafe owner edit reproduced before R115",
+    "apply unchanged R115",
+    "removed P1 denied and no data write",
+    "P2 own edit succeeds, P1 sheet denied",
+    "foreign DM denied",
+    "current DM edits and reinstates P1",
+    "P1 ownership restored",
+    "DM removes again",
+    "Auth delete removes tombstone without affecting P2"
+  ],
+  "syntheticPg17Passed": false,
+  "signedHostedQaPassed": false,
+  "all83HistoricalSemanticAuditPassed": false,
+  "all67PrivilegedChainsApproved": false,
+  "originalHostedRepairsApplied": false,
+  "qaSchemaInstalled": false,
+  "ownerReleaseApproved": false,
+  "noHostedWrites": true,
+  "noActiveRuntimeEdits": true,
+  "noVersionedMigrationEdits": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidInfrastructure": true
+}
