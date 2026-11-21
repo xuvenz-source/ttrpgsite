@@ -1,0 +1,52 @@
+name: World V2 R18-173 experimental Auth ledger cascade PG17 only
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-173-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-172-*'
+permissions:
+  contents: read
+jobs:
+  source-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject any current app or versioned migration edits
+        run: git diff --exit-code 55ac87f0a82ca984bef63347693750a1d020962c HEAD -- src/ supabase/migrations/
+      - name: Enforce scratch-only R173 and owner gate
+        run: node --test tests/world-v2-r18-173-auth-ledger-retention.test.mjs
+  synthetic-pg17:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r173_disposable_only
+          POSTGRES_DB: world_v2_r18_173
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_173"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R173_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_173
+      PGPASSWORD: r173_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Test synthetic Auth deletion cleanup and existing revocation guards
+        run: bash tests/world-v2-r18-173-postgres/run.sh
+      - name: Keep signed QA and release NO_GO
+        run: echo 'R173 scratch-only. No hosted schema, external admin or privacy approval.'
