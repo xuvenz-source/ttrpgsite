@@ -1,0 +1,22 @@
+name: World V2 R18-168 initial historical RLS replay gate
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-168-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-167-*'
+permissions:
+  contents: read
+jobs:
+  historical-rls-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prevent active migration or app modification
+        run: git diff --exit-code e16320f5d15894a083f1724046fc314905012266 HEAD -- src/ supabase/migrations/
+      - name: Validate historical RLS chronology and NO_GO
+        run: node --test tests/world-v2-r18-168-rls-bootstrap-review.test.mjs
