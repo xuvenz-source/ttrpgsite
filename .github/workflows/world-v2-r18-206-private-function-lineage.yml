@@ -1,0 +1,28 @@
+name: World V2 R18-206 private privileged function source lineage NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-206-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-205-*'
+permissions:
+  contents: read
+jobs:
+  owner-private-eleven-function-history-synthetic-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject live application, active SQL migrations, Supabase Edge and Vercel edits
+        run: git diff --exit-code 60cb549fe7f8278a2d7a5c0b6c185e333a6d91ee HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Verify 11 current live SHA fingerprints and frozen private offline auditor
+        run: python3 scripts/release/r206_validate_private_package.py
+      - name: Fictional 83-file chronology, privileged helper lineage, tamper and private output regression
+        run: python3 tests/world-v2-r18-206-private-privileged-function-lineage.test.py
+      - name: Fail closed on unsafe operator uploads, release approvals and script tampering
+        run: python3 tests/world-v2-r18-206-private-package.test.py
+      - name: Check offline script and validator Python syntax
+        run: python3 -m py_compile scripts/release/r206_private_privileged_function_lineage.py scripts/release/r206_validate_private_package.py
