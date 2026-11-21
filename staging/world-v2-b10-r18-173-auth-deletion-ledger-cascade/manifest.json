@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "workPackage": "B10-R18-173",
+  "date": "2026-11-21",
+  "decision": "NO_GO",
+  "parentPr": 281,
+  "parentSha": "55ac87f0a82ca984bef63347693750a1d020962c",
+  "reviewer": "SOLE_AI_TECHNICAL_REVIEWER",
+  "model": "DISPOSABLE_SYNTHETIC_POSTGRESQL17_ONLY",
+  "baseFixtures": [
+    "tests/world-v2-r18-120-postgres/setup.sql",
+    "tests/world-v2-r18-172-postgres/auth-user-cascade-fixture.sql"
+  ],
+  "reusedScratchCandidates": [
+    "R120",
+    "R122",
+    "R148",
+    "R150"
+  ],
+  "newScratchCandidate": "staging/world-v2-b10-r18-173-auth-deletion-ledger-cascade/unapplied-auth-identity-cleanup.sql",
+  "candidateContracts": {
+    "revocationUserFkReferencesAuthUsers": true,
+    "revocationUserFkOnDeleteCascade": true,
+    "stampMemberDeletionSkipsMissingCampaign": true,
+    "stampMemberDeletionSkipsMissingAuthUser": true,
+    "dmRemovalStillTombstonesCurrentAccount": true,
+    "noNewPrivilegedApiGrant": true,
+    "fallbackRollbackRestoresVulnerableFunction": false,
+    "exactOriginal83Migrated": false,
+    "hostedQaInstalled": false,
+    "approvedDataRetentionPolicy": false
+  },
+  "syntheticCases": [
+    {
+      "id": "C01",
+      "operation": "DM removes P1",
+      "expected": "one tombstone while identity active",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "C02",
+      "operation": "P1 old invite after DM removal",
+      "expected": "deny",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "C03",
+      "operation": "delete already-removed Auth user P1",
+      "expected": "cascade old tombstone deletion",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "C04",
+      "operation": "P2 ordinary Auth deletion",
+      "expected": "cascade membership with no new tombstone",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "C05",
+      "operation": "DM removes P3",
+      "expected": "tombstone remains while Auth identity active",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "C06",
+      "operation": "delete owner Auth user",
+      "expected": "campaign, membership and tombstones cascade",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "C07",
+      "operation": "other campaign remains intact",
+      "expected": "yes",
+      "result": "NOT_RUN"
+    },
+    {
+      "id": "C08",
+      "operation": "service_role direct INSERT and TRUNCATE",
+      "expected": "still denied",
+      "result": "NOT_RUN"
+    }
+  ],
+  "risksAndFollowups": [
+    "Adding an FK to Supabase-managed auth.users may require extra lock time and account-deletion service testing; never apply without QA-only authorization.",
+    "Auth delete and campaign delete can initiate multiple FK cascade chains; synthetic tests do not cover all concurrent transactions.",
+    "Account deletion intentionally erases UUID tombstones; a newly created account is a separate identity and may use a still-valid generic invite, so bans are not identity-proof.",
+    "Account deletion redaction must cover other personal data tables beyond the revocation ledger; outside this candidate's scope.",
+    "Existing orphaned revocation UUIDs could block the new FK during migration; require authorized preflight and safe cleanup decision.",
+    "Never trust client-supplied GUCs to label an account deletion; only server-owned Auth FK state controls the prototype.",
+    "Owner/DM privileged transfer, invite semantics and signed Storage/Realtime revocation remain separate blockers."
+  ],
+  "allTestsExecuted": false,
+  "original83SemanticAuditCompleted": false,
+  "all67PrivilegedRpcAuditCompleted": false,
+  "qaOnlyInstallApproved": false,
+  "signedQaExecuted": false,
+  "originalDatabasePatched": false,
+  "productionReleaseApproved": false,
+  "noHostedWrites": true,
+  "noOriginalSqlExport": true,
+  "noAppRuntimeChanges": true,
+  "noVersionedMigrationChanges": true,
+  "noMerge": true,
+  "noDeploy": true,
+  "noPaidInfrastructure": true
+}
