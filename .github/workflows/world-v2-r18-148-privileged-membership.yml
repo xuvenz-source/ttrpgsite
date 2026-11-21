@@ -1,0 +1,58 @@
+name: World V2 R18-148 privileged membership guard scratch PostgreSQL17
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-148-*'
+    paths:
+      - '.github/workflows/world-v2-r18-148-privileged-membership.yml'
+      - 'staging/world-v2-b10-r18-148-privileged-membership-guards/**'
+      - 'tests/world-v2-r18-148-*'
+      - 'docs/testing/world-v2-r18-148-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-147-*'
+permissions:
+  contents: read
+jobs:
+  candidate-source-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prove no runtime source or versioned migration changes
+        run: git diff --exit-code 471a7b2349e98477909ab67143e272f98f9ef548 HEAD -- src/ supabase/migrations/
+      - name: Verify R148 release NO_GO and candidate boundaries
+        run: node --test tests/world-v2-r18-148-source.test.mjs
+  disposable-pg17-privileged-boundaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r148_disposable_only
+          POSTGRES_DB: world_v2_r18_148
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_148"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R148_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: world_v2_r18_148
+      PGPASSWORD: r148_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Execute fictional PostgreSQL17 privileged negative controls
+        shell: bash
+        run: bash tests/world-v2-r18-148-postgres/run.sh
+      - name: Explicitly prohibit hosted changes
+        run: echo 'R148 disposable only. Privileged new-DM INSERT remains unresolved. NO_GO.'
