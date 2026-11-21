@@ -88,10 +88,14 @@ class WorldMotionRevocationGate(unittest.TestCase):
   self.assertIn("map_helper_before_first_qualified_update",script)
   self.assertIn("first_qualified_update_pos",script)
   selected=script[script.rfind("SELECT proname AS known_public_rpc"):]
-  for forbidden in ("prosrc AS source","prosrc,","pg_get_functiondef",
+  for forbidden in ("prosrc AS source","pg_get_functiondef",
    "SELECT p.prosrc","FROM auth.users","FROM public.campaign_members",
    "UPDATE public.","DELETE FROM public.","ALTER POLICY","DROP FUNCTION"):
    self.assertNotIn(forbidden,selected)
+  # Only SHA/byte functions may receive prosrc inside PostgreSQL; the
+  # final SELECT must never include a standalone source SQL output field.
+  self.assertFalse(any(line.strip().startswith(("prosrc,", "prosrc AS "))
+    for line in selected.splitlines()))
 
  def test_frozen_source_and_synthetic_fixture_safety(self):
   with tempfile.TemporaryDirectory() as tmp:
