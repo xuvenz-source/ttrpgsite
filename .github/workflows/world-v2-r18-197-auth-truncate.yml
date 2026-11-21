@@ -1,0 +1,57 @@
+name: World V2 R18-197 authenticated five-table TRUNCATE PG17 NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-197-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-196-*'
+permissions:
+  contents: read
+jobs:
+  original-privilege-source-only-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prevent application, active migrations, Edge and Vercel changes
+        run: git diff --exit-code d22674818b05ae1f40f0439e1f2be7a954c611fb HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Reconcile original read-only five-table grants and frozen candidate
+        run: python3 scripts/release/r197_validate_auth_truncate_scope.py
+      - name: Reject ACL-source drift, premature approval, SQL scope changes and inherited role bypass
+        run: python3 tests/world-v2-r18-197-auth-truncate.test.py
+      - name: Validate offline Python syntax
+        run: python3 -m py_compile scripts/release/r197_validate_auth_truncate_scope.py
+
+  five-table-synthetic-authenticated-truncate:
+    needs: original-privilege-source-only-no-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r197_disposable_only
+          POSTGRES_DB: world_v2_r18_197
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_197"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R197_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_197
+      PGUSER: postgres
+      PGPASSWORD: r197_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prove RLS does not protect TRUNCATE, roll back synthetic baseline and verify narrow revoke
+        shell: bash
+        run: bash tests/world-v2-r18-197-postgres/run.sh
