@@ -1,0 +1,40 @@
+name: World V2 R18-215 private managed effects triage NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-215-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-214-*'
+permissions:
+  contents: read
+jobs:
+  fictional-owner-private-managed-effects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prohibit runtime, migrations, Edge and deployment changes
+        run: git diff --exit-code dfaadf13cb74c6049808eb200e1f347b6be31fc3 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Enforce exact R215 five-file source-only scope
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          paths=set(subprocess.check_output(
+             ['git','diff','--name-only','dfaadf13cb74c6049808eb200e1f347b6be31fc3','HEAD'],
+             text=True).splitlines())
+          expected={
+             'scripts/release/r215_private_managed_effect_scope.py',
+             'scripts/release/r215_validate_owner_r214_receipt.py',
+             'tests/world-v2-r18-215-private-managed-effects.test.py',
+             'docs/testing/world-v2-r18-215-private-managed-effects-2026-11-22.md',
+             '.github/workflows/world-v2-r18-215-private-managed-effects.yml',
+          }
+          assert paths == expected, 'R215_UNREVIEWED_SOURCE_PATH'
+          PY
+      - name: Compile and test against invented SQL only
+        run: |
+          python3 -m py_compile scripts/release/r215_private_managed_effect_scope.py scripts/release/r215_validate_owner_r214_receipt.py
+          python3 tests/world-v2-r18-215-private-managed-effects.test.py -v
