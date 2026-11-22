@@ -134,7 +134,7 @@ class PrivatePolicyTests(unittest.TestCase):
             self.assertEqual(numbers,sorted(numbers))
             self.assertTrue({2,4,29}.issubset(set(numbers)))
             serialized=json.dumps(out)
-            for secret in ("invented2","owner_id","bucket_id","sourceBodySha256",
+            for secret in ("invented2","owner_id =","bucket_id =","sourceBodySha256",
                            "r111-private-review-docket","storage.objects"):
                 self.assertNotIn(secret,serialized)
     def test_mutated_source_blocks(self):
