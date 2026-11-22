@@ -1,0 +1,43 @@
+name: World V2 R18-224 cross-tab revocation hints NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-224-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-223-*'
+permissions:
+  contents: read
+jobs:
+  synthetic-cross-tab-revocation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject changes to live source, SQL, Edge, Vercel, package and production
+        run: git diff --exit-code 1d933345e601b23fbb2435749a42313aaee36943 HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Enforce exact four R224 staging-only files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          actual=set(subprocess.check_output([
+            'git','diff','--name-only','1d933345e601b23fbb2435749a42313aaee36943','HEAD'
+          ],text=True).splitlines())
+          expected={
+            'staging/world-v2-b10-r18-224-revocation-hints/CampaignRevocationHintRelay.js',
+            'tests/world-v2-r18-224-cross-tab-revocation-hints.test.mjs',
+            'docs/testing/world-v2-r18-224-cross-tab-revocation-hints-2026-11-22.md',
+            '.github/workflows/world-v2-r18-224-cross-tab-revocation-hints.yml',
+          }
+          assert actual==expected, 'R224_UNREVIEWED_SCOPE'
+          PY
+      - name: Fake multi-actor DM/P1/P2/outsider and two-tab hints
+        run: node --test tests/world-v2-r18-224-cross-tab-revocation-hints.test.mjs
+      - name: Preserve R123/R221/R222/R223 source-only revocation tests
+        run: |
+          node --test tests/world-v2-r18-123-access-revocation-guard.test.mjs
+          node --test tests/world-v2-r18-221-signed-asset-revocation-lock.test.mjs
+          node --test tests/world-v2-r18-222-signed-asset-revocation-bridge.test.mjs
+          node --test tests/world-v2-r18-223-terminal-revocation-bridge.test.mjs
