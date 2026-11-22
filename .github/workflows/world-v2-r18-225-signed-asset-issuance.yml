@@ -1,0 +1,43 @@
+name: World V2 R18-225 signed asset issuance surface NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-225-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-224-*'
+permissions:
+  contents: read
+jobs:
+  signing-callsite-surface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse any live UI, active Supabase, Edge or deploy edits
+        run: git diff --exit-code 281c2938915f2afad6d848ef622e6c49e2ef8f03 HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Require only four R225 review files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          paths=set(subprocess.check_output([
+            'git','diff','--name-only','281c2938915f2afad6d848ef622e6c49e2ef8f03','HEAD'
+          ],text=True).splitlines())
+          allowed={
+            'scripts/release/r225_live_signed_asset_issuance_gate.py',
+            'tests/world-v2-r18-225-signed-asset-issuance-gate.test.py',
+            'docs/testing/world-v2-r18-225-signed-asset-issuance-surface-2026-11-22.md',
+            '.github/workflows/world-v2-r18-225-signed-asset-issuance.yml',
+          }
+          assert paths==allowed, 'R225_UNREVIEWED_CODE_OR_CONFIG'
+          PY
+      - name: Compile and run synthetic source-tree adversarial tests
+        run: |
+          python3 -m py_compile scripts/release/r225_live_signed_asset_issuance_gate.py
+          python3 tests/world-v2-r18-225-signed-asset-issuance-gate.test.py -v
+      - name: Check exact live checkout signer, public-URL and cache-call counts
+        run: python3 scripts/release/r225_live_signed_asset_issuance_gate.py --repo .
+      - name: Preserve staged cross-tab source-only multi-actor verification
+        run: node --test tests/world-v2-r18-224-cross-tab-revocation-hints.test.mjs
