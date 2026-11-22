@@ -1,0 +1,39 @@
+name: World V2 R18-212 sanitized owner receipt validation NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-212-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-211-*'
+permissions:
+  contents: read
+jobs:
+  no-sql-no-deploy-receipt-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Fail if app, Supabase, or deploy files changed
+        run: git diff --exit-code eafc1a42a44a95642303ec5b018833f69f29fc1d HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Allow exactly R212 receipt checker, synthetic tests, documentation and CI
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base = "eafc1a42a44a95642303ec5b018833f69f29fc1d"
+          actual = set(subprocess.check_output(
+              ["git", "diff", "--name-only", base, "HEAD"], text=True).splitlines())
+          expected = {
+              "scripts/release/r212_validate_owner_migration_receipt.py",
+              "tests/world-v2-r18-212-sanitized-receipt.test.py",
+              "docs/testing/world-v2-r18-212-owner-receipt-priority-correction-2026-11-22.md",
+              ".github/workflows/world-v2-r18-212-owner-receipt.yml",
+          }
+          assert actual == expected, "R212_SOURCE_ONLY_SCOPE_MISMATCH"
+          PY
+      - name: Compile and run only fictional sanitized receipt tests
+        run: |
+          python3 -m py_compile scripts/release/r212_validate_owner_migration_receipt.py
+          python3 tests/world-v2-r18-212-sanitized-receipt.test.py -v
