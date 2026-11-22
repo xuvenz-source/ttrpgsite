@@ -8,9 +8,13 @@ export function createSignedAssetStore({
  sign=(db,bucket,path)=>db.storage.from(bucket).createSignedUrl(path,3600)
 }={}){
  const entries=new Map();
- let timer=null,epoch=0;
+ let timer=null,epoch=0,revocationLocked=false;
  const keyFor=(bucket,path)=>JSON.stringify([bucket,path]);
  function schedule(){
+  if(revocationLocked){
+   if(timer!==null){clearTimer(timer);timer=null}
+   return;
+  }
   if(timer!==null){clearTimer(timer);timer=null}
   let earliest=Infinity;
   for(const e of entries.values())
@@ -46,6 +50,8 @@ export function createSignedAssetStore({
   return e;
  }
  async function load(e){
+  // A revoked campaign must never trigger a fresh signed URL request.
+  if(revocationLocked)return '';
   if(e.promise)return e.promise;
   if(e.url&&e.expires>now()+15000)return e.url;
   const version=epoch;
@@ -54,13 +60,13 @@ export function createSignedAssetStore({
     const {data,error}=await sign(e.db,e.bucket,e.path);
     if(error)throw error;
     const url=data?.signedUrl||'';
-    if(version!==epoch)return '';
+    if(version!==epoch||revocationLocked)return '';
     e.url=url;
     e.expires=now()+(url?ttlMs:60000);
     for(const notify of e.listeners)notify(url);
     return url;
    }catch(error){
-    if(version===epoch){
+    if(version===epoch&&!revocationLocked){
      e.expires=now()+60000;
      console.warn('Signed artwork URL unavailable',error);
     }
@@ -70,11 +76,11 @@ export function createSignedAssetStore({
   e.promise=work;
   try{return await work}finally{
    if(e.promise===work)e.promise=null;
-   if(version===epoch)schedule();
+   if(version===epoch&&!revocationLocked)schedule();
   }
  }
  function subscribe(db,bucket,path,notify){
-  if(!db||!path){notify('');return()=>{}}
+  if(revocationLocked||!db||!path){notify('');return()=>{}}
   const e=entry(db,bucket,path);
   e.listeners.add(notify);
   if(e.url&&e.expires>now()+15000)notify(e.url);
@@ -87,6 +93,9 @@ export function createSignedAssetStore({
   };
  }
  function clear(){
+  // Ordinary auth refresh still works when not revoked. Once revoked,
+  // clear() cannot re-enable signing or existing subscriptions.
+  if(revocationLocked)return;
   epoch++;
   if(timer!==null){clearTimer(timer);timer=null}
   // Active components keep their subscriptions. Invalidating rather than
@@ -99,16 +108,45 @@ export function createSignedAssetStore({
   }
   schedule();
  }
- return {subscribe,clear,
+ /**
+  * Permanently seal this cache instance during confirmed campaign revocation.
+  * Unlike clear(), this does not reload subscribed assets. A new verified
+  * session must use a fresh store instance (normally a full app reload).
+  * Already-issued signed bearer URLs are NOT revoked by this client lock.
+  */
+ function lockForRevocation(){
+  if(revocationLocked)return false;
+  revocationLocked=true;
+  epoch++;
+  if(timer!==null){clearTimer(timer);timer=null}
+  const prior=[...entries.values()];
+  entries.clear();
+  for(const e of prior){
+   e.url='';e.expires=0;e.promise=null;
+   const listeners=[...e.listeners];
+   e.listeners.clear();
+   for(const notify of listeners){
+    // A failing widget callback cannot interrupt the security boundary.
+    try{
+     const result=notify('');
+     if(result&&typeof result.then==='function')
+      void Promise.resolve(result).catch(()=>{});
+    }catch{}
+   }
+  }
+  return true;
+ }
+ return {subscribe,clear,lockForRevocation,
+  isRevocationLocked:()=>revocationLocked,
   // Reuse a still-valid signed image synchronously across temporary token
   // unmount/remount cycles (e.g. visibility revisions). Never cache beyond
   // its expiry or across auth identity changes.
   peek:(db,bucket,path)=>{
-   if(!db||!path)return '';
+   if(revocationLocked||!db||!path)return '';
    const cached=entries.get(keyFor(bucket,path));
    return cached&&cached.url&&cached.expires>now()+15000?cached.url:'';
   },
-  get:(db,bucket,path)=>!db||!path?
+  get:(db,bucket,path)=>revocationLocked||!db||!path?
   Promise.resolve(''):load(entry(db,bucket,path)),
   stats:()=>({entries:entries.size,subscribers:[...entries.values()].reduce((n,e)=>n+e.listeners.size,0)})};
 }
