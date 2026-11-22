@@ -1,0 +1,40 @@
+name: World V2 R18-218 owner-private Storage policy lifecycle NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-218-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-217-*'
+permissions:
+  contents: read
+jobs:
+  synthetic-private-policy-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject app, active migration, Edge and deployment mutations
+        run: git diff --exit-code 47593a171f4384c66e6c1f735946258395aade88 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Enforce exactly five R218 source-only paths
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          actual=set(subprocess.check_output([
+            'git','diff','--name-only','47593a171f4384c66e6c1f735946258395aade88','HEAD'
+          ],text=True).splitlines())
+          allowed={
+            'scripts/release/r218_validate_owner_r217_receipt.py',
+            'scripts/release/r218_private_storage_policy_lifecycle.py',
+            'tests/world-v2-r18-218-private-storage-lifecycle.test.py',
+            'docs/testing/world-v2-r18-218-private-storage-lifecycle-2026-11-22.md',
+            '.github/workflows/world-v2-r18-218-private-storage-lifecycle.yml',
+          }
+          assert actual==allowed, 'R218_UNREVIEWED_SCOPE_CHANGED'
+          PY
+      - name: Compile and test synthetic 83-file source and no-leak JSON only
+        run: |
+          python3 -m py_compile scripts/release/r218_validate_owner_r217_receipt.py scripts/release/r218_private_storage_policy_lifecycle.py
+          python3 tests/world-v2-r18-218-private-storage-lifecycle.test.py -v
