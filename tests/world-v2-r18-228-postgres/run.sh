@@ -22,6 +22,18 @@ q(){ psql -X -q -A -t -v ON_ERROR_STOP=1 -c "$1"; }
 psql -X -q -v ON_ERROR_STOP=1 \
  -f tests/world-v2-r18-226-postgres/fictional-tenant-fixture.sql \
  > "$scratch/fixture.log"
+# R226's generic fake schema used a default NO ACTION active-map deletion,
+# while the read-only actual relation metadata has ON DELETE SET NULL.
+# Reproduce that known live deletion behavior in this disposable fake fixture;
+# no original Supabase DDL, records or migration SQL is used.
+psql -X -q -v ON_ERROR_STOP=1 -c "
+ALTER TABLE public.campaigns DROP CONSTRAINT synthetic_active_map_single_id;
+ALTER TABLE public.campaigns
+ ADD CONSTRAINT synthetic_active_map_single_id
+ FOREIGN KEY(active_map_id) REFERENCES public.battle_maps(id)
+ ON DELETE SET NULL;
+" > "$scratch/legacy-deletion-shape.log"
+
 # Coexistence check: R226 also stages independent token/character/map composite FKs.
 psql -X -q -v ON_ERROR_STOP=1 \
  -f staging/world-v2-b10-r18-226-cross-campaign-integrity/unapplied-composite-campaign-keys.sql \
