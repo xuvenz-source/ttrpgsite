@@ -82,11 +82,19 @@ CREATE POLICY synthetic_vulnerable_player_insert ON public.map_tokens
   )
  );
 
+-- A fictional SECURITY DEFINER helper can consult the membership table
+-- even though its own SELECT policy is default deny to ordinary actors.
+-- This uses neither the real privileged helper body nor any real Auth data.
+CREATE FUNCTION public.synthetic_is_campaign_dm(p_campaign uuid)
+ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=''
+ AS $ SELECT auth.uid() IS NOT NULL AND EXISTS (
+   SELECT 1 FROM public.campaign_members cm
+   WHERE cm.campaign_id=p_campaign AND cm.user_id=auth.uid()
+     AND cm.role='dm'
+ ); $;
 CREATE POLICY synthetic_dm_insert ON public.map_tokens
  FOR INSERT TO authenticated WITH CHECK (
-  EXISTS(SELECT 1 FROM public.campaign_members cm WHERE
-   cm.campaign_id=map_tokens.campaign_id
-    AND cm.user_id=auth.uid() AND cm.role='dm')
+  public.synthetic_is_campaign_dm(campaign_id)
  );
 
 -- Completely made-up IDs and file paths.
