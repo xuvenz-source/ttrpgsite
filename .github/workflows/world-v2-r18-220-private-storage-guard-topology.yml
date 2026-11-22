@@ -1,0 +1,40 @@
+name: World V2 R18-220 owner-private Storage guard topology NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-220-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-219-*'
+permissions:
+  contents: read
+jobs:
+  fictional-private-storage-guard-topology:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject app, active migrations, Edge or deployment edits
+        run: git diff --exit-code 6f2d27a43ba2e1c5bef6ea24a3ee76cc032fc8a3 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Enforce exact five R220 source-only files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          actual=set(subprocess.check_output(
+            ['git','diff','--name-only','6f2d27a43ba2e1c5bef6ea24a3ee76cc032fc8a3','HEAD'],
+            text=True).splitlines())
+          allowed={
+            'scripts/release/r220_validate_owner_r219_receipt.py',
+            'scripts/release/r220_private_storage_guard_or_topology.py',
+            'tests/world-v2-r18-220-private-storage-guard-topology.test.py',
+            'docs/testing/world-v2-r18-220-private-storage-guard-topology-2026-11-22.md',
+            '.github/workflows/world-v2-r18-220-private-storage-guard-topology.yml',
+          }
+          assert actual==allowed, 'R220_UNREVIEWED_SOURCE_PATH'
+          PY
+      - name: Compile source-only checkers and run fictional 83-file regressions
+        run: |
+          python3 -m py_compile scripts/release/r220_validate_owner_r219_receipt.py scripts/release/r220_private_storage_guard_or_topology.py
+          python3 tests/world-v2-r18-220-private-storage-guard-topology.test.py -v
