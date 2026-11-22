@@ -87,11 +87,11 @@ CREATE POLICY synthetic_vulnerable_player_insert ON public.map_tokens
 -- This uses neither the real privileged helper body nor any real Auth data.
 CREATE FUNCTION public.synthetic_is_campaign_dm(p_campaign uuid)
  RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=''
- AS $ SELECT auth.uid() IS NOT NULL AND EXISTS (
+ AS $r226_dm$ SELECT auth.uid() IS NOT NULL AND EXISTS (
    SELECT 1 FROM public.campaign_members cm
    WHERE cm.campaign_id=p_campaign AND cm.user_id=auth.uid()
      AND cm.role='dm'
- ); $;
+ ); $r226_dm$;
 CREATE POLICY synthetic_dm_insert ON public.map_tokens
  FOR INSERT TO authenticated WITH CHECK (
   public.synthetic_is_campaign_dm(campaign_id)
