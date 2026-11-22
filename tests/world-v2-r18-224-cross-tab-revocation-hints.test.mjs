@@ -198,7 +198,9 @@ test('R224 changed context suppresses stale campaign hints',async()=>{
  channel.inject(hint(P1));
  await tick();
  assert.equal(p1.queryCount(),before);
- assert.equal(p1.bridge.snapshot().allowed,true); // stale R123 state, host must mask on its next context transition
+ assert.equal(p1.bridge.snapshot().allowed,true); // underlying R123 has not yet observed context switch
+ assert.equal(p1.relay.snapshot().allowed,false); // R224 cannot claim stale context authorization
+ assert.equal(p1.relay.snapshot().currentContextMatches,false);
 });
 
 test('R224 relay disposal unsubscribes and leaves original bridge teardown to owner',async()=>{
