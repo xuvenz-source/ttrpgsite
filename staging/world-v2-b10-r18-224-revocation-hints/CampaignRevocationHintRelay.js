@@ -129,14 +129,23 @@ export function createCampaignRevocationHintRelay({
   // Caller still owns bridge.close()/dispose() and all view teardown.
   return true;
  }
- const snapshot=()=>Object.freeze({
-  ...bridge.snapshot(),
-  relayDisposed:disposed,
-  hintPublished:published,
-  outboundDeliveryUnverified:published,
-  outboundFailed,
-  remoteRechecks,
-  inboundFailures,
- });
+ const snapshot=()=>{
+  const base=bridge.snapshot();
+  const currentContextMatches=!disposed&&sameAsActive();
+  // A source switch must not claim access based on the old membership proof.
+  // The future host is still responsible for synchronously masking its UI
+  // and calling bridge.begin/close when actor or campaign identity changes.
+  return Object.freeze({
+   ...base,
+   allowed:base.allowed&&currentContextMatches,
+   relayDisposed:disposed,
+   currentContextMatches,
+   hintPublished:published,
+   outboundDeliveryUnverified:published,
+   outboundFailed,
+   remoteRechecks,
+   inboundFailures,
+  });
+ };
  return Object.freeze({begin,notify,dispose,snapshot});
 }
