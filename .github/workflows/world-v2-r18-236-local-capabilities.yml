@@ -1,0 +1,56 @@
+name: World V2 R18-236 owner-local no-subprocess capability inventory NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-236-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-235-*'
+permissions:
+  contents: read
+jobs:
+  metadata-only-source-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Exact four-file design-only scope and Python AST gate
+        run: |
+          python3 - <<'PY'
+          import ast
+          import subprocess
+          from pathlib import Path
+          base='e25e43d9a37d31c03140c8f95b5bed64fa370dba'
+          changed=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed=={
+            '.github/workflows/world-v2-r18-236-local-capabilities.yml',
+            'docs/testing/world-v2-r18-236-owner-local-metadata-inventory-2026-11-23.md',
+            'scripts/release/r236_owner_local_sandbox_capabilities.py',
+            'tests/world-v2-r18-236-local-capability.test.py'
+          },'R236_UNAUTHORIZED_SCOPE_CHANGE'
+          source=Path('scripts/release/r236_owner_local_sandbox_capabilities.py').read_text()
+          tree=ast.parse(source)
+          allowed={'__future__','json','os','pathlib','re','shutil','stat','sys'}
+          for node in ast.walk(tree):
+            if isinstance(node,ast.Import):
+              assert all(item.name in allowed for item in node.names),'R236_UNAPPROVED_IMPORT'
+            if isinstance(node,ast.ImportFrom):
+              assert node.module in allowed,'R236_UNAPPROVED_IMPORT'
+            if isinstance(node,ast.Call):
+              if isinstance(node.func,ast.Attribute):
+                assert node.func.attr not in {'run','Popen','system','connect','execv',
+                  'execl','spawn','start','apply_migration','db_reset','read_bytes',
+                  'write_text','write_bytes'},'R236_UNAPPROVED_CALL'
+          assert '"decision":"NO_GO"' in source
+          assert '"execution_of_original_migration_sql_authorized":False' in source
+          assert '"subprocess_or_any_external_binary_executed":False' in source
+          assert '"network_or_database_accessed":False' in source
+          PY
+      - name: Run only invented filesystem and injected metadata tests, no owner WSL SQL
+        run: python3 tests/world-v2-r18-236-local-capability.test.py
+      - name: Python syntax only, no database service
+        run: |
+          python3 -m py_compile scripts/release/r236_owner_local_sandbox_capabilities.py
+          python3 -m py_compile tests/world-v2-r18-236-local-capability.test.py
