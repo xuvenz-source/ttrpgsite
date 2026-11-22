@@ -1,0 +1,40 @@
+name: World V2 R18-216 private Storage effect preflight NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-216-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-215-*'
+permissions:
+  contents: read
+jobs:
+  fictional-storage-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject app, active migration, Edge and deploy changes
+        run: git diff --exit-code 84574a63c0b23a654a3996b289d6b58652be9e28 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Require exact five-file R216-only change
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          paths = set(subprocess.check_output(
+            ['git','diff','--name-only','84574a63c0b23a654a3996b289d6b58652be9e28','HEAD'],
+            text=True).splitlines())
+          allowed = {
+            'scripts/release/r216_validate_owner_r215_receipt.py',
+            'scripts/release/r216_private_storage_effect_words.py',
+            'tests/world-v2-r18-216-private-storage-effects.test.py',
+            'docs/testing/world-v2-r18-216-storage-effect-owner-checkpoint-2026-11-22.md',
+            '.github/workflows/world-v2-r18-216-private-storage-effects.yml',
+          }
+          assert paths == allowed, 'R216_SOURCE_ONLY_SCOPE_CHANGED'
+          PY
+      - name: Compile and run fictional 83-file source / sanitized receipt tests only
+        run: |
+          python3 -m py_compile scripts/release/r216_validate_owner_r215_receipt.py scripts/release/r216_private_storage_effect_words.py
+          python3 tests/world-v2-r18-216-private-storage-effects.test.py -v
