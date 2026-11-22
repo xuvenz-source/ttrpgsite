@@ -1,0 +1,79 @@
+name: World V2 R18-228 active map same-campaign PG17 NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-228-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-227-*'
+permissions:
+  contents: read
+jobs:
+  exact-staging-source-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject live runtime, hosted migration, Edge, package or deploy edits
+        run: git diff --exit-code c323ab3dc10b9aa837434463e1575acc1ed95cf8 HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Enforce four source-only R228 artifacts and NOT VALID candidate
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          paths=set(subprocess.check_output(['git','diff','--name-only',
+            'c323ab3dc10b9aa837434463e1575acc1ed95cf8','HEAD'],text=True).splitlines())
+          expected={
+            'staging/world-v2-b10-r18-228-active-map-integrity/unapplied-active-map-composite-fk.sql',
+            'tests/world-v2-r18-228-postgres/run.sh',
+            'docs/testing/world-v2-r18-228-active-map-campaign-2026-11-22.md',
+            '.github/workflows/world-v2-r18-228-active-map-integrity.yml'
+          }
+          assert paths==expected,'R228_UNREVIEWED_RELEASE_SCOPE'
+          sql=open('staging/world-v2-b10-r18-228-active-map-integrity/unapplied-active-map-composite-fk.sql').read()
+          clean='\n'.join(line for line in sql.splitlines() if not line.lstrip().startswith('--'))
+          assert clean.count('FOREIGN KEY (id, active_map_id)')==1,'R228_COMPOSITE_SCOPE_DRIFT'
+          assert 'REFERENCES public.battle_maps(campaign_id, id)' in clean
+          assert 'ON DELETE SET NULL (active_map_id)' in clean
+          assert clean.count('NOT VALID;')==1,'R228_NO_HISTORICAL_VALIDATION'
+          assert 'VALIDATE CONSTRAINT' not in clean,'R228_VALIDATION_UNAUTHORIZED'
+          for bad in ('DISABLE ROW LEVEL SECURITY','DROP TABLE','REVOKE ALL','TRUNCATE'):
+            assert bad not in clean.upper(), 'R228_UNREVIEWED_MUTATION'
+          PY
+      - name: Verify fictional loopback runner syntax
+        run: |
+          bash -n tests/world-v2-r18-228-postgres/run.sh
+          grep -q 'R228_ISOLATED' tests/world-v2-r18-228-postgres/run.sh
+          grep -q '127.0.0.1' tests/world-v2-r18-228-postgres/run.sh
+
+  disposable-postgres17-active-map:
+    needs: exact-staging-source-scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r228_disposable_only
+          POSTGRES_DB: world_v2_r18_228
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_228"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R228_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_228
+      PGUSER: postgres
+      PGPASSWORD: r228_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Test composite active-map constraint with only invented PG17 rows
+        shell: bash
+        run: bash tests/world-v2-r18-228-postgres/run.sh
