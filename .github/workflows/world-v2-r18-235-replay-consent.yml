@@ -1,0 +1,53 @@
+name: World V2 R18-235 proposed local replay consent gate NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-235-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-231-*'
+permissions:
+  contents: read
+jobs:
+  design-only-no-sql-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Require exact five source-only design files and no active SQL or gameplay edit
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base='0c5b36c152b45ff80b5e7b35aa067e1af45cf25f'
+          changed=set(subprocess.check_output(['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          expected={
+            '.github/workflows/world-v2-r18-235-replay-consent.yml',
+            'docs/testing/world-v2-r18-235-disposable-local-replay-plan-2026-11-23.md',
+            'scripts/release/r235_validate_disposable_replay_proposal.py',
+            'staging/world-v2-b10-r18-235-local-replay-consent/manifest.json',
+            'tests/world-v2-r18-235-disposable-replay-design.test.py'
+          }
+          assert changed==expected,'R235_UNAUTHORIZED_SCOPE_CHANGE'
+          checker=open('scripts/release/r235_validate_disposable_replay_proposal.py').read()
+          for required in ("NO_GO","PRE_APPROVAL_DESIGN_ONLY",
+                           "owner_permission_to_execute_original_migrations",
+                           "remote_connection_allowed","execution_enabled"):
+            assert required in checker, 'R235_MISSING_DENIAL'
+          for forbidden in ("import subprocess","import socket","import requests",
+                            "import psycopg","from supabase","urllib.request",
+                            "os.system(","subprocess.run(","eval(","exec(",
+                            "write_text(","write_bytes("):
+            assert forbidden not in checker,'R235_UNAPPROVED_ACTION'
+          PY
+      - name: Run only invented JSON proposal tests, no SQL or database service
+        run: python3 tests/world-v2-r18-235-disposable-replay-design.test.py
+      - name: Check pinned immutable proposal remains NO_GO
+        run: |
+          python3 scripts/release/r235_validate_disposable_replay_proposal.py \
+            staging/world-v2-b10-r18-235-local-replay-consent/manifest.json
+      - name: Parse and syntax-check only, no SQL execution
+        run: |
+          python3 -m py_compile scripts/release/r235_validate_disposable_replay_proposal.py
+          python3 -m py_compile tests/world-v2-r18-235-disposable-replay-design.test.py

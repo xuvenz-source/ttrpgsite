@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "work_package": "B10-R18-235",
+  "decision": "NO_GO",
+  "phase": "PRE_APPROVAL_DESIGN_ONLY",
+  "source_only": true,
+  "source_evidence": {
+    "original_migration_files_expected": 83,
+    "original_top_level_sql_statements_expected": 937,
+    "historical_top_level_do_blocks_expected": 12,
+    "do_containing_migrations_expected": 11,
+    "history_sha_verified_by_prior_owner_offline_tool": true,
+    "all_83_semantically_approved": false,
+    "all_67_privileged_functions_approved": false
+  },
+  "proposed_execution": {
+    "environment": "UNPROVISIONED_OWNER_LOCAL_ISOLATED_SUPABASE_COMPATIBLE_SANDBOX",
+    "execution_enabled": false,
+    "original_project_allowed": false,
+    "qa_project_allowed": false,
+    "production_allowed": false,
+    "remote_connection_allowed": false,
+    "network_egress_during_replay_allowed": false,
+    "real_user_data_allowed": false,
+    "private_sql_to_git_or_chat_allowed": false,
+    "cloud_resource_provisioning_allowed": false,
+    "maximum_approved_cost_usd": 0,
+    "owner_permission_to_execute_original_migrations": false
+  },
+  "status_checks": [
+    {
+      "id": "OWNER_SEPARATELY_APPROVES_EXACT_DISPOSABLE_SQL_REPLAY",
+      "approved": false
+    },
+    {
+      "id": "OWNER_LOCAL_RUNTIME_ISOLATION_AND_NO_REMOTE_LINK_PROVEN",
+      "approved": false
+    },
+    {
+      "id": "LOCAL_SUPABASE_MANAGED_SCHEMA_ROLE_EXTENSION_PARITY_VERIFIED",
+      "approved": false
+    },
+    {
+      "id": "LOCAL_ENGINE_VERSION_AND_CLIENT_COMMAND_TARGETS_VERIFIED",
+      "approved": false
+    },
+    {
+      "id": "ALL_83_PRIVATE_SHA_CHRONOLOGY_AND_PERMISSIONS_REVERIFIED",
+      "approved": false
+    },
+    {
+      "id": "83_SEMANTIC_DEPENDENCIES_AND_DANGEROUS_EFFECTS_REVIEWED",
+      "approved": false
+    },
+    {
+      "id": "HISTORICAL_12_DO_BLOCK_DEPENDENCIES_REVIEWED",
+      "approved": false
+    },
+    {
+      "id": "NO_ORIGINAL_QA_PRODUCTION_CREDENTIALS_OR_USER_DATA_PRESENT",
+      "approved": false
+    },
+    {
+      "id": "NO_PAID_RESOURCES_AND_NO_NETWORK_EGRESS_CONFIRMED",
+      "approved": false
+    },
+    {
+      "id": "EPHEMERAL_VOLUME_ID_AND_DELETION_SCOPE_RECORDED_PRIVATELY",
+      "approved": false
+    },
+    {
+      "id": "REPLAY_TEST_PLAN_AND_EXPECTED_ASSERTIONS_APPROVED",
+      "approved": false
+    },
+    {
+      "id": "PRIVATE_SANITIZED_RESULTS_FORMAT_AND_STOP_RULES_APPROVED",
+      "approved": false
+    }
+  ],
+  "release_gates": {
+    "signed_dm_p1_p2_removed_outsider_qa_passed": false,
+    "security_issue_remediation_approved": false,
+    "qa_hosted_install_authorized": false,
+    "original_production_install_authorized": false,
+    "merge_authorized": false,
+    "deploy_authorized": false
+  }
+}
