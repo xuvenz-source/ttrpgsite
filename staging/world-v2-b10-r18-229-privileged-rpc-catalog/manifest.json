@@ -1,0 +1,45 @@
+{
+  "schema": "r229_current_privileged_catalog_aggregate_v1",
+  "as_of_date": "2026-11-22",
+  "target_scope": "original TTRPG Site; pg_catalog-only read-only snapshot",
+  "source_exported": false,
+  "application_rows_accessed": false,
+  "application_functions_executed": false,
+  "original_database_changed": false,
+  "qa_database_accessed": false,
+  "qa_database_changed": false,
+  "merges_or_deployments": false,
+  "original_privileged_public_authenticated_count": 67,
+  "catalog_observations": {
+    "postgres_owned": 67,
+    "bypassrls_owned": 67,
+    "empty_search_path": 67,
+    "explicit_authenticated_acl": 67,
+    "anon_execute": 0,
+    "uid_direct_marker": 60,
+    "uid_direct_absent": 7,
+    "uid_direct_or_static_callee": 66,
+    "uid_static_closure_absent": 1,
+    "common_member_guard_lex": 53,
+    "write_word_lex": 42,
+    "dynamic_sql_word_lex": 0,
+    "editable_metadata_word_lex": 1,
+    "exception_word_lex": 7
+  },
+  "known_open_risk_codes": [
+    "FOG_STATUS_NONMEMBER_ORACLE_R104",
+    "REVOKED_SHEET_OWNER_R115",
+    "REUSED_INVITE_REJOIN_R119",
+    "STALE_MOTION_SESSION_REAUTH_UNVERIFIED_R208",
+    "USER_EDITABLE_DISPLAY_METADATA_AUTH_BOUNDARY_R207"
+  ],
+  "limitations": [
+    "Lexical source markers and best-effort qualified-call graph are not semantic proof",
+    "Some reachable functions are not visible through unqualified/dynamic call patterns",
+    "Review is catalog-only, not signed-user authorization testing",
+    "Absent static markers do not themselves establish an exploit",
+    "Previously staged patches remain unapplied and unverified against hosted users",
+    "Private 83-migration semantic approval and independent QA still outstanding"
+  ],
+  "decision": "NO_GO"
+}
