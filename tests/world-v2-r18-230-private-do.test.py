@@ -7,11 +7,13 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/"scripts/release"))
 SPEC=importlib.util.spec_from_file_location("r230",ROOT/"scripts/release/r230_private_opaque_do_effects.py")
 r230=importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(r230)
