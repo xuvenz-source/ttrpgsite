@@ -55,8 +55,8 @@ EXPECTED_KEYS={
  "subprocess_or_any_external_binary_executed",
  "tool_binaries_on_path","work_package","wsl_kernel_marker_present",
 }
-DOCKER_VERSION_RE=re.compile(r"^Docker version (\\d+)\\.(\\d+)\\.(\\d+)(?:[+.-][^\\s,]*)?(?:,|\\s|$)")
-COMPOSE_VERSION_RE=re.compile(r"^Docker Compose version v?(\\d+)\\.(\\d+)\\.(\\d+)(?:[+.-][^\\s,]*)?(?:\\s|$)")
+DOCKER_VERSION_RE=re.compile(r"^Docker version (\d+)\.(\d+)\.(\d+)(?:[+.-][^\s,]*)?(?:,|\s|$)")
+COMPOSE_VERSION_RE=re.compile(r"^Docker Compose version v?(\d+)\.(\d+)\.(\d+)(?:[+.-][^\s,]*)?(?:\s|$)")
 ALLOWED_COMMANDS=(
  ("docker","--version"),
  ("docker","compose","version"),
