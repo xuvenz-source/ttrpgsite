@@ -1,0 +1,42 @@
+name: World V2 R18-223 terminal revocation bridge NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-223-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-222-*'
+permissions:
+  contents: read
+jobs:
+  synthetic-terminal-revocation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Deny live application, Supabase, deployment and package modifications
+        run: git diff --exit-code 799dd7158e19d8c3c12b23eef33124cd7611ff36 HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Limit R223 exactly to four source-only files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          changed=set(subprocess.check_output([
+            'git','diff','--name-only','799dd7158e19d8c3c12b23eef33124cd7611ff36','HEAD'
+          ],text=True).splitlines())
+          expected={
+            'staging/world-v2-b10-r18-223-terminal-revocation-bridge/TerminalRevocationBridge.js',
+            'tests/world-v2-r18-223-terminal-revocation-bridge.test.mjs',
+            'docs/testing/world-v2-r18-223-terminal-revocation-2026-11-22.md',
+            '.github/workflows/world-v2-r18-223-terminal-revocation.yml',
+          }
+          assert changed==expected, 'R223_UNREVIEWED_SCOPE'
+          PY
+      - name: Test terminal policy and reinstatement with fictional members
+        run: node --test tests/world-v2-r18-223-terminal-revocation-bridge.test.mjs
+      - name: Preserve staged R123 R221 R222 contracts
+        run: |
+          node --test tests/world-v2-r18-123-access-revocation-guard.test.mjs
+          node --test tests/world-v2-r18-221-signed-asset-revocation-lock.test.mjs
+          node --test tests/world-v2-r18-222-signed-asset-revocation-bridge.test.mjs
