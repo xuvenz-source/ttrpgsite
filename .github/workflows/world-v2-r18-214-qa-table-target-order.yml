@@ -1,0 +1,42 @@
+name: World V2 R18-214 private QA table-target chronology NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-214-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-213-*'
+permissions:
+  contents: read
+jobs:
+  fictional-83-source-target-order:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Deny runtime, SQL, Edge or Vercel changes
+        run: git diff --exit-code 12dd9b68a26b2d98b6b0fa28f1f7a5ec11496164 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Restrict scope to five reviewed R214 files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          changed = set(subprocess.check_output(
+            ['git', 'diff', '--name-only', '12dd9b68a26b2d98b6b0fa28f1f7a5ec11496164', 'HEAD'],
+            text=True).splitlines())
+          allowed = {
+            'scripts/release/r214_validate_owner_r213_receipt.py',
+            'scripts/release/r214_private_qa_table_target_order.py',
+            'tests/world-v2-r18-214-private-table-target.test.py',
+            'docs/testing/world-v2-r18-214-owner-private-table-target-order-2026-11-22.md',
+            '.github/workflows/world-v2-r18-214-qa-table-target-order.yml',
+          }
+          assert changed == allowed, 'R214_SOURCE_ONLY_SCOPE_MISMATCH'
+          PY
+      - name: Compile R214 owner-private script and fixed JSON-only validator
+        run: |
+          python3 -m py_compile scripts/release/r214_validate_owner_r213_receipt.py
+          python3 -m py_compile scripts/release/r214_private_qa_table_target_order.py
+      - name: Run fake SQL 83-file chronology and tamper tests
+        run: python3 tests/world-v2-r18-214-private-table-target.test.py -v
