@@ -63,6 +63,15 @@ expect_denied(){
   fail "unexpected denial SQLSTATE, wanted $expected_code"
 }
 
+admin_override_attempt(){
+ local who="$1" sql="$2" output="$3"
+ # The controlled fake admin changes the fictional active-map pointer
+ # before the authenticated actor makes a separate RLS-gated INSERT.
+ psql -X -q -v ON_ERROR_STOP=1 -v VERBOSITY=sqlstate \
+  -c "BEGIN; UPDATE public.campaigns SET active_map_id='$M2' WHERE id='$C1'; SET LOCAL ROLE authenticated; SET LOCAL r226.actor='$who'; $sql ROLLBACK;" \
+  > "$output" 2>&1
+}
+
 # Baseline counterexample 1: fictional player owns character in C1 and is a
 # member of C2, but old tautological 'ch.campaign_id=ch.campaign_id'
 # allows attaching C1's character to a C2 token.
@@ -72,8 +81,7 @@ expect_allowed "$P1" "$(token_insert \
 
 # Baseline counterexample 2: absent composite map FK lets C1 declare
 # C2's map its active map even though map belongs to another campaign.
-attempt "$P1" "UPDATE public.campaigns SET active_map_id='$M2' WHERE id='$C1'; \
- $(token_insert 00000000-0000-4000-8000-000000000502 \
+admin_override_attempt "$P1" "$(token_insert 00000000-0000-4000-8000-000000000502 \
  "$C1" "$M2" "$CH1" "$P1" invented/player-a.webp)" "$scratch/unsafe-map.log" ||
  fail "fictional missing campaign-map FK counterexample did not reproduce"
 
@@ -97,9 +105,12 @@ expect_denied "$P1" "$(token_insert \
 
 # After temporarily moving the fictional active-map pointer to C2's map,
 # the composite map FK independently blocks a C1 token pointing at C2 map.
-expect_denied "$P1" "UPDATE public.campaigns SET active_map_id='$M2' WHERE id='$C1'; \
- $(token_insert 00000000-0000-4000-8000-000000000505 \
- "$C1" "$M2" "$CH1" "$P1" invented/player-a.webp)" 23503
+if admin_override_attempt "$P1" "$(token_insert 00000000-0000-4000-8000-000000000505 \
+ "$C1" "$M2" "$CH1" "$P1" invented/player-a.webp)" "$scratch/denied-map.log"; then
+ fail "composite map FK accepted fictional foreign-campaign map"
+fi
+grep -q "23503" "$scratch/denied-map.log" ||
+ fail "composite map FK produced wrong SQLSTATE"
 
 # In-campaign player writes still function with original guard unchanged.
 expect_allowed "$P1" "$(token_insert \
