@@ -114,6 +114,9 @@ class TableTargetTests(unittest.TestCase):
             'CREATE POLICY "P" ON storage.objects USING (TRUE)'),
             ("reference", ("storage", "objects")))
         self.assertEqual(graph.target_of(
+            "CREATE INDEX CONCURRENTLY idx ON public.invented_alpha(id)"),
+            ("reference", ("public", "invented_alpha")))
+        self.assertEqual(graph.target_of(
             "CREATE TRIGGER fake BEFORE UPDATE ON public.invented_alpha FOR EACH ROW EXECUTE FUNCTION public.trig()"),
             ("reference", ("public", "invented_alpha")))
         self.assertEqual(graph.target_of(
@@ -128,6 +131,7 @@ class TableTargetTests(unittest.TestCase):
                 "CREATE TABLE public.r214_created(id integer); "
                 "ALTER TABLE public.r214_created ADD COLUMN x text; "
                 "CREATE INDEX r214_idx ON public.r214_created(id); "
+                "CREATE INDEX CONCURRENTLY r214_concurrent ON public.r214_created(id); "
                 "CREATE POLICY r214_ok ON public.r214_created USING (TRUE); "
                 "ALTER TABLE public.r214_missing ADD COLUMN x integer; "
                 "CREATE POLICY r214_review ON public.r214_missing USING (TRUE); "
@@ -138,6 +142,9 @@ class TableTargetTests(unittest.TestCase):
             self.assertEqual(result["original_migrations_sha256_reverified"], 83)
             c = result["structural_target_statement_counts"]
             self.assertGreaterEqual(c["explicit_public_table_creates"], 1)
+            # R211 calls CONCURRENTLY create_other; R214 must still account
+            # for its valid explicitly qualified table target.
+            self.assertGreaterEqual(c["explicit_public_table_references"], 4)
             self.assertGreaterEqual(c["public_target_without_earlier_archive_create"], 2)
             self.assertGreaterEqual(c["unqualified_table_targets"], 1)
             self.assertGreaterEqual(c["nonpublic_explicit_table_targets"], 1)
