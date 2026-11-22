@@ -42,8 +42,7 @@ jobs:
             elif isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute):
               assert node.func.attr not in ('system','Popen','run','connect',
                 'socket','write_text','write_bytes','apply_migration','execv',
-                'execvp','spawnv','start','stop','remove','unlink'),
-                'R239_UNAPPROVED_ACTION'
+                'execvp','spawnv','start','stop','remove','unlink'), 'R239_UNAPPROVED_ACTION'
           for mandatory in (
              'R238_SHA256="6ff99a2f396d7eb57ffe20847971bd21be9d7d04b086972c0895baae1db88f6f"',
              'reader(fd,4)','os.O_RDONLY|os.O_CLOEXEC|os.O_NONBLOCK',
