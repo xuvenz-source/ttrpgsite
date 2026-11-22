@@ -1,0 +1,54 @@
+name: World V2 R18-230 owner-private opaque DO lexical preflight NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-230-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-229-*'
+permissions:
+  contents: read
+jobs:
+  private-history-do-source-only-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject live application, hosted migration, Edge, package and deployment edits
+        run: git diff --exit-code 3578beecc679d04c59bb9653eeef7a1b324faec0 HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Require exactly four R230 source-only audit files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          changed=set(subprocess.check_output([
+            'git','diff','--name-only',
+            '3578beecc679d04c59bb9653eeef7a1b324faec0','HEAD'
+          ],text=True).splitlines())
+          expected={
+            '.github/workflows/world-v2-r18-230-private-do.yml',
+            'docs/testing/world-v2-r18-230-owner-private-opaque-do-2026-11-22.md',
+            'scripts/release/r230_private_opaque_do_effects.py',
+            'tests/world-v2-r18-230-private-do.test.py'
+          }
+          assert changed==expected,'R230_UNREVIEWED_RELEASE_SCOPE'
+          script=open('scripts/release/r230_private_opaque_do_effects.py').read()
+          assert 'EXPECTED_MIGRATIONS = 83' in script
+          assert 'EXPECTED_STATEMENTS = 937' in script
+          assert 'EXPECTED_DO = 12' in script
+          assert 'EXPECTED_RISK_FILES = 22' in script
+          assert 'private_sql_or_identifiers_exported":False' in script
+          assert 'historical_migrations_approved_for_qa":False' in script
+          assert 'qa_or_original_sql_write_authorized":False' in script
+          assert 'decision":"NO_GO"' in script
+          for forbidden in ('psycopg','supabase.create_client','urllib.request','requests.get',
+                            'subprocess.run','openai','apply_migration'):
+            assert forbidden not in script,'R230_UNREVIEWED_NETWORK_OR_WRITE_PATH'
+          PY
+      - name: Run only invented 83-migration tests, never private owner SQL
+        run: python3 tests/world-v2-r18-230-private-do.test.py
+      - name: Syntax-check offline reader and test file
+        run: |
+          python3 -m py_compile scripts/release/r230_private_opaque_do_effects.py
+          python3 -m py_compile tests/world-v2-r18-230-private-do.test.py
