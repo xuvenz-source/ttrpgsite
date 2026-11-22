@@ -113,7 +113,9 @@ class OwnerPathMetadataOnlyTests(unittest.TestCase):
     lstat_fn=lambda x:SimpleNamespace(st_mode=stat.S_IFREG|0o755),
     access_fn=lambda x,y:True
   )
-  with patch.object(r238,"R237_SHA256",fake_digest()):
+  actual_validate=r238.validate_receipt
+  with patch.object(r238,"validate_receipt",
+      side_effect=lambda raw:actual_validate(raw,expected_sha=fake_digest())):
    report=r238.report(fake_bytes(),
     probe_fn=lambda:fabricated,
     exists_fn=lambda p:str(p)=="/mnt/wsl/docker-desktop",
