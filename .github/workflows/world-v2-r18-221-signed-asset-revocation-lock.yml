@@ -1,0 +1,43 @@
+name: World V2 R18-221 signed asset revocation lock NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-221-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-220-*'
+permissions:
+  contents: read
+jobs:
+  mocked-signed-asset-revocation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Deny SQL, Edge, deployment and unrelated UI modifications
+        run: |
+          git diff --exit-code a7b299cd5d313a5684f804af116161f5312c78c3 HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Require exact four-file signed-cache-only scope
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          actual=set(subprocess.check_output([
+            'git','diff','--name-only',
+            'a7b299cd5d313a5684f804af116161f5312c78c3','HEAD'
+          ],text=True).splitlines())
+          allowed={
+            'staging/world-v2-b10-r18-221-signed-asset-revocation-lock/SignedAssetUrlsRevocationCandidate.js',
+            'tests/world-v2-r18-221-signed-asset-revocation-lock.test.mjs',
+            'docs/testing/world-v2-r18-221-signed-asset-revocation-lock-2026-11-22.md',
+            '.github/workflows/world-v2-r18-221-signed-asset-revocation-lock.yml',
+          }
+          assert actual==allowed, 'R221_UNREVIEWED_SOURCE_SCOPE'
+          PY
+      - name: Run staged signed URL candidate with wholly fictional signers
+        run: |
+          node --test tests/world-v2-r18-221-signed-asset-revocation-lock.test.mjs
+      - name: Preserve existing R123 signed URL and revocation teardown contract
+        run: |
+          node --test tests/world-v2-r18-123-access-revocation-guard.test.mjs
