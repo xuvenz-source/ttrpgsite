@@ -88,10 +88,14 @@ def report(root: Path) -> dict:
         for statement in statements(raw.decode("utf-8")):
             count_statements += 1
             kind = kind_of(statement)
-            if kind not in STRUCTURAL_KINDS:
+            target = target_of(statement)
+            # Some legal forms (such as CREATE INDEX CONCURRENTLY) are
+            # classified create_other by R211's conservative taxonomy.
+            # Recognize their explicit table target rather than silently
+            # omit them just because the previous taxonomy is narrower.
+            if kind not in STRUCTURAL_KINDS and target is None:
                 continue
             totals["structural_statements"] += 1
-            target = target_of(statement)
             if target is None:
                 totals["structural_target_unparsed"] += 1
                 affected.add(priority)
