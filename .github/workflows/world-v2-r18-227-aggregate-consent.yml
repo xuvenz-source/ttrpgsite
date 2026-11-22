@@ -1,0 +1,85 @@
+name: World V2 R18-227 aggregate-only owner consent gate NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-227-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-226-*'
+permissions:
+  contents: read
+jobs:
+  exact-unexecuted-original-query-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Refuse any live source, hosted SQL, Edge, dependency or deploy edits
+        run: git diff --exit-code 0d430b38c6d1ec1566fff68a9caee85aca0c6bd9 HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Exactly five R227 source-only artifacts and pure SELECT proposal
+        run: |
+          python3 - <<'PY'
+          import re,subprocess
+          paths=set(subprocess.check_output([
+            'git','diff','--name-only','0d430b38c6d1ec1566fff68a9caee85aca0c6bd9','HEAD'
+          ],text=True).splitlines())
+          wanted={
+            'scripts/release/r227_PROPOSED_readonly_original_aggregate_only.sql',
+            'tests/world-v2-r18-227-postgres/fictional-records.sql',
+            'tests/world-v2-r18-227-postgres/run.sh',
+            'docs/testing/world-v2-r18-227-aggregate-readonly-consent-2026-11-22.md',
+            '.github/workflows/world-v2-r18-227-aggregate-consent.yml',
+          }
+          assert paths==wanted,'R227_UNREVIEWED_SOURCE_SCOPE'
+          sql=open('scripts/release/r227_PROPOSED_readonly_original_aggregate_only.sql').read()
+          clean='\n'.join(line for line in sql.splitlines() if not line.lstrip().startswith('--'))
+          assert clean.lstrip().upper().startswith('WITH TOKEN_EDGES AS ('),'R227_ONLY_ONE_AGGREGATE_SELECT'
+          assert clean.count(';')==1,'R227_MULTIPLE_SQL_STATEMENTS'
+          assert re.search(r'\bSELECT\b',clean,re.I),'R227_SELECT_REQUIRED'
+          forbidden=re.compile(r'\b(?:INSERT|UPDATE|DELETE|MERGE|DROP|TRUNCATE|CREATE|ALTER|REVOKE|GRANT|COPY|EXECUTE|CALL|DO|SET)\b',re.I)
+          assert not forbidden.search(clean),'R227_MUTATING_SQL_FORBIDDEN'
+          for field in ('token_count','token_wrong_campaign_map_count',
+                        'token_wrong_campaign_character_count','active_map_wrong_campaign_count'):
+            assert field in clean,'R227_AGGREGATE_FIELD_MISSING'
+          assert not re.search(r'\bSELECT\s+\*',clean,re.I),'R227_RAW_ROW_SELECT_FORBIDDEN'
+          assert all(x in clean for x in ('public.map_tokens','public.battle_maps',
+            'public.characters','public.campaigns')),'R227_SOURCE_SCOPE_DRIFT'
+          PY
+      - name: Check fictional runner syntax and no external database reference
+        run: |
+          bash -n tests/world-v2-r18-227-postgres/run.sh
+          grep -q 'R227_ISOLATED' tests/world-v2-r18-227-postgres/run.sh
+          grep -q '127.0.0.1' tests/world-v2-r18-227-postgres/run.sh
+
+  disposable-postgres17-aggregates:
+    needs: exact-unexecuted-original-query-scope
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: r227_disposable_only
+          POSTGRES_DB: world_v2_r18_227
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d world_v2_r18_227"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      R227_ISOLATED: 'yes'
+      PGHOST: '127.0.0.1'
+      PGPORT: '5432'
+      PGDATABASE: world_v2_r18_227
+      PGUSER: postgres
+      PGPASSWORD: r227_disposable_only
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify only four aggregate counts from invented source rows
+        shell: bash
+        run: bash tests/world-v2-r18-227-postgres/run.sh
