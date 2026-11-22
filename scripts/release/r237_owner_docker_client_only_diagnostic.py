@@ -94,7 +94,7 @@ def validate_r236(raw:bytes):
      d["docker_socket_file_present_not_connectivity_proof"] is not False):
   raise Blocked("R236_UNEXPECTED_LOCAL_HOST")
  tools=d["tool_binaries_on_path"]
- if type(tools) is not dict or set(tools)!=EXPECTED_TOOLS or any(
+ if type(tools) is not dict or set(tools)!=set(EXPECTED_TOOLS) or any(
      tools[k] is not v for k,v in EXPECTED_TOOLS.items()):
   raise Blocked("R236_TOOL_BOUNDARY_CHANGED")
  for key in ("available_home_filesystem_mib_observation","available_memory_mib_observation"):
