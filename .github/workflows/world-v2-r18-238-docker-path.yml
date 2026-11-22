@@ -1,0 +1,59 @@
+name: World V2 R18-238 Docker PATH filesystem metadata only NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-238-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-237-*'
+permissions:
+  contents: read
+jobs:
+  path-metadata-only-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Exact source-only scope and AST no-external-process gate
+        run: |
+          python3 - <<'PY'
+          import ast,subprocess
+          from pathlib import Path
+          base='f19632047aabb7a5f783e35b822e7e8606a9fcd8'
+          changed=set(subprocess.check_output(
+            ['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed=={
+            '.github/workflows/world-v2-r18-238-docker-path.yml',
+            'docs/testing/world-v2-r18-238-owner-docker-path-provenance-2026-11-23.md',
+            'scripts/release/r238_owner_docker_path_metadata.py',
+            'tests/world-v2-r18-238-docker-path-metadata.test.py',
+          },'R238_UNAUTHORIZED_SCOPE_CHANGE'
+          s=Path('scripts/release/r238_owner_docker_path_metadata.py').read_text()
+          tree=ast.parse(s)
+          allowed={'__future__','argparse','hashlib','json','os','pathlib',
+            'shutil','stat','sys'}
+          for node in ast.walk(tree):
+            if isinstance(node,ast.Import):
+              assert all(alias.name in allowed for alias in node.names),'R238_UNAPPROVED_IMPORT'
+            elif isinstance(node,ast.ImportFrom):
+              assert node.module in allowed,'R238_UNAPPROVED_IMPORT'
+            elif isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute):
+              assert node.func.attr not in ('system','Popen','run','connect','socket',
+                'write_text','write_bytes','apply_migration','execv','execvp',
+                'spawnv','start','stop'),'R238_UNAPPROVED_ACTION'
+          assert 'R237_SHA256="f2808df021b33435056e27e3720eb8a5e3c0793cc44f053bd757561d2cd69639"' in s
+          for mandatory in (
+            '"decision":"NO_GO"','"docker_cli_or_any_external_binary_executed":False',
+            '"remote_or_local_database_accessed":False',
+            '"hosted_or_local_sql_execution_authorized":False'
+          ):
+            assert mandatory in s,'R238_MISSING_NO_GO'
+          PY
+      - name: Run eight invented metadata tests without invoking Docker or SQL
+        run: python3 tests/world-v2-r18-238-docker-path-metadata.test.py
+      - name: Python syntax check only
+        run: |
+          python3 -m py_compile scripts/release/r238_owner_docker_path_metadata.py
+          python3 -m py_compile tests/world-v2-r18-238-docker-path-metadata.test.py
