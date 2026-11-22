@@ -160,6 +160,31 @@ CREATE POLICY invented_f ON storage.objects FOR SELECT TO anon USING (TRUE);
             self.assertEqual(result["distinct_possible_overlapping_policy_key_pairs"], 0)
             self.assertEqual(result["possible_overlap_storage_table_targets"], 0)
 
+    def test_drop_does_not_leave_a_false_overlapping_pair(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            fictional.fixture(root)
+            append(root, 0, """
+CREATE POLICY invented_a ON storage.objects FOR SELECT TO authenticated USING (TRUE);
+CREATE POLICY invented_b ON storage.objects FOR SELECT TO authenticated USING (TRUE);
+DROP POLICY invented_a ON storage.objects;
+""")
+            result = pairs.report(root)
+            self.assertEqual(result["final_archive_lexical_policy_keys"], 1)
+            self.assertEqual(result["distinct_possible_overlapping_policy_key_pairs"], 0)
+            self.assertFalse(result["actual_hosted_policy_catalog_or_rls_verified"])
+
+    def test_alter_effects_are_rejected_not_silently_ignored(self):
+        with tempfile.TemporaryDirectory() as t:
+            root = Path(t)
+            fictional.fixture(root)
+            append(root, 0, """
+CREATE POLICY invented_a ON storage.objects FOR SELECT TO authenticated USING (TRUE);
+ALTER POLICY invented_a ON storage.objects TO anon USING (TRUE);
+""")
+            with self.assertRaises(old.AuditBlocked):
+                pairs.report(root)
+
     def test_private_archive_sha_tampering_rejected(self):
         with tempfile.TemporaryDirectory() as t:
             root = Path(t)
