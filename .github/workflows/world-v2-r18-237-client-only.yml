@@ -1,0 +1,65 @@
+name: World V2 R18-237 owner WSL Docker client-only NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-237-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-236-*'
+permissions:
+  contents: read
+jobs:
+  sanitized-client-metadata-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Require exactly four source-only files and fixed command allowlist
+        run: |
+          python3 - <<'PY'
+          import ast,subprocess
+          from pathlib import Path
+          base='108b6ed3d1f18584a6694692107825adc81629a9'
+          changed=set(subprocess.check_output(
+            ['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed=={
+            '.github/workflows/world-v2-r18-237-client-only.yml',
+            'docs/testing/world-v2-r18-237-owner-docker-client-only-2026-11-23.md',
+            'scripts/release/r237_owner_docker_client_only_diagnostic.py',
+            'tests/world-v2-r18-237-docker-client-only.test.py',
+          },'R237_UNAUTHORIZED_SCOPE'
+          s=Path('scripts/release/r237_owner_docker_client_only_diagnostic.py').read_text()
+          tree=ast.parse(s)
+          allowed={'__future__','argparse','hashlib','json','os','pathlib',
+            're','shutil','subprocess','sys'}
+          for node in ast.walk(tree):
+            if isinstance(node,ast.Import):
+              assert all(alias.name in allowed for alias in node.names),'R237_UNAPPROVED_IMPORT'
+            elif isinstance(node,ast.ImportFrom):
+              assert node.module in allowed,'R237_UNAPPROVED_IMPORT'
+            elif isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute):
+              assert node.func.attr not in ('system','Popen','connect','socket',
+                'write_text','write_bytes','apply_migration','execv','execvp','spawnv'),'R237_UNAPPROVED_ACTION'
+          assert 'ALLOWED_COMMANDS=(' in s
+          for required in (
+            '("docker","--version")',
+            '("docker","compose","version")',
+            '("docker","context","show")',
+            'argv not in ALLOWED_COMMANDS',
+            'shell=False,timeout=8,check=False,env=safe_env',
+            'R236_SHA256="b4b686ad5e94fb4dec92d02628b07328e6fa9d179504d73af59a8c4c96e97699"',
+            '"decision":"NO_GO"',
+            '"docker_engine_availability_proven":False',
+            '"docker_remote_target_absence_proven":False',
+          ):
+            assert required in s,'R237_UNREVIEWED_CLIENT_SCOPE'
+          assert 'docker info' not in s.split('ALLOWED_COMMANDS=')[1].split('REMOTE_FLAG_NAMES=')[0]
+          PY
+      - name: Seven fictional/monkeypatched client-only tests; no actual Docker command
+        run: python3 tests/world-v2-r18-237-docker-client-only.test.py
+      - name: Syntax-check only
+        run: |
+          python3 -m py_compile scripts/release/r237_owner_docker_client_only_diagnostic.py
+          python3 -m py_compile tests/world-v2-r18-237-docker-client-only.test.py
