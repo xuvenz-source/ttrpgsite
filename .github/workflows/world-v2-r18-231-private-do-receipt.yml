@@ -36,7 +36,7 @@ jobs:
           checker=open('scripts/release/r231_verify_owner_r230_sanitized.py').read()
           assert 'EXPECTED_SHA256=' in checker
           assert '345f30ee49d853c9fa8ccefa7679e4a5acb04993f73e40451df7b5cdf3079e01' in checker
-          assert '"decision"!="NO_GO"' in checker
+          assert 'd["decision"]!="NO_GO"' in checker
           for forbidden in (
              'psycopg','supabase.create_client','subprocess.run','requests.',
              'urllib.request','apply_migration','write_text(','write_bytes('
