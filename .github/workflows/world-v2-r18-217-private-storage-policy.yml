@@ -1,0 +1,40 @@
+name: World V2 R18-217 owner-private Storage policy shape NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-217-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-216-*'
+permissions:
+  contents: read
+jobs:
+  synthetic-storage-policy-shape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject application SQL Edge and deployment mutations
+        run: git diff --exit-code e999d669c7536d2192fec7497a1bae0f6b364943 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Enforce exactly five reviewed source-only R217 files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          paths=set(subprocess.check_output([
+            'git','diff','--name-only','e999d669c7536d2192fec7497a1bae0f6b364943','HEAD'
+          ],text=True).splitlines())
+          expected={
+            'scripts/release/r217_validate_owner_r216_receipt.py',
+            'scripts/release/r217_private_storage_policy_shape.py',
+            'tests/world-v2-r18-217-private-storage-policy.test.py',
+            'docs/testing/world-v2-r18-217-storage-policy-shape-owner-checkpoint-2026-11-22.md',
+            '.github/workflows/world-v2-r18-217-private-storage-policy.yml',
+          }
+          assert paths==expected, 'R217_SOURCE_ONLY_SCOPE_CHANGED'
+          PY
+      - name: Compile offline readers and run fictional 83-file tests
+        run: |
+          python3 -m py_compile scripts/release/r217_validate_owner_r216_receipt.py scripts/release/r217_private_storage_policy_shape.py
+          python3 tests/world-v2-r18-217-private-storage-policy.test.py -v
