@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSignedAssetStore} from '../src/SignedAssetUrls.js';
+import {createSignedAssetStore} from '../staging/world-v2-b10-r18-221-signed-asset-revocation-lock/SignedAssetUrlsRevocationCandidate.js';
 
 function deferred(){
  let resolve,reject;
