@@ -1,0 +1,62 @@
+name: World V2 R18-239 Docker 4-byte file header NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-239-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-238-*'
+permissions:
+  contents: read
+jobs:
+  binary-header-only-no-go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Exact four-path scope and AST no-binary-execution gate
+        run: |
+          python3 - <<'PY'
+          import ast,subprocess
+          from pathlib import Path
+          base='47baa412deda90952f27b5a92c936d7a0db3f7b8'
+          changed=set(subprocess.check_output(
+            ['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed=={
+            '.github/workflows/world-v2-r18-239-four-byte-format.yml',
+            'docs/testing/world-v2-r18-239-owner-docker-four-byte-provenance-2026-11-23.md',
+            'scripts/release/r239_owner_docker_four_byte_type.py',
+            'tests/world-v2-r18-239-docker-four-byte.test.py',
+          },'R239_UNAUTHORIZED_SCOPE_CHANGE'
+          s=Path('scripts/release/r239_owner_docker_four_byte_type.py').read_text()
+          tree=ast.parse(s)
+          allowed={'__future__','argparse','hashlib','json','os','pathlib',
+                   'shutil','stat','sys'}
+          for node in ast.walk(tree):
+            if isinstance(node,ast.Import):
+              assert all(alias.name in allowed for alias in node.names),'R239_UNAPPROVED_IMPORT'
+            elif isinstance(node,ast.ImportFrom):
+              assert node.module in allowed,'R239_UNAPPROVED_IMPORT'
+            elif isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute):
+              assert node.func.attr not in ('system','Popen','run','connect',
+                'socket','write_text','write_bytes','apply_migration','execv',
+                'execvp','spawnv','start','stop','remove','unlink'), 'R239_UNAPPROVED_ACTION'
+          for mandatory in (
+             'R238_SHA256="6ff99a2f396d7eb57ffe20847971bd21be9d7d04b086972c0895baae1db88f6f"',
+             'reader(fd,4)','os.O_RDONLY|os.O_CLOEXEC|os.O_NONBLOCK',
+             'O_NOFOLLOW','"decision":"NO_GO"',
+             '"docker_binary_executed":False',
+             '"sql_executed":False',
+             '"sandbox_sql_execution_authorized":False',
+             '"docker_daemon_or_remote_endpoint_contacted":False'
+          ):
+            assert mandatory in s,'R239_MISSING_GUARD'
+          PY
+      - name: Run invented 4-byte and anti-leak tests only
+        run: python3 tests/world-v2-r18-239-docker-four-byte.test.py
+      - name: Syntax check only
+        run: |
+          python3 -m py_compile scripts/release/r239_owner_docker_four_byte_type.py
+          python3 -m py_compile tests/world-v2-r18-239-docker-four-byte.test.py
