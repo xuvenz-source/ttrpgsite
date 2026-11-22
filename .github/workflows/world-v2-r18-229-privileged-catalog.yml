@@ -1,0 +1,39 @@
+name: World V2 R18-229 privileged 67-RPC catalog read-only NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-229-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-228-*'
+permissions:
+  contents: read
+jobs:
+  static-catalog-audit-fail-closed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Never edit active app, Supabase, package or deploy configuration
+        run: git diff --exit-code 35d6b7dbc94b7b44a1a84d7bd20848dded685c7d HEAD -- src/ supabase/ vercel.json package.json package-lock.json
+      - name: Exactly five source-only R229 audit artifacts
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          changed=set(subprocess.check_output(['git','diff','--name-only',
+            '35d6b7dbc94b7b44a1a84d7bd20848dded685c7d','HEAD'],text=True).splitlines())
+          expected={
+            '.github/workflows/world-v2-r18-229-privileged-catalog.yml',
+            'docs/testing/world-v2-r18-229-original-privileged-rpc-catalog-2026-11-22.md',
+            'scripts/release/r229_CURRENT_privileged_rpc_catalog_only.sql',
+            'staging/world-v2-b10-r18-229-privileged-rpc-catalog/manifest.json',
+            'tests/world-v2-r18-229-privileged-catalog-readonly.test.py'
+          }
+          assert changed==expected,'R229_UNREVIEWED_ACTIVE_RELEASE_SCOPE'
+          PY
+      - name: Validate immutable sanitized original catalog footprint and no-go
+        run: python3 tests/world-v2-r18-229-privileged-catalog-readonly.test.py
+      - name: Syntax-check audit-only tests
+        run: python3 -m py_compile tests/world-v2-r18-229-privileged-catalog-readonly.test.py
