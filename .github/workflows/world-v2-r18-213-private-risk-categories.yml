@@ -1,0 +1,39 @@
+name: World V2 R18-213 owner-private risk-class ledger NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-213-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-212-*'
+permissions:
+  contents: read
+jobs:
+  fictional-private-risk-classes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Prohibit app, active migration, Edge or deploy changes
+        run: git diff --exit-code 6d4c5ac9028a999b7a9c1b697a55e9ea25b169ca HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Require exactly four R213 source-only files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          base = '6d4c5ac9028a999b7a9c1b697a55e9ea25b169ca'
+          got = set(subprocess.check_output(
+            ['git', 'diff', '--name-only', base, 'HEAD'], text=True).splitlines())
+          expected = {
+            'scripts/release/r213_private_qa_risk_categories.py',
+            'tests/world-v2-r18-213-private-risk-categories.test.py',
+            'docs/testing/world-v2-r18-213-private-risk-class-ledger-2026-11-22.md',
+            '.github/workflows/world-v2-r18-213-private-risk-categories.yml',
+          }
+          assert got == expected, 'R213_SOURCE_ONLY_SCOPE_MISMATCH'
+          PY
+      - name: Compile owner-only checker and test invented 83-file SQL only
+        run: |
+          python3 -m py_compile scripts/release/r213_private_qa_risk_categories.py
+          python3 tests/world-v2-r18-213-private-risk-categories.test.py -v
