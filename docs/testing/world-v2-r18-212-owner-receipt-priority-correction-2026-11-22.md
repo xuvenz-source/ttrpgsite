@@ -1,0 +1,21 @@
+# R212 — R211 owner-sanitized receipt review and priority-order clarification (NO_GO)
+
+22 November 2026. Source-only child of R211 draft PR #321 exact head `eafc1a42a44a95642303ec5b018833f69f29fc1d`, with **2/2 exact-head GitHub Actions successful** (`44927400163`, `44927400138`). R211 itself remains draft, unmerged and undeployed.
+
+## Receipt accepted, but no semantic approval
+
+The owner returned only `r211-sanitized-report.json`. Its offline private WSL preflight reports **83/83 SHA-reverified original migrations**, distinct chronological migration versions, **937 lexically classified top-level statements**, **0 unknown top-level categories**, **22/83 flagged original migrations**, **182 SECURITY DEFINER lexical definitions**, **12 top-level DO blocks**, **231 CREATE FUNCTION statements**, **104 CREATE POLICY**, **111 GRANT**, **190 REVOKE**, **18 Realtime publication/replica-identity word indicators**, and **3 Storage data-write word indicators**. All are *signals* and lexical counts, not proof of SQL effects, safe dependencies, live access control, executable PostgreSQL plans, or security authorisation. The other 61 migrations have **not** been semantically cleared.
+
+R211's field `first_r111_priority_review_indices_not_chronology` contains the correct **22 numeric R111 docket references**, but its implementation appended risky indices in **timestamp chronology** and returned them without sorting. This creates a misleading impression that the first 24 are always the **highest R111 priorities**. In this specific owner report there were only 22 flagged files, and the truncation flag is false, so all 22 are present; sorting numerically makes their order match the private R111 priority ranks: `1,2,3,4,7,8,12,19,25,29,41,42,43,44,46,47,48,49,50,54,58,61`. These are **not migration timestamp positions** and reveal no migration filename, SQL text, or private docket content. Were R211 to encounter **more than 24** risk-flagged files, its first-24 *selection* could omit top-priority items; reordering a truncated subset would **not** repair this. R212 explicitly refuses to claim full priority selection in that case.
+
+## R212 no-private-source validation
+
+`scripts/release/r212_validate_owner_migration_receipt.py` is a strict, read-only local checker requiring **only** the sanitized R211 JSON, never any of the 83 private files or docket. It rejects extra fields, duplicate JSON keys, boolean-as-integer spoofing, missing NO_GO limitations, false approvals, out-of-bounds or duplicated numeric indices, inconsistent counters and truncated coverage misstatements. The output is bounded to verified count/boolean fields and numeric indices only, always NO_GO. Error handling never quotes user inputs or paths.
+
+CI fabricates its own tiny aggregate reports, does not include or upload the owner's R211 report or SQL, and verifies exact changed-path scope, with no `src/`, active Supabase migrations/functions, Vercel config, production deployment, project mutation or hosted SQL. The owner report has been tested with the R212 source locally by the assistant and validates. The full GitHub Actions proof belongs to the exact R212 head after it completes.
+
+## Release and next gate
+
+Existing isolated QA is still blank (0 public app tables/functions and no migration ledger from earlier read-only check). We have **not** run SQL on QA or the original/production project. Historical SHA, lexical markers and a sanitized receipt cannot justify migration restoration. Next requires **private, source-semantic dependency review**, including function/DO bodies, dependency ordering, Auth/Storage writes, extension/role/publication effects and active security policies. Never export raw private SQL, original filenames/versions, private R111 docket, live function/policy bodies, Auth/campaign rows, JWT, credentials or bearer URLs to GitHub/chat/CI. A future QA SQL write requires **separate explicit owner approval of an exact QA-only plan** and validated target/backup/rollback; generic `Proceed` is not that approval. Production remains NO_GO.
+
+Original security blockers #212/#220/#223/#229/#231/#306, all 67 authenticated-callable privileged function graphs, 83 migration semantic approvals and signed DM/P1/P2/removed/outsider tests remain unresolved. No SQL installation, merge or deployment in R212.
