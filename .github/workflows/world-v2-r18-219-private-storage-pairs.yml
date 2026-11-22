@@ -1,0 +1,40 @@
+name: World V2 R18-219 owner-private Storage policy pair profiles NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-219-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-218-*'
+permissions:
+  contents: read
+jobs:
+  synthetic-private-policy-pair-profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Reject application, active migration, Edge and deployment changes
+        run: git diff --exit-code 5f1ce776bfe6895416fb5a3b92be8c538ddfc753 HEAD -- src/ supabase/migrations/ supabase/functions/ vercel.json
+      - name: Enforce exactly five R219 source-only files
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          actual=set(subprocess.check_output([
+            'git','diff','--name-only','5f1ce776bfe6895416fb5a3b92be8c538ddfc753','HEAD'
+          ],text=True).splitlines())
+          expected={
+            'scripts/release/r219_validate_owner_r218_receipt.py',
+            'scripts/release/r219_private_storage_policy_pair_profiles.py',
+            'tests/world-v2-r18-219-private-storage-policy-pairs.test.py',
+            'docs/testing/world-v2-r18-219-private-storage-pair-profiles-2026-11-22.md',
+            '.github/workflows/world-v2-r18-219-private-storage-pairs.yml',
+          }
+          assert actual==expected, 'R219_UNREVIEWED_SOURCE_SCOPE'
+          PY
+      - name: Compile and run fictional 83-file policy pair profile tests only
+        run: |
+          python3 -m py_compile scripts/release/r219_validate_owner_r218_receipt.py scripts/release/r219_private_storage_policy_pair_profiles.py
+          python3 tests/world-v2-r18-219-private-storage-policy-pairs.test.py -v
