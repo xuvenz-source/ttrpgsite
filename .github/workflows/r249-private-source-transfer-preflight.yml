@@ -1,0 +1,69 @@
+# R249: fictional-data tests only, no real SQL and no private repo checkout.
+name: R249 owner-offline private source candidate fictional tests
+
+on:
+  push:
+    branches:
+      - stage/r249-private-source-transfer-gate-2026-11-23
+    paths:
+      - scripts/release/r249_prepare_private_source_review.py
+      - tests/test_r249_prepare_private_source_review.py
+      - .github/workflows/r249-private-source-transfer-preflight.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: r249-private-candidate-fictional
+  cancel-in-progress: true
+
+jobs:
+  no-real-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout public code only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Confirm no network, command, SQL or private GitHub API imports
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          file = Path('scripts/release/r249_prepare_private_source_review.py')
+          src = file.read_text()
+          tree = ast.parse(src)
+          forbidden = {'subprocess', 'socket', 'urllib', 'requests', 'http', 'ftplib', 'psycopg', 'supabase', 'asyncpg', 'sqlite3'}
+          imports = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  imports.update(a.name.split('.')[0] for a in node.names)
+              elif isinstance(node, ast.ImportFrom) and node.module:
+                  imports.add(node.module.split('.')[0])
+          if imports & forbidden:
+              raise SystemExit('R249 forbidden network/DB/process import')
+          if any(s in src for s in ('os.system(', 'os.popen(', 'eval(', 'exec(')):
+              raise SystemExit('R249 dynamic execution not allowed')
+          print('R249 no network/process/DB import guard PASS')
+          PY
+      - name: Run fabricated-only copy and reject tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -B -m unittest discover -s tests -p 'test_r249_prepare_private_source_review.py' -v
+      - name: Keep release boundaries blocked
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, 'scripts/release')
+          import r249_prepare_private_source_review as r
+          assert r.TARGET == 'xuvenz-source/privttrpg'
+          assert r.EXPECTED_COUNT == 83
+          assert r.MAX_REPORT_BYTES <= 3072
+          print('R249 approved recipient is static-source-review ONLY; no deployment or SQL exec')
+          PY
