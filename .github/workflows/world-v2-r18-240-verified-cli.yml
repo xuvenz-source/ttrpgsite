@@ -1,0 +1,66 @@
+name: World V2 R18-240 verified standalone pinned Supabase CLI recipe NO_GO
+on:
+  push:
+    branches:
+      - 'stage/world-v2-b10-r18-240-*'
+  pull_request:
+    branches:
+      - 'stage/world-v2-b10-r18-239-*'
+permissions:
+  contents: read
+jobs:
+  verified-download-design-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Four source-only files and fail-closed install AST assertions
+        run: |
+          python3 - <<'PY'
+          import ast,subprocess
+          from pathlib import Path
+          base='efabd9da5f72339533bcaa920b35ccc603a26acf'
+          changed=set(subprocess.check_output(
+              ['git','diff','--name-only',base,'HEAD'],text=True).splitlines())
+          assert changed=={
+            '.github/workflows/world-v2-r18-240-verified-cli.yml',
+            'docs/testing/world-v2-r18-240-standalone-cli-pin-2026-11-23.md',
+            'scripts/release/r240_install_verified_standalone_cli.py',
+            'tests/world-v2-r18-240-standalone-cli-release.test.py'
+          }, 'R240_UNAUTHORIZED_SCOPE'
+          source=Path('scripts/release/r240_install_verified_standalone_cli.py').read_text()
+          parsed=ast.parse(source)
+          allowed={'__future__','hashlib','json','os','pathlib','platform',
+                   're','shutil','sys','tarfile','tempfile','urllib.parse','urllib.request'}
+          for node in ast.walk(parsed):
+            if isinstance(node,ast.Import):
+              assert all(alias.name in allowed for alias in node.names),'R240_UNAPPROVED_IMPORT'
+            if isinstance(node,ast.ImportFrom):
+              assert node.module in allowed,'R240_UNAPPROVED_IMPORT'
+            if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute):
+              assert node.func.attr not in (
+                'system','Popen','run','call','check_call','check_output','execv',
+                'spawnv','extractall','extract','apply_migration','db_reset',
+                'init','start','link','chmod_recursive','rmtree'
+              ),'R240_UNAPPROVED_ACTION'
+          for required in (
+            'VERSION="2.81.3"',
+            'api.github.com/repos/supabase/cli/releases/tags/',
+            'browser_download_url',
+            'sha256:[0-9a-f]{64}',
+            'digest.hexdigest()!=asset["digest"]',
+            'item.isfile()',
+            'NO_UNIQUE_ROOT_SUPABASE_BINARY',
+            'DESTINATION_ALREADY_EXISTS_DO_NOT_OVERWRITE',
+            'R240_VERIFIED_STANDALONE_READY'
+          ):
+            assert required in source,'R240_MISSING_GUARD'
+          PY
+      - name: Run only fabricated GitHub metadata and four-byte ELF archive tests
+        run: python3 tests/world-v2-r18-240-standalone-cli-release.test.py
+      - name: Syntax check only (never download or execute CLI)
+        run: |
+          python3 -m py_compile scripts/release/r240_install_verified_standalone_cli.py
+          python3 -m py_compile tests/world-v2-r18-240-standalone-cli-release.test.py
