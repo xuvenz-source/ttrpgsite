@@ -1,0 +1,68 @@
+# R252 tests only fake 83-migration ZIPs; never checkout owner's private repo.
+name: R252 private GitHub ZIP SHA256 fictional-only checks
+
+on:
+  push:
+    branches:
+      - stage/r252-offline-private-github-zip-hash-reconcile-2026-11-23
+    paths:
+      - scripts/release/r252_verify_private_github_zip.py
+      - tests/test_r252_private_github_zip_reconciliation.py
+      - .github/workflows/r252-private-zip-hash-only.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: r252-private-zip-fake
+  cancel-in-progress: true
+
+jobs:
+  invented-archive-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout public fake-test code only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Deny original SQL, database, CLI and network dependencies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          path = Path('scripts/release/r252_verify_private_github_zip.py')
+          source = path.read_text()
+          tree = ast.parse(source)
+          forbidden = {'subprocess','socket','urllib','requests','http','ftplib','psycopg','supabase','asyncpg','sqlite3'}
+          names = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  names.update(a.name.split('.')[0] for a in node.names)
+              if isinstance(node, ast.ImportFrom) and node.module:
+                  names.add(node.module.split('.')[0])
+          assert not (names & forbidden), 'unexpected remote access or DB import'
+          assert not any(s in source for s in ('os.system(', 'os.popen(', 'eval(', 'exec(')), 'dynamic execution'
+          print('R252 source has no process/network/SQL execution dependencies')
+          PY
+      - name: Test nine fabricated owner/ZIP comparisons only
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -B -m unittest discover -s tests -p 'test_r252_private_github_zip_reconciliation.py' -v
+      - name: Audit release invariants
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, 'scripts/release')
+          import r252_verify_private_github_zip as r
+          assert r.COUNT == 83 and r.BYTES == 710102
+          assert r.REPO == 'xuvenz-source/privttrpg'
+          assert r.BRANCH == 'review/original-83-source-2026-11-23'
+          assert r.MAX_REPORT_BYTES <= 2600
+          print('R252 source/docket verification gate remains NO_GO')
+          PY
