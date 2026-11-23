@@ -1,0 +1,266 @@
+# R247-GH: execute only fictional SQL on an isolated, disposable GitHub runner.
+# NEVER check out project sources or load original historical migration data.
+name: R247-GH isolated synthetic SQL and RLS smoke test
+
+on:
+  push:
+    branches:
+      - stage/r247-github-hosted-synthetic-rls-2026-11-23
+    paths:
+      - .github/workflows/r247-github-hosted-synthetic-rls.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: r247-gh-fictional-db
+  cancel-in-progress: false
+
+jobs:
+  fictional-rls-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      SUPABASE_ACCESS_TOKEN: ''
+      SUPABASE_DB_PASSWORD: ''
+      SUPABASE_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Verify no repository checkout, credentials or existing containers
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] || [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error::Cloud credentials must be absent"
+            exit 1
+          fi
+          if [ -e "$HOME/.supabase/access-token" ] || [ -e "$GITHUB_WORKSPACE/supabase/config.toml" ]; then
+            echo "::error::Unexpected checkout or cloud link"
+            exit 1
+          fi
+          docker info >/dev/null
+          if [ -n "$(docker ps -aq)" ]; then
+            echo "::error::Expected a fresh runner without containers"
+            exit 1
+          fi
+          memory_kib="$(awk '/MemTotal:/ {print $2}' /proc/meminfo)"
+          disk_kib="$(df -Pk "$RUNNER_TEMP" | awk 'NR == 2 {print $4}')"
+          if [ "$memory_kib" -lt 7340032 ] || [ "$disk_kib" -lt 9437184 ]; then
+            echo "::error::Insufficient resources for isolated full stack"
+            exit 1
+          fi
+          echo "R247-GH isolated runner preflight PASS"
+
+      - name: Install exact validated Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13
+        with:
+          version: '3.2.0'
+
+      - name: Launch cloud-unlinked scratch stack and test fictional RLS
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          scratch="$RUNNER_TEMP/r247-gh-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          network="r247-gh-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -m 700 "$scratch"
+          cleanup() {
+            original_rc=$?
+            trap - EXIT
+            cleanup_rc=0
+            if [ -f "$scratch/supabase/config.toml" ]; then
+              (cd "$scratch" && supabase --network-id "$network" stop --no-backup >/dev/null 2>&1) || cleanup_rc=1
+            fi
+            leftovers="$(docker ps -aq --filter "network=$network" 2>/dev/null)" || cleanup_rc=1
+            if [ -n "$leftovers" ]; then
+              printf '%s\n' "$leftovers" | xargs -r docker rm -f >/dev/null 2>&1 || cleanup_rc=1
+            fi
+            if docker network inspect "$network" >/dev/null 2>&1; then
+              docker network rm "$network" >/dev/null 2>&1 || cleanup_rc=1
+            fi
+            rm -rf -- "$scratch" || cleanup_rc=1
+            if [ "$cleanup_rc" -ne 0 ]; then
+              echo "::error::Scratch cleanup incomplete"
+              exit 1
+            fi
+            if [ "$original_rc" -eq 0 ]; then
+              echo "R247-GH cleanup PASS"
+            fi
+            exit "$original_rc"
+          }
+          trap cleanup EXIT
+
+          supabase --version
+          supabase --help | grep -q -- '--network-id'
+          supabase start --help | grep -q -- '--exclude'
+
+          docker network create --driver bridge \
+            --opt com.docker.network.bridge.host_binding_ipv4=127.0.0.1 \
+            "$network" >/dev/null
+          binding="$(docker network inspect -f '{{index .Options "com.docker.network.bridge.host_binding_ipv4"}}' "$network")"
+          test "$binding" = "127.0.0.1"
+
+          cd "$scratch"
+          supabase init >/dev/null 2>&1
+          test -f supabase/config.toml
+          if [ -e supabase/.temp/project-ref ] || [ -e supabase/seed.sql ]; then
+            echo "::error::Unexpected linked project or seed file"
+            exit 1
+          fi
+          if [ -d supabase/migrations ] && [ -n "$(find supabase/migrations -type f -print -quit)" ]; then
+            echo "::error::Unexpected historical migrations"
+            exit 1
+          fi
+          if ! supabase --network-id "$network" start \
+            --exclude studio,imgproxy,logflare,vector,supavisor >/dev/null 2>&1; then
+            echo "::error::Scratch startup failed"
+            exit 1
+          fi
+          supabase --network-id "$network" status >/dev/null 2>&1
+
+          # All running containers must belong to our network; all exposed ports
+          # must be bound to loopback; locate the ONE local PostgreSQL container.
+          db_id="$(python3 - "$network" <<'PY'
+          import json
+          import subprocess
+          import sys
+
+          network = sys.argv[1]
+          ids = subprocess.check_output(
+              ["docker", "ps", "-q"], text=True
+          ).split()
+          if not ids:
+              raise SystemExit("No isolated containers")
+          containers = json.loads(subprocess.check_output(
+              ["docker", "inspect", *ids], text=True
+          ))
+          databases = []
+          mapped = 0
+          for container in containers:
+              networks = container.get("NetworkSettings", {}).get("Networks") or {}
+              if network not in networks:
+                  raise SystemExit("Container escaped isolated network")
+              for bindings in (container.get("NetworkSettings", {}).get("Ports") or {}).values():
+                  for item in bindings or []:
+                      if item.get("HostIp") not in ("127.0.0.1", "::1"):
+                          raise SystemExit("Non-loopback port binding")
+                      mapped += 1
+              image = container.get("Config", {}).get("Image") or ""
+              if "supabase/postgres:" in image:
+                  databases.append(container.get("Id", ""))
+          if len(containers) < 3 or mapped < 2 or len(databases) != 1:
+              raise SystemExit("Incomplete local stack or ambiguous database")
+          print(databases[0])
+          PY
+          )"
+          if [ -z "$db_id" ]; then
+            echo "::error::Isolated scratch database could not be selected"
+            exit 1
+          fi
+
+          # Generated fictional-only SQL: no Git checkout, no real migration,
+          # no project identifiers, no user data and no hosted SQL operation.
+          cat > "$scratch/fictional.sql" <<'SQL'
+          BEGIN;
+          CREATE TABLE public.r247_fictional_probe (
+            owner_id uuid NOT NULL,
+            payload text NOT NULL
+          );
+          ALTER TABLE public.r247_fictional_probe ENABLE ROW LEVEL SECURITY;
+          GRANT USAGE ON SCHEMA public TO authenticated, anon;
+          GRANT SELECT, UPDATE ON public.r247_fictional_probe TO authenticated;
+          GRANT SELECT ON public.r247_fictional_probe TO anon;
+          CREATE POLICY r247_owner_select ON public.r247_fictional_probe
+            FOR SELECT TO authenticated
+            USING (owner_id = (SELECT auth.uid()));
+          CREATE POLICY r247_owner_update ON public.r247_fictional_probe
+            FOR UPDATE TO authenticated
+            USING (owner_id = (SELECT auth.uid()))
+            WITH CHECK (owner_id = (SELECT auth.uid()));
+
+          INSERT INTO public.r247_fictional_probe(owner_id, payload) VALUES
+            ('11111111-1111-4111-8111-111111111111', 'fictional-A'),
+            ('22222222-2222-4222-8222-222222222222', 'fictional-B');
+
+          SELECT set_config('request.jwt.claim.sub',
+            '11111111-1111-4111-8111-111111111111', true);
+          SET LOCAL ROLE authenticated;
+          DO $check$
+          DECLARE visible_count integer;
+          DECLARE affected_count integer;
+          BEGIN
+            SELECT count(*) INTO visible_count FROM public.r247_fictional_probe;
+            IF visible_count <> 1 THEN
+              RAISE EXCEPTION 'R247 fictional actor A visibility failed';
+            END IF;
+            UPDATE public.r247_fictional_probe SET payload='forbidden'
+              WHERE owner_id='22222222-2222-4222-8222-222222222222';
+            GET DIAGNOSTICS affected_count = ROW_COUNT;
+            IF affected_count <> 0 THEN
+              RAISE EXCEPTION 'R247 fictional cross-actor UPDATE was permitted';
+            END IF;
+            BEGIN
+              UPDATE public.r247_fictional_probe
+                SET owner_id='22222222-2222-4222-8222-222222222222'
+                WHERE owner_id='11111111-1111-4111-8111-111111111111';
+              RAISE EXCEPTION 'R247 fictional ownership transfer was permitted';
+            EXCEPTION
+              WHEN insufficient_privilege THEN NULL;
+            END;
+          END
+          $check$;
+          RESET ROLE;
+
+          SELECT set_config('request.jwt.claim.sub',
+            '22222222-2222-4222-8222-222222222222', true);
+          SET LOCAL ROLE authenticated;
+          DO $check$
+          DECLARE visible_count integer;
+          BEGIN
+            SELECT count(*) INTO visible_count FROM public.r247_fictional_probe;
+            IF visible_count <> 1 THEN
+              RAISE EXCEPTION 'R247 fictional actor B visibility failed';
+            END IF;
+          END
+          $check$;
+          RESET ROLE;
+
+          SELECT set_config('request.jwt.claim.sub', '', true);
+          SET LOCAL ROLE anon;
+          DO $check$
+          DECLARE visible_count integer;
+          BEGIN
+            SELECT count(*) INTO visible_count FROM public.r247_fictional_probe;
+            IF visible_count <> 0 THEN
+              RAISE EXCEPTION 'R247 fictional anonymous access was permitted';
+            END IF;
+          END
+          $check$;
+          RESET ROLE;
+          ROLLBACK;
+
+          DO $check$
+          BEGIN
+            IF to_regclass('public.r247_fictional_probe') IS NOT NULL THEN
+              RAISE EXCEPTION 'R247 fictional test table persisted after rollback';
+            END IF;
+          END
+          $check$;
+          SQL
+          # Execute inside the uniquely identified local database container:
+          # no host SQL URL, connection string, database password or remote flags.
+          if ! docker exec --user postgres -i "$db_id" \
+            psql -X -q -v ON_ERROR_STOP=1 -U postgres -d postgres \
+            < "$scratch/fictional.sql" >/dev/null; then
+            echo "::error::Fictional-only SQL / RLS isolation probe failed"
+            exit 1
+          fi
+          echo "R247-GH PASS: fictional owner A/B, denied cross-user update, denied ownership change, anonymous denial and transactional rollback"
+          {
+            echo "## R247-GH — synthetic database and RLS test"
+            echo
+            echo "- Fictional SQL executed only inside isolated, cloud-unlinked GitHub runner"
+            echo "- Positive A and B owner access and negative cross-actor/anonymous checks passed"
+            echo "- SQL transaction rolled back and synthetic table absence verified"
+            echo "- No repository checkout, original SQL, real account, hosted Supabase or Vercel changes"
+            echo "- This result does NOT authorize original 83 migrations or any release"
+          } >> "$GITHUB_STEP_SUMMARY"
