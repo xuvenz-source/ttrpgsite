@@ -1,0 +1,68 @@
+# R248 public source-only / fictional-only validation; no owner-private SQL.
+name: R248 owner-private preflight fictional NO_GO tests
+
+on:
+  push:
+    branches:
+      - stage/r248-owner-source-review-preflight-2026-11-23
+    paths:
+      - scripts/release/r248_owner_private_review_preflight.py
+      - tests/test_r248_owner_private_review_preflight.py
+      - .github/workflows/r248-owner-private-preflight.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: r248-fictional-source-preflight
+  cancel-in-progress: true
+
+jobs:
+  fictional-readonly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout public source only (no private repo)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Reject network, shell, SQL or database execution imports
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          source = Path('scripts/release/r248_owner_private_review_preflight.py').read_text()
+          tree = ast.parse(source)
+          forbidden = {'subprocess','socket','urllib','requests','http','ftplib','psycopg','supabase','asyncpg','sqlite3'}
+          imports = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  imports.update(alias.name.split('.')[0] for alias in node.names)
+              elif isinstance(node, ast.ImportFrom) and node.module:
+                  imports.add(node.module.split('.')[0])
+          if imports & forbidden:
+              raise SystemExit('R248 blocked forbidden network/execution dependency')
+          if 'os.system(' in source or 'os.popen(' in source or 'eval(' in source or 'exec(' in source:
+              raise SystemExit('R248 blocked command or dynamic execution')
+          print('R248 import/execution guard PASS')
+          PY
+      - name: Execute nine invented-only security tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -B -m unittest discover -s tests -p 'test_r248_owner_private_review_preflight.py' -v
+      - name: Confirm NO_GO by construction
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, 'scripts/release')
+          import r248_owner_private_review_preflight as gate
+          assert gate.EXPECTED == 83
+          assert gate.MAX_REPORT_BYTES <= 4096
+          assert gate.WORK == 'B10-R18-248'
+          print('R248 source-only NO_GO preflight verification PASS')
+          PY
