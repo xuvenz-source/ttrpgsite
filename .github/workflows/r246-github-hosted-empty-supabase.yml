@@ -1,0 +1,162 @@
+# R246-GH: disposable, cloud-unlinked Supabase bootstrap.
+# This workflow deliberately DOES NOT check out the repository, so it cannot
+# replay Tabletop Forge's historical migrations or read repository SQL/data.
+name: R246-GH isolated empty Supabase startup
+
+on:
+  push:
+    branches:
+      - stage/r246-github-hosted-empty-supabase-2026-11-23
+    paths:
+      - .github/workflows/r246-github-hosted-empty-supabase.yml
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: r246-gh-empty-stack
+  cancel-in-progress: false
+
+jobs:
+  blank-local-stack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      SUPABASE_ACCESS_TOKEN: ''
+      SUPABASE_DB_PASSWORD: ''
+      SUPABASE_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Confirm runner isolation and resources
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker info >/dev/null
+          if [ -n "$(docker ps -aq)" ]; then
+            echo "::error::Expected an empty, fresh Docker runner"
+            exit 1
+          fi
+          memory_kib="$(awk '/MemTotal:/ { print $2 }' /proc/meminfo)"
+          disk_kib="$(df -Pk "$RUNNER_TEMP" | awk 'NR == 2 { print $4 }')"
+          if [ "$memory_kib" -lt 7340032 ] || [ "$disk_kib" -lt 9437184 ]; then
+            echo "::error::Insufficient runner RAM or disk for safe first startup"
+            exit 1
+          fi
+          echo "R246-GH preflight: fresh standard runner, Docker ready, resources sufficient"
+
+      - name: Install exact supported Supabase CLI version
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13
+        with:
+          version: '3.2.0'
+
+      - name: Start empty local stack, validate bindings, and tear down
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          scratch="$RUNNER_TEMP/r246-gh-empty-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          network="r246-gh-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          mkdir -m 700 "$scratch"
+
+          cleanup() {
+            rc=$?
+            trap - EXIT
+            if [ -f "$scratch/supabase/config.toml" ]; then
+              (cd "$scratch" && supabase --network-id "$network" stop --no-backup >/dev/null 2>&1) || true
+            fi
+            docker ps -aq --filter "network=$network" | xargs -r docker rm -f >/dev/null 2>&1 || true
+            docker network rm "$network" >/dev/null 2>&1 || true
+            rm -rf -- "$scratch"
+            exit "$rc"
+          }
+          trap cleanup EXIT
+
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] || [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            echo "::error::Cloud credential environment must be empty"
+            exit 1
+          fi
+          if [ -f "$HOME/.supabase/access-token" ]; then
+            echo "::error::Unexpected stored Supabase credentials"
+            exit 1
+          fi
+
+          # Check actual installed CLI behavior rather than assuming flags.
+          supabase --version
+          supabase --help | grep -q -- '--network-id'
+          supabase start --help | grep -q -- '--exclude'
+
+          docker network create --driver bridge \
+            --opt com.docker.network.bridge.host_binding_ipv4=127.0.0.1 \
+            "$network" >/dev/null
+          binding="$(docker network inspect -f '{{index .Options "com.docker.network.bridge.host_binding_ipv4"}}' "$network")"
+          if [ "$binding" != "127.0.0.1" ]; then
+            echo "::error::Docker network does not enforce default loopback binding"
+            exit 1
+          fi
+
+          cd "$scratch"
+          supabase init >/dev/null 2>&1
+          test -f supabase/config.toml
+          if [ -d supabase/migrations ] && [ -n "$(find supabase/migrations -type f -print -quit)" ]; then
+            echo "::error::Unexpected migration SQL in empty scratch directory"
+            exit 1
+          fi
+          if [ -e supabase/seed.sql ] || [ -e supabase/.temp/project-ref ]; then
+            echo "::error::Unexpected seed or linked-project state"
+            exit 1
+          fi
+
+          # Exclude optional GUI/logging/auxiliary services to fit the standard
+          # free runner. Core DB, API, Auth, Realtime and Storage remain enabled.
+          # Suppress CLI output: local keys/passwords must NEVER enter public logs.
+          if ! supabase --network-id "$network" start \
+            --exclude studio,imgproxy,logflare,vector,supavisor \
+            >/dev/null 2>&1; then
+            echo "::error::Local Supabase startup failed; no cloud operation attempted"
+            exit 1
+          fi
+          if ! supabase --network-id "$network" status >/dev/null 2>&1; then
+            echo "::error::Local Supabase status did not pass"
+            exit 1
+          fi
+
+          # Fail closed if any published Docker port uses non-loopback binding,
+          # or if a created container escaped the intended isolated network.
+          python3 - "$network" <<'PY'
+          import json
+          import subprocess
+          import sys
+
+          network = sys.argv[1]
+          ids = subprocess.check_output(["docker", "ps", "-q"], text=True).split()
+          if not ids:
+              sys.exit("ERROR: no running containers")
+          containers = json.loads(
+              subprocess.check_output(["docker", "inspect", *ids], text=True)
+          )
+          mapped = 0
+          attached = 0
+          for container in containers:
+              nets = container.get("NetworkSettings", {}).get("Networks") or {}
+              if network not in nets:
+                  sys.exit("ERROR: container outside isolated network")
+              attached += 1
+              for bindings in (container.get("NetworkSettings", {}).get("Ports") or {}).values():
+                  for binding in bindings or []:
+                      if binding.get("HostIp") not in ("127.0.0.1", "::1"):
+                          sys.exit("ERROR: non-loopback published port detected")
+                      mapped += 1
+          if attached < 3 or mapped < 2:
+              sys.exit("ERROR: incomplete stack or unverified bindings")
+          print(f"R246-GH PASS: {attached} isolated containers; {mapped} loopback-only published port mappings")
+          PY
+
+          {
+            echo '## R246-GH — isolated empty Supabase startup'
+            echo
+            echo '- Result: PASS (empty GitHub-hosted runner; disposable Docker)'
+            echo '- No checkout, historical migrations, seed data, or Supabase cloud credentials'
+            echo '- All observed published ports bound to loopback'
+            echo '- No hosted QA or production modification'
+            echo '- Stack removed during runner cleanup'
+            echo '- Original local-machine R246 checkpoint is not represented as completed'
+          } >> "$GITHUB_STEP_SUMMARY"
