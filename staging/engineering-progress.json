@@ -1,0 +1,1211 @@
+{
+  "schema": 1,
+  "workflowVersion": "1.1",
+  "workflowApprovedOn": "2026-11-10",
+  "updatedOn": "2026-11-27",
+  "repository": "xuvenz-source/ttrpgsite",
+  "workflowPath": "docs/engineering-workflow.md",
+  "releaseLedgerPath": "staging/next-release-ledger.json",
+  "docsStagingPullRequest": 72,
+  "canonicalProduction": {
+    "mainSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+    "mergedPullRequest": 70,
+    "vercelDeploymentId": "dpl_FNwPjVY7o1781dc8Uo6Eizgf8rb4",
+    "vercelStatus": "READY",
+    "supabaseProjectId": "lwhwgqaunxbmvyndswze",
+    "supabaseStatus": "ACTIVE_HEALTHY",
+    "appliedMigrationCountAtAudit": 83,
+    "verifiedAt": "2026-11-10"
+  },
+  "nextStep": "E04/E05 — active B10 security interruption; forward-only inventory candidate source-equivalence review",
+  "steps": {
+    "A01": {
+      "status": "VERIFIED"
+    },
+    "A02": {
+      "status": "VERIFIED"
+    },
+    "A03": {
+      "status": "STAGED"
+    },
+    "A04": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "pullRequest": 73,
+      "dependsOnPullRequest": 72,
+      "baseSha": "5864e64df1f8c3003e365eeb6282c5200a3a52e8",
+      "acceptanceDocument": "docs/testing/world-v2-authenticated-multiplayer-fixture.md",
+      "manifest": "tests/fixtures/world-v2-multiplayer-manifest.json",
+      "validationTest": "tests/world-v2-multiplayer-manifest.test.mjs",
+      "scenarioCount": 24,
+      "executionStatus": "NOT_RUN",
+      "note": "Documentation/test contract is staged. Existing active test map is not fully configured: fog/collision off, no door/one-way vision/2x2 token. Authenticated browser tests are future A06 work requiring controlled test preparation; do not claim PASS."
+    },
+    "A05": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "pullRequest": 74,
+      "dependsOnPullRequest": 73,
+      "baseSha": "718067e58a252ef9ab98e317b349fb0e77914ca4",
+      "description": "Opt-in bounded trace extensions for first visible local/remote position update, RAF spacing, renderer mounts and sight-recovery diagnostics; no gameplay behavior changes.",
+      "changedImplementationFiles": [
+        "src/engine/v2/WorldTrace.js",
+        "src/engine/v2/WorldRenderer.js",
+        "src/engine/v2/WorldCanvasStack.jsx"
+      ],
+      "documentation": "docs/testing/world-v2-bounded-tracing.md",
+      "regressionTests": [
+        "tests/world-v2-phase1-trace-2026-11-10.test.mjs",
+        "tests/world-v2-real-react-board-drag.test.mjs"
+      ],
+      "measurementsCollected": "NONE — staged instrumentation is not live authenticated user telemetry",
+      "verification": {
+        "referenceImplementationCommit": "8c716305f61c8217c98debd35a2a70d4cfe56ed2",
+        "exactHeadBuildRuns": [
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804010423",
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804000457"
+        ],
+        "status": "SUCCESS",
+        "tests": 772,
+        "failed": 0,
+        "skipped": 0,
+        "includes": "Node trace and headless actual React drag harness; npm audit, Vite build and Deno Edge checks",
+        "excluded": "Real authenticated DM/P1/P2 browser sessions and production latency measurements were not run. A05 stacked PR CodeQL/isolated Postgres checks not independently established on this head."
+      }
+    },
+    "A06": {
+      "status": "BLOCKED",
+      "phase": "Read-only data collection complete; real three-account acceptance unexecuted",
+      "branch": "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "pullRequest": 75,
+      "dependsOnPullRequest": 74,
+      "baselineDocument": "docs/testing/world-v2-a06-live-baseline-2026-11-10.md",
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "evidenceCapturedOn": "2026-11-10T11:22:13Z",
+      "measuredFrom": "Cumulative pg_stat_statements (reset 2026-11-05T09:51:43Z), Vercel/GitHub source-of-truth and live test-campaign read-only inspection",
+      "importantLimitation": "Not p95, not end-to-end browser latency, not necessarily current-release-only data; no authenticated DM/P1/P2 fixture run or A05 diagnostic data",
+      "conditionToVerify": "Designer-authorized deployed A05/integrated QA build, prepared protected fixture, three distinct authenticated DM/P1/P2 sessions, 24 A04 cases with actual p50/p95 and flash/authorization evidence",
+      "observedCalls": {
+        "begin": 250,
+        "advance": 426,
+        "commit": 209,
+        "viewerVisibility": 622
+      },
+      "meanDbMs": {
+        "begin": 24.3,
+        "advance": 53.2,
+        "commit": 135.74,
+        "viewerVisibility": 49.16
+      },
+      "liveBrowserTestStatus": "NOT_RUN",
+      "nextStepRemains": "A06 blocked for authenticated QA; active design-only next microstep B02 is an explicit delegated exception (not Gate A clearance)."
+    },
+    "B01": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-authority-contract-b01-2026-11-10",
+      "basedOnStagingHead": "ba816658ff26a91c4c1563ef99ecb5f243aaa0ad",
+      "designDocument": "docs/architecture/world-v2-authority-contract-b01.md",
+      "scope": "World Engine V2 movement and security protocol contract, state diagrams, grant/recovery rules, and 20 hostile/latency cases; no code or SQL",
+      "designOnly": true,
+      "gateA": "NOT PASSED",
+      "verification": "Source-grounded review against current main V2 JS and migration contracts; document/static review, no real authenticated QA",
+      "next": "B02 design/read-only comparison only",
+      "pullRequest": 76
+    },
+    "B02": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-transport-decision-b02-2026-11-10",
+      "basedOnStagingHead": "f84743986a380e2d6ec5bfda8deea697d7f0e3e1",
+      "designDocument": "docs/architecture/world-v2-transport-evaluation-b02.md",
+      "decision": "SELECT EXISTING SUPABASE RPC WITH ORDERED COALESCING; DEFER DEDICATED EDGE WEBSOCKET",
+      "designOnly": true,
+      "modeledRttMs": [
+        0,
+        100,
+        200
+      ],
+      "scenario": "4 advances to 1 advance, historical SQL means; not measured p95",
+      "verification": "Current production V2 JS/SQL reviewed, project + 83 migrations and historical pg_stat_statements read-only verified, official Free quotas checked; live browser QA NOT RUN",
+      "gateA": "NOT PASSED",
+      "next": "B03 candidate requires Gate A or new documented, staging-only sequencing exception",
+      "pullRequest": 77
+    },
+    "B03": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "basedOnStagingHead": "4401e4d1de36dfd9ca5c8693a16778e64b6ebda4",
+      "sqlCandidate": "supabase/candidates/world_v2_b03_path_validation.sql",
+      "test": "tests/world-v2-b03-path-validator-contract.test.mjs",
+      "designDocument": "docs/architecture/world-v2-b03-path-validation.md",
+      "scope": "Actor-bound, sequence- and revision-scoped, bounded ordered route validation; per-cell swept collision for rigid mixed token/tool groups; private nonapplied SQL candidate only",
+      "verification": "Code/static review and targeted source-contract regression test staged; isolated PostgreSQL execution, privilege validation and authenticated multiplayer acceptance NOT RUN",
+      "sqlStatus": "NOT APPLIED — intentionally outside supabase/migrations",
+      "security": "SECURITY INVOKER, no browser EXECUTE grants, auth.uid session locking and unchanged existing public RPCs",
+      "gateA": "NOT PASSED",
+      "next": "B04 hostile-authority regressions; isolated PostgreSQL compilation required",
+      "pullRequest": 78
+    },
+    "B04": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "basedOnStagingHead": "012a368a1ce62ed21637bee3eb6597b8930336ef",
+      "designDocument": "docs/testing/world-v2-b04-hostile-authority-regression-2026-11-11.md",
+      "postgresWorkflow": ".github/workflows/world-v2-b04-postgres.yml",
+      "tests": [
+        "tests/world-v2-b04-postgres/schema.sql",
+        "tests/world-v2-b04-postgres/extract_real_v2_functions.py",
+        "tests/world-v2-b04-postgres/hostile.sql",
+        "tests/world-v2-b04-postgres/run.sh"
+      ],
+      "scope": "Isolated PostgreSQL 17 tests for B03 private path validator and source-extracted current production public V2 Begin/Advance, including 40 hostile, 16 positive/no-write, 5 metadata/role assertions; 4 extra direct-role checks.",
+      "isolatedPostgresRun": 42824086455,
+      "exactTestSourceSha": "69d8d8bb8c9943f780d27844456e7f3d6bf7fbab",
+      "assertionCount": 61,
+      "assertionFailures": 0,
+      "grantCallChecks": "authenticated/anon denied private; anon denied public; authenticated direct public Begin and Advance verified",
+      "knownGap": "Current public advance_core_v2 caches same-seq reply even when retry payload differs. No new movement or rebroadcast observed, but exact payload denial is not enforced; must remediate before Gate B.",
+      "fixturesLimit": "Membership and auth.uid are isolated test stubs, recipient-private realtime publisher is a test sink, no real Supabase Auth/RLS/LOS or production database; B04 does not prove p95 or live UX.",
+      "verification": "Actual source + isolated SQL, test and documentation head b31f3f10e51fed519ba0e8d21857071484ccf94d: isolated PostgreSQL job #42824746094 SUCCESS (61 assertions, direct role checks); general CI #42824745105 SUCCESS. Subsequent handoff-only JSON updates do not modify SQL/tests; exact final commit CI to recheck. NOT real Supabase Auth/Realtime or live DM/P1/P2.",
+      "security": "B03 candidate unchanged/nonapplied; no live schema/permissions; H39 replay exact-match policy gap explicitly not claimed as denied",
+      "gateA": "NOT PASSED",
+      "next": "B05 subject to Gate A or a new, explicitly recorded staging-only exception",
+      "pullRequest": 79,
+      "latestPassingCISha": "b31f3f10e51fed519ba0e8d21857071484ccf94d",
+      "latestPassingSQLRun": 42824746094,
+      "latestPassingGeneralRun": 42824745105
+    },
+    "B05": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-b05-ordered-coalescing-2026-11-11",
+      "basedOnStagingHead": "53f20ce5bb779092db7c654057270b93e6a8a0e4",
+      "designDocument": "docs/architecture/world-v2-b05-gesture-coalescing.md",
+      "sourceFiles": [
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js"
+      ],
+      "test": "tests/world-v2-b05-ordered-coalescing-2026-11-11.test.mjs",
+      "scope": "Disabled-by-default opt-in coalescing controller; immutable in-flight batch detachment, ordered pending route and 16ms flush, 8000ms bounded RPC deadline; current V2 authority untouched",
+      "mode": "VITE_WORLD_V2_COALESCE_MOTION=1 at authorized build time only; default false",
+      "verification": "Initial exact implementation/test head 927d71a3bc46acb4418c6e7d882ab926e05a1a38 passed CI #42826832604 with 790/790 tests; final metadata-only HEAD CI pending; real DM/P1/P2 QA NOT RUN",
+      "security": "Server-authorized accepted-prefix validation preserved, no speculative geometry, blocked route clears pending, hard local timeout, late responses ignored, DM preview local-only; no SQL/Realtime changes",
+      "knownGap": "B04-H39 cached ACK on altered same-seq payload still a server-side security contract blocker for B08; A06/Gate A not passed",
+      "gateA": "NOT PASSED",
+      "next": "B06 is next design/implementation step; requires another explicit staging-only exception or Gate A",
+      "pullRequest": 80
+    },
+    "B06": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-b06-certified-local-presentation-2026-11-11",
+      "basedOnStagingHead": "62d92eae16fc8b886c8c62f68cd62f0ca356bbb5",
+      "designDocument": "docs/architecture/world-v2-b06-certified-motion-presentation.md",
+      "sourceFiles": [
+        "src/engine/v2/CertifiedMotionPresentation.js",
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "src/engine/v2/WorldRenderer.js"
+      ],
+      "test": "tests/world-v2-b06-certified-local-presentation-2026-11-11.test.mjs",
+      "scope": "Feature-gated, sight-snapshot-bound one-cell local cosmetic motion for ordinary player viewers; strict renderer verification and revocation, no API/SQL changes",
+      "mode": "VITE_WORLD_V2_CERTIFIED_MOTION=1 at explicitly authorized future build time only; default false, DM local path and DM preview unchanged",
+      "verification": "Exact implementation/tests SHA 22faa7dac646459efaafb9443d31af0af3d07bb8 succeeded GitHub CI #42831444455: 803/803 tests, npm audit no vulnerabilities, Vite build and Deno typechecks. Final ledger metadata HEAD recheck pending; real protected multiplayer browser QA NOT RUN.",
+      "security": "Uses only normalized server predictionGrants; requires current scope/viewer/map/scene/permission/visionEpoch/cursor and all selected-piece quadrants, denies >one-cell, resets on server ACK, sight revocation, missing grant, blocked first step, no private geometry, no writes or sockets",
+      "knownGap": "A06/Gate A remain blocked; PR #71 security/recovery amendments pending; B04-H39 altered same-seq public Advance retry returns cached ACK; B07 observer budget and B08–B10 integration not staged",
+      "gateA": "NOT PASSED",
+      "next": "B07 recipient-aware observer frequency/budget; separately authorize any B07 staging or complete Gate A",
+      "pullRequest": 81
+    },
+    "B07": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
+      "basedOnStagingHead": "9aac3b0cfacf3131a5438fc34e8badb31b9b42e7",
+      "designDocument": "docs/architecture/world-v2-b07-private-observer-cadence.md",
+      "sqlCandidate": "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+      "postgresWorkflow": ".github/workflows/world-v2-b07-postgres.yml",
+      "tests": [
+        "tests/world-v2-b07-postgres/schema.sql",
+        "tests/world-v2-b07-postgres/extract_viewer_authority.py",
+        "tests/world-v2-b07-postgres/hostile.sql",
+        "tests/world-v2-b07-postgres/run.sh"
+      ],
+      "scope": "Nonapplied private server-side per-recipient ordered observer queue, 200ms normal coalescing, bounded 64-frame FIFO, 20/s movement broadcasts plus up to 10/s priority hides, private cursor increment on actual send, auth/LOS recheck and expired queue cleanup",
+      "mode": "SQL CANDIDATE NONAPPLIED; active public V2 Advance/Commit/Realtime unchanged until separately reviewed migration/integration",
+      "verification": "Final PR #82 pre-handoff metadata exact source head 254799d5281e6165b9b1fba4186978d029536c59 passed isolated PostgreSQL #42838560260: 35/35 SQL assertions, 2 direct privilege-denial probes, and standard CI #42838547542: 803/803 unit/integration tests, audit zero vulnerabilities, Vite build, critical lint and Deno Edge checks. Nonapplied candidate only; real DM/P1/P2/Auth/Realtme/p95 NOT RUN.",
+      "security": "Only current server-authorized recipient IDs and private LOS-filtered accepted contiguous paths; no client broadcaster, no hidden geometry, no public grants, observer cursor only after successful private send; queued segments retained across Realtime outages and budget throttling.",
+      "knownGaps": [
+        "Terminal flush NOT wired into public commit; requires B08 and must succeed only after canonical commit",
+        "Urgent hide ordering under saturated FIFO and recipient map/fog changes must be tested end-to-end before release",
+        "A06/Gate A real DM/P1/P2 staging fixture, latency p95/flash counts not run",
+        "B04 H39 altered same-sequence payload receives cached prior ACK",
+        "PR #71 observer/recovery amendments still AMEND BEFORE MERGE",
+        "No full Supabase JWT/Realtime LOS integration, free-tier quota or concurrency stress test"
+      ],
+      "gateA": "NOT PASSED",
+      "next": "B08, independently authorized staging-only or complete Gate A",
+      "pullRequest": 82,
+      "latestPassingSourceSha": "254799d5281e6165b9b1fba4186978d029536c59",
+      "latestPassingPostgresRun": 42838560260,
+      "latestPassingStandardRun": 42838547542
+    },
+    "B08": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "stackedOnPullRequest": 82,
+      "sqlCandidate": "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+      "clientFeatureFlag": "VITE_WORLD_V2_COMMIT_RECONCILE=1 (OFF by default)",
+      "testWorkflow": ".github/workflows/world-v2-b08-postgres.yml",
+      "docs": "docs/architecture/world-v2-b08-final-commit-reconciliation.md",
+      "scope": "Source-derived V2 atomic Commit retains checkpoint/locks, exact-batch Advance replay, exact Commit replay, bounded postcommit B07 private drain, one opt-in client retry and uncertain-authority/signed-sight reconciliation.",
+      "statusDetail": "STAGED SOURCE AND TESTS; exact-head CI pending; no live DB or real authenticated DM/P1/P2 QA.",
+      "security": "No new public RPC, private transport topic or grants; generic denial for changed replay; final canonical write independent of private budget; sight authority required for unknown commit.",
+      "knownGaps": [
+        "B07 FIFO hide priority now staged/tested in isolation; real Auth/LOS multi-piece/multi-tab revocation and budget-saturated eventual hiding NOT RUN",
+        "No retry=no guarantee of terminal drain when message budget exhausted; B10 must test eventual resync",
+        "Original isolated fixture does not include full production update triggers/real Auth/LOS or multi-tab Realtime",
+        "A06/Gate A blocked; PR #71 security amendments pending; no real browser p95/map flashing evidence",
+        "A final reviewed migration and integrated SQL + flags release require separate approval"
+      ],
+      "pullRequest": 83,
+      "gateA": "NOT PASSED",
+      "next": "B09 after exact-head CI; no production rollout",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/83",
+      "b07HidePriorityAmendment": "Same nonapplied B07 candidate now prioritizes certified hide ahead of stale queued paths for that piece; tested under 25-point deferred FIFO and exhausted budget. Real end-to-end hiding/sight revocation remains B10 gated."
+    },
+    "B09": {
+      "status": "STAGED",
+      "branch": "stage/world-v2-b09-input-parity-2026-11-11",
+      "basedOnStagingHead": "eb1af274a1be6d0c48233a4d29b73d92c4545967",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "docs": "docs/architecture/world-v2-b09-input-parity.md",
+      "tests": [
+        "tests/world-v2-b09-input-parity-2026-11-11.test.mjs"
+      ],
+      "expectedFiles": [
+        "src/engine/v2/KeyboardStepper.js",
+        "src/engine/v2/InputController.js",
+        "src/engine/v2/WorldV2Board.jsx",
+        "src/engine/v2/PreviewAuthority.js",
+        "tests/world-v2-b09-input-parity-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b09-input-parity.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json",
+        "src/engine/v2/MovementController.js",
+        "tests/world-v2-pointer-keyboard-preview-2026-11-10.test.mjs"
+      ],
+      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene. Certified final endpoint is included for preview returns; queued keys require same canonical endpoint/selection across latest sight to prevent stale snapback.",
+      "mode": "Frontend/testing only; existing B05/B06/B08 opt-in flags unchanged and OFF by default; no Supabase SQL or public endpoint touched.",
+      "verification": "B09 authored 11 deterministic tests including stale-cursor rejection; original keyboard fixture updated to use refreshed canonical endpoint. Final exact PR-head CI pending (prior 816/816 initial source check #42847563283).",
+      "security": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement. Exact previous committed endpoint and unchanged ordered group must match current signed sight before replaying keyboard backlog.",
+      "knownGaps": [
+        "A06/Gate A real authenticated DM+two-player browser parity, fog collision/visibility, mobile touch, multi-tab and p95 tests not run",
+        "PR #71 amendments pending; B07/B08 budgeted observer terminal delivery/LOS integration still unqualified",
+        "B03-B09 source-integration, SQL migration provenance and CodeQL need B10 release review",
+        "No live device, Supabase or production deployment testing in B09; 816 tests are fixture/controlled checks"
+      ],
+      "gateA": "NOT PASSED",
+      "next": "B10 only after designer instruction",
+      "pullRequest": 84,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/84"
+    },
+    "B10": {
+      "status": "BLOCKED",
+      "stageArtifacts": "STAGED",
+      "releaseDecision": "NO_GO",
+      "branch": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "pullRequest": 85,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/85",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "stackedOnPullRequest": 84,
+      "stackedOnHead": "21de65468a013fed7bf59c7803a5089e9b2201b8",
+      "docs": "docs/architecture/world-v2-b10-integrated-release-qualification.md",
+      "machineGate": "staging/world-v2-b10-release-qualification.json",
+      "expectedFiles": [
+        ".github/workflows/codeql.yml",
+        ".github/workflows/verify-staged.yml",
+        ".github/workflows/world-v2-b10-integrated.yml",
+        "package.json",
+        "tests/world-v2-b10-postgres/integrated.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-release-qualification.test.mjs",
+        "docs/architecture/world-v2-b10-integrated-release-qualification.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json",
+        "tests/world-v2-phase3-real-dom.test.mjs"
+      ],
+      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO. Bounded fresh-profile Chromium DevTools startup retry only (no skipped browser assertions).",
+      "checks": {
+        "combinedSql": "PASS: all B03/B07/B08 candidate source-real hostile fixtures plus seven B10 integration assertions in disposable PG17, source run 42852430736",
+        "codeQL": "PASS at earlier B10 source SHA 46c5aa8df, run 42853736555; final exact-head scan pending",
+        "frontend": "Earlier 823-test head had intermittent real Chromium DevTools startup failure; one bounded launch-only retry staged, exact-head CI PENDING",
+        "audit": "0 high vulnerabilities at previous passing standard CI; final exact-head pending",
+        "live": "READ-ONLY PostgreSQL catalog: 83 applied migrations, no B03/B07/B08 installed, B03 uncalled, private schema denied to browser",
+        "realQA": "NOT RUN: A06 authenticated multi-account 24-case matrix, browser p95 and image flash metrics"
+      },
+      "security": "No new direct browser RPC/private schema privileges; PostgreSQL cross-candidate RLS/ACL tests passed isolated. Unresolved branch PR71, masked Realtime budget recovery, and true multi-user LOS remain blockers.",
+      "knownGaps": [
+        "B03 candidate is not called by actual live forge_world_v2.advance_core_v2; separate reviewed integration or retirement decision required",
+        "B07/B08 terminal progress and priority hides lack a guaranteed immediate authorized delivery when all Realtime budget is saturated; no verified new resync trigger",
+        "A06/Gate A 24 real authenticated DM/Player1/Player2 campaign acceptance scenarios and browser p95/map flashing tests NOT RUN",
+        "PR #71 sight continuity and metadata refresh security/recovery amendments are DRAFT/BLOCKED; conflicts with stacked runtime unreviewed",
+        "Forward-only reviewed B03→B07→B08 production migration, failure recovery/rollback and exact combined main+SQL parity NOT PREPARED",
+        "Integrated free-tier Realtime fanout/RAM and real LOS, group 2x2 collision, door, map switch, preview/multi-tab QA unverified",
+        "No designer production release or campaign fixture permission"
+      ],
+      "gateA": "NOT PASSED",
+      "gateB": "NOT PASSED",
+      "noProductionChanges": true,
+      "next": "B10 remains BLOCKED; resolve release blockers and obtain explicit new instruction before continuing to C01 or attempting release",
+      "currentReconciliation": "2026-11-27",
+      "note": "A06/Gate A and Gate B still not qualified; latest movement performance failure recorded in issue #168. Later staged work must be reviewed before release."
+    },
+    "C01": {
+      "status": "NOT STARTED"
+    },
+    "C02": {
+      "status": "NOT STARTED"
+    },
+    "C03": {
+      "status": "NOT STARTED"
+    },
+    "C04": {
+      "status": "NOT STARTED"
+    },
+    "C05": {
+      "status": "NOT STARTED"
+    },
+    "C06": {
+      "status": "NOT STARTED"
+    },
+    "D01": {
+      "status": "NOT STARTED"
+    },
+    "D02": {
+      "status": "NOT STARTED"
+    },
+    "D03": {
+      "status": "NOT STARTED"
+    },
+    "D04": {
+      "status": "NOT STARTED"
+    },
+    "D05": {
+      "status": "NOT STARTED"
+    },
+    "E01": {
+      "status": "NOT STARTED"
+    },
+    "E02": {
+      "status": "NOT STARTED"
+    },
+    "E03": {
+      "status": "NOT STARTED"
+    },
+    "E04": {
+      "status": "IN PROGRESS",
+      "note": "Critical access-control exception to normal order; private evidence retained in restricted review record. No production remediation claimed."
+    },
+    "E05": {
+      "status": "IN PROGRESS",
+      "note": "83-file history recovery/source parity and forward-only migration preparation; full semantic equivalence and recovery acceptance outstanding."
+    },
+    "F01": {
+      "status": "NOT STARTED"
+    },
+    "F02": {
+      "status": "NOT STARTED"
+    },
+    "F03": {
+      "status": "NOT STARTED"
+    }
+  },
+  "handoffs": {
+    "A01": {
+      "status": "VERIFIED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "scope": "Read-only GitHub main, 71 branches, six open PRs, Vercel READY production SHA, 83 applied Supabase migrations, release ledger and test campaign inventory",
+      "evidence": [
+        "https://github.com/xuvenz-source/ttrpgsite/commit/b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+        "https://github.com/xuvenz-source/ttrpgsite/pull/70"
+      ],
+      "noCodeChanges": true,
+      "findings": [
+        "PR #71 is the only open non-Dependabot PR",
+        "Historical ledger stale after PR #53 and prior PR #68 release",
+        "Eight V2 migrations already applied under distinct recorded version numbers",
+        "Issue #69: previously applied historical anon grants migration lacks exact source file"
+      ]
+    },
+    "A02": {
+      "status": "VERIFIED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "reviewedHeadSha": "ae02168387d36c80f13204a4804b6cf765e8d6a5",
+      "pullRequest": 71,
+      "decision": "AMEND BEFORE MERGE",
+      "changedFiles": 6,
+      "additions": 172,
+      "deletions": 7,
+      "ciAtReview": {
+        "codeql": "SUCCESS",
+        "isolatedPostgres": "SUCCESS",
+        "priorBuildAndTest": "SUCCESS",
+        "additionalBuildAndTest": "IN_PROGRESS",
+        "supabasePreview": "SKIPPED"
+      },
+      "releaseBlockingAmendments": [
+        "Add a hard cancellable observer-sight retention deadline covering indefinitely pending RPC and ensure stale in-flight visibility does not block recovery",
+        "While private observer stream is locked, preserve only previously certified rendering and prohibit new movement based on stale authorization",
+        "Add real-renderer edge tests for pending/hanging RPC, bounded retries, permission changes, disconnect, context switching and disposal",
+        "Reconcile only affected token/tool resources on movement commit, not all issued/placed tool data after token-only movement",
+        "Verify all required checks on exact amended PR head, including the previously in-progress run"
+      ],
+      "scope": "Complete six-file PR diff and surrounding WorldV2 runtime, observer transport, visibility, renderer, board and scheduling review",
+      "reviewUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/71",
+      "noCodeChanges": true
+    },
+    "A03": {
+      "status": "STAGED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/engineering-workflow-and-ledger-a03-2026-11-10",
+      "pullRequest": 72,
+      "scope": "Approved 35-step workflow + persistent tracker + documentation-only release ledger reconciliation",
+      "expectedFiles": [
+        "docs/engineering-workflow.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "noRuntimeChanges": true,
+      "noSqlChanges": true,
+      "noDeployment": true,
+      "verification": "Final branch diff / CI to be verified before considering review complete",
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/72"
+    },
+    "A04": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "A04",
+      "baseSha": "5864e64df1f8c3003e365eeb6282c5200a3a52e8",
+      "branch": "stage/world-v2-authenticated-fixture-a04-2026-11-10",
+      "pullRequest": 73,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/73",
+      "stackedOnPullRequest": 72,
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "scope": "Reproducible manual authenticated three-role fixture, 24-case JSON matrix and structural contract test, current test-campaign readiness audit; no live execution or data setup.",
+      "expectedFiles": [
+        "docs/testing/world-v2-authenticated-multiplayer-fixture.md",
+        "tests/fixtures/world-v2-multiplayer-manifest.json",
+        "tests/world-v2-multiplayer-manifest.test.mjs",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": {
+        "readOnlySupabase": "Existing TestCampaign has 1 DM and 8 other members, two maps, five distinct owned token actors; active map has published fog=false and collision=false, one wall, two static lights, zero doors, zero one-way vision barriers and zero 2x2 tokens.",
+        "scenarioCount": 24,
+        "testExecution": "NO AUTHENTICATED MULTIPLAYER BROWSER TEST EXECUTED",
+        "staticValidation": "Two exact-head A04 GitHub staged verification runs succeeded at 718067e58a252ef9ab98e317b349fb0e77914ca4; authenticated test runs NOT RUN."
+      },
+      "securityParity": "No runtime, RLS, Realtime, SQL or auth changes; NPC hiding and RLS remain unchanged.",
+      "sqlDeployment": "NONE",
+      "blockers": [
+        "Live fixture still needs authorized setup before A06 testing",
+        "PR #71 A02 amendments still required",
+        "PR #72 A03 parent is unmerged; PR #73 stacked on it",
+        "Final CI on A04 head must be checked"
+      ],
+      "next": "A05 — Baseline tracing (bounded staging)"
+    },
+    "A05": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "A05",
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "baseSha": "718067e58a252ef9ab98e317b349fb0e77914ca4",
+      "branch": "stage/world-v2-bounded-first-paint-tracing-a05-2026-11-10",
+      "pullRequest": 74,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/74",
+      "stackedOnPullRequest": 73,
+      "scope": "Bounded opt-in trace: local gesture renderer first changed position, authorized remote path first changed position, requestAnimationFrame interval and stalls, actual React renderer mount/unmount; existing RPC/fog/terrain/observer counters preserved.",
+      "expectedFiles": [
+        "src/engine/v2/WorldTrace.js",
+        "src/engine/v2/WorldRenderer.js",
+        "src/engine/v2/WorldCanvasStack.jsx",
+        "tests/world-v2-phase1-trace-2026-11-10.test.mjs",
+        "tests/world-v2-real-react-board-drag.test.mjs",
+        "docs/testing/world-v2-bounded-tracing.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "securityParity": "No user IDs, token IDs, positions or RPC payloads stored; allowlisted constant categories; client-memory-only and opt-in. No change to rendering/sight/collision authority or movement RPC protocol.",
+      "evidence": {
+        "unitTests": "Both exact implementation-head GitHub staged verification runs succeeded at 8c716305..., 772 pass / 0 fail / 0 skip. Includes four new A05 trace checks.",
+        "browserHarness": "Headless Chromium real React board drag passed (owned player, DM, unlocked-editor DM, DM player preview) with opt-in trace assertions. This uses fake authority, NOT authenticated live Supabase.",
+        "authenticatedLiveResults": "NOT RUN",
+        "productionBuild": "Vite build and Deno username Edge Function checks successful; npm audit --omit=dev --audit-level=high found 0 vulnerabilities.",
+        "movementMeasurements": "NOT RUN. A06 to capture DM/P1/P2 actual traces after authorized live testing.",
+        "ciLinks": [
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804010423",
+          "https://github.com/xuvenz-source/ttrpgsite/actions/runs/42804000457"
+        ]
+      },
+      "sqlDeployment": "NONE",
+      "blockers": [
+        "A06 requires real authenticated DM/P1/P2 tests and may require separately approved campaign setup/deployment",
+        "PR #71 A02 permission/recovery security amendments still blocked",
+        "PR #72/#73/#74 are stacked drafts and cannot release independently",
+        "A05 exact head CI and combined release security gate must be checked"
+      ],
+      "next": "A06 — Baseline capture and actual multi-user measurement; read-only/approved QA only"
+    },
+    "A06": {
+      "status": "BLOCKED",
+      "date": "2026-11-10",
+      "step": "A06",
+      "scope": "Read-only production verification, historical SQL RPC latency and database activity, published test-fixture readiness; written evidence only",
+      "branch": "stage/world-v2-a06-readonly-baseline-2026-11-10",
+      "pullRequest": 75,
+      "stackedOnPullRequest": 74,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/75",
+      "productionSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "evidence": {
+        "baselineDocument": "docs/testing/world-v2-a06-live-baseline-2026-11-10.md",
+        "source": "Read-only PostgreSQL pg_stat_statements, pg_stat_user_tables, pg_stat_database, Supabase unified log summary, GitHub and Vercel snapshots",
+        "historicalMeansDbMs": {
+          "begin": 24.3,
+          "advance": 53.2,
+          "commit": 135.74,
+          "viewerVisibility": 49.16
+        },
+        "historicalSlowestDbMs": {
+          "begin": 743.61,
+          "advance": 1534.19,
+          "commit": 2765.8,
+          "viewerVisibility": 1844.02
+        },
+        "statementStatsReset": "2026-11-05 09:51:43 UTC",
+        "limitation": "Cumulative per-statement database execution (not p95/RTT, not user gesture measurement)",
+        "fixture": "TestCampaign has 1 DM/8 other members but active map published automatic fog=false, collision=false, no door, one-way vision or 2×2 token",
+        "actualAuthenticatedBrowserTesting": "NOT RUN; cannot enter user's DM and two separate player browser sessions from the available connector tools",
+        "optInA05DiagnosticsInLive": "NOT DEPLOYED",
+        "currentUserExperience": "Designer earlier reported laggy normal DM/player movement, player-side flashes and fast DM preview; not independently reproduced during A06"
+      },
+      "securityFeatureParity": "Read-only; no change to auth, RLS, fog, movement or observer paths; PR #71 safety blockers remain.",
+      "sqlDeployment": "NONE — no SQL writes, migrations, deployments, fixture data writes or campaign actions.",
+      "blockers": [
+        "A05 performance diagnostics are in draft PR #74, not deployed",
+        "No access to distinct live authenticated DM/P1/P2 browser sessions",
+        "Published test map has fog and collision disabled and lacks door, one-way barrier and 2×2 token",
+        "Must obtain separate designer approval for integrated release and for altering any live test campaign",
+        "PR #71 still blocked by hard observer retention deadline, stream-lock movement gate, renderer/security tests and CI",
+        "Gate A cannot be claimed from historical SQL means and owner's prior subjective reports"
+      ],
+      "next": "A06 remains open: collect live authenticated baseline after explicitly approved setup. Do not start B01 without Gate A or documented designer-approved plan deviation."
+    },
+    "B01": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "B01",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-authority-contract-b01-2026-11-10",
+      "stackedOnPullRequest": 75,
+      "scope": "Document design-only authoritative movement session, bounded ordered waypoint validation, prediction grants, private observer progress, commit/recovery/cancellation, state diagrams and hostile-input matrix.",
+      "expectedFiles": [
+        "docs/architecture/world-v2-authority-contract-b01.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Reviewed live main MovementController, AuthorityClient, PredictionGrants, PreviewAuthority, RealtimeTransport, VisibilityController and V2 SQL migrations; no runtime/SQL test executed.",
+      "securityParity": "Security invariants explicitly preserved; PR #71 independently blocked and A06 authenticated QA NOT RUN.",
+      "sqlDeployment": "NONE",
+      "blockers": [
+        "A06 still BLOCKED and Gate A NOT PASSED",
+        "PR #71 retention/recovery safety fixes outstanding",
+        "B02 must measure and compare transports; no protocol implementation in B01"
+      ],
+      "next": "B02 design/read-only only",
+      "pullRequest": 76,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/76"
+    },
+    "B02": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "B02",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-transport-decision-b02-2026-11-10",
+      "stackedOnPullRequest": 76,
+      "scope": "Compare existing coalesced RPC vs Supabase Edge Function WebSocket authority, source-based tradeoffs, modeled 0/100/200 ms RTT and Realtime quotas, select RPC; documentation only",
+      "expectedFiles": [
+        "docs/architecture/world-v2-transport-evaluation-b02.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Source-checked current V2 authority, GesturePath and private observer SQL; Supabase ACTIVE_HEALTHY, 83 migrations, historical SQL means 24.30/53.20/135.74 ms with 2026-11-05 reset; official free limits; no live testing or prototype deployment.",
+      "securityParity": "Keep server auth.uid/RLS, swept collision, client safe grants and per-viewer private Realtime filtering; no runtime or security change.",
+      "sqlDeployment": "NONE; no live SQL writes, migrations or deployment",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED; real DM/P1/P2 p95 missing",
+        "PR #71 A02 security amendments pending",
+        "Dedicated transport latency gain unmeasured; B03 cannot proceed under current design-only exception without a separate boundary decision"
+      ],
+      "next": "B03 — staged SQL candidate ONLY after Gate A or a newly documented, narrow staging-only sequencing exception",
+      "pullRequest": 77,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/77"
+    },
+    "B03": {
+      "status": "STAGED",
+      "date": "2026-11-10",
+      "step": "B03",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b03-private-path-validation-2026-11-10",
+      "stackedOnPullRequest": 77,
+      "scope": "Staged-only private path validator, static JS contract tests, documentation and release tracking. No public entry point or production DDL.",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b03_path_validation.sql",
+        "tests/world-v2-b03-path-validator-contract.test.mjs",
+        "docs/architecture/world-v2-b03-path-validation.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Reviewed main V2 movement/scene/collision/observer and read-only production Supabase pg_proc; live project ACTIVE_HEALTHY / 83 applied migrations; exact SQL not compiled in Postgres.",
+      "securityParity": "No runtime or grants changed. New helper explicitly binds auth.uid, locked session, permission/map revision and selected immutable footprints; denied blocked-first-cell does not reveal obstacles; oneWay remains vision-only.",
+      "sqlDeployment": "NONE, NONAPPLIED SQL CANDIDATE ONLY",
+      "blockers": [
+        "A06 still BLOCKED / Gate A NOT PASSED",
+        "PR #71 exact security amendments pending",
+        "B04 must compile candidate against isolated real Postgres and run denial/positive and grants tests",
+        "No integrated live performance, security or migration verification"
+      ],
+      "next": "B04 ONLY (separate authorization); no production SQL or release",
+      "pullRequest": 78,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/78"
+    },
+    "B04": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B04",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b04-hostile-authority-tests-2026-11-11",
+      "stackedOnPullRequest": 78,
+      "scope": "Add isolated PostgreSQL 17 CI service and actual V2 source-based hostile-authority regression suite; nonapplied, no runtime changes",
+      "expectedFiles": [
+        ".github/workflows/world-v2-b04-postgres.yml",
+        "tests/world-v2-b04-postgres/schema.sql",
+        "tests/world-v2-b04-postgres/extract_real_v2_functions.py",
+        "tests/world-v2-b04-postgres/hostile.sql",
+        "tests/world-v2-b04-postgres/run.sh",
+        "docs/testing/world-v2-b04-hostile-authority-regression-2026-11-11.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "61 PostgreSQL assertions passed; actual public Begin/Advance source imported; authenticated and anon SQL role invocations exercised; isolated PG run #42824086455 succeeded; role and SQL gaps documented. Exact pre-handoff head b31f3f10e51fed519ba0e8d21857071484ccf94d passed both isolated SQL CI #42824746094 and standard CI #42824745105.",
+      "securityParity": "B03 SQL private candidate compiles under real Postgres; bearer actor, session expiry, stale generation, wall, door, group and grants tested. H39 public altered payload same-seq replies cached ACK, no extra movement/broadcast; fails strict same-payload denial until hardening.",
+      "sqlDeployment": "NONE; B04 ephemeral PostgreSQL ONLY; no production DB writes",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED and real DM/P1/P2 QA unavailable",
+        "B04-H39 existing advance_core_v2 altered same-seq replay not denied (must fix before B10/Gate B)",
+        "PR #71 security/recovery amendments remain pending",
+        "Real Supabase Auth, PostgREST JWT, private LOS observer and commit checkpoint integration not exercised in isolated fixture",
+        "No free-tier headroom / browser p95 proof"
+      ],
+      "next": "B05 only, with explicit Gate A completion or separately recorded staging-only sequencing decision; no production release",
+      "pullRequest": 79,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/79",
+      "ciEvidence": {
+        "testedSha": "b31f3f10e51fed519ba0e8d21857071484ccf94d",
+        "isolatedSqlRun": 42824746094,
+        "standardRun": 42824745105,
+        "conclusion": "SUCCESS",
+        "headClassification": "pre-handoff metadata update"
+      }
+    },
+    "B05": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B05",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b05-ordered-coalescing-2026-11-11",
+      "stackedOnPullRequest": 79,
+      "scope": "Feature-gated immutable bounded V2 gesture queue and finite local authority deadline; 13 deterministic controller tests; documentation and ledger only",
+      "expectedFiles": [
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "tests/world-v2-b05-ordered-coalescing-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b05-gesture-coalescing.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "13 deterministic behavior tests passed in standard GitHub CI #42826832604 at 927d71a3bc46acb4418c6e7d882ab926e05a1a38; total 790 tests, 0 failures, Vite build, lint and Deno typechecks success. No real authenticated live QA.",
+      "securityParity": "Legacy code path default; new opt-in never broadcasts client paths or grants arbitrary movement; canonical SQL unchanged; per-advance seq validated and bounded with local deadline.",
+      "sqlDeployment": "NONE; no SQL/Edge applies, Vercel deployments, campaign writes, merges, public grants",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED",
+        "PR #71 AMEND BEFORE MERGE",
+        "B04-H39 existing altered same-sequence replay not rejected by public RPC",
+        "B06 certified rendering and B07 observer budget not yet built",
+        "Real 3-account DM/P1/P2 browser latency and flash measurements unavailable"
+      ],
+      "next": "B06 ONLY (fresh sequencing authorization while Gate A blocked); separate review required before enabling flag or merging",
+      "pullRequest": 80,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/80"
+    },
+    "B06": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B06",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b06-certified-local-presentation-2026-11-11",
+      "stackedOnPullRequest": 80,
+      "scope": "Server-issued one-cell viewer predictions become first-class, per-frame-scoped cosmetic certificates; controller and renderer revalidate grants and discard on refreshed sight/blocked ACK; disabled by default",
+      "expectedFiles": [
+        "src/engine/v2/CertifiedMotionPresentation.js",
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "src/engine/v2/WorldRenderer.js",
+        "tests/world-v2-b06-certified-local-presentation-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b06-certified-motion-presentation.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "13 B06 deterministic tests + 790 prior tests succeeded (803/803) on #42831444455, tested head 22faa7dac646459efaafb9443d31af0af3d07bb8. No live DM/P1/P2 simulation or true networking; exact final PR head CI to be verified.",
+      "securityParity": "No new grants, no hidden geometry; all group members require existing signed current safe-quadrant grant, renderer rechecks active sight each paint event and revokes stale predicted position. DM fallback unchanged.",
+      "sqlDeployment": "NONE; no SQL/Edge applies, no Vercel deployment, no migrations, no PR merge",
+      "blockers": [
+        "A06 BLOCKED / Gate A NOT PASSED; real protected DM/P1/P2 test not run",
+        "PR #71 AMEND BEFORE MERGE",
+        "B04-H39 existing public RPC exact altered-payload replay not denied",
+        "B07 recipient emission budget and B08–B10 integration unverified",
+        "No measured E2E p95 or player map flash/terrain/sprite remount evidence on staging production"
+      ],
+      "next": "B07 ONLY with new narrow staging authorization or Gate A completion; flag OFF until approved QA build",
+      "pullRequest": 81,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/81"
+    },
+    "B07": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B07",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b07-recipient-observer-budget-2026-11-11",
+      "stackedOnPullRequest": 81,
+      "scope": "Stage original V2 private per-viewer LOS publisher with bounded recipient message queue/transactional budget and isolated source-real PostgreSQL acceptance, no live schema or runtime activation",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b07_private_observer_budget.sql",
+        ".github/workflows/world-v2-b07-postgres.yml",
+        "tests/world-v2-b07-postgres/schema.sql",
+        "tests/world-v2-b07-postgres/extract_viewer_authority.py",
+        "tests/world-v2-b07-postgres/hostile.sql",
+        "tests/world-v2-b07-postgres/run.sh",
+        "docs/architecture/world-v2-b07-private-observer-cadence.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "Isolated PostgreSQL 17 PG #42837859102 at b5eaf6f9a6a11730120db1f708881db036ed312a: 35 passed SQL assertions, anon+authenticated denied direct private helper. Full standard CI #42837858900: 803/803 tests, 0 dependency vulnerabilities, Vite build and Deno checks succeeded. Exact source/PR head 254799d5281e6165b9b1fba4186978d029536c59 after PR registration passed PG #42838560260 and standard CI #42838547542. Final future metadata-only CI separately required if SHA changes.",
+      "securityParity": "Verifies source-real viewer_on_map/observer_path_status (controlled deeper LOS fixture), private topics, monotonic per-recipient cursors, no duplicate sends, no unseen route leak, abort/ACL revocation, global budget and overflow FIFO preserving accepted segments. No live Auth/fog or performance certification.",
+      "sqlDeployment": "NONE — candidate outside migration discovery; no production SQL",
+      "blockers": [
+        "Gate A NOT PASSED; A06 BLOCKED",
+        "B08 post-commit terminal flush is not wired into public API; integration/release blocker",
+        "Priority hide delayed behind saturated FIFO requires B08/B10 adversarial acceptance",
+        "B04 H39 current public Advance same-seq changed payload not denied",
+        "PR #71 security/recovery amendment blockers",
+        "Real DM/P1/P2 protected sight, end-to-end p95, flashing and Realtime quota measurements not run"
+      ],
+      "next": "B08 ONLY, with separate staging-only instruction or successful Gate A",
+      "pullRequest": 82,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/82",
+      "ciEvidence": {
+        "testedSha": "254799d5281e6165b9b1fba4186978d029536c59",
+        "sqlRun": 42838560260,
+        "standardRun": 42838547542,
+        "sqlAssertions": 35,
+        "deniedRoles": 2,
+        "frontendTests": 803,
+        "conclusion": "SUCCESS",
+        "note": "pre-handoff metadata-only update"
+      }
+    },
+    "B08": {
+      "status": "STAGED",
+      "date": "2026-11-11",
+      "step": "B08",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b08-final-commit-reconciliation-2026-11-11",
+      "stackedOnPullRequest": 82,
+      "scope": "Source-derived V2 atomic Commit retains checkpoint/locks, exact-batch Advance replay, exact Commit replay, bounded postcommit B07 private drain, one opt-in client retry and uncertain-authority/signed-sight reconciliation.",
+      "expectedFiles": [
+        "supabase/candidates/world_v2_b08_commit_reconciliation.sql",
+        ".github/workflows/world-v2-b08-postgres.yml",
+        "tests/world-v2-b08-postgres/schema.sql",
+        "tests/world-v2-b08-postgres/hostile.sql",
+        "tests/world-v2-b08-postgres/run.sh",
+        "tests/world-v2-b08-final-commit-2026-11-11.test.mjs",
+        "src/engine/v2/AuthorityClient.js",
+        "src/engine/v2/MovementController.js",
+        "src/engine/v2/WorldV2TabletopRuntime.js",
+        "src/engine/v2/WorldRenderer.js",
+        "docs/architecture/world-v2-b08-final-commit-reconciliation.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json"
+      ],
+      "evidence": "B08 source-real PG17 tested, including exact Advance+Commit replay, real canonical write, budget outage and saturated FIFO hide preemption at #42845242094; source/final PR head CI pending. See PR #83.",
+      "securityParity": "No new public RPC, private transport topic or grants; generic denial for changed replay; final canonical write independent of private budget; sight authority required for unknown commit.",
+      "sqlDeployment": "NONE — candidate only in supabase/candidates, no migration, no production apply",
+      "blockers": [
+        "B07 FIFO hide priority now staged/tested in isolation; real Auth/LOS multi-piece/multi-tab revocation and budget-saturated eventual hiding NOT RUN",
+        "No retry=no guarantee of terminal drain when message budget exhausted; B10 must test eventual resync",
+        "Original isolated fixture does not include full production update triggers/real Auth/LOS or multi-tab Realtime",
+        "A06/Gate A blocked; PR #71 security amendments pending; no real browser p95/map flashing evidence",
+        "A final reviewed migration and integrated SQL + flags release require separate approval"
+      ],
+      "next": "B09 subject to B08 exact-head CI",
+      "pullRequest": 83,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/83"
+    },
+    "B09": {
+      "date": "2026-11-11",
+      "step": "B09",
+      "status": "STAGED",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "branch": "stage/world-v2-b09-input-parity-2026-11-11",
+      "stackedOnPullRequest": 83,
+      "scope": "One V2 gesture authority for fast keyboard, primary touch/multitouch cancellation, all-or-none selected group and nonpersistent player preview. Fails closed on stale/ambiguous commits, failed sight refresh and old scene. Certified final endpoint is included for preview returns; queued keys require same canonical endpoint/selection across latest sight to prevent stale snapback.",
+      "expectedFiles": [
+        "src/engine/v2/KeyboardStepper.js",
+        "src/engine/v2/InputController.js",
+        "src/engine/v2/WorldV2Board.jsx",
+        "src/engine/v2/PreviewAuthority.js",
+        "tests/world-v2-b09-input-parity-2026-11-11.test.mjs",
+        "docs/architecture/world-v2-b09-input-parity.md",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json",
+        "src/engine/v2/MovementController.js",
+        "tests/world-v2-pointer-keyboard-preview-2026-11-10.test.mjs"
+      ],
+      "evidence": "B09 authored 11 deterministic tests including stale-cursor rejection; original keyboard fixture updated to use refreshed canonical endpoint. Final exact PR-head CI pending (prior 816/816 initial source check #42847563283).",
+      "securityParity": "Queue refuses stale runtime/denied commit; mixed group never silently truncated; preview rejects forged from-coordinate/scene revision and cannot persist. Current signed roster and server RPCs still gate actual movement. Exact previous committed endpoint and unchanged ordered group must match current signed sight before replaying keyboard backlog.",
+      "sqlDeployment": "NONE — frontend/tests only; no SQL/migrations/Edge/production",
+      "blockers": [
+        "A06/Gate A real authenticated DM+two-player browser parity, fog collision/visibility, mobile touch, multi-tab and p95 tests not run",
+        "PR #71 amendments pending; B07/B08 budgeted observer terminal delivery/LOS integration still unqualified",
+        "B03-B09 source-integration, SQL migration provenance and CodeQL need B10 release review",
+        "No live device, Supabase or production deployment testing in B09; 816 tests are fixture/controlled checks"
+      ],
+      "next": "B10 only",
+      "pullRequest": 84,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/84"
+    },
+    "B10": {
+      "step": "B10",
+      "date": "2026-11-11",
+      "status": "BLOCKED — stage integration completed, release NO-GO",
+      "branch": "stage/world-v2-b10-integrated-release-qualification-2026-11-11",
+      "baseSha": "b246b3a72537b53b2afc2a9a38cbe1db3609a8af",
+      "pullRequest": 85,
+      "prUrl": "https://github.com/xuvenz-source/ttrpgsite/pull/85",
+      "parentPullRequest": 84,
+      "exactParentHead": "21de65468a013fed7bf59c7803a5089e9b2201b8",
+      "scope": "B03–B09 cross-layer qualification: disposable combined SQL/hostile role tests; security-extended CodeQL on B10; same full npm test including Chromium in serial; mapped 24-case real Auth acceptance and release/migration safety NO-GO. Bounded fresh-profile Chromium DevTools startup retry only (no skipped browser assertions).",
+      "expectedFiles": [
+        ".github/workflows/codeql.yml",
+        ".github/workflows/verify-staged.yml",
+        ".github/workflows/world-v2-b10-integrated.yml",
+        "package.json",
+        "tests/world-v2-b10-postgres/integrated.sql",
+        "tests/world-v2-b10-postgres/run.sh",
+        "tests/world-v2-b10-release-qualification.test.mjs",
+        "docs/architecture/world-v2-b10-integrated-release-qualification.md",
+        "staging/world-v2-b10-release-qualification.json",
+        "staging/engineering-progress.json",
+        "staging/next-release-ledger.json",
+        "tests/world-v2-phase3-real-dom.test.mjs"
+      ],
+      "evidence": "Source-real combined PG17 and CodeQL previously passed; final B10 head still pending full unskipped npm test with bounded Chrome startup retry. Authenticated 24-case matrix NOT RUN.",
+      "securityParity": "No new direct browser RPC/private schema privileges; PostgreSQL cross-candidate RLS/ACL tests passed isolated. Unresolved branch PR71, masked Realtime budget recovery, and true multi-user LOS remain blockers.",
+      "sqlDeployment": "NONE — no B03/B07/B08 source candidates applied and no production migration file or live feature flag",
+      "blockers": [
+        "B03 candidate is not called by actual live forge_world_v2.advance_core_v2; separate reviewed integration or retirement decision required",
+        "B07/B08 terminal progress and priority hides lack a guaranteed immediate authorized delivery when all Realtime budget is saturated; no verified new resync trigger",
+        "A06/Gate A 24 real authenticated DM/Player1/Player2 campaign acceptance scenarios and browser p95/map flashing tests NOT RUN",
+        "PR #71 sight continuity and metadata refresh security/recovery amendments are DRAFT/BLOCKED; conflicts with stacked runtime unreviewed",
+        "Forward-only reviewed B03→B07→B08 production migration, failure recovery/rollback and exact combined main+SQL parity NOT PREPARED",
+        "Integrated free-tier Realtime fanout/RAM and real LOS, group 2x2 collision, door, map switch, preview/multi-tab QA unverified",
+        "No designer production release or campaign fixture permission"
+      ],
+      "releaseDecision": "NO_GO",
+      "next": "B10 remediation with new designer instruction; gate B blocked; do not start C01 or production release automatically"
+    }
+  },
+  "pendingWork": [
+    {
+      "id": "PR71-A02",
+      "pr": 71,
+      "category": "movement-security",
+      "status": "BLOCKED",
+      "decision": "AMEND BEFORE MERGE",
+      "ownerStep": "A02-review-followup",
+      "notes": "Do not silently merge PR #71 during A03 or A04; require distinct authorization for amendments and a future release."
+    },
+    {
+      "id": "ISSUE69",
+      "issue": 69,
+      "category": "migration-provenance",
+      "status": "OPEN",
+      "ownerStep": "E05",
+      "notes": "Applied migration version 20261107051546 has no exact matching SQL source on main; documentation/provenance only until dedicated E05. Never reapply it."
+    },
+    {
+      "id": "GATE-A",
+      "category": "acceptance",
+      "status": "NOT STARTED",
+      "notes": "Authenticated DM/player browser movement/fog regression and measured baseline remain outstanding; CI does not prove live gameplay quality."
+    },
+    {
+      "id": "A04-FIXTURE-SETUP",
+      "category": "QA",
+      "status": "NOT_RUN",
+      "ownerStep": "A06",
+      "notes": "Fixture spec only; do not claim live 3-account acceptance. Before running, use approved test campaign to configure published fog/collision, door, one-way vision wall, 2x2 footprint, NPC LOS, torch and map switch, without any unapproved database writes."
+    },
+    {
+      "id": "A05-LIVE-BASELINE",
+      "status": "NOT_RUN",
+      "category": "QA",
+      "ownerStep": "A06",
+      "notes": "A05 traces are staged only. Need approved release/testing context and three independently authenticated DM/P1/P2 sessions to gather real end-to-end latency and flash counts. Do not treat CI fixture as live QA."
+    },
+    {
+      "id": "A06-AUTH-BROWSER-BASELINE",
+      "category": "QA",
+      "status": "BLOCKED",
+      "ownerStep": "A06",
+      "notes": "Live 24-case A04 browser QA cannot run with current tools, non-deployed A05 telemetry and incomplete protected map setup. Need explicit designer release/fixture approval and 3 authenticated independent sessions. No further work promised asynchronously."
+    },
+    {
+      "id": "B02-TRANSPORT-DECISION",
+      "category": "architecture",
+      "status": "STAGED",
+      "ownerStep": "B02",
+      "notes": "Select the existing Supabase RPC coalescing protocol, retain private server-authorized progress. No dedicated WebSocket service. Design/estimates only: A06 Gate A remains NOT PASSED."
+    },
+    {
+      "id": "B03-SQL-COMPILATION-AND-PRIVILEGES",
+      "category": "security-validation",
+      "status": "NOT STARTED",
+      "ownerStep": "B04",
+      "notes": "B03 new private SECURITY INVOKER candidate is outside migrations, NOT INSTALLED; real PG compilation, permission audits and transaction-safe positive/negative testing are required before wiring into advance_core_v2."
+    },
+    {
+      "id": "B04-H39-EXACT-PAYLOAD-REPLAY",
+      "category": "security-contract",
+      "status": "STAGED_CANDIDATE_NOT_RELEASED",
+      "ownerStep": "B08",
+      "notes": "B08 nonapplied candidate binds same-seq replay to exact Advance payload; source-real isolated PG/CI still require verification and B10 integrated qualification. Not fixed in production."
+    },
+    {
+      "id": "B07-TERMINAL-FLUSH-B08",
+      "category": "security-integration",
+      "status": "STAGED_CANDIDATE_NOT_RELEASED",
+      "ownerStep": "B08",
+      "notes": "B08 candidate invokes bounded recipient FIFO drain only after atomic Commit; exact-ACK replay reattempts, but no guaranteed drain without future authorized RPC/canonical sight when quota exhausted. B10 gate; candidate nonapplied."
+    },
+    {
+      "id": "B07-HIDE-PRIORITY-B08",
+      "category": "security-integration",
+      "status": "STAGED_CANDIDATE_NOT_RELEASED",
+      "ownerStep": "B08",
+      "notes": "B08 amends nonapplied B07 queue for urgent hide preemption and removal of all same-piece unsent paths, isolated PostgreSQL P11/H07/P12 tests passed #42845242094. Still requires real multi-user LOS/revoke tests and priority budget eventual-delivery/resync in B10; no production fix."
+    },
+    {
+      "id": "B09-AUTHENTICATED-INPUT-PARITY",
+      "category": "B10-release-acceptance",
+      "status": "BLOCKED",
+      "ownerStep": "B10",
+      "notes": "B09 controlled unit tests show parity/guarding, but real DM/P1/P2 group, touch/pinch, keyboard on focus, player preview and collision/fog must be run and timed. A06/Gate A blocked. No live activation."
+    },
+    {
+      "id": "B10-B03-AUTHORITY-WIRING",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "B03 private validator absent from actual advance_core_v2; choose audited secure integration or remove redundant candidate and demonstrate equivalent path validation under test."
+    },
+    {
+      "id": "B10-OBSERVER-TERMINAL-RECOVERY",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "Under exhausted Realtime/hide budget and no actor retry, observers can stay stale; require safe authorization-triggered resync and adversarial multi-tab tests."
+    },
+    {
+      "id": "B10-PR71-RECONCILIATION",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "PR #71 still draft with outstanding viewer scope/lock deadline/metadata safety amendments. Analyze conflicts on WorldV2TabletopRuntime and WorldTrace before any combined merge."
+    },
+    {
+      "id": "B10-AUTHENTICATED-QA",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "A06 fixture must be populated with proper fog/collision/door, 2x2, held tool and hidden NPC under consent; run all 24 DM/P1/P2 scenarios with sanitized trace p50/p95."
+    },
+    {
+      "id": "B10-FORWARD-MIGRATION",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "Package valid forward-only B03/B07/B08 migration in safe order, verify installed function signatures/RLS/grants and recovery strategy; no SQL apply without release approval."
+    },
+    {
+      "id": "B10-FREE-TIER-SECURITY",
+      "status": "BLOCKED",
+      "ownerStep": "B10-remediation",
+      "category": "release-gate",
+      "notes": "Audit Realtime billed fanout and 67 project-wide executable SECURITY DEFINER advisor warnings individually; do not blindly revoke legitimate V2 RPCs."
+    }
+  ],
+  "sourceOfTruthRules": [
+    "Current GitHub main + Vercel production deployment metadata determine served frontend SHA; release ledger is an auditable record, not a substitute for verification.",
+    "Supabase actual applied migration history is authoritative for applied SQL; repository source filename timestamps can differ from applied version numbers.",
+    "Open and draft PRs are unmerged staging work. Historical diverged branches are not automatically outstanding work; inspect PR/merge ancestry and semantic diff.",
+    "Progress STAGED means changes exist in a draft PR only; future chats must load PR #72 head until approved merge.",
+    "No deployment, SQL, Vercel setting or Supabase mutation without explicit designer release approval.",
+    "The currentReconciliation overlay supersedes stale snapshot statements for known GitHub facts only. Recheck actual deployed state and all staged dependencies before release."
+  ],
+  "planDeviations": [
+    {
+      "id": "B01-EARLY-DESIGN-2026-11-10",
+      "approvedOn": "2026-11-10",
+      "authority": "Designer delegated free-tier engineering decisions; lead developer accepts a B01 design-only sequencing exception",
+      "appliesTo": "B01 design and B02 transport design only; no production release",
+      "rationale": "A06 is blocked by unavailable DM/P1/P2 browser access and undeployed A05 telemetry. A non-executable movement/security protocol can be reviewed while authenticated baseline awaits a suitable test session.",
+      "constraints": [
+        "A06 remains BLOCKED and Gate A NOT PASSED",
+        "No production merge/deployment, SQL/Edge apply, campaign changes or PR #71 merge under this exception",
+        "No movement runtime B03-B10 release until the real protected multiplayer fixture is verified"
+      ]
+    },
+    {
+      "id": "B03-ONLY-STAGING-SQL-CANDIDATE-2026-11-10",
+      "approvedOn": "2026-11-10",
+      "authority": "Designer explicitly instructed 'Proceed with B03' after delegating free-tier engineering decisions",
+      "appliesTo": "B03 only: create nonapplied private SQL candidate, static contracts, docs and staging records",
+      "rationale": "Existing Gate A live three-account fixture remains inaccessible; a private, noninstalled SQL candidate can be audited without affecting live user movement or authorization.",
+      "constraints": [
+        "A06 BLOCKED and Gate A NOT PASSED; this is not a blanket B03–B10 release waiver",
+        "Candidate must stay outside deployed migration directory with no new public grants; no live SQL/Edge changes or test campaign edits",
+        "No PR merge/production deploy under this exception",
+        "Actual isolated PostgreSQL compilation, role-adversarial tests and full integration remain B04/B10 blockers"
+      ]
+    },
+    {
+      "id": "B04-ISOLATED-SQL-REGRESSION-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly directed 'Please proceed with B04' after B03 staging; staging-only delegated engineering execution",
+      "appliesTo": "B04 hostile-authority regression SQL fixture, CI, documentation, and persistent release records only",
+      "rationale": "An ephemeral PostgreSQL 17 CI database enables direct verified SQL function and role checks while A06 live DM/P1/P2 browser gate remains blocked; this safe test work does not affect production gameplay.",
+      "constraints": [
+        "A06 BLOCKED / Gate A NOT PASSED; staging-only testing is not a waiver of production release qualification",
+        "No live Supabase SQL operations, public grants, campaign changes, Vercel/Edge deploy or PR merge",
+        "All fixture database roles, passwords, and private observer sink exist only in disposable GitHub Actions PostgreSQL",
+        "A discovered same-seq altered replay returns cached ACK rather than denial; carry blocker to B08/B10; don't claim complete security certification"
+      ]
+    },
+    {
+      "id": "B05-STAGING-ONLY-FRONTEND-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly instructed 'Proceed with B05' with previous authority delegated for free-tier engineering",
+      "appliesTo": "B05 opt-in, disabled-by-default frontend queue coalescing, deterministic tests and documentation only",
+      "rationale": "Safe, reviewable staging implementation can address a real race in the in-flight gesture queue without enabling changes for players while A06/Gate A awaits authenticated live browser QA.",
+      "constraints": [
+        "A06 remains BLOCKED and Gate A NOT PASSED",
+        "No live production release, SQL/migration/Edge apply, public grants or campaign changes",
+        "B05 coalescing flag disabled by default; separate release authorization required before enabling QA/production build",
+        "No B06 implementation or Gate B waiver under this microstep",
+        "B04 H39 altered same-sequence replay remains a release security blocker"
+      ]
+    },
+    {
+      "id": "B06-STAGING-ONLY-CERTIFIED-PRESENTATION-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly instructed 'Proceed with B06'; delegated lead engineering under existing staged-only workflow",
+      "appliesTo": "B06 only: disabled-by-default client-sprite presentation using existing server-issued private one-cell prediction grants, deterministic security tests, documentation and ledgers",
+      "rationale": "Safe reviewable client-only feature can be staged and tested while A06 protected DM/P1/P2 browser fixture remains unavailable; no real server authority or production behavior is changed.",
+      "constraints": [
+        "A06 remains BLOCKED and Gate A NOT PASSED",
+        "B06 flag OFF by default; no live Vercel flags, DNS, SQL/Edge migrations, public grants, campaigns, deployment or merge",
+        "Do not stage B07 or assume Gate B passage from deterministic CI",
+        "Keep B04-H39 altered same-sequence replay as security blocker; PR #71 still AMEND BEFORE MERGE",
+        "No live p95, fog exposure or real authenticated three-account UX claims"
+      ]
+    },
+    {
+      "id": "B07-PRIVATE-OBSERVER-STAGING-ONLY-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly said 'Alright proceed' immediately after B06 handoff naming B07 as the next step",
+      "appliesTo": "B07 only: nonapplied private recipient observer coalescing SQL candidate, isolated PostgreSQL role/traffic tests, documentation and engineering ledgers",
+      "rationale": "A private, server-filtered and bounded staging candidate can be tested against source-real SQL without deploying or changing live campaign state while A06 authenticated three-account Gate A remains blocked.",
+      "constraints": [
+        "A06 BLOCKED, Gate A NOT PASSED; no waiver of release qualification",
+        "Candidate remains under supabase/candidates, not migrations: no live Supabase DDL/DML, migrations, public grants, Edge changes or Vercel deployment",
+        "B08 MUST integrate verified post-successful-commit terminal flush, own idempotent reconciliation and review hide priority; B07 is not release ready",
+        "B04 H39 same-seq changed-payload cached ACK and PR #71 security/recovery amendments remain blockers",
+        "No staging flag activation, PR merge, live DM/P1/P2 test or B08 implementation authorized by this one microstep"
+      ]
+    },
+    {
+      "id": "B08-STAGING-ONLY-ATOMIC-RECONCILIATION-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer explicitly instructed 'Proceed with B08' after B07 staged handoff",
+      "appliesTo": "B08 source-derived nonapplied SQL candidate, disabled-by-default client reconciliation, focused isolated tests, documentation and ledgers only",
+      "rationale": "Bounded, isolated security and UX work can be staged without disturbing live campaigns while authenticated A06/Gate A tests remain blocked",
+      "constraints": [
+        "No main merge, Vercel deploy, Supabase migrations, public grants, campaign edits, new paid infrastructure, or activating environment flags",
+        "A06/Gate A NOT PASSED, PR #71 still blocked, hidden-piece B07 hide-priority and no-trigger budget drain remain release blockers",
+        "B08 source/CI stages don't prove real authenticated group/multi-tab fog/collision or browser presentation acceptance",
+        "B09 only in separately requested microstep; final B10 release still requires explicit approval"
+      ]
+    },
+    {
+      "id": "B10-QUALIFICATION-DESPITE-GATE-A-2026-11-11",
+      "approvedOn": "2026-11-11",
+      "authority": "Designer said 'Proceed' directly after verified B09 handoff, authorizing B10 staging/qualification only",
+      "appliesTo": "B10 GitHub stage PR #85, disposable CI and read-only database catalog check",
+      "rationale": "Expose integration and free-tier safety blockers without editing live maps, installing SQL, merging PRs or claiming actual performance improvement",
+      "constraints": [
+        "Gate A/A06 and Gate B remain not passed",
+        "No preview/Vercel deployment or live database migration",
+        "No change to PR #71, production repo main or feature env vars",
+        "Do not start C01 or call B10 release-ready without new explicit designer decision"
+      ]
+    }
+  ],
+  "currentReconciliation": {
+    "date": "2026-11-27",
+    "mainSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "mainShaEvidence": "https://github.com/xuvenz-source/ttrpgsite/commit/90df8c960e79e8d66c322095611427da7bb09de4",
+    "mainMergedPR": 101,
+    "vercelStatus": "NOT RECHECKED THIS TURN",
+    "supabaseHistory": "83 historical migrations previously reported; not freshly rechecked",
+    "priorSnapshot": "canonicalProduction is historical evidence, not current state",
+    "primaryMilestone": "B10",
+    "activeInterruption": [
+      "E04",
+      "E05"
+    ],
+    "gateA": "BLOCKED",
+    "gateB": "BLOCKED",
+    "release": "NO_GO",
+    "scope": "Documentation only; current source of truth for private remediation is restricted review record.",
+    "evidence": [
+      "https://github.com/xuvenz-source/ttrpgsite/pull/72",
+      "https://github.com/xuvenz-source/ttrpgsite/pull/85",
+      "https://github.com/xuvenz-source/ttrpgsite/issues/168",
+      "https://github.com/xuvenz-source/ttrpgsite/issues/212"
+    ],
+    "next": "Finish critical security interruption and source-equivalent migration/client integration; return to B10 authenticated movement acceptance. Then C, D, remaining E, F.",
+    "statusCaveat": "C/D/F historical tracker values are not a fresh implementation audit; no new verification claimed.",
+    "ledgerCaveat": "Main ledger older than staged R18-226 ledger; branch-by-branch reconciliation not complete.",
+    "pr71": "closed unmerged; prior pending entries are historical; assess replacement coverage, never merge blindly."
+  }
+}
