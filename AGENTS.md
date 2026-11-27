@@ -20,14 +20,14 @@
 - In an explicitly **ideas-only/log-only** conversation, document requested ideas but perform no changes.
 - A staging request is **never** approval to deploy. Keep the release bundle on GitHub with previews disabled, even when CI is green.
 
-## Database testing policy — live environment
+## Database testing policy — isolated pre-release security checks and authorized live acceptance
 
-- **There is no separate database testing platform.** Do not require a paid staging database, Supabase preview branch, cloned database, disposable test environment, or synthetic-data SQL test run as a prerequisite to an approved database release.
-- Stage and review schema/RLS/RPC changes as code first. Use non-invasive checks (static migration review, GitHub CI, query inspection) where feasible. They do **not** establish that a migration has passed live testing.
-- **When the designer authorizes a production release**, apply the compatible migration to the existing live Supabase project and test the behaviour directly there using the project's current test campaigns and accounts. Report results and repair observed errors in subsequent controlled fixes.
-- Before any potentially destructive change, identify affected data, prefer backward-compatible/transactional migrations, prepare a rollback or recovery path where feasible, and disclose any irreversible risk. Do not use an expensive service or silently expose private data to make testing easier.
-- This policy removes the requirement for a separate database testing platform; it does **not** authorize deploying without approval, skipping basic security review, falsely claiming tests passed, or treating live testing as proof that access controls are secure.
-- Where older staged PRs demand disposable database or role-switched staging environment tests, apply this live-testing policy instead. Validate permissions in live with authorized test accounts after release, and correct failures promptly.
+- The 7 November 2026 live-only testing decision is superseded where the designer subsequently authorized $0 isolated QA and local sandbox verification. No paid testing platform or paid private CI is permitted.
+- Stage and review SQL/RLS/RPC changes first. Use isolated local Docker with synthetic fixtures and reviewed allowlisted manifests; keep owner-private migration source in its restricted repository/local registry. Do not replay unreviewed historical SQL into hosted environments or expose private source or data.
+- Before releasing access-control changes, verify the exact forward candidate against a source-equivalent isolated baseline, check integrated frontend/backend compatibility, and perform separately authorized authenticated QA. A green synthetic test is not proof of production permissions or authenticated behavior.
+- Only an explicit designer production release approval authorizes compatible live migrations, Edge Function updates or application deployment. Verify the intended behavior afterward using approved test campaigns. Do not use a test failure as authorization to alter production.
+- Before destructive changes, identify affected data, prefer transactional forward fixes, document recovery and disclose irreversible risk. Preserve historical migrations, RLS, least privilege and zero-cost constraints.
+- Follow docs/engineering-workflow.md (or the linked staged reconciliation if unmerged): bounded related iterations, original A–F gates, durable handoffs and independently reconciled local agent receipts. No claim of continuous assistant execution.
 
 ## Guardrails
 
