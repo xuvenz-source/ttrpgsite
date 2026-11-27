@@ -32,16 +32,16 @@ Vercel evaluates multiple matching rules so that an explicit `main: true` allows
 
 ## Database release and testing standard
 
-**Designer decision, 7 November 2026:** this project has **no dedicated database test platform** and will not pay to create one. Database functionality is verified by **live tests after an authorized production release**, using the existing test campaigns. If an issue is discovered, stage and release a fix through the normal approval path.
+The 7 November 2026 live-only testing decision remains historical. Subsequent designer instructions authorize free isolated local Docker security verification and a separately authorized free QA environment. No paid Supabase branch, metered private Actions or unapproved hosted mutation is permitted.
 
-1. **Prepare on a staging Git branch:** author proposed SQL/RLS/RPC changes alongside related frontend code and inspect them for correctness and authorization boundaries. Automated frontend tests and builds stay part of routine CI. A separate test database, Supabase paid branch, synthetic data environment, and disposable-data SQL runs are **not release gates**.
-2. **Assess change safety:** inspect existing live schema and dependencies with read-only queries when possible. For destructive changes, document which data could be lost and provide a feasible rollback/recovery plan; prefer additive migrations and smaller coordinated updates.
-3. **Obtain designer's release approval** before running SQL or deploying backend/frontend. An instruction to stage changes is not permission to modify the production database.
-4. **Apply migrations on the existing live Supabase Free project** in a compatible order, then deploy the matching approved frontend once. Do not install hourly/paid testing infrastructure.
-5. **Test in live:** run the intended actions as DM and players using current test campaigns; inspect permissions, real-time updates, data persistence, and feature-specific regressions. Explicitly disclose what was and was not tested.
-6. **Fix issues found in live** with a reviewed, authorized follow-up patch or rollback as appropriate. Urgent access-control exposures may require temporarily disabling the affected action until resolved; never assume a successful SQL execution proves security.
+1. **Stage:** review forward-only SQL/RLS/RPC changes with related frontend changes; preserve actual historical migrations. Keep private source and test records restricted.
+2. **Verify pre-release:** use reviewed, pinned local test jobs and source-equivalent isolated baselines for security-sensitive changes; reconcile results, integrated CI, privilege and rollback checks. Synthetic, source-bound and complete historical replay evidence must be identified separately.
+3. **Qualify:** verify the exact integrated frontend/backend contract and real authenticated multi-user scenarios in the separately authorized QA context. No unreviewed historical SQL replay to hosted resources; no production change as a side effect of testing.
+4. **Obtain explicit release approval:** identify exact candidate, migration order, risk, recovery and full staging inventory. Stage/QA permission is not production permission.
+5. **Deploy deliberately:** apply compatible authorized changes in the approved order and verify deployed versions independently. Run approved live test-campaign acceptance after deployment.
+6. **Recover safely:** use reviewed forward fixes or safe recovery; do not restore insecure privileges or bypass RLS.
 
-Older draft PR notes requiring a disposable database or separate staging SQL test should be read using this newer policy. A developer can still run optional non-destructive checks, but should not block releases because a database test platform does not exist.
+See docs/engineering-workflow.md for A–F milestones, scoped work packages, local agent receipts and release gates. Old live-only guidance in historical PRs does not supersede these staged rules once approved.
 
 ### On-demand preview checklist
 
