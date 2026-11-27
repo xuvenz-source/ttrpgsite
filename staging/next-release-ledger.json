@@ -264,7 +264,8 @@
       "status": "staged",
       "linkedPullRequest": 101,
       "productionBaseSha": "c1e098f0287c1cbf78c1f74586507ee0b4809bb5",
-      "note": "B10-R16: avoid all-map opaque seal on valid same-generation private observer route origin mismatch or capped cosmetic backlog. Keep the affected route deferred until a fresh server-signed snapshot; malformed packets and sequence gaps still seal. No DB/SQL, Supabase Realtime protocol, fog authority or grants change. CI test and live DM/observer acceptance pending."
+      "note": "B10-R16: avoid all-map opaque seal on valid same-generation private observer route origin mismatch or capped cosmetic backlog. Keep the affected route deferred until a fresh server-signed snapshot; malformed packets and sequence gaps still seal. No DB/SQL, Supabase Realtime protocol, fog authority or grants change. CI test and live DM/observer acceptance pending.",
+      "reconciliation20261127": "GitHub PR #101 closed merged; main commit 90df8c960e79e8d66c322095611427da7bb09de4. Vercel/live acceptance not freshly verified; retain historical fields."
     }
   ],
   "features": [
@@ -729,7 +730,8 @@
       "releaseReady": false,
       "linkedPullRequest": 101,
       "databaseDependencies": [],
-      "note": "Staged client-only repair; player and DM QA plus review required before controlled deployment."
+      "note": "Staged client-only repair; player and DM QA plus review required before controlled deployment.",
+      "reconciliation20261127": "GitHub PR #101 closed merged; main commit 90df8c960e79e8d66c322095611427da7bb09de4. Vercel/live acceptance not freshly verified; retain historical fields."
     }
   ],
   "databaseDependencies": [
@@ -1212,5 +1214,36 @@
       "notes": "Designer-approved single merge and Vercel production deploy VERIFIED READY. Supabase runtime corrected and grants/RLS inspected. Follow-up player QA revealed visual wall knockback and sprite remounts, staged in PR #54."
     }
   ],
-  "databaseReleaseVersion": "20261108091818"
+  "databaseReleaseVersion": "20261108091818",
+  "workflowReconciliation20261127": {
+    "observedMainSha": "90df8c960e79e8d66c322095611427da7bb09de4",
+    "observedMainMergedPR": 101,
+    "observedOn": "2026-11-27",
+    "releaseDecision": "NO_GO",
+    "deploymentMetadata": "Not freshly rechecked",
+    "appliedMigrationHistory": "Not freshly rechecked",
+    "primaryMilestone": "B10",
+    "activeInterruption": [
+      "E04",
+      "E05"
+    ],
+    "progressTracker": "staging/engineering-progress.json",
+    "historicalA03PullRequest": 72,
+    "historicalB10PullRequest": 85,
+    "retainedMainLedger": {
+      "updated": "2026-11-11",
+      "branchCount": 50,
+      "featureCount": 44
+    },
+    "laterStagingLedger": {
+      "branch": "stage/world-v2-b10-r18-226-cross-campaign-referential-guard-2026-11-22",
+      "blobSha": "6ad3fcca21edb48d6ad21526e3f4343ca9f7a987",
+      "updated": "2026-11-15",
+      "branchCount": 192,
+      "featureCount": 60
+    },
+    "status": "PARTIAL RECONCILIATION — full branch-by-branch adjudication and deployment/migration parity outstanding",
+    "policy": "Preserve both ledgers; do not overwrite later entries, blindly merge obsolete branches, or infer readiness. Historical releaseBranch/productionBaseSha and migration status fields are not current deployment assertions. Refresh all branch/PR inventories and validate each semantic dependency before consolidated release.",
+    "scope": "Documentation only; no runtime, SQL, Edge, hosted service or deployment changes."
+  }
 }
